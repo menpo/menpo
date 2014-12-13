@@ -568,7 +568,7 @@ def update_colour_selection(colour_selection_wid, default_colour_list):
 
 def line_options(line_options_default, plot_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Line Object', show_checkbox_title='Show line',
+                 toggle_title='Line Object', show_checkbox_title='Render lines',
                  labels=None):
     r"""
     Creates a widget with Line Options. Specifically, it has:
@@ -581,8 +581,8 @@ def line_options(line_options_default, plot_function=None,
 
     The structure of the widgets is the following:
         line_options_wid.children = [toggle_button, options]
-        options.children = [show_line_checkbox, other_options]
-        other_options.children = [linestyle, linewidth, linecolour]
+        options.children = [render_lines_checkbox, other_options]
+        other_options.children = [line_style, line_width, line_colour]
 
     The returned widget saves the selected values in the following dictionary:
         line_options_wid.selected_values
@@ -595,10 +595,10 @@ def line_options(line_options_default, plot_function=None,
     line_options_default : `dict`
         The initial selected line options.
         Example:
-            line_options={'show_line': True,
-                          'linewidth': 1,
-                          'linecolour': ['b'],
-                          'linestyle': '-'}
+            line_options={'render_lines': True,
+                          'line_width': 1,
+                          'line_colour': ['b'],
+                          'line_style': '-'}
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
@@ -622,27 +622,28 @@ def line_options(line_options_default, plot_function=None,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
-    # linestyle, linewidth, linecolour
-    show_line = CheckboxWidget(description=show_checkbox_title,
-                               value=line_options_default['show_line'])
-    linewidth = BoundedFloatTextWidget(description='Width',
-                                       value=line_options_default['linewidth'],
-                                       min=0.5)
-    linestyle_dict = OrderedDict()
-    linestyle_dict['solid'] = '-'
-    linestyle_dict['dashed'] = '--'
-    linestyle_dict['dash-dot'] = '-.'
-    linestyle_dict['dotted'] = ':'
-    linestyle = DropdownWidget(values=linestyle_dict,
-                               value=line_options_default['linestyle'],
-                               description='Style')
-    linecolour = colour_selection(line_options_default['linecolour'],
-                                  title='Colour', labels=labels,
-                                  plot_function=plot_function)
+    # line_style, line_width, line_colour
+    render_lines = CheckboxWidget(description=show_checkbox_title,
+                                  value=line_options_default['render_lines'])
+    line_width = BoundedFloatTextWidget(description='Width',
+                                        value=line_options_default['line_width'],
+                                        min=0.5)
+    line_style_dict = OrderedDict()
+    line_style_dict['solid'] = '-'
+    line_style_dict['dashed'] = '--'
+    line_style_dict['dash-dot'] = '-.'
+    line_style_dict['dotted'] = ':'
+    line_style = DropdownWidget(values=line_style_dict,
+                                value=line_options_default['line_style'],
+                                description='Style')
+    line_colour = colour_selection(line_options_default['line_colour'],
+                                   title='Colour', labels=labels,
+                                   plot_function=plot_function)
 
     # Options widget
-    line_options = ContainerWidget(children=[linestyle, linewidth, linecolour])
-    options_wid = ContainerWidget(children=[show_line, line_options])
+    all_line_options = ContainerWidget(children=[line_style, line_width,
+                                                 line_colour])
+    options_wid = ContainerWidget(children=[render_lines, all_line_options])
 
     # Final widget
     line_options_wid = ContainerWidget(children=[but, options_wid])
@@ -652,37 +653,37 @@ def line_options(line_options_default, plot_function=None,
 
     # line options visibility
     def options_visible(name, value):
-        linestyle.disabled = not value
-        linewidth.disabled = not value
-        if len(linecolour.children) == 4:
-            linecolour.children[0].disabled = not value
-            linecolour.children[1].disabled = not value
-            linecolour.children[2].disabled = not value
-            linecolour.children[3].children[0].disabled = not value
-            linecolour.children[3].children[1].disabled = not value
-            linecolour.children[3].children[2].disabled = not value
+        line_style.disabled = not value
+        line_width.disabled = not value
+        if len(line_colour.children) == 4:
+            line_colour.children[0].disabled = not value
+            line_colour.children[1].disabled = not value
+            line_colour.children[2].disabled = not value
+            line_colour.children[3].children[0].disabled = not value
+            line_colour.children[3].children[1].disabled = not value
+            line_colour.children[3].children[2].disabled = not value
         else:
-            linecolour.children[0].disabled = not value
-            linecolour.children[1].children[0].disabled = not value
-            linecolour.children[1].children[1].disabled = not value
-            linecolour.children[1].children[2].disabled = not value
-    options_visible('', line_options_default['show_line'])
-    show_line.on_trait_change(options_visible, 'value')
+            line_colour.children[0].disabled = not value
+            line_colour.children[1].children[0].disabled = not value
+            line_colour.children[1].children[1].disabled = not value
+            line_colour.children[1].children[2].disabled = not value
+    options_visible('', line_options_default['render_lines'])
+    render_lines.on_trait_change(options_visible, 'value')
 
     # get options functions
-    def save_show_line(name, value):
-        line_options_wid.selected_values['show_line'] = value
-    show_line.on_trait_change(save_show_line, 'value')
+    def save_render_lines(name, value):
+        line_options_wid.selected_values['render_lines'] = value
+    render_lines.on_trait_change(save_render_lines, 'value')
 
-    def save_linewidth(name, value):
-        line_options_wid.selected_values['linewidth'] = float(value)
-    linewidth.on_trait_change(save_linewidth, 'value')
+    def save_line_width(name, value):
+        line_options_wid.selected_values['line_width'] = float(value)
+    line_width.on_trait_change(save_line_width, 'value')
 
-    def save_linestyle(name, value):
-        line_options_wid.selected_values['linestyle'] = value
-    linestyle.on_trait_change(save_linestyle, 'value')
+    def save_line_style(name, value):
+        line_options_wid.selected_values['line_style'] = value
+    line_style.on_trait_change(save_line_style, 'value')
 
-    line_options_wid.selected_values['linecolour'] = linecolour.selected_values
+    line_options_wid.selected_values['line_colour'] = line_colour.selected_values
 
     # Toggle button function
     def toggle_fun(name, value):
@@ -692,9 +693,9 @@ def line_options(line_options_default, plot_function=None,
 
     # assign plot_function
     if plot_function is not None:
-        show_line.on_trait_change(plot_function, 'value')
-        linestyle.on_trait_change(plot_function, 'value')
-        linewidth.on_trait_change(plot_function, 'value')
+        render_lines.on_trait_change(plot_function, 'value')
+        line_style.on_trait_change(plot_function, 'value')
+        line_width.on_trait_change(plot_function, 'value')
 
     return line_options_wid
 
@@ -764,17 +765,17 @@ def update_line_options(line_options_wid, line_options_dict):
     r"""
     Function that updates the state of a given line_options widget. Usage
     example:
-        default_line_options={'show_line':True,
-                              'linewidth':2,
-                              'linecolour':['r'],
-                              'linestyle':'-'}
+        default_line_options={'render_lines':True,
+                              'line_width':2,
+                              'line_colour':['r'],
+                              'line_style':'-'}
         line_options_wid = line_options(default_line_options)
         display(line_options_wid)
         format_line_options(line_options_wid)
-        default_line_options={'show_line':False,
-                              'linewidth':4,
-                              'linecolour':[[0.1, 0.2, 0.3]],
-                              'linestyle':'-'}
+        default_line_options={'render_lines':False,
+                              'line_width':4,
+                              'line_colour':[[0.1, 0.2, 0.3]],
+                              'line_style':'-'}
         update_line_options(line_options_wid, default_line_options)
 
     Parameters
@@ -784,34 +785,34 @@ def update_line_options(line_options_wid, line_options_dict):
 
     line_options_dict : `dict`
         The new set of options. For example:
-            line_options_dict={'show_line':True,
-                               'linewidth':2,
-                               'linecolour':['r'],
-                               'linestyle':'-'}
+            line_options_dict={'render_lines':True,
+                               'line_width':2,
+                               'line_colour':['r'],
+                               'line_style':'-'}
     """
     # Assign new options dict to selected_values
     line_options_wid.selected_values = line_options_dict
 
-    # update show line checkbox
-    if 'show_line' in line_options_dict.keys():
+    # update render lines checkbox
+    if 'render_lines' in line_options_dict.keys():
         line_options_wid.children[1].children[0].value = \
-            line_options_dict['show_line']
+            line_options_dict['render_lines']
 
-    # update linestyle dropdown menu
-    if 'linestyle' in line_options_dict.keys():
+    # update line_style dropdown menu
+    if 'line_style' in line_options_dict.keys():
         line_options_wid.children[1].children[1].children[0].value = \
-            line_options_dict['linestyle']
+            line_options_dict['line_style']
 
-    # update linewidth text box
-    if 'linewidth' in line_options_dict.keys():
+    # update line_width text box
+    if 'line_width' in line_options_dict.keys():
         line_options_wid.children[1].children[1].children[1].value = \
-            float(line_options_dict['linewidth'])
+            float(line_options_dict['line_width'])
 
-    # update linecolour
-    if 'linecolour' in line_options_dict.keys():
+    # update line_colour
+    if 'line_colour' in line_options_dict.keys():
         update_colour_selection(
             line_options_wid.children[1].children[1].children[2],
-            line_options_dict['linecolour'])
+            line_options_dict['line_colour'])
 
 
 def marker_options(marker_options_default, plot_function=None,
@@ -831,9 +832,9 @@ def marker_options(marker_options_default, plot_function=None,
 
     The structure of the widgets is the following:
         marker_options_wid.children = [toggle_button, options]
-        options.children = [show_marker_checkbox, other_options]
-        other_options.children = [markerstyle, markersize, markeredgewidth,
-                                  facecolour, edgecolour]
+        options.children = [render_markers_checkbox, other_options]
+        other_options.children = [marker_style, marker_size, marker_edge_width,
+                                  marker_face_colour, marker_edge_colour]
 
     The returned widget saves the selected values in the following dictionary:
         marker_options_wid.selected_values
@@ -846,12 +847,12 @@ def marker_options(marker_options_default, plot_function=None,
     marker_options_default : `dict`
         The initial selected marker options.
         Example:
-            marker_options_default={'show_marker':True,
-                                    'markersize':20,
-                                    'markerfacecolour':['r'],
-                                    'markeredgecolour':['k'],
-                                    'markerstyle':'o',
-                                    'markeredgewidth':1}
+            marker_options_default={'render_markers':True,
+                                    'marker_size':20,
+                                    'marker_face_colour':['r'],
+                                    'marker_edge_colour':['k'],
+                                    'marker_style':'o',
+                                    'marker_edge_width':1}
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
@@ -875,52 +876,54 @@ def marker_options(marker_options_default, plot_function=None,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
-    # linestyle, linewidth, linecolour
-    show_marker = CheckboxWidget(description=show_checkbox_title,
-                                 value=marker_options_default['show_marker'])
-    markersize = BoundedIntTextWidget(
-        description='Size', value=marker_options_default['markersize'], min=1)
-    markeredgewidth = BoundedFloatTextWidget(
+    # marker_size, marker_edge_width, marker_style, marker_face_colour,
+    # marker_edge_colour
+    render_markers = CheckboxWidget(
+        description=show_checkbox_title,
+        value=marker_options_default['render_markers'])
+    marker_size = BoundedIntTextWidget(
+        description='Size', value=marker_options_default['marker_size'], min=1)
+    marker_edge_width = BoundedFloatTextWidget(
         description='Edge width',
-        value=marker_options_default['markeredgewidth'], min=0.5)
-    markerstyle_dict = OrderedDict()
-    markerstyle_dict['point'] = '.'
-    markerstyle_dict['pixel'] = ','
-    markerstyle_dict['circle'] = 'o'
-    markerstyle_dict['triangle down'] = 'v'
-    markerstyle_dict['triangle up'] = '^'
-    markerstyle_dict['triangle left'] = '<'
-    markerstyle_dict['triangle right'] = '>'
-    markerstyle_dict['tri down'] = '1'
-    markerstyle_dict['tri up'] = '2'
-    markerstyle_dict['tri left'] = '3'
-    markerstyle_dict['tri right'] = '4'
-    markerstyle_dict['octagon'] = '8'
-    markerstyle_dict['square'] = 's'
-    markerstyle_dict['pentagon'] = 'p'
-    markerstyle_dict['star'] = '*'
-    markerstyle_dict['hexagon 1'] = 'h'
-    markerstyle_dict['hexagon 2'] = 'H'
-    markerstyle_dict['plus'] = '+'
-    markerstyle_dict['x'] = 'x'
-    markerstyle_dict['diamond'] = 'D'
-    markerstyle_dict['thin diamond'] = 'd'
-    markerstyle = DropdownWidget(values=markerstyle_dict,
-                                 value=marker_options_default['markerstyle'],
-                                 description='Style')
-    markerfacecolour = colour_selection(
-        marker_options_default['markerfacecolour'], title='Face Colour',
+        value=marker_options_default['marker_edge_width'], min=0.5)
+    marker_style_dict = OrderedDict()
+    marker_style_dict['point'] = '.'
+    marker_style_dict['pixel'] = ','
+    marker_style_dict['circle'] = 'o'
+    marker_style_dict['triangle down'] = 'v'
+    marker_style_dict['triangle up'] = '^'
+    marker_style_dict['triangle left'] = '<'
+    marker_style_dict['triangle right'] = '>'
+    marker_style_dict['tri down'] = '1'
+    marker_style_dict['tri up'] = '2'
+    marker_style_dict['tri left'] = '3'
+    marker_style_dict['tri right'] = '4'
+    marker_style_dict['octagon'] = '8'
+    marker_style_dict['square'] = 's'
+    marker_style_dict['pentagon'] = 'p'
+    marker_style_dict['star'] = '*'
+    marker_style_dict['hexagon 1'] = 'h'
+    marker_style_dict['hexagon 2'] = 'H'
+    marker_style_dict['plus'] = '+'
+    marker_style_dict['x'] = 'x'
+    marker_style_dict['diamond'] = 'D'
+    marker_style_dict['thin diamond'] = 'd'
+    marker_style = DropdownWidget(values=marker_style_dict,
+                                  value=marker_options_default['marker_style'],
+                                  description='Style')
+    marker_face_colour = colour_selection(
+        marker_options_default['marker_face_colour'], title='Face Colour',
         plot_function=plot_function)
-    markeredgecolour = colour_selection(
-        marker_options_default['markeredgecolour'], title='Edge Colour',
+    marker_edge_colour = colour_selection(
+        marker_options_default['marker_edge_colour'], title='Edge Colour',
         plot_function=plot_function)
 
     # Options widget
-    marker_options = ContainerWidget(children=[markerstyle, markersize,
-                                               markeredgewidth,
-                                               markerfacecolour,
-                                               markeredgecolour])
-    options_wid = ContainerWidget(children=[show_marker, marker_options])
+    all_marker_options = ContainerWidget(children=[marker_style, marker_size,
+                                                   marker_edge_width,
+                                                   marker_face_colour,
+                                                   marker_edge_colour])
+    options_wid = ContainerWidget(children=[render_markers, all_marker_options])
 
     # Final widget
     marker_options_wid = ContainerWidget(children=[but, options_wid])
@@ -930,41 +933,41 @@ def marker_options(marker_options_default, plot_function=None,
 
     # marker options visibility
     def options_visible(name, value):
-        markerstyle.disabled = not value
-        markersize.disabled = not value
-        markeredgewidth.disabled = not value
-        markerfacecolour.children[0].disabled = not value
-        markerfacecolour.children[1].children[0].disabled = not value
-        markerfacecolour.children[1].children[1].disabled = not value
-        markerfacecolour.children[1].children[2].disabled = not value
-        markeredgecolour.children[0].disabled = not value
-        markeredgecolour.children[1].children[0].disabled = not value
-        markeredgecolour.children[1].children[1].disabled = not value
-        markeredgecolour.children[1].children[2].disabled = not value
-    options_visible('', marker_options_default['show_marker'])
-    show_marker.on_trait_change(options_visible, 'value')
+        marker_style.disabled = not value
+        marker_size.disabled = not value
+        marker_edge_width.disabled = not value
+        marker_face_colour.children[0].disabled = not value
+        marker_face_colour.children[1].children[0].disabled = not value
+        marker_face_colour.children[1].children[1].disabled = not value
+        marker_face_colour.children[1].children[2].disabled = not value
+        marker_edge_colour.children[0].disabled = not value
+        marker_edge_colour.children[1].children[0].disabled = not value
+        marker_edge_colour.children[1].children[1].disabled = not value
+        marker_edge_colour.children[1].children[2].disabled = not value
+    options_visible('', marker_options_default['render_markers'])
+    render_markers.on_trait_change(options_visible, 'value')
 
     # get options functions
-    def save_show_marker(name, value):
-        marker_options_wid.selected_values['show_marker'] = value
-    show_marker.on_trait_change(save_show_marker, 'value')
+    def save_render_markers(name, value):
+        marker_options_wid.selected_values['render_markers'] = value
+    render_markers.on_trait_change(save_render_markers, 'value')
 
     def save_markersize(name, value):
-        marker_options_wid.selected_values['markersize'] = int(value)
-    markersize.on_trait_change(save_markersize, 'value')
+        marker_options_wid.selected_values['marker_size'] = int(value)
+    marker_size.on_trait_change(save_markersize, 'value')
 
     def save_markeredgewidth(name, value):
-        marker_options_wid.selected_values['markeredgewidth'] = float(value)
-    markeredgewidth.on_trait_change(save_markeredgewidth, 'value')
+        marker_options_wid.selected_values['marker_edge_width'] = float(value)
+    marker_edge_width.on_trait_change(save_markeredgewidth, 'value')
 
     def save_markerstyle(name, value):
-        marker_options_wid.selected_values['markerstyle'] = value
-    markerstyle.on_trait_change(save_markerstyle, 'value')
+        marker_options_wid.selected_values['marker_style'] = value
+    marker_style.on_trait_change(save_markerstyle, 'value')
 
-    marker_options_wid.selected_values['markeredgecolour'] = \
-        markeredgecolour.selected_values
-    marker_options_wid.selected_values['markerfacecolour'] = \
-        markerfacecolour.selected_values
+    marker_options_wid.selected_values['marker_edge_colour'] = \
+        marker_edge_colour.selected_values
+    marker_options_wid.selected_values['marker_face_colour'] = \
+        marker_face_colour.selected_values
 
     # Toggle button function
     def toggle_fun(name, value):
@@ -974,10 +977,10 @@ def marker_options(marker_options_default, plot_function=None,
 
     # assign plot_function
     if plot_function is not None:
-        show_marker.on_trait_change(plot_function, 'value')
-        markerstyle.on_trait_change(plot_function, 'value')
-        markeredgewidth.on_trait_change(plot_function, 'value')
-        markersize.on_trait_change(plot_function, 'value')
+        render_markers.on_trait_change(plot_function, 'value')
+        marker_style.on_trait_change(plot_function, 'value')
+        marker_edge_width.on_trait_change(plot_function, 'value')
+        marker_size.on_trait_change(plot_function, 'value')
 
     return marker_options_wid
 
@@ -1051,21 +1054,21 @@ def update_marker_options(marker_options_wid, marker_options_dict):
     r"""
     Function that updates the state of a given marker_options widget. Usage
     example:
-        default_marker_options={'show_marker':True,
-                                'markersize':20,
-                                'markerfacecolour':['r'],
-                                'markeredgecolour':['k'],
-                                'markerstyle':'o',
-                                'markeredgewidth':1}
+        default_marker_options={'render_markers':True,
+                                'marker_size':20,
+                                'marker_face_colour':['r'],
+                                'marker_edge_colour':['k'],
+                                'marker_style':'o',
+                                'marker_edge_width':1}
         marker_options_wid = marker_options(default_marker_options)
         display(marker_options_wid)
         format_marker_options(marker_options_wid)
-        default_marker_options={'show_marker':True,
-                                'markersize':40,
-                                'markerfacecolour':[[0.1, 0.2, 0.3]],
-                                'markeredgecolour':['r'],
-                                'markerstyle':'d',
-                                'markeredgewidth':1}
+        default_marker_options={'render_markers':True,
+                                'marker_size':40,
+                                'marker_face_colour':[[0.1, 0.2, 0.3]],
+                                'marker_edge_colour':['r'],
+                                'marker_style':'d',
+                                'marker_edge_width':1}
         update_marker_options(marker_options_wid, default_marker_options)
 
     Parameters
@@ -1075,86 +1078,91 @@ def update_marker_options(marker_options_wid, marker_options_dict):
 
     marker_options_dict : `dict`
         The new set of options. For example:
-            marker_options_dict={'show_marker':True,
-                                 'markersize':20,
-                                 'markerfacecolour':['r'],
-                                 'markeredgecolour':['k'],
-                                 'markerstyle':'o',
-                                 'markeredgewidth':1}
+            marker_options_dict={'render_markers':True,
+                                 'marker_size':20,
+                                 'marker_face_colour':['r'],
+                                 'marker_edge_colour':['k'],
+                                 'marker_style':'o',
+                                 'marker_edge_width':1}
     """
     # Assign new options dict to selected_values
     marker_options_wid.selected_values = marker_options_dict
 
-    # update show marker checkbox
-    if 'show_marker' in marker_options_dict.keys():
+    # update render marker checkbox
+    if 'render_markers' in marker_options_dict.keys():
         marker_options_wid.children[1].children[0].value = \
-            marker_options_dict['show_marker']
+            marker_options_dict['render_markers']
 
-    # update markerstyle dropdown menu
-    if 'markerstyle' in marker_options_dict.keys():
+    # update marker_style dropdown menu
+    if 'marker_style' in marker_options_dict.keys():
         marker_options_wid.children[1].children[1].children[0].value = \
-            marker_options_dict['markerstyle']
+            marker_options_dict['marker_style']
 
-    # update markersize text box
-    if 'markersize' in marker_options_dict.keys():
+    # update marker_size text box
+    if 'marker_size' in marker_options_dict.keys():
         marker_options_wid.children[1].children[1].children[1].value = \
-            int(marker_options_dict['markersize'])
+            int(marker_options_dict['marker_size'])
 
-    # update markeredgewidth text box
-    if 'markeredgewidth' in marker_options_dict.keys():
+    # update marker_edge_width text box
+    if 'marker_edge_width' in marker_options_dict.keys():
         marker_options_wid.children[1].children[1].children[2].value = \
-            float(marker_options_dict['markeredgewidth'])
+            float(marker_options_dict['marker_edge_width'])
 
-    # update markerfacecolour
-    if 'markerfacecolour' in marker_options_dict.keys():
+    # update marker_face_colour
+    if 'marker_face_colour' in marker_options_dict.keys():
         update_colour_selection(
             marker_options_wid.children[1].children[1].children[3],
-            marker_options_dict['markerfacecolour'])
+            marker_options_dict['marker_face_colour'])
 
-    # update markeredgecolour
-    if 'markeredgecolour' in marker_options_dict.keys():
+    # update marker_edge_colour
+    if 'marker_edge_colour' in marker_options_dict.keys():
         update_colour_selection(
             marker_options_wid.children[1].children[1].children[4],
-            marker_options_dict['markeredgecolour'])
+            marker_options_dict['marker_edge_colour'])
 
 
-def font_options(font_options_default, plot_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Font Options', show_checkbox_title='Show text'):
+def numbering_options(numbers_options_default, plot_function=None,
+                      toggle_show_visible=True, toggle_show_default=True,
+                      toggle_title='Numbering Options',
+                      show_checkbox_title='Render numbering'):
     r"""
-    Creates a widget with Font Options. Specifically, it has:
+    Creates a widget with Numbering Options. Specifically, it has:
         1) A checkbox that controls text's visibility.
         2) A dropdown menu for font name.
         3) A bounded int text box for font size.
         4) A dropdown menu for font style.
         5) A dropdown menu for font weight.
         6) A colour_selection widget for font colour.
-        7) A toggle button that controls the visibility of all the above, i.e.
-           the font options.
+        7) A dropdown menu for horizontal alignment.
+        8) A dropdown menu for vertical alignment.
+        9) A toggle button that controls the visibility of all the above, i.e.
+           the numbering options.
 
     The structure of the widgets is the following:
-        line_options_wid.children = [toggle_button, options]
+        numbering_options_wid.children = [toggle_button, options]
         options.children = [show_font_checkbox, other_options]
-        other_options.children = [fontname, fontsize, fontstyle, fontweight,
-                                  fontcolour]
+        other_options.children = [font_name, font_size, font_style, font_weight,
+                                  font_colour, horizontal_align, vertical_align]
 
     The returned widget saves the selected values in the following dictionary:
-        font_options_wid.selected_values
+        numbering_options_wid.selected_values
 
     To fix the alignment within this widget please refer to
-    `format_font_options()` function.
+    `format_numbering_options()` function.
 
     Parameters
     ----------
-    font_options_default : `dict`
+    numbers_options_default : `dict`
         The initial selected font options.
         Example:
-            font_options={'show_font': True,
-                          'fontname': 'serif',
-                          'fontsize': 10,
-                          'fontstyle': 'normal',
-                          'fontweight': 'normal',
-                          'fontcolour': ['k']}
+            numbers_options_default = {'render_numbering': True,
+                                       'numbers_font_name': 'serif',
+                                       'numbers_font_size': 10,
+                                       'numbers_font_style': 'normal',
+                                       'numbers_font_weight': 'normal',
+                                       'numbers_font_colour': ['k'],
+                                       'numbers_horizontal_align': 'center',
+                                       'numbers_vertical_align': 'bottom'}
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
@@ -1178,95 +1186,135 @@ def font_options(font_options_default, plot_function=None,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
-    # fontname, fontsize, fontstyle, fontweight, fontcolour
-    show_font = CheckboxWidget(description=show_checkbox_title,
-                               value=font_options_default['show_font'])
-    fontname_dict = OrderedDict()
-    fontname_dict['serif'] = 'serif'
-    fontname_dict['sans-serif'] = 'sans-serif'
-    fontname_dict['cursive'] = 'cursive'
-    fontname_dict['fantasy'] = 'fantasy'
-    fontname_dict['monospace'] = 'monospace'
-    fontname = DropdownWidget(values=fontname_dict,
-                              value=font_options_default['fontname'],
-                              description='Font')
-    fontsize = BoundedIntTextWidget(description='Size',
-                                    value=font_options_default['fontsize'],
-                                    min=2)
-    fontstyle_dict = OrderedDict()
-    fontstyle_dict['normal'] = 'normal'
-    fontstyle_dict['italic'] = 'italic'
-    fontstyle_dict['oblique'] = 'oblique'
-    fontstyle = DropdownWidget(values=fontstyle_dict,
-                               value=font_options_default['fontstyle'],
-                               description='Style')
-    fontweight_dict = OrderedDict()
-    fontweight_dict['normal'] = 'normal'
-    fontweight_dict['ultralight'] = 'ultralight'
-    fontweight_dict['light'] = 'light'
-    fontweight_dict['regular'] = 'regular'
-    fontweight_dict['book'] = 'book'
-    fontweight_dict['medium'] = 'medium'
-    fontweight_dict['roman'] = 'roman'
-    fontweight_dict['semibold'] = 'semibold'
-    fontweight_dict['demibold'] = 'demibold'
-    fontweight_dict['demi'] = 'demi'
-    fontweight_dict['bold'] = 'bold'
-    fontweight_dict['heavy'] = 'heavy'
-    fontweight_dict['extra bold'] = 'extra bold'
-    fontweight_dict['black'] = 'black'
-    fontweight = DropdownWidget(values=fontweight_dict,
-                                value=font_options_default['fontweight'],
-                                description='Weight')
-    fontcolour = colour_selection(font_options_default['fontcolour'],
-                                  title='Colour', plot_function=plot_function)
+    # numbers_font_name, numbers_font_size, numbers_font_style,
+    # numbers_font_weight, numbers_font_colour
+    render_numbering = CheckboxWidget(
+        description=show_checkbox_title,
+        value=numbers_options_default['render_numbering'])
+    numbers_font_name_dict = OrderedDict()
+    numbers_font_name_dict['serif'] = 'serif'
+    numbers_font_name_dict['sans-serif'] = 'sans-serif'
+    numbers_font_name_dict['cursive'] = 'cursive'
+    numbers_font_name_dict['fantasy'] = 'fantasy'
+    numbers_font_name_dict['monospace'] = 'monospace'
+    numbers_font_name = DropdownWidget(
+        values=numbers_font_name_dict,
+        value=numbers_options_default['numbers_font_name'], description='Font')
+    numbers_font_size = BoundedIntTextWidget(
+        description='Size', value=numbers_options_default['numbers_font_size'],
+        min=2)
+    numbers_font_style_dict = OrderedDict()
+    numbers_font_style_dict['normal'] = 'normal'
+    numbers_font_style_dict['italic'] = 'italic'
+    numbers_font_style_dict['oblique'] = 'oblique'
+    numbers_font_style = DropdownWidget(
+        values=numbers_font_style_dict,
+        value=numbers_options_default['numbers_font_style'],
+        description='Style')
+    numbers_font_weight_dict = OrderedDict()
+    numbers_font_weight_dict['normal'] = 'normal'
+    numbers_font_weight_dict['ultralight'] = 'ultralight'
+    numbers_font_weight_dict['light'] = 'light'
+    numbers_font_weight_dict['regular'] = 'regular'
+    numbers_font_weight_dict['book'] = 'book'
+    numbers_font_weight_dict['medium'] = 'medium'
+    numbers_font_weight_dict['roman'] = 'roman'
+    numbers_font_weight_dict['semibold'] = 'semibold'
+    numbers_font_weight_dict['demibold'] = 'demibold'
+    numbers_font_weight_dict['demi'] = 'demi'
+    numbers_font_weight_dict['bold'] = 'bold'
+    numbers_font_weight_dict['heavy'] = 'heavy'
+    numbers_font_weight_dict['extra bold'] = 'extra bold'
+    numbers_font_weight_dict['black'] = 'black'
+    numbers_font_weight = DropdownWidget(
+        values=numbers_font_weight_dict,
+        value=numbers_options_default['numbers_font_weight'],
+        description='Weight')
+    numbers_font_colour = colour_selection(
+        numbers_options_default['numbers_font_colour'], title='Colour',
+        plot_function=plot_function)
+    numbers_horizontal_align_dict = OrderedDict()
+    numbers_horizontal_align_dict['center'] = 'center'
+    numbers_horizontal_align_dict['right'] = 'right'
+    numbers_horizontal_align_dict['left'] = 'left'
+    numbers_horizontal_align = DropdownWidget(
+        values=numbers_horizontal_align_dict,
+        value=numbers_options_default['numbers_horizontal_align'],
+        description='Align hor.')
+    numbers_vertical_align_dict = OrderedDict()
+    numbers_vertical_align_dict['center'] = 'center'
+    numbers_vertical_align_dict['top'] = 'top'
+    numbers_vertical_align_dict['bottom'] = 'bottom'
+    numbers_vertical_align_dict['baseline'] = 'baseline'
+    numbers_vertical_align = DropdownWidget(
+        values=numbers_vertical_align_dict,
+        value=numbers_options_default['numbers_vertical_align'],
+        description='Align ver.')
 
     # Options widget
-    font_options = ContainerWidget(children=[fontname, fontsize, fontstyle,
-                                             fontweight, fontcolour])
-    options_wid = ContainerWidget(children=[show_font, font_options])
+    all_font_options = ContainerWidget(children=[numbers_font_name,
+                                                 numbers_font_size,
+                                                 numbers_font_style,
+                                                 numbers_font_weight,
+                                                 numbers_font_colour,
+                                                 numbers_horizontal_align,
+                                                 numbers_vertical_align])
+    options_wid = ContainerWidget(children=[render_numbering, all_font_options])
 
     # Final widget
-    font_options_wid = ContainerWidget(children=[but, options_wid])
+    numbering_options_wid = ContainerWidget(children=[but, options_wid])
 
     # Assign output
-    font_options_wid.selected_values = font_options_default
+    numbering_options_wid.selected_values = numbers_options_default
 
     # font options visibility
     def options_visible(name, value):
-        fontname.disabled = not value
-        fontsize.disabled = not value
-        fontstyle.disabled = not value
-        fontweight.disabled = not value
-        fontcolour.children[0].disabled = not value
-        fontcolour.children[1].children[0].disabled = not value
-        fontcolour.children[1].children[1].disabled = not value
-        fontcolour.children[1].children[2].disabled = not value
-    options_visible('', font_options_default['show_font'])
-    show_font.on_trait_change(options_visible, 'value')
+        numbers_font_name.disabled = not value
+        numbers_font_size.disabled = not value
+        numbers_font_style.disabled = not value
+        numbers_font_weight.disabled = not value
+        numbers_font_colour.children[0].disabled = not value
+        numbers_font_colour.children[1].children[0].disabled = not value
+        numbers_font_colour.children[1].children[1].disabled = not value
+        numbers_font_colour.children[1].children[2].disabled = not value
+        numbers_horizontal_align.disabled = not value
+        numbers_vertical_align.disabled = not value
+    options_visible('', numbers_options_default['render_numbering'])
+    render_numbering.on_trait_change(options_visible, 'value')
 
     # get options functions
-    def save_show_font(name, value):
-        font_options_wid.selected_values['show_font'] = value
-    show_font.on_trait_change(save_show_font, 'value')
+    def save_render_numbering(name, value):
+        numbering_options_wid.selected_values['render_numbering'] = value
+    render_numbering.on_trait_change(save_render_numbering, 'value')
 
-    def save_fontname(name, value):
-        font_options_wid.selected_values['fontname'] = value
-    fontname.on_trait_change(save_fontname, 'value')
+    def save_numbers_font_name(name, value):
+        numbering_options_wid.selected_values['numbers_font_name'] = value
+    numbers_font_name.on_trait_change(save_numbers_font_name, 'value')
 
-    def save_fontsize(name, value):
-        font_options_wid.selected_values['fontsize'] = int(value)
-    fontsize.on_trait_change(save_fontsize, 'value')
+    def save_numbers_font_size(name, value):
+        numbering_options_wid.selected_values['numbers_font_size'] = int(value)
+    numbers_font_size.on_trait_change(save_numbers_font_size, 'value')
 
-    def save_fontstyle(name, value):
-        font_options_wid.selected_values['fontstyle'] = value
-    fontstyle.on_trait_change(save_fontstyle, 'value')
+    def save_numbers_font_style(name, value):
+        numbering_options_wid.selected_values['numbers_font_style'] = value
+    numbers_font_style.on_trait_change(save_numbers_font_style, 'value')
 
-    def save_fontweight(name, value):
-        font_options_wid.selected_values['fontweight'] = value
-    fontweight.on_trait_change(save_fontweight, 'value')
+    def save_numbers_font_weight(name, value):
+        numbering_options_wid.selected_values['numbers_font_weight'] = value
+    numbers_font_weight.on_trait_change(save_numbers_font_weight, 'value')
 
-    font_options_wid.selected_values['fontcolour'] = fontcolour.selected_values
+    def save_numbers_horizontal_align(name, value):
+        numbering_options_wid.selected_values['numbers_horizontal_align'] = \
+            value
+    numbers_horizontal_align.on_trait_change(save_numbers_horizontal_align,
+                                             'value')
+
+    def save_numbers_vertical_align(name, value):
+        numbering_options_wid.selected_values['numbers_vertical_align'] = value
+    numbers_vertical_align.on_trait_change(save_numbers_vertical_align, 'value')
+
+    numbering_options_wid.selected_values['numbers_font_colour'] = \
+        numbers_font_colour.selected_values
 
     # Toggle button function
     def toggle_fun(name, value):
@@ -1276,31 +1324,34 @@ def font_options(font_options_default, plot_function=None,
 
     # assign plot_function
     if plot_function is not None:
-        show_font.on_trait_change(plot_function, 'value')
-        fontname.on_trait_change(plot_function, 'value')
-        fontstyle.on_trait_change(plot_function, 'value')
-        fontsize.on_trait_change(plot_function, 'value')
-        fontweight.on_trait_change(plot_function, 'value')
+        render_numbering.on_trait_change(plot_function, 'value')
+        numbers_font_name.on_trait_change(plot_function, 'value')
+        numbers_font_style.on_trait_change(plot_function, 'value')
+        numbers_font_size.on_trait_change(plot_function, 'value')
+        numbers_font_weight.on_trait_change(plot_function, 'value')
+        numbers_horizontal_align.on_trait_change(plot_function, 'value')
+        numbers_vertical_align.on_trait_change(plot_function, 'value')
 
-    return font_options_wid
+    return numbering_options_wid
 
 
-def format_font_options(font_options_wid, container_padding='6px',
-                        container_margin='6px',
-                        container_border='1px solid black',
-                        toggle_button_font_weight='bold', border_visible=True,
-                        suboptions_border_visible=True):
+def format_numbering_options(numbering_options_wid, container_padding='6px',
+                             container_margin='6px',
+                             container_border='1px solid black',
+                             toggle_button_font_weight='bold',
+                             border_visible=True,
+                             suboptions_border_visible=True):
     r"""
-    Function that corrects the align (style format) of a given font_options
+    Function that corrects the align (style format) of a given numbering_options
     widget. Usage example:
-        font_options_wid = font_options()
-        display(font_options_wid)
-        format_font_options(font_options_wid)
+        numbering_options_wid = numbering_options()
+        display(numbering_options_wid)
+        format_numbering_options(numbering_options_wid)
 
     Parameters
     ----------
-    font_options_wid :
-        The widget object generated by the `font_options()` function.
+    numbering_options_wid :
+        The widget object generated by the `numbering_options()` function.
 
     container_padding : `str`, optional
         The padding around the widget, e.g. '6px'
@@ -1322,114 +1373,137 @@ def format_font_options(font_options_wid, container_padding='6px',
         the show font checkbox.
     """
     # align font options with checkbox
-    font_options_wid.children[1].add_class('align-end')
+    numbering_options_wid.children[1].add_class('align-end')
 
     # set fontsize text box width
-    font_options_wid.children[1].children[1].children[1].set_css('width', '1cm')
+    numbering_options_wid.children[1].children[1].children[1].set_css('width',
+                                                                      '1cm')
 
     # format colour options
-    format_colour_selection(font_options_wid.children[1].children[1].children[4])
+    format_colour_selection(
+        numbering_options_wid.children[1].children[1].children[4])
 
     # border around options
     if suboptions_border_visible:
-        font_options_wid.children[1].children[1].set_css('border',
-                                                         container_border)
+        numbering_options_wid.children[1].children[1].set_css('border',
+                                                              container_border)
 
     # set toggle button font bold
-    font_options_wid.children[0].set_css('font-weight',
-                                         toggle_button_font_weight)
+    numbering_options_wid.children[0].set_css('font-weight',
+                                              toggle_button_font_weight)
 
     # margin and border around container widget
-    font_options_wid.set_css('padding', container_padding)
-    font_options_wid.set_css('margin', container_margin)
+    numbering_options_wid.set_css('padding', container_padding)
+    numbering_options_wid.set_css('margin', container_margin)
     if border_visible:
-        font_options_wid.set_css('border', container_border)
+        numbering_options_wid.set_css('border', container_border)
 
 
-def update_font_options(font_options_wid, font_options_dict):
+def update_numbering_options(numbering_options_wid, numbering_options_dict):
     r"""
-    Function that updates the state of a given font_options widget. Usage
+    Function that updates the state of a given numbering_options widget. Usage
     example:
-        font_options_default={'show_font': True,
-                              'fontname': 'serif',
-                              'fontsize': 10,
-                              'fontstyle': 'normal',
-                              'fontweight': 'normal',
-                              'fontcolour': ['k']}
-        font_options_wid = font_options(font_options)
-        display(font_options_wid)
-        format_font_options(font_options_wid)
-        font_options_default={'show_font': False,
-                              'fontname': 'sans-serif',
-                              'fontsize': 14,
-                              'fontstyle': 'italic',
-                              'fontweight': 'bold',
-                              'fontcolour': ['r']}
-        update_font_options(font_options_wid, font_options)
+        numbering_options_default = {'render_numbering': True,
+                                      'numbers_font_name': 'serif',
+                                      'numbers_font_size': 10,
+                                      'numbers_font_style': 'normal',
+                                      'numbers_font_weight': 'normal',
+                                      'numbers_font_colour': ['k'],
+                                      'numbers_horizontal_align': 'center',
+                                      'numbers_vertical_align': 'bottom'}
+        numbering_options_wid = numbering_options(numbering_options_default)
+        display(numbering_options_wid)
+        format_numbering_options(numbering_options_wid)
+        numbering_options_default = {'render_numbering': False,
+                                      'numbers_font_name': 'serif',
+                                      'numbers_font_size': 10,
+                                      'numbers_font_style': 'normal',
+                                      'numbers_font_weight': 'normal',
+                                      'numbers_font_colour': ['k'],
+                                      'numbers_horizontal_align': 'center',
+                                      'numbers_vertical_align': 'bottom'}
+        update_numbering_options(numbering_options_wid,
+                                 numbering_options_default)
 
     Parameters
     ----------
-    font_options_wid :
-        The widget object generated by the `font_options()` function.
+    numbering_options_wid :
+        The widget object generated by the `numbering_options()` function.
 
-    font_options_dict : `dict`
+    numbering_options_dict : `dict`
         The new set of options. For example:
-            font_options_dict={'show_font': True,
-                               'fontname': 'serif',
-                               'fontsize': 10,
-                               'fontstyle': 'normal',
-                               'fontweight': 'normal',
-                               'fontcolour': ['k']}
+            numbering_options_dict = {'render_numbering': True,
+                                      'numbers_font_name': 'serif',
+                                      'numbers_font_size': 10,
+                                      'numbers_font_style': 'normal',
+                                      'numbers_font_weight': 'normal',
+                                      'numbers_font_colour': ['k'],
+                                      'numbers_horizontal_align': 'center',
+                                      'numbers_vertical_align': 'bottom'}
     """
     # Assign new options dict to selected_values
-    font_options_wid.selected_values = font_options_dict
+    numbering_options_wid.selected_values = numbering_options_dict
 
-    # update show font checkbox
-    if 'show_font' in font_options_dict.keys():
-        font_options_wid.children[1].children[0].value = \
-            font_options_dict['show_font']
+    # update render numbering checkbox
+    if 'render_numbering' in numbering_options_dict.keys():
+        numbering_options_wid.children[1].children[0].value = \
+            numbering_options_dict['render_numbering']
 
-    # update fontname dropdown menu
-    if 'fontname' in font_options_dict.keys():
-        font_options_wid.children[1].children[1].children[0].value = \
-            font_options_dict['fontname']
+    # update numbers_font_name dropdown menu
+    if 'numbers_font_name' in numbering_options_dict.keys():
+        numbering_options_wid.children[1].children[1].children[0].value = \
+            numbering_options_dict['numbers_font_name']
 
-    # update fontsize text box
-    if 'fontsize' in font_options_dict.keys():
-        font_options_wid.children[1].children[1].children[1].value = \
-            int(font_options_dict['fontsize'])
+    # update numbers_font_size text box
+    if 'numbers_font_size' in numbering_options_dict.keys():
+        numbering_options_wid.children[1].children[1].children[1].value = \
+            int(numbering_options_dict['numbers_font_size'])
 
-    # update fontstyle dropdown menu
-    if 'fontstyle' in font_options_dict.keys():
-        font_options_wid.children[1].children[1].children[2].value = \
-            font_options_dict['fontstyle']
+    # update numbers_font_style dropdown menu
+    if 'numbers_font_style' in numbering_options_dict.keys():
+        numbering_options_wid.children[1].children[1].children[2].value = \
+            numbering_options_dict['numbers_font_style']
 
-    # update fontweight dropdown menu
-    if 'fontweight' in font_options_dict.keys():
-        font_options_wid.children[1].children[1].children[3].value = \
-            font_options_dict['fontweight']
+    # update numbers_font_weight dropdown menu
+    if 'numbers_font_weight' in numbering_options_dict.keys():
+        numbering_options_wid.children[1].children[1].children[3].value = \
+            numbering_options_dict['numbers_font_weight']
 
-    # update fontcolour
-    if 'fontcolour' in font_options_dict.keys():
+    # update numbers_font_colour
+    if 'numbers_font_colour' in numbering_options_dict.keys():
         update_colour_selection(
-            font_options_wid.children[1].children[1].children[4],
-            font_options_dict['fontcolour'])
+            numbering_options_wid.children[1].children[1].children[4],
+            numbering_options_dict['numbers_font_colour'])
+
+    # update numbers_horizontal_align dropdown menu
+    if 'numbers_horizontal_align' in numbering_options_dict.keys():
+        numbering_options_wid.children[1].children[1].children[5].value = \
+            numbering_options_dict['numbers_horizontal_align']
+
+    # update numbers_vertical_align dropdown menu
+    if 'numbers_vertical_align' in numbering_options_dict.keys():
+        numbering_options_wid.children[1].children[1].children[6].value = \
+            numbering_options_dict['numbers_vertical_align']
 
 
 def figure_options(figure_options_default, plot_function=None,
                    figure_scale_bounds=(0.1, 2), figure_scale_step=0.1,
-                   figure_scale_visible=True, show_axes_visible=True,
+                   figure_scale_visible=True, axes_visible=True,
                    toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Figure Options. Specifically, it has:
         1) A slider that controls the scaling of the figure.
         2) A checkbox that controls the visibility of the figure's axes.
-        3) A toggle button that controls the visibility of all the above, i.e.
+        3) Font options for the axes.
+        4) A toggle button that controls the visibility of all the above, i.e.
            the figure options.
 
     The structure of the widgets is the following:
         figure_options_wid.children = [toggle_button, figure_scale_slider,
-                                       show_axes_checkbox]
+                                       show_axes_checkbox, axes_font_name,
+                                       axes_font_size, axes_font_style,
+                                       axes_font_weight, axes_x_limits,
+                                       axes_y_limits]
 
     The returned widget saves the selected values in the following dictionary:
         figure_options_wid.selected_values
@@ -1444,7 +1518,13 @@ def figure_options(figure_options_default, plot_function=None,
         Example:
             figure_options_default = {'x_scale': 1.,
                                       'y_scale': 1.,
-                                      'show_axes': True}
+                                      'render_axes': True,
+                                      'axes_font_name': 'serif',
+                                      'axes_font_size': 10,
+                                      'axes_font_style': 'normal',
+                                      'axes_font_weight': 'normal',
+                                      'axes_x_limits': None,
+                                      'axes_y_limits': None}
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
@@ -1474,28 +1554,160 @@ def figure_options(figure_options_default, plot_function=None,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
-    # figure_scale, show_axes
+    # figure_scale, render_axes
     figure_scale = FloatSliderWidget(description='Figure scale:',
                                      value=figure_options_default['x_scale'],
                                      min=figure_scale_bounds[0],
                                      max=figure_scale_bounds[1],
                                      step=figure_scale_step,
                                      visible=figure_scale_visible)
-    show_axes = CheckboxWidget(description='Show axes',
-                               value=figure_options_default['show_axes'],
-                               visible=show_axes_visible)
+    render_axes = CheckboxWidget(description='Render axes',
+                                 value=figure_options_default['render_axes'],
+                                 visible=axes_visible)
+    axes_font_name_dict = OrderedDict()
+    axes_font_name_dict['serif'] = 'serif'
+    axes_font_name_dict['sans-serif'] = 'sans-serif'
+    axes_font_name_dict['cursive'] = 'cursive'
+    axes_font_name_dict['fantasy'] = 'fantasy'
+    axes_font_name_dict['monospace'] = 'monospace'
+    axes_font_name = DropdownWidget(
+        values=axes_font_name_dict,
+        value=figure_options_default['axes_font_name'], description='Font',
+        visible=axes_visible)
+    axes_font_size = BoundedIntTextWidget(
+        description='Size', value=figure_options_default['axes_font_size'],
+        min=2, visible=axes_visible)
+    axes_font_style_dict = OrderedDict()
+    axes_font_style_dict['normal'] = 'normal'
+    axes_font_style_dict['italic'] = 'italic'
+    axes_font_style_dict['oblique'] = 'oblique'
+    axes_font_style = DropdownWidget(
+        values=axes_font_style_dict,
+        value=figure_options_default['axes_font_style'],
+        description='Style', visible=axes_visible)
+    axes_font_weight_dict = OrderedDict()
+    axes_font_weight_dict['normal'] = 'normal'
+    axes_font_weight_dict['ultralight'] = 'ultralight'
+    axes_font_weight_dict['light'] = 'light'
+    axes_font_weight_dict['regular'] = 'regular'
+    axes_font_weight_dict['book'] = 'book'
+    axes_font_weight_dict['medium'] = 'medium'
+    axes_font_weight_dict['roman'] = 'roman'
+    axes_font_weight_dict['semibold'] = 'semibold'
+    axes_font_weight_dict['demibold'] = 'demibold'
+    axes_font_weight_dict['demi'] = 'demi'
+    axes_font_weight_dict['bold'] = 'bold'
+    axes_font_weight_dict['heavy'] = 'heavy'
+    axes_font_weight_dict['extra bold'] = 'extra bold'
+    axes_font_weight_dict['black'] = 'black'
+    axes_font_weight = DropdownWidget(
+        values=axes_font_weight_dict,
+        value=figure_options_default['axes_font_weight'],
+        description='Weight', visible=axes_visible)
+    if figure_options_default['axes_x_limits'] is None:
+        tmp1 = False
+        tmp2 = 0.
+        tmp3 = 0.
+    else:
+        tmp1 = True
+        tmp2 = figure_options_default['axes_x_limits'][0]
+        tmp3 = figure_options_default['axes_x_limits'][1]
+    axes_x_limits_enable = CheckboxWidget(value=tmp1,
+                                          description='X limits')
+    axes_x_limits_from = FloatTextWidget(value=tmp2, description='')
+    axes_x_limits_to = FloatTextWidget(value=tmp3, description='')
+    axes_x_limits = ContainerWidget(children=[axes_x_limits_enable,
+                                              axes_x_limits_from,
+                                              axes_x_limits_to])
+    if figure_options_default['axes_y_limits'] is None:
+        tmp1 = False
+        tmp2 = 0.
+        tmp3 = 0.
+    else:
+        tmp1 = True
+        tmp2 = figure_options_default['axes_y_limits'][0]
+        tmp3 = figure_options_default['axes_y_limits'][1]
+    axes_y_limits_enable = CheckboxWidget(value=tmp1,
+                                          description='Y limits')
+    axes_y_limits_from = FloatTextWidget(value=tmp2, description='')
+    axes_y_limits_to = FloatTextWidget(value=tmp3, description='')
+    axes_y_limits = ContainerWidget(children=[axes_y_limits_enable,
+                                              axes_y_limits_from,
+                                              axes_y_limits_to])
 
     # Final widget
     figure_options_wid = ContainerWidget(children=[but, figure_scale,
-                                                   show_axes])
+                                                   render_axes, axes_font_name,
+                                                   axes_font_size,
+                                                   axes_font_style,
+                                                   axes_font_weight,
+                                                   axes_x_limits,
+                                                   axes_y_limits])
 
     # Assign output
     figure_options_wid.selected_values = figure_options_default
 
+    # font options visibility
+    def options_visible(name, value):
+        axes_font_name.disabled = not value
+        axes_font_size.disabled = not value
+        axes_font_style.disabled = not value
+        axes_font_weight.disabled = not value
+        axes_x_limits.disabled = not value
+        axes_y_limits.disabled = not value
+    options_visible('', figure_options_default['render_axes'])
+    render_axes.on_trait_change(options_visible, 'value')
+
     # get options functions
-    def save_show_axes(name, value):
-        figure_options_wid.selected_values['show_axes'] = value
-    show_axes.on_trait_change(save_show_axes, 'value')
+    def save_render_axes(name, value):
+        figure_options_wid.selected_values['render_axes'] = value
+    render_axes.on_trait_change(save_render_axes, 'value')
+
+    def save_axes_font_name(name, value):
+        figure_options_wid.selected_values['axes_font_name'] = value
+    axes_font_name.on_trait_change(save_axes_font_name, 'value')
+
+    def save_axes_font_size(name, value):
+        figure_options_wid.selected_values['axes_font_size'] = int(value)
+    axes_font_size.on_trait_change(save_axes_font_size, 'value')
+
+    def save_axes_font_style(name, value):
+        figure_options_wid.selected_values['axes_font_style'] = value
+    axes_font_style.on_trait_change(save_axes_font_style, 'value')
+
+    def save_axes_font_weight(name, value):
+        figure_options_wid.selected_values['axes_font_weight'] = value
+    axes_font_weight.on_trait_change(save_axes_font_weight, 'value')
+
+    def axes_x_limits_disable(name, value):
+        axes_x_limits_from.disabled = not value
+        axes_x_limits_to.disabled = not value
+    axes_x_limits_enable.on_trait_change(axes_x_limits_disable, 'value')
+
+    def axes_y_limits_disable(name, value):
+        axes_y_limits_from.disabled = not value
+        axes_y_limits_to.disabled = not value
+    axes_y_limits_enable.on_trait_change(axes_y_limits_disable, 'value')
+
+    def save_axes_x_limits(name, value):
+        if axes_x_limits_enable.value:
+            figure_options_wid.selected_values['axes_x_limits'] = \
+                (axes_x_limits_from.value, axes_x_limits_to.value)
+        else:
+            figure_options_wid.selected_values['axes_x_limits'] = None
+    axes_x_limits_enable.on_trait_change(save_axes_x_limits, 'value')
+    axes_x_limits_from.on_trait_change(save_axes_x_limits, 'value')
+    axes_x_limits_to.on_trait_change(save_axes_x_limits, 'value')
+
+    def save_axes_y_limits(name, value):
+        if axes_y_limits_enable.value:
+            figure_options_wid.selected_values['axes_y_limits'] = \
+                (axes_y_limits_from.value, axes_y_limits_to.value)
+        else:
+            figure_options_wid.selected_values['axes_y_limits'] = None
+    axes_y_limits_enable.on_trait_change(save_axes_y_limits, 'value')
+    axes_y_limits_from.on_trait_change(save_axes_y_limits, 'value')
+    axes_y_limits_to.on_trait_change(save_axes_y_limits, 'value')
 
     def save_scale(name, value):
         figure_options_wid.selected_values['x_scale'] = value
@@ -1505,14 +1717,26 @@ def figure_options(figure_options_default, plot_function=None,
     # Toggle button function
     def toggle_fun(name, value):
         figure_scale.visible = value
-        show_axes.visible = value
+        render_axes.visible = value
+        axes_font_name.visible = value
+        axes_font_size.visible = value
+        axes_font_style.visible = value
+        axes_font_weight.visible = value
+        axes_x_limits.visible = value
+        axes_y_limits.visible = value
     toggle_fun('', toggle_show_default)
     but.on_trait_change(toggle_fun, 'value')
 
     # assign plot_function
     if plot_function is not None:
         figure_scale.on_trait_change(plot_function, 'value')
-        show_axes.on_trait_change(plot_function, 'value')
+        render_axes.on_trait_change(plot_function, 'value')
+        axes_font_name.on_trait_change(plot_function, 'value')
+        axes_font_size.on_trait_change(plot_function, 'value')
+        axes_font_style.on_trait_change(plot_function, 'value')
+        axes_font_weight.on_trait_change(plot_function, 'value')
+        axes_x_limits.on_trait_change(plot_function, 'value')
+        axes_y_limits.on_trait_change(plot_function, 'value')
 
     return figure_options_wid
 
@@ -1552,6 +1776,21 @@ def format_figure_options(figure_options_wid, container_padding='6px',
     # fix figure scale slider width
     figure_options_wid.children[1].set_css('width', '3cm')
 
+    # fix font size width
+    figure_options_wid.children[4].set_css('width', '1cm')
+
+    # align and set width of axes_x_limits
+    figure_options_wid.children[7].remove_class('vbox')
+    figure_options_wid.children[7].add_class('hbox')
+    figure_options_wid.children[7].children[1].set_css('width', '1cm')
+    figure_options_wid.children[7].children[2].set_css('width', '1cm')
+
+    # align and set width of axes_y_limits
+    figure_options_wid.children[8].remove_class('vbox')
+    figure_options_wid.children[8].add_class('hbox')
+    figure_options_wid.children[8].children[1].set_css('width', '1cm')
+    figure_options_wid.children[8].children[2].set_css('width', '1cm')
+
     # set toggle button font bold
     figure_options_wid.children[0].set_css('font-weight',
                                            toggle_button_font_weight)
@@ -1567,16 +1806,28 @@ def update_figure_options(figure_options_wid, figure_options_dict):
     r"""
     Function that updates the state of a given figure_options widget. Usage
     example:
-        default_figure_options={'x_scale':1.,
-                                'y_scale':1.,
-                                'show_axes':True}
-        figure_options_wid = figure_options(default_figure_options)
+        figure_options_default = {'x_scale': 1.,
+                                  'y_scale': 1.,
+                                  'render_axes': True,
+                                  'axes_font_name': 'serif',
+                                  'axes_font_size': 10,
+                                  'axes_font_style': 'normal',
+                                  'axes_font_weight': 'normal',
+                                  'axes_x_limits': None,
+                                  'axes_y_limits': None}
+        figure_options_wid = figure_options(figure_options_default)
         display(figure_options_wid)
         format_figure_options(figure_options_wid)
-        default_figure_options={'x_scale':0.5,
-                                'y_scale':0.5,
-                                'show_axes':False}
-        update_figure_options(figure_options_wid, default_figure_options)
+        figure_options_default = {'x_scale': 1.,
+                                  'y_scale': 1.,
+                                  'render_axes': True,
+                                  'axes_font_name': 'serif',
+                                  'axes_font_size': 10,
+                                  'axes_font_style': 'normal',
+                                  'axes_font_weight': 'normal',
+                                  'axes_x_limits': None,
+                                  'axes_y_limits': None}
+        update_figure_options(figure_options_wid, figure_options_default)
 
     Parameters
     ----------
@@ -1585,16 +1836,18 @@ def update_figure_options(figure_options_wid, figure_options_dict):
 
     figure_options_dict : `dict`
         The new set of options. For example:
-            figure_options_dict={'x_scale':1.,
-                                 'y_scale':1.,
-                                 'show_axes':True}
+            figure_options_dict = {'x_scale': 1.,
+                                   'y_scale': 1.,
+                                   'render_axes': True,
+                                   'axes_font_name': 'serif',
+                                   'axes_font_size': 10,
+                                   'axes_font_style': 'normal',
+                                   'axes_font_weight': 'normal',
+                                   'axes_x_limits': None,
+                                   'axes_y_limits': None}
     """
     # Assign new options dict to selected_values
     figure_options_wid.selected_values = figure_options_dict
-
-    # update show axes checkbox
-    if 'show_axes' in figure_options_dict.keys():
-        figure_options_wid.children[2].value = figure_options_dict['show_axes']
 
     # update scale slider
     if 'x_scale' in figure_options_dict.keys():
@@ -1602,50 +1855,106 @@ def update_figure_options(figure_options_wid, figure_options_dict):
     elif 'y_scale' in figure_options_dict.keys():
         figure_options_wid.children[1].value = figure_options_dict['y_scale']
 
+    # update render axes checkbox
+    if 'render_axes' in figure_options_dict.keys():
+        figure_options_wid.children[2].value = \
+            figure_options_dict['render_axes']
+
+    # update axes_font_name dropdown menu
+    if 'axes_font_name' in figure_options_dict.keys():
+        figure_options_wid.children[3].value = \
+            figure_options_dict['axes_font_name']
+
+    # update axes_font_size text box
+    if 'axes_font_size' in figure_options_dict.keys():
+        figure_options_wid.children[4].value = \
+            int(figure_options_dict['axes_font_size'])
+
+    # update axes_font_style dropdown menu
+    if 'axes_font_style' in figure_options_dict.keys():
+        figure_options_wid.children[5].value = \
+            figure_options_dict['axes_font_style']
+
+    # update axes_font_weight dropdown menu
+    if 'axes_font_weight' in figure_options_dict.keys():
+        figure_options_wid.children[6].value = \
+            figure_options_dict['axes_font_weight']
+
+    # update axes_x_limits
+    if 'axes_x_limits' in figure_options_dict.keys():
+        if figure_options_dict['axes_x_limits'] is None:
+            tmp1 = False
+            tmp2 = 0.
+            tmp3 = 0.
+        else:
+            tmp1 = True
+            tmp2 = figure_options_dict['axes_x_limits'][0]
+            tmp3 = figure_options_dict['axes_x_limits'][1]
+        figure_options_wid.children[7].children[0].value = tmp1
+        figure_options_wid.children[7].children[1].value = tmp2
+        figure_options_wid.children[7].children[2].value = tmp3
+
+    # update axes_y_limits
+    if 'axes_y_limits' in figure_options_dict.keys():
+        if figure_options_dict['axes_y_limits'] is None:
+            tmp1 = False
+            tmp2 = 0.
+            tmp3 = 0.
+        else:
+            tmp1 = True
+            tmp2 = figure_options_dict['axes_y_limits'][0]
+            tmp3 = figure_options_dict['axes_y_limits'][1]
+        figure_options_wid.children[8].children[0].value = tmp1
+        figure_options_wid.children[8].children[1].value = tmp2
+        figure_options_wid.children[8].children[2].value = tmp3
+
 
 def figure_options_two_scales(figure_options_default, plot_function=None,
                               coupled_default=False,
                               figure_scales_bounds=(0.1, 2),
                               figure_scales_step=0.1,
                               figure_scales_visible=True,
-                              show_axes_visible=True, toggle_show_default=True,
+                              axes_visible=True, toggle_show_default=True,
                               toggle_show_visible=True):
     r"""
     Creates a widget with Figure Options. Specifically, it has:
-        1) Two sliders that control the horizontal and vertical scaling of the
-           figure.
-        2) A checkbox that couples/decouples the above sliders.
-        3) A checkbox that controls the visibility of the figure's axes.
+        1) A slider that controls the scaling of the figure.
+        2) A checkbox that controls the visibility of the figure's axes.
+        3) Font options for the axes.
         4) A toggle button that controls the visibility of all the above, i.e.
            the figure options.
 
     The structure of the widgets is the following:
-        figure_options_wid.children = [toggle_button, figure_scale,
-                                       show_axes_checkbox]
-        figure_scale.children = [X_scale_slider, Y_scale_slider,
-                                 coupled_checkbox]
+        figure_options_wid.children = [toggle_button, figure_scale_slider,
+                                       show_axes_checkbox, axes_font_name,
+                                       axes_font_size, axes_font_style,
+                                       axes_font_weight, axes_x_limits,
+                                       axes_y_limits]
 
     The returned widget saves the selected values in the following dictionary:
         figure_options_wid.selected_values
 
     To fix the alignment within this widget please refer to
-    `format_figure_options_two_scales()` function.
+    `format_figure_options()` function.
 
     Parameters
     ----------
     figure_options_default : `dict`
         The initial selected figure options.
         Example:
-            figure_options_default = {'x_scale': 0.5,
-                                      'y_scale': 1.0,
-                                      'show_axes': True}
+            figure_options_default = {'x_scale': 1.,
+                                      'y_scale': 1.,
+                                      'render_axes': True,
+                                      'axes_font_name': 'serif',
+                                      'axes_font_size': 10,
+                                      'axes_font_style': 'normal',
+                                      'axes_font_weight': 'normal',
+                                      'axes_x_limits': None,
+                                      'axes_y_limits': None}
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
-
-    coupled_default : `boolean`, optional
-        The initial value of the coupled checkbox.
 
     figure_scale_bounds : (`float`, `float`), optional
         The range of scales that can be optionally applied to the figure.
@@ -1671,7 +1980,7 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
-    # figure_scale, show_axes
+    # figure_scale, render_axes
     x_scale = FloatSliderWidget(description='Figure size: X scale',
                                 value=figure_options_default['x_scale'],
                                 min=figure_scales_bounds[0],
@@ -1684,18 +1993,104 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
                                 step=figure_scales_step,
                                 disabled=coupled_default)
     coupled = CheckboxWidget(description='Coupled', value=coupled_default)
-    show_axes = CheckboxWidget(description='Show axes',
-                               value=figure_options_default['show_axes'],
-                               visible=show_axes_visible)
-
-    # Final widget
     figure_scale = ContainerWidget(children=[x_scale, y_scale, coupled],
                                    visible=figure_scales_visible)
+    render_axes = CheckboxWidget(description='Render axes',
+                                 value=figure_options_default['render_axes'],
+                                 visible=axes_visible)
+    axes_font_name_dict = OrderedDict()
+    axes_font_name_dict['serif'] = 'serif'
+    axes_font_name_dict['sans-serif'] = 'sans-serif'
+    axes_font_name_dict['cursive'] = 'cursive'
+    axes_font_name_dict['fantasy'] = 'fantasy'
+    axes_font_name_dict['monospace'] = 'monospace'
+    axes_font_name = DropdownWidget(
+        values=axes_font_name_dict,
+        value=figure_options_default['axes_font_name'], description='Font',
+        visible=axes_visible)
+    axes_font_size = BoundedIntTextWidget(
+        description='Size', value=figure_options_default['axes_font_size'],
+        min=2, visible=axes_visible)
+    axes_font_style_dict = OrderedDict()
+    axes_font_style_dict['normal'] = 'normal'
+    axes_font_style_dict['italic'] = 'italic'
+    axes_font_style_dict['oblique'] = 'oblique'
+    axes_font_style = DropdownWidget(
+        values=axes_font_style_dict,
+        value=figure_options_default['axes_font_style'],
+        description='Style', visible=axes_visible)
+    axes_font_weight_dict = OrderedDict()
+    axes_font_weight_dict['normal'] = 'normal'
+    axes_font_weight_dict['ultralight'] = 'ultralight'
+    axes_font_weight_dict['light'] = 'light'
+    axes_font_weight_dict['regular'] = 'regular'
+    axes_font_weight_dict['book'] = 'book'
+    axes_font_weight_dict['medium'] = 'medium'
+    axes_font_weight_dict['roman'] = 'roman'
+    axes_font_weight_dict['semibold'] = 'semibold'
+    axes_font_weight_dict['demibold'] = 'demibold'
+    axes_font_weight_dict['demi'] = 'demi'
+    axes_font_weight_dict['bold'] = 'bold'
+    axes_font_weight_dict['heavy'] = 'heavy'
+    axes_font_weight_dict['extra bold'] = 'extra bold'
+    axes_font_weight_dict['black'] = 'black'
+    axes_font_weight = DropdownWidget(
+        values=axes_font_weight_dict,
+        value=figure_options_default['axes_font_weight'],
+        description='Weight', visible=axes_visible)
+    if figure_options_default['axes_x_limits'] is None:
+        tmp1 = False
+        tmp2 = 0.
+        tmp3 = 0.
+    else:
+        tmp1 = True
+        tmp2 = figure_options_default['axes_x_limits'][0]
+        tmp3 = figure_options_default['axes_x_limits'][1]
+    axes_x_limits_enable = CheckboxWidget(value=tmp1,
+                                          description='X limits')
+    axes_x_limits_from = FloatTextWidget(value=tmp2, description='')
+    axes_x_limits_to = FloatTextWidget(value=tmp3, description='')
+    axes_x_limits = ContainerWidget(children=[axes_x_limits_enable,
+                                              axes_x_limits_from,
+                                              axes_x_limits_to])
+    if figure_options_default['axes_y_limits'] is None:
+        tmp1 = False
+        tmp2 = 0.
+        tmp3 = 0.
+    else:
+        tmp1 = True
+        tmp2 = figure_options_default['axes_y_limits'][0]
+        tmp3 = figure_options_default['axes_y_limits'][1]
+    axes_y_limits_enable = CheckboxWidget(value=tmp1,
+                                          description='Y limits')
+    axes_y_limits_from = FloatTextWidget(value=tmp2, description='')
+    axes_y_limits_to = FloatTextWidget(value=tmp3, description='')
+    axes_y_limits = ContainerWidget(children=[axes_y_limits_enable,
+                                              axes_y_limits_from,
+                                              axes_y_limits_to])
+
+    # Final widget
     figure_options_wid = ContainerWidget(children=[but, figure_scale,
-                                                   show_axes])
+                                                   render_axes, axes_font_name,
+                                                   axes_font_size,
+                                                   axes_font_style,
+                                                   axes_font_weight,
+                                                   axes_x_limits,
+                                                   axes_y_limits])
 
     # Assign output
     figure_options_wid.selected_values = figure_options_default
+
+    # font options visibility
+    def options_visible(name, value):
+        axes_font_name.disabled = not value
+        axes_font_size.disabled = not value
+        axes_font_style.disabled = not value
+        axes_font_weight.disabled = not value
+        axes_x_limits.disabled = not value
+        axes_y_limits.disabled = not value
+    options_visible('', figure_options_default['render_axes'])
+    render_axes.on_trait_change(options_visible, 'value')
 
     # Coupled sliders function
     def coupled_sliders(name, value):
@@ -1704,9 +2099,55 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
     coupled.on_trait_change(coupled_sliders, 'value')
 
     # get options functions
-    def save_show_axes(name, value):
-        figure_options_wid.selected_values['show_axes'] = value
-    show_axes.on_trait_change(save_show_axes, 'value')
+    def save_render_axes(name, value):
+        figure_options_wid.selected_values['render_axes'] = value
+    render_axes.on_trait_change(save_render_axes, 'value')
+
+    def save_axes_font_name(name, value):
+        figure_options_wid.selected_values['axes_font_name'] = value
+    axes_font_name.on_trait_change(save_axes_font_name, 'value')
+
+    def save_axes_font_size(name, value):
+        figure_options_wid.selected_values['axes_font_size'] = int(value)
+    axes_font_size.on_trait_change(save_axes_font_size, 'value')
+
+    def save_axes_font_style(name, value):
+        figure_options_wid.selected_values['axes_font_style'] = value
+    axes_font_style.on_trait_change(save_axes_font_style, 'value')
+
+    def save_axes_font_weight(name, value):
+        figure_options_wid.selected_values['axes_font_weight'] = value
+    axes_font_weight.on_trait_change(save_axes_font_weight, 'value')
+
+    def axes_x_limits_disable(name, value):
+        axes_x_limits_from.disabled = not value
+        axes_x_limits_to.disabled = not value
+    axes_x_limits_enable.on_trait_change(axes_x_limits_disable, 'value')
+
+    def axes_y_limits_disable(name, value):
+        axes_y_limits_from.disabled = not value
+        axes_y_limits_to.disabled = not value
+    axes_y_limits_enable.on_trait_change(axes_y_limits_disable, 'value')
+
+    def save_axes_x_limits(name, value):
+        if axes_x_limits_enable.value:
+            figure_options_wid.selected_values['axes_x_limits'] = \
+                (axes_x_limits_from.value, axes_x_limits_to.value)
+        else:
+            figure_options_wid.selected_values['axes_x_limits'] = None
+    axes_x_limits_enable.on_trait_change(save_axes_x_limits, 'value')
+    axes_x_limits_from.on_trait_change(save_axes_x_limits, 'value')
+    axes_x_limits_to.on_trait_change(save_axes_x_limits, 'value')
+
+    def save_axes_y_limits(name, value):
+        if axes_y_limits_enable.value:
+            figure_options_wid.selected_values['axes_y_limits'] = \
+                (axes_y_limits_from.value, axes_y_limits_to.value)
+        else:
+            figure_options_wid.selected_values['axes_y_limits'] = None
+    axes_y_limits_enable.on_trait_change(save_axes_y_limits, 'value')
+    axes_y_limits_from.on_trait_change(save_axes_y_limits, 'value')
+    axes_y_limits_to.on_trait_change(save_axes_y_limits, 'value')
 
     def save_x_scale(name, old_value, value):
         figure_options_wid.selected_values['x_scale'] = value
@@ -1721,7 +2162,13 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
     # Toggle button function
     def toggle_fun(name, value):
         figure_scale.visible = value
-        show_axes.visible = value
+        render_axes.visible = value
+        axes_font_name.visible = value
+        axes_font_size.visible = value
+        axes_font_style.visible = value
+        axes_font_weight.visible = value
+        axes_x_limits.visible = value
+        axes_y_limits.visible = value
     toggle_fun('', toggle_show_default)
     but.on_trait_change(toggle_fun, 'value')
 
@@ -1729,7 +2176,14 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
     if plot_function is not None:
         x_scale.on_trait_change(plot_function, 'value')
         y_scale.on_trait_change(plot_function, 'value')
-        show_axes.on_trait_change(plot_function, 'value')
+        coupled.on_trait_change(plot_function, 'value')
+        render_axes.on_trait_change(plot_function, 'value')
+        axes_font_name.on_trait_change(plot_function, 'value')
+        axes_font_size.on_trait_change(plot_function, 'value')
+        axes_font_style.on_trait_change(plot_function, 'value')
+        axes_font_weight.on_trait_change(plot_function, 'value')
+        axes_x_limits.on_trait_change(plot_function, 'value')
+        axes_y_limits.on_trait_change(plot_function, 'value')
 
     return figure_options_wid
 
@@ -1769,12 +2223,28 @@ def format_figure_options_two_scales(figure_options_wid,
         Defines whether to draw the border line around the widget.
     """
     # align figure scale sliders and checkbox
-    figure_options_wid.children[1].remove_class('vbox')
-    figure_options_wid.children[1].add_class('hbox')
+    #figure_options_wid.children[1].remove_class('vbox')
+    #figure_options_wid.children[1].add_class('hbox')
+    figure_options_wid.children[1].add_class('align-end')
 
     # fix figure scale sliders width
     figure_options_wid.children[1].children[0].set_css('width', '3cm')
     figure_options_wid.children[1].children[1].set_css('width', '3cm')
+
+    # fix font size width
+    figure_options_wid.children[4].set_css('width', '1cm')
+
+    # align and set width of axes_x_limits
+    figure_options_wid.children[7].remove_class('vbox')
+    figure_options_wid.children[7].add_class('hbox')
+    figure_options_wid.children[7].children[1].set_css('width', '1cm')
+    figure_options_wid.children[7].children[2].set_css('width', '1cm')
+
+    # align and set width of axes_y_limits
+    figure_options_wid.children[8].remove_class('vbox')
+    figure_options_wid.children[8].add_class('hbox')
+    figure_options_wid.children[8].children[1].set_css('width', '1cm')
+    figure_options_wid.children[8].children[2].set_css('width', '1cm')
 
     # set toggle button font bold
     figure_options_wid.children[0].set_css('font-weight',
@@ -1791,15 +2261,27 @@ def update_figure_options_two_scales(figure_options_wid, figure_options_dict):
     r"""
     Function that updates the state of a given figure_options_two_scales widget.
     Usage example:
-        default_figure_options={'x_scale':1.,
-                                'y_scale':1.,
-                                'show_axes':True}
+        figure_options_default = {'x_scale': 1.,
+                                  'y_scale': 1.,
+                                  'render_axes': True,
+                                  'axes_font_name': 'serif',
+                                  'axes_font_size': 10,
+                                  'axes_font_style': 'normal',
+                                  'axes_font_weight': 'normal',
+                                  'axes_x_limits': None,
+                                  'axes_y_limits': None}
         figure_options_wid = figure_options_two_scales(default_figure_options)
         display(figure_options_wid)
         format_figure_options_two_scales(figure_options_wid)
-        default_figure_options={'x_scale':0.8,
-                                'y_scale':0.2,
-                                'show_axes':False}
+        figure_options_default = {'x_scale': 1.,
+                                  'y_scale': 1.,
+                                  'render_axes': True,
+                                  'axes_font_name': 'serif',
+                                  'axes_font_size': 10,
+                                  'axes_font_style': 'normal',
+                                  'axes_font_weight': 'normal',
+                                  'axes_x_limits': None,
+                                  'axes_y_limits': None}
         update_figure_options_two_scales(figure_options_wid,
                                          default_figure_options)
 
@@ -1811,16 +2293,18 @@ def update_figure_options_two_scales(figure_options_wid, figure_options_dict):
 
     figure_options_dict : `dict`
         The new set of options. For example:
-            figure_options_dict={'x_scale':1.,
-                                 'y_scale':1.,
-                                 'show_axes':True}
+            figure_options_default = {'x_scale': 1.,
+                                      'y_scale': 1.,
+                                      'render_axes': True,
+                                      'axes_font_name': 'serif',
+                                      'axes_font_size': 10,
+                                      'axes_font_style': 'normal',
+                                      'axes_font_weight': 'normal',
+                                      'axes_x_limits': None,
+                                      'axes_y_limits': None}
     """
     # Assign new options dict to selected_values
     figure_options_wid.selected_values = figure_options_dict
-
-    # update show axes checkbox
-    if 'show_axes' in figure_options_dict.keys():
-        figure_options_wid.children[2].value = figure_options_dict['show_axes']
 
     # update scale slider
     if ('x_scale' in figure_options_dict.keys() and
@@ -1842,22 +2326,75 @@ def update_figure_options_two_scales(figure_options_wid, figure_options_dict):
         figure_options_wid.children[1].children[2].value = \
             figure_options_dict['x_scale'] == figure_options_dict['y_scale']
 
+    # update render axes checkbox
+    if 'render_axes' in figure_options_dict.keys():
+        figure_options_wid.children[2].value = \
+            figure_options_dict['render_axes']
+
+    # update axes_font_name dropdown menu
+    if 'axes_font_name' in figure_options_dict.keys():
+        figure_options_wid.children[3].value = \
+            figure_options_dict['axes_font_name']
+
+    # update axes_font_size text box
+    if 'axes_font_size' in figure_options_dict.keys():
+        figure_options_wid.children[4].value = \
+            int(figure_options_dict['axes_font_size'])
+
+    # update axes_font_style dropdown menu
+    if 'axes_font_style' in figure_options_dict.keys():
+        figure_options_wid.children[5].value = \
+            figure_options_dict['axes_font_style']
+
+    # update axes_font_weight dropdown menu
+    if 'axes_font_weight' in figure_options_dict.keys():
+        figure_options_wid.children[6].value = \
+            figure_options_dict['axes_font_weight']
+
+    # update axes_x_limits
+    if 'axes_x_limits' in figure_options_dict.keys():
+        if figure_options_dict['axes_x_limits'] is None:
+            tmp1 = False
+            tmp2 = 0.
+            tmp3 = 0.
+        else:
+            tmp1 = True
+            tmp2 = figure_options_dict['axes_x_limits'][0]
+            tmp3 = figure_options_dict['axes_x_limits'][1]
+        figure_options_wid.children[7].children[0].value = tmp1
+        figure_options_wid.children[7].children[1].value = tmp2
+        figure_options_wid.children[7].children[2].value = tmp3
+
+    # update axes_y_limits
+    if 'axes_y_limits' in figure_options_dict.keys():
+        if figure_options_dict['axes_y_limits'] is None:
+            tmp1 = False
+            tmp2 = 0.
+            tmp3 = 0.
+        else:
+            tmp1 = True
+            tmp2 = figure_options_dict['axes_y_limits'][0]
+            tmp3 = figure_options_dict['axes_y_limits'][1]
+        figure_options_wid.children[8].children[0].value = tmp1
+        figure_options_wid.children[8].children[1].value = tmp2
+        figure_options_wid.children[8].children[2].value = tmp3
+
 
 def legend_options(legend_options_default, plot_function=None,
                    toggle_show_visible=True, toggle_show_default=True,
                    toggle_title='Legend Options',
-                   show_checkbox_title='Show legend'):
+                   show_checkbox_title='Render legend'):
     r"""
     Creates a widget with Legend Options. Specifically, it has:
         1) A checkbox that controls legend's visibility.
-        2) A tab widget with location, font and formatting options.
+        2) A tab widget with legend_location, font and formatting options.
         3) A toggle button that controls the visibility of all the above, i.e.
            the font options.
 
     The structure of the widgets is the following:
         legend_options_wid.children = [toggle_button, options]
         options.children = [show_legend_checkbox, other_options]
-        other_options.children = [location, font, formatting]
+        other_options.children = [legend_location, font, formatting]
         ...
 
     The returned widget saves the selected values in the following dictionary:
@@ -1871,22 +2408,23 @@ def legend_options(legend_options_default, plot_function=None,
     legend_options_default : `dict`
         The initial selected font options.
         Example:
-            legend_options_default = {'show_legend':True,
-                                      'title':'',
-                                      'fontname':'serif',
-                                      'fontstyle':'normal',
-                                      'fontsize':10,
-                                      'fontweight':'normal',
-                                      'location':2,
-                                      'bbox_to_anchor':(1.05, 1.),
-                                      'borderaxespad':1.,
-                                      'n_columns':1,
-                                      'horizontal_spacing':1.,
-                                      'vertical_spacing':1.,
-                                      'draw_border':True,
-                                      'border_padding':0.5,
-                                      'draw_shadow':False,
-                                      'fancy_corners':True}
+            legend_options_default = {'render_legend':True,
+                                      'legend_title':'',
+                                      'legend_font_name':'serif',
+                                      'legend_font_style':'normal',
+                                      'legend_font_size':10,
+                                      'legend_font_weight':'normal',
+                                      'legend_marker_scale':1.,
+                                      'legend_location':2,
+                                      'legend_bbox_to_anchor':(1.05, 1.),
+                                      'legend_border_axes_pad':1.,
+                                      'legend_n_columns':1,
+                                      'legend_horizontal_spacing':1.,
+                                      'legend_vertical_spacing':1.,
+                                      'legend_border':True,
+                                      'legend_border_padding':0.5,
+                                      'legend_shadow':False,
+                                      'legend_rounded_corners':True}
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
@@ -1899,7 +2437,7 @@ def legend_options(legend_options_default, plot_function=None,
         The visibility of the toggle button.
 
     toggle_title : `str`, optional
-        The title of the toggle button.
+        The legend_title of the toggle button.
 
     show_checkbox_title : `str`, optional
         The description of the show text checkbox.
@@ -1910,127 +2448,137 @@ def legend_options(legend_options_default, plot_function=None,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
-    # show legend
-    show_legend = CheckboxWidget(description=show_checkbox_title,
-                                 value=legend_options_default['show_legend'])
+    # render legend
+    render_legend = CheckboxWidget(
+        description=show_checkbox_title,
+        value=legend_options_default['render_legend'])
 
     # font-related
-    fontname_dict = OrderedDict()
-    fontname_dict['serif'] = 'serif'
-    fontname_dict['sans-serif'] = 'sans-serif'
-    fontname_dict['cursive'] = 'cursive'
-    fontname_dict['fantasy'] = 'fantasy'
-    fontname_dict['monospace'] = 'monospace'
-    fontname = DropdownWidget(values=fontname_dict,
-                              value=legend_options_default['fontname'],
-                              description='Font')
-    fontsize = BoundedIntTextWidget(description='Size',
-                                    value=legend_options_default['fontsize'],
-                                    min=2)
-    fontstyle_dict = OrderedDict()
-    fontstyle_dict['normal'] = 'normal'
-    fontstyle_dict['italic'] = 'italic'
-    fontstyle_dict['oblique'] = 'oblique'
-    fontstyle = DropdownWidget(values=fontstyle_dict,
-                               value=legend_options_default['fontstyle'],
-                               description='Style')
-    fontweight_dict = OrderedDict()
-    fontweight_dict['normal'] = 'normal'
-    fontweight_dict['ultralight'] = 'ultralight'
-    fontweight_dict['light'] = 'light'
-    fontweight_dict['regular'] = 'regular'
-    fontweight_dict['book'] = 'book'
-    fontweight_dict['medium'] = 'medium'
-    fontweight_dict['roman'] = 'roman'
-    fontweight_dict['semibold'] = 'semibold'
-    fontweight_dict['demibold'] = 'demibold'
-    fontweight_dict['demi'] = 'demi'
-    fontweight_dict['bold'] = 'bold'
-    fontweight_dict['heavy'] = 'heavy'
-    fontweight_dict['extra bold'] = 'extra bold'
-    fontweight_dict['black'] = 'black'
-    fontweight = DropdownWidget(values=fontweight_dict,
-                                value=legend_options_default['fontweight'],
-                                description='Weight')
-    title = TextWidget(description='Title',
-                       value=legend_options_default['title'])
+    legend_font_name_dict = OrderedDict()
+    legend_font_name_dict['serif'] = 'serif'
+    legend_font_name_dict['sans-serif'] = 'sans-serif'
+    legend_font_name_dict['cursive'] = 'cursive'
+    legend_font_name_dict['fantasy'] = 'fantasy'
+    legend_font_name_dict['monospace'] = 'monospace'
+    legend_font_name = DropdownWidget(
+        values=legend_font_name_dict,
+        value=legend_options_default['legend_font_name'], description='Font')
+    legend_font_size = BoundedIntTextWidget(
+        description='Size', value=legend_options_default['legend_font_size'],
+        min=2)
+    legend_font_style_dict = OrderedDict()
+    legend_font_style_dict['normal'] = 'normal'
+    legend_font_style_dict['italic'] = 'italic'
+    legend_font_style_dict['oblique'] = 'oblique'
+    legend_font_style = DropdownWidget(
+        values=legend_font_style_dict,
+        value=legend_options_default['legend_font_style'], description='Style')
+    legend_font_weight_dict = OrderedDict()
+    legend_font_weight_dict['normal'] = 'normal'
+    legend_font_weight_dict['ultralight'] = 'ultralight'
+    legend_font_weight_dict['light'] = 'light'
+    legend_font_weight_dict['regular'] = 'regular'
+    legend_font_weight_dict['book'] = 'book'
+    legend_font_weight_dict['medium'] = 'medium'
+    legend_font_weight_dict['roman'] = 'roman'
+    legend_font_weight_dict['semibold'] = 'semibold'
+    legend_font_weight_dict['demibold'] = 'demibold'
+    legend_font_weight_dict['demi'] = 'demi'
+    legend_font_weight_dict['bold'] = 'bold'
+    legend_font_weight_dict['heavy'] = 'heavy'
+    legend_font_weight_dict['extra bold'] = 'extra bold'
+    legend_font_weight_dict['black'] = 'black'
+    legend_font_weight = DropdownWidget(
+        values=legend_font_weight_dict,
+        value=legend_options_default['legend_font_weight'],
+        description='Weight')
+    legend_title = TextWidget(description='Title',
+                              value=legend_options_default['legend_title'])
     font_cont_tmp = ContainerWidget(
-        children=[ContainerWidget(children=[fontname, fontsize]),
-                  ContainerWidget(children=[fontstyle, fontweight])])
-    font_cont = ContainerWidget(children=[title, font_cont_tmp])
+        children=[ContainerWidget(children=[legend_font_name,
+                                            legend_font_size]),
+                  ContainerWidget(children=[legend_font_style,
+                                            legend_font_weight])])
+    font_cont = ContainerWidget(children=[legend_title, font_cont_tmp])
 
-    # location-related
-    location_dict = OrderedDict()
-    location_dict['best'] = 0
-    location_dict['upper right'] = 1
-    location_dict['upper left'] = 2
-    location_dict['lower left'] = 3
-    location_dict['lower right'] = 4
-    location_dict['right'] = 5
-    location_dict['center left'] = 6
-    location_dict['center right'] = 7
-    location_dict['lower center'] = 8
-    location_dict['upper center'] = 9
-    location_dict['center'] = 10
-    location = DropdownWidget(values=location_dict,
-                              value=legend_options_default['location'],
-                              description='Predefined location')
-    if legend_options_default['bbox_to_anchor'] is None:
+    # legend_location-related
+    legend_location_dict = OrderedDict()
+    legend_location_dict['best'] = 0
+    legend_location_dict['upper right'] = 1
+    legend_location_dict['upper left'] = 2
+    legend_location_dict['lower left'] = 3
+    legend_location_dict['lower right'] = 4
+    legend_location_dict['right'] = 5
+    legend_location_dict['center left'] = 6
+    legend_location_dict['center right'] = 7
+    legend_location_dict['lower center'] = 8
+    legend_location_dict['upper center'] = 9
+    legend_location_dict['center'] = 10
+    legend_location = DropdownWidget(
+        values=legend_location_dict,
+        value=legend_options_default['legend_location'],
+        description='Predefined location')
+    if legend_options_default['legend_bbox_to_anchor'] is None:
         tmp1 = False
         tmp2 = 0.
         tmp3 = 0.
     else:
         tmp1 = True
-        tmp2 = legend_options_default['bbox_to_anchor'][0]
-        tmp3 = legend_options_default['bbox_to_anchor'][1]
+        tmp2 = legend_options_default['legend_bbox_to_anchor'][0]
+        tmp3 = legend_options_default['legend_bbox_to_anchor'][1]
     bbox_to_anchor_enable = CheckboxWidget(value=tmp1,
                                            description='Arbitrary location')
     bbox_to_anchor_x = FloatTextWidget(value=tmp2, description='')
     bbox_to_anchor_y = FloatTextWidget(value=tmp3, description='')
-    bbox_to_anchor = ContainerWidget(children=[bbox_to_anchor_enable,
-                                               bbox_to_anchor_x,
-                                               bbox_to_anchor_y])
-    borderaxespad = BoundedFloatTextWidget(
-        value=legend_options_default['borderaxespad'],
+    legend_bbox_to_anchor = ContainerWidget(children=[bbox_to_anchor_enable,
+                                                      bbox_to_anchor_x,
+                                                      bbox_to_anchor_y])
+    legend_border_axes_pad = BoundedFloatTextWidget(
+        value=legend_options_default['legend_border_axes_pad'],
         description='Distance to axes', min=0.)
-    location_cont = ContainerWidget(children=[location, bbox_to_anchor,
-                                              borderaxespad])
+    location_cont = ContainerWidget(children=[legend_location,
+                                              legend_bbox_to_anchor,
+                                              legend_border_axes_pad])
 
     # formatting-related
-    n_columns = BoundedIntTextWidget(value=legend_options_default['n_columns'],
-                                     description='Columns', min=0)
-    markerscale = BoundedFloatTextWidget(
-        value=legend_options_default['markerscale'],
-        description='Marker scale', min=0.)
-    horizontal_spacing = BoundedFloatTextWidget(
-        value=legend_options_default['horizontal_spacing'],
+    legend_n_columns = BoundedIntTextWidget(
+        value=legend_options_default['legend_n_columns'], description='Columns',
+        min=0)
+    legend_marker_scale = BoundedFloatTextWidget(
+        description='Marker scale',
+        value=legend_options_default['legend_marker_scale'], min=0.)
+    legend_horizontal_spacing = BoundedFloatTextWidget(
+        value=legend_options_default['legend_horizontal_spacing'],
         description='Horizontal space', min=0.)
-    vertical_spacing = BoundedFloatTextWidget(
-        value=legend_options_default['vertical_spacing'],
+    legend_vertical_spacing = BoundedFloatTextWidget(
+        value=legend_options_default['legend_vertical_spacing'],
         description='Vertical space', min=0.)
     spacing = ContainerWidget(
-        children=[ContainerWidget(children=[n_columns, markerscale]),
-                  ContainerWidget(children=[horizontal_spacing,
-                                            vertical_spacing])])
-    draw_border = CheckboxWidget(description='Border',
-                                 value=legend_options_default['draw_border'])
-    border_padding = BoundedFloatTextWidget(
-        value=legend_options_default['border_padding'],
+        children=[ContainerWidget(children=[legend_n_columns,
+                                            legend_marker_scale]),
+                  ContainerWidget(children=[legend_horizontal_spacing,
+                                            legend_vertical_spacing])])
+    legend_border = CheckboxWidget(
+        description='Border',
+        value=legend_options_default['legend_border'])
+    legend_border_padding = BoundedFloatTextWidget(
+        value=legend_options_default['legend_border_padding'],
         description='Border pad', min=0.)
-    border = ContainerWidget(children=[draw_border, border_padding])
-    draw_shadow = CheckboxWidget(description='Shadow',
-                                 value=legend_options_default['draw_shadow'])
-    fancy_corners = CheckboxWidget(
+    border = ContainerWidget(children=[legend_border, legend_border_padding])
+    legend_shadow = CheckboxWidget(
+        description='Shadow', value=legend_options_default['legend_shadow'])
+    legend_rounded_corners = CheckboxWidget(
         description='Rounded corners',
-        value=legend_options_default['fancy_corners'])
-    shadow_fancy = ContainerWidget(children=[draw_shadow, fancy_corners])
+        value=legend_options_default['legend_rounded_corners'])
+    shadow_fancy = ContainerWidget(children=[legend_shadow,
+                                             legend_rounded_corners])
 
     formatting_cont = ContainerWidget(children=[spacing, border, shadow_fancy])
 
     # Options widget
     tab_options = TabWidget(children=[location_cont, font_cont,
                                       formatting_cont])
-    options_wid = ContainerWidget(children=[show_legend, tab_options])
+    options_wid = ContainerWidget(children=[render_legend, tab_options])
 
     # Final widget
     legend_options_wid = ContainerWidget(children=[but, options_wid])
@@ -2040,31 +2588,31 @@ def legend_options(legend_options_default, plot_function=None,
 
     # font options visibility
     def options_visible(name, value):
-        title.disabled = not value
-        fontname.disabled = not value
-        fontsize.disabled = not value
-        fontstyle.disabled = not value
-        fontweight.disabled = not value
-        location.disabled = not value
+        legend_title.disabled = not value
+        legend_font_name.disabled = not value
+        legend_font_size.disabled = not value
+        legend_font_style.disabled = not value
+        legend_font_weight.disabled = not value
+        legend_location.disabled = not value
         bbox_to_anchor_enable.disabled = not value
         bbox_to_anchor_x.disabled = not value or not bbox_to_anchor_enable.value
         bbox_to_anchor_y.disabled = not value or not bbox_to_anchor_enable.value
-        borderaxespad.disabled = not value
-        n_columns.disabled = not value
-        markerscale.disabled = not value
-        horizontal_spacing.disabled = not value
-        vertical_spacing.disabled = not value
-        draw_border.disabled = not value
-        border_padding.disabled = not value or not draw_border.value
-        draw_shadow.disabled = not value
-        fancy_corners.disabled = not value
-    options_visible('', legend_options_default['show_legend'])
-    show_legend.on_trait_change(options_visible, 'value')
+        legend_border_axes_pad.disabled = not value
+        legend_n_columns.disabled = not value
+        legend_marker_scale.disabled = not value
+        legend_horizontal_spacing.disabled = not value
+        legend_vertical_spacing.disabled = not value
+        legend_border.disabled = not value
+        legend_border_padding.disabled = not value or not legend_border.value
+        legend_shadow.disabled = not value
+        legend_rounded_corners.disabled = not value
+    options_visible('', legend_options_default['render_legend'])
+    render_legend.on_trait_change(options_visible, 'value')
 
     # get options functions
     def border_pad_disable(name, value):
-        border_padding.disabled = not value
-    draw_border.on_trait_change(border_pad_disable, 'value')
+        legend_border_padding.disabled = not value
+    legend_border.on_trait_change(border_pad_disable, 'value')
 
     def bbox_to_anchor_disable(name, value):
         bbox_to_anchor_x.disabled = not value
@@ -2072,32 +2620,32 @@ def legend_options(legend_options_default, plot_function=None,
     bbox_to_anchor_enable.on_trait_change(bbox_to_anchor_disable, 'value')
 
     def save_show_legend(name, value):
-        legend_options_wid.selected_values['show_legend'] = value
-    show_legend.on_trait_change(save_show_legend, 'value')
+        legend_options_wid.selected_values['render_legend'] = value
+    render_legend.on_trait_change(save_show_legend, 'value')
 
     def save_title(name, value):
-        legend_options_wid.selected_values['title'] = value
-    title.on_trait_change(save_title, 'value')
+        legend_options_wid.selected_values['legend_title'] = value
+    legend_title.on_trait_change(save_title, 'value')
 
     def save_fontname(name, value):
-        legend_options_wid.selected_values['fontname'] = value
-    fontname.on_trait_change(save_fontname, 'value')
+        legend_options_wid.selected_values['legend_font_name'] = value
+    legend_font_name.on_trait_change(save_fontname, 'value')
 
     def save_fontsize(name, value):
-        legend_options_wid.selected_values['fontsize'] = int(value)
-    fontsize.on_trait_change(save_fontsize, 'value')
+        legend_options_wid.selected_values['legend_font_size'] = int(value)
+    legend_font_size.on_trait_change(save_fontsize, 'value')
 
     def save_fontstyle(name, value):
-        legend_options_wid.selected_values['fontstyle'] = value
-    fontstyle.on_trait_change(save_fontstyle, 'value')
+        legend_options_wid.selected_values['legend_font_style'] = value
+    legend_font_style.on_trait_change(save_fontstyle, 'value')
 
     def save_fontweight(name, value):
-        legend_options_wid.selected_values['fontweight'] = value
-    fontweight.on_trait_change(save_fontweight, 'value')
+        legend_options_wid.selected_values['legend_font_weight'] = value
+    legend_font_weight.on_trait_change(save_fontweight, 'value')
 
     def save_location(name, value):
-        legend_options_wid.selected_values['location'] = value
-    location.on_trait_change(save_location, 'value')
+        legend_options_wid.selected_values['legend_location'] = value
+    legend_location.on_trait_change(save_location, 'value')
 
     def save_bbox_to_anchor(name, value):
         if bbox_to_anchor_enable.value:
@@ -2110,40 +2658,40 @@ def legend_options(legend_options_default, plot_function=None,
     bbox_to_anchor_y.on_trait_change(save_bbox_to_anchor, 'value')
 
     def save_borderaxespad(name, value):
-        legend_options_wid.selected_values['borderaxespad'] = float(value)
-    borderaxespad.on_trait_change(save_borderaxespad, 'value')
+        legend_options_wid.selected_values['legend_border_axes_pad'] = float(value)
+    legend_border_axes_pad.on_trait_change(save_borderaxespad, 'value')
 
     def save_n_columns(name, value):
-        legend_options_wid.selected_values['n_columns'] = int(value)
-    n_columns.on_trait_change(save_n_columns, 'value')
+        legend_options_wid.selected_values['legend_n_columns'] = int(value)
+    legend_n_columns.on_trait_change(save_n_columns, 'value')
 
     def save_markerscale(name, value):
-        legend_options_wid.selected_values['markerscale'] = float(value)
-    markerscale.on_trait_change(save_markerscale, 'value')
+        legend_options_wid.selected_values['legend_marker_scale'] = float(value)
+    legend_marker_scale.on_trait_change(save_markerscale, 'value')
 
     def save_horizontal_spacing(name, value):
-        legend_options_wid.selected_values['horizontal_spacing'] = float(value)
-    horizontal_spacing.on_trait_change(save_horizontal_spacing, 'value')
+        legend_options_wid.selected_values['legend_horizontal_spacing'] = float(value)
+    legend_horizontal_spacing.on_trait_change(save_horizontal_spacing, 'value')
 
     def save_vertical_spacing(name, value):
-        legend_options_wid.selected_values['vertical_spacing'] = float(value)
-    vertical_spacing.on_trait_change(save_vertical_spacing, 'value')
+        legend_options_wid.selected_values['legend_vertical_spacing'] = float(value)
+    legend_vertical_spacing.on_trait_change(save_vertical_spacing, 'value')
 
     def save_draw_border(name, value):
-        legend_options_wid.selected_values['draw_border'] = value
-    draw_border.on_trait_change(save_draw_border, 'value')
+        legend_options_wid.selected_values['legend_border'] = value
+    legend_border.on_trait_change(save_draw_border, 'value')
 
     def save_border_padding(name, value):
-        legend_options_wid.selected_values['border_padding'] = float(value)
-    border_padding.on_trait_change(save_border_padding, 'value')
+        legend_options_wid.selected_values['legend_border_padding'] = float(value)
+    legend_border_padding.on_trait_change(save_border_padding, 'value')
 
     def save_draw_shadow(name, value):
-        legend_options_wid.selected_values['draw_shadow'] = value
-    draw_shadow.on_trait_change(save_draw_shadow, 'value')
+        legend_options_wid.selected_values['legend_shadow'] = value
+    legend_shadow.on_trait_change(save_draw_shadow, 'value')
 
     def save_fancy_corners(name, value):
-        legend_options_wid.selected_values['fancy_corners'] = value
-    fancy_corners.on_trait_change(save_fancy_corners, 'value')
+        legend_options_wid.selected_values['legend_rounded_corners'] = value
+    legend_rounded_corners.on_trait_change(save_fancy_corners, 'value')
 
     # Toggle button function
     def toggle_fun(name, value):
@@ -2153,25 +2701,25 @@ def legend_options(legend_options_default, plot_function=None,
 
     # assign plot_function
     if plot_function is not None:
-        show_legend.on_trait_change(plot_function, 'value')
-        title.on_trait_change(plot_function, 'value')
-        fontname.on_trait_change(plot_function, 'value')
-        fontstyle.on_trait_change(plot_function, 'value')
-        fontsize.on_trait_change(plot_function, 'value')
-        fontweight.on_trait_change(plot_function, 'value')
-        location.on_trait_change(plot_function, 'value')
+        render_legend.on_trait_change(plot_function, 'value')
+        legend_title.on_trait_change(plot_function, 'value')
+        legend_font_name.on_trait_change(plot_function, 'value')
+        legend_font_style.on_trait_change(plot_function, 'value')
+        legend_font_size.on_trait_change(plot_function, 'value')
+        legend_font_weight.on_trait_change(plot_function, 'value')
+        legend_location.on_trait_change(plot_function, 'value')
         bbox_to_anchor_enable.on_trait_change(plot_function, 'value')
         bbox_to_anchor_x.on_trait_change(plot_function, 'value')
         bbox_to_anchor_y.on_trait_change(plot_function, 'value')
-        borderaxespad.on_trait_change(plot_function, 'value')
-        n_columns.on_trait_change(plot_function, 'value')
-        markerscale.on_trait_change(plot_function, 'value')
-        horizontal_spacing.on_trait_change(plot_function, 'value')
-        vertical_spacing.on_trait_change(plot_function, 'value')
-        draw_border.on_trait_change(plot_function, 'value')
-        border_padding.on_trait_change(plot_function, 'value')
-        draw_shadow.on_trait_change(plot_function, 'value')
-        fancy_corners.on_trait_change(plot_function, 'value')
+        legend_border_axes_pad.on_trait_change(plot_function, 'value')
+        legend_n_columns.on_trait_change(plot_function, 'value')
+        legend_marker_scale.on_trait_change(plot_function, 'value')
+        legend_horizontal_spacing.on_trait_change(plot_function, 'value')
+        legend_vertical_spacing.on_trait_change(plot_function, 'value')
+        legend_border.on_trait_change(plot_function, 'value')
+        legend_border_padding.on_trait_change(plot_function, 'value')
+        legend_shadow.on_trait_change(plot_function, 'value')
+        legend_rounded_corners.on_trait_change(plot_function, 'value')
 
     return legend_options_wid
 
@@ -2218,13 +2766,15 @@ def format_legend_options(legend_options_wid, container_padding='6px',
         legend_options_wid.children[1].children[1].set_title(k, tl)
 
     # align font-related options
-    legend_options_wid.children[1].children[1].children[1].children[1].\
-        remove_class('vbox')
-    legend_options_wid.children[1].children[1].children[1].children[1].\
-        add_class('hbox')
+    #legend_options_wid.children[1].children[1].children[1].children[1].\
+    #    remove_class('vbox')
+    #legend_options_wid.children[1].children[1].children[1].children[1].\
+    #    add_class('hbox')
 
-    # set fontsize text box width
+    # set fontsize and title text box width
     legend_options_wid.children[1].children[1].children[1].children[1].children[0].children[1].set_css('width', '1cm')
+    legend_options_wid.children[1].children[1].children[1].children[0].\
+        set_css('width', '4cm')
 
     # align and set width of bbox_to_anchor
     legend_options_wid.children[1].children[1].children[0].children[1].\
@@ -2294,41 +2844,43 @@ def update_legend_options(legend_options_wid, legend_options_dict):
     r"""
     Function that updates the state of a given font_options widget. Usage
     example:
-        legend_options_default = {'show_legend':True,
-                                  'title':'',
-                                  'fontname':'serif',
-                                  'fontstyle':'normal',
-                                  'fontsize':10,
-                                  'fontweight':'normal',
-                                  'location':2,
-                                  'bbox_to_anchor':(1.05, 1.),
-                                  'borderaxespad':1.,
-                                  'n_columns':1,
-                                  'horizontal_spacing':1.,
-                                  'vertical_spacing':1.,
-                                  'draw_border':True,
-                                  'border_padding':0.5,
-                                  'draw_shadow':False,
-                                  'fancy_corners':True}
+        legend_options_default = {'render_legend':True,
+                                  'legend_title':'',
+                                  'legend_font_name':'serif',
+                                  'legend_font_style':'normal',
+                                  'legend_font_size':10,
+                                  'legend_font_weight':'normal',
+                                  'legend_marker_scale':1.,
+                                  'legend_location':2,
+                                  'legend_bbox_to_anchor':(1.05, 1.),
+                                  'legend_border_axes_pad':1.,
+                                  'legend_n_columns':1,
+                                  'legend_horizontal_spacing':1.,
+                                  'legend_vertical_spacing':1.,
+                                  'legend_border':True,
+                                  'legend_border_padding':0.5,
+                                  'legend_shadow':False,
+                                  'legend_rounded_corners':True}
         legend_options_wid = legend_options(legend_options_default)
         display(legend_options_wid)
         format_legend_options(legend_options_wid)
-        legend_options_default = {'show_legend':True,
-                                  'title':'',
-                                  'fontname':'serif',
-                                  'fontstyle':'normal',
-                                  'fontsize':10,
-                                  'fontweight':'normal',
-                                  'location':2,
-                                  'bbox_to_anchor':(1.05, 1.),
-                                  'borderaxespad':1.,
-                                  'n_columns':1,
-                                  'horizontal_spacing':1.,
-                                  'vertical_spacing':1.,
-                                  'draw_border':True,
-                                  'border_padding':0.5,
-                                  'draw_shadow':False,
-                                  'fancy_corners':True}
+        legend_options_default = {'render_legend':True,
+                                  'legend_title':'',
+                                  'legend_font_name':'serif',
+                                  'legend_font_style':'normal',
+                                  'legend_font_size':10,
+                                  'legend_font_weight':'normal',
+                                  'legend_marker_scale':1.,
+                                  'legend_location':2,
+                                  'legend_bbox_to_anchor':(1.05, 1.),
+                                  'legend_border_axes_pad':1.,
+                                  'legend_n_columns':1,
+                                  'legend_horizontal_spacing':1.,
+                                  'legend_vertical_spacing':1.,
+                                  'legend_border':True,
+                                  'legend_border_padding':0.5,
+                                  'legend_shadow':False,
+                                  'legend_rounded_corners':True}
         update_legend_options(legend_options_wid, legend_options_dict)
 
     Parameters
@@ -2338,119 +2890,120 @@ def update_legend_options(legend_options_wid, legend_options_dict):
 
     legend_options_dict : `dict`
         The new set of options. For example:
-            legend_options_dict = {'show_legend':True,
-                                   'title':'',
-                                   'fontname':'serif',
-                                   'fontstyle':'normal',
-                                   'fontsize':10,
-                                   'fontweight':'normal',
-                                   'location':2,
-                                   'bbox_to_anchor':(1.05, 1.),
-                                   'borderaxespad':1.,
-                                   'n_columns':1,
-                                   'horizontal_spacing':1.,
-                                   'vertical_spacing':1.,
-                                   'draw_border':True,
-                                   'border_padding':0.5,
-                                   'draw_shadow':False,
-                                   'fancy_corners':True}
+            legend_options_dict = {'render_legend':True,
+                                   'legend_title':'',
+                                   'legend_font_name':'serif',
+                                   'legend_font_style':'normal',
+                                   'legend_font_size':10,
+                                   'legend_font_weight':'normal',
+                                   'legend_marker_scale':1.,
+                                   'legend_location':2,
+                                   'legend_bbox_to_anchor':(1.05, 1.),
+                                   'legend_border_axes_pad':1.,
+                                   'legend_n_columns':1,
+                                   'legend_horizontal_spacing':1.,
+                                   'legend_vertical_spacing':1.,
+                                   'legend_border':True,
+                                   'legend_border_padding':0.5,
+                                   'legend_shadow':False,
+                                   'legend_rounded_corners':True}
     """
     # Assign new options dict to selected_values
     legend_options_wid.selected_values = legend_options_dict
 
-    # update show legend checkbox
-    if 'show_legend' in legend_options_dict.keys():
+    # update render legend checkbox
+    if 'render_legend' in legend_options_dict.keys():
         legend_options_wid.children[1].children[0].value = \
-            legend_options_dict['show_legend']
+            legend_options_dict['render_legend']
 
-    # update title
-    if 'title' in legend_options_dict.keys():
-        legend_options_wid.children[1].children[1].children[1].children[0].value = \
-            legend_options_dict['title']
+    # update legend_title
+    if 'legend_title' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[1].children[0].\
+            value = legend_options_dict['legend_title']
 
-    # update fontname dropdown menu
-    if 'fontname' in legend_options_dict.keys():
+    # update legend_font_name dropdown menu
+    if 'legend_font_name' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[1].children[1].children[0].children[0].value = \
-            legend_options_dict['fontname']
+            legend_options_dict['legend_font_name']
 
-    # update fontsize text box
-    if 'fontsize' in legend_options_dict.keys():
+    # update legend_font_size text box
+    if 'legend_font_size' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[1].children[1].children[0].children[1].value = \
-            int(legend_options_dict['fontsize'])
+            int(legend_options_dict['legend_font_size'])
 
-    # update fontstyle dropdown menu
-    if 'fontstyle' in legend_options_dict.keys():
+    # update legend_font_style dropdown menu
+    if 'legend_font_style' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].value = \
-            legend_options_dict['fontstyle']
+            legend_options_dict['legend_font_style']
 
-    # update fontweight dropdown menu
-    if 'fontweight' in legend_options_dict.keys():
+    # update legend_font_weight dropdown menu
+    if 'legend_font_weight' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value = \
-            legend_options_dict['fontweight']
+            legend_options_dict['legend_font_weight']
 
-    # update location dropdown menu
-    if 'location' in legend_options_dict.keys():
-        legend_options_wid.children[1].children[1].children[0].children[0].value = \
-            legend_options_dict['location']
+    # update legend_location dropdown menu
+    if 'legend_location' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[0].children[0].\
+            value = legend_options_dict['legend_location']
 
-    # update bbox_to_anchor
-    if 'bbox_to_anchor' in legend_options_dict.keys():
-        if legend_options_dict['bbox_to_anchor'] is None:
+    # update legend_bbox_to_anchor
+    if 'legend_bbox_to_anchor' in legend_options_dict.keys():
+        if legend_options_dict['legend_bbox_to_anchor'] is None:
             tmp1 = False
             tmp2 = 0.
             tmp3 = 0.
         else:
             tmp1 = True
-            tmp2 = legend_options_dict['bbox_to_anchor'][0]
-            tmp3 = legend_options_dict['bbox_to_anchor'][1]
+            tmp2 = legend_options_dict['legend_bbox_to_anchor'][0]
+            tmp3 = legend_options_dict['legend_bbox_to_anchor'][1]
         legend_options_wid.children[1].children[1].children[0].children[1].children[0].value = tmp1
         legend_options_wid.children[1].children[1].children[0].children[1].children[1].value = tmp2
         legend_options_wid.children[1].children[1].children[0].children[1].children[2].value = tmp3
 
-    # update borderaxespad
-    if 'borderaxespad' in legend_options_dict.keys():
+    # update legend_border_axes_pad
+    if 'legend_border_axes_pad' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[0].children[2].value = \
-            legend_options_dict['borderaxespad']
+            legend_options_dict['legend_border_axes_pad']
 
-    # update n_columns text box
-    if 'n_columns' in legend_options_dict.keys():
+    # update legend_n_columns text box
+    if 'legend_n_columns' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[2].children[0].children[0].children[0].value = \
-            int(legend_options_dict['n_columns'])
+            int(legend_options_dict['legend_n_columns'])
 
-    # update markerspace text box
-    if 'markerspace' in legend_options_dict.keys():
+    # update legend_marker_scale text box
+    if 'legend_marker_scale' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[2].children[0].children[0].children[1].value = \
-            float(legend_options_dict['markerspace'])
+            float(legend_options_dict['legend_marker_scale'])
 
-    # update horizontal_spacing text box
-    if 'horizontal_spacing' in legend_options_dict.keys():
+    # update legend_horizontal_spacing text box
+    if 'legend_horizontal_spacing' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[2].children[0].children[1].children[0].value = \
-            float(legend_options_dict['horizontal_spacing'])
+            float(legend_options_dict['legend_horizontal_spacing'])
 
-    # update vertical_spacing text box
-    if 'vertical_spacing' in legend_options_dict.keys():
+    # update legend_vertical_spacing text box
+    if 'legend_vertical_spacing' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[2].children[0].children[1].children[1].value = \
-            float(legend_options_dict['vertical_spacing'])
+            float(legend_options_dict['legend_vertical_spacing'])
 
-    # update draw_border
-    if 'draw_border' in legend_options_dict.keys():
+    # update legend_border
+    if 'legend_border' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[2].children[1].children[0].value = \
-            legend_options_dict['draw_border']
+            legend_options_dict['legend_border']
 
-    # update border_padding text box
-    if 'border_padding' in legend_options_dict.keys():
+    # update legend_border_padding text box
+    if 'legend_border_padding' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[2].children[1].children[1].value = \
-            float(legend_options_dict['border_padding'])
+            float(legend_options_dict['legend_border_padding'])
 
-    # update draw_shadow
-    if 'draw_shadow' in legend_options_dict.keys():
+    # update legend_shadow
+    if 'legend_shadow' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[2].children[2].children[0].value = \
-            legend_options_dict['draw_shadow']
+            legend_options_dict['legend_shadow']
 
-    # update draw_shadow
-    if 'fancy_corners' in legend_options_dict.keys():
+    # update legend_rounded_corners
+    if 'legend_rounded_corners' in legend_options_dict.keys():
         legend_options_wid.children[1].children[1].children[2].children[2].children[1].value = \
-            legend_options_dict['fancy_corners']
+            legend_options_dict['legend_rounded_corners']
 
 
 def hog_options(toggle_show_default=True, toggle_show_visible=True):

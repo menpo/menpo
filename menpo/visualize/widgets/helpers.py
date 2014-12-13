@@ -16,8 +16,8 @@ from .lowlevelhelpers import (colour_selection, format_colour_selection,
                               line_options, format_line_options,
                               update_line_options, marker_options,
                               format_marker_options, update_marker_options,
-                              font_options, format_font_options,
-                              update_font_options, figure_options,
+                              numbering_options, format_numbering_options,
+                              update_numbering_options, figure_options,
                               format_figure_options, update_figure_options,
                               figure_options_two_scales,
                               format_figure_options_two_scales,
@@ -2438,7 +2438,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
         viewer_options_wid.children = [toggle_button, options]
         options.children = [selection_menu, tab_options]
         tab_options.children = [line_options, marker_options,
-                                numbers_options, figure_options]
+                                numbers_options, figure_options, legend_options]
 
     The returned widget saves the selected values in the following dictionary:
         viewer_options_wid.selected_values
@@ -2452,55 +2452,64 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
         A list of dictionaries with the initial selected viewer options per
         object. Example:
 
-            landmarks_options = {'show_line':True, # line-related
-                                 'linewidth':10,
-                                 'labels':['eye', 'nose'],
-                                 'linecolour':['r', 'g'],
-                                 'linestyle':'-',
-                                 'show_marker':False, # marker-related
-                                 'markersize':20,
-                                 'markerfacecolour':['r'],
-                                 'markeredgecolour':['b'],
-                                 'markerstyle':'o',
-                                 'markeredgewidth':1}
+            lines_options = {'render_lines': True,
+                             'line_width': 1,
+                             'line_colour': ['b'],
+                             'line_style': '-'}
 
-            numbering_options = {'show_font':True,
-                                 'fontname':'sans-serif',
-                                 'fontsize':10,
-                                 'fontstyle':'italic',
-                                 'fontweight':'bold',
-                                 'fontcolour':[[1., 1., 1.]]}
+            markers_options = {'render_markers':True,
+                               'marker_size':20,
+                               'marker_face_colour':['r'],
+                               'marker_edge_colour':['k'],
+                               'marker_style':'o',
+                               'marker_edge_width':1}
 
-            legend_options = {'show_legend':True,
-                              'title':'',
-                              'fontname':'sans-serif',
-                              'fontstyle':'normal',
-                              'fontsize':10,
-                              'fontweight':'normal',
-                              'markerscale':2.,
-                              'location':2,
-                              'bbox_to_anchor':(1.05, 1.),
-                              'borderaxespad':1.,
-                              'n_columns':2,
-                              'horizontal_spacing':3.,
-                              'vertical_spacing':10.,
-                              'draw_border':True,
-                              'border_padding':9.5,
-                              'draw_shadow':True,
-                              'fancy_corners':True}
+            numbers_options = {'render_numbering': True,
+                               'numbers_font_name': 'serif',
+                               'numbers_font_size': 10,
+                               'numbers_font_style': 'normal',
+                               'numbers_font_weight': 'normal',
+                               'numbers_font_colour': ['k'],
+                               'numbers_horizontal_align': 'center',
+                               'numbers_vertical_align': 'bottom'}
 
-            figure_options = {'x_scale':1.,
-                              'y_scale':1.,
-                              'show_axes':True}
+            legend_options = {'render_legend':True,
+                              'legend_title':'',
+                              'legend_font_name':'serif',
+                              'legend_font_style':'normal',
+                              'legend_font_size':10,
+                              'legend_font_weight':'normal',
+                              'legend_marker_scale':1.,
+                              'legend_location':2,
+                              'legend_bbox_to_anchor':(1.05, 1.),
+                              'legend_border_axes_pad':1.,
+                              'legend_n_columns':1,
+                              'legend_horizontal_spacing':1.,
+                              'legend_vertical_spacing':1.,
+                              'legend_border':True,
+                              'legend_border_padding':0.5,
+                              'legend_shadow':False,
+                              'legend_rounded_corners':True}
 
-            viewer_options_default = {'landmarks_options':landmarks_options,
-                                      'numbering_options':numbering_options,
-                                      'legend_options':legend_options,
-                                      'figure_options': figure_options}
+            figure_options = {'x_scale': 1.,
+                              'y_scale': 1.,
+                              'render_axes': True,
+                              'axes_font_name': 'serif',
+                              'axes_font_size': 10,
+                              'axes_font_style': 'normal',
+                              'axes_font_weight': 'normal',
+                              'axes_x_limits': None,
+                              'axes_y_limits': None}
+
+            viewer_options_default = {'lines': lines_options,
+                                      'markers': markers_options,
+                                      'numbering': numbering_options,
+                                      'legend': legend_options,
+                                      'figure': figure_options}
 
     options_tabs : `list` of `str`
         List that defines the ordering of the options tabs. It can take one of
-        {``lines``, ``markers``, ``numbers``, ``figure_one``, ``figure_two``,
+        {``lines``, ``markers``, ``numbering``, ``figure_one``, ``figure_two``,
         ``legend``}
 
     objects_names : `list` of `str`, optional
@@ -2523,6 +2532,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
 
     # find number of objects
     n_objects = len(viewer_options_default)
+    selection_visible = n_objects > 1
 
     # Create widgets
     # toggle button
@@ -2539,7 +2549,8 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
         for k, g in enumerate(objects_names):
             objects_dict[g] = k
     selection = DropdownWidget(values=objects_dict, value=0,
-                               description='Select', visible=n_objects > 1)
+                               description='Select',
+                               visible=selection_visible and toggle_show_default)
 
     # options widgets
     options_widgets = []
@@ -2547,56 +2558,53 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     for o in options_tabs:
         if o == 'lines':
             options_widgets.append(
-                line_options(viewer_options_default[0]['landmarks_options'],
-                             toggle_show_visible=False,
-                             toggle_show_default=True,
-                             plot_function=plot_function, toggle_title='Lines',
-                             show_checkbox_title='Show lines'))
-            tab_titles.append('Lines')
-        elif o == 'markers':
-            options_widgets.append(
-                marker_options(viewer_options_default[0]['landmarks_options'],
-                               toggle_show_visible=False,
-                               toggle_show_default=True,
-                               plot_function=plot_function,
-                               toggle_title='Markers',
-                               show_checkbox_title='Show markers'))
-            tab_titles.append('Markers')
-        elif o == 'numbers':
-            options_widgets.append(
-                font_options(viewer_options_default[0]['numbering_options'],
+                line_options(viewer_options_default[0]['lines'],
                              toggle_show_visible=False,
                              toggle_show_default=True,
                              plot_function=plot_function,
-                             toggle_title='Numbers',
-                             show_checkbox_title='Show numbers'))
-            tab_titles.append('Numbers')
+                             show_checkbox_title='Render lines'))
+            tab_titles.append('Lines')
+        elif o == 'markers':
+            options_widgets.append(
+                marker_options(viewer_options_default[0]['markers'],
+                               toggle_show_visible=False,
+                               toggle_show_default=True,
+                               plot_function=plot_function,
+                               show_checkbox_title='Render markers'))
+            tab_titles.append('Markers')
+        elif o == 'numbering':
+            options_widgets.append(
+                numbering_options(viewer_options_default[0]['numbering'],
+                                  toggle_show_visible=False,
+                                  toggle_show_default=True,
+                                  plot_function=plot_function,
+                                  show_checkbox_title='Render numbering'))
+            tab_titles.append('Numbering')
         elif o == 'figure_one':
             options_widgets.append(
-                figure_options(viewer_options_default[0]['figure_options'],
+                figure_options(viewer_options_default[0]['figure'],
                                plot_function=plot_function,
                                figure_scale_bounds=(0.1, 2),
                                figure_scale_step=0.1, figure_scale_visible=True,
-                               show_axes_visible=True, toggle_show_default=True,
+                               axes_visible=True, toggle_show_default=True,
                                toggle_show_visible=False))
             tab_titles.append('Figure')
         elif o == 'figure_two':
             options_widgets.append(
                 figure_options_two_scales(
-                    viewer_options_default[0]['figure_options'],
+                    viewer_options_default[0]['figure'],
                     plot_function=plot_function, coupled_default=False,
                     figure_scales_bounds=(0.1, 2), figure_scales_step=0.1,
-                    figure_scales_visible=True, show_axes_visible=True,
+                    figure_scales_visible=True, axes_visible=True,
                     toggle_show_default=True, toggle_show_visible=False))
             tab_titles.append('Figure')
         elif o == 'legend':
             options_widgets.append(
-                legend_options(viewer_options_default[0]['legend_options'],
+                legend_options(viewer_options_default[0]['legend'],
                                toggle_show_visible=False,
                                toggle_show_default=True,
                                plot_function=plot_function,
-                               toggle_title='Legend',
-                               show_checkbox_title='Show legend'))
+                               show_checkbox_title='Render legend'))
             tab_titles.append('Legend')
     options = TabWidget(children=options_widgets)
 
@@ -2618,28 +2626,35 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
             if o == 'lines':
                 update_line_options(
                     options_widgets[k],
-                    viewer_options_default[value]['landmarks_options'])
+                    viewer_options_default[value]['lines'])
             elif o == 'markers':
                 update_marker_options(
                     options_widgets[k],
-                    viewer_options_default[value]['landmarks_options'])
-            elif o == 'numbers':
-                update_font_options(
+                    viewer_options_default[value]['markers'])
+            elif o == 'numbering':
+                update_numbering_options(
                     options_widgets[k],
-                    viewer_options_default[value]['numbering_options'])
+                    viewer_options_default[value]['numbering'])
             elif o == 'figure_one':
                 update_figure_options(
                     options_widgets[k],
-                    viewer_options_default[value]['figure_options'])
+                    viewer_options_default[value]['figure'])
             elif o == 'figure_two':
                 update_figure_options_two_scales(
                     options_widgets[k],
-                    viewer_options_default[value]['figure_options'])
+                    viewer_options_default[value]['figure'])
             elif o == 'legend':
                 update_legend_options(
                     options_widgets[k],
-                    viewer_options_default[value]['legend_options'])
+                    viewer_options_default[value]['legend'])
     selection.on_trait_change(update_widgets, 'value')
+
+    # Toggle button function
+    def toggle_fun(name, value):
+        selection.visible = value and selection_visible
+        options.visible = value
+    toggle_fun('', toggle_show_default)
+    but.on_trait_change(toggle_fun, 'value')
 
     return viewer_options_wid
 
@@ -2691,8 +2706,8 @@ def format_viewer_options(viewer_options_wid, container_padding='6px',
                 viewer_options_wid.children[1].children[1].children[k],
                 suboptions_border_visible=suboptions_border_visible,
                 border_visible=False)
-        elif o == 'numbers':
-            format_font_options(
+        elif o == 'numbering':
+            format_numbering_options(
                 viewer_options_wid.children[1].children[1].children[k],
                 suboptions_border_visible=suboptions_border_visible,
                 border_visible=False)
