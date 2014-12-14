@@ -137,13 +137,39 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         super(MatplotlibImageViewer2d, self).__init__(figure_id, new_figure)
         self.image = image
 
-    def _render(self, **kwargs):
+    def _render(self, render_axes=False, axes_font_name='sans-serif',
+                axes_font_size=10, axes_font_style='normal',
+                axes_font_weight='normal', axes_x_limits=None,
+                axes_y_limits=None, figure_size=(6, 4)):
         import matplotlib.cm as cm
 
         if len(self.image.shape) == 2:  # Single channels are viewed in Gray
-            plt.imshow(self.image, cmap=cm.Greys_r, **kwargs)
+            plt.imshow(self.image, cmap=cm.Greys_r)
         else:
-            plt.imshow(self.image, **kwargs)
+            plt.imshow(self.image)
+
+        # render axes options
+        if render_axes:
+            plt.axis('on')
+            # set font options
+            for l in (plt.gca().get_xticklabels() +
+                      plt.gca().get_yticklabels()):
+                l.set_fontsize(axes_font_size)
+                l.set_fontname(axes_font_name)
+                l.set_fontstyle(axes_font_style)
+                l.set_fontweight(axes_font_weight)
+        else:
+            plt.axis('off')
+
+        # Set axes limits
+        if axes_x_limits is not None:
+            plt.xlim(axes_x_limits)
+        if axes_y_limits is not None:
+            plt.ylim(axes_y_limits[::-1])
+
+        # Set figure size
+        if figure_size is not None:
+            plt.gcf().set_size_inches(np.asarray(figure_size))
 
         return self
 
@@ -156,15 +182,41 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
         self.num_subplots = self.image.shape[2]
         self.plot_layout = self._subplot_layout(self.num_subplots)
 
-    def _render(self, **kwargs):
+    def _render(self, render_axes=False, axes_font_name='sans-serif',
+                axes_font_size=10, axes_font_style='normal',
+                axes_font_weight='normal', axes_x_limits=None,
+                axes_y_limits=None, figure_size=(6, 4)):
         import matplotlib.cm as cm
 
         p = self.plot_layout
         for i in range(self.image.shape[2]):
             plt.subplot(p[0], p[1], 1 + i)
-            # Hide the x and y labels
-            plt.axis('off')
-            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r, **kwargs)
+
+            # render axes options
+            if render_axes:
+                plt.axis('on')
+                # set font options
+                for l in (plt.gca().get_xticklabels() +
+                          plt.gca().get_yticklabels()):
+                    l.set_fontsize(axes_font_size)
+                    l.set_fontname(axes_font_name)
+                    l.set_fontstyle(axes_font_style)
+                    l.set_fontweight(axes_font_weight)
+            else:
+                plt.axis('off')
+
+            # Set axes limits
+            if axes_x_limits is not None:
+                plt.xlim(axes_x_limits)
+            if axes_y_limits is not None:
+                plt.ylim(axes_y_limits[::-1])
+
+            # show image
+            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r)
+
+            # Set figure size
+            if figure_size is not None:
+                plt.gcf().set_size_inches(np.asarray(figure_size))
         return self
 
 

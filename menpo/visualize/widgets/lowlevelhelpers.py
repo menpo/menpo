@@ -1735,8 +1735,12 @@ def figure_options(figure_options_default, plot_function=None,
         axes_font_size.on_trait_change(plot_function, 'value')
         axes_font_style.on_trait_change(plot_function, 'value')
         axes_font_weight.on_trait_change(plot_function, 'value')
-        axes_x_limits.on_trait_change(plot_function, 'value')
-        axes_y_limits.on_trait_change(plot_function, 'value')
+        axes_x_limits_from.on_trait_change(plot_function, 'value')
+        axes_x_limits_to.on_trait_change(plot_function, 'value')
+        axes_x_limits_enable.on_trait_change(plot_function, 'value')
+        axes_y_limits_from.on_trait_change(plot_function, 'value')
+        axes_y_limits_to.on_trait_change(plot_function, 'value')
+        axes_y_limits_enable.on_trait_change(plot_function, 'value')
 
     return figure_options_wid
 
@@ -2624,7 +2628,7 @@ def legend_options(legend_options_default, plot_function=None,
     render_legend.on_trait_change(save_show_legend, 'value')
 
     def save_title(name, value):
-        legend_options_wid.selected_values['legend_title'] = value
+        legend_options_wid.selected_values['legend_title'] = str(value)
     legend_title.on_trait_change(save_title, 'value')
 
     def save_fontname(name, value):
@@ -2649,10 +2653,10 @@ def legend_options(legend_options_default, plot_function=None,
 
     def save_bbox_to_anchor(name, value):
         if bbox_to_anchor_enable.value:
-            legend_options_wid.selected_values['bbox_to_anchor'] = \
+            legend_options_wid.selected_values['legend_bbox_to_anchor'] = \
                 (bbox_to_anchor_x.value, bbox_to_anchor_y.value)
         else:
-            legend_options_wid.selected_values['bbox_to_anchor'] = None
+            legend_options_wid.selected_values['legend_bbox_to_anchor'] = None
     bbox_to_anchor_enable.on_trait_change(save_bbox_to_anchor, 'value')
     bbox_to_anchor_x.on_trait_change(save_bbox_to_anchor, 'value')
     bbox_to_anchor_y.on_trait_change(save_bbox_to_anchor, 'value')

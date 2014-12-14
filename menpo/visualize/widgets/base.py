@@ -3,16 +3,19 @@ from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
 from IPython.display import display, clear_output
 import matplotlib.pylab as plt
 import numpy as np
-
-from menpo.visualize.viewmatplotlib import MatplotlibSubplots
 from collections import Sized
+
+from menpo.visualize.viewmatplotlib import (MatplotlibSubplots,
+                                            MatplotlibImageViewer2d)
+
 from .helpers import (channel_options, format_channel_options,
                       update_channel_options,
                       landmark_options, format_landmark_options,
                       update_landmark_options, info_print, format_info_print,
                       animation_options, format_animation_options,
                       save_figure_options, format_save_figure_options,
-                      features_options, format_features_options)
+                      features_options, format_features_options, viewer_options,
+                      format_viewer_options)
 from .lowlevelhelpers import (logo, format_logo, figure_options,
                               format_figure_options)
 
@@ -96,8 +99,8 @@ def _raw_info_string_to_latex(raw):
     return _join_bullets_as_latex_math(bullets)
 
 
-def visualize_images(images, figure_size=(7, 7), popup=False,
-                     images_browser_style='buttons', **kwargs):
+def visualize_images(images, figure_size=(6, 4), popup=False,
+                     images_browser_style='buttons'):
     r"""
     Widget that allows browsing through a list of images.
 
@@ -111,15 +114,12 @@ def visualize_images(images, figure_size=(7, 7), popup=False,
     figure_size : (`int`, `int`), optional
         The initial size of the plotted figures.
 
-    popup : `boolean`, optional
-        If enabled, the widget will appear as a popup window.
+    popup : `bool`, optional
+        If ``True``, the widget will appear as a popup window.
 
     images_browser_style : ``buttons`` or ``slider``, optional
         It defines whether the selector of the images will have the form of
         plus/minus buttons or a slider.
-
-    kwargs : `dict`, optional
-        Passed through to the viewer.
     """
     from menpo.image import MaskedImage
 
@@ -140,6 +140,79 @@ def visualize_images(images, figure_size=(7, 7), popup=False,
         initial_groups_keys = [' ']
         initial_labels_keys = [[' ']]
 
+    # initial options dictionaries
+    channels_default = 0
+    if images[0].n_channels == 3:
+        channels_default = None
+    channels_options_default = {'n_channels': images[0].n_channels,
+                                'image_is_masked': isinstance(images[0],
+                                                              MaskedImage),
+                                'channels': channels_default,
+                                'glyph_enabled': False,
+                                'glyph_block_size': 3,
+                                'glyph_use_negative': False,
+                                'sum_enabled': False,
+                                'masked_enabled': isinstance(images[0],
+                                                             MaskedImage)}
+    landmark_options_default = {'render_landmarks': first_has_landmarks,
+                                'group_keys': initial_groups_keys,
+                                'labels_keys': initial_labels_keys,
+                                'group': 'PTS',
+                                'with_labels': ['all']}
+    lines_options = {'render_lines': True,
+                     'line_width': 1,
+                     'line_colour': ['r'],
+                     'line_style': '-'}
+    markers_options = {'render_markers': True,
+                       'marker_size': 20,
+                       'marker_face_colour': ['r'],
+                       'marker_edge_colour': ['k'],
+                       'marker_style': 'o',
+                       'marker_edge_width': 1}
+    numbering_options = {'render_numbering': False,
+                         'numbers_font_name': 'sans-serif',
+                         'numbers_font_size': 10,
+                         'numbers_font_style': 'normal',
+                         'numbers_font_weight': 'normal',
+                         'numbers_font_colour': ['k'],
+                         'numbers_horizontal_align': 'center',
+                         'numbers_vertical_align': 'bottom'}
+    legend_options = {'render_legend': True,
+                      'legend_title': '',
+                      'legend_font_name': 'sans-serif',
+                      'legend_font_style': 'normal',
+                      'legend_font_size': 10,
+                      'legend_font_weight': 'normal',
+                      'legend_marker_scale': 1.,
+                      'legend_location': 2,
+                      'legend_bbox_to_anchor': (1.05, 1.),
+                      'legend_border_axes_pad': 1.,
+                      'legend_n_columns': 1,
+                      'legend_horizontal_spacing': 1.,
+                      'legend_vertical_spacing': 1.,
+                      'legend_border': True,
+                      'legend_border_padding': 0.5,
+                      'legend_shadow': False,
+                      'legend_rounded_corners': False}
+    figure_options = {'x_scale': 1.,
+                      'y_scale': 1.,
+                      'render_axes': False,
+                      'axes_font_name': 'sans-serif',
+                      'axes_font_size': 10,
+                      'axes_font_style': 'normal',
+                      'axes_font_weight': 'normal',
+                      'axes_x_limits': None,
+                      'axes_y_limits': None}
+    viewer_options_default = {'lines': lines_options,
+                              'markers': markers_options,
+                              'numbering': numbering_options,
+                              'legend': legend_options,
+                              'figure': figure_options}
+    index_selection_default = {'min': 0,
+                               'max': n_images-1,
+                               'step': 1,
+                               'index': 0}
+
     # define plot function
     def plot_function(name, value):
         # clear current figure, but wait until the new data to be displayed are
@@ -149,42 +222,61 @@ def visualize_images(images, figure_size=(7, 7), popup=False,
         # get selected image number
         im = 0
         if n_images > 1:
-            im = image_number_wid.selected_index
+            im = image_number_wid.selected_values['index']
 
         # update info text widget
         image_has_landmarks = images[im].landmarks.n_groups != 0
         image_is_masked = isinstance(images[im], MaskedImage)
         update_info(images[im], image_is_masked, image_has_landmarks,
-                    landmark_options_wid.group)
+                    landmark_options_wid.selected_values['group'])
 
         # get the current figure id
-        figure_id = save_figure_wid.figure_id
+        #renderer = save_figure_wid.renderer[0]
 
         # show image with selected options
-        new_figure_id = _plot_figure(
-            image=images[im], figure_id=figure_id, image_enabled=True,
-            landmarks_enabled=landmark_options_wid.landmarks_enabled,
-            image_is_masked=channel_options_wid.image_is_masked,
-            masked_enabled=(channel_options_wid.masked_enabled and
-                            image_is_masked),
-            channels=channel_options_wid.channels,
-            glyph_enabled=channel_options_wid.glyph_enabled,
-            glyph_block_size=channel_options_wid.glyph_block_size,
-            glyph_use_negative=channel_options_wid.glyph_use_negative,
-            sum_enabled=channel_options_wid.sum_enabled,
-            groups=[landmark_options_wid.group],
-            with_labels=[landmark_options_wid.with_labels],
-            groups_colours=dict(), subplots_enabled=False,
-            subplots_titles=dict(), image_axes_mode=True,
-            legend_enabled=landmark_options_wid.legend_enabled,
-            numbering_enabled=landmark_options_wid.numbering_enabled,
-            x_scale=figure_options_wid.x_scale,
-            y_scale=figure_options_wid.x_scale,
-            axes_visible=figure_options_wid.axes_visible,
-            figure_size=figure_size, **kwargs)
+        tmp1 = viewer_options_wid.selected_values[0]['lines']
+        tmp2 = viewer_options_wid.selected_values[0]['markers']
+        tmp3 = viewer_options_wid.selected_values[0]['numbering']
+        tmp4 = viewer_options_wid.selected_values[0]['legend']
+        tmp5 = viewer_options_wid.selected_values[0]['figure']
+        new_figure_size = (tmp5['x_scale'] * figure_size[0],
+                           tmp5['y_scale'] * figure_size[1])
+        renderer = _visualize(
+            images[im], save_figure_wid.renderer[0], True,
+            landmark_options_wid.selected_values['render_landmarks'],
+            channel_options_wid.selected_values['image_is_masked'],
+            channel_options_wid.selected_values['masked_enabled'],
+            channel_options_wid.selected_values['channels'],
+            channel_options_wid.selected_values['glyph_enabled'],
+            channel_options_wid.selected_values['glyph_block_size'],
+            channel_options_wid.selected_values['glyph_use_negative'],
+            channel_options_wid.selected_values['sum_enabled'],
+            [landmark_options_wid.selected_values['group']],
+            landmark_options_wid.selected_values['with_labels'],
+            False, dict(), True, False,
+            tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
+            tmp1['line_colour'], tmp2['render_markers'], tmp2['marker_style'],
+            tmp2['marker_size'], tmp2['marker_edge_width'],
+            tmp2['marker_edge_colour'], tmp2['marker_face_colour'],
+            tmp3['render_numbering'], tmp3['numbers_font_name'],
+            tmp3['numbers_font_size'], tmp3['numbers_font_style'],
+            tmp3['numbers_font_weight'], tmp3['numbers_font_colour'][0],
+            tmp3['numbers_horizontal_align'], tmp3['numbers_vertical_align'],
+            tmp4['legend_n_columns'], tmp4['legend_border_axes_pad'],
+            tmp4['legend_rounded_corners'], tmp4['legend_title'],
+            tmp4['legend_horizontal_spacing'], tmp4['legend_shadow'],
+            tmp4['legend_location'], tmp4['legend_font_name'],
+            tmp4['legend_bbox_to_anchor'], tmp4['legend_border'],
+            tmp4['legend_marker_scale'], tmp4['legend_vertical_spacing'],
+            tmp4['legend_font_weight'], tmp4['legend_font_size'],
+            tmp4['render_legend'], tmp4['legend_font_style'],
+            tmp4['legend_border_padding'], new_figure_size, tmp5['render_axes'],
+            tmp5['axes_font_name'], tmp5['axes_font_size'],
+            tmp5['axes_font_style'], tmp5['axes_x_limits'],
+            tmp5['axes_y_limits'], tmp5['axes_font_weight'])
 
         # save the current figure id
-        save_figure_wid.figure_id = new_figure_id
+        save_figure_wid.renderer[0] = renderer
 
     # define function that updates info text
     def update_info(image, image_is_masked, image_has_landmarks, group):
@@ -215,34 +307,38 @@ def visualize_images(images, figure_size=(7, 7), popup=False,
         # update info widget text
         info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
 
-    # create options widgets
-    channel_options_wid = channel_options(images[0].n_channels,
-                                          isinstance(images[0], MaskedImage),
-                                          plot_function,
-                                          masked_default=False,
+    # channel options widget
+    channel_options_wid = channel_options(channels_options_default,
+                                          plot_function=plot_function,
                                           toggle_show_default=True,
                                           toggle_show_visible=False)
+
+    # landmarks options widget
     # The landmarks checkbox default value if the first image doesn't have
     # landmarks
-    landmark_options_wid = landmark_options(
-        initial_groups_keys, initial_labels_keys, plot_function,
-        toggle_show_default=True, landmarks_default=first_has_landmarks,
-        legend_default=True, numbering_default=False, toggle_show_visible=False)
+    landmark_options_wid = landmark_options(landmark_options_default,
+                                            plot_function=plot_function,
+                                            toggle_show_default=True,
+                                            toggle_show_visible=False)
     # if only a single image is passed in and it doesn't have landmarks, then
     # landmarks checkbox should be disabled
-    landmark_options_wid.children[1].children[0].disabled = \
-        not first_has_landmarks
-    figure_options_wid = figure_options(plot_function, scale_default=1.,
-                                        show_axes_default=False,
-                                        toggle_show_default=True,
-                                        figure_scale_bounds=(0.1, 2),
-                                        figure_scale_step=0.1,
-                                        figure_scale_visible=True,
-                                        toggle_show_visible=False)
+    landmark_options_wid.children[1].disabled = not first_has_landmarks
+
+    # viewer options widget
+    viewer_options_wid = viewer_options(viewer_options_default,
+                                        ['lines', 'markers', 'numbering',
+                                         'legend', 'figure_one'],
+                                        objects_names=None,
+                                        plot_function=plot_function,
+                                        toggle_show_visible=False,
+                                        toggle_show_default=True)
     info_wid = info_print(toggle_show_default=True,
                           toggle_show_visible=False)
-    initial_figure_id = plt.figure()
-    save_figure_wid = save_figure_options(initial_figure_id,
+
+    # save figure widget
+    initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
+                                               image=np.zeros((10, 10)))
+    save_figure_wid = save_figure_options(initial_renderer,
                                           toggle_show_default=True,
                                           toggle_show_visible=False)
 
@@ -267,52 +363,45 @@ def visualize_images(images, figure_size=(7, 7), popup=False,
     # create final widget
     if n_images > 1:
         # image selection slider
-        image_number_wid = animation_options(
-            index_min_val=0, index_max_val=n_images-1,
-            plot_function=plot_function, update_function=update_widgets,
-            index_step=1, index_default=0,
-            index_description='Image Number', index_minus_description='<',
-            index_plus_description='>', index_style=images_browser_style,
-            index_text_editable=True, loop_default=True, interval_default=0.3,
-            toggle_show_title='Image Options', toggle_show_default=True,
-            toggle_show_visible=False)
+        image_number_wid = animation_options(index_selection_default,
+                                             plot_function=plot_function,
+                                             update_function=update_widgets,
+                                             index_description='Image Number',
+                                             index_minus_description='<',
+                                             index_plus_description='>',
+                                             index_style=images_browser_style,
+                                             index_text_editable=True,
+                                             loop_default=True,
+                                             interval_default=0.3,
+                                             toggle_show_title='Image Options',
+                                             toggle_show_default=True,
+                                             toggle_show_visible=False)
 
         # final widget
-        cont_wid = TabWidget(children=[info_wid, channel_options_wid,
-                                       landmark_options_wid,
-                                       figure_options_wid, save_figure_wid])
-        wid = ContainerWidget(children=[image_number_wid, cont_wid])
+        logo_wid = ContainerWidget(children=[logo(), image_number_wid])
         button_title = 'Images Menu'
     else:
         # final widget
-        wid = TabWidget(children=[info_wid, channel_options_wid,
-                                  landmark_options_wid, figure_options_wid,
-                                  save_figure_wid])
+        logo_wid = logo()
         button_title = 'Image Menu'
     # create popup widget if asked
+    cont_wid = TabWidget(children=[info_wid, channel_options_wid,
+                                   landmark_options_wid,
+                                   viewer_options_wid, save_figure_wid])
     if popup:
-        wid = PopupWidget(children=[wid], button_text=button_title)
+        wid = PopupWidget(children=[logo_wid, cont_wid],
+                          button_text=button_title)
+    else:
+        wid = ContainerWidget(children=[logo_wid, cont_wid])
 
     # display final widget
     display(wid)
 
     # set final tab titles
     tab_titles = ['Image info', 'Channels options', 'Landmarks options',
-                  'Figure options', 'Save figure']
-    if popup:
-        if n_images > 1:
-            for (k, tl) in enumerate(tab_titles):
-                wid.children[0].children[1].set_title(k, tl)
-        else:
-            for (k, tl) in enumerate(tab_titles):
-                wid.children[0].set_title(k, tl)
-    else:
-        if n_images > 1:
-            for (k, tl) in enumerate(tab_titles):
-                wid.children[1].set_title(k, tl)
-        else:
-            for (k, tl) in enumerate(tab_titles):
-                wid.set_title(k, tl)
+                  'Viewer options', 'Save figure']
+    for (k, tl) in enumerate(tab_titles):
+        wid.children[1].set_title(k, tl)
 
     # align-start the image number widget and the rest
     if n_images > 1:
@@ -320,6 +409,8 @@ def visualize_images(images, figure_size=(7, 7), popup=False,
 
     # format options' widgets
     if n_images > 1:
+        wid.children[0].remove_class('vbox')
+        wid.children[0].add_class('hbox')
         format_animation_options(image_number_wid, index_text_width='1.0cm',
                                  container_padding='6px',
                                  container_margin='6px',
@@ -336,11 +427,12 @@ def visualize_images(images, figure_size=(7, 7), popup=False,
                             container_border='1px solid black',
                             toggle_button_font_weight='bold',
                             border_visible=False)
-    format_figure_options(figure_options_wid, container_padding='6px',
+    format_viewer_options(viewer_options_wid, container_padding='6px',
                           container_margin='6px',
                           container_border='1px solid black',
                           toggle_button_font_weight='bold',
-                          border_visible=False)
+                          border_visible=False,
+                          suboptions_border_visible=True)
     format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
                       container_margin='6px',
                       container_border='1px solid black',
@@ -355,7 +447,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False,
     update_widgets('', 0)
 
     # Reset value to trigger initial visualization
-    landmark_options_wid.children[1].children[1].value = False
+    landmark_options_wid.children[1].value = False
 
 
 def visualize_shapes(shapes, figure_size=(7, 7), popup=False,
@@ -687,109 +779,32 @@ def features_selection(popup=True):
     return output
 
 
-def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
-                 image_is_masked, masked_enabled, channels, glyph_enabled,
-                 glyph_block_size, glyph_use_negative, sum_enabled, groups,
-                 with_labels, groups_colours, subplots_enabled, subplots_titles,
-                 image_axes_mode, legend_enabled, numbering_enabled, x_scale,
-                 y_scale, axes_visible, figure_size, **kwargs):
-    r"""
-    Helper function that plots an object given a set of selected options.
-
-    Parameters
-    -----------
-    image : :map:`Image` or subclass
-       The image to be displayed.
-
-    figure_id : matplotlib.pyplot.Figure instance
-        The handle of the figure to be saved.
-
-    image_enabled : `bool`
-        Flag that determines whether to display the image.
-
-    landmarks_enabled : `bool`
-        Flag that determines whether to display the landmarks.
-
-    image_is_masked : `bool`
-        If True, image is an instance of :map:`MaskedImage`.
-        If False, image is an instance of :map:`Image`.
-
-    masked_enabled : `bool`
-        If True and the image is an instance of :map:`MaskedImage`, then only
-        the masked pixels will be displayed.
-
-    channels : `int` or `list` of `int`
-        The image channels to be displayed.
-
-    glyph_enabled : `bool`
-        Defines whether to display the image as glyph or not.
-
-    glyph_block_size : `int`
-        The size of the glyph's blocks.
-
-    glyph_use_negative : `bool`
-        Whether to use the negative hist values.
-
-    sum_enabled : `bool`
-        If true, the image will be displayed as glyph with glyph_block_size=1,
-        thus the sum of the image's selected channels.
-
-    groups : `list` of `str`
-        A list of the landmark groups to be displayed.
-
-    with_labels : `list` of `list` of `str`
-        The labels to be displayed for each group in groups.
-
-    groups_colours : `dict` of `str`
-        A dictionary that defines a colour for each of the groups, e.g.
-        subplots_titles[groups[0]] = 'b'
-        subplots_titles[groups[1]] = 'r'
-
-    subplots_enabled : `bool`
-        Flag that determines whether to plot all selected landmark groups in a
-        single axes object or in subplots.
-
-    subplots_titles : `dict` of `str`
-        A dictionary that defines a subplot title for each of the groups, e.g.
-        subplots_titles[groups[0]] = 'first group'
-        subplots_titles[groups[1]] = 'second group'
-
-    image_axes_mode : `bool`
-        If True, then the point clouds are plotted with the axes in the image
-        mode.
-
-    legend_enabled : `bool`
-        Flag that determines whether to show the legend for the landmarks.
-
-    numbering_enabled : `bool`
-        Flag that determines whether to show the numbering for the landmarks.
-
-    x_scale : `float`
-        The scale of x axis.
-
-    y_scale : `float`
-        The scale of y axis.
-
-    axes_visible : `bool`
-        If False, the figure's axes will be invisible.
-
-    figure_size : (`int`, `int`)
-        The size of the plotted figures.
-
-    kwargs : `dict`, optional
-        Passed through to the viewer.
-    """
+def _visualize(image, renderer, render_image, render_landmarks, image_is_masked,
+               masked_enabled, channels, glyph_enabled, glyph_block_size,
+               glyph_use_negative, sum_enabled, groups, with_labels,
+               subplots_enabled, subplots_titles, image_axes_mode,
+               legend_enabled, render_lines, line_style, line_width,
+               line_colour, render_markers, marker_style, marker_size,
+               marker_edge_width, marker_edge_colour, marker_face_colour,
+               render_numbering, numbers_font_name, numbers_font_size,
+               numbers_font_style, numbers_font_weight, numbers_font_colour,
+               numbers_horizontal_align, numbers_vertical_align,
+               legend_n_columns, legend_border_axes_pad, legend_rounded_corners,
+               legend_title, legend_horizontal_spacing, legend_shadow,
+               legend_location, legend_font_name, legend_bbox_to_anchor,
+               legend_border, legend_marker_scale, legend_vertical_spacing,
+               legend_font_weight, legend_font_size, render_legend,
+               legend_font_style, legend_border_padding, figure_size,
+               render_axes, axes_font_name, axes_font_size, axes_font_style,
+               axes_x_limits, axes_y_limits, axes_font_weight):
     global glyph
     if glyph is None:
         from menpo.visualize.image import glyph
 
-    # select figure
-    figure_id = plt.figure(figure_id.number)
-
     # plot
-    if image_enabled:
+    if render_image:
         # image will be displayed
-        if landmarks_enabled and len(groups) > 0:
+        if render_landmarks and len(groups) > 0:
             # there are selected landmark groups and they will be displayed
             if subplots_enabled:
                 # calculate subplots structure
@@ -802,78 +817,150 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                     if legend_enabled:
                         # set subplot's title
                         plt.title(subplots_titles[group])
-                    if not axes_visible:
-                        # turn axes on/off
-                        plt.axis('off')
-                if image_is_masked:
-                    if glyph_enabled or sum_enabled:
-                        # image, landmarks, masked, glyph
-                        glyph(image, vectors_block_size=glyph_block_size,
-                              use_negative=glyph_use_negative,
-                              channels=channels).\
-                            view_landmarks(group=group,
-                                           with_labels=with_labels[k],
-                                           render_legend=(legend_enabled
-                                                          and not subplots_enabled),
-                                           render_numbering=numbering_enabled,
-                                           obj_view_kwargs={'masked':masked_enabled},
-                                           lmark_view_kwargs=kwargs)
-                    else:
-                        # image, landmarks, masked, not glyph
-                        image.view_landmarks(group=group,
-                                             with_labels=with_labels[k],
-                                             render_legend=(legend_enabled
-                                                            and not subplots_enabled),
-                                             render_numbering=numbering_enabled,
-                                             obj_view_kwargs={'channels':channels,
-                                                              'masked': masked_enabled},
-                                             lmark_view_kwargs=kwargs)
+                if glyph_enabled or sum_enabled:
+                    # image, landmarks, masked, glyph
+                    renderer = glyph(image, vectors_block_size=glyph_block_size,
+                                     use_negative=glyph_use_negative,
+                                     channels=channels).\
+                        view_landmarks(
+                            masked=masked_enabled, group=group,
+                            with_labels=with_labels[k], without_labels=None,
+                            figure_id=renderer.figure_id, new_figure=False,
+                            render_lines=render_lines, line_colour=line_colour,
+                            line_style=line_style, line_width=line_width,
+                            render_markers=render_markers,
+                            marker_style=marker_style, marker_size=marker_size,
+                            marker_face_colour=marker_face_colour,
+                            marker_edge_colour=marker_edge_colour,
+                            marker_edge_width=marker_edge_width,
+                            render_numbering=render_numbering,
+                            numbers_horizontal_align=numbers_horizontal_align,
+                            numbers_vertical_align=numbers_vertical_align,
+                            numbers_font_name=numbers_font_name,
+                            numbers_font_size=numbers_font_size,
+                            numbers_font_style=numbers_font_style,
+                            numbers_font_weight=numbers_font_weight,
+                            numbers_font_colour=numbers_font_colour,
+                            render_legend=render_legend,
+                            legend_title=legend_title,
+                            legend_font_name=legend_font_name,
+                            legend_font_style=legend_font_style,
+                            legend_font_size=legend_font_size,
+                            legend_font_weight=legend_font_weight,
+                            legend_marker_scale=legend_marker_scale,
+                            legend_location=legend_location,
+                            legend_bbox_to_anchor=legend_bbox_to_anchor,
+                            legend_border_axes_pad=legend_border_axes_pad,
+                            legend_n_columns=legend_n_columns,
+                            legend_horizontal_spacing=legend_horizontal_spacing,
+                            legend_vertical_spacing=legend_vertical_spacing,
+                            legend_border=legend_border,
+                            legend_border_padding=legend_border_padding,
+                            legend_shadow=legend_shadow,
+                            legend_rounded_corners=legend_rounded_corners,
+                            render_axes=render_axes,
+                            axes_font_name=axes_font_name,
+                            axes_font_size=axes_font_size,
+                            axes_font_style=axes_font_style,
+                            axes_font_weight=axes_font_weight,
+                            axes_x_limits=axes_x_limits,
+                            axes_y_limits=axes_y_limits,
+                            figure_size=figure_size)
                 else:
-                    if glyph_enabled or sum_enabled:
-                        # image, landmarks, not masked, glyph
-                        glyph(image, vectors_block_size=glyph_block_size,
-                              use_negative=glyph_use_negative,
-                              channels=channels).\
-                            view_landmarks(group=group,
-                                           with_labels=with_labels[k],
-                                           render_legend=(legend_enabled
-                                                          and not subplots_enabled),
-                                           render_numbering=numbering_enabled,
-                                           lmark_view_kwargs=kwargs)
-                    else:
-                        # image, landmarks, not masked, not glyph
-                        image.view_landmarks(group=group,
-                                             with_labels=with_labels[k],
-                                             render_legend=(legend_enabled
-                                                            and not subplots_enabled),
-                                             render_numbering=numbering_enabled,
-                                             obj_view_kwargs={'channels':channels},
-                                             lmark_view_kwargs=kwargs)
+                    # image, landmarks, masked, not glyph
+                    renderer = image.view_landmarks(
+                        channels=channels, masked=masked_enabled, group=group,
+                        with_labels=with_labels[k], without_labels=None,
+                        figure_id=renderer.figure_id, new_figure=False,
+                        render_lines=render_lines, line_colour=line_colour,
+                        line_style=line_style, line_width=line_width,
+                        render_markers=render_markers,
+                        marker_style=marker_style, marker_size=marker_size,
+                        marker_face_colour=marker_face_colour,
+                        marker_edge_colour=marker_edge_colour,
+                        marker_edge_width=marker_edge_width,
+                        render_numbering=render_numbering,
+                        numbers_horizontal_align=numbers_horizontal_align,
+                        numbers_vertical_align=numbers_vertical_align,
+                        numbers_font_name=numbers_font_name,
+                        numbers_font_size=numbers_font_size,
+                        numbers_font_style=numbers_font_style,
+                        numbers_font_weight=numbers_font_weight,
+                        numbers_font_colour=numbers_font_colour,
+                        render_legend=render_legend, legend_title=legend_title,
+                        legend_font_name=legend_font_name,
+                        legend_font_style=legend_font_style,
+                        legend_font_size=legend_font_size,
+                        legend_font_weight=legend_font_weight,
+                        legend_marker_scale=legend_marker_scale,
+                        legend_location=legend_location,
+                        legend_bbox_to_anchor=legend_bbox_to_anchor,
+                        legend_border_axes_pad=legend_border_axes_pad,
+                        legend_n_columns=legend_n_columns,
+                        legend_horizontal_spacing=legend_horizontal_spacing,
+                        legend_vertical_spacing=legend_vertical_spacing,
+                        legend_border=legend_border,
+                        legend_border_padding=legend_border_padding,
+                        legend_shadow=legend_shadow,
+                        legend_rounded_corners=legend_rounded_corners,
+                        render_axes=render_axes, axes_font_name=axes_font_name,
+                        axes_font_size=axes_font_size,
+                        axes_font_style=axes_font_style,
+                        axes_font_weight=axes_font_weight,
+                        axes_x_limits=axes_x_limits,
+                        axes_y_limits=axes_y_limits, figure_size=figure_size)
         else:
             # either there are not any landmark groups selected or they won't
             # be displayed
             if image_is_masked:
                 if glyph_enabled or sum_enabled:
                     # image, not landmarks, masked, glyph
-                    glyph(image, vectors_block_size=glyph_block_size,
-                          use_negative=glyph_use_negative, channels=channels).\
-                        view(masked=masked_enabled, **kwargs)
+                    renderer = glyph(image, vectors_block_size=glyph_block_size,
+                                     use_negative=glyph_use_negative,
+                                     channels=channels).view(
+                        masked=masked_enabled, render_axes=render_axes,
+                        axes_font_name=axes_font_name,
+                        axes_font_size=axes_font_size,
+                        axes_font_style=axes_font_style,
+                        axes_font_weight=axes_font_weight,
+                        axes_x_limits=axes_x_limits,
+                        axes_y_limits=axes_y_limits,
+                        figure_size=figure_size)
                 else:
                     # image, not landmarks, masked, not glyph
-                    image.view(masked=masked_enabled, channels=channels,
-                               **kwargs)
+                    renderer = image.view(
+                        masked=masked_enabled, channels=channels,
+                        render_axes=render_axes, axes_font_name=axes_font_name,
+                        axes_font_size=axes_font_size,
+                        axes_font_style=axes_font_style,
+                        axes_font_weight=axes_font_weight,
+                        axes_x_limits=axes_x_limits,
+                        axes_y_limits=axes_y_limits, figure_size=figure_size)
             else:
                 if glyph_enabled or sum_enabled:
                     # image, not landmarks, not masked, glyph
-                    glyph(image, vectors_block_size=glyph_block_size,
-                          use_negative=glyph_use_negative, channels=channels).\
-                        view(**kwargs)
+                    renderer = glyph(image, vectors_block_size=glyph_block_size,
+                                     use_negative=glyph_use_negative,
+                                     channels=channels).view(
+                        render_axes=render_axes, axes_font_name=axes_font_name,
+                        axes_font_size=axes_font_size,
+                        axes_font_style=axes_font_style,
+                        axes_font_weight=axes_font_weight,
+                        axes_x_limits=axes_x_limits,
+                        axes_y_limits=axes_y_limits, figure_size=figure_size)
                 else:
                     # image, not landmarks, not masked, not glyph
-                    image.view(channels=channels, **kwargs)
+                    renderer = image.view(
+                        channels=channels, render_axes=render_axes,
+                        axes_font_name=axes_font_name,
+                        axes_font_size=axes_font_size,
+                        axes_font_style=axes_font_style,
+                        axes_font_weight=axes_font_weight,
+                        axes_x_limits=axes_x_limits,
+                        axes_y_limits=axes_y_limits, figure_size=figure_size)
     else:
         # image won't be displayed
-        if landmarks_enabled and len(groups) > 0:
+        if render_landmarks and len(groups) > 0:
             # there are selected landmark groups and they will be displayed
             if subplots_enabled:
                 # calculate subplots structure
@@ -883,41 +970,19 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                 if subplots_enabled:
                     # create subplot
                     plt.subplot(subplots[0], subplots[1], k + 1)
-                    # set axes to equal spacing
-                    plt.gca().axis('equal')
                     if legend_enabled:
                         # set subplot's title
                         plt.title(subplots_titles[group])
-                    if not axes_visible:
-                        # turn axes on/off
-                        plt.axis('off')
-                    if image_axes_mode:
-                        # set axes mode to image
-                        plt.gca().invert_yaxis()
-                image.landmarks[group].lms.view(image_view=image_axes_mode,
-                                                colour_array=groups_colours[group],
-                                                **kwargs)
+                image.landmarks[group].lms.view(image_view=image_axes_mode)
             if not subplots_enabled:
-                # set axes to equal spacing
-                plt.gca().axis('equal')
                 if legend_enabled:
                     # display legend on side
                     plt.legend(groups, loc='best')
-                if image_axes_mode:
-                    # set axes mode to image
-                    plt.gca().invert_yaxis()
-
-    # set figure size
-    plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
-
-    # turn axis on/off
-    if not axes_visible:
-        plt.axis('off')
 
     # show plot
     plt.show()
 
-    return figure_id
+    return renderer
 
 
 def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,

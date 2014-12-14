@@ -3,7 +3,8 @@ from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   ToggleButtonWidget, RadioButtonsWidget,
                                   IntTextWidget, DropdownWidget, LatexWidget,
                                   ButtonWidget, SelectWidget, FloatTextWidget,
-                                  TextWidget, TabWidget, ImageWidget)
+                                  TextWidget, TabWidget, ImageWidget,
+                                  BoundedIntTextWidget)
 import numpy as np
 from collections import OrderedDict
 from functools import partial
@@ -28,9 +29,8 @@ from .lowlevelhelpers import (colour_selection, format_colour_selection,
                               update_legend_options)
 
 
-def channel_options(n_channels, image_is_masked, plot_function=None,
-                    masked_default=False, toggle_show_default=True,
-                    toggle_show_visible=True):
+def channel_options(channels_options_default, plot_function=None,
+                    toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Channel Options. Specifically, it has:
         1) Two radio buttons that select an options mode, depending on whether
@@ -59,15 +59,8 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
         glyph_all.children = [glyph_checkbox, glyph_options]
         glyph_options.children = [block_size_text, use_negative_checkbox]
 
-    The returned widget saves the selected values in the following fields:
-        channel_options_wid.n_channels
-        channel_options_wid.image_is_masked
-        channel_options_wid.channels
-        channel_options_wid.glyph_enabled
-        channel_options_wid.glyph_block_size
-        channel_options_wid.glyph_use_negative
-        channel_options_wid.sum_enabled
-        channel_options_wid.masked_enabled
+    The returned widget saves the selected values in the following dictionary:
+        channel_options_wid.selected_values
 
     To fix the alignment within this widget please refer to
     `format_channel_options()` function.
@@ -77,19 +70,20 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
 
     Parameters
     ----------
-    n_channels : `int`
-        The number of channels.
-
-    image_is_masked : `boolean`
-        Flag that defines whether the image is an instance of :map:`MaskedImage`
-        or subclass.
+    channels_options_default : `dict`
+        The initial options. For example:
+            channels_options_default = {'n_channels': 10,
+                                        'image_is_masked': True,
+                                        'channels': 0,
+                                        'glyph_enabled': False,
+                                        'glyph_block_size': 3,
+                                        'glyph_use_negative': False,
+                                        'sum_enabled': False,
+                                        'masked_enabled': True}
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
-
-    masked_default : `boolean`, optional
-        The initial value of the masked checkbox.
 
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
@@ -98,37 +92,68 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
         The visibility of the toggle button.
     """
     # if image is not masked, then masked flag should be disabled
-    if not image_is_masked:
-        masked_default = False
+    if not channels_options_default['image_is_masked']:
+        channels_options_default['masked_enabled'] = False
+
+    # parse channels
+    if isinstance(channels_options_default['channels'], list):
+        if len(channels_options_default['channels']) == 1:
+            mode_default = 'Single'
+            first_slider_default = channels_options_default['channels'][0]
+            second_slider_default = channels_options_default['n_channels']-1
+        else:
+            mode_default = 'Multiple'
+            first_slider_default = min(channels_options_default['channels'])
+            second_slider_default = max(channels_options_default['channels'])
+    elif channels_options_default['channels'] is None:
+        mode_default = 'Single'
+        first_slider_default = 0
+        second_slider_default = channels_options_default['n_channels']-1
+    else:
+        mode_default = 'Single'
+        first_slider_default = channels_options_default['channels']
+        second_slider_default = channels_options_default['n_channels']-1
 
     # Create all necessary widgets
     # If single channel, disable all options apart from masked
     but = ToggleButtonWidget(description='Channels Options',
                              value=toggle_show_default,
                              visible=toggle_show_visible)
-    mode = RadioButtonsWidget(values=["Single", "Multiple"], value="Single",
-                              description='Mode:', visible=toggle_show_default,
-                              disabled=n_channels == 1)
-    masked = CheckboxWidget(value=masked_default, description='Masked',
-                            visible=toggle_show_default and image_is_masked)
-    first_slider_wid = IntSliderWidget(min=0, max=n_channels-1, step=1,
-                                       value=0, description='Channel',
-                                       visible=toggle_show_default,
-                                       disabled=n_channels == 1)
-    second_slider_wid = IntSliderWidget(min=1, max=n_channels-1, step=1,
-                                        value=n_channels-1, description='To',
-                                        visible=False, disabled=n_channels == 1)
-    rgb_wid = CheckboxWidget(value=n_channels == 3, description='RGB',
-                             visible=toggle_show_default and n_channels == 3)
-    sum_wid = CheckboxWidget(value=False, description='Sum', visible=False,
-                             disabled=n_channels == 1)
-    glyph_wid = CheckboxWidget(value=False, description='Glyph', visible=False,
-                               disabled=n_channels == 1)
-    glyph_block_size = IntTextWidget(description='Block size', value='3',
-                                     visible=False, disabled=n_channels == 1)
-    glyph_use_negative = CheckboxWidget(description='Negative values',
-                                        value=False, visible=False,
-                                        disabled=n_channels == 1)
+    mode = RadioButtonsWidget(
+        values=["Single", "Multiple"], value=mode_default, description='Mode:',
+        visible=toggle_show_default,
+        disabled=channels_options_default['n_channels'] == 1)
+    masked = CheckboxWidget(
+        value=channels_options_default['masked_enabled'], description='Masked',
+        visible=toggle_show_default and channels_options_default['image_is_masked'])
+    first_slider_wid = IntSliderWidget(
+        min=0, max=channels_options_default['n_channels']-1, step=1,
+        value=first_slider_default, description='Channel',
+        visible=toggle_show_default,
+        disabled=channels_options_default['n_channels'] == 1)
+    second_slider_wid = IntSliderWidget(
+        min=1, max=channels_options_default['n_channels']-1, step=1,
+        value=second_slider_default, description='To',
+        visible=mode_default == "Multiple",
+        disabled=channels_options_default['n_channels'] == 1)
+    rgb_wid = CheckboxWidget(
+        value=channels_options_default['n_channels'] == 3 and channels_options_default['channels'] == None,
+        description='RGB',
+        visible=toggle_show_default and channels_options_default['n_channels'] == 3)
+    sum_wid = CheckboxWidget(
+        value=channels_options_default['sum_enabled'], description='Sum',
+        visible=False, disabled=channels_options_default['n_channels'] == 1)
+    glyph_wid = CheckboxWidget(
+        value=channels_options_default['glyph_enabled'], description='Glyph',
+        visible=False, disabled=channels_options_default['n_channels'] == 1)
+    glyph_block_size = BoundedIntTextWidget(
+        description='Block size', min=1, max=25,
+        value=channels_options_default['glyph_block_size'], visible=False,
+        disabled=channels_options_default['n_channels'] == 1)
+    glyph_use_negative = CheckboxWidget(
+        description='Negative values',
+        value=channels_options_default['glyph_use_negative'], visible=False,
+        disabled=channels_options_default['n_channels'] == 1)
 
     # Group widgets
     glyph_options = ContainerWidget(children=[glyph_block_size,
@@ -147,24 +172,15 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
     channel_options_wid = ContainerWidget(children=[but, all_but_toggle])
 
     # Initialize output variables
-    channel_options_wid.n_channels = n_channels
-    channel_options_wid.image_is_masked = image_is_masked
-    if n_channels == 3:
-        channel_options_wid.channels = None
-    else:
-        channel_options_wid.channels = 0
-    channel_options_wid.glyph_enabled = False
-    channel_options_wid.glyph_block_size = 3
-    channel_options_wid.glyph_use_negative = False
-    channel_options_wid.sum_enabled = False
-    channel_options_wid.masked_enabled = masked_default
+    channel_options_wid.selected_values = channels_options_default
 
     # Define mode visibility
     def mode_selection_fun(name, value):
         if value == 'Single':
             first_slider_wid.description = 'Channel'
             first_slider_wid.min = 0
-            first_slider_wid.max = channel_options_wid.n_channels - 1
+            first_slider_wid.max = \
+                channel_options_wid.selected_values['n_channels'] - 1
             second_slider_wid.visible = False
             sum_wid.visible = False
             sum_wid.value = False
@@ -174,14 +190,18 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
             glyph_block_size.value = '3'
             glyph_use_negative.visible = False
             glyph_use_negative.value = False
-            rgb_wid.visible = channel_options_wid.n_channels == 3
-            rgb_wid.value = channel_options_wid.n_channels == 3
+            rgb_wid.visible = \
+                channel_options_wid.selected_values['n_channels'] == 3
+            rgb_wid.value = \
+                channel_options_wid.selected_values['n_channels'] == 3
         else:
             first_slider_wid.description = 'From'
             first_slider_wid.min = 0
-            first_slider_wid.max = channel_options_wid.n_channels - 1
+            first_slider_wid.max = \
+                channel_options_wid.selected_values['n_channels'] - 1
             second_slider_wid.min = 0
-            second_slider_wid.max = channel_options_wid.n_channels - 1
+            second_slider_wid.max = \
+                channel_options_wid.selected_values['n_channels'] - 1
             second_slider_wid.value = first_slider_wid.value
             second_slider_wid.visible = True
             rgb_wid.visible = False
@@ -194,6 +214,8 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
             glyph_block_size.value = '3'
             glyph_use_negative.visible = False
             glyph_use_negative.value = False
+    mode_selection_fun('', mode_default)
+    second_slider_wid.value - second_slider_default
     mode.on_trait_change(mode_selection_fun, 'value')
 
     # Define glyph visibility
@@ -221,22 +243,14 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
         channel_options_wid.masked_enabled = value
     masked.on_trait_change(masked_fun, 'value')
 
-    # Check block size value
-    def block_size_fun(name, value):
-        if value <= 0:
-            glyph_block_size.value = 1
-        if value >25:
-            glyph_block_size.value = 25
-    glyph_block_size.on_trait_change(block_size_fun, 'value')
-
     # Function that gets glyph/sum options
     def get_glyph_options(name, value):
-        channel_options_wid.glyph_enabled = glyph_wid.value
-        channel_options_wid.sum_enabled = sum_wid.value
-        channel_options_wid.glyph_use_negative = glyph_use_negative.value
-        channel_options_wid.glyph_block_size = glyph_block_size.value
-        if channel_options_wid.sum_enabled:
-            channel_options_wid.glyph_block_size = 1
+        channel_options_wid.selected_values['glyph_enabled'] = glyph_wid.value
+        channel_options_wid.selected_values['sum_enabled'] = sum_wid.value
+        channel_options_wid.selected_values['glyph_use_negative'] = glyph_use_negative.value
+        channel_options_wid.selected_values['glyph_block_size'] = glyph_block_size.value
+        if channel_options_wid.selected_values['sum_enabled']:
+            channel_options_wid.selected_values['glyph_block_size'] = 1
     glyph_wid.on_trait_change(get_glyph_options, 'value')
     sum_wid.on_trait_change(get_glyph_options, 'value')
     glyph_use_negative.on_trait_change(get_glyph_options, 'value')
@@ -255,11 +269,11 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
     def get_channels(name, value):
         if mode.value == "Single":
             if rgb_wid.value:
-                channel_options_wid.channels = None
+                channel_options_wid.selected_values['channels'] = None
             else:
-                channel_options_wid.channels = first_slider_wid.value
+                channel_options_wid.selected_values['channels'] = first_slider_wid.value
         else:
-            channel_options_wid.channels = range(first_slider_wid.value,
+            channel_options_wid.selected_values['channels'] = range(first_slider_wid.value,
                                                  second_slider_wid.value + 1)
     first_slider_wid.on_trait_change(first_slider_val, 'value')
     second_slider_wid.on_trait_change(second_slider_val, 'value')
@@ -268,14 +282,18 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
     rgb_wid.on_trait_change(get_channels, 'value')
     mode.on_trait_change(get_channels, 'value')
 
+    def get_masked(name, value):
+        channel_options_wid.selected_values['masked_enabled'] = value
+    masked.on_trait_change(get_masked, 'value')
+
     # Toggle button function
     def toggle_image_options(name, value):
         mode.visible = value
         if value:
-            masked.visible = channel_options_wid.image_is_masked
+            masked.visible = channel_options_wid.selected_values['image_is_masked']
             if mode.value == 'Single':
                 first_slider_wid.visible = True
-                rgb_wid.visible = channel_options_wid.n_channels == 3
+                rgb_wid.visible = channel_options_wid.selected_values['n_channels'] == 3
             else:
                 first_slider_wid.visible = True
                 second_slider_wid.visible = True
@@ -390,19 +408,20 @@ def update_channel_options(channel_options_wid, n_channels, image_is_masked,
         The value to be assigned at the masked checkbox.
     """
     # if image_is_masked flag has actually changed from the previous value
-    if image_is_masked != channel_options_wid.image_is_masked:
+    if image_is_masked != channel_options_wid.selected_values['image_is_masked']:
         # change the channel_options output
-        channel_options_wid.image_is_masked = image_is_masked
-        channel_options_wid.masked_enabled = masked_default
+        channel_options_wid.selected_values['image_is_masked'] = image_is_masked
+        channel_options_wid.selected_values['masked_enabled'] = masked_default
         # set the masked checkbox state
-        channel_options_wid.children[1].children[0].children[1].visible = channel_options_wid.children[0].value and image_is_masked
+        channel_options_wid.children[1].children[0].children[1].visible = \
+            channel_options_wid.children[0].value and image_is_masked
         channel_options_wid.children[1].children[0].children[1].value = False
 
     # if n_channels are actually different from the previous value
-    if n_channels != channel_options_wid.n_channels:
+    if n_channels != channel_options_wid.selected_values['n_channels']:
         # change the channel_options output
-        channel_options_wid.n_channels = n_channels
-        channel_options_wid.channels = 0
+        channel_options_wid.selected_values['n_channels'] = n_channels
+        channel_options_wid.selected_values['channels'] = 0
         # set the rgb checkbox state
         channel_options_wid.children[1].children[1].children[1].children[2].visible = \
             n_channels == 3 and channel_options_wid.children[0].value
@@ -461,35 +480,24 @@ def update_channel_options(channel_options_wid, n_channels, image_is_masked,
                     channel_options_wid.children[1].children[1].children[0].children[1].value = 0
 
 
-def landmark_options(group_keys, labels_keys, plot_function=None,
-                     landmarks_default=True, legend_default=True,
-                     numbering_default=True, toggle_show_default=True,
-                     toggle_show_visible=True):
+def landmark_options(landmark_options_default, plot_function=None,
+                     toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Landmark Options. Specifically, it has:
         1) A checkbox that controls the landmarks' visibility.
         2) A drop down menu with the available landmark groups.
         3) Several toggle buttons with the group's available labels.
-        4) A checkbox that controls the legend's visibility.
-        5) A checkbox that toggles the numbering visibility.
-        6) A toggle button that controls the visibility of all the above, i.e.
+        4) A toggle button that controls the visibility of all the above, i.e.
            the landmark options.
 
     The structure of the widgets is the following:
-        landmark_options_wid.children = [toggle_button, checkboxes, groups]
-        checkboxes.children = [landmarks_checkbox, legend_checkbox, numbering_checkbox]
+        landmark_options_wid.children = [toggle_button, landmarks_checkbox,
+                                         groups]
         groups.children = [group_drop_down_menu, labels]
         labels.children = [labels_text, labels_toggle_buttons]
 
-    The returned widget saves the selected values in the following fields:
-        landmark_options_wid.group_keys
-        landmark_options_wid.labels_keys
-        landmark_options_wid.labels_toggles
-        landmark_options_wid.landmarks_enabled
-        landmark_options_wid.legend_enabled
-        landmark_options_wid.numbering_enabled
-        landmark_options_wid.group
-        landmark_options_wid.with_labels
+    The returned widget saves the selected values in the following dictionary:
+        landmark_options_wid.selected_values
 
     To fix the alignment within this widget, please refer to
     `format_landmark_options()` function.
@@ -499,19 +507,16 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
 
     Parameters
     ----------
-    group_keys : `list` of `str`
-        A list of the available landmark groups.
-    labels_keys : `list` of `list` of `str`
-        A list of lists of each landmark group's labels.
+    landmark_options_default : `dict`
+        The default options. For example:
+            landmark_options_default = {'render_landmarks': True,
+                                        'group_keys': ['PTS', 'ibug_face_68'],
+                                        'labels_keys': [['all'], ['jaw', 'nose'],
+                                        'group': 'PTS',
+                                        'with_labels': ['all']}
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
-    landmarks_default : `bool`, optional
-        The initial value of the landmarks visibility checkbox.
-    legend_default : `bool`, optional
-        The initial value of the legend's visibility checkbox.
-    numbering_default : `bool`, optional
-        The initial value of the render numbering visibility checkbox.
     toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
     toggle_show_visible : `bool`, optional
@@ -521,47 +526,40 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     but = ToggleButtonWidget(description='Landmarks Options',
                              value=toggle_show_default,
                              visible=toggle_show_visible)
-    landmarks = CheckboxWidget(description='Show landmarks',
-                               value=landmarks_default)
-    legend = CheckboxWidget(description='Show legend', value=legend_default)
-    numbering = CheckboxWidget(description='Show numbering',
-                               value=numbering_default)
-    group = DropdownWidget(values=group_keys, description='Group')
+    landmarks = CheckboxWidget(description='Render landmarks',
+                               value=landmark_options_default['render_landmarks'])
+    group = DropdownWidget(values=landmark_options_default['group_keys'],
+                           description='Group')
     labels_toggles = [[ToggleButtonWidget(description=k, value=True)
-                       for k in s_keys] for s_keys in labels_keys]
+                       for k in s_keys]
+                      for s_keys in landmark_options_default['labels_keys']]
     labels_text = LatexWidget(value='Labels')
     labels = ContainerWidget(children=labels_toggles[0])
 
     # Group widgets
-    checkboxes_wid = ContainerWidget(children=[landmarks, legend,
-                                               numbering])
     labels_and_text = ContainerWidget(children=[labels_text, labels])
     group_wid = ContainerWidget(children=[group, labels_and_text])
 
     # Widget container
-    landmark_options_wid = ContainerWidget(children=[but, checkboxes_wid,
+    landmark_options_wid = ContainerWidget(children=[but, landmarks,
                                                      group_wid])
 
     # Initialize output variables
-    landmark_options_wid.group_keys = group_keys
-    landmark_options_wid.labels_keys = labels_keys
-    landmark_options_wid.labels_toggles = labels_toggles
-    landmark_options_wid.landmarks_enabled = landmarks_default
-    landmark_options_wid.legend_enabled = legend_default
-    landmark_options_wid.numbering_enabled = numbering_default
-    landmark_options_wid.group = group_keys[0]
-    landmark_options_wid.with_labels = labels_keys[0]
+    landmark_options_wid.selected_values = landmark_options_default
+    landmark_options_wid.selected_values['labels_toggles'] = labels_toggles
+    landmark_options_wid.selected_values['group'] = \
+        landmark_options_wid.selected_values['group_keys'][0]
+    landmark_options_wid.selected_values['with_labels'] = \
+        landmark_options_wid.selected_values['labels_keys'][0]
 
     # Disability control
     def landmarks_fun(name, value):
         # get landmarks_enabled value
-        landmark_options_wid.landmarks_enabled = value
-        # disable legend checkbox and group drop down menu
-        legend.disabled = not value
-        numbering.disabled = not value
+        landmark_options_wid.selected_values['render_landmarks'] = value
+        # disable group drop down menu
         group.disabled = not value
         # disable all labels toggles
-        for s_keys in landmark_options_wid.labels_toggles:
+        for s_keys in landmark_options_wid.selected_values['labels_toggles']:
             for k in s_keys:
                 k.disabled = not value
         # if all currently selected labels toggles are False, set them all
@@ -570,20 +568,21 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         if all(item is False for item in all_values):
             for ww in labels.children:
                 ww.value = True
+    landmarks_fun('', landmark_options_wid.selected_values['render_landmarks'])
     landmarks.on_trait_change(landmarks_fun, 'value')
-    landmarks_fun('', landmarks_default)
 
     # Group drop down method
     def group_fun(name, value):
         # get group value
-        landmark_options_wid.group = value
+        landmark_options_wid.selected_values['group'] = value
         # assign the correct children to the labels toggles
-        labels.children = landmark_options_wid.labels_toggles[landmark_options_wid.group_keys.index(value)]
+        labels.children = landmark_options_wid.selected_values['labels_toggles'][landmark_options_wid.selected_values['group_keys'].index(value)]
         # get with_labels value
-        landmark_options_wid.with_labels = []
+        landmark_options_wid.selected_values['with_labels'] = []
         for ww in labels.children:
             if ww.value:
-                landmark_options_wid.with_labels.append(str(ww.description))
+                landmark_options_wid.selected_values['with_labels'].append(
+                    str(ww.description))
         # assign plot_function to all enabled labels
         if plot_function is not None:
             for w in labels.children:
@@ -598,39 +597,27 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         if all(item is False for item in all_values):
             landmarks.value = False
         # get with_labels value
-        landmark_options_wid.with_labels = []
+        landmark_options_wid.selected_values['with_labels'] = []
         for ww in labels.children:
             if ww.value:
-                landmark_options_wid.with_labels.append(str(ww.description))
+                landmark_options_wid.selected_values['with_labels'].append(
+                    str(ww.description))
     # assign labels_fun to all labels toggles (even hidden ones)
-    for s_group in landmark_options_wid.labels_toggles:
+    for s_group in landmark_options_wid.selected_values['labels_toggles']:
         for w in s_group:
             w.on_trait_change(labels_fun, 'value')
-
-    # Legend function
-    def legend_fun(name, value):
-        landmark_options_wid.legend_enabled = value
-    legend.on_trait_change(legend_fun, 'value')
-
-    # Render Labels function
-    def numbering_fun(name, value):
-        landmark_options_wid.numbering_enabled = value
-    numbering.on_trait_change(numbering_fun, 'value')
 
     # Toggle button function
     def show_options(name, value):
         group_wid.visible = value
-        checkboxes_wid.visible = value
+        landmarks.visible = value
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
 
     # assign plot_function
     if plot_function is not None:
-        # assign plot_function to landmarks checkbox, legend
-        # checkbox and group drop down menu
+        # assign plot_function to landmarks checkbox and group drop down menu
         landmarks.on_trait_change(plot_function, 'value')
-        legend.on_trait_change(plot_function, 'value')
-        numbering.on_trait_change(plot_function, 'value')
         group.on_trait_change(plot_function, 'value')
         # assign plot_function to all currently active labels toggles
         for w in labels.children:
@@ -684,12 +671,7 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
 
     # align group drop down menu with labels toggle buttons
     landmark_options_wid.children[2].children[1].set_css('margin-top', '10px')
-    landmark_options_wid.children[2].add_class('start')
-
-    # align checkboxes
-    landmark_options_wid.children[1].children[0].set_css('margin-right', '25px')
-    landmark_options_wid.children[1].remove_class('vbox')
-    landmark_options_wid.children[1].add_class('hbox')
+    landmark_options_wid.children[2].add_class('align-start')
 
     # set toggle button font bold
     landmark_options_wid.children[0].set_css('font-weight',
@@ -707,10 +689,12 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
     r"""
     Function that updates the state of a given landmark_options widget if the
     group or label keys of an image has changed. Usage example:
-        group_keys = ['group1', 'group2']
-        labels_keys = [['label11'], ['label21', 'label22']]
-        landmark_options_wid = landmark_options(group_keys=group_keys,
-                                                labels_keys=labels_keys)
+        landmark_options_default = {'render_landmarks': True,
+                                    'group_keys': ['PTS', 'ibug_face_68'],
+                                    'labels_keys': [['all'], ['jaw', 'nose'],
+                                    'group': 'PTS',
+                                    'with_labels': ['all']}
+        landmark_options_wid = landmark_options(landmark_options_default)
         display(landmark_options_wid)
         format_landmark_options(landmark_options_wid)
         update_landmark_options(landmark_options_wid,
@@ -738,11 +722,13 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
     """
     # check if the new group_keys and labels_keys are the same as the old
     # ones
-    if not _compare_groups_and_labels(group_keys, labels_keys,
-                                      landmark_options_wid.group_keys,
-                                      landmark_options_wid.labels_keys):
+    if not _compare_groups_and_labels(
+            group_keys, labels_keys,
+            landmark_options_wid.selected_values['group_keys'],
+            landmark_options_wid.selected_values['labels_keys']):
         # Create all necessary widgets
-        group = DropdownWidget(values=group_keys, description='Group')
+        group = DropdownWidget(values=group_keys,
+                               description='Group')
         labels_toggles = [[ToggleButtonWidget(description=k, value=True)
                            for k in s_keys] for s_keys in labels_keys]
 
@@ -756,47 +742,46 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
                                          cont]
 
         # Initialize output variables
-        landmark_options_wid.group_keys = group_keys
-        landmark_options_wid.labels_keys = labels_keys
-        landmark_options_wid.labels_toggles = labels_toggles
-        landmark_options_wid.group = group_keys[0]
-        landmark_options_wid.with_labels = labels_keys[0]
+        landmark_options_wid.selected_values['group_keys'] = group_keys
+        landmark_options_wid.selected_values['labels_keys'] = labels_keys
+        landmark_options_wid.selected_values['labels_toggles'] = labels_toggles
+        landmark_options_wid.selected_values['group'] = group_keys[0]
+        landmark_options_wid.selected_values['with_labels'] = group_keys[0]
 
-        # Disability control
         # Disability control
         def landmarks_fun(name, value):
             # get landmarks_enabled value
-            landmark_options_wid.landmarks_enabled = value
-            # disable legend checkbox and group drop down menu
-            landmark_options_wid.children[1].children[1].disabled = not value
-            landmark_options_wid.children[1].children[2].disabled = not value
+            landmark_options_wid.selected_values['render_landmarks'] = value
+            # disable group drop down menu
             group.disabled = not value
             # disable all labels toggles
-            for s_keys in landmark_options_wid.labels_toggles:
+            for s_keys in landmark_options_wid.selected_values['labels_toggles']:
                 for k in s_keys:
                     k.disabled = not value
             # if all currently selected labels toggles are False, set them all
             # to True
-            all_values = [ww.value for ww in landmark_options_wid.children[2].children[1].children[1].children]
+            all_values = [ww.value
+                          for ww in landmark_options_wid.children[2].children[1].children[1].children]
             if all(item is False for item in all_values):
                 for ww in landmark_options_wid.children[2].children[1].children[1].children:
                     ww.value = True
-        landmark_options_wid.children[1].children[0].on_trait_change(landmarks_fun, 'value')
-        landmarks_fun('', landmark_options_wid.landmarks_enabled)
+        landmark_options_wid.children[1].on_trait_change(landmarks_fun, 'value')
+        landmarks_fun('',
+                      landmark_options_wid.selected_values['render_landmarks'])
 
         # Group drop down method
         def group_fun(name, value):
             # get group value
-            landmark_options_wid.group = value
+            landmark_options_wid.selected_values['group'] = value
             # assign the correct children to the labels toggles
             landmark_options_wid.children[2].children[1].children[1].\
-                children = landmark_options_wid.labels_toggles[
-                    landmark_options_wid.group_keys.index(value)]
+                children = landmark_options_wid.selected_values['labels_toggles'][
+                    landmark_options_wid.selected_values['group_keys'].index(value)]
             # get with_labels value
-            landmark_options_wid.with_labels = []
+            landmark_options_wid.selected_values['with_labels'] = []
             for ww in landmark_options_wid.children[2].children[1].children[1].children:
                 if ww.value:
-                    landmark_options_wid.with_labels.append(
+                    landmark_options_wid.selected_values['with_labels'].append(
                         str(ww.description))
             # assign plot_function to all enabled labels
             if plot_function is not None:
@@ -811,13 +796,13 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
             all_values = [ww.value
                           for ww in landmark_options_wid.children[2].children[1].children[1].children]
             if all(item is False for item in all_values):
-                landmark_options_wid.children[1].children[0].value = False
+                landmark_options_wid.children[1].value = False
             # get with_labels value
-            landmark_options_wid.with_labels = []
+            landmark_options_wid.selected_values['with_labels'] = []
             for ww in landmark_options_wid.children[2].children[1].children[1].\
                     children:
                 if ww.value:
-                    landmark_options_wid.with_labels.append(
+                    landmark_options_wid.selected_values['with_labels'].append(
                         str(ww.description))
         # assign labels_fun to all labels toggles (even hidden ones)
         for s_group in labels_toggles:
@@ -844,12 +829,12 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         # didn't have any landmarks. So disable the show_landmarks checkbox.
         if len(group_keys) == 1 and group_keys[0] == ' ':
             # No landmarks are provided. So disable the show landmarks checkbox
-            landmark_options_wid.children[1].children[0].value = False
-            landmark_options_wid.children[1].children[0].disabled = True
+            landmark_options_wid.children[1].value = False
+            landmark_options_wid.children[1].disabled = True
         else:
-            if landmark_options_wid.children[1].children[0].disabled:
-                landmark_options_wid.children[1].children[0].disabled = False
-                landmark_options_wid.children[1].children[0].value = True
+            if landmark_options_wid.children[1].disabled:
+                landmark_options_wid.children[1].disabled = False
+                landmark_options_wid.children[1].value = True
 
 
 def info_print(toggle_show_default=True, toggle_show_visible=True):
@@ -3313,6 +3298,9 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     options_wid = TabWidget(children=[path_wid, page_wid, colour_wid])
     save_figure_wid = ContainerWidget(children=[but, options_wid, save_but])
 
+    # Assign renderer
+    save_figure_wid.renderer = [renderer]
+
     # save function
     def save_function(name):
         # set save button state
@@ -3323,15 +3311,13 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
         selected_dpi = dpi_wid.value
         if dpi_wid.value == 0:
             selected_dpi = None
-        print facecolour_wid.selected_values[0]
-        renderer.save_figure(filename=filename.value, dpi=selected_dpi,
-                             face_colour=facecolour_wid.selected_values[0],
-                             edge_colour=edgecolour_wid.selected_values[0],
-                             orientation=orientation_wid.value,
-                             paper_type=papertype_wid.value,
-                             format=format_wid.value,
-                             transparent=transparent_wid.value,
-                             pad_inches=pad_inches_wid.value)
+        save_figure_wid.renderer[0].save_figure(
+            filename=filename.value, dpi=selected_dpi,
+            face_colour=facecolour_wid.selected_values[0],
+            edge_colour=edgecolour_wid.selected_values[0],
+            orientation=orientation_wid.value, paper_type=papertype_wid.value,
+            format=format_wid.value, transparent=transparent_wid.value,
+            pad_inches=pad_inches_wid.value)
 
         # set save button state
         save_but.description = 'Save'

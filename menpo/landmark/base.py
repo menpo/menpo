@@ -91,7 +91,7 @@ class LandmarkableViewable(Landmarkable, Viewable):
                        axes_font_name='sans-serif', axes_font_size=10,
                        axes_font_style='normal', axes_font_weight='normal',
                        axes_x_limits=None, axes_y_limits=None,
-                       figure_size=(6, 4), obj_view_kwargs=None):
+                       figure_size=(6, 4)):
         """
         View all landmarks on the current shape, using the default
         shape view method. Kwargs passed in here will be passed through
@@ -910,7 +910,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, figure_size=(6, 4))
+            axes_y_limits=axes_y_limits, figure_size=figure_size)
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(
