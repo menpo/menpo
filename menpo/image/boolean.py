@@ -13,17 +13,14 @@ class BooleanImage(Image):
 
     Parameters
     -----------
-    mask_data : (M, N, ..., L) ndarray
+    mask_data : ``(M, N, ..., L)`` `ndarray`
         The binary mask data. Note that there is no channel axis - a 2D Mask
         Image is built from just a 2D numpy array of mask_data.
         Automatically coerced in to boolean values.
-
-    copy: bool, optional
+    copy: `bool`, optional
         If False, the image_data will not be copied on assignment. Note that
         if the array you provide is not boolean, there **will still be copy**.
         In general this should only be used if you know what you are doing.
-
-        Default: `False`
     """
 
     def __init__(self, mask_data, copy=True):
@@ -41,6 +38,10 @@ class BooleanImage(Image):
         super(BooleanImage, self).__init__(mask_data, copy=copy)
 
     def as_masked(self, mask=None, copy=True):
+        r"""
+        Impossible for a :map:`BooleanImage` to be transformed to a
+        :map:`MaskedImage`.
+        """
         raise NotImplementedError("as_masked cannot be invoked on a "
                                   "BooleanImage.")
 
@@ -51,19 +52,13 @@ class BooleanImage(Image):
 
         Parameters
         ----------
-        shape : tuple or list
+        shape : `tuple` or `list`
             The shape of the image. Any floating point values are rounded
             according to the `round` kwarg.
-
-        fill : True or False, optional
-            The mask value to be set everywhere
-
-            Default: True (masked region is the whole image - meaning the whole
-                 image is exposed)
-        round: {'ceil', 'floor', 'round'}
+        fill : `bool`, optional
+            The mask value to be set everywhere.
+        round: {``ceil``, ``floor``, ``round``}, optional
             Rounding function to be applied to floating point shapes.
-
-            Default: 'ceil'
 
         Returns
         -------
@@ -85,55 +80,55 @@ class BooleanImage(Image):
         Returns the pixels of the mask with no channel axis. This is what
         should be used to mask any k-dimensional image.
 
-        :type: (M, N, ..., L), np.bool ndarray
+        :type: ``(M, N, ..., L)``, `bool` `ndarray`
         """
         return self.pixels[..., 0]
 
     def n_true(self):
         r"""
-        The number of `True` values in the mask
+        The number of ``True`` values in the mask.
 
-        :type: int
+        :type: `int`
         """
         return np.sum(self.pixels)
 
     def n_false(self):
         r"""
-        The number of `False` values in the mask
+        The number of ``False`` values in the mask.
 
-        :type: int
+        :type: `int`
         """
         return self.n_pixels - self.n_true()
 
     def all_true(self):
         r"""
-        True iff every element of the mask is True.
+        ``True`` iff every element of the mask is ``True``.
 
-        :type: bool
+        :type: `bool`
         """
         return np.all(self.pixels)
 
     def proportion_true(self):
         r"""
-        The proportion of the mask which is `True`
+        The proportion of the mask which is ``True``.
 
-        :type: double
+        :type: `float`
         """
         return (self.n_true() * 1.0) / self.n_pixels
 
     def proportion_false(self):
         r"""
-        The proportion of the mask which is `False`
+        The proportion of the mask which is ``False``
 
-        :type: double
+        :type: float
         """
         return (self.n_false() * 1.0) / self.n_pixels
 
     def true_indices(self):
         r"""
-        The indices of pixels that are true.
+        The indices of pixels that are ``True``.
 
-        :type: (`n_dims`, `n_true`) ndarray
+        :type: ``(n_dims, n_true)`` `ndarray`
         """
         if self.all_true():
             return self.indices()
@@ -143,9 +138,9 @@ class BooleanImage(Image):
 
     def false_indices(self):
         r"""
-        The indices of pixels that are false.
+        The indices of pixels that are ``Flase``.
 
-        :type: (`n_dims`, `n_false`) ndarray
+        :type: ``(n_dims, n_false)`` `ndarray`
         """
         # Ignore the channel axis
         return np.vstack(np.nonzero(~self.pixels[..., 0])).T
@@ -166,13 +161,10 @@ class BooleanImage(Image):
 
         Parameters
         ----------
-        vector : (`n_pixels`,) np.bool ndarray
-            A flattened vector of all the pixels of a BooleanImage.
-
-        copy : bool, optional
-            If false, no copy of the vector will be taken.
-
-            Default: True
+        vector : ``(n_pixels,)`` `bool` `ndarray`
+            A flattened vector of all the pixels of a :map:`BooleanImage`.
+        copy : `bool`, optional
+            If ``False``, no copy of the vector will be taken.
 
         Returns
         -------
@@ -181,8 +173,8 @@ class BooleanImage(Image):
 
         Raises
         ------
-        Warning : If copy=False cannot be honored.
-
+        Warning
+            If copy=False cannot be honored.
         """
         mask = BooleanImage(vector.reshape(self.shape), copy=copy)
         mask.landmarks = self.landmarks
@@ -191,7 +183,6 @@ class BooleanImage(Image):
     def invert_inplace(self):
         r"""
         Inverts this Boolean Image inplace.
-
         """
         self.pixels = ~self.pixels
 
@@ -201,11 +192,9 @@ class BooleanImage(Image):
 
         Returns
         -------
-
         inverted : :map:`BooleanImage`
             A copy of this boolean mask, where all True values are False and
             all False values are True.
-
         """
         inverse = self.copy()
         inverse.invert_inplace()
@@ -220,28 +209,22 @@ class BooleanImage(Image):
 
         Parameters
         ----------
-        boundary : int, optional
+        boundary : `int`, optional
             A number of pixels that should be added to the extent. A
             negative value can be used to shrink the bounds in.
-
-            Default: 0
-
-        constrain_to_bounds: bool, optional
-            If True, the bounding extent is snapped to not go beyond
-            the edge of the image. If False, the bounds are left unchanged.
-
-            Default: True
+        constrain_to_bounds: `bool`, optional
+            If ``True``, the bounding extent is snapped to not go beyond
+            the edge of the image. If ``False``, the bounds are left unchanged.
 
         Returns
         --------
-        min_b : (D,) ndarray
-            The minimum extent of the True mask region with the boundary
-            along each dimension. If constrain_to_bounds was True,
+        min_b : ``(D,)`` `ndarray`
+            The minimum extent of the ``True`` mask region with the boundary
+            along each dimension. If `constrain_to_bounds` was ``True``,
             is clipped to legal image bounds.
-
-        max_b : (D,) ndarray
-            The maximum extent of the True mask region with the boundary
-            along each dimension. If constrain_to_bounds was True,
+        max_b : ``(D,)`` `ndarray`
+            The maximum extent of the ``True`` mask region with the boundary
+            along each dimension. If `constrain_to_bounds` was ``True``,
             is clipped to legal image bounds.
         """
         mpi = self.true_indices()
@@ -261,28 +244,22 @@ class BooleanImage(Image):
 
         Parameters
         ----------
-        boundary : int >= 0, optional
+        boundary : `int` >= 0, optional
             A number of pixels that should be added to the extent. A
             negative value can be used to shrink the bounds in.
-
-            Default: 0
-
-        constrain_to_bounds: bool, optional
-            If True, the bounding extent is snapped to not go beyond
-            the edge of the image. If False, the bounds are left unchanged.
-
-            Default: True
+        constrain_to_bounds: `bool`, optional
+            If ``True``, the bounding extent is snapped to not go beyond
+            the edge of the image. If ``False``, the bounds are left unchanged.
 
         Returns
         --------
-        min_b : (D,) ndarray
-            The minimum extent of the False mask region with the boundary
-            along each dimension. If constrain_to_bounds was True,
+        min_b : ``(D,)`` `ndarray`
+            The minimum extent of the ``True`` mask region with the boundary
+            along each dimension. If `constrain_to_bounds` was ``True``,
             is clipped to legal image bounds.
-
-        max_b : (D,) ndarray
-            The maximum extent of the False mask region with the boundary
-            along each dimension. If constrain_to_bounds was True,
+        max_b : ``(D,)`` `ndarray`
+            The maximum extent of the ``True`` mask region with the boundary
+            along each dimension. If `constrain_to_bounds` was ``True``,
             is clipped to legal image bounds.
         """
         return self.invert().bounds_true(
@@ -303,22 +280,18 @@ class BooleanImage(Image):
         template_mask : :map:`BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
-
         transform : :map:`Transform`
             Transform **from the template space back to this image**.
             Defines, for each pixel location on the template, which pixel
             location should be sampled from on this image.
-
         warp_landmarks : `bool`, optional
-            If `True`, warped_image will have the same landmark dictionary
+            If ``True``, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
-
-        mode : `str`, optional
+        mode : {``constant, ``nearest``, ``reflect`` or ``wrap``}, optional
             Points outside the boundaries of the input are filled according
-            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
-
+            to the given mode.
         cval : `float`, optional
-            Used in conjunction with mode 'constant', the value outside
+            Used in conjunction with mode ``'constant'``, the value outside
             the image boundaries.
 
         Returns
@@ -344,32 +317,27 @@ class BooleanImage(Image):
 
         Parameters
         ----------
-        template_shape : (n_dims, ) tuple or ndarray
+        template_shape : ``(n_dims, )`` `tuple` or `ndarray`
             Defines the shape of the result, and what pixel indices should be
             sampled (all of them).
-
         transform : :map:`Transform`
             Transform **from the template_shape space back to this image**.
             Defines, for each index on template_shape, which pixel location
             should be sampled from on this image.
-
         warp_landmarks : `bool`, optional
             If `True`, ``warped_image`` will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
-
-        mode : `str`, optional
+        mode : {``constant, ``nearest``, ``reflect`` or ``wrap``}, optional
             Points outside the boundaries of the input are filled according
-            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
-
+            to the given mode.
         cval : `float`, optional
-            Used in conjunction with mode 'constant', the value outside
+            Used in conjunction with mode ``'constant'``, the value outside
             the image boundaries.
 
         Returns
         -------
         warped_image : :map:`BooleanImage`
             A copy of this image, warped.
-
         """
         # call the super variant and get ourselves an Image back
         # note that we force the use of order=0 for BooleanImages.
@@ -387,8 +355,8 @@ class BooleanImage(Image):
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values,
                               **kwargs):
-        r"""Builds the warped image from the template mask and
-        sampled pixel values.
+        r"""
+        Builds the warped image from the template mask and sampled pixel values.
         """
         # start from a copy of the template_mask
         warped_img = template_mask.copy()
@@ -408,24 +376,16 @@ class BooleanImage(Image):
 
         Parameters
         ----------
-        group : string, Optional
-            The key of the landmark set that should be used. If None,
+        group : `str`, optional
+            The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
-
-            Default: None
-
-        label: string, Optional
+        label: `str`, optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
-
-            Default: None
-
-        trilist: (t, 3) ndarray, Optional
+        trilist: ``(t, 3)`` `ndarray`, optional
             Triangle list to be used on the landmarked points in selecting
             the mask region. If None defaults to performing Delaunay
             triangulation on the points.
-
-            Default: None
         """
         self.constrain_to_pointcloud(self.landmarks[group][label],
                                      trilist=trilist)
@@ -437,14 +397,11 @@ class BooleanImage(Image):
         Parameters
         ----------
         pointcloud : :map:`PointCloud`
-            The pointcloud of points that should be constrained to
-
-        trilist: (t, 3) ndarray, Optional
-            Triangle list to be used on the points in selecting
+            The pointcloud of points that should be constrained to.
+        trilist: ``(t, 3)`` `ndarray`, optional
+            Triangle list to be used on the landmarked points in selecting
             the mask region. If None defaults to performing Delaunay
             triangulation on the points.
-
-            Default: None
         """
         from menpo.transform.piecewiseaffine import PiecewiseAffine
         from menpo.transform.piecewiseaffine import TriangleContainmentError
