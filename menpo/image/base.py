@@ -501,12 +501,12 @@ class Image(Vectorizable, LandmarkableViewable):
     def view_widget(self, popup=False):
         r"""
         Visualizes the image object using the
-        menpo.visualize.widgets.visualize_images widget.
+        :ref:`menpo.visualize.widgets.visualize_images` widget.
 
         Parameters
         -----------
-        popup : `boolean`, optional
-            If enabled, the widget will appear as a popup window.
+        popup : `bool`, optional
+            If ``True``, the widget will appear as a popup window.
         """
         from menpo.visualize import visualize_images
         visualize_images(self, figure_size=(6, 4), popup=popup)

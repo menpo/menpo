@@ -333,16 +333,19 @@ def update_index_selection(index_wid, index_selection_default,
     index_wid.selected_values = index_selection_default
 
 
-def colour_selection(default_colour_list, plot_function=None,
-                     title='Colour', labels=None):
+def colour_selection(default_colour_list, plot_function=None, title='Colour',
+                     labels=None):
     r"""
     Creates a widget with Colour Selection Options. Specifically, it has:
-        1) A drop down menu with predefined colours and a 'custom' entry.
-        2) If 'custom is selected, then three float text boxes appear to enter
-        the desired RGB values.
+        1) A label selection if more than one colours are provided.
+        2) An 'apply to all labels' button.
+        3) A drop down menu with predefined colours and a 'custom' entry.
+        4) If 'custom is selected, then three float text boxes appear to enter
+           the desired RGB values.
 
     The structure of the widgets is the following:
-        colour_selection_wid.children = [drop_down_menu, rgb]
+        colour_selection_wid.children = [labels, drop_down_menu, rgb]
+        labels.children = [selection_dropdown, apply_to_all_button]
         rgb.children = [r_value, g_value, b_value]
 
     The returned widget saves the selected values in the following list:
@@ -356,9 +359,10 @@ def colour_selection(default_colour_list, plot_function=None,
 
     Parameters
     ----------
-    default_colour_list : `list` of `str` or `list` of `float`
+    default_colour_list : `list` of `str` or [`float`, `float`, `float`]
         If `str`, it must be one of {'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'}.
-        If `list`, it defines an RGB value and must have length 3.
+        If [`float`, `float`, `float`], it defines an RGB value and must have
+        length 3.
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
@@ -366,6 +370,9 @@ def colour_selection(default_colour_list, plot_function=None,
 
     title : `str`, optional
         The description of the drop down menu.
+
+    labels : `list`, optional
+        A list with the labels' names.
     """
     # check if multiple mode should be enabled
     n_labels = len(default_colour_list)
@@ -384,17 +391,19 @@ def colour_selection(default_colour_list, plot_function=None,
     colour_dict['custom'] = 'custom'
 
     # Labels dropdown menu
-    if multiple:
-        labels_dict = OrderedDict()
-        if labels is None:
-            for k in range(n_labels):
-                labels_dict[str(k)] = k
-        else:
-            for k, l in enumerate(labels):
-                labels_dict[l] = k
-        selection = DropdownWidget(values=labels_dict, value=0,
-                                   description=title)
-        apply_to_all = ButtonWidget(description='apply to all labels')
+    labels_dict = OrderedDict()
+    if labels is None:
+        labels = []
+        for k in range(n_labels):
+            labels_dict["label {}".format(k)] = k
+            labels.append("label {}".format(k))
+    else:
+        for k, l in enumerate(labels):
+            labels_dict[l] = k
+    selection = DropdownWidget(values=labels_dict, value=0)
+    apply_to_all = ButtonWidget(description='apply to all labels')
+    labels_wid = ContainerWidget(children=[selection, apply_to_all],
+                                 visible=multiple)
 
     # find default values
     def decode_colour(colour):
@@ -415,21 +424,19 @@ def colour_selection(default_colour_list, plot_function=None,
     b_wid = BoundedFloatTextWidget(value=b_val, min=0.0, max=1.0)
     menu = DropdownWidget(values=colour_dict, value=default_colour,
                           description='')
-    if not multiple:
-        menu.description = title
     rgb = ContainerWidget(children=[r_wid, g_wid, b_wid])
 
-    # Final widget
     if multiple:
-        colour_selection_wid = ContainerWidget(children=[selection,
-                                                         apply_to_all,
-                                                         menu, rgb])
+        selection.description = title
     else:
-        colour_selection_wid = ContainerWidget(children=[menu, rgb])
+        menu.description = title
+
+    # Final widget
+    colour_selection_wid = ContainerWidget(children=[labels_wid, menu, rgb])
 
     # Assign output
-    colour_selection_wid.selected_values = default_colour_list
-    colour_selection_wid.multiple = multiple
+    colour_selection_wid.selected_values = {'colour': default_colour_list,
+                                            'labels': labels}
 
     # control visibility
     def show_rgb(name, value):
@@ -441,35 +448,38 @@ def colour_selection(default_colour_list, plot_function=None,
     menu.on_trait_change(show_rgb, 'value')
 
     # functions in case of multiple
-    if multiple:
-        def apply_to_all_function(name):
-            if menu.value == 'custom':
-                tmp = [r_wid.value, g_wid.value, b_wid.value]
-            else:
-                tmp = menu.value
-            for idx in range(len(colour_selection_wid.selected_values)):
-                colour_selection_wid.selected_values[idx] = tmp
-        apply_to_all.on_click(apply_to_all_function)
+    def apply_to_all_function(name):
+        if menu.value == 'custom':
+            tmp = [r_wid.value, g_wid.value, b_wid.value]
+        else:
+            tmp = menu.value
+        #for idx in range(len(colour_selection_wid.selected_values['colour'])):
+        #    colour_selection_wid.selected_values['colour'][idx] = tmp
+        #colour_selection_wid.selected_values['colour'] = [tmp] * len(colour_selection_wid.selected_values['colour'])
+        if selection.value == 0:
+            selection.value = 1
+        else:
+            selection.value = 0
+    apply_to_all.on_click(apply_to_all_function)
 
-        def selection_function(name, value):
-            colour, r_val, g_val, b_val = decode_colour(colour_selection_wid.selected_values[value])
-            menu.value = colour
-            r_wid.value = r_val
-            g_wid.value = g_val
-            b_wid.value = b_val
-        selection.on_trait_change(selection_function, 'value')
+    def selection_function(name, value):
+        colour, r_val, g_val, b_val = decode_colour(colour_selection_wid.selected_values['colour'][value])
+        menu.value = colour
+        r_wid.value = r_val
+        g_wid.value = g_val
+        b_wid.value = b_val
+    selection.on_trait_change(selection_function, 'value')
 
     # save colour
     def get_colour(name, value):
-        idx = 0
-        if multiple:
-            idx = selection.value
+        idx = selection.value
+        print idx
         if menu.value == 'custom':
-            colour_selection_wid.selected_values[idx] = [r_wid.value,
-                                                         g_wid.value,
-                                                         b_wid.value]
+            colour_selection_wid.selected_values['colour'][idx] = [r_wid.value,
+                                                                   g_wid.value,
+                                                                   b_wid.value]
         else:
-            colour_selection_wid.selected_values[idx] = menu.value
+            colour_selection_wid.selected_values['colour'][idx] = menu.value
     menu.on_trait_change(get_colour, 'value')
     r_wid.on_trait_change(get_colour, 'value')
     g_wid.on_trait_change(get_colour, 'value')
@@ -481,6 +491,11 @@ def colour_selection(default_colour_list, plot_function=None,
         r_wid.on_trait_change(plot_function, 'value')
         g_wid.on_trait_change(plot_function, 'value')
         b_wid.on_trait_change(plot_function, 'value')
+
+        def new_plot_function(name):
+            return plot_function(name, '')
+
+        apply_to_all.on_click(new_plot_function)
 
     return colour_selection_wid
 
@@ -498,72 +513,114 @@ def format_colour_selection(colour_selection_wid):
     colour_selection_wid :
         The widget object generated by the `colour_selection()` function.
     """
-    k = 1
-    if colour_selection_wid.multiple:
-        k = 3
-
-    # align r, g, b values
-    colour_selection_wid.children[k].remove_class('vbox')
-    colour_selection_wid.children[k].add_class('hbox')
-    colour_selection_wid.children[k].add_class('align-start')
-
-    # set width of r, g, b
-    colour_selection_wid.children[k].children[0].set_css('width', '0.5cm')
-    colour_selection_wid.children[k].children[1].set_css('width', '0.5cm')
-    colour_selection_wid.children[k].children[2].set_css('width', '0.5cm')
-
-    # align drop down menu with r, g, b values
+    # align selection container and colour
     colour_selection_wid.add_class('align-end')
 
+    # align r, g, b values
+    colour_selection_wid.children[2].remove_class('vbox')
+    colour_selection_wid.children[2].add_class('hbox')
+    colour_selection_wid.children[2].add_class('align-start')
 
-def update_colour_selection(colour_selection_wid, default_colour_list):
+    # set width of r, g, b
+    colour_selection_wid.children[2].children[0].set_css('width', '0.5cm')
+    colour_selection_wid.children[2].children[1].set_css('width', '0.5cm')
+    colour_selection_wid.children[2].children[2].set_css('width', '0.5cm')
+
+    # align label selection and apply to all button
+    colour_selection_wid.children[0].add_class('align-end')
+
+
+def update_colour_selection(colour_selection_wid, default_colour_list,
+                            labels=None):
     r"""
     Function that updates the state of a given colour_selection widget. Usage
     example:
-        colour_selection_wid = colour_selection(default_colour_list='r')
+        colour_selection_wid = colour_selection(default_colour_list=['r', 'b'],
+                                                labels=['jaw', 'mouth'])
         display(colour_selection_wid)
         format_colour_selection(colour_selection_wid)
         update_colour_selection(colour_selection_wid,
-                                default_colour_list=[0.5, 0.7, 1.0])
+                                default_colour_list=[[0.5, 0.7, 1.0]],
+                                labels=['all'])
 
     Parameters
     ----------
     colour_selection_wid :
         The widget object generated by the `colour_selection()` function.
 
-    default_colour : `list` of `str` or `list` of `float`
+    default_colour_list : `list` of `str` or [`float`, `float`, `float`]
         If `str`, it must be one of {'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'}.
-        If `list`, it defines an RGB value and must have length 3.
-    """
-    if len(colour_selection_wid.selected_values) == len(default_colour_list):
-        # assign colour
-        colour_selection_wid.selected_values = default_colour_list
+        If [`float`, `float`, `float`], it defines an RGB value and must have
+        length 3.
 
-        if len(colour_selection_wid.children) == 4:
-            # multiple
-            k = colour_selection_wid.children[0].value
-            default_colour = default_colour_list[k]
-            if not isinstance(default_colour, str):
-                r_val = default_colour[0]
-                g_val = default_colour[1]
-                b_val = default_colour[2]
-                default_colour = 'custom'
-                colour_selection_wid.children[3].children[0].value = r_val
-                colour_selection_wid.children[3].children[1].value = g_val
-                colour_selection_wid.children[3].children[2].value = b_val
-            colour_selection_wid.children[2].value = default_colour
-        else:
-            # single
-            default_colour = default_colour_list[0]
-            if not isinstance(default_colour, str):
-                r_val = default_colour[0]
-                g_val = default_colour[1]
-                b_val = default_colour[2]
-                default_colour = 'custom'
-                colour_selection_wid.children[1].children[0].value = r_val
-                colour_selection_wid.children[1].children[1].value = g_val
-                colour_selection_wid.children[1].children[2].value = b_val
-            colour_selection_wid.children[0].value = default_colour
+    labels : `list`, optional
+        A list with the labels' names.
+    """
+    if labels is None:
+        labels = colour_selection_wid.selected_values['labels']
+    if (_lists_are_the_same(colour_selection_wid.selected_values['colour'],
+                            default_colour_list) and
+        not _lists_are_the_same(colour_selection_wid.selected_values['labels'],
+                                labels)):
+        # the provided colours are the same, but the labels changed, so update
+        # the labels
+        colour_selection_wid.selected_values['labels'] = labels
+        labels_dict = OrderedDict()
+        for k, l in enumerate(labels):
+            labels_dict[l] = k
+        colour_selection_wid.children[0].children[0].values = labels_dict
+        colour_selection_wid.children[0].children[0].value = 0
+    elif (not _lists_are_the_same(colour_selection_wid.selected_values['colour'],
+                                  default_colour_list) and
+          _lists_are_the_same(colour_selection_wid.selected_values['labels'],
+                              labels)):
+        # the provided labels are the same, but the colours are different
+        # assign colour
+        colour_selection_wid.selected_values['colour'] = default_colour_list
+        k = colour_selection_wid.children[0].children[0].value
+        default_colour = default_colour_list[k]
+        if not isinstance(default_colour, str):
+            r_val = default_colour[0]
+            g_val = default_colour[1]
+            b_val = default_colour[2]
+            default_colour = 'custom'
+            colour_selection_wid.children[2].children[0].value = r_val
+            colour_selection_wid.children[2].children[1].value = g_val
+            colour_selection_wid.children[2].children[2].value = b_val
+        colour_selection_wid.children[1].value = default_colour
+        colour_selection_wid.children[0].children[0].value = 0
+    elif (not _lists_are_the_same(colour_selection_wid.selected_values['colour'],
+                                  default_colour_list) and not
+          _lists_are_the_same(colour_selection_wid.selected_values['labels'],
+                              labels)):
+        # both the colours and the labels are different
+        # assign colour
+        if len(colour_selection_wid.selected_values['labels']) > 1 and len(labels) == 1:
+            colour_selection_wid.children[1].description = colour_selection_wid.children[0].children[0].description
+            colour_selection_wid.children[0].children[0].description = ''
+        elif len(colour_selection_wid.selected_values['labels']) == 1 and len(labels) > 1:
+            colour_selection_wid.children[0].children[0].description = colour_selection_wid.children[1].description
+            colour_selection_wid.children[1].description = ''
+        colour_selection_wid.children[0].visible = len(labels) > 1
+        colour_selection_wid.selected_values['colour'] = default_colour_list
+        colour_selection_wid.selected_values['labels'] = labels
+        labels_dict = OrderedDict()
+        for k, l in enumerate(labels):
+            labels_dict[l] = k
+        colour_selection_wid.children[0].children[0].values = labels_dict
+        colour_selection_wid.children[0].children[0].value = 0
+        k = 0
+        default_colour = default_colour_list[k]
+        if not isinstance(default_colour, str):
+            r_val = default_colour[0]
+            g_val = default_colour[1]
+            b_val = default_colour[2]
+            default_colour = 'custom'
+            colour_selection_wid.children[2].children[0].value = r_val
+            colour_selection_wid.children[2].children[1].value = g_val
+            colour_selection_wid.children[2].children[2].value = b_val
+        colour_selection_wid.children[1].value = default_colour
+        colour_selection_wid.children[0].children[0].value = 0
 
 
 def line_options(line_options_default, plot_function=None,
@@ -655,18 +712,12 @@ def line_options(line_options_default, plot_function=None,
     def options_visible(name, value):
         line_style.disabled = not value
         line_width.disabled = not value
-        if len(line_colour.children) == 4:
-            line_colour.children[0].disabled = not value
-            line_colour.children[1].disabled = not value
-            line_colour.children[2].disabled = not value
-            line_colour.children[3].children[0].disabled = not value
-            line_colour.children[3].children[1].disabled = not value
-            line_colour.children[3].children[2].disabled = not value
-        else:
-            line_colour.children[0].disabled = not value
-            line_colour.children[1].children[0].disabled = not value
-            line_colour.children[1].children[1].disabled = not value
-            line_colour.children[1].children[2].disabled = not value
+        line_colour.children[0].children[0].disabled = not value
+        line_colour.children[0].children[1].disabled = not value
+        line_colour.children[1].disabled = not value
+        line_colour.children[2].children[0].disabled = not value
+        line_colour.children[2].children[1].disabled = not value
+        line_colour.children[2].children[2].disabled = not value
     options_visible('', line_options_default['render_lines'])
     render_lines.on_trait_change(options_visible, 'value')
 
@@ -683,7 +734,7 @@ def line_options(line_options_default, plot_function=None,
         line_options_wid.selected_values['line_style'] = value
     line_style.on_trait_change(save_line_style, 'value')
 
-    line_options_wid.selected_values['line_colour'] = line_colour.selected_values
+    line_options_wid.selected_values['line_colour'] = line_colour.selected_values['colour']
 
     # Toggle button function
     def toggle_fun(name, value):
@@ -761,7 +812,7 @@ def format_line_options(line_options_wid, container_padding='6px',
         line_options_wid.set_css('border', container_border)
 
 
-def update_line_options(line_options_wid, line_options_dict):
+def update_line_options(line_options_wid, line_options_dict, labels=None):
     r"""
     Function that updates the state of a given line_options widget. Usage
     example:
@@ -812,7 +863,7 @@ def update_line_options(line_options_wid, line_options_dict):
     if 'line_colour' in line_options_dict.keys():
         update_colour_selection(
             line_options_wid.children[1].children[1].children[2],
-            line_options_dict['line_colour'])
+            line_options_dict['line_colour'], labels=labels)
 
 
 def marker_options(marker_options_default, plot_function=None,
@@ -936,14 +987,18 @@ def marker_options(marker_options_default, plot_function=None,
         marker_style.disabled = not value
         marker_size.disabled = not value
         marker_edge_width.disabled = not value
-        marker_face_colour.children[0].disabled = not value
-        marker_face_colour.children[1].children[0].disabled = not value
-        marker_face_colour.children[1].children[1].disabled = not value
-        marker_face_colour.children[1].children[2].disabled = not value
-        marker_edge_colour.children[0].disabled = not value
-        marker_edge_colour.children[1].children[0].disabled = not value
-        marker_edge_colour.children[1].children[1].disabled = not value
-        marker_edge_colour.children[1].children[2].disabled = not value
+        marker_face_colour.children[0].children[0].disabled = not value
+        marker_face_colour.children[0].children[1].disabled = not value
+        marker_face_colour.children[1].disabled = not value
+        marker_face_colour.children[2].children[0].disabled = not value
+        marker_face_colour.children[2].children[1].disabled = not value
+        marker_face_colour.children[2].children[2].disabled = not value
+        marker_edge_colour.children[0].children[0].disabled = not value
+        marker_edge_colour.children[0].children[1].disabled = not value
+        marker_edge_colour.children[1].disabled = not value
+        marker_edge_colour.children[2].children[0].disabled = not value
+        marker_edge_colour.children[2].children[1].disabled = not value
+        marker_edge_colour.children[2].children[2].disabled = not value
     options_visible('', marker_options_default['render_markers'])
     render_markers.on_trait_change(options_visible, 'value')
 
@@ -965,9 +1020,9 @@ def marker_options(marker_options_default, plot_function=None,
     marker_style.on_trait_change(save_markerstyle, 'value')
 
     marker_options_wid.selected_values['marker_edge_colour'] = \
-        marker_edge_colour.selected_values
+        marker_edge_colour.selected_values['colour']
     marker_options_wid.selected_values['marker_face_colour'] = \
-        marker_face_colour.selected_values
+        marker_face_colour.selected_values['colour']
 
     # Toggle button function
     def toggle_fun(name, value):
@@ -1273,10 +1328,12 @@ def numbering_options(numbers_options_default, plot_function=None,
         numbers_font_size.disabled = not value
         numbers_font_style.disabled = not value
         numbers_font_weight.disabled = not value
-        numbers_font_colour.children[0].disabled = not value
-        numbers_font_colour.children[1].children[0].disabled = not value
-        numbers_font_colour.children[1].children[1].disabled = not value
-        numbers_font_colour.children[1].children[2].disabled = not value
+        numbers_font_colour.children[0].children[0].disabled = not value
+        numbers_font_colour.children[0].children[1].disabled = not value
+        numbers_font_colour.children[1].disabled = not value
+        numbers_font_colour.children[2].children[0].disabled = not value
+        numbers_font_colour.children[2].children[1].disabled = not value
+        numbers_font_colour.children[2].children[2].disabled = not value
         numbers_horizontal_align.disabled = not value
         numbers_vertical_align.disabled = not value
     options_visible('', numbers_options_default['render_numbering'])
@@ -1314,7 +1371,7 @@ def numbering_options(numbers_options_default, plot_function=None,
     numbers_vertical_align.on_trait_change(save_numbers_vertical_align, 'value')
 
     numbering_options_wid.selected_values['numbers_font_colour'] = \
-        numbers_font_colour.selected_values
+        numbers_font_colour.selected_values['colour']
 
     # Toggle button function
     def toggle_fun(name, value):
@@ -1607,7 +1664,7 @@ def figure_options(figure_options_default, plot_function=None,
     if figure_options_default['axes_x_limits'] is None:
         tmp1 = False
         tmp2 = 0.
-        tmp3 = 0.
+        tmp3 = 100.
     else:
         tmp1 = True
         tmp2 = figure_options_default['axes_x_limits'][0]
@@ -1622,7 +1679,7 @@ def figure_options(figure_options_default, plot_function=None,
     if figure_options_default['axes_y_limits'] is None:
         tmp1 = False
         tmp2 = 0.
-        tmp3 = 0.
+        tmp3 = 100.
     else:
         tmp1 = True
         tmp2 = figure_options_default['axes_y_limits'][0]
@@ -1889,7 +1946,7 @@ def update_figure_options(figure_options_wid, figure_options_dict):
         if figure_options_dict['axes_x_limits'] is None:
             tmp1 = False
             tmp2 = 0.
-            tmp3 = 0.
+            tmp3 = 100.
         else:
             tmp1 = True
             tmp2 = figure_options_dict['axes_x_limits'][0]
@@ -1903,7 +1960,7 @@ def update_figure_options(figure_options_wid, figure_options_dict):
         if figure_options_dict['axes_y_limits'] is None:
             tmp1 = False
             tmp2 = 0.
-            tmp3 = 0.
+            tmp3 = 100.
         else:
             tmp1 = True
             tmp2 = figure_options_dict['axes_y_limits'][0]
@@ -3873,3 +3930,13 @@ def _convert_image_to_bytes(image):
     image.as_PILImage().save(fp, format='png')
     fp.seek(0)
     return fp.read()
+
+
+def _lists_are_the_same(a, b):
+    if len(a) == len(b):
+        for i, j in zip(a, b):
+            if i != j:
+                return False
+        return True
+    else:
+        return False

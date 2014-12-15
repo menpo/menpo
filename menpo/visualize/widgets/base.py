@@ -6,7 +6,8 @@ import numpy as np
 from collections import Sized
 
 from menpo.visualize.viewmatplotlib import (MatplotlibSubplots,
-                                            MatplotlibImageViewer2d)
+                                            MatplotlibImageViewer2d,
+                                            sample_colours_from_colourmap)
 
 from .helpers import (channel_options, format_channel_options,
                       update_channel_options,
@@ -15,9 +16,10 @@ from .helpers import (channel_options, format_channel_options,
                       animation_options, format_animation_options,
                       save_figure_options, format_save_figure_options,
                       features_options, format_features_options, viewer_options,
-                      format_viewer_options)
+                      format_viewer_options, update_viewer_options)
 from .lowlevelhelpers import (logo, format_logo, figure_options,
-                              format_figure_options)
+                              format_figure_options, update_colour_selection,
+                              update_line_options)
 
 # This glyph import is called frequently during visualisation, so we ensure
 # that we only import it once
@@ -104,20 +106,21 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     r"""
     Widget that allows browsing through a list of images.
 
+    The images can have a combination of different attributes, e.g. masked or
+    not, landmarked or not, without multiple landmark groups and labels etc.
+    The widget has options tabs regarding the visualized channels, the
+    landmarks, the renderer (lines, markers, numbering, legend, figure, axes)
+    and saving the figure to file.
+
     Parameters
     -----------
     images : `list` of :map:`Image` or subclass
-        The list of images to be displayed. Note that the images can have
-        different attributes between them, i.e. different landmark groups and
-        labels, different number of channels etc.
-
+        The `list` of images to be visualized.
     figure_size : (`int`, `int`), optional
-        The initial size of the plotted figures.
-
+        The initial size of the rendered figure.
     popup : `bool`, optional
         If ``True``, the widget will appear as a popup window.
-
-    images_browser_style : ``buttons`` or ``slider``, optional
+    images_browser_style : {``buttons``, ``slider``}, optional
         It defines whether the selector of the images will have the form of
         plus/minus buttons or a slider.
     """
@@ -157,8 +160,8 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     landmark_options_default = {'render_landmarks': first_has_landmarks,
                                 'group_keys': initial_groups_keys,
                                 'labels_keys': initial_labels_keys,
-                                'group': 'PTS',
-                                'with_labels': ['all']}
+                                'group': None,
+                                'with_labels': None}
     lines_options = {'render_lines': True,
                      'line_width': 1,
                      'line_colour': ['r'],
@@ -230,9 +233,6 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         update_info(images[im], image_is_masked, image_has_landmarks,
                     landmark_options_wid.selected_values['group'])
 
-        # get the current figure id
-        #renderer = save_figure_wid.renderer[0]
-
         # show image with selected options
         tmp1 = viewer_options_wid.selected_values[0]['lines']
         tmp2 = viewer_options_wid.selected_values[0]['markers']
@@ -241,6 +241,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         tmp5 = viewer_options_wid.selected_values[0]['figure']
         new_figure_size = (tmp5['x_scale'] * figure_size[0],
                            tmp5['y_scale'] * figure_size[1])
+        #print tmp1['line_colour'][:n_labels]
         renderer = _visualize(
             images[im], save_figure_wid.renderer[0], True,
             landmark_options_wid.selected_values['render_landmarks'],
@@ -252,11 +253,11 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
             channel_options_wid.selected_values['glyph_use_negative'],
             channel_options_wid.selected_values['sum_enabled'],
             [landmark_options_wid.selected_values['group']],
-            landmark_options_wid.selected_values['with_labels'],
+            [landmark_options_wid.selected_values['with_labels']],
             False, dict(), True, False,
             tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
-            tmp1['line_colour'], tmp2['render_markers'], tmp2['marker_style'],
-            tmp2['marker_size'], tmp2['marker_edge_width'],
+            tmp1['line_colour'][0], tmp2['render_markers'],
+            tmp2['marker_style'], tmp2['marker_size'], tmp2['marker_edge_width'],
             tmp2['marker_edge_colour'], tmp2['marker_face_colour'],
             tmp3['render_numbering'], tmp3['numbers_font_name'],
             tmp3['numbers_font_size'], tmp3['numbers_font_style'],
@@ -447,7 +448,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     update_widgets('', 0)
 
     # Reset value to trigger initial visualization
-    landmark_options_wid.children[1].value = False
+    viewer_options_wid.children[1].children[1].children[3].children[1].children[0].value = False
 
 
 def visualize_shapes(shapes, figure_size=(7, 7), popup=False,

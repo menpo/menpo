@@ -746,7 +746,7 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         landmark_options_wid.selected_values['labels_keys'] = labels_keys
         landmark_options_wid.selected_values['labels_toggles'] = labels_toggles
         landmark_options_wid.selected_values['group'] = group_keys[0]
-        landmark_options_wid.selected_values['with_labels'] = group_keys[0]
+        landmark_options_wid.selected_values['with_labels'] = labels_keys[0]
 
         # Disability control
         def landmarks_fun(name, value):
@@ -2410,7 +2410,7 @@ def update_animation_options(animation_options_wid, index_selection_default,
 
 
 def viewer_options(viewer_options_default, options_tabs, objects_names=None,
-                   plot_function=None, toggle_show_visible=True,
+                   labels=None, plot_function=None, toggle_show_visible=True,
                    toggle_show_default=True):
     r"""
     Creates a widget with Viewer Options. Specifically, it has:
@@ -2547,7 +2547,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                              toggle_show_visible=False,
                              toggle_show_default=True,
                              plot_function=plot_function,
-                             show_checkbox_title='Render lines'))
+                             show_checkbox_title='Render lines', labels=labels))
             tab_titles.append('Lines')
         elif o == 'markers':
             options_widgets.append(
@@ -2723,6 +2723,35 @@ def format_viewer_options(viewer_options_wid, container_padding='6px',
     viewer_options_wid.set_css('margin', container_margin)
     if border_visible:
         viewer_options_wid.set_css('border', container_border)
+
+
+def update_viewer_options(viewer_options_wid, viewer_options_default,
+                          labels=None):
+    for k, o in enumerate(viewer_options_wid.options_tabs):
+        if o == 'lines' and 'lines' in viewer_options_default:
+            update_line_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                viewer_options_default['lines'], labels=labels)
+        elif o == 'markers' and viewer_options_default.has_key('markers'):
+            update_marker_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                viewer_options_default['markers'])
+        elif o == 'numbering' and viewer_options_default.has_key('numbering'):
+            update_numbering_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                viewer_options_default['numbering'])
+        elif o == 'figure_one' and viewer_options_default.has_key('figure'):
+            update_figure_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                viewer_options_default['figure'])
+        elif o == 'figure_two' and viewer_options_default.has_key('figure'):
+            update_figure_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                viewer_options_default['figure'])
+        elif o == 'legend' and viewer_options_default.has_key('legend'):
+            update_legend_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                viewer_options_default['legend'])
 
 
 def plot_options(plot_options_default, plot_function=None,

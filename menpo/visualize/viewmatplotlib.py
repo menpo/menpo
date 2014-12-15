@@ -229,7 +229,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
     def _render(self, image_view=False, render_lines=True, line_colour='r',
                 line_style='-', line_width=1, render_markers=True,
-                marker_style='o', marker_size=20, marker_face_colour='k',
+                marker_style='o', marker_size=20, marker_face_colour='r',
                 marker_edge_colour='k', marker_edge_width=1., render_axes=True,
                 axes_font_name='sans-serif', axes_font_size=10,
                 axes_font_style='normal', axes_font_weight='normal',
@@ -311,7 +311,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
 
     def _render(self, image_view=False, render_lines=True, line_colour='r',
                 line_style='-', line_width=1, render_markers=True,
-                marker_style='o', marker_size=20, marker_face_colour='k',
+                marker_style='o', marker_size=20, marker_face_colour='r',
                 marker_edge_colour='k', marker_edge_width=1.,
                 render_numbering=False, numbers_horizontal_align='center',
                 numbers_vertical_align='bottom',
@@ -334,8 +334,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
+        n_labels = len(self.labels_to_masks)
         if render_lines:
-            n_labels = len(self.labels_to_masks)
             if line_colour is None:
                 # sample colours from jet colour map
                 line_colour = sample_colours_from_colourmap(n_labels, 'jet')
@@ -344,6 +344,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             elif len(line_colour) != n_labels:
                 raise ValueError('Must pass a list of n_labels line colours '
                                  'or a single line colour for all labels.')
+        else:
+            line_colour = [None] * n_labels
 
         # Get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
