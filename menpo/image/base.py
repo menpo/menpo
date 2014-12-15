@@ -500,8 +500,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
     def view_widget(self, popup=False):
         r"""
-        Visualizes the image object using the
-        :ref:`menpo.visualize.widgets.visualize_images` widget.
+        Visualizes the image object using the :map:`visualize_images` widget.
 
         Parameters
         -----------

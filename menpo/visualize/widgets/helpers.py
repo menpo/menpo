@@ -2573,7 +2573,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                                figure_scale_step=0.1, figure_scale_visible=True,
                                axes_visible=True, toggle_show_default=True,
                                toggle_show_visible=False))
-            tab_titles.append('Figure')
+            tab_titles.append('Figure/Axes')
         elif o == 'figure_two':
             options_widgets.append(
                 figure_options_two_scales(
@@ -2582,7 +2582,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                     figure_scales_bounds=(0.1, 2), figure_scales_step=0.1,
                     figure_scales_visible=True, axes_visible=True,
                     toggle_show_default=True, toggle_show_visible=False))
-            tab_titles.append('Figure')
+            tab_titles.append('Figure/Axes')
         elif o == 'legend':
             options_widgets.append(
                 legend_options(viewer_options_default[0]['legend'],
@@ -3342,8 +3342,8 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
             selected_dpi = None
         save_figure_wid.renderer[0].save_figure(
             filename=filename.value, dpi=selected_dpi,
-            face_colour=facecolour_wid.selected_values[0],
-            edge_colour=edgecolour_wid.selected_values[0],
+            face_colour=facecolour_wid.selected_values['colour'][0],
+            edge_colour=edgecolour_wid.selected_values['colour'][0],
             orientation=orientation_wid.value, paper_type=papertype_wid.value,
             format=format_wid.value, transparent=transparent_wid.value,
             pad_inches=pad_inches_wid.value)

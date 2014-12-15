@@ -260,6 +260,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
             # a PointGraph, which represent each one of the labels, unless a
             # PointCLoud is passed in.
             label = None
+            ax.autoscale()
 
         # Scatter
         if render_markers:

@@ -1,13 +1,13 @@
 from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
-                                  RadioButtonsWidget, ButtonWidget)
+                                  RadioButtonsWidget, ButtonWidget,
+                                  CheckboxWidget)
 from IPython.display import display, clear_output
 import matplotlib.pylab as plt
 import numpy as np
 from collections import Sized
 
 from menpo.visualize.viewmatplotlib import (MatplotlibSubplots,
-                                            MatplotlibImageViewer2d,
-                                            sample_colours_from_colourmap)
+                                            MatplotlibImageViewer2d)
 
 from .helpers import (channel_options, format_channel_options,
                       update_channel_options,
@@ -101,8 +101,218 @@ def _raw_info_string_to_latex(raw):
     return _join_bullets_as_latex_math(bullets)
 
 
+def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
+                          browser_style='buttons'):
+    r"""
+    Widget that allows browsing through a list of pointclouds and pointgraphs.
+
+    The widget has options tabs regarding the renderer (lines, markers, figure,
+    axes) and saving the figure to file.
+
+    Parameters
+    -----------
+    pointclouds : `list` of :map:`PointCloud` or :map:`PointGraph` or subclass
+        The `list` of pointclouds to be visualized.
+    figure_size : (`int`, `int`), optional
+        The initial size of the rendered figure.
+    popup : `bool`, optional
+        If ``True``, the widget will appear as a popup window.
+    browser_style : {``buttons``, ``slider``}, optional
+        It defines whether the selector of the pointclouds will have the form of
+        plus/minus buttons or a slider.
+    """
+    # make sure that pointclouds is a list even with one pointcloud member
+    if not isinstance(pointclouds, Sized):
+        pointclouds = [pointclouds]
+
+    # find number of pointclouds
+    n_pointclouds = len(pointclouds)
+
+    # initial options dictionaries
+    lines_options = {'render_lines': False,
+                     'line_width': 1,
+                     'line_colour': ['r'],
+                     'line_style': '-'}
+    markers_options = {'render_markers': True,
+                       'marker_size': 20,
+                       'marker_face_colour': ['r'],
+                       'marker_edge_colour': ['k'],
+                       'marker_style': 'o',
+                       'marker_edge_width': 1}
+    figure_options = {'x_scale': 1.,
+                      'y_scale': 1.,
+                      'render_axes': False,
+                      'axes_font_name': 'sans-serif',
+                      'axes_font_size': 10,
+                      'axes_font_style': 'normal',
+                      'axes_font_weight': 'normal',
+                      'axes_x_limits': None,
+                      'axes_y_limits': None}
+    viewer_options_default = {'lines': lines_options,
+                              'markers': markers_options,
+                              'figure': figure_options}
+    index_selection_default = {'min': 0,
+                               'max': n_pointclouds-1,
+                               'step': 1,
+                               'index': 0}
+
+    # define plot function
+    def plot_function(name, value):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
+        # get selected pointcloud number
+        im = 0
+        if n_pointclouds > 1:
+            im = pointcloud_number_wid.selected_values['index']
+
+        # update info text widget
+        update_info(pointclouds[im])
+
+        # show image with selected options
+        tmp1 = viewer_options_wid.selected_values[0]['lines']
+        tmp2 = viewer_options_wid.selected_values[0]['markers']
+        tmp3 = viewer_options_wid.selected_values[0]['figure']
+        new_figure_size = (tmp3['x_scale'] * figure_size[0],
+                           tmp3['y_scale'] * figure_size[1])
+
+        renderer = pointclouds[im].view(
+            figure_id=save_figure_wid.renderer[0].figure_id,
+            new_figure=False, image_view=image_view_wid.value,
+            render_lines=tmp1['render_lines'],
+            line_colour=tmp1['line_colour'][0],
+            line_style=tmp1['line_style'], line_width=tmp1['line_width'],
+            render_markers=tmp2['render_markers'],
+            marker_style=tmp2['marker_style'], marker_size=tmp2['marker_size'],
+            marker_face_colour=tmp2['marker_face_colour'],
+            marker_edge_colour=tmp2['marker_edge_colour'],
+            marker_edge_width=tmp2['marker_edge_width'],
+            render_axes=tmp3['render_axes'],
+            axes_font_name=tmp3['axes_font_name'],
+            axes_font_size=tmp3['axes_font_size'],
+            axes_font_style=tmp3['axes_font_style'],
+            axes_font_weight=tmp3['axes_font_weight'],
+            axes_x_limits=tmp3['axes_x_limits'],
+            axes_y_limits=tmp3['axes_y_limits'],
+            figure_size=new_figure_size,
+            label=None)
+
+        plt.show()
+
+        # save the current figure id
+        save_figure_wid.renderer[0] = renderer
+
+    # define function that updates info text
+    def update_info(pointcloud):
+        min_b, max_b = pointcloud.bounds()
+        rang = pointcloud.range()
+        cm = pointcloud.centre()
+        # Create info string
+        info_txt = r"""
+             {0} points.
+             Bounds: [{1:.1f}-{2:.1f}]W, [{3:.1f}-{4:.1f}]H.
+             Range: {5:.1f}W, {6:.1f}H
+             Centre of mass: ({7:.1f}, {8:.1f})
+        """.format(pointcloud.n_points, min_b[0], max_b[0], min_b[1],
+                   max_b[1], rang[0], rang[1], cm[0], cm[1])
+
+        # update info widget text
+        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
+
+    # viewer options widget
+    image_view_wid = CheckboxWidget(description='Image mode', value=True)
+    image_view_wid.on_trait_change(plot_function, 'value')
+    viewer_options_wid = viewer_options(viewer_options_default,
+                                        ['lines', 'markers', 'figure_one'],
+                                        objects_names=None,
+                                        plot_function=plot_function,
+                                        toggle_show_visible=False,
+                                        toggle_show_default=True)
+    viewer_options_all = ContainerWidget(children=[image_view_wid,
+                                                   viewer_options_wid])
+    info_wid = info_print(toggle_show_default=True,
+                          toggle_show_visible=False)
+
+    # save figure widget
+    initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
+                                               image=np.zeros((10, 10)))
+    save_figure_wid = save_figure_options(initial_renderer,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
+
+    # create final widget
+    if n_pointclouds > 1:
+        # pointcloud selection slider
+        pointcloud_number_wid = animation_options(
+            index_selection_default, plot_function=plot_function,
+            index_description='Pointcloud Number', index_minus_description='<',
+            index_plus_description='>', index_style=browser_style,
+            index_text_editable=True, loop_default=True, interval_default=0.3,
+            toggle_show_title='Pointcloud Options', toggle_show_default=True,
+            toggle_show_visible=False)
+
+        # final widget
+        logo_wid = ContainerWidget(children=[logo(), pointcloud_number_wid])
+        button_title = 'Pointclouds Menu'
+    else:
+        # final widget
+        logo_wid = logo()
+        button_title = 'Pointcloud Menu'
+    # create popup widget if asked
+    cont_wid = TabWidget(children=[info_wid, viewer_options_all,
+                                   save_figure_wid])
+    if popup:
+        wid = PopupWidget(children=[logo_wid, cont_wid],
+                          button_text=button_title)
+    else:
+        wid = ContainerWidget(children=[logo_wid, cont_wid])
+
+    # display final widget
+    display(wid)
+
+    # set final tab titles
+    tab_titles = ['Pointcloud info', 'Viewer options', 'Save figure']
+    for (k, tl) in enumerate(tab_titles):
+        wid.children[1].set_title(k, tl)
+
+    # align-start the pointcloud number widget and the rest
+    if n_pointclouds > 1:
+        wid.add_class('align-start')
+
+    # format options' widgets
+    if n_pointclouds > 1:
+        wid.children[0].remove_class('vbox')
+        wid.children[0].add_class('hbox')
+        format_animation_options(pointcloud_number_wid,
+                                 index_text_width='1.0cm',
+                                 container_padding='6px',
+                                 container_margin='6px',
+                                 container_border='1px solid black',
+                                 toggle_button_font_weight='bold',
+                                 border_visible=False)
+    format_viewer_options(viewer_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold',
+                          border_visible=False,
+                          suboptions_border_visible=True)
+    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+                      container_margin='6px',
+                      container_border='1px solid black',
+                      toggle_button_font_weight='bold', border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm', border_visible=False)
+
+    # Reset value to trigger initial visualization
+    viewer_options_wid.children[1].children[1].children[0].children[1].children[0].value = True
+
+
 def visualize_images(images, figure_size=(6, 4), popup=False,
-                     images_browser_style='buttons'):
+                     browser_style='buttons'):
     r"""
     Widget that allows browsing through a list of images.
 
@@ -120,7 +330,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         The initial size of the rendered figure.
     popup : `bool`, optional
         If ``True``, the widget will appear as a popup window.
-    images_browser_style : {``buttons``, ``slider``}, optional
+    browser_style : {``buttons``, ``slider``}, optional
         It defines whether the selector of the images will have the form of
         plus/minus buttons or a slider.
     """
@@ -370,7 +580,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                                              index_description='Image Number',
                                              index_minus_description='<',
                                              index_plus_description='>',
-                                             index_style=images_browser_style,
+                                             index_style=browser_style,
                                              index_text_editable=True,
                                              loop_default=True,
                                              interval_default=0.3,

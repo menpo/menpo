@@ -843,44 +843,53 @@ class PointGraph(object):
 
         Parameters
         ----------
-        figure_id : optional
+        figure_id : `object`, optional
             The id of the figure to be used.
-
-        new_figure : `boolean`, optional
+        new_figure : `bool`, optional
             If ``True``, a new figure is created.
-
-        image_view : `boolean`, optional
+        image_view : `bool`, optional
             If ``True``, the x and y axes are flipped.
-
         line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
                       ``(3, )`` `ndarray`, optional
             The colour of the lines.
-
         line_style : {``-``, ``--``, ``-.``, ``:``}, optional
             The style of the lines.
-
         line_width : `float`, optional
             The width of the lines.
-
         marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
                         ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
                         ``1``, ``2``, ``3``, ``4``, ``8``}, optional
             The style of the markers.
-
         marker_size : `int`, optional
             The size of the markers in points^2.
-
         marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                              or ``(3, )`` `ndarray`, optional
             The face (filling) colour of the markers.
-
         marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                              or ``(3, )`` `ndarray`, optional
             The edge colour of the markers.
-
         marker_edge_width : `float`, optional
             The width of the markers' edge.
-
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
         label : `str`, optional
             The name entry in case of a legend.
 
@@ -902,6 +911,19 @@ class PointGraph(object):
             axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
             axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
             figure_size=figure_size, label=label)
+
+    def view_widget(self, popup=False):
+        r"""
+        Visualization of the :map:`PointGraph` using the
+        :map:`visualize_pointclouds` widget.
+
+        Parameters
+        ----------
+        popup : `bool`, optional
+            If ``True``, the widget will be rendered in a popup window.
+        """
+        from menpo.visualize import visualize_pointclouds
+        visualize_pointclouds(self, popup=popup, figure_size=(6, 4))
 
 
 class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):

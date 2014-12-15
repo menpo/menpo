@@ -43,6 +43,8 @@ xref_map = {
 'Vectorizable': ('class', 'menpo.base.Vectorizable'),
 'view': ('function', 'menpo.visualize.Viewable.view'),
 'Viewable': ('class', 'menpo.visualize.Viewable'),
+'visualize_images': ('function', 'menpo.visualize.visualize_images'),
+'visualize_pointclouds': ('function', 'menpo.visualize.visualize_pointclouds'),
 'VComposable': ('class', 'menpo.transform.VComposable'),
 'VInvertible': ('class', 'menpo.transform.VInvertible')
 }
