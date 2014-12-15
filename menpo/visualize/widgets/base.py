@@ -451,7 +451,6 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         tmp5 = viewer_options_wid.selected_values[0]['figure']
         new_figure_size = (tmp5['x_scale'] * figure_size[0],
                            tmp5['y_scale'] * figure_size[1])
-        #print tmp1['line_colour'][:n_labels]
         renderer = _visualize(
             images[im], save_figure_wid.renderer[0], True,
             landmark_options_wid.selected_values['render_landmarks'],
@@ -555,17 +554,24 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
 
     # define function that updates options' widgets state
     def update_widgets(name, value):
+        # set channels = 0 to make sure that when plotting is triggered by the
+        # update_landmark_options, we don't get an error for not enough channels
+        tmp_channels = channel_options_wid.selected_values['channels']
+        channel_options_wid.selected_values['channels'] = 0
+
         # get new groups and labels, update landmark options and format them
         group_keys, labels_keys = _extract_groups_labels(images[value])
         update_landmark_options(landmark_options_wid, group_keys,
                                 labels_keys, plot_function)
-        format_landmark_options(landmark_options_wid, container_padding='6px',
+        format_landmark_options(landmark_options_wid,
+                                container_padding='6px',
                                 container_margin='6px',
                                 container_border='1px solid black',
                                 toggle_button_font_weight='bold',
                                 border_visible=False)
 
         # update channel options
+        channel_options_wid.selected_values['channels'] = tmp_channels
         update_channel_options(channel_options_wid,
                                n_channels=images[value].n_channels,
                                image_is_masked=isinstance(images[value],

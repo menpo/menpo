@@ -727,8 +727,7 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
             landmark_options_wid.selected_values['group_keys'],
             landmark_options_wid.selected_values['labels_keys']):
         # Create all necessary widgets
-        group = DropdownWidget(values=group_keys,
-                               description='Group')
+        group = DropdownWidget(values=group_keys, description='Group')
         labels_toggles = [[ToggleButtonWidget(description=k, value=True)
                            for k in s_keys] for s_keys in labels_keys]
 
