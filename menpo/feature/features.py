@@ -6,7 +6,7 @@ scipy_gaussian_filter = None  # expensive
 
 from .base import ndfeature, winitfeature
 from .gradient import gradient_cython
-from .windowiterator import WindowIterator
+from .windowiterator import WindowIterator, WindowIteratorResult
 
 
 @ndfeature
@@ -193,6 +193,10 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
     ValueError
         Window step unit must be either pixels or cells
     """
+    # TODO: This is a temporal fix
+    # flip axis
+    pixels = np.rollaxis(pixels, 0, len(pixels.shape))
+
     # Parse options
     if mode not in ['dense', 'sparse']:
         raise ValueError("HOG features mode must be either dense or sparse")
@@ -278,8 +282,14 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
     if verbose:
         print(iterator)
     # Compute HOG
-    return iterator.HOG(algorithm, num_bins, cell_size, block_size,
-                        signed_gradient, l2_norm_clip, verbose)
+    hog_descriptor = iterator.HOG(algorithm, num_bins, cell_size, block_size,
+                                  signed_gradient, l2_norm_clip, verbose)
+    # TODO: This is a temporal fix
+    # flip axis
+    hog_descriptor = WindowIteratorResult(
+        np.ascontiguousarray(np.rollaxis(hog_descriptor.pixels, -1)),
+        hog_descriptor.centres)
+    return hog_descriptor
 
     # store parameters
     # hog_image.hog_parameters = {'mode': mode, 'algorithm': algorithm,
@@ -651,6 +661,10 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     if samples is None:
         samples = [8]*4
 
+    # TODO: This is a temporal fix
+    # flip axis
+    pixels = np.rollaxis(pixels, 0, len(pixels.shape))
+
     if not skip_checks:
         # Check parameters
         if ((isinstance(radius, int) and isinstance(samples, list)) or
@@ -717,7 +731,14 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         print(iterator)
 
     # Compute LBP
-    return iterator.LBP(radius, samples, mapping_type, verbose)
+    lbp_descriptor = iterator.LBP(radius, samples, mapping_type, verbose)
+
+    # TODO: This is a temporal fix
+    # flip axis
+    lbp_descriptor = WindowIteratorResult(
+        np.ascontiguousarray(np.rollaxis(lbp_descriptor.pixels, -1)),
+        lbp_descriptor.centres)
+    return lbp_descriptor
 
     # # store parameters
     # lbp_image.lbp_parameters = {'radius': radius, 'samples': samples,

@@ -94,7 +94,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     '''
     # Compute image derivatives.
     # Get number of input image's channels
-    n_channels = img.shape[-1]
+    n_channels = img.shape[0]
 
     # Compute image gradient
     grad = gradient(img)
@@ -103,20 +103,20 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     tmp_mag = np.zeros(img.shape)
     tmp_ori = np.zeros(img.shape)
     for c in range(n_channels):
-        tmp_mag[..., c] = sqrt(grad[..., 2*c] ** 2 + grad[..., 2*c+1] ** 2)
-        tmp_ori[..., c] = arctan2(grad[..., 2*c+1], grad[..., 2*c])
-    grad_mag_ind = np.argmax(tmp_mag, axis=2)
+        tmp_mag[c, ...] = sqrt(grad[2*c, ...] ** 2 + grad[2*c+1, ...] ** 2)
+        tmp_ori[c, ...] = arctan2(grad[2*c+1, ...], grad[2*c, ...])
+    grad_mag_ind = np.argmax(tmp_mag, axis=0)
 
     # Compute gradient orientation and magnitude and their contribution
     # to the histograms.
-    b = np.concatenate([(grad_mag_ind == i)[..., None]
-                        for i in xrange(n_channels)], axis=-1)
-    grad_mag = tmp_mag[b].reshape(tmp_mag.shape[:2])
-    grad_ori = tmp_ori[b].reshape(tmp_ori.shape[:2])
+    b = np.concatenate([(grad_mag_ind == i)[None, ...]
+                        for i in xrange(n_channels)], axis=0)
+    grad_mag = tmp_mag[b].reshape(tmp_mag.shape[1:])
+    grad_ori = tmp_ori[b].reshape(tmp_ori.shape[1:])
     orientation_kappa = orientations / pi
     orientation_angles = [2 * o * pi / orientations - pi
                           for o in range(orientations)]
-    hist = np.empty((orientations,) + img.shape[:2], dtype=float)
+    hist = np.empty((orientations,) + img.shape[1:], dtype=float)
     for i, o in enumerate(orientation_angles):
         # Weigh bin contribution by the circular normal distribution
         hist[i, :, :] = exp(orientation_kappa * cos(grad_ori - o))
@@ -134,8 +134,8 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     # Assemble descriptor grid.
     theta = [2 * pi * j / histograms for j in range(histograms)]
     desc_dims = (rings * histograms + 1) * orientations
-    descs = np.empty((desc_dims, img.shape[0] - 2 * radius,
-                      img.shape[1] - 2 * radius))
+    descs = np.empty((desc_dims, img.shape[-2] - 2 * radius,
+                      img.shape[-1] - 2 * radius))
     descs[:orientations, :, :] = hist_smooth[0, :, radius:-radius,
                                              radius:-radius]
     idx = orientations
@@ -150,22 +150,18 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
                                                               x_min:x_max]
             idx += orientations
     descs = descs[:, ::step, ::step]
-    descs = descs.swapaxes(0, 1).swapaxes(1, 2)
 
     # Normalize descriptors.
     if normalization != 'off':
         descs += 1e-10
         if normalization == 'l1':
-            descs /= np.sum(descs, axis=2)[:, :, np.newaxis]
+            descs /= np.sum(descs, axis=0)[np.newaxis, :, :]
         elif normalization == 'l2':
-            descs /= sqrt(np.sum(descs ** 2, axis=2))[:, :, np.newaxis]
+            descs /= sqrt(np.sum(descs ** 2, axis=0))[np.newaxis, :, :]
         elif normalization == 'daisy':
             for i in range(0, desc_dims, orientations):
                 norms = sqrt(np.sum(descs[:, :, i:i + orientations] ** 2,
-                                    axis=2))
-                descs[:, :, i:i + orientations] /= norms[:, :, np.newaxis]
-
-    # Change axes so that the channels go to the final axis
-    descs = np.ascontiguousarray(descs)
+                                    axis=0))
+                descs[:, :, i:i + orientations] /= norms[np.newaxis, :, :]
 
     return descs
