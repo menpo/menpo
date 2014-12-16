@@ -4,6 +4,7 @@ from scipy.misc import imrotate
 from menpo.feature import ndfeature
 
 
+# TODO: Needs fixing ...
 @ndfeature
 def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
     r"""

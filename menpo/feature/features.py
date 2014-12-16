@@ -1,7 +1,6 @@
 from __future__ import division
 import itertools
 import numpy as np
-from cyvlfeat.sift.dsift import dsift as cyvlfeat_dsift
 scipy_gaussian_filter = None  # expensive
 
 from .base import ndfeature, winitfeature
@@ -59,23 +58,6 @@ def gaussian_filter(pixels, sigma):
     for dim in range(pixels.shape[0]):
         scipy_gaussian_filter(pixels[dim, ...], sigma, output=output[dim, ...])
     return output
-
-
-# TODO: Nontas might want to make this nicer ...
-@winitfeature
-def dsift(pixels, step=1, size=3, bounds=None, window_size=2, norm=True,
-          fast=False, float_descriptors=True, geometry=(4, 4, 8)):
-    centers, output = cyvlfeat_dsift(np.rot90(pixels[0, ..., ::-1]),
-                                     step=step, size=size, bounds=bounds,
-                                     window_size=window_size, norm=norm,
-                                     fast=fast,
-                                     float_descriptors=float_descriptors,
-                                     geometry=geometry)
-    shape = pixels.shape[1:] - 2 * centers[:2, 0]
-    return (np.require(output.reshape((-1, shape[0], shape[1])),
-                       dtype=np.double),
-            np.require(centers[:2, ...].T[..., ::-1].reshape(
-                (shape[0], shape[1], 2)), dtype=np.int))
 
 
 # TODO: Needs fixing ...
@@ -453,7 +435,6 @@ def es(image_data, verbose=False):
     #                               self._image.pixels.shape[2]}
 
 
-# TODO: Needs fixing ...
 @ndfeature
 def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
           normalization='l1', sigmas=None, ring_radii=None, verbose=False):
