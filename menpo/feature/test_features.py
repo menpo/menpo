@@ -4,7 +4,7 @@ import random
 import math
 
 from menpo.image import Image, MaskedImage
-from menpo.feature import hog, lbp, es, igo, daisy
+from menpo.feature import hog, lbp, es, igo, daisy, gradient
 import menpo.io as mio
 
 
@@ -15,8 +15,8 @@ def test_imagewindowiterator_hog_padding():
     window_step_horizontal = np.random.randint(1, 10, [n_cases, 1])
     window_step_vertical = np.random.randint(1, 10, [n_cases, 1])
     for i in range(n_cases):
-        image = MaskedImage(np.random.randn(image_height[i, 0],
-                                            image_width[i, 0], 1))
+        image = MaskedImage(np.random.randn(1, image_height[i, 0],
+                                            image_width[i, 0]))
         hog_im = hog(image,
             mode='dense', window_step_vertical=window_step_vertical[i, 0],
             window_step_horizontal=window_step_horizontal[i, 0],
@@ -38,8 +38,8 @@ def test_windowiterator_hog_no_padding():
     window_width = np.random.randint(3, 20, [n_cases, 1])
     window_height = np.random.randint(3, 20, [n_cases, 1])
     for i in range(n_cases):
-        image = MaskedImage(np.random.randn(image_height[i, 0],
-                                            image_width[i, 0], 1))
+        image = MaskedImage(np.random.randn(1, image_height[i, 0],
+                                            image_width[i, 0]))
         hog_img = hog(image,
             mode='dense', cell_size=3, block_size=1,
             window_height=window_height[i, 0], window_width=window_width[i, 0],
@@ -64,8 +64,8 @@ def test_windowiterator_lbp_padding():
     window_step_horizontal = np.random.randint(1, 10, [n_cases, 1])
     window_step_vertical = np.random.randint(1, 10, [n_cases, 1])
     for i in range(n_cases):
-        image = MaskedImage(np.random.randn(image_height[i, 0],
-                                            image_width[i, 0], 1))
+        image = MaskedImage(np.random.randn(1, image_height[i, 0],
+                                            image_width[i, 0]))
         lbp_img = lbp(image,
             window_step_vertical=window_step_vertical[i, 0],
             window_step_horizontal=window_step_horizontal[i, 0],
@@ -86,8 +86,8 @@ def test_windowiterator_lbp_no_padding():
     window_step_vertical = np.random.randint(1, 10, [n_cases, 1])
     radius = np.random.randint(3, 5, [n_cases, 1])
     for i in range(n_cases):
-        image = Image(np.random.randn(image_height[i, 0],
-                                      image_width[i, 0], 1))
+        image = Image(np.random.randn(1, image_height[i, 0],
+                                      image_width[i, 0]))
         lbp_img = lbp(image,
             radius=radius[i, 0], samples=8,
             window_step_vertical=window_step_vertical[i, 0],
@@ -109,7 +109,7 @@ def test_hog_channels_dalaltriggs():
     num_bins = np.random.randint(7, 9, [n_cases, 1])
     channels = np.random.randint(1, 4, [n_cases, 1])
     for i in range(n_cases):
-        image = MaskedImage(np.random.randn(40, 40, channels[i, 0]))
+        image = MaskedImage(np.random.randn(channels[i, 0], 40, 40))
         block_size_pixels = cell_size[i, 0] * block_size[i, 0]
         window_width = np.random.randint(block_size_pixels, 40, 1)
         window_height = np.random.randint(block_size_pixels, 40, 1)
@@ -133,7 +133,7 @@ def test_hog_channels_zhuramanan():
     cell_size = np.random.randint(2, 10, [n_cases, 1])
     channels = np.random.randint(1, 4, [n_cases, 1])
     for i in range(n_cases):
-        image = MaskedImage(np.random.randn(40, 40, channels[i, 0]))
+        image = MaskedImage(np.random.randn(channels[i, 0], 40, 40))
         window_width = np.random.randint(3 * cell_size[i, 0], 40, 1)
         window_height = np.random.randint(3 * cell_size[i, 0], 40, 1)
         hog_img = hog(image, mode='dense', algorithm='zhuramanan',
@@ -159,7 +159,7 @@ def test_lbp_channels():
     for i in range(n_cases):
         radius = random.sample(xrange(1, 10), n_combs[i, 0])
         samples = random.sample(xrange(4, 12), n_combs[i, 0])
-        image = MaskedImage(np.random.randn(40, 40, channels[i, 0]))
+        image = MaskedImage(np.random.randn(channels[i, 0], 40, 40))
         lbp_img = lbp(image, radius=radius, samples=samples,
                       window_step_vertical=3, window_step_horizontal=3,
                       window_step_unit='pixels', padding=True)
@@ -196,7 +196,7 @@ def test_daisy_channels():
     histograms = np.random.randint(1, 6, [n_cases, 1])
     channels = np.random.randint(1, 5, [n_cases, 1])
     for i in range(n_cases):
-        image = Image(np.random.randn(40, 40, channels[i, 0]))
+        image = Image(np.random.randn(channels[i, 0], 40, 40))
         daisy_img = daisy(image, step=4, rings=rings[i, 0],
                           orientations=orientations[i, 0],
                           histograms=histograms[i, 0])
@@ -206,7 +206,7 @@ def test_daisy_channels():
 
 
 def test_igo_values():
-    image = Image([[1, 2], [2, 1]])
+    image = Image([[1., 2.], [2., 1.]])
     igo_img = igo(image)
     res = np.array(
         [[[0.70710678, -0.70710678],
@@ -214,19 +214,19 @@ def test_igo_values():
          [[0.70710678, 0.70710678],
           [-0.70710678, -0.70710678]]])
     assert_allclose(igo_img.pixels, res)
-    image = Image([[0, 0], [0, 0]])
+    image = Image([[0., 0.], [0., 0.]])
     igo_img = igo(image)
     res = np.array([[[0., 0.], [0., 0.]], [[1., 1.], [1., 1.]]])
     assert_allclose(igo_img.pixels, res)
 
 
 def test_es_values():
-    image = Image([[1, 2], [2, 1]])
+    image = Image([[1., 2.], [2., 1.]])
     es_img = es(image)
     k = 1 / (2 * (2**0.5))
     res = np.array([[[k, -k], [k, -k]], [[k, k], [-k, -k]]])
     assert_allclose(es_img.pixels, res)
-    image = Image([[0, 0], [0, 0]])
+    image = Image([[0., 0.], [0., 0.]])
     es_img = es(image)
     res = np.array([[[np.nan, np.nan], [np.nan, np.nan]],
                     [[np.nan, np.nan], [np.nan, np.nan]]])
@@ -234,13 +234,14 @@ def test_es_values():
 
 
 def test_daisy_values():
-    image = Image([[1, 2, 3, 4], [2, 1, 3, 4], [1, 2, 3, 4], [2, 1, 3, 4]])
+    image = Image([[1., 2., 3., 4.], [2., 1., 3., 4.], [1., 2., 3., 4.],
+                   [2., 1., 3., 4.]])
     daisy_img = daisy(image, step=1, rings=2, radius=1, orientations=8,
                       histograms=8)
-    assert_allclose(np.around(daisy_img.pixels[0, 0, 10], 6), 0.000196)
-    assert_allclose(np.around(daisy_img.pixels[0, 1, 20], 6), 0.002842)
-    assert_allclose(np.around(daisy_img.pixels[1, 0, 30], 6), 0.006205)
-    assert_allclose(np.around(daisy_img.pixels[1, 1, 40], 6), 0.001946)
+    assert_allclose(np.around(daisy_img.pixels[10, 0, 0], 6), 0.000261)
+    assert_allclose(np.around(daisy_img.pixels[20, 0, 1], 6), 0.002853)
+    assert_allclose(np.around(daisy_img.pixels[30, 1, 0], 6), 0.007266)
+    assert_allclose(np.around(daisy_img.pixels[40, 1, 1], 6), 0.001971)
 
 
 def test_lbp_values():
@@ -260,6 +261,15 @@ def test_lbp_values():
     assert_allclose(lbp_img.pixels, 4.)
 
 
+def test_gradient_sanity():
+    # Only a sanity check - does it run and generate sensible output?
+    image = Image(np.zeros([3, 120, 120]))
+    grad_image = gradient(image)
+    assert(type(grad_image) == Image)
+    assert(grad_image.shape == image.shape)
+    assert(grad_image.n_channels == image.n_channels * 2)
+
+
 def test_constrain_landmarks():
     breaking_bad = mio.import_builtin_asset('breakingbad.jpg').as_masked()
     breaking_bad.crop_to_landmarks_inplace(boundary=20)
@@ -274,3 +284,4 @@ def test_constrain_landmarks():
     x = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[1] - 1)
     y = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[0] - 1)
     assert_allclose(len(x[0]) + len(y[0]), 0)
+

@@ -164,4 +164,6 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
                                     axis=0))
                 descs[:, :, i:i + orientations] /= norms[np.newaxis, :, :]
 
+    descs = np.ascontiguousarray(descs)
+
     return descs

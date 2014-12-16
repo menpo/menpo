@@ -647,15 +647,6 @@ def test_as_pil_image_3channels():
                     (im.pixels * 255).astype(np.uint8))
 
 
-def test_image_gradient_sanity():
-    # Only a sanity check - does it run and generate sensible output?
-    image = Image(np.zeros([3, 120, 120]))
-    new_image = image.gradient()
-    assert(type(new_image) == Image)
-    assert(new_image.shape == image.shape)
-    assert(new_image.n_channels == image.n_channels * 2)
-
-
 def test_image_extract_channels():
     image = Image(np.random.rand(3, 120, 120))
     extracted = image.extract_channels(0)
