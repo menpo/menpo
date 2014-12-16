@@ -351,6 +351,11 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # Get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
 
+        self.figure.set_size_inches(1, 1)
+        ax = plt.Axes(self.figure, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        self.figure.add_axes(ax)
+
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
@@ -413,6 +418,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                 l.set_fontweight(axes_font_weight)
         else:
             plt.axis('off')
+            plt.xticks([])
+            plt.yticks([])
 
         # Set axes limits
         if axes_x_limits is not None:
@@ -424,6 +431,11 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # Set figure size
         if figure_size is not None:
             plt.gcf().set_size_inches(np.asarray(figure_size))
+
+        self.figure.set_size_inches(1, 1)
+        ax = plt.Axes(self.figure, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        self.figure.add_axes(ax)
 
         return self
 

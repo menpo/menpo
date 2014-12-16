@@ -26,7 +26,7 @@ from .lowlevelhelpers import (colour_selection, format_colour_selection,
                               index_selection_slider, index_selection_buttons,
                               format_index_selection, update_index_selection,
                               legend_options, format_legend_options,
-                              update_legend_options)
+                              update_legend_options, update_colour_selection)
 
 
 def channel_options(channels_options_default, plot_function=None,
@@ -2539,14 +2539,15 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     # options widgets
     options_widgets = []
     tab_titles = []
-    for o in options_tabs:
+    for j, o in enumerate(options_tabs):
         if o == 'lines':
             options_widgets.append(
                 line_options(viewer_options_default[0]['lines'],
                              toggle_show_visible=False,
                              toggle_show_default=True,
                              plot_function=plot_function,
-                             show_checkbox_title='Render lines', labels=labels))
+                             show_checkbox_title='Render lines',
+                             labels=labels[j]))
             tab_titles.append('Lines')
         elif o == 'markers':
             options_widgets.append(
@@ -2606,30 +2607,31 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
 
     # Update widgets' state
     def update_widgets(name, value):
-        for k, o in enumerate(options_tabs):
-            if o == 'lines':
+        for i, tab in enumerate(options_tabs):
+            if tab == 'lines':
                 update_line_options(
-                    options_widgets[k],
-                    viewer_options_default[value]['lines'])
-            elif o == 'markers':
+                    options_widgets[i],
+                    viewer_options_default[value]['lines'],
+                    labels=labels[value])
+            elif tab == 'markers':
                 update_marker_options(
-                    options_widgets[k],
+                    options_widgets[i],
                     viewer_options_default[value]['markers'])
-            elif o == 'numbering':
+            elif tab == 'numbering':
                 update_numbering_options(
-                    options_widgets[k],
+                    options_widgets[i],
                     viewer_options_default[value]['numbering'])
-            elif o == 'figure_one':
+            elif tab == 'figure_one':
                 update_figure_options(
-                    options_widgets[k],
+                    options_widgets[i],
                     viewer_options_default[value]['figure'])
-            elif o == 'figure_two':
+            elif tab == 'figure_two':
                 update_figure_options_two_scales(
-                    options_widgets[k],
+                    options_widgets[i],
                     viewer_options_default[value]['figure'])
-            elif o == 'legend':
+            elif tab == 'legend':
                 update_legend_options(
-                    options_widgets[k],
+                    options_widgets[i],
                     viewer_options_default[value]['legend'])
     selection.on_trait_change(update_widgets, 'value')
 
