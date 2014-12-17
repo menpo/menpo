@@ -456,7 +456,6 @@ def colour_selection(default_colour_list, plot_function=None, title='Colour',
             tmp = menu.value
         for idx in range(len(colour_selection_wid.selected_values['colour'])):
             colour_selection_wid.selected_values['colour'][idx] = tmp
-        #colour_selection_wid.selected_values['colour'] = [tmp] * len(colour_selection_wid.selected_values['colour'])
         if selection.value == 0:
             selection.value = 1
         else:
@@ -491,11 +490,6 @@ def colour_selection(default_colour_list, plot_function=None, title='Colour',
         r_wid.on_trait_change(plot_function, 'value')
         g_wid.on_trait_change(plot_function, 'value')
         b_wid.on_trait_change(plot_function, 'value')
-
-        def new_plot_function(name):
-            return plot_function(name, '')
-
-        apply_to_all.on_click(new_plot_function)
 
     return colour_selection_wid
 
@@ -886,51 +880,8 @@ def update_line_options(line_options_wid, line_options_dict, labels=None):
         line_options_wid.children[1].children[1].children[2].children[0].children[0].values = labels_dict
         line_options_wid.children[1].children[1].children[2].children[0].children[0].value = 0
 
-        line_options_wid.children[1].children[1].children[2].selected_values = {'colour': line_options_dict,
+        line_options_wid.children[1].children[1].children[2].selected_values = {'colour': line_options_dict['line_colour'],
                                                                                 'labels': labels}
-
-        # functions in case of multiple
-        def apply_to_all_function(name):
-            if line_options_wid.children[1].children[1].children[2].children[1].value == 'custom':
-                tmp = [line_options_wid.children[1].children[1].children[2].children[2].children[0].value,
-                       line_options_wid.children[1].children[1].children[2].children[2].children[1].value,
-                       line_options_wid.children[1].children[1].children[2].children[2].children[2].value]
-            else:
-                tmp = line_options_wid.children[1].children[1].children[2].children[1].value
-            for idx in range(len(line_options_wid.children[1].children[1].children[2].selected_values['colour'])):
-                line_options_wid.children[1].children[1].children[2].selected_values['colour'][idx] = tmp
-            #colour_selection_wid.selected_values['colour'] = [tmp] * len(colour_selection_wid.selected_values['colour'])
-            if line_options_wid.children[1].children[1].children[2].children[0].children[0].value == 0:
-                line_options_wid.children[1].children[1].children[2].children[0].children[0].value = 1
-            else:
-                line_options_wid.children[1].children[1].children[2].children[0].children[0].value = 0
-        line_options_wid.children[1].children[1].children[2].children[0].children[1].on_click(apply_to_all_function)
-
-        def selection_function(name, value):
-            colour, r_val, g_val, b_val = _decode_colour(line_options_wid.children[1].children[1].children[2].selected_values['colour'][value])
-            line_options_wid.children[1].children[1].children[2].children[1].value = colour
-            line_options_wid.children[1].children[1].children[2].children[2].children[0].value = r_val
-            line_options_wid.children[1].children[1].children[2].children[2].children[1].value = g_val
-            line_options_wid.children[1].children[1].children[2].children[2].children[2].value = b_val
-        line_options_wid.children[1].children[1].children[2].children[0].children[0].on_trait_change(selection_function, 'value')
-
-        # save colour
-        def get_colour(name, value):
-            idx = line_options_wid.children[1].children[1].children[2].children[0].children[0].value
-            if line_options_wid.children[1].children[1].children[2].children[1].value == 'custom':
-                line_options_wid.children[1].children[1].children[2].selected_values['colour'][idx] = [line_options_wid.children[1].children[1].children[2].children[2].children[0].value,
-                                                                                                       line_options_wid.children[1].children[1].children[2].children[2].children[1].value,
-                                                                                                       line_options_wid.children[1].children[1].children[2].children[2].children[2].value]
-            else:
-                line_options_wid.children[1].children[1].children[2].selected_values['colour'][idx] = line_options_wid.children[1].children[1].children[2].children[1].value
-        line_options_wid.children[1].children[1].children[2].children[1].on_trait_change(get_colour, 'value')
-        line_options_wid.children[1].children[1].children[2].children[2].children[0].on_trait_change(get_colour, 'value')
-        line_options_wid.children[1].children[1].children[2].children[2].children[1].on_trait_change(get_colour, 'value')
-        line_options_wid.children[1].children[1].children[2].children[2].children[2].on_trait_change(get_colour, 'value')
-
-        #update_colour_selection(
-        #    line_options_wid.children[1].children[1].children[2],
-        #    line_options_dict['line_colour'], labels=labels)
 
 
 def marker_options(marker_options_default, plot_function=None,
