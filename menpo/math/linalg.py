@@ -150,13 +150,13 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
         return data
 
 
-def from_matrix(matrix, template, as_generator=False):
+def from_matrix(matrix, template):
     r"""
-    Create a list/generator from a matrix given a template :map:`Vectorizable`
+    Create a generator from a matrix given a template :map:`Vectorizable`
     objects as a template. The ``from_vector`` method will be used to
     reconstruct each object.
 
-    If you are short on memory, consider using the ``as_generator`` argument.
+    If you want a list, warp the returned value in ``list()``.
 
     Parameters
     ----------
@@ -165,20 +165,10 @@ def from_matrix(matrix, template, as_generator=False):
         object.
     template : :map:`Vectorizable`
         The template object to use to reconstruct each row of the matrix with.
-    as_generator : `bool`, optional
-        If ``True``, will return a generator as opposed to a list (for memory
-        efficiency).
 
     Returns
     -------
-    M : (length, n_features) `ndarray`
-        Every row is an element of the list.
-    template : :map:`Vectorizable`, optional
-        If ``return_template == True``, will return the template used to
-        build the matrix `M`.
+    vectorizables : generator of :map:`Vectorizable`
+        Every row of the matrix becomes an element of the list.
     """
-    vectorizables = (template.from_vector(row) for row in matrix)
-    if as_generator:
-        return vectorizables
-    else:
-        return list(vectorizables)
+    return (template.from_vector(row) for row in matrix)

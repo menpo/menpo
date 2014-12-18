@@ -87,13 +87,6 @@ def test_as_matrix_return_template():
     assert_equal(t.shape, image_shape)
 
 
-def test_from_matrix_as_list():
+def test_from_matrix():
     images = from_matrix(matrix, template)
-    assert_equal(len(images), 5)
-    assert isinstance(images[0], MaskedImage)
-
-
-def test_from_matrix_as_generator():
-    images = from_matrix(matrix, template, as_generator=True)
-    image1 = next(images)
-    assert isinstance(image1, MaskedImage)
+    assert isinstance(next(images), MaskedImage)
