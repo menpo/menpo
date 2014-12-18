@@ -351,15 +351,11 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # Get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
 
-        self.figure.set_size_inches(1, 1)
-        ax = plt.Axes(self.figure, [0., 0., 1., 1.])
-        ax.set_axis_off()
-        self.figure.add_axes(ax)
-
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
-            pc.view_on(figure_id=self.figure_id, image_view=image_view,
+            pc.points = pc.points[:, ::-1] if image_view else pc.points
+            pc.view_on(figure_id=self.figure_id, image_view=False,
                        render_lines=render_lines, line_colour=line_colour[i],
                        line_style=line_style, line_width=line_width,
                        render_markers=render_markers, marker_style=marker_style,
@@ -371,7 +367,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                        axes_font_size=axes_font_size,
                        axes_font_style=axes_font_style,
                        axes_font_weight=axes_font_weight, axes_x_limits=None,
-                       axes_y_limits=None, figure_size=None,
+                       axes_y_limits=None, figure_size=figure_size,
                        label='{0}: {1}'.format(self.group, label))
 
             ax = plt.gca()
@@ -387,6 +383,11 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                                 fontstyle=numbers_font_style,
                                 fontweight=numbers_font_weight,
                                 color=numbers_font_colour)
+
+        # Plot on image mode
+        if image_view:
+            plt.gca().set_aspect('equal', adjustable='box')
+            plt.gca().invert_yaxis()
 
         if render_legend:
             # Options related to legend's font
@@ -431,11 +432,6 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # Set figure size
         if figure_size is not None:
             plt.gcf().set_size_inches(np.asarray(figure_size))
-
-        self.figure.set_size_inches(1, 1)
-        ax = plt.Axes(self.figure, [0., 0., 1., 1.])
-        ax.set_axis_off()
-        self.figure.add_axes(ax)
 
         return self
 

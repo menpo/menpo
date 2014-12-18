@@ -2539,6 +2539,8 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     # options widgets
     options_widgets = []
     tab_titles = []
+    if labels is None:
+        labels = [str(j) for j in range(len(options_tabs))]
     for j, o in enumerate(options_tabs):
         if o == 'lines':
             options_widgets.append(

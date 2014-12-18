@@ -871,7 +871,6 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             lmark_group = self.without_labels(without_labels)
         else:
             lmark_group = self  # Fall through
-
         landmark_viewer = LandmarkViewer(figure_id, new_figure, group,
                                          lmark_group._pointcloud,
                                          lmark_group._labels_to_masks)
