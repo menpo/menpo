@@ -373,8 +373,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             ax = plt.gca()
 
             if render_numbering:
-                points = pc.points[:, ::-1] if image_view else pc.points
-                for k, p in enumerate(points):
+                for k, p in enumerate(pc.points):
                     ax.annotate(str(k), xy=(p[0], p[1]),
                                 horizontalalignment=numbers_horizontal_align,
                                 verticalalignment=numbers_vertical_align,

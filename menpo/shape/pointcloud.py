@@ -7,8 +7,8 @@ from menpo.shape.base import Shape
 
 class PointCloud(Shape):
     r"""
-    An N-dimensional point cloud. This is internally represented as an ndarray
-    of shape (``n_points``, ``n_dims``). This class is important for dealing
+    An N-dimensional point cloud. This is internally represented as an `ndarray`
+    of shape ``(n_points, n_dims)``. This class is important for dealing
     with complex functionality such as viewing and representing metadata such
     as landmarks.
 
@@ -18,8 +18,7 @@ class PointCloud(Shape):
     ----------
     points : ``(n_points, n_dims)`` `ndarray`
         The array representing the points.
-
-    copy : `boolean`, optional
+    copy : `bool`, optional
         If ``False``, the points will not be copied on assignment. Note that
         this will miss out on additional checks. Further note that we still
         demand that the array is C-contiguous - if it isn't, a copy will be
@@ -58,14 +57,14 @@ class PointCloud(Shape):
 
     def h_points(self):
         r"""
-        homogeneous points of shape (``n_dims + 1``, ``n_points``)
+        Homogeneous points of shape ``(n_dims + 1, n_points)``
         """
         return np.concatenate((self.points.T, np.ones(self.n_points)[None, :]))
 
     def centre(self):
         r"""
         The mean of all the points in this PointCloud (in the centre of mass
-        sense)
+        sense).
 
         Returns
         -------
@@ -114,7 +113,14 @@ class PointCloud(Shape):
 
     def from_vector_inplace(self, vector):
         r"""
-        Updates this PointCloud in-place with a new vector of parameters
+        Updates the points of this PointCloud in-place with the reshaped points
+        from the provided vector. Note that the vector should have the form
+        ``[x0, y0, x1, y1, ....., xn, yn]`` for 2D.
+
+        Parameters
+        ----------
+        vector : ``(n_points,)`` `ndarray`
+            The vector from which to create the points' array.
         """
         self.points = vector.reshape([-1, self.n_dims])
 
@@ -125,9 +131,8 @@ class PointCloud(Shape):
 
     def bounds(self, boundary=0):
         r"""
-        The minimum to maximum extent of the :map:`PointCloud`.
-        An optional boundary argument can be provided to expand the bounds
-        by a constant margin.
+        The minimum to maximum extent of the PointCloud. An optional boundary
+        argument can be provided to expand the bounds by a constant margin.
 
         Parameters
         ----------
@@ -152,7 +157,7 @@ class PointCloud(Shape):
 
     def range(self, boundary=0):
         r"""
-        The range of the extent of the :map:`PointCloud`.
+        The range of the extent of the PointCloud.
 
         Parameters
         ----------
@@ -203,7 +208,7 @@ class PointCloud(Shape):
              axes_x_limits=None, axes_y_limits=None, figure_size=None,
              label=None, **kwargs):
         r"""
-        Visualization of the :map:`PointCloud`.
+        Visualization of the PointCloud.
 
         Parameters
         ----------
@@ -269,8 +274,8 @@ class PointCloud(Shape):
 
     def view_widget(self, popup=False):
         r"""
-        Visualization of the :map:`PointCloud` using the
-        :map:`visualize_pointclouds` widget.
+        Visualization of the PointCloud using the :map:`visualize_pointclouds`
+        widget.
 
         Parameters
         ----------
@@ -286,7 +291,7 @@ class PointCloud(Shape):
 
     def distance_to(self, pointcloud, **kwargs):
         r"""
-        Returns a distance matrix between this point cloud and another.
+        Returns a distance matrix between this PointCloud and another.
         By default the Euclidian distance is calculated - see
         `scipy.spatial.distance.cdist` for valid kwargs to change the metric
         and other properties.
@@ -312,7 +317,7 @@ class PointCloud(Shape):
 
     def norm(self, **kwargs):
         r"""
-        Returns the norm of this point cloud. This is a translation and
+        Returns the norm of this PointCloud. This is a translation and
         rotation invariant measure of the point cloud's intrinsic size - in
         other words, it is always taken around the point cloud's centre.
 
@@ -329,8 +334,8 @@ class PointCloud(Shape):
     def from_mask(self, mask):
         """
         A 1D boolean array with the same number of elements as the number of
-        points in the pointcloud. This is then broadcast across the dimensions
-        of the pointcloud and returns a new pointcloud containing only those
+        points in the PointCloud. This is then broadcast across the dimensions
+        of the PointCloud and returns a new PointCloud containing only those
         points that were ``True`` in the mask.
 
         Parameters

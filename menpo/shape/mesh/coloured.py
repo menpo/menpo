@@ -6,28 +6,22 @@ from .base import TriMesh
 
 class ColouredTriMesh(TriMesh):
     r"""
-    Combines a :class:`menpo.shape.mesh.base.TriMesh` with a colour per vertex.
+    Combines a :map:`TriMesh` with a colour per vertex.
 
     Parameters
     ----------
-    points : (N, D) ndarray
-        The coordinates of the mesh.
-    trilist : (M, 3) ndarray, optional
-        The triangle list for the mesh. If `None`, a Delaunay triangulation
-        will be performed.
-
-        Default: `None`
-    colours : (N, 3) ndarray, optional
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
+    trilist : ``(M, 3)`` `ndarray` or `None`, optional
+        The triangle list. If `None`, a Delaunay triangulation of
+        the points will be used instead.
+    colours : ``(N, 3)`` `ndarray`, optional
         The floating point RGB colour per vertex. If not given, grey will be
         assigned to each vertex.
-
-        Default: `None`
-    copy: bool, optional
-        If `False`, the points, trilist and colours will not be copied on
+    copy: `bool`, optional
+        If ``False``, the points, trilist and colours will not be copied on
         assignment.
         In general this should only be used if you know what you are doing.
-
-        Default: `False`
 
     Raises
     ------

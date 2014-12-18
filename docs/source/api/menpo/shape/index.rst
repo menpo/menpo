@@ -6,6 +6,13 @@
 .. toctree::
    :maxdepth: 1
 
+
+PointCloud
+--------------------
+
+.. toctree::
+   :maxdepth: 1
+
   PointCloud
 
 
@@ -17,7 +24,6 @@ Graphs & PointGraphs
 
   UndirectedGraph
   DirectedGraph
-  PointGraph
   PointUndirectedGraph
   PointDirectedGraph
 

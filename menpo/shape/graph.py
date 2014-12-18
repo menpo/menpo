@@ -20,6 +20,9 @@ class Graph(object):
 
         For an undirected graph, the order of an edge's vertices doesn't matter,
         for example:
+
+        ::
+
                |---0---|        adjacency_array = ndarray([[0, 1],
                |       |                                   [0, 2],
                |       |                                   [1, 2],
@@ -31,8 +34,11 @@ class Graph(object):
                5
 
         For a directed graph, we assume that the vertices in the first column of
-        the adjacency_array are the fathers and the vertices in the second
-        column of the adjacency_array are the children, for example:
+        the `adjacency_array` are the parents and the vertices in the second
+        column of the `adjacency_array` are the children, for example:
+
+        ::
+
                |-->0<--|        adjacency_array = ndarray([[1, 0],
                |       |                                   [2, 0],
                |       |                                   [1, 2],
@@ -116,7 +122,7 @@ class Graph(object):
         n_vertices that for each vertex has a list of the vertex neighbours.
         If the graph is directed, the neighbours are children.
 
-        :type: `list` of `lists` of len n_vertices
+        :type: `list` of `lists` with length n_vertices
         """
         pass
 
@@ -273,8 +279,47 @@ class Graph(object):
 class UndirectedGraph(Graph):
     r"""
     Class for Undirected Graph definition and manipulation.
+
+    Parameters
+    -----------
+    adjacency_array : ``(n_edges, 2, )`` `ndarray`
+        The Adjacency Array of the graph, i.e. an array containing the sets of
+        the graph's edges. The numbering of vertices is assumed to start from 0.
+        For example:
+
+        ::
+
+               |---0---|        adjacency_array = ndarray([[0, 1],
+               |       |                                   [0, 2],
+               |       |                                   [1, 2],
+               1-------2                                   [1, 3],
+               |       |                                   [2, 4],
+               |       |                                   [3, 4],
+               3-------4                                   [3, 5]])
+               |
+               5
+
+    copy : `bool`, optional
+        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+
+    Raises
+    ------
+    ValueError
+        You must provide at least one edge.
+    ValueError
+        Adjacency list must contain the sets of connected edges and thus must
+        have shape (n_edges, 2).
+    ValueError
+        The vertices must be numbered starting from 0.
     """
     def get_adjacency_matrix(self):
+        r"""
+        Returns the Adjacency Matrix of the graph, i.e. the boolean ndarray that
+        with True and False if there is an edge connecting the two vertices or
+        not respectively.
+
+        :type: ``(n_vertices, n_vertices, )`` `ndarray`
+        """
         adjacency_mat = np.zeros((self.n_vertices, self.n_vertices),
                                  dtype=np.bool)
         for e in range(self.n_edges):
@@ -420,9 +465,52 @@ class UndirectedGraph(Graph):
 class DirectedGraph(Graph):
     r"""
     Class for Directed Graph definition and manipulation.
+
+    Parameters
+    -----------
+    adjacency_array : ``(n_edges, 2, )`` `ndarray`
+        The Adjacency Array of the graph, i.e. an array containing the sets of
+        the graph's edges. The numbering of vertices is assumed to start from 0.
+
+        We assume that the vertices in the first column of the `adjacency_array`
+        are the parents and the vertices in the second column of the
+        `adjacency_array` are the children, for example:
+
+        ::
+
+               |-->0<--|        adjacency_array = ndarray([[1, 0],
+               |       |                                   [2, 0],
+               |       |                                   [1, 2],
+               1<----->2                                   [2, 1],
+               |       |                                   [1, 3],
+               v       v                                   [2, 4],
+               3------>4                                   [3, 4],
+               |                                           [3, 5]])
+               v
+               5
+
+    copy : `bool`, optional
+        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+
+    Raises
+    ------
+    ValueError
+        You must provide at least one edge.
+    ValueError
+        Adjacency list must contain the sets of connected edges and thus must
+        have shape (n_edges, 2).
+    ValueError
+        The vertices must be numbered starting from 0.
     """
 
     def get_adjacency_matrix(self):
+        r"""
+        Returns the Adjacency Matrix of the graph, i.e. the boolean ndarray that
+        with True and False if there is an edge connecting the two vertices or
+        not respectively.
+
+        :type: ``(n_vertices, n_vertices, )`` `ndarray`
+        """
         adjacency_mat = np.zeros((self.n_vertices, self.n_vertices),
                                  dtype=np.bool)
         for e in range(self.n_edges):
@@ -580,9 +668,11 @@ class Tree(DirectedGraph):
         The Adjacency Array of the tree, i.e. an array containing the sets of
         the tree's edges. The numbering of vertices is assumed to start from 0.
 
-        We assume that the vertices in the first column of the adjacency_array
-        are the fathers and the vertices in the second column of the
-        adjacency_array are the children, for example:
+        We assume that the vertices in the first column of the `adjacency_array`
+        are the parents and the vertices in the second column of the
+        `adjacency_array` are the children, for example:
+
+        ::
 
                    0            adjacency_array = ndarray([[0, 1],
                    |                                       [0, 2],
@@ -597,7 +687,6 @@ class Tree(DirectedGraph):
 
     root_vertex : `int`
         The vertex that will be considered as root.
-
     copy : `bool`, optional
         If ``False``, the ``adjacency_list`` will not be copied on assignment.
 
@@ -793,15 +882,17 @@ class PointGraph(object):
 
     Parameters
     -----------
-    points : `ndarray`
-        The array of point locations.
-
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
 
         For an undirected graph, the order of an edge's vertices doesn't matter,
         for example:
+
+        ::
+
                |---0---|        adjacency_array = ndarray([[0, 1],
                |       |                                   [0, 2],
                |       |                                   [1, 2],
@@ -815,6 +906,9 @@ class PointGraph(object):
         For a directed graph, we assume that the vertices in the first column of
         the adjacency_array are the fathers and the vertices in the second
         column of the adjacency_array are the children, for example:
+
+        ::
+
                |-->0<--|        adjacency_array = ndarray([[1, 0],
                |       |                                   [2, 0],
                |       |                                   [1, 2],
@@ -839,7 +933,7 @@ class PointGraph(object):
              axes_x_limits=None, axes_y_limits=None, figure_size=None,
              label=None):
         r"""
-        Visualization of the :map:`PointGraph`.
+        Visualization of the PointGraph.
 
         Parameters
         ----------
@@ -849,6 +943,8 @@ class PointGraph(object):
             If ``True``, a new figure is created.
         image_view : `bool`, optional
             If ``True``, the x and y axes are flipped.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
         line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
                       ``(3, )`` `ndarray`, optional
             The colour of the lines.
@@ -856,6 +952,8 @@ class PointGraph(object):
             The style of the lines.
         line_width : `float`, optional
             The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
         marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
                         ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
                         ``1``, ``2``, ``3``, ``4``, ``8``}, optional
@@ -914,8 +1012,8 @@ class PointGraph(object):
 
     def view_widget(self, popup=False):
         r"""
-        Visualization of the :map:`PointGraph` using the
-        :map:`visualize_pointclouds` widget.
+        Visualization of the PointGraph using the :map:`visualize_pointclouds`
+        widget.
 
         Parameters
         ----------
@@ -932,13 +1030,15 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):
 
     Parameters
     -----------
-    points : `ndarray`
-        The array of point locations.
-
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
         For example:
+
+        ::
+
                |---0---|        adjacency_array = ndarray([[0, 1],
                |       |                                   [0, 2],
                |       |                                   [1, 2],
@@ -1023,13 +1123,15 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
 
     Parameters
     -----------
-    points : `ndarray`
-        The array of point locations.
-
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
         For example:
+
+        ::
+
                |-->0<--|        adjacency_array = ndarray([[1, 0],
                |       |                                   [2, 0],
                |       |                                   [1, 2],
@@ -1061,6 +1163,8 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
         if vertex j is the parent and vertex i is its child and vector l
         denotes the coordinates of a vertex, then:
 
+        ::
+
                     l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
                               = [[x_i - x_j], [y_i - y_j]]
 
@@ -1074,7 +1178,7 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
 
         Returns
         -------
-        relative_location : `ndarray`
+        relative_location : ``(2,)`` `ndarray`
             The relative location vector.
 
         Raises
@@ -1093,12 +1197,14 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
         vertex j is the parent and vertex i is its child and vector l denotes
         the coordinates of a vertex, then:
 
+        ::
+
                     l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
                               = [[x_i - x_j], [y_i - y_j]]
 
         Returns
         -------
-        relative_locations : `ndarray`
+        relative_locations : ``(n_vertexes, 2)`` `ndarray`
             The relative locations vector.
         """
         parents = [p[0] for p in self.adjacency_array]
@@ -1167,9 +1273,8 @@ class PointTree(PointDirectedGraph, Tree, PointCloud):
 
     Parameters
     -----------
-    points : `ndarray`
-        The array of point locations.
-
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the tree, i.e. an array containing the sets of
         the tree's edges. The numbering of vertices is assumed to start from 0.
@@ -1177,6 +1282,8 @@ class PointTree(PointDirectedGraph, Tree, PointCloud):
         We assume that the vertices in the first column of the adjacency_array
         are the fathers and the vertices in the second column of the
         adjacency_array are the children, for example:
+
+        ::
 
                    0            adjacency_array = ndarray([[0, 1],
                    |                                       [0, 2],
@@ -1191,7 +1298,6 @@ class PointTree(PointDirectedGraph, Tree, PointCloud):
 
     root_vertex : `int`
         The root vertex of the tree.
-
     copy : `bool`, optional
         If ``False``, the ``adjacency_list`` will not be copied on assignment.
     """
@@ -1321,7 +1427,6 @@ def _has_cycles(adjacency_list, directed):
     ---------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The adjacency array of the directed graph.
-
     directed : `boolean`
         Defines if the provided graph is directed or not.
     """

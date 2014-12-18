@@ -9,31 +9,25 @@ from .base import TriMesh
 
 class TexturedTriMesh(TriMesh):
     r"""
-    Combines a :class:`menpo.shape.mesh.base.TriMesh` with a texture. Also
-    encapsulates the texture coordinates required to render the texture on the
-    mesh.
+    Combines a :map:`TriMesh` with a texture. Also encapsulates the texture
+    coordinates required to render the texture on the mesh.
 
     Parameters
     ----------
-    points : (N, D) ndarray
-        The coordinates of the mesh.
-    tcoords : (N, 2) ndarray
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
+    tcoords : ``(N, 2)`` `ndarray`
         The texture coordinates for the mesh.
-    texture : :class:`menpo.image.base.Image`
+    texture : :map:`Image`
         The texture for the mesh.
-    trilist : (M, 3) ndarray, optional
-        The triangle list for the mesh. If `None`, a Delaunay triangulation
-        will be performed.
-
-        Default: `None`
-    copy: bool, optional
+    trilist : ``(M, 3)`` `ndarray` or `None`, optional
+        The triangle list. If `None`, a Delaunay triangulation of
+        the points will be used instead.
+    copy: `bool`, optional
         If `False`, the points, trilist and texture will not be copied on
         assignment.
         In general this should only be used if you know what you are doing.
-
-        Default: `False`
     """
-
     def __init__(self, points, tcoords, texture, trilist=None, copy=True):
         super(TexturedTriMesh, self).__init__(points, trilist=trilist,
                                               copy=copy)
@@ -51,9 +45,11 @@ class TexturedTriMesh(TriMesh):
         operations). The resulting tcoords behave just like image landmarks
         do:
 
-         >>> texture = texturedtrimesh.texture
-         >>> tc_ps = texturedtrimesh.tcoords_pixel_scaled()
-         >>> pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
+        ::
+
+            texture = texturedtrimesh.texture
+            tc_ps = texturedtrimesh.tcoords_pixel_scaled()
+            pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
 
         The operations that are performed are:
 
@@ -63,7 +59,7 @@ class TexturedTriMesh(TriMesh):
 
         Returns
         -------
-        tcoords_scaled : :class:`menpo.shape.PointCloud`
+        tcoords_scaled : :map:`PointCloud`
             A copy of the tcoords that behave like Image landmarks
         """
         scale = Scale(np.array(self.texture.shape)[::-1])
@@ -83,12 +79,12 @@ class TexturedTriMesh(TriMesh):
 
         Parameters
         ----------
-        flattened : (N,) ndarray
+        flattened : ``(N,)`` `ndarray`
             Vector representing a set of points.
 
         Returns
         --------
-        trimesh : :class:`TriMesh`
+        trimesh : :map:`TriMesh`
             A new trimesh created from the vector with self's trilist.
         """
         return TexturedTriMesh(flattened.reshape([-1, self.n_dims]),
@@ -156,10 +152,8 @@ class TexturedTriMesh(TriMesh):
 
         Parameters
         ----------
-        textured : bool, optional
-            If `True`, render the texture.
-
-            Default: `True`
+        textured : `bool`, optional
+            If ``True``, render the texture.
 
         Returns
         -------

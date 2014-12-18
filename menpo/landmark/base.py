@@ -474,8 +474,8 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         popup : `boolean`, optional
             If enabled, the widget will appear as a popup window.
         """
-        from menpo.visualize import visualize_shapes
-        visualize_shapes(self, figure_size=(7, 7), popup=popup)
+        from menpo.visualize import visualize_landmarks
+        visualize_landmarks(self, figure_size=(6, 4), popup=popup)
 
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,

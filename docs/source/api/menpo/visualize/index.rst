@@ -37,7 +37,7 @@ Widgets
    :maxdepth: 1
 
   visualize_pointclouds
-  visualize_shapes
+  visualize_landmarks
   visualize_images
   features_selection
   save_matplotlib_figure

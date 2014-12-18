@@ -40,6 +40,7 @@ xref_map = {
 'TransformChain': ('class', 'menpo.transform.TransformChain'),
 'Transformable': ('class', 'menpo.transform.Transformable'),
 'TriMesh': ('class', 'menpo.shape.TriMesh'),
+'TriMeshViewer': ('class', 'menpo.visualize.TriMeshViewer'),
 'Vectorizable': ('class', 'menpo.base.Vectorizable'),
 'view': ('function', 'menpo.visualize.Viewable.view'),
 'Viewable': ('class', 'menpo.visualize.Viewable'),

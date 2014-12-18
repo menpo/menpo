@@ -310,362 +310,6 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
     viewer_options_wid.children[1].children[1].children[0].children[1].children[0].value = True
 
 
-def visualize_images(images, figure_size=(6, 4), popup=False,
-                     browser_style='buttons'):
-    r"""
-    Widget that allows browsing through a list of images.
-
-    The images can have a combination of different attributes, e.g. masked or
-    not, landmarked or not, without multiple landmark groups and labels etc.
-    The widget has options tabs regarding the visualized channels, the
-    landmarks, the renderer (lines, markers, numbering, legend, figure, axes)
-    and saving the figure to file.
-
-    Parameters
-    -----------
-    images : `list` of :map:`Image` or subclass
-        The `list` of images to be visualized.
-    figure_size : (`int`, `int`), optional
-        The initial size of the rendered figure.
-    popup : `bool`, optional
-        If ``True``, the widget will appear as a popup window.
-    browser_style : {``buttons``, ``slider``}, optional
-        It defines whether the selector of the images will have the form of
-        plus/minus buttons or a slider.
-    """
-    from menpo.image import MaskedImage
-
-    # make sure that images is a list even with one image member
-    if not isinstance(images, Sized):
-        images = [images]
-
-    # find number of images
-    n_images = len(images)
-
-    # find initial groups and labels that will be passed to the landmark options
-    # widget creation
-    first_has_landmarks = images[0].landmarks.n_groups != 0
-    if first_has_landmarks:
-        initial_groups_keys, initial_labels_keys = \
-            _extract_groups_labels(images[0])
-    else:
-        initial_groups_keys = [' ']
-        initial_labels_keys = [[' ']]
-
-    # initial options dictionaries
-    channels_default = 0
-    if images[0].n_channels == 3:
-        channels_default = None
-    channels_options_default = {'n_channels': images[0].n_channels,
-                                'image_is_masked': isinstance(images[0],
-                                                              MaskedImage),
-                                'channels': channels_default,
-                                'glyph_enabled': False,
-                                'glyph_block_size': 3,
-                                'glyph_use_negative': False,
-                                'sum_enabled': False,
-                                'masked_enabled': isinstance(images[0],
-                                                             MaskedImage)}
-    landmark_options_default = {'render_landmarks': first_has_landmarks,
-                                'group_keys': initial_groups_keys,
-                                'labels_keys': initial_labels_keys,
-                                'group': None,
-                                'with_labels': None}
-    lines_options = {'render_lines': True,
-                     'line_width': 1,
-                     'line_colour': ['r'],
-                     'line_style': '-'}
-    markers_options = {'render_markers': True,
-                       'marker_size': 20,
-                       'marker_face_colour': ['r'],
-                       'marker_edge_colour': ['k'],
-                       'marker_style': 'o',
-                       'marker_edge_width': 1}
-    numbering_options = {'render_numbering': False,
-                         'numbers_font_name': 'sans-serif',
-                         'numbers_font_size': 10,
-                         'numbers_font_style': 'normal',
-                         'numbers_font_weight': 'normal',
-                         'numbers_font_colour': ['k'],
-                         'numbers_horizontal_align': 'center',
-                         'numbers_vertical_align': 'bottom'}
-    legend_options = {'render_legend': True,
-                      'legend_title': '',
-                      'legend_font_name': 'sans-serif',
-                      'legend_font_style': 'normal',
-                      'legend_font_size': 10,
-                      'legend_font_weight': 'normal',
-                      'legend_marker_scale': 1.,
-                      'legend_location': 2,
-                      'legend_bbox_to_anchor': (1.05, 1.),
-                      'legend_border_axes_pad': 1.,
-                      'legend_n_columns': 1,
-                      'legend_horizontal_spacing': 1.,
-                      'legend_vertical_spacing': 1.,
-                      'legend_border': True,
-                      'legend_border_padding': 0.5,
-                      'legend_shadow': False,
-                      'legend_rounded_corners': False}
-    figure_options = {'x_scale': 1.,
-                      'y_scale': 1.,
-                      'render_axes': False,
-                      'axes_font_name': 'sans-serif',
-                      'axes_font_size': 10,
-                      'axes_font_style': 'normal',
-                      'axes_font_weight': 'normal',
-                      'axes_x_limits': None,
-                      'axes_y_limits': None}
-    viewer_options_default = {'lines': lines_options,
-                              'markers': markers_options,
-                              'numbering': numbering_options,
-                              'legend': legend_options,
-                              'figure': figure_options}
-    index_selection_default = {'min': 0,
-                               'max': n_images-1,
-                               'step': 1,
-                               'index': 0}
-
-    # define plot function
-    def plot_function(name, value):
-        # clear current figure, but wait until the new data to be displayed are
-        # generated
-        clear_output(wait=True)
-
-        # get selected image number
-        im = 0
-        if n_images > 1:
-            im = image_number_wid.selected_values['index']
-
-        # update info text widget
-        image_has_landmarks = images[im].landmarks.n_groups != 0
-        image_is_masked = isinstance(images[im], MaskedImage)
-        update_info(images[im], image_is_masked, image_has_landmarks,
-                    landmark_options_wid.selected_values['group'])
-
-        # show image with selected options
-        tmp1 = viewer_options_wid.selected_values[0]['lines']
-        tmp2 = viewer_options_wid.selected_values[0]['markers']
-        tmp3 = viewer_options_wid.selected_values[0]['numbering']
-        tmp4 = viewer_options_wid.selected_values[0]['legend']
-        tmp5 = viewer_options_wid.selected_values[0]['figure']
-        new_figure_size = (tmp5['x_scale'] * figure_size[0],
-                           tmp5['y_scale'] * figure_size[1])
-        renderer = _visualize(
-            images[im], save_figure_wid.renderer[0], True,
-            landmark_options_wid.selected_values['render_landmarks'],
-            channel_options_wid.selected_values['image_is_masked'],
-            channel_options_wid.selected_values['masked_enabled'],
-            channel_options_wid.selected_values['channels'],
-            channel_options_wid.selected_values['glyph_enabled'],
-            channel_options_wid.selected_values['glyph_block_size'],
-            channel_options_wid.selected_values['glyph_use_negative'],
-            channel_options_wid.selected_values['sum_enabled'],
-            [landmark_options_wid.selected_values['group']],
-            [landmark_options_wid.selected_values['with_labels']],
-            False, dict(), True, False,
-            tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
-            tmp1['line_colour'][0], tmp2['render_markers'],
-            tmp2['marker_style'], tmp2['marker_size'], tmp2['marker_edge_width'],
-            tmp2['marker_edge_colour'], tmp2['marker_face_colour'],
-            tmp3['render_numbering'], tmp3['numbers_font_name'],
-            tmp3['numbers_font_size'], tmp3['numbers_font_style'],
-            tmp3['numbers_font_weight'], tmp3['numbers_font_colour'][0],
-            tmp3['numbers_horizontal_align'], tmp3['numbers_vertical_align'],
-            tmp4['legend_n_columns'], tmp4['legend_border_axes_pad'],
-            tmp4['legend_rounded_corners'], tmp4['legend_title'],
-            tmp4['legend_horizontal_spacing'], tmp4['legend_shadow'],
-            tmp4['legend_location'], tmp4['legend_font_name'],
-            tmp4['legend_bbox_to_anchor'], tmp4['legend_border'],
-            tmp4['legend_marker_scale'], tmp4['legend_vertical_spacing'],
-            tmp4['legend_font_weight'], tmp4['legend_font_size'],
-            tmp4['render_legend'], tmp4['legend_font_style'],
-            tmp4['legend_border_padding'], new_figure_size, tmp5['render_axes'],
-            tmp5['axes_font_name'], tmp5['axes_font_size'],
-            tmp5['axes_font_style'], tmp5['axes_x_limits'],
-            tmp5['axes_y_limits'], tmp5['axes_font_weight'])
-
-        # save the current figure id
-        save_figure_wid.renderer[0] = renderer
-
-    # define function that updates info text
-    def update_info(image, image_is_masked, image_has_landmarks, group):
-        # Prepare masked (or non-masked) string
-        masked_str = 'Masked Image' if image_is_masked else 'Image'
-        # Display masked pixels if image is masked
-        masked_pixels_str = (r'{} masked pixels (attached mask {:.1%} true)'.
-                             format(image.n_true_pixels(),
-                                    image.mask.proportion_true())
-                             if image_is_masked else '')
-        # Display number of landmarks if image is landmarked
-        landmarks_str = (r'{} landmark points.'.
-                         format(image.landmarks[group].lms.n_points)
-                         if image_has_landmarks else '')
-        path_str = image.path if hasattr(image, 'path') else 'NO PATH'
-
-        # Create info string
-        info_txt = r"""
-             {} of size {} with {} channel{}
-             {}
-             {}
-             min={:.3f}, max={:.3f}
-             {}
-        """.format(masked_str, image._str_shape, image.n_channels,
-                   's' * (image.n_channels > 1), path_str, masked_pixels_str,
-                   image.pixels.min(), image.pixels.max(), landmarks_str)
-
-        # update info widget text
-        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
-
-    # channel options widget
-    channel_options_wid = channel_options(channels_options_default,
-                                          plot_function=plot_function,
-                                          toggle_show_default=True,
-                                          toggle_show_visible=False)
-
-    # landmarks options widget
-    # The landmarks checkbox default value if the first image doesn't have
-    # landmarks
-    landmark_options_wid = landmark_options(landmark_options_default,
-                                            plot_function=plot_function,
-                                            toggle_show_default=True,
-                                            toggle_show_visible=False)
-    # if only a single image is passed in and it doesn't have landmarks, then
-    # landmarks checkbox should be disabled
-    landmark_options_wid.children[1].disabled = not first_has_landmarks
-
-    # viewer options widget
-    viewer_options_wid = viewer_options(viewer_options_default,
-                                        ['lines', 'markers', 'numbering',
-                                         'legend', 'figure_one'],
-                                        objects_names=None,
-                                        plot_function=plot_function,
-                                        toggle_show_visible=False,
-                                        toggle_show_default=True)
-    info_wid = info_print(toggle_show_default=True,
-                          toggle_show_visible=False)
-
-    # save figure widget
-    initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
-                                               image=np.zeros((10, 10)))
-    save_figure_wid = save_figure_options(initial_renderer,
-                                          toggle_show_default=True,
-                                          toggle_show_visible=False)
-
-    # define function that updates options' widgets state
-    def update_widgets(name, value):
-        # set channels = 0 to make sure that when plotting is triggered by the
-        # update_landmark_options, we don't get an error for not enough channels
-        tmp_channels = channel_options_wid.selected_values['channels']
-        channel_options_wid.selected_values['channels'] = 0
-
-        # get new groups and labels, update landmark options and format them
-        group_keys, labels_keys = _extract_groups_labels(images[value])
-        update_landmark_options(landmark_options_wid, group_keys,
-                                labels_keys, plot_function)
-        format_landmark_options(landmark_options_wid,
-                                container_padding='6px',
-                                container_margin='6px',
-                                container_border='1px solid black',
-                                toggle_button_font_weight='bold',
-                                border_visible=False)
-
-        # update channel options
-        channel_options_wid.selected_values['channels'] = tmp_channels
-        update_channel_options(channel_options_wid,
-                               n_channels=images[value].n_channels,
-                               image_is_masked=isinstance(images[value],
-                                                          MaskedImage))
-
-    # create final widget
-    if n_images > 1:
-        # image selection slider
-        image_number_wid = animation_options(index_selection_default,
-                                             plot_function=plot_function,
-                                             update_function=update_widgets,
-                                             index_description='Image Number',
-                                             index_minus_description='<',
-                                             index_plus_description='>',
-                                             index_style=browser_style,
-                                             index_text_editable=True,
-                                             loop_default=True,
-                                             interval_default=0.3,
-                                             toggle_show_title='Image Options',
-                                             toggle_show_default=True,
-                                             toggle_show_visible=False)
-
-        # final widget
-        logo_wid = ContainerWidget(children=[logo(), image_number_wid])
-        button_title = 'Images Menu'
-    else:
-        # final widget
-        logo_wid = logo()
-        button_title = 'Image Menu'
-    # create popup widget if asked
-    cont_wid = TabWidget(children=[info_wid, channel_options_wid,
-                                   landmark_options_wid,
-                                   viewer_options_wid, save_figure_wid])
-    if popup:
-        wid = PopupWidget(children=[logo_wid, cont_wid],
-                          button_text=button_title)
-    else:
-        wid = ContainerWidget(children=[logo_wid, cont_wid])
-
-    # display final widget
-    display(wid)
-
-    # set final tab titles
-    tab_titles = ['Image info', 'Channels options', 'Landmarks options',
-                  'Viewer options', 'Save figure']
-    for (k, tl) in enumerate(tab_titles):
-        wid.children[1].set_title(k, tl)
-
-    # align-start the image number widget and the rest
-    if n_images > 1:
-        wid.add_class('align-start')
-
-    # format options' widgets
-    if n_images > 1:
-        wid.children[0].remove_class('vbox')
-        wid.children[0].add_class('hbox')
-        format_animation_options(image_number_wid, index_text_width='1.0cm',
-                                 container_padding='6px',
-                                 container_margin='6px',
-                                 container_border='1px solid black',
-                                 toggle_button_font_weight='bold',
-                                 border_visible=False)
-    format_channel_options(channel_options_wid, container_padding='6px',
-                           container_margin='6px',
-                           container_border='1px solid black',
-                           toggle_button_font_weight='bold',
-                           border_visible=False)
-    format_landmark_options(landmark_options_wid, container_padding='6px',
-                            container_margin='6px',
-                            container_border='1px solid black',
-                            toggle_button_font_weight='bold',
-                            border_visible=False)
-    format_viewer_options(viewer_options_wid, container_padding='6px',
-                          container_margin='6px',
-                          container_border='1px solid black',
-                          toggle_button_font_weight='bold',
-                          border_visible=False,
-                          suboptions_border_visible=True)
-    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
-                      container_margin='6px',
-                      container_border='1px solid black',
-                      toggle_button_font_weight='bold', border_visible=False)
-    format_save_figure_options(save_figure_wid, container_padding='6px',
-                               container_margin='6px',
-                               container_border='1px solid black',
-                               toggle_button_font_weight='bold',
-                               tab_top_margin='0cm', border_visible=False)
-
-    # update widgets' state for image number 0
-    update_widgets('', 0)
-
-    # Reset value to trigger initial visualization
-    viewer_options_wid.children[1].children[1].children[3].children[1].children[0].value = False
-
-
 def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
                         browser_style='buttons'):
     r"""
@@ -1020,6 +664,362 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
 
     # Reset value to trigger initial visualization
     axes_mode_wid.value = 1
+
+
+def visualize_images(images, figure_size=(6, 4), popup=False,
+                     browser_style='buttons'):
+    r"""
+    Widget that allows browsing through a list of images.
+
+    The images can have a combination of different attributes, e.g. masked or
+    not, landmarked or not, without multiple landmark groups and labels etc.
+    The widget has options tabs regarding the visualized channels, the
+    landmarks, the renderer (lines, markers, numbering, legend, figure, axes)
+    and saving the figure to file.
+
+    Parameters
+    -----------
+    images : `list` of :map:`Image` or subclass
+        The `list` of images to be visualized.
+    figure_size : (`int`, `int`), optional
+        The initial size of the rendered figure.
+    popup : `bool`, optional
+        If ``True``, the widget will appear as a popup window.
+    browser_style : {``buttons``, ``slider``}, optional
+        It defines whether the selector of the images will have the form of
+        plus/minus buttons or a slider.
+    """
+    from menpo.image import MaskedImage
+
+    # make sure that images is a list even with one image member
+    if not isinstance(images, Sized):
+        images = [images]
+
+    # find number of images
+    n_images = len(images)
+
+    # find initial groups and labels that will be passed to the landmark options
+    # widget creation
+    first_has_landmarks = images[0].landmarks.n_groups != 0
+    if first_has_landmarks:
+        initial_groups_keys, initial_labels_keys = \
+            _extract_groups_labels(images[0])
+    else:
+        initial_groups_keys = [' ']
+        initial_labels_keys = [[' ']]
+
+    # initial options dictionaries
+    channels_default = 0
+    if images[0].n_channels == 3:
+        channels_default = None
+    channels_options_default = {'n_channels': images[0].n_channels,
+                                'image_is_masked': isinstance(images[0],
+                                                              MaskedImage),
+                                'channels': channels_default,
+                                'glyph_enabled': False,
+                                'glyph_block_size': 3,
+                                'glyph_use_negative': False,
+                                'sum_enabled': False,
+                                'masked_enabled': isinstance(images[0],
+                                                             MaskedImage)}
+    landmark_options_default = {'render_landmarks': first_has_landmarks,
+                                'group_keys': initial_groups_keys,
+                                'labels_keys': initial_labels_keys,
+                                'group': None,
+                                'with_labels': None}
+    lines_options = {'render_lines': True,
+                     'line_width': 1,
+                     'line_colour': ['r'],
+                     'line_style': '-'}
+    markers_options = {'render_markers': True,
+                       'marker_size': 20,
+                       'marker_face_colour': ['r'],
+                       'marker_edge_colour': ['k'],
+                       'marker_style': 'o',
+                       'marker_edge_width': 1}
+    numbering_options = {'render_numbering': False,
+                         'numbers_font_name': 'sans-serif',
+                         'numbers_font_size': 10,
+                         'numbers_font_style': 'normal',
+                         'numbers_font_weight': 'normal',
+                         'numbers_font_colour': ['k'],
+                         'numbers_horizontal_align': 'center',
+                         'numbers_vertical_align': 'bottom'}
+    legend_options = {'render_legend': True,
+                      'legend_title': '',
+                      'legend_font_name': 'sans-serif',
+                      'legend_font_style': 'normal',
+                      'legend_font_size': 10,
+                      'legend_font_weight': 'normal',
+                      'legend_marker_scale': 1.,
+                      'legend_location': 2,
+                      'legend_bbox_to_anchor': (1.05, 1.),
+                      'legend_border_axes_pad': 1.,
+                      'legend_n_columns': 1,
+                      'legend_horizontal_spacing': 1.,
+                      'legend_vertical_spacing': 1.,
+                      'legend_border': True,
+                      'legend_border_padding': 0.5,
+                      'legend_shadow': False,
+                      'legend_rounded_corners': False}
+    figure_options = {'x_scale': 1.,
+                      'y_scale': 1.,
+                      'render_axes': False,
+                      'axes_font_name': 'sans-serif',
+                      'axes_font_size': 10,
+                      'axes_font_style': 'normal',
+                      'axes_font_weight': 'normal',
+                      'axes_x_limits': None,
+                      'axes_y_limits': None}
+    viewer_options_default = {'lines': lines_options,
+                              'markers': markers_options,
+                              'numbering': numbering_options,
+                              'legend': legend_options,
+                              'figure': figure_options}
+    index_selection_default = {'min': 0,
+                               'max': n_images-1,
+                               'step': 1,
+                               'index': 0}
+
+    # define plot function
+    def plot_function(name, value):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
+        # get selected image number
+        im = 0
+        if n_images > 1:
+            im = image_number_wid.selected_values['index']
+
+        # update info text widget
+        image_has_landmarks = images[im].landmarks.n_groups != 0
+        image_is_masked = isinstance(images[im], MaskedImage)
+        update_info(images[im], image_is_masked, image_has_landmarks,
+                    landmark_options_wid.selected_values['group'])
+
+        # show image with selected options
+        tmp1 = viewer_options_wid.selected_values[0]['lines']
+        tmp2 = viewer_options_wid.selected_values[0]['markers']
+        tmp3 = viewer_options_wid.selected_values[0]['numbering']
+        tmp4 = viewer_options_wid.selected_values[0]['legend']
+        tmp5 = viewer_options_wid.selected_values[0]['figure']
+        new_figure_size = (tmp5['x_scale'] * figure_size[0],
+                           tmp5['y_scale'] * figure_size[1])
+        renderer = _visualize(
+            images[im], save_figure_wid.renderer[0], True,
+            landmark_options_wid.selected_values['render_landmarks'],
+            channel_options_wid.selected_values['image_is_masked'],
+            channel_options_wid.selected_values['masked_enabled'],
+            channel_options_wid.selected_values['channels'],
+            channel_options_wid.selected_values['glyph_enabled'],
+            channel_options_wid.selected_values['glyph_block_size'],
+            channel_options_wid.selected_values['glyph_use_negative'],
+            channel_options_wid.selected_values['sum_enabled'],
+            [landmark_options_wid.selected_values['group']],
+            [landmark_options_wid.selected_values['with_labels']],
+            False, dict(), True, False,
+            tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
+            tmp1['line_colour'][0], tmp2['render_markers'],
+            tmp2['marker_style'], tmp2['marker_size'], tmp2['marker_edge_width'],
+            tmp2['marker_edge_colour'], tmp2['marker_face_colour'],
+            tmp3['render_numbering'], tmp3['numbers_font_name'],
+            tmp3['numbers_font_size'], tmp3['numbers_font_style'],
+            tmp3['numbers_font_weight'], tmp3['numbers_font_colour'][0],
+            tmp3['numbers_horizontal_align'], tmp3['numbers_vertical_align'],
+            tmp4['legend_n_columns'], tmp4['legend_border_axes_pad'],
+            tmp4['legend_rounded_corners'], tmp4['legend_title'],
+            tmp4['legend_horizontal_spacing'], tmp4['legend_shadow'],
+            tmp4['legend_location'], tmp4['legend_font_name'],
+            tmp4['legend_bbox_to_anchor'], tmp4['legend_border'],
+            tmp4['legend_marker_scale'], tmp4['legend_vertical_spacing'],
+            tmp4['legend_font_weight'], tmp4['legend_font_size'],
+            tmp4['render_legend'], tmp4['legend_font_style'],
+            tmp4['legend_border_padding'], new_figure_size, tmp5['render_axes'],
+            tmp5['axes_font_name'], tmp5['axes_font_size'],
+            tmp5['axes_font_style'], tmp5['axes_x_limits'],
+            tmp5['axes_y_limits'], tmp5['axes_font_weight'])
+
+        # save the current figure id
+        save_figure_wid.renderer[0] = renderer
+
+    # define function that updates info text
+    def update_info(image, image_is_masked, image_has_landmarks, group):
+        # Prepare masked (or non-masked) string
+        masked_str = 'Masked Image' if image_is_masked else 'Image'
+        # Display masked pixels if image is masked
+        masked_pixels_str = (r'{} masked pixels (attached mask {:.1%} true)'.
+                             format(image.n_true_pixels(),
+                                    image.mask.proportion_true())
+                             if image_is_masked else '')
+        # Display number of landmarks if image is landmarked
+        landmarks_str = (r'{} landmark points.'.
+                         format(image.landmarks[group].lms.n_points)
+                         if image_has_landmarks else '')
+        path_str = image.path if hasattr(image, 'path') else 'NO PATH'
+
+        # Create info string
+        info_txt = r"""
+             {} of size {} with {} channel{}
+             {}
+             {}
+             min={:.3f}, max={:.3f}
+             {}
+        """.format(masked_str, image._str_shape, image.n_channels,
+                   's' * (image.n_channels > 1), path_str, masked_pixels_str,
+                   image.pixels.min(), image.pixels.max(), landmarks_str)
+
+        # update info widget text
+        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
+
+    # channel options widget
+    channel_options_wid = channel_options(channels_options_default,
+                                          plot_function=plot_function,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
+
+    # landmarks options widget
+    # The landmarks checkbox default value if the first image doesn't have
+    # landmarks
+    landmark_options_wid = landmark_options(landmark_options_default,
+                                            plot_function=plot_function,
+                                            toggle_show_default=True,
+                                            toggle_show_visible=False)
+    # if only a single image is passed in and it doesn't have landmarks, then
+    # landmarks checkbox should be disabled
+    landmark_options_wid.children[1].disabled = not first_has_landmarks
+
+    # viewer options widget
+    viewer_options_wid = viewer_options(viewer_options_default,
+                                        ['lines', 'markers', 'numbering',
+                                         'legend', 'figure_one'],
+                                        objects_names=None,
+                                        plot_function=plot_function,
+                                        toggle_show_visible=False,
+                                        toggle_show_default=True)
+    info_wid = info_print(toggle_show_default=True,
+                          toggle_show_visible=False)
+
+    # save figure widget
+    initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
+                                               image=np.zeros((10, 10)))
+    save_figure_wid = save_figure_options(initial_renderer,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
+
+    # define function that updates options' widgets state
+    def update_widgets(name, value):
+        # set channels = 0 to make sure that when plotting is triggered by the
+        # update_landmark_options, we don't get an error for not enough channels
+        tmp_channels = channel_options_wid.selected_values['channels']
+        channel_options_wid.selected_values['channels'] = 0
+
+        # get new groups and labels, update landmark options and format them
+        group_keys, labels_keys = _extract_groups_labels(images[value])
+        update_landmark_options(landmark_options_wid, group_keys,
+                                labels_keys, plot_function)
+        format_landmark_options(landmark_options_wid,
+                                container_padding='6px',
+                                container_margin='6px',
+                                container_border='1px solid black',
+                                toggle_button_font_weight='bold',
+                                border_visible=False)
+
+        # update channel options
+        channel_options_wid.selected_values['channels'] = tmp_channels
+        update_channel_options(channel_options_wid,
+                               n_channels=images[value].n_channels,
+                               image_is_masked=isinstance(images[value],
+                                                          MaskedImage))
+
+    # create final widget
+    if n_images > 1:
+        # image selection slider
+        image_number_wid = animation_options(index_selection_default,
+                                             plot_function=plot_function,
+                                             update_function=update_widgets,
+                                             index_description='Image Number',
+                                             index_minus_description='<',
+                                             index_plus_description='>',
+                                             index_style=browser_style,
+                                             index_text_editable=True,
+                                             loop_default=True,
+                                             interval_default=0.3,
+                                             toggle_show_title='Image Options',
+                                             toggle_show_default=True,
+                                             toggle_show_visible=False)
+
+        # final widget
+        logo_wid = ContainerWidget(children=[logo(), image_number_wid])
+        button_title = 'Images Menu'
+    else:
+        # final widget
+        logo_wid = logo()
+        button_title = 'Image Menu'
+    # create popup widget if asked
+    cont_wid = TabWidget(children=[info_wid, channel_options_wid,
+                                   landmark_options_wid,
+                                   viewer_options_wid, save_figure_wid])
+    if popup:
+        wid = PopupWidget(children=[logo_wid, cont_wid],
+                          button_text=button_title)
+    else:
+        wid = ContainerWidget(children=[logo_wid, cont_wid])
+
+    # display final widget
+    display(wid)
+
+    # set final tab titles
+    tab_titles = ['Image info', 'Channels options', 'Landmarks options',
+                  'Viewer options', 'Save figure']
+    for (k, tl) in enumerate(tab_titles):
+        wid.children[1].set_title(k, tl)
+
+    # align-start the image number widget and the rest
+    if n_images > 1:
+        wid.add_class('align-start')
+
+    # format options' widgets
+    if n_images > 1:
+        wid.children[0].remove_class('vbox')
+        wid.children[0].add_class('hbox')
+        format_animation_options(image_number_wid, index_text_width='1.0cm',
+                                 container_padding='6px',
+                                 container_margin='6px',
+                                 container_border='1px solid black',
+                                 toggle_button_font_weight='bold',
+                                 border_visible=False)
+    format_channel_options(channel_options_wid, container_padding='6px',
+                           container_margin='6px',
+                           container_border='1px solid black',
+                           toggle_button_font_weight='bold',
+                           border_visible=False)
+    format_landmark_options(landmark_options_wid, container_padding='6px',
+                            container_margin='6px',
+                            container_border='1px solid black',
+                            toggle_button_font_weight='bold',
+                            border_visible=False)
+    format_viewer_options(viewer_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold',
+                          border_visible=False,
+                          suboptions_border_visible=True)
+    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+                      container_margin='6px',
+                      container_border='1px solid black',
+                      toggle_button_font_weight='bold', border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm', border_visible=False)
+
+    # update widgets' state for image number 0
+    update_widgets('', 0)
+
+    # Reset value to trigger initial visualization
+    viewer_options_wid.children[1].children[1].children[3].children[1].children[0].value = False
 
 
 def save_matplotlib_figure(renderer, popup=True):

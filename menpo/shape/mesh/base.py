@@ -26,21 +26,16 @@ class TriMesh(PointCloud):
 
     Parameters
     ----------
-    points : (N, D) ndarray
-        The set coordinates for the mesh.
-    trilist : (M, 3) ndarray, optional
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
+    trilist : ``(M, 3)`` `ndarray` or `None`, optional
         The triangle list. If `None`, a Delaunay triangulation of
         the points will be used instead.
-
-        Default: None
-    copy: bool, optional
-        If `False`, the points will not be copied on assignment.
+    copy: `bool`, optional
+        If ``False``, the points will not be copied on assignment.
         Any trilist will also not be copied.
         In general this should only be used if you know what you are doing.
-
-        Default: `False`
     """
-
     def __init__(self, points, trilist=None, copy=True):
         #TODO add inheritance from Graph once implemented
         super(TriMesh, self).__init__(points, copy=copy)
@@ -67,7 +62,7 @@ class TriMesh(PointCloud):
         r"""
         The number of triangles in the triangle list.
 
-        :type: int
+        :type: `int`
         """
         return len(self.trilist)
 
@@ -131,6 +126,19 @@ class TriMesh(PointCloud):
         return new_mask
 
     def as_pointgraph(self, copy=True):
+        """
+        Converts the TriMesh to a :map:`PointUndirectedGraph`.
+
+        Parameters
+        ----------
+        copy : `bool`
+            If ``True``, the graph will be a copy.
+
+        Returns
+        -------
+        pointgraph : :map:`PointUndirectedGraph`
+            The point graph.
+        """
         from .. import PointUndirectedGraph
         # Since we have triangles we need the last connection
         # that 'completes' the triangle
@@ -147,12 +155,12 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        normals : (`n_points`, 3) ndarray
+        normals : ``(n_points, 3)`` `ndarray`
             Normal at each point.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             If mesh is not 3D
         """
         if self.n_dims != 3:
@@ -166,12 +174,12 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        normals : (`n_tris`, 3) ndarray
+        normals : ``(n_tris, 3)`` `ndarray`
             Normal at each face.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             If mesh is not 3D
         """
         if self.n_dims != 3:
@@ -189,12 +197,12 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        viewer : :class:`menpo.visualize.base.Renderer`
+        viewer : :map:`TriMeshViewer`
             The viewer object.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             If `not self.n_dims in [2, 3]`.
         """
         return TriMeshViewer(figure_id, new_figure,
