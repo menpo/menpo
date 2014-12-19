@@ -1075,6 +1075,11 @@ def features_selection(popup=True):
     -------
     features_function : `list` of length 1
         The function closure of the features function using `functools.partial`.
+        So the function can be called as:
+
+        ::
+
+            features_image = features_function[0](image)
     """
     # Create sub-widgets
     logo_wid = logo()

@@ -995,6 +995,11 @@ class PointGraph(object):
         -------
         viewer : :map:`PointGraphViewer`
             The viewer object.
+
+        Raises
+        ------
+        ValueError
+            If `not self.n_dims in [2, 3]`.
         """
         return PointGraphViewer(figure_id, new_figure, self.points,
                                 self.adjacency_array).render(
