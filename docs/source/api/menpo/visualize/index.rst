@@ -36,9 +36,10 @@ Widgets
 .. toctree::
    :maxdepth: 1
 
-  visualize_pointclouds
-  visualize_landmarks
   visualize_images
+  visualize_landmarks
+  visualize_landmarkgroups
+  visualize_pointclouds
   features_selection
   save_matplotlib_figure
 

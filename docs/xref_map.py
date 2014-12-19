@@ -46,6 +46,8 @@ xref_map = {
 'Viewable': ('class', 'menpo.visualize.Viewable'),
 'visualize_images': ('function', 'menpo.visualize.visualize_images'),
 'visualize_pointclouds': ('function', 'menpo.visualize.visualize_pointclouds'),
+'visualize_landmarks': ('function', 'menpo.visualize.visualize_landmarks'),
+'visualize_landmarkgroups': ('function', 'menpo.visualize.visualize_landmarkgroups'),
 'VComposable': ('class', 'menpo.transform.VComposable'),
 'VInvertible': ('class', 'menpo.transform.VInvertible')
 }

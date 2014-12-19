@@ -467,7 +467,7 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
     def view_widget(self, popup=False):
         r"""
         Visualizes the landmark manager object using the
-        menpo.visualize.widgets.visualize_shapes widget.
+        :map:`visualize_landmarks` widget.
 
         Parameters
         -----------
@@ -910,6 +910,19 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
             axes_y_limits=axes_y_limits, figure_size=figure_size)
+
+    def view_widget(self, popup=False):
+        r"""
+        Visualizes the landmark group object using the
+        :map:`visualize_landmarkgroups` widget.
+
+        Parameters
+        -----------
+        popup : `boolean`, optional
+            If enabled, the widget will appear as a popup window.
+        """
+        from menpo.visualize import visualize_landmarkgroups
+        visualize_landmarkgroups(self, figure_size=(6, 4), popup=popup)
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(
