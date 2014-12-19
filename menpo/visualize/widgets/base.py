@@ -1,6 +1,5 @@
 from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
-                                  RadioButtonsWidget, ButtonWidget,
-                                  CheckboxWidget)
+                                  RadioButtonsWidget, ButtonWidget)
 from IPython.display import display, clear_output
 import matplotlib.pylab as plt
 import numpy as np
@@ -10,7 +9,7 @@ from menpo.visualize.viewmatplotlib import (MatplotlibSubplots,
                                             MatplotlibImageViewer2d,
                                             sample_colours_from_colourmap)
 
-from .helpers import (channel_options, format_channel_options,
+from .options import (channel_options, format_channel_options,
                       update_channel_options,
                       landmark_options, format_landmark_options,
                       update_landmark_options, info_print, format_info_print,
@@ -18,7 +17,7 @@ from .helpers import (channel_options, format_channel_options,
                       save_figure_options, format_save_figure_options,
                       features_options, format_features_options, viewer_options,
                       format_viewer_options)
-from .lowlevelhelpers import logo, format_logo
+from .tools import logo, format_logo
 
 # This glyph import is called frequently during visualisation, so we ensure
 # that we only import it once

@@ -9,7 +9,7 @@ import numpy as np
 from collections import OrderedDict
 from functools import partial
 
-from .lowlevelhelpers import (colour_selection, format_colour_selection,
+from .tools import (colour_selection, format_colour_selection,
                               hog_options, format_hog_options, igo_options,
                               format_igo_options, lbp_options,
                               format_lbp_options, daisy_options,
