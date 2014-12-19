@@ -15,6 +15,7 @@ Abstract Classes
 
   Renderer
   Viewable
+  MatplotlibRenderer
 
 
 Viewers

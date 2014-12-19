@@ -58,6 +58,41 @@ class MatplotlibRenderer(Renderer):
                     edge_colour='w', orientation='portrait',
                     paper_type='letter', transparent=False, pad_inches=0.1,
                     overwrite=False):
+        r"""
+        Method for saving the figure of the current `figure_id` to file.
+
+        Parameters
+        ----------
+        filename : `str` or `file`-like object
+            The string path or file-like object to save the figure at/into.
+        format : `str`
+            The format to use. This must match the file path if the file path is
+            a `str`.
+        dpi : `int` > 0 or None, optional
+            The resolution in dots per inch.
+        face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                       ``(3, )`` `ndarray`, optional
+            The face colour of the figure rectangle.
+        edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                       ``(3, )`` `ndarray`, optional
+            The edge colour of the figure rectangle.
+        orientation : {``portrait``, ``landscape``}, optional
+            The page orientation.
+        paper_type : {``letter``, ``legal``, ``executive``, ``ledger``,
+                      ``a0`` through ``a10``, ``b0` through ``b10``}, optional
+            The type of the paper.
+        transparent : `bool`, optional
+            If ``True``, the axes patches will all be transparent; the figure
+            patch will also be transparent unless `face_colour` and/or
+            `edge_colour` are specified. This is useful, for example, for
+            displaying a plot on top of a coloured background on a web page.
+            The transparency of these patches will be restored to their original
+            values upon exit of this function.
+        pad_inches : `float`, optional
+            Amount of padding around the figure.
+        overwrite : `bool`, optional
+            If ``True``, the file will be overwritten if it already exists.
+        """
         from menpo.io.output.base import _export
 
         save_fig_args = {'dpi': dpi, 'facecolour': face_colour,
