@@ -24,6 +24,15 @@ class MatplotlibRenderer(Renderer):
     def __init__(self, figure_id, new_figure):
         super(MatplotlibRenderer, self).__init__(figure_id, new_figure)
 
+        # Set up data for saving
+        self._supported_ext = self.figure.canvas.get_supported_filetypes().keys()
+        # Create the extensions map, have to add . in front of the extensions
+        # and map every extension to the savefig method
+        n_ext = len(self._supported_ext)
+        func_list = [lambda obj, fp: self.figure.savefig(fp, **obj)] * n_ext
+        self._extensions_map = dict(zip(['.' + s for s in self._supported_ext],
+                                    func_list))
+
     def get_figure(self):
         r"""
         Gets the figure specified by the combination of `self.figure_id` and
@@ -47,12 +56,18 @@ class MatplotlibRenderer(Renderer):
 
     def save_figure(self, filename, format='png', dpi=None, face_colour='w',
                     edge_colour='w', orientation='portrait',
-                    paper_type='letter', transparent=False, pad_inches=0.1):
-        self.figure.savefig(filename, dpi=dpi, facecolour=face_colour,
-                            edgecolour=edge_colour, orientation=orientation,
-                            papertype=paper_type, format=format,
-                            transparent=transparent, pad_inches=pad_inches,
-                            bbox_inches='tight', frameon=None)
+                    paper_type='letter', transparent=False, pad_inches=0.1,
+                    overwrite=False):
+        from menpo.io.output.base import _export
+
+        save_fig_args = {'dpi': dpi, 'facecolour': face_colour,
+                         'edgecolour': edge_colour, 'orientation': orientation,
+                         'papertype': paper_type, 'format': format,
+                         'transparent': transparent, 'pad_inches': pad_inches,
+                         'bbox_inches': 'tight', 'frameon': None}
+        # Use the export code so that we have a consistent interface
+        _export(save_fig_args, filename, self._extensions_map, format,
+                overwrite=overwrite)
 
     def save_figure_widget(self, popup=True):
         r"""
