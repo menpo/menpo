@@ -674,33 +674,33 @@ class MaskedImage(Image):
 
         self.mask = BooleanImage(mask)
 
-    def set_boundary_pixels(self, iterations=1):
+    def set_boundary_pixels(self, value=0.0, n_pixels=1):
         r"""
         Returns a copy of this :map:`MaskedImage` for which n pixels along
-        the its mask boundary have been set to to 0. This is useful in
-        situations where there is absent data in the image which can cause,
-        for example, erroneous computations of gradient or features.
+        the its mask boundary have been set to a particular value. This is
+        useful in situations where there is absent data in the image which
+        can cause, for example, erroneous computations of gradient or features.
 
         Parameters
         ----------
+        value : float or (n_channels, 1) ndarray
         n_pixels : int, optional
             The number of pixels along the mask boundary that will be set to 0.
 
         Returns
         -------
          : :map:`MaskedImage`
-            The gradient over each axis over each channel. Therefore, the
-            gradient of a 2D, single channel image, will have length `2`.
-            The length of a 2D, 3-channel image, will have length `6`.
+            The copy of the image for which the n pixels along its mask
+            boundary have been set to a particular value.
         """
         global binary_erosion
         if binary_erosion is None:
             from scipy.ndimage import binary_erosion  # expensive
         # Erode the edge of the mask in by one pixel
-        eroded_mask = binary_erosion(self.mask.mask, iterations=iterations)
+        eroded_mask = binary_erosion(self.mask.mask, iterations=n_pixels)
 
         # replace the eroded mask with the diff between the two
         # masks. This is only true in the region we want to nullify.
         np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
-        # nullify all the boundary values in the grad image
-        self.pixels[..., eroded_mask] = 0.0
+        # set all the boundary pixels to a particular value
+        self.pixels[..., eroded_mask] = value
