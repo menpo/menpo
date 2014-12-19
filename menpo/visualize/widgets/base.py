@@ -120,6 +120,8 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
         It defines whether the selector of the pointclouds will have the form of
         plus/minus buttons or a slider.
     """
+    print 'Initializing...'
+
     # make sure that pointclouds is a list even with one pointcloud member
     if not isinstance(pointclouds, Sized):
         pointclouds = [pointclouds]
@@ -128,7 +130,7 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
     n_pointclouds = len(pointclouds)
 
     # initial options dictionaries
-    lines_options = {'render_lines': False,
+    lines_options = {'render_lines': True,
                      'line_width': 1,
                      'line_colour': ['r'],
                      'line_style': '-'}
@@ -178,7 +180,7 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
 
         renderer = pointclouds[im].view(
             figure_id=save_figure_wid.renderer[0].figure_id,
-            new_figure=False, image_view=image_view_wid.value,
+            new_figure=False, image_view=axes_mode_wid.value==1,
             render_lines=tmp1['render_lines'],
             line_colour=tmp1['line_colour'][0],
             line_style=tmp1['line_style'], line_width=tmp1['line_width'],
@@ -220,15 +222,16 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
         info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
 
     # viewer options widget
-    image_view_wid = CheckboxWidget(description='Image mode', value=True)
-    image_view_wid.on_trait_change(plot_function, 'value')
+    axes_mode_wid = RadioButtonsWidget(values={'Image': 1, 'Point cloud': 2},
+                                       description='Axes mode:', value=2)
+    axes_mode_wid.on_trait_change(plot_function, 'value')
     viewer_options_wid = viewer_options(viewer_options_default,
                                         ['lines', 'markers', 'figure_one'],
                                         objects_names=None,
                                         plot_function=plot_function,
                                         toggle_show_visible=False,
                                         toggle_show_default=True)
-    viewer_options_all = ContainerWidget(children=[image_view_wid,
+    viewer_options_all = ContainerWidget(children=[axes_mode_wid,
                                                    viewer_options_wid])
     info_wid = info_print(toggle_show_default=True,
                           toggle_show_visible=False)
@@ -307,7 +310,7 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
                                tab_top_margin='0cm', border_visible=False)
 
     # Reset value to trigger initial visualization
-    viewer_options_wid.children[1].children[1].children[0].children[1].children[0].value = True
+    axes_mode_wid.value = 1
 
 
 def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
@@ -332,6 +335,8 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
         It defines whether the selector of the landmark managers will have the
         form of plus/minus buttons or a slider.
     """
+    print 'Initializing...'
+
     # make sure that landmarkgroups is a list even with one landmark group
     # member
     if not isinstance(landmarkgroups, list):
@@ -671,6 +676,8 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
         It defines whether the selector of the landmark managers will have the
         form of plus/minus buttons or a slider.
     """
+    print 'Initializing...'
+
     # make sure that landmarks (groups) is a list even with one landmark group
     # member
     if not isinstance(landmarks, list):
@@ -751,7 +758,7 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
                       'legend_rounded_corners': False}
     figure_options = {'x_scale': 1.,
                       'y_scale': 1.,
-                          'render_axes': False,
+                      'render_axes': False,
                       'axes_font_name': 'sans-serif',
                       'axes_font_size': 10,
                       'axes_font_style': 'normal',
@@ -920,11 +927,9 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
                                 toggle_button_font_weight='bold',
                                 border_visible=False)
 
-        # set correct group to viewer options' selection
+        # change group on viewer_options
         viewer_options_wid.children[1].children[0].value = \
             all_groups.index(landmark_options_wid.selected_values['group'])
-    landmark_options_wid.children[2].children[0].on_trait_change(update_widgets,
-                                                                 'value')
 
     # create final widget
     if n_landmarks > 1:
@@ -966,6 +971,14 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
     # align-start the image number widget and the rest
     if n_landmarks > 1:
         wid.add_class('align-start')
+
+    # update viewer options
+    def update_viewer_options(name, value):
+        # set correct group at viewer options' selection
+        if cont_wid.selected_index == 2:
+            viewer_options_wid.children[1].children[0].value = \
+                all_groups.index(landmark_options_wid.selected_values['group'])
+    cont_wid.on_trait_change(update_viewer_options, 'selected_index')
 
     # format options' widgets
     if n_landmarks > 1:
@@ -1030,6 +1043,8 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     """
     from menpo.image import MaskedImage
 
+    print 'Initializing...'
+
     # make sure that images is a list even with one image member
     if not isinstance(images, Sized):
         images = [images]
@@ -1047,10 +1062,33 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         initial_groups_keys = [' ']
         initial_labels_keys = [[' ']]
 
+    # find all available groups and the respective labels from all the landmarks
+    # that are passed in
+    all_groups = []
+    all_labels = []
+    for l in images:
+        groups_l, labels_l = _extract_groups_labels(l)
+        for i, g in enumerate(groups_l):
+            if g not in all_groups:
+                all_groups.append(g)
+                all_labels.append(labels_l[i])
+
+    # get initial line colours for each available group
+    line_colours = []
+    for l in all_labels:
+        if len(l) == 1:
+            line_colours.append(['r'])
+        else:
+            line_colours.append(sample_colours_from_colourmap(len(l), 'jet'))
+
     # initial options dictionaries
     channels_default = 0
     if images[0].n_channels == 3:
         channels_default = None
+    index_selection_default = {'min': 0,
+                               'max': n_images-1,
+                               'step': 1,
+                               'index': 0}
     channels_options_default = {'n_channels': images[0].n_channels,
                                 'image_is_masked': isinstance(images[0],
                                                               MaskedImage),
@@ -1066,10 +1104,6 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                                 'labels_keys': initial_labels_keys,
                                 'group': None,
                                 'with_labels': None}
-    lines_options = {'render_lines': True,
-                     'line_width': 1,
-                     'line_colour': ['r'],
-                     'line_style': '-'}
     markers_options = {'render_markers': True,
                        'marker_size': 20,
                        'marker_face_colour': ['r'],
@@ -1110,15 +1144,18 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                       'axes_font_weight': 'normal',
                       'axes_x_limits': None,
                       'axes_y_limits': None}
-    viewer_options_default = {'lines': lines_options,
-                              'markers': markers_options,
-                              'numbering': numbering_options,
-                              'legend': legend_options,
-                              'figure': figure_options}
-    index_selection_default = {'min': 0,
-                               'max': n_images-1,
-                               'step': 1,
-                               'index': 0}
+    viewer_options_default = []
+    for i in range(len(all_groups)):
+        lines_options_default = {'render_lines': True,
+                                 'line_width': 1,
+                                 'line_colour': line_colours[i],
+                                 'line_style': '-'}
+        tmp = {'lines': lines_options_default,
+               'markers': markers_options,
+               'numbering': numbering_options,
+               'legend': legend_options,
+               'figure': figure_options}
+        viewer_options_default.append(tmp)
 
     # define plot function
     def plot_function(name, value):
@@ -1136,13 +1173,15 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         image_is_masked = isinstance(images[im], MaskedImage)
         update_info(images[im], image_is_masked, image_has_landmarks,
                     landmark_options_wid.selected_values['group'])
+        n_labels = len(landmark_options_wid.selected_values['with_labels'])
 
         # show image with selected options
-        tmp1 = viewer_options_wid.selected_values[0]['lines']
-        tmp2 = viewer_options_wid.selected_values[0]['markers']
-        tmp3 = viewer_options_wid.selected_values[0]['numbering']
-        tmp4 = viewer_options_wid.selected_values[0]['legend']
-        tmp5 = viewer_options_wid.selected_values[0]['figure']
+        group_idx = all_groups.index(landmark_options_wid.selected_values['group'])
+        tmp1 = viewer_options_wid.selected_values[group_idx]['lines']
+        tmp2 = viewer_options_wid.selected_values[group_idx]['markers']
+        tmp3 = viewer_options_wid.selected_values[group_idx]['numbering']
+        tmp4 = viewer_options_wid.selected_values[group_idx]['legend']
+        tmp5 = viewer_options_wid.selected_values[group_idx]['figure']
         new_figure_size = (tmp5['x_scale'] * figure_size[0],
                            tmp5['y_scale'] * figure_size[1])
         renderer = _visualize(
@@ -1159,7 +1198,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
             [landmark_options_wid.selected_values['with_labels']],
             False, dict(), True, False,
             tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
-            tmp1['line_colour'][0], tmp2['render_markers'],
+            tmp1['line_colour'][:n_labels], tmp2['render_markers'],
             tmp2['marker_style'], tmp2['marker_size'], tmp2['marker_edge_width'],
             tmp2['marker_edge_colour'], tmp2['marker_face_colour'],
             tmp3['render_numbering'], tmp3['numbers_font_name'],
@@ -1232,10 +1271,11 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     viewer_options_wid = viewer_options(viewer_options_default,
                                         ['lines', 'markers', 'numbering',
                                          'legend', 'figure_one'],
-                                        objects_names=None,
+                                        objects_names=all_groups,
                                         plot_function=plot_function,
                                         toggle_show_visible=False,
-                                        toggle_show_default=True)
+                                        toggle_show_default=True,
+                                        labels=all_labels)
     info_wid = info_print(toggle_show_default=True,
                           toggle_show_visible=False)
 
@@ -1254,7 +1294,10 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         channel_options_wid.selected_values['channels'] = 0
 
         # get new groups and labels, update landmark options and format them
-        group_keys, labels_keys = _extract_groups_labels(images[value])
+        im = 0
+        if n_images > 1:
+            im = image_number_wid.selected_values['index']
+        group_keys, labels_keys = _extract_groups_labels(images[im])
         update_landmark_options(landmark_options_wid, group_keys,
                                 labels_keys, plot_function)
         format_landmark_options(landmark_options_wid,
@@ -1267,9 +1310,14 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         # update channel options
         channel_options_wid.selected_values['channels'] = tmp_channels
         update_channel_options(channel_options_wid,
-                               n_channels=images[value].n_channels,
-                               image_is_masked=isinstance(images[value],
+                               n_channels=images[im].n_channels,
+                               image_is_masked=isinstance(images[im],
                                                           MaskedImage))
+
+        # set correct group at viewer options' selection
+        if not group_keys == [' ']:
+            viewer_options_wid.children[1].children[0].value = \
+                all_groups.index(landmark_options_wid.selected_values['group'])
 
     # create final widget
     if n_images > 1:
@@ -1313,6 +1361,14 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                   'Viewer options', 'Save figure']
     for (k, tl) in enumerate(tab_titles):
         wid.children[1].set_title(k, tl)
+
+    # update viewer options
+    def update_viewer_options(name, value):
+        # set correct group at viewer options' selection
+        if cont_wid.selected_index == 3:
+            viewer_options_wid.children[1].children[0].value = \
+                all_groups.index(landmark_options_wid.selected_values['group'])
+    cont_wid.on_trait_change(update_viewer_options, 'selected_index')
 
     # align-start the image number widget and the rest
     if n_images > 1:

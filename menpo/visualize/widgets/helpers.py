@@ -541,8 +541,7 @@ def landmark_options(landmark_options_default, plot_function=None,
     group_wid = ContainerWidget(children=[group, labels_and_text])
 
     # Widget container
-    landmark_options_wid = ContainerWidget(children=[but, landmarks,
-                                                     group_wid])
+    landmark_options_wid = ContainerWidget(children=[but, landmarks, group_wid])
 
     # Initialize output variables
     landmark_options_wid.selected_values = landmark_options_default
