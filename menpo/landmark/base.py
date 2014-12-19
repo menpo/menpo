@@ -28,20 +28,43 @@ class Landmarkable(Copyable):
 
     @abc.abstractproperty
     def n_dims(self):
+        """
+        The total number of dimensions.
+
+        :type: `int`
+        """
         pass
 
     @property
     def landmarks(self):
+        """
+        The landmarks object.
+
+        :type: :map:`LandmarkManager`
+        """
         if self._landmarks is None:
             self._landmarks = LandmarkManager()
         return self._landmarks
 
     @property
     def has_landmarks(self):
+        """
+        Whether the object has landmarks.
+
+        :type: `bool`
+        """
         return self._landmarks is not None
 
     @landmarks.setter
     def landmarks(self, value):
+        """
+        Landmarks setter.
+
+        Parameters
+        ----------
+        value : :map:`LandmarkManager`
+            The landmarks to set.
+        """
         # firstly, make sure the dim is correct. Note that the dim can be None
         lm_n_dims = value.n_dims
         if lm_n_dims is not None and lm_n_dims != self.n_dims:
@@ -93,39 +116,150 @@ class LandmarkableViewable(Landmarkable, Viewable):
                        axes_x_limits=None, axes_y_limits=None,
                        figure_size=(6, 4)):
         """
-        View all landmarks on the current shape, using the default
-        shape view method. Kwargs passed in here will be passed through
-        to the shapes view method.
+        Visualize the landmarks.
 
         Parameters
         ----------
-        group : `str`, optional
-            If ``None``, show all groups, else show only the provided group.
-        render_numbering : `bool`, optional
-            If ``True``, also render the label names next to the landmarks.
-        render_legend : `bool`, optional
-            If ``True``, also render a legend showing the landmark group symbols
-            and colours.
+        channels : `int` or `list` of `int` or ``all`` or `None`
+            If `int` or `list` of `int`, the specified channel(s) will be
+            rendered. If ``all``, all the channels will be rendered in subplots.
+            If `None` and the image is RGB, it will be rendered in RGB mode.
+            If `None` and the image is not RGB, it is equivalent to ``all``.
+        masked : `bool`, optional
+            If ``True``, only the masked pixels will be rendered.
+        group : `str` or `None`, optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
         with_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, only show the given label(s). Should **not** be
             used with the ``without_labels`` kwarg.
         without_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, show all except the given label(s). Should **not**
             be used with the ``with_labels`` kwarg.
-        lmark_view_kwargs : `dict`, optional
-            Passed through to the landmark viewer. An example for 3 labels:
-                lmark_view_kwargs = {'labels_colours': ['r', 'g', 'b'],
-                                     'marker_sizes': 20,
-                                     'marker_styles': 'o',
-                                     'edge_colours': 'k',
-                                     'face_colours': 'b',
-                                     'line_styles': 'solid',
-                                     'line_widths': 1,
-                                     'halign': 'center',
-                                     'valign': 'bottom',
-                                     'font_size': 10}
-        obj_view_kwargs : `dict`, optional
-            Passed through to this object's viewer.
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : {``center``, ``right``, ``left``}, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : {``center``, ``top``, ``bottom``,
+                                  ``baseline``}, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                             ``fantasy``, ``monospace``}, optional
+            The font of the numbers.
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the numbers.
+        numbers_font_weight : {``ultralight``, ``light``, ``normal``,
+                               ``regular``, ``book``, ``medium``, ``roman``,
+                               ``semibold``, ``demibold``, ``demi``, ``bold``,
+                               ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the numbers.
+        numbers_font_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                              or ``(3, )`` `ndarray`, optional
+            The font colour of the numbers.
+        render_legend : `bool`, optional
+            If ``True``, the legend will be rendered.
+        legend_title : `str`, optional
+            The title of the legend.
+        legend_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                            ``fantasy``, ``monospace``}, optional
+            The font of the legend.
+        legend_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the legend.
+        legend_font_size : `int`, optional
+            The font size of the legend.
+        legend_font_weight : {``ultralight``, ``light``, ``normal``,
+                              ``regular``, ``book``, ``medium``, ``roman``,
+                              ``semibold``, ``demibold``, ``demi``, ``bold``,
+                              ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the legend.
+        legend_marker_scale : `float`, optional
+            The relative size of the legend markers with respect to the original
+        legend_location : `int`, optional
+            The location of the legend. The predefined values are:
+
+            =============== ===
+            'best'          0
+            'upper right'   1
+            'upper left'    2
+            'lower left'    3
+            'lower right'   4
+            'right'         5
+            'center left'   6
+            'center right'  7
+            'lower center'  8
+            'upper center'  9
+            'center'        10
+            =============== ===
+
+        legend_bbox_to_anchor : (`float`, `float`), optional
+            The bbox that the legend will be anchored.
+        legend_border_axes_pad : `float`, optional
+            The pad between the axes and legend border.
+        legend_n_columns : `int`, optional
+            The number of the legend's columns.
+        legend_horizontal_spacing : `float`, optional
+            The spacing between the columns.
+        legend_vertical_spacing : `float`, optional
+            The vertical space between the legend entries.
+        legend_border : `bool`, optional
+            If ``True``, a frame will be drawn around the legend.
+        legend_border_padding : `float`, optional
+            The fractional whitespace inside the legend border.
+        legend_shadow : `bool`, optional
+            If ``True``, a shadow will be drawn behind legend.
+        legend_rounded_corners : `bool`, optional
+            If ``True``, the frame's corners will be rounded (fancybox).
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
 
         Raises
         ------
@@ -223,6 +357,11 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
 
     @property
     def n_dims(self):
+        """
+        The total number of dimensions.
+
+        :type: `int`
+        """
         if self.n_groups != 0:
             # Python version independent way of getting the first value
             for v in self._landmark_groups.values():
@@ -236,7 +375,6 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
 
         Returns
         -------
-
         ``type(self)``
             A copy of this object
 
@@ -354,7 +492,7 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         """
         All the labels for the landmark set.
 
-        :type: list of `string`
+        :type: `list` of `str`
         """
         return self._landmark_groups.keys()
 
@@ -385,24 +523,145 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
              axes_font_style='normal', axes_font_weight='normal',
              axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         """
-        View all landmarks groups on the current manager.
+        Visualize the landmarks.
 
         Parameters
         ----------
-        group : `str`, optional
-            If ``None``, show all groups, else show only the provided group.
-        render_numbering : `boolean`, optional
-            If ``True``, also render the label names next to the landmarks.
-        render_legend : `bool`, optional
-            If ``True``, also render the legend.
-        with_labels : None or `str` or list of `str`, optional
+        group : `str` or `None`, optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
+        with_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, only show the given label(s). Should **not** be
             used with the ``without_labels`` kwarg.
-        without_labels : None or `str` or list of `str`, optional
+        without_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, show all except the given label(s). Should **not**
             be used with the ``with_labels`` kwarg.
-        kwargs : `dict`, optional
-            Passed through to the viewer.
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        image_view : `bool`, optional
+            If ``True``, the x and y axes are flipped.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : {``center``, ``right``, ``left``}, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : {``center``, ``top``, ``bottom``,
+                                  ``baseline``}, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                             ``fantasy``, ``monospace``}, optional
+            The font of the numbers.
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the numbers.
+        numbers_font_weight : {``ultralight``, ``light``, ``normal``,
+                               ``regular``, ``book``, ``medium``, ``roman``,
+                               ``semibold``, ``demibold``, ``demi``, ``bold``,
+                               ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the numbers.
+        numbers_font_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                              or ``(3, )`` `ndarray`, optional
+            The font colour of the numbers.
+        render_legend : `bool`, optional
+            If ``True``, the legend will be rendered.
+        legend_title : `str`, optional
+            The title of the legend.
+        legend_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                            ``fantasy``, ``monospace``}, optional
+            The font of the legend.
+        legend_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the legend.
+        legend_font_size : `int`, optional
+            The font size of the legend.
+        legend_font_weight : {``ultralight``, ``light``, ``normal``,
+                              ``regular``, ``book``, ``medium``, ``roman``,
+                              ``semibold``, ``demibold``, ``demi``, ``bold``,
+                              ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the legend.
+        legend_marker_scale : `float`, optional
+            The relative size of the legend markers with respect to the original
+        legend_location : `int`, optional
+            The location of the legend. The predefined values are:
+
+            =============== ===
+            'best'          0
+            'upper right'   1
+            'upper left'    2
+            'lower left'    3
+            'lower right'   4
+            'right'         5
+            'center left'   6
+            'center right'  7
+            'lower center'  8
+            'upper center'  9
+            'center'        10
+            =============== ===
+
+        legend_bbox_to_anchor : (`float`, `float`), optional
+            The bbox that the legend will be anchored.
+        legend_border_axes_pad : `float`, optional
+            The pad between the axes and legend border.
+        legend_n_columns : `int`, optional
+            The number of the legend's columns.
+        legend_horizontal_spacing : `float`, optional
+            The spacing between the columns.
+        legend_vertical_spacing : `float`, optional
+            The vertical space between the legend entries.
+        legend_border : `bool`, optional
+            If ``True``, a frame will be drawn around the legend.
+        legend_border_padding : `float`, optional
+            The fractional whitespace inside the legend border.
+        legend_shadow : `bool`, optional
+            If ``True``, a shadow will be drawn behind legend.
+        legend_rounded_corners : `bool`, optional
+            If ``True``, the frame's corners will be rounded (fancybox).
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
 
         Raises
         ------
@@ -502,14 +761,14 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
     ----------
     target : :map:`Landmarkable`
         The parent object of this landmark group.
-    group : `string`
+    group : `str`
         The label of the group.
     pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
-    labels_to_masks : `OrderedDict` of `string` to `boolean` `ndarrays`
+    labels_to_masks : `OrderedDict` of `str` to `bool` `ndarrays`
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
-    copy : `boolean`, optional
+    copy : `bool`, optional
         If ``True``, a copy of the :map:`PointCloud` is stored on the group.
 
     Raises
@@ -524,7 +783,6 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         If there exists any point in the pointcloud that is not covered
         by a label.
     """
-
     def __init__(self, pointcloud, labels_to_masks, copy=True):
         super(LandmarkGroup, self).__init__()
 
@@ -557,10 +815,8 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         Returns
         -------
-
         ``type(self)``
             A copy of this object
-
         """
         new = Copyable.copy(self)
         for k, v in new._labels_to_masks.items():
@@ -650,7 +906,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         """
         The list of labels that belong to this group.
 
-        :type: list of `string`
+        :type: `list` of `str`
         """
         return self._labels_to_masks.keys()
 
@@ -696,7 +952,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         Parameters
         ----------
-        labels : `string` or list of `string`, optional
+        labels : `str` or `list` of `str`, optional
             Labels that should be kept in the returned landmark group. If
             None is passed, and if there is only one label on this group,
             the label will be substituted automatically.
@@ -726,7 +982,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         Parameters
         ----------
-        label : `string`
+        label : `str`
             Label to exclude.
 
         Returns
@@ -833,29 +1089,145 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
              axes_font_style='normal', axes_font_weight='normal',
              axes_x_limits=None, axes_y_limits=None, figure_size=None):
         """
-        View all landmarks.
+        Visualize the landmark group.
 
         Parameters
         ----------
-        targettype : `type`, optional
-            Hint for the landmark viewer for the type of the object these
-            landmarks are attached to. If ``None``, The landmarks will be
-            visualized without special consideration for the type of the
-            target. Mainly used for :map:`Image` subclasses.
-        render_numbering : `bool`, optional
-            If `True`, also render the label numbers next to the landmarks.
-        render_legend : `bool`, optional
-            If ``True``, also render the legend.
-        group : `str`, optional
-            The group label to prepend before the semantic labels
-        with_labels : None or `str` or list of `str`, optional
+        with_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, only show the given label(s). Should **not** be
             used with the ``without_labels`` kwarg.
-        without_labels : None or `str` or list of `str`, optional
+        without_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, show all except the given label(s). Should **not**
             be used with the ``with_labels`` kwarg.
-        kwargs : `dict`, optional
-            Passed through to the viewer.
+        group : `str` or `None`, optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        image_view : `bool`, optional
+            If ``True``, the x and y axes are flipped.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : {``center``, ``right``, ``left``}, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : {``center``, ``top``, ``bottom``,
+                                  ``baseline``}, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                             ``fantasy``, ``monospace``}, optional
+            The font of the numbers.
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the numbers.
+        numbers_font_weight : {``ultralight``, ``light``, ``normal``,
+                               ``regular``, ``book``, ``medium``, ``roman``,
+                               ``semibold``, ``demibold``, ``demi``, ``bold``,
+                               ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the numbers.
+        numbers_font_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                              or ``(3, )`` `ndarray`, optional
+            The font colour of the numbers.
+        render_legend : `bool`, optional
+            If ``True``, the legend will be rendered.
+        legend_title : `str`, optional
+            The title of the legend.
+        legend_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                            ``fantasy``, ``monospace``}, optional
+            The font of the legend.
+        legend_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the legend.
+        legend_font_size : `int`, optional
+            The font size of the legend.
+        legend_font_weight : {``ultralight``, ``light``, ``normal``,
+                              ``regular``, ``book``, ``medium``, ``roman``,
+                              ``semibold``, ``demibold``, ``demi``, ``bold``,
+                              ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the legend.
+        legend_marker_scale : `float`, optional
+            The relative size of the legend markers with respect to the original
+        legend_location : `int`, optional
+            The location of the legend. The predefined values are:
+
+            =============== ===
+            'best'          0
+            'upper right'   1
+            'upper left'    2
+            'lower left'    3
+            'lower right'   4
+            'right'         5
+            'center left'   6
+            'center right'  7
+            'lower center'  8
+            'upper center'  9
+            'center'        10
+            =============== ===
+
+        legend_bbox_to_anchor : (`float`, `float`), optional
+            The bbox that the legend will be anchored.
+        legend_border_axes_pad : `float`, optional
+            The pad between the axes and legend border.
+        legend_n_columns : `int`, optional
+            The number of the legend's columns.
+        legend_horizontal_spacing : `float`, optional
+            The spacing between the columns.
+        legend_vertical_spacing : `float`, optional
+            The vertical space between the legend entries.
+        legend_border : `bool`, optional
+            If ``True``, a frame will be drawn around the legend.
+        legend_border_padding : `float`, optional
+            The fractional whitespace inside the legend border.
+        legend_shadow : `bool`, optional
+            If ``True``, a shadow will be drawn behind legend.
+        legend_rounded_corners : `bool`, optional
+            If ``True``, the frame's corners will be rounded (fancybox).
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
 
         Raises
         ------

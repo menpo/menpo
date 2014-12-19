@@ -164,7 +164,7 @@ def ibug_face_68(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
@@ -256,7 +256,7 @@ def ibug_face_66(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
@@ -351,7 +351,7 @@ def ibug_face_51(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
@@ -441,7 +441,7 @@ def ibug_face_49(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
@@ -524,7 +524,7 @@ def ibug_face_68_trimesh(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
@@ -606,7 +606,7 @@ def ibug_face_65_closed_mouth(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
@@ -744,12 +744,12 @@ def lfpw_face(landmark_group):
     -------
     group : `str`
         The group label: 'lfpw_face'
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group: :map:`LandmarkGroup`
         New landmark group
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 29 points
 
     References
@@ -856,7 +856,7 @@ def ibug_open_eye(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 38 points
     """
     from menpo.shape import PointUndirectedGraph
@@ -936,7 +936,7 @@ def ibug_close_eye_points(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 17 points
     """
     from menpo.shape import PointUndirectedGraph
@@ -993,7 +993,7 @@ def ibug_open_eye_trimesh(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 38 points
     """
     from menpo.shape import TriMesh
@@ -1058,7 +1058,7 @@ def ibug_close_eye_trimesh(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 38 points
     """
     from menpo.shape import TriMesh
@@ -1110,7 +1110,7 @@ def ibug_tongue(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 19 points
     """
     group = 'ibug_tongue'
@@ -1151,7 +1151,7 @@ def ibug_hand(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 39 points
     """
     from menpo.shape import PointUndirectedGraph
@@ -1230,7 +1230,7 @@ def stickmen_pose(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 12 points
 
     References
@@ -1279,7 +1279,7 @@ def lsp_pose(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 14 points
 
     References
@@ -1353,7 +1353,7 @@ def flic_pose(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 11 points
 
     References
@@ -1398,7 +1398,7 @@ def streetscene_car_view_0(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
@@ -1466,7 +1466,7 @@ def streetscene_car_view_1(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
@@ -1535,7 +1535,7 @@ def streetscene_car_view_2(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
@@ -1594,7 +1594,7 @@ def streetscene_car_view_3(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
@@ -1666,7 +1666,7 @@ def streetscene_car_view_4(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
@@ -1736,7 +1736,7 @@ def streetscene_car_view_5(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
@@ -1795,7 +1795,7 @@ def streetscene_car_view_6(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
@@ -1866,7 +1866,7 @@ def streetscene_car_view_7(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
@@ -1914,20 +1914,19 @@ def labeller(landmarkable, group, label_func):
 
     Parameters
     ----------
-    landmarkable: :class:`menpo.landmark.base.Landmarkable`
+    landmarkable: :map:`Landmarkable`
         Landmarkable object
-    group: string
+    group: `str`
         The group label of the landmark group to apply semantic labels to.
-    label_func: func
+    label_func: `func`
         A labelling function taken from this module. `func` should take a
-        :class:`menpo.landmark.base.LandmarkGroup` and
-        return a tuple of (group label, new LandmarkGroup with semantic labels
-        applied.)
+        :map:`LandmarkGroup` and return a tuple of
+        (group label, new LandmarkGroup with semantic labels applied.)
 
     Returns
     -------
-    landmarkable : :class:`menpo.landmark.base.Landmarkable`
-        landmarkable with label (this is just for convenience,
+    landmarkable : :map:`Landmarkable`
+        Landmarkable with label (this is just for convenience,
         the object will actually be modified in place)
     """
     new_group, lmark_group = label_func(landmarkable.landmarks[group])
