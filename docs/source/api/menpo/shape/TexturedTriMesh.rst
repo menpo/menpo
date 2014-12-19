@@ -1,10 +1,9 @@
 .. _menpo-shape-TexturedTriMesh:
 
-.. currentmodule:: menpo.shape.mesh
+.. currentmodule:: menpo.shape
 
 TexturedTriMesh
 ===============
-
 .. autoclass:: TexturedTriMesh
   :members:
   :inherited-members:

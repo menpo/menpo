@@ -1,10 +1,9 @@
 .. _menpo-image-Image:
 
-.. currentmodule:: menpo.image.base
+.. currentmodule:: menpo.image
 
 Image
 =====
-
 .. autoclass:: Image
   :members:
   :inherited-members:

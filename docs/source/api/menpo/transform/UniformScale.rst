@@ -1,10 +1,9 @@
 .. _menpo-transform-UniformScale:
 
-.. currentmodule:: menpo.transform.homogeneous.scale
+.. currentmodule:: menpo.transform
 
 UniformScale
 ============
-
 .. autoclass:: UniformScale
   :members:
   :inherited-members:

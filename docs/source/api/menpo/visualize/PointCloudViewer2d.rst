@@ -1,10 +1,9 @@
 .. _menpo-visualize-PointCloudViewer2d:
 
-.. currentmodule:: menpo.visualize.base
+.. currentmodule:: menpo.visualize
 
 PointCloudViewer2d
 ==================
-
 .. autoclass:: PointCloudViewer2d
   :members:
   :inherited-members:
