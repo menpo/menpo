@@ -3195,8 +3195,8 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
                         orientation_default='portrait',
                         papertype_default='letter', transparent_default=False,
                         facecolour_default='w', edgecolour_default='w',
-                        pad_inches_default=0.5, toggle_show_default=True,
-                        toggle_show_visible=True):
+                        pad_inches_default=0.5, overwrite_default=False,
+                        toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Save Figure Options.
 
@@ -3318,16 +3318,21 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
                                      value=pad_inches_default)
     filename = TextWidget(description='Path',
                           value=join(getcwd(), 'Untitled.' + format_default))
+    overwrite = CheckboxWidget(description='Overwrite if file exists',
+                               value=overwrite_default)
+    error_str = LatexWidget(value="")
     save_but = ButtonWidget(description='Save')
 
     # create final widget
-    path_wid = ContainerWidget(children=[filename, format_wid, papertype_wid])
+    path_wid = ContainerWidget(children=[filename, format_wid, overwrite,
+                                         papertype_wid])
     page_wid = ContainerWidget(children=[orientation_wid, dpi_wid,
                                          pad_inches_wid])
     colour_wid = ContainerWidget(children=[facecolour_wid, edgecolour_wid,
                                            transparent_wid])
     options_wid = TabWidget(children=[path_wid, page_wid, colour_wid])
-    save_figure_wid = ContainerWidget(children=[but, options_wid, save_but])
+    save_wid = ContainerWidget(children=[save_but, error_str])
+    save_figure_wid = ContainerWidget(children=[but, options_wid, save_wid])
 
     # Assign renderer
     save_figure_wid.renderer = [renderer]
@@ -3335,6 +3340,7 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     # save function
     def save_function(name):
         # set save button state
+        error_str.value = ''
         save_but.description = 'Saving...'
         save_but.disabled = True
 
@@ -3342,13 +3348,22 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
         selected_dpi = dpi_wid.value
         if dpi_wid.value == 0:
             selected_dpi = None
-        save_figure_wid.renderer[0].save_figure(
-            filename=filename.value, dpi=selected_dpi,
-            face_colour=facecolour_wid.selected_values['colour'][0],
-            edge_colour=edgecolour_wid.selected_values['colour'][0],
-            orientation=orientation_wid.value, paper_type=papertype_wid.value,
-            format=format_wid.value, transparent=transparent_wid.value,
-            pad_inches=pad_inches_wid.value)
+        try:
+            save_figure_wid.renderer[0].save_figure(
+                filename=filename.value, dpi=selected_dpi,
+                face_colour=facecolour_wid.selected_values['colour'][0],
+                edge_colour=edgecolour_wid.selected_values['colour'][0],
+                orientation=orientation_wid.value,
+                paper_type=papertype_wid.value, format=format_wid.value,
+                transparent=transparent_wid.value,
+                pad_inches=pad_inches_wid.value, overwrite=overwrite.value)
+            error_str.value = ''
+        except ValueError as e:
+            if (e.message == 'File already exists. Please set the overwrite '
+                             'kwarg if you wish to overwrite the file.'):
+                error_str.value = 'File exists! Select overwrite to replace.'
+            else:
+                error_str.value = e.message
 
         # set save button state
         save_but.description = 'Save'
@@ -3403,6 +3418,15 @@ def format_save_figure_options(save_figure_wid, container_padding='6px',
     """
     # add margin on top of tabs widget
     save_figure_wid.children[1].set_css('margin-top', tab_top_margin)
+
+    # align path options to the right
+    save_figure_wid.children[1].children[0].add_class('align-end')
+
+    # align save button and error message horizontally
+    save_figure_wid.children[2].remove_class('vbox')
+    save_figure_wid.children[2].add_class('hbox')
+    save_figure_wid.children[2].children[1].set_css({'margin-left': '0.5cm',
+                                                     'background-color': 'red'})
 
     # set final tab titles
     tab_titles = ['Path', 'Page setup', 'Image colour']

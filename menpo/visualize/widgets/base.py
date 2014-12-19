@@ -102,21 +102,22 @@ def _raw_info_string_to_latex(raw):
 def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
                           browser_style='buttons'):
     r"""
-    Widget that allows browsing through a list of pointclouds and pointgraphs.
+    Widget that allows browsing through a list of :map:`PointCLoud`,
+    :map:`PointGraph` or :map:`TriMesh`.
 
     The widget has options tabs regarding the renderer (lines, markers, figure,
     axes) and saving the figure to file.
 
     Parameters
     -----------
-    pointclouds : `list` of :map:`PointCloud` or :map:`PointGraph` or subclass
-        The `list` of pointclouds to be visualized.
+    pointclouds : `list` of :map:`PointCloud` or :map:`PointGraph` or :map:`TriMesh` or subclass
+        The `list` of objects to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
     popup : `bool`, optional
         If ``True``, the widget will appear as a popup window.
     browser_style : {``buttons``, ``slider``}, optional
-        It defines whether the selector of the pointclouds will have the form of
+        It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
     print 'Initializing...'
