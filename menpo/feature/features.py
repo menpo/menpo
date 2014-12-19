@@ -36,7 +36,7 @@ def gradient(pixels, fast2d=True):
         Bd_x, Bd_y].
 
     """
-    if fast2d and len(pixels.shape) is 3:
+    if fast2d and (len(pixels.shape) is 3):
         return gradient_cython(pixels)
     else:
         grad_per_dim_per_channel = [np.gradient(g) for g in pixels]
