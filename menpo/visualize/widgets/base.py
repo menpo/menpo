@@ -1,7 +1,7 @@
 from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
                                   RadioButtonsWidget, ButtonWidget)
 from IPython.display import display, clear_output
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 import numpy as np
 from collections import Sized
 

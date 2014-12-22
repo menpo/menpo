@@ -4026,7 +4026,8 @@ def _convert_str_to_list_int(s):
 
 def _convert_str_to_list_float(s):
     r"""
-    Function that converts a given string to a list of float numbers. For example:
+    Function that converts a given string to a list of float numbers.
+    For example:
         _convert_str_to_list_float('1, 2, 3') returns [1.0, 2.0, 3.0]
     """
     if isinstance(s, str):

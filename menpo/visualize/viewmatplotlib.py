@@ -1,7 +1,6 @@
 import abc
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from menpo.visualize.base import Renderer
 
@@ -45,6 +44,8 @@ class MatplotlibRenderer(Renderer):
         figure : Matplotlib figure object
             The figure we will be rendering on.
         """
+        import matplotlib.pyplot as plt
+
         if self.new_figure or self.figure_id is not None:
             self.figure = plt.figure(self.figure_id)
         else:
@@ -192,6 +193,7 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
                 axes_font_weight='normal', axes_x_limits=None,
                 axes_y_limits=None, figure_size=(6, 4)):
         import matplotlib.cm as cm
+        import matplotlib.pyplot as plt
 
         if len(self.image.shape) == 2:  # Single channels are viewed in Gray
             plt.imshow(self.image, cmap=cm.Greys_r)
@@ -237,6 +239,7 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
                 axes_font_weight='normal', axes_x_limits=None,
                 axes_y_limits=None, figure_size=(6, 4)):
         import matplotlib.cm as cm
+        import matplotlib.pyplot as plt
 
         p = self.plot_layout
         for i in range(self.image.shape[2]):
@@ -287,6 +290,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
                 label=None):
         from matplotlib import collections as mc
         import matplotlib.cm as cm
+        import matplotlib.pyplot as plt
 
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
@@ -382,6 +386,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                 axes_font_name='sans-serif', axes_font_size=10,
                 axes_font_style='normal', axes_font_weight='normal',
                 axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
+        import matplotlib.pyplot as plt
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
@@ -502,6 +507,7 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         r"""
         Visualize how points are affected by the warp in 2 dimensions.
         """
+        import matplotlib.pyplot as plt
         source = self.alignment_transform.source.points
         target = self.alignment_transform.target.points
         # a factor by which the minimum and maximum x and y values of the warp
@@ -569,6 +575,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         self.axis_limits = axis_limits
 
     def _render(self, colour_list=None, marker_list=None, **kwargs):
+        import matplotlib.pyplot as plt
         ax = plt.gca()
         ax.set_xlabel(self.x_label)
         ax.set_ylabel(self.y_label)
@@ -591,6 +598,7 @@ class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
         self.image_list = image_list
 
     def _render(self, interval=50, **kwargs):
+        import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         import matplotlib.animation as animation
 
@@ -626,6 +634,7 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
     def _render(self, interval=50, **kwargs):
         import matplotlib.cm as cm
         import matplotlib.animation as animation
+        import matplotlib.pyplot as plt
 
         p = self.plot_layout
         _axs = []
@@ -653,5 +662,6 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
 
 
 def sample_colours_from_colourmap(n_colours, colour_map):
+    import matplotlib.pyplot as plt
     cm = plt.get_cmap(colour_map)
     return [cm(1.*i/n_colours)[:3] for i in range(n_colours)]
