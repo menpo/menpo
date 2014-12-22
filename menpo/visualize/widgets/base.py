@@ -1,6 +1,3 @@
-from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
-                                  RadioButtonsWidget, ButtonWidget)
-from IPython.display import display, clear_output
 import numpy as np
 from collections import Sized
 
@@ -119,7 +116,9 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
-    print 'Initializing...'
+    import IPython.display as ipydisplay
+    import IPython.html.widgets as ipywidgets
+    print('Initializing...')
 
     # make sure that pointclouds is a list even with one pointcloud member
     if not isinstance(pointclouds, Sized):
@@ -161,7 +160,7 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
         import matplotlib.pyplot as plt
         # clear current figure, but wait until the new data to be displayed are
         # generated
-        clear_output(wait=True)
+        ipydisplay.clear_output(wait=True)
 
         # get selected pointcloud number
         im = 0
@@ -222,8 +221,9 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
         info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
 
     # viewer options widget
-    axes_mode_wid = RadioButtonsWidget(values={'Image': 1, 'Point cloud': 2},
-                                       description='Axes mode:', value=2)
+    axes_mode_wid = ipywidgets.RadioButtonsWidget(
+        values={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
+        value=2)
     axes_mode_wid.on_trait_change(plot_function, 'value')
     viewer_options_wid = viewer_options(viewer_options_default,
                                         ['lines', 'markers', 'figure_one'],
@@ -231,8 +231,8 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
                                         plot_function=plot_function,
                                         toggle_show_visible=False,
                                         toggle_show_default=True)
-    viewer_options_all = ContainerWidget(children=[axes_mode_wid,
-                                                   viewer_options_wid])
+    viewer_options_all = ipywidgets.ContainerWidget(children=[axes_mode_wid,
+                                                    viewer_options_wid])
     info_wid = info_print(toggle_show_default=True,
                           toggle_show_visible=False)
 
@@ -255,23 +255,24 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
             toggle_show_visible=False)
 
         # final widget
-        logo_wid = ContainerWidget(children=[logo(), pointcloud_number_wid])
+        logo_wid = ipywidgets.ContainerWidget(children=[logo(),
+                                                        pointcloud_number_wid])
         button_title = 'Pointclouds Menu'
     else:
         # final widget
         logo_wid = logo()
         button_title = 'Pointcloud Menu'
     # create popup widget if asked
-    cont_wid = TabWidget(children=[info_wid, viewer_options_all,
+    cont_wid = ipywidgets.TabWidget(children=[info_wid, viewer_options_all,
                                    save_figure_wid])
     if popup:
-        wid = PopupWidget(children=[logo_wid, cont_wid],
-                          button_text=button_title)
+        wid = ipywidgets.PopupWidget(children=[logo_wid, cont_wid],
+                                     button_text=button_title)
     else:
-        wid = ContainerWidget(children=[logo_wid, cont_wid])
+        wid = ipywidgets.ContainerWidget(children=[logo_wid, cont_wid])
 
     # display final widget
-    display(wid)
+    ipydisplay.display(wid)
 
     # set final tab titles
     tab_titles = ['Pointcloud info', 'Viewer options', 'Save figure']
@@ -335,7 +336,9 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
         It defines whether the selector of the landmark managers will have the
         form of plus/minus buttons or a slider.
     """
-    print 'Initializing...'
+    import IPython.display as ipydisplay
+    import IPython.html.widgets as ipywidgets
+    print('Initializing...')
 
     # make sure that landmarkgroups is a list even with one landmark group
     # member
@@ -433,7 +436,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
         import matplotlib.pyplot as plt
         # clear current figure, but wait until the new data to be displayed are
         # generated
-        clear_output(wait=True)
+        ipydisplay.clear_output(wait=True)
 
         # get selected pointcloud number
         im = 0
@@ -533,8 +536,9 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
                                             toggle_show_visible=False)
 
     # viewer options widget
-    axes_mode_wid = RadioButtonsWidget(values={'Image': 1, 'Point cloud': 2},
-                                       description='Axes mode:', value=2)
+    axes_mode_wid = ipywidgets.RadioButtonsWidget(
+        values={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
+        value=2)
     axes_mode_wid.on_trait_change(plot_function, 'value')
     viewer_options_wid = viewer_options(viewer_options_default,
                                         ['lines', 'markers', 'numbering',
@@ -544,8 +548,8 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
                                         toggle_show_visible=False,
                                         toggle_show_default=True,
                                         labels=all_labels)
-    viewer_options_all = ContainerWidget(children=[axes_mode_wid,
-                                                   viewer_options_wid])
+    viewer_options_all = ipywidgets.ContainerWidget(children=[axes_mode_wid,
+                                                    viewer_options_wid])
     info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
 
     # save figure widget
@@ -589,23 +593,25 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
             toggle_show_visible=False)
 
         # final widget
-        logo_wid = ContainerWidget(children=[logo(), landmark_number_wid])
+        logo_wid = ipywidgets.ContainerWidget(children=[logo(),
+                                                        landmark_number_wid])
         button_title = 'Shapes Menu'
     else:
         # final widget
         logo_wid = logo()
         button_title = 'Shape Menu'
     # create popup widget if asked
-    cont_wid = TabWidget(children=[info_wid, landmark_options_wid,
-                                   viewer_options_all, save_figure_wid])
+    cont_wid = ipywidgets.TabWidget(children=[info_wid, landmark_options_wid,
+                                              viewer_options_all,
+                                              save_figure_wid])
     if popup:
-        wid = PopupWidget(children=[logo_wid, cont_wid],
-                          button_text=button_title)
+        wid = ipywidgets.PopupWidget(children=[logo_wid, cont_wid],
+                                     button_text=button_title)
     else:
-        wid = ContainerWidget(children=[logo_wid, cont_wid])
+        wid = ipywidgets.ContainerWidget(children=[logo_wid, cont_wid])
 
     # display final widget
-    display(wid)
+    ipydisplay.display(wid)
 
     # set final tab titles
     tab_titles = ['Shape info', 'Landmarks options', 'Viewer options',
@@ -677,7 +683,9 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
         It defines whether the selector of the landmark managers will have the
         form of plus/minus buttons or a slider.
     """
-    print 'Initializing...'
+    import IPython.display as ipydisplay
+    import IPython.html.widgets as ipywidgets
+    print('Initializing...')
 
     # make sure that landmarks (groups) is a list even with one landmark group
     # member
@@ -784,7 +792,7 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
         import matplotlib.pyplot as plt
         # clear current figure, but wait until the new data to be displayed are
         # generated
-        clear_output(wait=True)
+        ipydisplay.clear_output(wait=True)
 
         # get selected pointcloud number
         im = 0
@@ -892,8 +900,9 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
     landmark_options_wid.children[1].disabled = not first_has_landmarks
 
     # viewer options widget
-    axes_mode_wid = RadioButtonsWidget(values={'Image': 1, 'Point cloud': 2},
-                                       description='Axes mode:', value=2)
+    axes_mode_wid = ipywidgets.RadioButtonsWidget(
+        values={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
+        value=2)
     axes_mode_wid.on_trait_change(plot_function, 'value')
     viewer_options_wid = viewer_options(viewer_options_default,
                                         ['lines', 'markers', 'numbering',
@@ -903,8 +912,8 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
                                         toggle_show_visible=False,
                                         toggle_show_default=True,
                                         labels=all_labels)
-    viewer_options_all = ContainerWidget(children=[axes_mode_wid,
-                                                   viewer_options_wid])
+    viewer_options_all = ipywidgets.ContainerWidget(children=[axes_mode_wid,
+                                                    viewer_options_wid])
     info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
 
     # save figure widget
@@ -946,23 +955,25 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
             toggle_show_visible=False)
 
         # final widget
-        logo_wid = ContainerWidget(children=[logo(), landmark_number_wid])
+        logo_wid = ipywidgets.ContainerWidget(children=[logo(),
+                                                        landmark_number_wid])
         button_title = 'Shapes Menu'
     else:
         # final widget
         logo_wid = logo()
         button_title = 'Shape Menu'
     # create popup widget if asked
-    cont_wid = TabWidget(children=[info_wid, landmark_options_wid,
-                                   viewer_options_all, save_figure_wid])
+    cont_wid = ipywidgets.TabWidget(children=[info_wid, landmark_options_wid,
+                                              viewer_options_all,
+                                              save_figure_wid])
     if popup:
-        wid = PopupWidget(children=[logo_wid, cont_wid],
-                          button_text=button_title)
+        wid = ipywidgets.PopupWidget(children=[logo_wid, cont_wid],
+                                     button_text=button_title)
     else:
-        wid = ContainerWidget(children=[logo_wid, cont_wid])
+        wid = ipywidgets.ContainerWidget(children=[logo_wid, cont_wid])
 
     # display final widget
-    display(wid)
+    ipydisplay.display(wid)
 
     # set final tab titles
     tab_titles = ['Shape info', 'Landmarks options', 'Viewer options',
@@ -1044,8 +1055,9 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         plus/minus buttons or a slider.
     """
     from menpo.image import MaskedImage
-
-    print 'Initializing...'
+    import IPython.display as ipydisplay
+    import IPython.html.widgets as ipywidgets
+    print('Initializing...')
 
     # make sure that images is a list even with one image member
     if not isinstance(images, Sized):
@@ -1163,7 +1175,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     def plot_function(name, value):
         # clear current figure, but wait until the new data to be displayed are
         # generated
-        clear_output(wait=True)
+        ipydisplay.clear_output(wait=True)
 
         # get selected image number
         im = 0
@@ -1339,24 +1351,26 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                                              toggle_show_visible=False)
 
         # final widget
-        logo_wid = ContainerWidget(children=[logo(), image_number_wid])
+        logo_wid = ipywidgets.ContainerWidget(children=[logo(),
+                                                        image_number_wid])
         button_title = 'Images Menu'
     else:
         # final widget
         logo_wid = logo()
         button_title = 'Image Menu'
     # create popup widget if asked
-    cont_wid = TabWidget(children=[info_wid, channel_options_wid,
-                                   landmark_options_wid,
-                                   viewer_options_wid, save_figure_wid])
+    cont_wid = ipywidgets.TabWidget(children=[info_wid, channel_options_wid,
+                                              landmark_options_wid,
+                                              viewer_options_wid,
+                                              save_figure_wid])
     if popup:
-        wid = PopupWidget(children=[logo_wid, cont_wid],
-                          button_text=button_title)
+        wid = ipywidgets.PopupWidget(children=[logo_wid, cont_wid],
+                                     button_text=button_title)
     else:
-        wid = ContainerWidget(children=[logo_wid, cont_wid])
+        wid = ipywidgets.ContainerWidget(children=[logo_wid, cont_wid])
 
     # display final widget
-    display(wid)
+    ipydisplay.display(wid)
 
     # set final tab titles
     tab_titles = ['Image info', 'Channels options', 'Landmarks options',
@@ -1430,6 +1444,8 @@ def save_matplotlib_figure(renderer, popup=True):
     popup : `bool`, optional
         If ``True``, the widget will appear as a popup window.
     """
+    import IPython.display as ipydisplay
+    import IPython.html.widgets as ipywidgets
     # Create sub-widgets
     logo_wid = logo()
     save_figure_wid = save_figure_options(renderer, toggle_show_default=True,
@@ -1437,15 +1453,15 @@ def save_matplotlib_figure(renderer, popup=True):
 
     # Create final widget
     if popup:
-        wid = PopupWidget(children=[logo_wid, save_figure_wid],
-                          button_text='Save Figure')
+        wid = ipywidgets.PopupWidget(children=[logo_wid, save_figure_wid],
+                                     button_text='Save Figure')
         # set width of popup widget
         wid.set_css({'width': '11cm'}, selector='modal')
     else:
-        wid = ContainerWidget(children=[logo_wid, save_figure_wid])
+        wid = ipywidgets.ContainerWidget(children=[logo_wid, save_figure_wid])
 
     # Display widget
-    display(wid)
+    ipydisplay.display(wid)
 
     # Format widgets
     format_save_figure_options(save_figure_wid, container_padding='6px',
@@ -1478,19 +1494,22 @@ def features_selection(popup=True):
 
             features_image = features_function[0](image)
     """
+    import IPython.display as ipydisplay
+    import IPython.html.widgets as ipywidgets
     # Create sub-widgets
     logo_wid = logo()
     features_options_wid = features_options(toggle_show_default=True,
                                             toggle_show_visible=False)
-    features_wid = ContainerWidget(children=[logo_wid, features_options_wid])
-    select_but = ButtonWidget(description='Select')
+    features_wid = ipywidgets.ContainerWidget(children=[logo_wid,
+                                                        features_options_wid])
+    select_but = ipywidgets.ButtonWidget(description='Select')
 
     # Create final widget
     if popup:
-        wid = PopupWidget(children=[features_wid, select_but],
-                          button_text='Features Selection')
+        wid = ipywidgets.PopupWidget(children=[features_wid, select_but],
+                                     button_text='Features Selection')
     else:
-        wid = ContainerWidget(children=[features_wid, select_but])
+        wid = ipywidgets.ContainerWidget(children=[features_wid, select_but])
 
     # function for select button
     def select_function(name):
@@ -1500,7 +1519,7 @@ def features_selection(popup=True):
     select_but.on_click(select_function)
 
     # Display widget
-    display(wid)
+    ipydisplay.display(wid)
 
     # Format widgets
     format_features_options(features_options_wid, border_visible=True)

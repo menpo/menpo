@@ -1,13 +1,7 @@
-from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
-                                  IntSliderWidget, CheckboxWidget,
-                                  ToggleButtonWidget, RadioButtonsWidget,
-                                  IntTextWidget, DropdownWidget, LatexWidget,
-                                  ButtonWidget, SelectWidget, FloatTextWidget,
-                                  TextWidget, TabWidget, ImageWidget,
-                                  BoundedIntTextWidget)
-import numpy as np
 from collections import OrderedDict
 from functools import partial
+
+import numpy as np
 
 from .tools import (colour_selection, format_colour_selection,
                     hog_options, format_hog_options, igo_options,
@@ -91,6 +85,7 @@ def channel_options(channels_options_default, plot_function=None,
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    import IPython.html.widgets as ipywidgets
     # if image is not masked, then masked flag should be disabled
     if not channels_options_default['image_is_masked']:
         channels_options_default['masked_enabled'] = False
@@ -100,7 +95,7 @@ def channel_options(channels_options_default, plot_function=None,
         if len(channels_options_default['channels']) == 1:
             mode_default = 'Single'
             first_slider_default = channels_options_default['channels'][0]
-            second_slider_default = channels_options_default['n_channels']-1
+            second_slider_default = channels_options_default['n_channels'] - 1
         else:
             mode_default = 'Multiple'
             first_slider_default = min(channels_options_default['channels'])
@@ -108,68 +103,74 @@ def channel_options(channels_options_default, plot_function=None,
     elif channels_options_default['channels'] is None:
         mode_default = 'Single'
         first_slider_default = 0
-        second_slider_default = channels_options_default['n_channels']-1
+        second_slider_default = channels_options_default['n_channels'] - 1
     else:
         mode_default = 'Single'
         first_slider_default = channels_options_default['channels']
-        second_slider_default = channels_options_default['n_channels']-1
+        second_slider_default = channels_options_default['n_channels'] - 1
 
     # Create all necessary widgets
     # If single channel, disable all options apart from masked
-    but = ToggleButtonWidget(description='Channels Options',
-                             value=toggle_show_default,
-                             visible=toggle_show_visible)
-    mode = RadioButtonsWidget(
+    but = ipywidgets.ToggleButtonWidget(description='Channels Options',
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
+    mode = ipywidgets.RadioButtonsWidget(
         values=["Single", "Multiple"], value=mode_default, description='Mode:',
         visible=toggle_show_default,
         disabled=channels_options_default['n_channels'] == 1)
-    masked = CheckboxWidget(
+    masked = ipywidgets.CheckboxWidget(
         value=channels_options_default['masked_enabled'], description='Masked',
-        visible=toggle_show_default and channels_options_default['image_is_masked'])
-    first_slider_wid = IntSliderWidget(
-        min=0, max=channels_options_default['n_channels']-1, step=1,
+        visible=toggle_show_default and channels_options_default[
+            'image_is_masked'])
+    first_slider_wid = ipywidgets.IntSliderWidget(
+        min=0, max=channels_options_default['n_channels'] - 1, step=1,
         value=first_slider_default, description='Channel',
         visible=toggle_show_default,
         disabled=channels_options_default['n_channels'] == 1)
-    second_slider_wid = IntSliderWidget(
-        min=1, max=channels_options_default['n_channels']-1, step=1,
+    second_slider_wid = ipywidgets.IntSliderWidget(
+        min=1, max=channels_options_default['n_channels'] - 1, step=1,
         value=second_slider_default, description='To',
         visible=mode_default == "Multiple",
         disabled=channels_options_default['n_channels'] == 1)
-    rgb_wid = CheckboxWidget(
-        value=channels_options_default['n_channels'] == 3 and channels_options_default['channels'] == None,
+    rgb_wid = ipywidgets.CheckboxWidget(
+        value=channels_options_default['n_channels'] == 3 and
+              channels_options_default['channels'] == None,
         description='RGB',
-        visible=toggle_show_default and channels_options_default['n_channels'] == 3)
-    sum_wid = CheckboxWidget(
+        visible=toggle_show_default and channels_options_default[
+                                            'n_channels'] == 3)
+    sum_wid = ipywidgets.CheckboxWidget(
         value=channels_options_default['sum_enabled'], description='Sum',
         visible=False, disabled=channels_options_default['n_channels'] == 1)
-    glyph_wid = CheckboxWidget(
+    glyph_wid = ipywidgets.CheckboxWidget(
         value=channels_options_default['glyph_enabled'], description='Glyph',
         visible=False, disabled=channels_options_default['n_channels'] == 1)
-    glyph_block_size = BoundedIntTextWidget(
+    glyph_block_size = ipywidgets.BoundedIntTextWidget(
         description='Block size', min=1, max=25,
         value=channels_options_default['glyph_block_size'], visible=False,
         disabled=channels_options_default['n_channels'] == 1)
-    glyph_use_negative = CheckboxWidget(
+    glyph_use_negative = ipywidgets.CheckboxWidget(
         description='Negative values',
         value=channels_options_default['glyph_use_negative'], visible=False,
         disabled=channels_options_default['n_channels'] == 1)
 
     # Group widgets
-    glyph_options = ContainerWidget(children=[glyph_block_size,
-                                              glyph_use_negative])
-    glyph_all = ContainerWidget(children=[glyph_wid, glyph_options])
-    multiple_checkboxes = ContainerWidget(children=[sum_wid, glyph_all,
-                                                    rgb_wid])
-    sliders = ContainerWidget(children=[first_slider_wid, second_slider_wid])
-    all_but_radiobuttons = ContainerWidget(children=[sliders,
-                                                     multiple_checkboxes])
-    mode_and_masked = ContainerWidget(children=[mode, masked])
-    all_but_toggle = ContainerWidget(children=[mode_and_masked,
-                                               all_but_radiobuttons])
+    glyph_options = ipywidgets.ContainerWidget(children=[glyph_block_size,
+                                                         glyph_use_negative])
+    glyph_all = ipywidgets.ContainerWidget(children=[glyph_wid, glyph_options])
+    multiple_checkboxes = ipywidgets.ContainerWidget(
+        children=[sum_wid, glyph_all,
+                  rgb_wid])
+    sliders = ipywidgets.ContainerWidget(
+        children=[first_slider_wid, second_slider_wid])
+    all_but_radiobuttons = ipywidgets.ContainerWidget(children=[sliders,
+                                                                multiple_checkboxes])
+    mode_and_masked = ipywidgets.ContainerWidget(children=[mode, masked])
+    all_but_toggle = ipywidgets.ContainerWidget(children=[mode_and_masked,
+                                                          all_but_radiobuttons])
 
     # Widget container
-    channel_options_wid = ContainerWidget(children=[but, all_but_toggle])
+    channel_options_wid = ipywidgets.ContainerWidget(
+        children=[but, all_but_toggle])
 
     # Initialize output variables
     channel_options_wid.selected_values = channels_options_default
@@ -214,6 +215,7 @@ def channel_options(channels_options_default, plot_function=None,
             glyph_block_size.value = '3'
             glyph_use_negative.visible = False
             glyph_use_negative.value = False
+
     mode_selection_fun('', mode_default)
     second_slider_wid.value - second_slider_default
     mode.on_trait_change(mode_selection_fun, 'value')
@@ -224,33 +226,40 @@ def channel_options(channels_options_default, plot_function=None,
         glyph_use_negative.visible = glyph_wid.value
         if glyph_wid.value:
             sum_wid.value = False
+
     glyph_wid.on_trait_change(glyph_options_visibility_fun, 'value')
     glyph_wid.on_trait_change(glyph_options_visibility_fun, 'visible')
 
     # Define rgb functionality
     def rgb_fun(name, value):
         first_slider_wid.disabled = value
+
     rgb_wid.on_trait_change(rgb_fun, 'value')
 
     # Define sum functionality
     def sum_fun(name, value):
         if value:
             glyph_wid.value = False
+
     sum_wid.on_trait_change(sum_fun, 'value')
 
     # Define masked functionality
     def masked_fun(name, value):
         channel_options_wid.masked_enabled = value
+
     masked.on_trait_change(masked_fun, 'value')
 
     # Function that gets glyph/sum options
     def get_glyph_options(name, value):
         channel_options_wid.selected_values['glyph_enabled'] = glyph_wid.value
         channel_options_wid.selected_values['sum_enabled'] = sum_wid.value
-        channel_options_wid.selected_values['glyph_use_negative'] = glyph_use_negative.value
-        channel_options_wid.selected_values['glyph_block_size'] = glyph_block_size.value
+        channel_options_wid.selected_values[
+            'glyph_use_negative'] = glyph_use_negative.value
+        channel_options_wid.selected_values[
+            'glyph_block_size'] = glyph_block_size.value
         if channel_options_wid.selected_values['sum_enabled']:
             channel_options_wid.selected_values['glyph_block_size'] = 1
+
     glyph_wid.on_trait_change(get_glyph_options, 'value')
     sum_wid.on_trait_change(get_glyph_options, 'value')
     glyph_use_negative.on_trait_change(get_glyph_options, 'value')
@@ -271,10 +280,13 @@ def channel_options(channels_options_default, plot_function=None,
             if rgb_wid.value:
                 channel_options_wid.selected_values['channels'] = None
             else:
-                channel_options_wid.selected_values['channels'] = first_slider_wid.value
+                channel_options_wid.selected_values[
+                    'channels'] = first_slider_wid.value
         else:
-            channel_options_wid.selected_values['channels'] = range(first_slider_wid.value,
-                                                 second_slider_wid.value + 1)
+            channel_options_wid.selected_values['channels'] = range(
+                first_slider_wid.value,
+                second_slider_wid.value + 1)
+
     first_slider_wid.on_trait_change(first_slider_val, 'value')
     second_slider_wid.on_trait_change(second_slider_val, 'value')
     first_slider_wid.on_trait_change(get_channels, 'value')
@@ -284,16 +296,19 @@ def channel_options(channels_options_default, plot_function=None,
 
     def get_masked(name, value):
         channel_options_wid.selected_values['masked_enabled'] = value
+
     masked.on_trait_change(get_masked, 'value')
 
     # Toggle button function
     def toggle_image_options(name, value):
         mode.visible = value
         if value:
-            masked.visible = channel_options_wid.selected_values['image_is_masked']
+            masked.visible = channel_options_wid.selected_values[
+                'image_is_masked']
             if mode.value == 'Single':
                 first_slider_wid.visible = True
-                rgb_wid.visible = channel_options_wid.selected_values['n_channels'] == 3
+                rgb_wid.visible = channel_options_wid.selected_values[
+                                      'n_channels'] == 3
             else:
                 first_slider_wid.visible = True
                 second_slider_wid.visible = True
@@ -308,11 +323,12 @@ def channel_options(channels_options_default, plot_function=None,
             glyph_wid.visible = False
             glyph_options.children[0].visible = False
             glyph_options.children[1].visible = False
+
     but.on_trait_change(toggle_image_options, 'value')
 
     # assign plot_function
     if plot_function is not None:
-        #mode.on_trait_change(plot_function, 'value')
+        # mode.on_trait_change(plot_function, 'value')
         masked.on_trait_change(plot_function, 'value')
         first_slider_wid.on_trait_change(plot_function, 'value')
         second_slider_wid.on_trait_change(plot_function, 'value')
@@ -358,9 +374,12 @@ def format_channel_options(channel_options_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # align glyph options
-    channel_options_wid.children[1].children[1].children[1].children[1].children[1].remove_class('vbox')
-    channel_options_wid.children[1].children[1].children[1].children[1].children[1].add_class('hbox')
-    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].set_css('width', '0.8cm')
+    channel_options_wid.children[1].children[1].children[1].children[
+        1].children[1].remove_class('vbox')
+    channel_options_wid.children[1].children[1].children[1].children[
+        1].children[1].add_class('hbox')
+    channel_options_wid.children[1].children[1].children[1].children[
+        1].children[1].children[0].set_css('width', '0.8cm')
 
     # align sum and glyph checkboxes
     channel_options_wid.children[1].children[1].children[1].remove_class('vbox')
@@ -423,61 +442,92 @@ def update_channel_options(channel_options_wid, n_channels, image_is_masked,
         channel_options_wid.selected_values['n_channels'] = n_channels
         channel_options_wid.selected_values['channels'] = 0
         # set the rgb checkbox state
-        channel_options_wid.children[1].children[1].children[1].children[2].visible = \
+        channel_options_wid.children[1].children[1].children[1].children[
+            2].visible = \
             n_channels == 3 and channel_options_wid.children[0].value
         # set the channel options state (apart from the masked checkbox)
         if n_channels == 1:
             # set sliders max and min values
-            channel_options_wid.children[1].children[1].children[0].children[0].max = 1
-            channel_options_wid.children[1].children[1].children[0].children[1].max = 1
-            channel_options_wid.children[1].children[1].children[0].children[0].min = 0
-            channel_options_wid.children[1].children[1].children[0].children[1].min = 0
+            channel_options_wid.children[1].children[1].children[0].children[
+                0].max = 1
+            channel_options_wid.children[1].children[1].children[0].children[
+                1].max = 1
+            channel_options_wid.children[1].children[1].children[0].children[
+                0].min = 0
+            channel_options_wid.children[1].children[1].children[0].children[
+                1].min = 0
             # set sliders state
-            channel_options_wid.children[1].children[1].children[0].children[0].disabled = True
-            channel_options_wid.children[1].children[1].children[0].children[1].visible = False
+            channel_options_wid.children[1].children[1].children[0].children[
+                0].disabled = True
+            channel_options_wid.children[1].children[1].children[0].children[
+                1].visible = False
             # set glyph/sum state
-            channel_options_wid.children[1].children[1].children[1].children[0].disabled = True
-            channel_options_wid.children[1].children[1].children[1].children[1].children[0].disabled = True
-            channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].disabled = True
-            channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].disabled = True
+            channel_options_wid.children[1].children[1].children[1].children[
+                0].disabled = True
+            channel_options_wid.children[1].children[1].children[1].children[
+                1].children[0].disabled = True
+            channel_options_wid.children[1].children[1].children[1].children[
+                1].children[1].children[0].disabled = True
+            channel_options_wid.children[1].children[1].children[1].children[
+                1].children[1].children[1].disabled = True
             # set mode state
-            channel_options_wid.children[1].children[0].children[0].disabled = True
+            channel_options_wid.children[1].children[0].children[
+                0].disabled = True
             # set mode and sliders values
             for k in range(4):
                 if k == 0:
-                    channel_options_wid.children[1].children[1].children[1].children[2].value = False
+                    channel_options_wid.children[1].children[1].children[
+                        1].children[2].value = False
                 elif k == 1:
-                    channel_options_wid.children[1].children[0].children[0].value = "Single"
+                    channel_options_wid.children[1].children[0].children[
+                        0].value = "Single"
                 elif k == 2:
-                    channel_options_wid.children[1].children[1].children[0].children[0].value = 0
+                    channel_options_wid.children[1].children[1].children[
+                        0].children[0].value = 0
                 else:
-                    channel_options_wid.children[1].children[1].children[0].children[1].value = 0
+                    channel_options_wid.children[1].children[1].children[
+                        0].children[1].value = 0
         else:
             # set sliders max and min values
-            channel_options_wid.children[1].children[1].children[0].children[0].max = n_channels - 1
-            channel_options_wid.children[1].children[1].children[0].children[1].max = n_channels - 1
-            channel_options_wid.children[1].children[1].children[0].children[0].min = 0
-            channel_options_wid.children[1].children[1].children[0].children[1].min = 0
+            channel_options_wid.children[1].children[1].children[0].children[
+                0].max = n_channels - 1
+            channel_options_wid.children[1].children[1].children[0].children[
+                1].max = n_channels - 1
+            channel_options_wid.children[1].children[1].children[0].children[
+                0].min = 0
+            channel_options_wid.children[1].children[1].children[0].children[
+                1].min = 0
             # set sliders state
-            channel_options_wid.children[1].children[1].children[0].children[0].disabled = False
-            channel_options_wid.children[1].children[1].children[0].children[1].visible = False
+            channel_options_wid.children[1].children[1].children[0].children[
+                0].disabled = False
+            channel_options_wid.children[1].children[1].children[0].children[
+                1].visible = False
             # set glyph/sum state
-            channel_options_wid.children[1].children[1].children[1].children[0].disabled = False
-            channel_options_wid.children[1].children[1].children[1].children[1].children[0].disabled = False
-            channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].disabled = False
-            channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].disabled = False
+            channel_options_wid.children[1].children[1].children[1].children[
+                0].disabled = False
+            channel_options_wid.children[1].children[1].children[1].children[
+                1].children[0].disabled = False
+            channel_options_wid.children[1].children[1].children[1].children[
+                1].children[1].children[0].disabled = False
+            channel_options_wid.children[1].children[1].children[1].children[
+                1].children[1].children[1].disabled = False
             # set mode state
-            channel_options_wid.children[1].children[0].children[0].disabled = False
+            channel_options_wid.children[1].children[0].children[
+                0].disabled = False
             # set mode and sliders values
             for k in range(4):
                 if k == 0:
-                    channel_options_wid.children[1].children[1].children[1].children[2].value = n_channels == 3
+                    channel_options_wid.children[1].children[1].children[
+                        1].children[2].value = n_channels == 3
                 elif k == 1:
-                    channel_options_wid.children[1].children[0].children[0].value = "Single"
+                    channel_options_wid.children[1].children[0].children[
+                        0].value = "Single"
                 elif k == 2:
-                    channel_options_wid.children[1].children[1].children[0].children[0].value = 0
+                    channel_options_wid.children[1].children[1].children[
+                        0].children[0].value = 0
                 else:
-                    channel_options_wid.children[1].children[1].children[0].children[1].value = 0
+                    channel_options_wid.children[1].children[1].children[
+                        0].children[1].value = 0
 
 
 def landmark_options(landmark_options_default, plot_function=None,
@@ -522,26 +572,30 @@ def landmark_options(landmark_options_default, plot_function=None,
     toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     """
+    import IPython.html.widgets as ipywidgets
     # Create all necessary widgets
-    but = ToggleButtonWidget(description='Landmarks Options',
-                             value=toggle_show_default,
-                             visible=toggle_show_visible)
-    landmarks = CheckboxWidget(description='Render landmarks',
-                               value=landmark_options_default['render_landmarks'])
-    group = DropdownWidget(values=landmark_options_default['group_keys'],
-                           description='Group')
-    labels_toggles = [[ToggleButtonWidget(description=k, value=True)
+    but = ipywidgets.ToggleButtonWidget(description='Landmarks Options',
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
+    landmarks = ipywidgets.CheckboxWidget(description='Render landmarks',
+                                          value=landmark_options_default[
+                                              'render_landmarks'])
+    group = ipywidgets.DropdownWidget(
+        values=landmark_options_default['group_keys'],
+        description='Group')
+    labels_toggles = [[ipywidgets.ToggleButtonWidget(description=k, value=True)
                        for k in s_keys]
                       for s_keys in landmark_options_default['labels_keys']]
-    labels_text = LatexWidget(value='Labels')
-    labels = ContainerWidget(children=labels_toggles[0])
+    labels_text = ipywidgets.LatexWidget(value='Labels')
+    labels = ipywidgets.ContainerWidget(children=labels_toggles[0])
 
     # Group widgets
-    labels_and_text = ContainerWidget(children=[labels_text, labels])
-    group_wid = ContainerWidget(children=[group, labels_and_text])
+    labels_and_text = ipywidgets.ContainerWidget(children=[labels_text, labels])
+    group_wid = ipywidgets.ContainerWidget(children=[group, labels_and_text])
 
     # Widget container
-    landmark_options_wid = ContainerWidget(children=[but, landmarks, group_wid])
+    landmark_options_wid = ipywidgets.ContainerWidget(
+        children=[but, landmarks, group_wid])
 
     # Initialize output variables
     landmark_options_wid.selected_values = landmark_options_default
@@ -567,6 +621,7 @@ def landmark_options(landmark_options_default, plot_function=None,
         if all(item is False for item in all_values):
             for ww in labels.children:
                 ww.value = True
+
     landmarks_fun('', landmark_options_wid.selected_values['render_landmarks'])
     landmarks.on_trait_change(landmarks_fun, 'value')
 
@@ -575,7 +630,9 @@ def landmark_options(landmark_options_default, plot_function=None,
         # get group value
         landmark_options_wid.selected_values['group'] = value
         # assign the correct children to the labels toggles
-        labels.children = landmark_options_wid.selected_values['labels_toggles'][landmark_options_wid.selected_values['group_keys'].index(value)]
+        labels.children = \
+        landmark_options_wid.selected_values['labels_toggles'][
+            landmark_options_wid.selected_values['group_keys'].index(value)]
         # get with_labels value
         landmark_options_wid.selected_values['with_labels'] = []
         for ww in labels.children:
@@ -601,6 +658,7 @@ def landmark_options(landmark_options_default, plot_function=None,
             if ww.value:
                 landmark_options_wid.selected_values['with_labels'].append(
                     str(ww.description))
+
     # assign labels_fun to all labels toggles (even hidden ones)
     for s_group in landmark_options_wid.selected_values['labels_toggles']:
         for w in s_group:
@@ -610,6 +668,7 @@ def landmark_options(landmark_options_default, plot_function=None,
     def show_options(name, value):
         group_wid.visible = value
         landmarks.visible = value
+
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
 
@@ -719,6 +778,7 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
     """
+    import IPython.html.widgets as ipywidgets
     # check if the new group_keys and labels_keys are the same as the old
     # ones
     if not _compare_groups_and_labels(
@@ -726,15 +786,17 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
             landmark_options_wid.selected_values['group_keys'],
             landmark_options_wid.selected_values['labels_keys']):
         # Create all necessary widgets
-        group = DropdownWidget(values=group_keys, description='Group')
-        labels_toggles = [[ToggleButtonWidget(description=k, value=True)
-                           for k in s_keys] for s_keys in labels_keys]
+        group = ipywidgets.DropdownWidget(values=group_keys,
+                                          description='Group')
+        labels_toggles = [
+            [ipywidgets.ToggleButtonWidget(description=k, value=True)
+             for k in s_keys] for s_keys in labels_keys]
 
         # Group widgets
-        landmark_options_wid.children[2].children[1].children[1].\
+        landmark_options_wid.children[2].children[1].children[1]. \
             children = labels_toggles[0]
         labels = landmark_options_wid.children[2].children[1]
-        cont = ContainerWidget(children=[group, labels])
+        cont = ipywidgets.ContainerWidget(children=[group, labels])
         landmark_options_wid.children = [landmark_options_wid.children[0],
                                          landmark_options_wid.children[1],
                                          cont]
@@ -753,16 +815,21 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
             # disable group drop down menu
             group.disabled = not value
             # disable all labels toggles
-            for s_keys in landmark_options_wid.selected_values['labels_toggles']:
+            for s_keys in landmark_options_wid.selected_values[
+                'labels_toggles']:
                 for k in s_keys:
                     k.disabled = not value
             # if all currently selected labels toggles are False, set them all
             # to True
             all_values = [ww.value
-                          for ww in landmark_options_wid.children[2].children[1].children[1].children]
+                          for ww in
+                          landmark_options_wid.children[2].children[1].children[
+                              1].children]
             if all(item is False for item in all_values):
-                for ww in landmark_options_wid.children[2].children[1].children[1].children:
+                for ww in landmark_options_wid.children[2].children[1].children[
+                    1].children:
                     ww.value = True
+
         landmark_options_wid.children[1].on_trait_change(landmarks_fun, 'value')
         landmarks_fun('',
                       landmark_options_wid.selected_values['render_landmarks'])
@@ -772,18 +839,21 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
             # get group value
             landmark_options_wid.selected_values['group'] = value
             # assign the correct children to the labels toggles
-            landmark_options_wid.children[2].children[1].children[1].\
-                children = landmark_options_wid.selected_values['labels_toggles'][
-                    landmark_options_wid.selected_values['group_keys'].index(value)]
+            landmark_options_wid.children[2].children[1].children[1]. \
+                children = \
+            landmark_options_wid.selected_values['labels_toggles'][
+                landmark_options_wid.selected_values['group_keys'].index(value)]
             # get with_labels value
             landmark_options_wid.selected_values['with_labels'] = []
-            for ww in landmark_options_wid.children[2].children[1].children[1].children:
+            for ww in landmark_options_wid.children[2].children[1].children[
+                1].children:
                 if ww.value:
                     landmark_options_wid.selected_values['with_labels'].append(
                         str(ww.description))
             # assign plot_function to all enabled labels
             if plot_function is not None:
-                for w in landmark_options_wid.children[2].children[1].children[1].children:
+                for w in landmark_options_wid.children[2].children[1].children[
+                    1].children:
                     w.on_trait_change(plot_function, 'value')
 
         group.on_trait_change(group_fun, 'value')
@@ -792,16 +862,19 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         def labels_fun(name, value):
             # if all labels toggles are False, set landmarks checkbox to False
             all_values = [ww.value
-                          for ww in landmark_options_wid.children[2].children[1].children[1].children]
+                          for ww in
+                          landmark_options_wid.children[2].children[1].children[
+                              1].children]
             if all(item is False for item in all_values):
                 landmark_options_wid.children[1].value = False
             # get with_labels value
             landmark_options_wid.selected_values['with_labels'] = []
-            for ww in landmark_options_wid.children[2].children[1].children[1].\
+            for ww in landmark_options_wid.children[2].children[1].children[1]. \
                     children:
                 if ww.value:
                     landmark_options_wid.selected_values['with_labels'].append(
                         str(ww.description))
+
         # assign labels_fun to all labels toggles (even hidden ones)
         for s_group in labels_toggles:
             for w in s_group:
@@ -820,6 +893,7 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         def show_options(name, value):
             landmark_options_wid.children[1].visible = value
             landmark_options_wid.children[2].visible = value
+
         show_options('', landmark_options_wid.children[0].value)
         landmark_options_wid.children[0].on_trait_change(show_options, 'value')
 
@@ -853,21 +927,24 @@ def info_print(toggle_show_default=True, toggle_show_visible=True):
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    import IPython.html.widgets as ipywidgets
     # Create toggle button
-    but = ToggleButtonWidget(description='Info', value=toggle_show_default,
-                             visible=toggle_show_visible)
+    but = ipywidgets.ToggleButtonWidget(description='Info',
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
 
     # Create text widget
-    text_wid = LatexWidget(value="$\\bullet~$")
+    text_wid = ipywidgets.LatexWidget(value="$\\bullet~$")
 
     # Toggle button function
     def show_options(name, value):
         text_wid.visible = value
+
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
 
     # Group widgets
-    info_wid = ContainerWidget(children=[but, text_wid])
+    info_wid = ipywidgets.ContainerWidget(children=[but, text_wid])
 
     return info_wid
 
@@ -996,44 +1073,50 @@ def model_parameters(n_params, plot_function=None, params_str='',
     toggle_show_name : `str`, optional
         The name of the toggle button.
     """
+    import IPython.html.widgets as ipywidgets
     # If only one slider requested, then set mode to multiple
     if n_params == 1:
         mode = 'multiple'
 
     # Create all necessary widgets
-    but = ToggleButtonWidget(description=toggle_show_name,
-                             value=toggle_show_default,
-                             visible=toggle_show_visible)
-    reset_button = ButtonWidget(description='Reset')
+    but = ipywidgets.ToggleButtonWidget(description=toggle_show_name,
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
+    reset_button = ipywidgets.ButtonWidget(description='Reset')
     if mode == 'multiple':
-        sliders = [FloatSliderWidget(description="{}{}".format(params_str, p),
-                                     min=params_bounds[0], max=params_bounds[1],
-                                     value=0.)
+        sliders = [ipywidgets.FloatSliderWidget(
+            description="{}{}".format(params_str, p),
+            min=params_bounds[0], max=params_bounds[1],
+            value=0.)
                    for p in range(n_params)]
-        parameters_wid = ContainerWidget(children=sliders)
+        parameters_wid = ipywidgets.ContainerWidget(children=sliders)
     else:
         vals = OrderedDict()
         for p in range(n_params):
             vals["{}{}".format(params_str, p)] = p
-        slider = FloatSliderWidget(description='', min=params_bounds[0],
-                                   max=params_bounds[1], value=0.)
-        dropdown_params = DropdownWidget(values=vals)
-        parameters_wid = ContainerWidget(children=[dropdown_params, slider])
+        slider = ipywidgets.FloatSliderWidget(description='',
+                                              min=params_bounds[0],
+                                              max=params_bounds[1], value=0.)
+        dropdown_params = ipywidgets.DropdownWidget(values=vals)
+        parameters_wid = ipywidgets.ContainerWidget(
+            children=[dropdown_params, slider])
 
     # Group widgets
     if plot_eig_visible:
-        plot_button = ButtonWidget(description='Plot eigenvalues')
+        plot_button = ipywidgets.ButtonWidget(description='Plot eigenvalues')
         if plot_eig_function is not None:
             plot_button.on_click(plot_eig_function)
-        plot_and_reset = ContainerWidget(children=[plot_button, reset_button])
-        params_and_reset = ContainerWidget(children=[parameters_wid,
-                                                     plot_and_reset])
+        plot_and_reset = ipywidgets.ContainerWidget(
+            children=[plot_button, reset_button])
+        params_and_reset = ipywidgets.ContainerWidget(children=[parameters_wid,
+                                                                plot_and_reset])
     else:
-        params_and_reset = ContainerWidget(children=[parameters_wid,
-                                                     reset_button])
+        params_and_reset = ipywidgets.ContainerWidget(children=[parameters_wid,
+                                                                reset_button])
 
     # Widget container
-    model_parameters_wid = ContainerWidget(children=[but, params_and_reset])
+    model_parameters_wid = ipywidgets.ContainerWidget(
+        children=[but, params_and_reset])
 
     # Save mode and parameters values
     model_parameters_wid.parameters_values = [0.0] * n_params
@@ -1197,9 +1280,10 @@ def update_model_parameters(model_parameters_wid, n_params, plot_function=None,
             pb = [model_parameters_wid.children[1].children[0].children[0].min,
                   model_parameters_wid.children[1].children[0].children[0].max]
             # create sliders widgets
-            sliders = [FloatSliderWidget(description="{}{}".format(params_str,
-                                                                   p),
-                                         min=pb[0], max=pb[1], value=0.)
+            sliders = [ipywidgets.FloatSliderWidget(
+                description="{}{}".format(params_str,
+                                          p),
+                min=pb[0], max=pb[1], value=0.)
                        for p in range(n_params)]
             # assign sliders to container
             model_parameters_wid.children[1].children[0].children = sliders
@@ -1211,8 +1295,9 @@ def update_model_parameters(model_parameters_wid, n_params, plot_function=None,
 
             # partial function that helps get the widget's description str
             def partial_widget(description):
-               return lambda name, value: save_slider_value_from_id(description,
-                                                                    name, value)
+                return lambda name, value: save_slider_value_from_id(
+                    description,
+                    name, value)
 
             # assign saving values and main plotting function to all sliders
             for w in model_parameters_wid.children[1].children[0].children:
@@ -1227,7 +1312,8 @@ def update_model_parameters(model_parameters_wid, n_params, plot_function=None,
                     w.on_trait_change(plot_function, 'value')
     else:
         # get the number of enabled parameters (len of list of drop down menu)
-        enabled_params = len(model_parameters_wid.children[1].children[0].children[0].values)
+        enabled_params = len(
+            model_parameters_wid.children[1].children[0].children[0].values)
         if n_params != enabled_params:
             # reset all parameters values
             model_parameters_wid.parameters_values = [0.0] * n_params
@@ -1299,35 +1385,39 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
     toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     """
+    import IPython.html.widgets as ipywidgets
     # Toggle button that controls options' visibility
-    but = ToggleButtonWidget(description=title,
-                             value=toggle_show_default,
-                             visible=toggle_show_visible)
+    but = ipywidgets.ToggleButtonWidget(description=title,
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
 
     # Create widgets
-    shapes_checkboxes = [LatexWidget(value='Select shape:')]
+    shapes_checkboxes = [ipywidgets.LatexWidget(value='Select shape:')]
     for group in group_keys:
-        t = ToggleButtonWidget(description=group, value=False)
+        t = ipywidgets.ToggleButtonWidget(description=group, value=False)
         if group == 'final':
             t.value = True
         shapes_checkboxes.append(t)
-    show_image = CheckboxWidget(description='Show image',
-                                value=show_image_default)
-    mode = RadioButtonsWidget(description='Plot mode:',
-                              values={'Single': False, 'Multiple': True})
+    show_image = ipywidgets.CheckboxWidget(description='Show image',
+                                           value=show_image_default)
+    mode = ipywidgets.RadioButtonsWidget(description='Plot mode:',
+                                         values={'Single': False,
+                                                 'Multiple': True})
     mode.value = subplots_enabled_default
-    show_legend = CheckboxWidget(description='Show legend',
-                                 value=legend_default)
-    show_numbering = CheckboxWidget(description='Show numbering',
-                                    value=numbering_default)
+    show_legend = ipywidgets.CheckboxWidget(description='Show legend',
+                                            value=legend_default)
+    show_numbering = ipywidgets.CheckboxWidget(description='Show numbering',
+                                               value=numbering_default)
 
     # Group widgets
-    shapes_wid = ContainerWidget(children=shapes_checkboxes)
-    opts = ContainerWidget(children=[mode, show_legend, show_numbering])
+    shapes_wid = ipywidgets.ContainerWidget(children=shapes_checkboxes)
+    opts = ipywidgets.ContainerWidget(
+        children=[mode, show_legend, show_numbering])
 
     # Widget container
-    final_result_wid = ContainerWidget(children=[but, shapes_wid, show_image,
-                                                 opts])
+    final_result_wid = ipywidgets.ContainerWidget(
+        children=[but, shapes_wid, show_image,
+                  opts])
 
     # Initialize variables
     final_result_wid.all_group_keys = group_keys
@@ -1371,6 +1461,7 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
         shapes_wid.visible = value
         show_image.visible = value
         opts.visible = value
+
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
 
@@ -1469,13 +1560,14 @@ def update_final_result_options(final_result_wid, group_keys, plot_function):
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
     """
+    import IPython.html.widgets as ipywidgets
     # check if the new group_keys are the same as the old ones
     if not _compare_groups_and_labels(group_keys, [],
                                       final_result_wid.all_group_keys, []):
         # Create all necessary widgets
-        shapes_checkboxes = [LatexWidget(value='Select shape:')]
+        shapes_checkboxes = [ipywidgets.LatexWidget(value='Select shape:')]
         for group in group_keys:
-            t = ToggleButtonWidget(description=group, value=True)
+            t = ipywidgets.ToggleButtonWidget(description=group, value=True)
             shapes_checkboxes.append(t)
 
         # Group widgets
@@ -1491,6 +1583,7 @@ def update_final_result_options(final_result_wid, group_keys, plot_function):
             for i in final_result_wid.children[1].children[1::]:
                 if i.value:
                     final_result_wid.groups.append(str(i.description))
+
         for w in final_result_wid.children[1].children[1::]:
             w.on_trait_change(groups_fun, 'value')
 
@@ -1499,6 +1592,7 @@ def update_final_result_options(final_result_wid, group_keys, plot_function):
             final_result_wid.children[1].visible = value
             final_result_wid.children[2].visible = value
             final_result_wid.children[3].visible = value
+
         show_options('', final_result_wid.children[0].value)
         final_result_wid.children[0].on_trait_change(show_options, 'value')
 
@@ -1610,17 +1704,21 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     """
+    import IPython.html.widgets as ipywidgets
     # Create all necessary widgets
-    but = ToggleButtonWidget(description=title, value=toggle_show_default,
-                             visible=toggle_show_visible)
-    iterations_mode = RadioButtonsWidget(values={'Animation': 0, 'Static': 1},
-                                         value=0,
-                                         description='Iterations mode:',
-                                         visible=toggle_show_default)
+    but = ipywidgets.ToggleButtonWidget(description=title,
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
+    iterations_mode = ipywidgets.RadioButtonsWidget(
+        values={'Animation': 0, 'Static': 1},
+        value=0,
+        description='Iterations mode:',
+        visible=toggle_show_default)
     # Don't assign the plot function to the animation_wid at this point. We
     # first need to assign the get_groups function and then the plot_function()
     # for synchronization reasons.
-    animation_wid = animation_options(index_min_val=0, index_max_val=n_iters-1,
+    animation_wid = animation_options(index_min_val=0,
+                                      index_max_val=n_iters - 1,
                                       plot_function=None,
                                       update_function=None,
                                       index_step=1, index_default=0,
@@ -1629,17 +1727,22 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
                                       loop_default=False, interval_default=0.2,
                                       toggle_show_default=toggle_show_default,
                                       toggle_show_visible=False)
-    first_slider_wid = IntSliderWidget(min=0, max=n_iters-1, step=1,
-                                       value=0, description='From',
-                                       visible=False)
-    second_slider_wid = IntSliderWidget(min=0, max=n_iters-1, step=1,
-                                        value=n_iters-1, description='To',
-                                        visible=False)
-    update_but = ButtonWidget(description='Update Plot', visible=False)
-    show_image = CheckboxWidget(description='Show image',
-                                value=show_image_default)
-    plot_errors_button = ButtonWidget(description='Plot Errors')
-    plot_displacements_button = ButtonWidget(description='Plot Displacements')
+    first_slider_wid = ipywidgets.IntSliderWidget(min=0, max=n_iters - 1,
+                                                  step=1,
+                                                  value=0, description='From',
+                                                  visible=False)
+    second_slider_wid = ipywidgets.IntSliderWidget(min=0, max=n_iters - 1,
+                                                   step=1,
+                                                   value=n_iters - 1,
+                                                   description='To',
+                                                   visible=False)
+    update_but = ipywidgets.ButtonWidget(description='Update Plot',
+                                         visible=False)
+    show_image = ipywidgets.CheckboxWidget(description='Show image',
+                                           value=show_image_default)
+    plot_errors_button = ipywidgets.ButtonWidget(description='Plot Errors')
+    plot_displacements_button = ipywidgets.ButtonWidget(
+        description='Plot Displacements')
     dropdown_menu = OrderedDict()
     dropdown_menu['mean'] = 'mean'
     dropdown_menu['median'] = 'median'
@@ -1647,25 +1750,27 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     dropdown_menu['min'] = 'min'
     for p in range(n_points):
         dropdown_menu["point {}".format(p)] = p
-    plot_displacements_menu = SelectWidget(values=dropdown_menu, value='mean')
-    plot_mode = RadioButtonsWidget(description='Plot mode:',
-                                   values={'Single': False, 'Multiple': True})
+    plot_displacements_menu = ipywidgets.SelectWidget(values=dropdown_menu,
+                                                      value='mean')
+    plot_mode = ipywidgets.RadioButtonsWidget(description='Plot mode:',
+                                              values={'Single': False,
+                                                      'Multiple': True})
     plot_mode.value = subplots_enabled_default
-    show_legend = CheckboxWidget(description='Show legend',
-                                 value=legend_default)
-    show_numbering = CheckboxWidget(description='Show numbering',
-                                    value=numbering_default)
+    show_legend = ipywidgets.CheckboxWidget(description='Show legend',
+                                            value=legend_default)
+    show_numbering = ipywidgets.CheckboxWidget(description='Show numbering',
+                                               value=numbering_default)
     # if just one iteration, disable multiple options
     if n_iters == 1:
         iterations_mode.value = 0
         iterations_mode.disabled = True
         first_slider_wid.disabled = True
         animation_wid.children[1].children[0].children[2].disabled = True
-        animation_wid.children[1].children[1].children[0].children[0].\
+        animation_wid.children[1].children[1].children[0].children[0]. \
             disabled = True
-        animation_wid.children[1].children[1].children[0].children[1].\
+        animation_wid.children[1].children[1].children[0].children[1]. \
             disabled = True
-        animation_wid.children[1].children[1].children[0].children[2].\
+        animation_wid.children[1].children[1].children[0].children[2]. \
             disabled = True
         second_slider_wid.disabled = True
         plot_errors_button.disabled = True
@@ -1673,18 +1778,22 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
         plot_displacements_menu.disabled = True
 
     # Group widgets
-    sliders = ContainerWidget(children=[animation_wid, first_slider_wid,
-                                        second_slider_wid, update_but])
-    iterations_mode_and_sliders = ContainerWidget(children=[iterations_mode,
-                                                            sliders])
-    plot_displacements = ContainerWidget(children=[plot_displacements_button,
-                                                   plot_displacements_menu])
-    opts = ContainerWidget(children=[plot_mode, show_image, show_legend,
-                                     show_numbering, plot_errors_button,
-                                     plot_displacements])
+    sliders = ipywidgets.ContainerWidget(
+        children=[animation_wid, first_slider_wid,
+                  second_slider_wid, update_but])
+    iterations_mode_and_sliders = ipywidgets.ContainerWidget(
+        children=[iterations_mode,
+                  sliders])
+    plot_displacements = ipywidgets.ContainerWidget(
+        children=[plot_displacements_button,
+                  plot_displacements_menu])
+    opts = ipywidgets.ContainerWidget(
+        children=[plot_mode, show_image, show_legend,
+                  show_numbering, plot_errors_button,
+                  plot_displacements])
 
     # Widget container
-    iterations_result_wid = ContainerWidget(children=[
+    iterations_result_wid = ipywidgets.ContainerWidget(children=[
         but, iterations_mode_and_sliders, opts])
 
     # Initialize variables
@@ -1807,6 +1916,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     if plot_function is not None:
         def plot_function_but(name):
             plot_function(name, 0)
+
         update_but.on_click(plot_function_but)
         # Here we assign plot_function() to the slider of animation_wid, as
         # we didn't do it at its creation.
@@ -1962,7 +2072,7 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
         select_menu['max'] = 'max'
         select_menu['min'] = 'min'
         for p in range(n_points):
-            select_menu["point {}".format(p+1)] = p
+            select_menu["point {}".format(p + 1)] = p
         iterations_result_wid.children[2].children[5].children[1].values = \
             select_menu
         # store the number of points
@@ -1983,82 +2093,82 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
             for t in range(4):
                 if t == 0:
                     # first slider
-                    iterations_result_wid.children[1].children[1].children[1].\
+                    iterations_result_wid.children[1].children[1].children[1]. \
                         value = 0
-                    iterations_result_wid.children[1].children[1].children[1].\
+                    iterations_result_wid.children[1].children[1].children[1]. \
                         max = 0
-                    iterations_result_wid.children[1].children[1].children[1].\
+                    iterations_result_wid.children[1].children[1].children[1]. \
                         visible = False
                 elif t == 1:
                     # second slider
-                    iterations_result_wid.children[1].children[1].children[2].\
+                    iterations_result_wid.children[1].children[1].children[2]. \
                         value = 0
-                    iterations_result_wid.children[1].children[1].children[2].\
+                    iterations_result_wid.children[1].children[1].children[2]. \
                         max = 0
-                    iterations_result_wid.children[1].children[1].children[2].\
+                    iterations_result_wid.children[1].children[1].children[2]. \
                         visible = False
                 elif t == 2:
                     # animation slider
                     animation_options_wid.selected_index = 0
                     animation_options_wid.index_max = 0
-                    animation_options_wid.children[1].children[0].children[2].\
+                    animation_options_wid.children[1].children[0].children[2]. \
                         value = 0
-                    animation_options_wid.children[1].children[0].children[2].\
+                    animation_options_wid.children[1].children[0].children[2]. \
                         max = 0
-                    animation_options_wid.children[1].children[0].children[2].\
+                    animation_options_wid.children[1].children[0].children[2]. \
                         disabled = True
-                    animation_options_wid.children[1].children[1].children[0].\
+                    animation_options_wid.children[1].children[1].children[0]. \
                         children[0].disabled = True
-                    animation_options_wid.children[1].children[1].children[0].\
+                    animation_options_wid.children[1].children[1].children[0]. \
                         children[1].disabled = True
-                    animation_options_wid.children[1].children[1].children[0].\
+                    animation_options_wid.children[1].children[1].children[0]. \
                         children[2].disabled = True
                 else:
                     # iterations mode
                     iterations_result_wid.children[1].children[0].value = 0
                     iterations_result_wid.groups = [iter_str + "0"]
-                    iterations_result_wid.children[1].children[0].\
+                    iterations_result_wid.children[1].children[0]. \
                         disabled = True
         else:
             # set sliders max and min values
             for t in range(4):
                 if t == 0:
                     # first slider
-                    iterations_result_wid.children[1].children[1].children[1].\
+                    iterations_result_wid.children[1].children[1].children[1]. \
                         value = 0
-                    iterations_result_wid.children[1].children[1].children[1].\
+                    iterations_result_wid.children[1].children[1].children[1]. \
                         max = n_iters - 1
-                    iterations_result_wid.children[1].children[1].children[1].\
+                    iterations_result_wid.children[1].children[1].children[1]. \
                         visible = False
                 elif t == 1:
                     # second slider
-                    iterations_result_wid.children[1].children[1].children[2].\
+                    iterations_result_wid.children[1].children[1].children[2]. \
                         value = n_iters - 1
-                    iterations_result_wid.children[1].children[1].children[2].\
+                    iterations_result_wid.children[1].children[1].children[2]. \
                         max = n_iters - 1
-                    iterations_result_wid.children[1].children[1].children[2].\
+                    iterations_result_wid.children[1].children[1].children[2]. \
                         visible = False
                 elif t == 2:
                     # animation slider
-                    animation_options_wid.children[1].children[0].children[2].\
+                    animation_options_wid.children[1].children[0].children[2]. \
                         value = 0
-                    animation_options_wid.children[1].children[0].children[2].\
+                    animation_options_wid.children[1].children[0].children[2]. \
                         max = n_iters - 1
                     animation_options_wid.selected_index = 0
                     animation_options_wid.index_max = n_iters - 1
-                    animation_options_wid.children[1].children[0].children[2].\
+                    animation_options_wid.children[1].children[0].children[2]. \
                         disabled = False
-                    animation_options_wid.children[1].children[1].children[0].\
+                    animation_options_wid.children[1].children[1].children[0]. \
                         children[0].disabled = False
-                    animation_options_wid.children[1].children[1].children[0].\
+                    animation_options_wid.children[1].children[1].children[0]. \
                         children[1].disabled = True
-                    animation_options_wid.children[1].children[1].children[0].\
+                    animation_options_wid.children[1].children[1].children[0]. \
                         children[2].disabled = False
                 else:
                     # iterations mode
                     iterations_result_wid.children[1].children[0].value = 0
                     iterations_result_wid.groups = [iter_str + "0"]
-                    iterations_result_wid.children[1].children[0].\
+                    iterations_result_wid.children[1].children[0]. \
                         disabled = False
 
 
@@ -2153,6 +2263,7 @@ def animation_options(index_selection_default, plot_function=None,
     """
     from time import sleep
     from IPython import get_ipython
+    import IPython.html.widgets as ipywidgets
 
     # get the kernel to use it later in order to make sure that the widgets'
     # traits changes are passed during a while-loop
@@ -2173,22 +2284,26 @@ def animation_options(index_selection_default, plot_function=None,
             text_editable=index_text_editable)
 
     # Create other widgets
-    but = ToggleButtonWidget(description=toggle_show_title,
-                             value=toggle_show_default,
-                             visible=toggle_show_visible)
-    play_but = ToggleButtonWidget(description='Play >', value=False)
-    stop_but = ToggleButtonWidget(description='Stop', value=True, disabled=True)
-    play_options = ToggleButtonWidget(description='Options', value=False)
-    loop = CheckboxWidget(description='Loop', value=loop_default, visible=False)
-    interval = FloatTextWidget(description='Interval (sec)',
-                               value=interval_default, visible=False)
+    but = ipywidgets.ToggleButtonWidget(description=toggle_show_title,
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
+    play_but = ipywidgets.ToggleButtonWidget(description='Play >', value=False)
+    stop_but = ipywidgets.ToggleButtonWidget(description='Stop', value=True,
+                                             disabled=True)
+    play_options = ipywidgets.ToggleButtonWidget(description='Options',
+                                                 value=False)
+    loop = ipywidgets.CheckboxWidget(description='Loop', value=loop_default,
+                                     visible=False)
+    interval = ipywidgets.FloatTextWidget(description='Interval (sec)',
+                                          value=interval_default, visible=False)
 
     # Widget container
-    tmp_options = ContainerWidget(children=[interval, loop])
-    buttons = ContainerWidget(children=[play_but, stop_but, play_options])
-    animation = ContainerWidget(children=[buttons, tmp_options])
-    cont = ContainerWidget(children=[index_wid, animation])
-    animation_options_wid = ContainerWidget(children=[but, cont])
+    tmp_options = ipywidgets.ContainerWidget(children=[interval, loop])
+    buttons = ipywidgets.ContainerWidget(
+        children=[play_but, stop_but, play_options])
+    animation = ipywidgets.ContainerWidget(children=[buttons, tmp_options])
+    cont = ipywidgets.ContainerWidget(children=[index_wid, animation])
+    animation_options_wid = ipywidgets.ContainerWidget(children=[but, cont])
 
     # Initialize variables
     animation_options_wid.selected_values = index_selection_default
@@ -2226,7 +2341,7 @@ def animation_options(index_selection_default, plot_function=None,
             else:
                 i = animation_options_wid.selected_values['min']
             while (i <= animation_options_wid.selected_values['max'] and
-                   not stop_but.value):
+                       not stop_but.value):
                 # update index value
                 if index_style == 'slider':
                     index_wid.value = i
@@ -2251,7 +2366,7 @@ def animation_options(index_selection_default, plot_function=None,
             i = animation_options_wid.selected_values['index']
             i += animation_options_wid.selected_values['step']
             while (i <= animation_options_wid.selected_values['max'] and
-                   not stop_but.value):
+                       not stop_but.value):
                 # update value
                 if index_style == 'slider':
                     index_wid.value = i
@@ -2333,7 +2448,7 @@ def format_animation_options(animation_options_wid, index_text_width='0.5cm',
     animation_options_wid.children[1].children[1].add_class('align-end')
 
     # add margin on the right of the play button
-    animation_options_wid.children[1].children[1].children[0].children[1].\
+    animation_options_wid.children[1].children[1].children[0].children[1]. \
         set_css('margin-right', container_margin)
 
     if animation_options_wid.index_style == 'slider':
@@ -2348,7 +2463,7 @@ def format_animation_options(animation_options_wid, index_text_width='0.5cm',
                                                               '1cm')
 
     # set interval width
-    animation_options_wid.children[1].children[1].children[1].children[0].\
+    animation_options_wid.children[1].children[1].children[1].children[0]. \
         set_css('width', '20px')
 
     # set toggle button font bold
@@ -2509,6 +2624,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    import IPython.html.widgets as ipywidgets
     # make sure that viewer_options_default is list even with one member
     if not isinstance(viewer_options_default, list):
         viewer_options_default = [viewer_options_default]
@@ -2519,9 +2635,9 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
 
     # Create widgets
     # toggle button
-    but = ToggleButtonWidget(description='Viewer Options',
-                             value=toggle_show_default,
-                             visible=toggle_show_visible)
+    but = ipywidgets.ToggleButtonWidget(description='Viewer Options',
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
 
     # select object drop down menu
     objects_dict = OrderedDict()
@@ -2531,9 +2647,9 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     else:
         for k, g in enumerate(objects_names):
             objects_dict[g] = k
-    selection = DropdownWidget(values=objects_dict, value=0,
-                               description='Select',
-                               visible=selection_visible and toggle_show_default)
+    selection = ipywidgets.DropdownWidget(values=objects_dict, value=0,
+                                          description='Select',
+                                          visible=selection_visible and toggle_show_default)
 
     # options widgets
     options_widgets = []
@@ -2592,11 +2708,11 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                                plot_function=plot_function,
                                show_checkbox_title='Render legend'))
             tab_titles.append('Legend')
-    options = TabWidget(children=options_widgets)
+    options = ipywidgets.TabWidget(children=options_widgets)
 
     # Final widget
-    all_options = ContainerWidget(children=[selection, options])
-    viewer_options_wid = ContainerWidget(children=[but, all_options])
+    all_options = ipywidgets.ContainerWidget(children=[selection, options])
+    viewer_options_wid = ipywidgets.ContainerWidget(children=[but, all_options])
 
     # save tab titles and options str to widget in order to be passed to the
     # format function
@@ -2773,9 +2889,9 @@ def plot_options(plot_options_default, plot_function=None,
     The structure of the widgets is the following:
         plot_options_wid.children = [toggle_button, options]
         options.children = [curve_menu, per_curve_options_wid]
-        per_curve_options_wid = ContainerWidget(children=[legend_entry,
+        per_curve_options_wid = ipywidgets.ContainerWidget(children=[legend_entry,
                                                           line_marker_wid])
-        line_marker_wid = ContainerWidget(children=[line_widget, marker_widget])
+        line_marker_wid = ipywidgets.ContainerWidget(children=[line_widget, marker_widget])
         line_widget.children = [show_line_checkbox, line_options]
         marker_widget.children = [show_marker_checkbox, marker_options]
         line_options.children = [linestyle, linewidth, linecolour]
@@ -2827,6 +2943,7 @@ def plot_options(plot_options_default, plot_function=None,
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    import IPython.html.widgets as ipywidgets
     # make sure that plot_options_default is a list even with one member
     if not isinstance(plot_options_default, list):
         plot_options_default = [plot_options_default]
@@ -2834,37 +2951,42 @@ def plot_options(plot_options_default, plot_function=None,
     # find number of curves
     n_curves = len(plot_options_default)
 
-    #Create widgets
+    # Create widgets
     # toggle button
-    but = ToggleButtonWidget(description='Plot Options',
-                             value=toggle_show_default,
-                             visible=toggle_show_visible)
+    but = ipywidgets.ToggleButtonWidget(description='Plot Options',
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
 
     # select curve drop down menu
     curves_dict = OrderedDict()
     for k in range(n_curves):
         curves_dict['Curve ' + str(k)] = k
-    curve_selection = DropdownWidget(values=curves_dict,
-                                     value=0,
-                                     description='Select curve',
-                                     visible=n_curves > 1)
+    curve_selection = ipywidgets.DropdownWidget(values=curves_dict,
+                                                value=0,
+                                                description='Select curve',
+                                                visible=n_curves > 1)
 
     # legend entry
-    legend_entry = TextWidget(description='Legend entry',
-                              value=plot_options_default[0]['legend_entry'])
+    legend_entry = ipywidgets.TextWidget(description='Legend entry',
+                                         value=plot_options_default[0][
+                                             'legend_entry'])
 
     # show line, show markers checkboxes
-    show_line = CheckboxWidget(description='Show line',
-                               value=plot_options_default[0]['show_line'])
-    show_marker = CheckboxWidget(description='Show markers',
-                                 value=plot_options_default[0]['show_marker'])
+    show_line = ipywidgets.CheckboxWidget(description='Show line',
+                                          value=plot_options_default[0][
+                                              'show_line'])
+    show_marker = ipywidgets.CheckboxWidget(description='Show markers',
+                                            value=plot_options_default[0][
+                                                'show_marker'])
 
     # linewidth, markersize
-    linewidth = FloatTextWidget(description='Width',
-                                value=plot_options_default[0]['linewidth'])
-    markersize = IntTextWidget(description='Size',
-                               value=plot_options_default[0]['markersize'])
-    markeredgewidth = FloatTextWidget(
+    linewidth = ipywidgets.FloatTextWidget(description='Width',
+                                           value=plot_options_default[0][
+                                               'linewidth'])
+    markersize = ipywidgets.IntTextWidget(description='Size',
+                                          value=plot_options_default[0][
+                                              'markersize'])
+    markeredgewidth = ipywidgets.FloatTextWidget(
         description='Edge width',
         value=plot_options_default[0]['markeredgewidth'])
 
@@ -2891,9 +3013,10 @@ def plot_options(plot_options_default, plot_function=None,
     markerstyle_dict['x'] = 'x'
     markerstyle_dict['diamond'] = 'D'
     markerstyle_dict['thin diamond'] = 'd'
-    markerstyle = DropdownWidget(values=markerstyle_dict,
-                                 value=plot_options_default[0]['markerstyle'],
-                                 description='Style')
+    markerstyle = ipywidgets.DropdownWidget(values=markerstyle_dict,
+                                            value=plot_options_default[0][
+                                                'markerstyle'],
+                                            description='Style')
 
     # linestyle
     linestyle_dict = OrderedDict()
@@ -2901,33 +3024,42 @@ def plot_options(plot_options_default, plot_function=None,
     linestyle_dict['dashed'] = '--'
     linestyle_dict['dash-dot'] = '-.'
     linestyle_dict['dotted'] = ':'
-    linestyle = DropdownWidget(values=linestyle_dict,
-                               value=plot_options_default[0]['linestyle'],
-                               description='Style')
+    linestyle = ipywidgets.DropdownWidget(values=linestyle_dict,
+                                          value=plot_options_default[0][
+                                              'linestyle'],
+                                          description='Style')
 
     # colours
     # do not assign the plot_function here
     linecolour = colour_selection(plot_options_default[0]['linecolour'],
                                   title='Colour')
-    markerfacecolour = colour_selection(plot_options_default[0]['markerfacecolour'],
-                                        title='Face Colour')
-    markeredgecolour = colour_selection(plot_options_default[0]['markeredgecolour'],
-                                        title='Edge Colour')
+    markerfacecolour = colour_selection(
+        plot_options_default[0]['markerfacecolour'],
+        title='Face Colour')
+    markeredgecolour = colour_selection(
+        plot_options_default[0]['markeredgecolour'],
+        title='Edge Colour')
 
     # Group widgets
-    line_options = ContainerWidget(children=[linestyle, linewidth, linecolour])
-    marker_options = ContainerWidget(children=[markerstyle, markersize,
-                                               markeredgewidth,
-                                               markerfacecolour,
-                                               markeredgecolour])
-    line_wid = ContainerWidget(children=[show_line, line_options])
-    marker_wid = ContainerWidget(children=[show_marker, marker_options])
-    line_options_options_wid = ContainerWidget(children=[line_wid, marker_wid])
-    options_wid = ContainerWidget(children=[legend_entry,
-                                            line_options_options_wid])
-    options_and_curve_wid = ContainerWidget(children=[curve_selection,
-                                                      options_wid])
-    plot_options_wid = ContainerWidget(children=[but, options_and_curve_wid])
+    line_options = ipywidgets.ContainerWidget(
+        children=[linestyle, linewidth, linecolour])
+    marker_options = ipywidgets.ContainerWidget(
+        children=[markerstyle, markersize,
+                  markeredgewidth,
+                  markerfacecolour,
+                  markeredgecolour])
+    line_wid = ipywidgets.ContainerWidget(children=[show_line, line_options])
+    marker_wid = ipywidgets.ContainerWidget(
+        children=[show_marker, marker_options])
+    line_options_options_wid = ipywidgets.ContainerWidget(
+        children=[line_wid, marker_wid])
+    options_wid = ipywidgets.ContainerWidget(children=[legend_entry,
+                                                       line_options_options_wid])
+    options_and_curve_wid = ipywidgets.ContainerWidget(
+        children=[curve_selection,
+                  options_wid])
+    plot_options_wid = ipywidgets.ContainerWidget(
+        children=[but, options_and_curve_wid])
 
     # initialize output
     plot_options_wid.selected_options = plot_options_default
@@ -2968,46 +3100,66 @@ def plot_options(plot_options_default, plot_function=None,
 
     # assign options
     def save_legend_entry(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['legend_entry'] = str(value)
+        plot_options_wid.selected_options[curve_selection.value][
+            'legend_entry'] = str(value)
+
     legend_entry.on_trait_change(save_legend_entry, 'value')
 
     def save_show_line(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['show_line'] = value
+        plot_options_wid.selected_options[curve_selection.value][
+            'show_line'] = value
+
     show_line.on_trait_change(save_show_line, 'value')
 
     def save_show_marker(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['show_marker'] = value
+        plot_options_wid.selected_options[curve_selection.value][
+            'show_marker'] = value
+
     show_marker.on_trait_change(save_show_marker, 'value')
 
     def save_linewidth(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['linewidth'] = float(value)
+        plot_options_wid.selected_options[curve_selection.value][
+            'linewidth'] = float(value)
+
     linewidth.on_trait_change(save_linewidth, 'value')
 
     def save_linestyle(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['linestyle'] = value
+        plot_options_wid.selected_options[curve_selection.value][
+            'linestyle'] = value
+
     linestyle.on_trait_change(save_linestyle, 'value')
 
     def save_markersize(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['markersize'] = int(value)
+        plot_options_wid.selected_options[curve_selection.value][
+            'markersize'] = int(value)
+
     markersize.on_trait_change(save_markersize, 'value')
 
     def save_markeredgewidth(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['markeredgewidth'] = float(value)
+        plot_options_wid.selected_options[curve_selection.value][
+            'markeredgewidth'] = float(value)
+
     markeredgewidth.on_trait_change(save_markeredgewidth, 'value')
 
     def save_markerstyle(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['markerstyle'] = value
+        plot_options_wid.selected_options[curve_selection.value][
+            'markerstyle'] = value
+
     markerstyle.on_trait_change(save_markerstyle, 'value')
 
     def save_linecolour(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['linecolour'] = get_colour(linecolour)
+        plot_options_wid.selected_options[curve_selection.value][
+            'linecolour'] = get_colour(linecolour)
+
     linecolour.children[0].on_trait_change(save_linecolour, 'value')
     linecolour.children[1].children[0].on_trait_change(save_linecolour, 'value')
     linecolour.children[1].children[1].on_trait_change(save_linecolour, 'value')
     linecolour.children[1].children[2].on_trait_change(save_linecolour, 'value')
 
     def save_markerfacecolour(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['markerfacecolour'] = get_colour(markerfacecolour)
+        plot_options_wid.selected_options[curve_selection.value][
+            'markerfacecolour'] = get_colour(markerfacecolour)
+
     markerfacecolour.children[0].on_trait_change(save_markerfacecolour, 'value')
     markerfacecolour.children[1].children[0].on_trait_change(
         save_markerfacecolour, 'value')
@@ -3017,7 +3169,9 @@ def plot_options(plot_options_default, plot_function=None,
         save_markerfacecolour, 'value')
 
     def save_markeredgecolour(name, value):
-        plot_options_wid.selected_options[curve_selection.value]['markeredgecolour'] = get_colour(markeredgecolour)
+        plot_options_wid.selected_options[curve_selection.value][
+            'markeredgecolour'] = get_colour(markeredgecolour)
+
     markeredgecolour.children[0].on_trait_change(save_markeredgecolour, 'value')
     markeredgecolour.children[1].children[0].on_trait_change(
         save_markeredgecolour, 'value')
@@ -3028,14 +3182,19 @@ def plot_options(plot_options_default, plot_function=None,
 
     # set correct value to slider when drop down menu value changes
     def set_options(name, value):
-        legend_entry.value = plot_options_wid.selected_options[value]['legend_entry']
+        legend_entry.value = plot_options_wid.selected_options[value][
+            'legend_entry']
         show_line.value = plot_options_wid.selected_options[value]['show_line']
-        show_marker.value = plot_options_wid.selected_options[value]['show_marker']
+        show_marker.value = plot_options_wid.selected_options[value][
+            'show_marker']
         linewidth.value = plot_options_wid.selected_options[value]['linewidth']
         linestyle.value = plot_options_wid.selected_options[value]['linestyle']
-        markersize.value = plot_options_wid.selected_options[value]['markersize']
-        markerstyle.value = plot_options_wid.selected_options[value]['markerstyle']
-        markeredgewidth.value = plot_options_wid.selected_options[value]['markeredgewidth']
+        markersize.value = plot_options_wid.selected_options[value][
+            'markersize']
+        markerstyle.value = plot_options_wid.selected_options[value][
+            'markerstyle']
+        markeredgewidth.value = plot_options_wid.selected_options[value][
+            'markeredgewidth']
         default_colour = plot_options_wid.selected_options[value]['linecolour']
         if not isinstance(default_colour, str):
             r_val = default_colour[0]
@@ -3046,7 +3205,8 @@ def plot_options(plot_options_default, plot_function=None,
             linecolour.children[1].children[1].value = g_val
             linecolour.children[1].children[2].value = b_val
         linecolour.children[0].value = default_colour
-        default_colour = plot_options_wid.selected_options[value]['markerfacecolour']
+        default_colour = plot_options_wid.selected_options[value][
+            'markerfacecolour']
         if not isinstance(default_colour, str):
             r_val = default_colour[0]
             g_val = default_colour[1]
@@ -3056,7 +3216,8 @@ def plot_options(plot_options_default, plot_function=None,
             markerfacecolour.children[1].children[1].value = g_val
             markerfacecolour.children[1].children[2].value = b_val
         markerfacecolour.children[0].value = default_colour
-        default_colour = plot_options_wid.selected_options[value]['markeredgecolour']
+        default_colour = plot_options_wid.selected_options[value][
+            'markeredgecolour']
         if not isinstance(default_colour, str):
             r_val = default_colour[0]
             g_val = default_colour[1]
@@ -3086,25 +3247,25 @@ def plot_options(plot_options_default, plot_function=None,
         markersize.on_trait_change(plot_function, 'value')
         linecolour.children[0].on_trait_change(plot_function, 'value')
         linecolour.children[1].children[0].on_trait_change(plot_function,
-                                                          'value')
+                                                           'value')
         linecolour.children[1].children[1].on_trait_change(plot_function,
-                                                          'value')
+                                                           'value')
         linecolour.children[1].children[2].on_trait_change(plot_function,
-                                                          'value')
+                                                           'value')
         markerfacecolour.children[0].on_trait_change(plot_function, 'value')
         markerfacecolour.children[1].children[0].on_trait_change(plot_function,
-                                                                'value')
+                                                                 'value')
         markerfacecolour.children[1].children[1].on_trait_change(plot_function,
-                                                                'value')
+                                                                 'value')
         markerfacecolour.children[1].children[2].on_trait_change(plot_function,
-                                                                'value')
+                                                                 'value')
         markeredgecolour.children[0].on_trait_change(plot_function, 'value')
         markeredgecolour.children[1].children[0].on_trait_change(plot_function,
-                                                                'value')
+                                                                 'value')
         markeredgecolour.children[1].children[1].on_trait_change(plot_function,
-                                                                'value')
+                                                                 'value')
         markeredgecolour.children[1].children[2].on_trait_change(plot_function,
-                                                                'value')
+                                                                 'value')
 
     return plot_options_wid
 
@@ -3145,19 +3306,22 @@ def format_plot_options(plot_options_wid, container_padding='6px',
         Defines whether to draw the border line around the per curve options.
     """
     # align line options with checkbox
-    plot_options_wid.children[1].children[1].children[1].children[0].\
+    plot_options_wid.children[1].children[1].children[1].children[0]. \
         add_class('align-end')
 
     # align marker options with checkbox
-    plot_options_wid.children[1].children[1].children[1].children[1].\
+    plot_options_wid.children[1].children[1].children[1].children[1]. \
         add_class('align-end')
 
     # set text boxes width
-    plot_options_wid.children[1].children[1].children[1].children[0].children[1].children[1].\
+    plot_options_wid.children[1].children[1].children[1].children[0].children[
+        1].children[1]. \
         set_css('width', '1cm')
-    plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].\
+    plot_options_wid.children[1].children[1].children[1].children[1].children[
+        1].children[1]. \
         set_css('width', '1cm')
-    plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[2].\
+    plot_options_wid.children[1].children[1].children[1].children[1].children[
+        1].children[2]. \
         set_css('width', '1cm')
 
     # align line and marker options
@@ -3174,11 +3338,14 @@ def format_plot_options(plot_options_wid, container_padding='6px',
 
     # format colour options
     format_colour_selection(
-        plot_options_wid.children[1].children[1].children[1].children[0].children[1].children[2])
+        plot_options_wid.children[1].children[1].children[1].children[
+            0].children[1].children[2])
     format_colour_selection(
-        plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[3])
+        plot_options_wid.children[1].children[1].children[1].children[
+            1].children[1].children[3])
     format_colour_selection(
-        plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[4])
+        plot_options_wid.children[1].children[1].children[1].children[
+            1].children[1].children[4])
 
     # set toggle button font bold
     plot_options_wid.children[0].set_css('font-weight',
@@ -3245,13 +3412,14 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    import IPython.html.widgets as ipywidgets
     from os import getcwd
     from os.path import join, splitext
 
     # create widgets
-    but = ToggleButtonWidget(description='Save Figure',
-                             value=toggle_show_default,
-                             visible=toggle_show_visible)
+    but = ipywidgets.ToggleButtonWidget(description='Save Figure',
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
     format_dict = OrderedDict()
     format_dict['png'] = 'png'
     format_dict['jpg'] = 'jpg'
@@ -3259,26 +3427,29 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     format_dict['eps'] = 'eps'
     format_dict['postscript'] = 'ps'
     format_dict['svg'] = 'svg'
-    format_wid = SelectWidget(values=format_dict, value=format_default,
-                              description='Format')
+    format_wid = ipywidgets.SelectWidget(values=format_dict,
+                                         value=format_default,
+                                         description='Format')
 
     def papertype_visibility(name, value):
         papertype_wid.disabled = not value == 'ps'
+
     format_wid.on_trait_change(papertype_visibility, 'value')
 
     def set_extension(name, value):
         fileName, fileExtension = splitext(filename.value)
         filename.value = fileName + '.' + value
+
     format_wid.on_trait_change(set_extension, 'value')
     if dpi_default is None:
         dpi_default = 0
-    dpi_wid = FloatTextWidget(description='DPI', value=dpi_default)
+    dpi_wid = ipywidgets.FloatTextWidget(description='DPI', value=dpi_default)
     orientation_dict = OrderedDict()
     orientation_dict['portrait'] = 'portrait'
     orientation_dict['landscape'] = 'landscape'
-    orientation_wid = DropdownWidget(values=orientation_dict,
-                                     value=orientation_default,
-                                     description='Orientation')
+    orientation_wid = ipywidgets.DropdownWidget(values=orientation_dict,
+                                                value=orientation_default,
+                                                description='Orientation')
     papertype_dict = OrderedDict()
     papertype_dict['letter'] = 'letter'
     papertype_dict['legal'] = 'legal'
@@ -3306,33 +3477,39 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     papertype_dict['b8'] = 'b8'
     papertype_dict['b9'] = 'b9'
     papertype_dict['b10'] = 'b10'
-    papertype_wid = DropdownWidget(values=papertype_dict,
-                                   value=papertype_default,
-                                   description='Paper type',
-                                   disabled=not format_default == 'ps')
-    transparent_wid = CheckboxWidget(description='Transparent',
-                                     value=transparent_default)
+    papertype_wid = ipywidgets.DropdownWidget(values=papertype_dict,
+                                              value=papertype_default,
+                                              description='Paper type',
+                                              disabled=not format_default == 'ps')
+    transparent_wid = ipywidgets.CheckboxWidget(description='Transparent',
+                                                value=transparent_default)
     facecolour_wid = colour_selection([facecolour_default], title='Face colour')
     edgecolour_wid = colour_selection([edgecolour_default], title='Edge colour')
-    pad_inches_wid = FloatTextWidget(description='Pad (inch)',
-                                     value=pad_inches_default)
-    filename = TextWidget(description='Path',
-                          value=join(getcwd(), 'Untitled.' + format_default))
-    overwrite = CheckboxWidget(description='Overwrite if file exists',
-                               value=overwrite_default)
-    error_str = LatexWidget(value="")
-    save_but = ButtonWidget(description='Save')
+    pad_inches_wid = ipywidgets.FloatTextWidget(description='Pad (inch)',
+                                                value=pad_inches_default)
+    filename = ipywidgets.TextWidget(description='Path',
+                                     value=join(getcwd(),
+                                                'Untitled.' + format_default))
+    overwrite = ipywidgets.CheckboxWidget(
+        description='Overwrite if file exists',
+        value=overwrite_default)
+    error_str = ipywidgets.LatexWidget(value="")
+    save_but = ipywidgets.ButtonWidget(description='Save')
 
     # create final widget
-    path_wid = ContainerWidget(children=[filename, format_wid, overwrite,
-                                         papertype_wid])
-    page_wid = ContainerWidget(children=[orientation_wid, dpi_wid,
-                                         pad_inches_wid])
-    colour_wid = ContainerWidget(children=[facecolour_wid, edgecolour_wid,
-                                           transparent_wid])
-    options_wid = TabWidget(children=[path_wid, page_wid, colour_wid])
-    save_wid = ContainerWidget(children=[save_but, error_str])
-    save_figure_wid = ContainerWidget(children=[but, options_wid, save_wid])
+    path_wid = ipywidgets.ContainerWidget(
+        children=[filename, format_wid, overwrite,
+                  papertype_wid])
+    page_wid = ipywidgets.ContainerWidget(children=[orientation_wid, dpi_wid,
+                                                    pad_inches_wid])
+    colour_wid = ipywidgets.ContainerWidget(
+        children=[facecolour_wid, edgecolour_wid,
+                  transparent_wid])
+    options_wid = ipywidgets.TabWidget(
+        children=[path_wid, page_wid, colour_wid])
+    save_wid = ipywidgets.ContainerWidget(children=[save_but, error_str])
+    save_figure_wid = ipywidgets.ContainerWidget(
+        children=[but, options_wid, save_wid])
 
     # Assign renderer
     save_figure_wid.renderer = [renderer]
@@ -3479,11 +3656,12 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
     from menpo.image import Image
     import menpo.io as mio
     from menpo.visualize.image import glyph
+    import IPython.html.widgets as ipywidgets
 
     # Toggle button that controls options' visibility
-    but = ToggleButtonWidget(description='Features Options',
-                             value=toggle_show_default,
-                             visible=toggle_show_visible)
+    but = ipywidgets.ToggleButtonWidget(description='Features Options',
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
 
     # feature type
     tmp = OrderedDict()
@@ -3494,8 +3672,8 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
     tmp['LBP'] = lbp
     tmp['Gradient'] = gradient
     tmp['None'] = no_op
-    feature = RadioButtonsWidget(value=no_op, values=tmp,
-                                 description='Feature type:')
+    feature = ipywidgets.RadioButtonsWidget(value=no_op, values=tmp,
+                                            description='Feature type:')
 
     # feature-related options
     hog_options_wid = hog_options(toggle_show_default=True,
@@ -3506,7 +3684,7 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
                                   toggle_show_visible=False)
     daisy_options_wid = daisy_options(toggle_show_default=True,
                                       toggle_show_visible=False)
-    no_options_wid = LatexWidget(value='No options available.')
+    no_options_wid = ipywidgets.LatexWidget(value='No options available.')
 
     # load and rescale preview image (lenna)
     image = mio.import_builtin_asset.lenna_png()
@@ -3514,27 +3692,31 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
     image = image.as_greyscale()
 
     # per feature options widget
-    per_feature_options = ContainerWidget(children=[hog_options_wid,
-                                                    igo_options_wid,
-                                                    lbp_options_wid,
-                                                    daisy_options_wid,
-                                                    no_options_wid])
+    per_feature_options = ipywidgets.ContainerWidget(children=[hog_options_wid,
+                                                               igo_options_wid,
+                                                               lbp_options_wid,
+                                                               daisy_options_wid,
+                                                               no_options_wid])
 
     # preview tab widget
-    preview_img = ImageWidget(value=_convert_image_to_bytes(image),
-                              visible=False)
-    preview_input = LatexWidget(value="Input: {}W x {}H x {}C".format(
-        image.width, image.height, image.n_channels), visible=False)
-    preview_output = LatexWidget(value="")
-    preview_time = LatexWidget(value="")
-    preview = ContainerWidget(children=[preview_img, preview_input,
-                                        preview_output, preview_time])
+    preview_img = ipywidgets.ImageWidget(value=_convert_image_to_bytes(image),
+                                         visible=False)
+    preview_input = ipywidgets.LatexWidget(
+        value="Input: {}W x {}H x {}C".format(
+            image.width, image.height, image.n_channels), visible=False)
+    preview_output = ipywidgets.LatexWidget(value="")
+    preview_time = ipywidgets.LatexWidget(value="")
+    preview = ipywidgets.ContainerWidget(children=[preview_img, preview_input,
+                                                   preview_output,
+                                                   preview_time])
 
     # options tab widget
-    all_options = TabWidget(children=[feature, per_feature_options, preview])
+    all_options = ipywidgets.TabWidget(
+        children=[feature, per_feature_options, preview])
 
     # Widget container
-    features_options_wid = ContainerWidget(children=[but, all_options])
+    features_options_wid = ipywidgets.ContainerWidget(
+        children=[but, all_options])
 
     # Initialize output dictionary
     options = {}
@@ -3622,8 +3804,9 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
             val4 = feat_image.n_channels
             # compute sum of feature image and normalize its pixels in range (0, 1)
             # because it is required by as_PILImage
-            feat_image = glyph(feat_image, vectors_block_size=1, use_negative=False)
-            #feat_image = np.sum(feat_image.pixels, axis=2)
+            feat_image = glyph(feat_image, vectors_block_size=1,
+                               use_negative=False)
+            # feat_image = np.sum(feat_image.pixels, axis=2)
             feat_image = feat_image.pixels
             feat_image -= np.min(feat_image)
             feat_image /= np.max(feat_image)
@@ -3691,8 +3874,9 @@ def format_features_options(features_options_wid, container_padding='6px',
                        border_visible=False)
     format_lbp_options(features_options_wid.children[1].children[1].children[2],
                        border_visible=False)
-    format_daisy_options(features_options_wid.children[1].children[1].children[3],
-                         border_visible=False)
+    format_daisy_options(
+        features_options_wid.children[1].children[1].children[3],
+        border_visible=False)
 
     # set final tab titles
     tab_titles = ['Feature', 'Options', 'Preview']
@@ -3753,4 +3937,4 @@ def _convert_iterations_to_groups(from_iter, to_iter, iter_str):
     Function that generates a list of group labels given the range bounds and
     the str to be used.
     """
-    return ["{}{}".format(iter_str, i) for i in range(from_iter, to_iter+1)]
+    return ["{}{}".format(iter_str, i) for i in range(from_iter, to_iter + 1)]
