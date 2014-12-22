@@ -1,7 +1,6 @@
 from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
                                   RadioButtonsWidget, ButtonWidget)
 from IPython.display import display, clear_output
-import matplotlib.pyplot as plt
 import numpy as np
 from collections import Sized
 
@@ -159,6 +158,7 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
 
     # define plot function
     def plot_function(name, value):
+        import matplotlib.pyplot as plt
         # clear current figure, but wait until the new data to be displayed are
         # generated
         clear_output(wait=True)
@@ -430,6 +430,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
 
     # Define plot function
     def plot_function(name, value):
+        import matplotlib.pyplot as plt
         # clear current figure, but wait until the new data to be displayed are
         # generated
         clear_output(wait=True)
@@ -780,6 +781,7 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
 
     # Define plot function
     def plot_function(name, value):
+        import matplotlib.pyplot as plt
         # clear current figure, but wait until the new data to be displayed are
         # generated
         clear_output(wait=True)
@@ -1537,6 +1539,8 @@ def _visualize(image, renderer, render_image, render_landmarks, image_is_masked,
                legend_font_style, legend_border_padding, figure_size,
                render_axes, axes_font_name, axes_font_size, axes_font_style,
                axes_x_limits, axes_y_limits, axes_font_weight):
+    import matplotlib.pyplot as plt
+
     global glyph
     if glyph is None:
         from menpo.visualize.image import glyph
@@ -1798,6 +1802,7 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
     labels_fontsize : `float`
         The fontsize of the title, x_label, y_label and legend.
     """
+    import matplotlib.pyplot as plt
     # select figure
     figure_id = plt.figure(figure_id.number)
 
@@ -1881,6 +1886,7 @@ def _plot_eigenvalues(figure_id, model, figure_size, x_scale, y_scale):
     y_scale : `float`
         The scale of y axis.
     """
+    import matplotlib.pyplot as plt
     # select figure
     figure_id = plt.figure(figure_id.number)
 
