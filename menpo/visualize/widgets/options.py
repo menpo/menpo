@@ -134,7 +134,7 @@ def channel_options(channels_options_default, plot_function=None,
         disabled=channels_options_default['n_channels'] == 1)
     rgb_wid = ipywidgets.CheckboxWidget(
         value=channels_options_default['n_channels'] == 3 and
-              channels_options_default['channels'] == None,
+              channels_options_default['channels'] is None,
         description='RGB',
         visible=toggle_show_default and channels_options_default[
                                             'n_channels'] == 3)
@@ -1270,6 +1270,8 @@ def update_model_parameters(model_parameters_wid, n_params, plot_function=None,
     params_str : `str`, optional
         The string that will be used for each parameters name.
     """
+    import IPython.html.widgets as ipywidgets
+
     if model_parameters_wid.mode == 'multiple':
         # get the number of enabled parameters (number of sliders)
         enabled_params = len(model_parameters_wid.children[1].children[0].children)
@@ -1281,9 +1283,9 @@ def update_model_parameters(model_parameters_wid, n_params, plot_function=None,
                   model_parameters_wid.children[1].children[0].children[0].max]
             # create sliders widgets
             sliders = [ipywidgets.FloatSliderWidget(
-                description="{}{}".format(params_str,
-                                          p),
-                min=pb[0], max=pb[1], value=0.)
+                            description="{}{}".format(params_str,
+                                                      p),
+                            min=pb[0], max=pb[1], value=0.)
                        for p in range(n_params)]
             # assign sliders to container
             model_parameters_wid.children[1].children[0].children = sliders
