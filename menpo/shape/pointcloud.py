@@ -201,8 +201,9 @@ class PointCloud(Shape):
                                   copy=False)
 
     def view(self, figure_id=None, new_figure=False, image_view=True,
-             marker_style='o', marker_size=20, marker_face_colour='r',
-             marker_edge_colour='k', marker_edge_width=1., render_axes=True,
+             render_markers=True, marker_style='o', marker_size=20,
+             marker_face_colour='r', marker_edge_colour='k',
+             marker_edge_width=1., render_axes=True,
              axes_font_name='sans-serif', axes_font_size=10,
              axes_font_style='normal', axes_font_weight='normal',
              axes_x_limits=None, axes_y_limits=None, figure_size=None,
@@ -218,6 +219,8 @@ class PointCloud(Shape):
             If ``True``, a new figure is created.
         image_view : `bool`, optional
             If ``True``, the x and y axes are flipped.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
         marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
                         ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
                         ``1``, ``2``, ``3``, ``4``, ``8``}, optional
@@ -262,7 +265,7 @@ class PointCloud(Shape):
         """
         return PointCloudViewer(figure_id, new_figure, self.points).render(
             image_view=image_view, render_lines=False, line_colour='b',
-            line_style='-', line_width=1., render_markers=True,
+            line_style='-', line_width=1., render_markers=render_markers,
             marker_style=marker_style, marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,

@@ -1758,8 +1758,18 @@ def figure_options(figure_options_default, plot_function=None,
         axes_font_size.disabled = not value
         axes_font_style.disabled = not value
         axes_font_weight.disabled = not value
-        axes_x_limits.disabled = not value
-        axes_y_limits.disabled = not value
+        axes_x_limits_enable.disabled = not value
+        axes_y_limits_enable.disabled = not value
+        if value:
+            axes_x_limits_from.disabled = not axes_x_limits_enable.value
+            axes_x_limits_to.disabled = not axes_x_limits_enable.value
+            axes_y_limits_from.disabled = not axes_y_limits_enable.value
+            axes_y_limits_to.disabled = not axes_y_limits_enable.value
+        else:
+            axes_x_limits_from.disabled = True
+            axes_x_limits_to.disabled = True
+            axes_y_limits_from.disabled = True
+            axes_y_limits_to.disabled = True
     options_visible('', figure_options_default['render_axes'])
     render_axes.on_trait_change(options_visible, 'value')
 
@@ -1787,11 +1797,13 @@ def figure_options(figure_options_default, plot_function=None,
     def axes_x_limits_disable(name, value):
         axes_x_limits_from.disabled = not value
         axes_x_limits_to.disabled = not value
+    axes_x_limits_disable('', axes_x_limits_enable.value)
     axes_x_limits_enable.on_trait_change(axes_x_limits_disable, 'value')
 
     def axes_y_limits_disable(name, value):
         axes_y_limits_from.disabled = not value
         axes_y_limits_to.disabled = not value
+    axes_y_limits_disable('', axes_y_limits_enable.value)
     axes_y_limits_enable.on_trait_change(axes_y_limits_disable, 'value')
 
     def save_axes_x_limits(name, value):
