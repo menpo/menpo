@@ -10,6 +10,11 @@ from collections import OrderedDict
 from StringIO import StringIO
 
 
+# Global variables to try and reduce overhead of loading the logo
+MENPO_LOGO = None
+MENPO_LOGO_SCALE = None
+
+
 def logo(scale=0.3):
     r"""
     Creates a widget with Menpo Logo Image.
@@ -26,10 +31,14 @@ def logo(scale=0.3):
         Defines the scale that will be applied to the logo image
         (data/menpo_thumbnail.jpg).
     """
-    import menpo.io as mio
-    image = mio.import_builtin_asset.menpo_thumbnail_jpg()
-    image = image.rescale(scale)
-    logo_wid = ImageWidget(value=_convert_image_to_bytes(image))
+    # Try only load the logo once
+    global MENPO_LOGO, MENPO_LOGO_SCALE
+    if MENPO_LOGO is None or scale != MENPO_LOGO_SCALE:
+        import menpo.io as mio
+        image = mio.import_builtin_asset.menpo_thumbnail_jpg()
+        MENPO_LOGO = image.rescale(scale)
+        MENPO_LOGO_SCALE = scale
+    logo_wid = ImageWidget(value=_convert_image_to_bytes(MENPO_LOGO))
     return ContainerWidget(children=[logo_wid])
 
 
