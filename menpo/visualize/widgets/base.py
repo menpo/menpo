@@ -170,7 +170,7 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
         # update info text widget
         update_info(pointclouds[im])
 
-        # show image with selected options
+        # show pointcloud with selected options
         tmp1 = viewer_options_wid.selected_values[0]['lines']
         tmp2 = viewer_options_wid.selected_values[0]['markers']
         tmp3 = viewer_options_wid.selected_values[0]['figure']
@@ -1884,59 +1884,6 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
     return figure_id
 
 
-def _plot_eigenvalues(figure_id, model, figure_size, x_scale, y_scale):
-    r"""
-    Helper function that plots a model's eigenvalues.
-
-    Parameters
-    -----------
-    figure_id : matplotlib.pyplot.Figure instance
-        The handle of the figure to be saved.
-
-    model : :map:`PCAModel` or subclass
-       The model to be used.
-
-    figure_size : (`int`, `int`)
-        The size of the plotted figures.
-
-    x_scale : `float`
-        The scale of x axis.
-
-    y_scale : `float`
-        The scale of y axis.
-    """
-    import matplotlib.pyplot as plt
-    # select figure
-    figure_id = plt.figure(figure_id.number)
-
-    # plot eigenvalues ratio
-    plt.subplot(211)
-    plt.bar(range(len(model.eigenvalues_ratio())),
-            model.eigenvalues_ratio())
-    plt.ylabel('Variance Ratio')
-    plt.xlabel('Component Number')
-    plt.title('Variance Ratio per Eigenvector')
-    plt.grid("on")
-
-    # plot eigenvalues cumulative ratio
-    plt.subplot(212)
-    plt.bar(range(len(model.eigenvalues_cumulative_ratio())),
-            model.eigenvalues_cumulative_ratio())
-    plt.ylim((0., 1.))
-    plt.ylabel('Cumulative Variance Ratio')
-    plt.xlabel('Component Number')
-    plt.title('Cumulative Variance Ratio')
-    plt.grid("on")
-
-    # set figure size
-    #plt.gcf().tight_layout()
-    plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
-
-    plt.show()
-
-    return figure_id
-
-
 def _extract_groups_labels(image):
     r"""
     Function that extracts the groups and labels from an image's landmarks.
@@ -1982,31 +1929,3 @@ def _extract_group_labels_landmarks(landmark_manager):
     else:
         labels_keys = [landmark_manager[g].keys() for g in groups_keys]
     return groups_keys, labels_keys
-
-
-def _check_n_parameters(n_params, n_levels, max_n_params):
-    r"""
-    Checks the maximum number of components per level either of the shape
-    or the appearance model. It must be None or int or float or a list of
-    those containing 1 or {n_levels} elements.
-    """
-    str_error = ("n_params must be None or 1 <= int <= max_n_params or "
-                 "a list of those containing 1 or {} elements").format(n_levels)
-    if not isinstance(n_params, list):
-        n_params_list = [n_params] * n_levels
-    elif len(n_params) == 1:
-        n_params_list = [n_params[0]] * n_levels
-    elif len(n_params) == n_levels:
-        n_params_list = n_params
-    else:
-        raise ValueError(str_error)
-    for i, comp in enumerate(n_params_list):
-        if comp is None:
-            n_params_list[i] = max_n_params[i]
-        else:
-            if isinstance(comp, int):
-                if comp > max_n_params[i]:
-                    n_params_list[i] = max_n_params[i]
-            else:
-                raise ValueError(str_error)
-    return n_params_list

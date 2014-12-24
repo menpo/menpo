@@ -391,17 +391,10 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # which case we generate random colours) or a single colour to colour
         # all the labels with
         n_labels = len(self.labels_to_masks)
-        if render_lines:
-            if line_colour is None:
-                # sample colours from jet colour map
-                line_colour = sample_colours_from_colourmap(n_labels, 'jet')
-            if len(line_colour) == 1:
-                line_colour *= n_labels
-            elif len(line_colour) != n_labels:
-                raise ValueError('Must pass a list of n_labels line colours '
-                                 'or a single line colour for all labels.')
-        else:
-            line_colour = [None] * n_labels
+        line_colour = _check_colours_list(
+            render_lines, line_colour, n_labels,
+            'Must pass a list of line colours with length n_labels or a single '
+            'line colour for all labels.')
 
         # Get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
@@ -562,32 +555,158 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
 
 class MatplotlibGraphPlotter(MatplotlibRenderer):
 
-    def __init__(self, figure_id, new_figure, x_axis, y_axis,
-                 title=None, legend=None, x_label=None, y_label=None,
-                 axis_limits=None):
+    def __init__(self, figure_id, new_figure, x_axis, y_axis, title=None,
+                 legend_entries=None, x_label=None, y_label=None,
+                 x_axis_limits=None, y_axis_limits=None):
         super(MatplotlibGraphPlotter, self).__init__(figure_id, new_figure)
         self.x_axis = x_axis
         self.y_axis = y_axis
+        if legend_entries is None:
+            legend_entries = ["Curve {}".format(i) for i in range(len(y_axis))]
+        self.legend_entries = legend_entries
         self.title = title
-        self.legend = legend
         self.x_label = x_label
         self.y_label = y_label
-        self.axis_limits = axis_limits
+        self.x_axis_limits = x_axis_limits
+        self.y_axis_limits = y_axis_limits
 
-    def _render(self, colour_list=None, marker_list=None, **kwargs):
+    def _render(self, render_lines=True, line_colour='r',
+                line_style='-', line_width=1, render_markers=True,
+                marker_style='o', marker_size=20, marker_face_colour='r',
+                marker_edge_colour='k', marker_edge_width=1.,
+                render_legend=True, legend_title='',
+                legend_font_name='sans-serif',
+                legend_font_style='normal', legend_font_size=10,
+                legend_font_weight='normal', legend_marker_scale=None,
+                legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
+                legend_border_axes_pad=None, legend_n_columns=1,
+                legend_horizontal_spacing=None,
+                legend_vertical_spacing=None, legend_border=True,
+                legend_border_padding=None, legend_shadow=False,
+                legend_rounded_corners=False, render_axes=True,
+                axes_font_name='sans-serif', axes_font_size=10,
+                axes_font_style='normal', axes_font_weight='normal',
+                figure_size=(6, 4), render_grid=True, grid_line_style='--',
+                grid_line_width=1):
         import matplotlib.pyplot as plt
-        ax = plt.gca()
-        ax.set_xlabel(self.x_label)
-        ax.set_ylabel(self.y_label)
-        for y, c, m in zip(self.y_axis, colour_list, marker_list):
-            plt.plot(self.x_axis, y, color=c, marker=m, **kwargs)
-        if self.axis_limits is not None:
-            plt.axis(self.axis_limits)
 
-        plt.grid(True)
-        plt.title(self.title)
-        plt.legend(self.legend, bbox_to_anchor=(1.05, 1), loc=2,
-                   borderaxespad=0.)
+        # Check the viewer options that can be different for each plotted curve
+        n_curves = len(self.y_axis)
+        render_lines = _check_render_flag(render_lines, n_curves,
+                                          'Must pass a list of different '
+                                          'render_lines flag for each curve or '
+                                          'a single render_lines flag for all '
+                                          'curves.')
+        render_markers = _check_render_flag(render_markers, n_curves,
+                                            'Must pass a list of different '
+                                            'render_markers flag for each '
+                                            'curve or a single render_markers '
+                                            'flag for all curves.')
+        line_colour = _check_colours_list(
+            True, line_colour, n_curves,
+            'Must pass a list of line colours with length n_curves or a single '
+            'line colour for all curves.')
+        line_style = _check_colours_list(
+            True, line_style, n_curves,
+            'Must pass a list of line styles with length n_curves or a single '
+            'line style for all curves.')
+        line_width = _check_colours_list(
+            True, line_width, n_curves,
+            'Must pass a list of line widths with length n_curves or a single '
+            'line width for all curves.')
+        marker_style = _check_colours_list(
+            True, marker_style, n_curves,
+            'Must pass a list of marker styles with length n_curves or a single '
+            'marker style for all curves.')
+        marker_size = _check_colours_list(
+            True, marker_size, n_curves,
+            'Must pass a list of marker sizes with length n_curves or a single '
+            'marker size for all curves.')
+        marker_face_colour = _check_colours_list(
+            True, marker_face_colour, n_curves,
+            'Must pass a list of marker face colours with length n_curves or a '
+            'single marker face colour for all curves.')
+        marker_edge_colour = _check_colours_list(
+            True, marker_edge_colour, n_curves,
+            'Must pass a list of marker edge colours with length n_curves or a '
+            'single marker edge colour for all curves.')
+        marker_edge_width = _check_colours_list(
+            True, marker_edge_width, n_curves,
+            'Must pass a list of marker edge widths with length n_curves or a '
+            'single marker edge width for all curves.')
+
+        # turn grid on/off
+        plt.grid(render_grid, linestyle=grid_line_style,
+                 linewidth=grid_line_width)
+
+        # plot
+        ax = plt.gca()
+        for i, y in enumerate(self.y_axis):
+            linestyle = line_style[i]
+            if not render_lines[i]:
+                linestyle = 'None'
+            marker = marker_style[i]
+            if not render_markers[i]:
+                marker = 'None'
+            plt.plot(self.x_axis, y, color=line_colour[i], linestyle=linestyle,
+                     linewidth=line_width[i], marker=marker,
+                     markeredgecolor=marker_edge_colour[i],
+                     markerfacecolor=marker_face_colour[i],
+                     markeredgewidth=marker_edge_width[i],
+                     markersize=marker_size[i], label=self.legend_entries[i])
+
+        if render_legend:
+            # Options related to legend's font
+            prop = {'family': legend_font_name, 'size': legend_font_size,
+                    'style': legend_font_style,
+                    'weight': legend_font_weight}
+
+            # Render legend
+            ax.legend(title=legend_title, prop=prop,
+                      loc=legend_location,
+                      bbox_to_anchor=legend_bbox_to_anchor,
+                      borderaxespad=legend_border_axes_pad,
+                      ncol=legend_n_columns,
+                      columnspacing=legend_horizontal_spacing,
+                      labelspacing=legend_vertical_spacing,
+                      frameon=legend_border, borderpad=legend_border_padding,
+                      shadow=legend_shadow, fancybox=legend_rounded_corners,
+                      markerscale=legend_marker_scale)
+
+        # Apply axes options
+        if render_axes:
+            plt.axis('on')
+            ax.set_xlabel(self.x_label, fontsize=axes_font_size,
+                          fontname=axes_font_name, fontstyle=axes_font_style,
+                          fontweight=axes_font_weight)
+            ax.set_ylabel(self.y_label, fontsize=axes_font_size,
+                          fontname=axes_font_name, fontstyle=axes_font_style,
+                          fontweight=axes_font_weight)
+            plt.title(self.title, fontsize=axes_font_size,
+                      fontname=axes_font_name, fontstyle=axes_font_style,
+                      fontweight=axes_font_weight)
+            # set font options
+            for l in (plt.gca().get_xticklabels() +
+                      plt.gca().get_yticklabels()):
+                l.set_fontsize(axes_font_size)
+                l.set_fontname(axes_font_name)
+                l.set_fontstyle(axes_font_style)
+                l.set_fontweight(axes_font_weight)
+        else:
+            plt.axis('off')
+            plt.xticks([])
+            plt.yticks([])
+
+        # Set axes limits
+        if self.x_axis_limits is not None:
+            plt.xlim(self.x_axis_limits)
+        if self.y_axis_limits is not None:
+            plt.ylim(self.y_axis_limits)
+
+        # Set figure size
+        if figure_size is not None:
+            plt.gcf().set_size_inches(np.asarray(figure_size))
+
         return self
 
 
@@ -665,3 +784,32 @@ def sample_colours_from_colourmap(n_colours, colour_map):
     import matplotlib.pyplot as plt
     cm = plt.get_cmap(colour_map)
     return [cm(1.*i/n_colours)[:3] for i in range(n_colours)]
+
+
+def _check_colours_list(render_flag, colours_list, n_objects, error_str):
+    if render_flag:
+        if colours_list is None:
+            # sample colours from jet colour map
+            colours_list = sample_colours_from_colourmap(n_objects, 'jet')
+        if isinstance(colours_list, list):
+            if len(colours_list) == 1:
+                colours_list *= n_objects
+            elif len(colours_list) != n_objects:
+                raise ValueError(error_str)
+        else:
+            colours_list = [colours_list] * n_objects
+    else:
+        colours_list = [None] * n_objects
+    return colours_list
+
+
+def _check_render_flag(render_flag, n_objects, error_str):
+    if isinstance(render_flag, bool):
+        return [render_flag] * n_objects
+    elif isinstance(render_flag, list):
+        if len(render_flag) == 1:
+            return render_flag * n_objects
+        elif len(render_flag) != n_objects:
+            raise ValueError(error_str)
+    else:
+        raise ValueError(error_str)
