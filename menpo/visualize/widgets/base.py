@@ -20,81 +20,6 @@ from .tools import logo, format_logo
 glyph = None
 
 
-def _bullet_text(line):
-    r"""
-    Take a single line and wrap it in a latex bullet string.
-
-    Parameters
-    ----------
-    line : `str`
-        Single line of text
-
-    Returns
-    -------
-    bullet_line : `str`
-        Text wrapped in a bullet latex and verbatim.
-    """
-    return r'\bullet~\texttt{{{}}}'.format(line)
-
-
-def _split_wall_of_text(wall):
-    r""""
-    Take a raw string of text and split it in to a list of lines split on the
-    new line symbol. Discards any lines that are empty strings (strips white
-    space from the left and right before discarding).
-
-    Parameters
-    ----------
-    wall : `str`
-        A multiline raw string.
-
-    Returns
-    -------
-    lines : `list` of `str`
-        List of strings not including empty strings
-    """
-    return filter(lambda x: x.strip(), wall.split('\n'))
-
-
-def _join_bullets_as_latex_math(bullets):
-    r""""
-    Take a list of lines (wrapped in math mode latex commands) and re-join then
-    using the latex new line command (wrapped in math mode).
-
-    Parameters
-    ----------
-    bullets : `list` of `str`
-        List of lines containing latex math commands
-
-    Returns
-    -------
-    latex_string : `str`
-        Single string wrapped in latex math mode '$...$'
-    """
-    return r'${}$'.format(r'\\'.join(bullets))
-
-
-def _raw_info_string_to_latex(raw):
-    r""""
-    A raw string of multiple lines converted into a single math latex command
-    containing multiple bullet points.
-
-    Parameters
-    ----------
-    raw : `str`
-        Multiline raw string
-
-    Returns
-    -------
-    info_str : `str`
-        Latex math mode string containing multiple bullet points. Each new line
-        is converted to a bullet point.
-    """
-    lines = _split_wall_of_text(raw)
-    bullets = map(lambda x: _bullet_text(x), lines)
-    return _join_bullets_as_latex_math(bullets)
-
-
 def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
                           browser_style='buttons'):
     r"""
@@ -208,17 +133,18 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
         min_b, max_b = pointcloud.bounds()
         rang = pointcloud.range()
         cm = pointcloud.centre()
-        # Create info string
-        info_txt = r"""
-             {0} points.
-             Bounds: [{1:.1f}-{2:.1f}]W, [{3:.1f}-{4:.1f}]H.
-             Range: {5:.1f}W, {6:.1f}H
-             Centre of mass: ({7:.1f}, {8:.1f})
-        """.format(pointcloud.n_points, min_b[0], max_b[0], min_b[1],
-                   max_b[1], rang[0], rang[1], cm[0], cm[1])
-
-        # update info widget text
-        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
+        info_wid.children[1].children[0].value = "> {} points.".\
+            format(pointcloud.n_points)
+        info_wid.children[1].children[1].value = "> Bounds: " \
+                                                 "[{0:.1f}-{1:.1f}]W, " \
+                                                 "[{2:.1f}-{3:.1f}]H.".\
+            format(min_b[0], max_b[0], min_b[1], max_b[1])
+        info_wid.children[1].children[2].value = "> Range: {0:.1f}W, " \
+                                                 "{1:.1f}H.".\
+            format(rang[0], rang[1])
+        info_wid.children[1].children[3].value = "> Centre of mass: " \
+                                                 "({0:.1f}, {1:.1f}).".\
+            format(cm[0], cm[1])
 
     # viewer options widget
     axes_mode_wid = ipywidgets.RadioButtonsWidget(
@@ -233,7 +159,7 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
                                         toggle_show_default=True)
     viewer_options_all = ipywidgets.ContainerWidget(children=[axes_mode_wid,
                                                     viewer_options_wid])
-    info_wid = info_print(toggle_show_default=True,
+    info_wid = info_print(n_bullets=4, toggle_show_default=True,
                           toggle_show_visible=False)
 
     # save figure widget
@@ -300,9 +226,9 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
                           toggle_button_font_weight='bold',
                           border_visible=False,
                           suboptions_border_visible=True)
-    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+    format_info_print(info_wid, font_size_in_pt='10pt', container_padding='6px',
                       container_margin='6px',
-                      container_border='1px solid black',
+                      container_border='1px solid gray',
                       toggle_button_font_weight='bold', border_visible=False)
     format_save_figure_options(save_figure_wid, container_padding='6px',
                                container_margin='6px',
@@ -513,19 +439,21 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
         min_b, max_b = landmarkgroup.values()[0].bounds()
         rang = landmarkgroup.values()[0].range()
         cm = landmarkgroup.values()[0].centre()
-        info_txt = r"""
-            {0} landmark points.
-            Bounds: [{1:.1f}-{2:.1f}]W, [{3:.1f}-{4:.1f}]H.
-            Range: {5:.1f}W, {6:.1f}H
-            Centre of mass: ({7:.1f}, {8:.1f})
-            Shape norm is {9:.2f}.
-        """.format(landmarkgroup.values()[0].n_points,
-                   min_b[0], max_b[0], min_b[1],
-                   max_b[1], rang[0], rang[1], cm[0], cm[1],
-                   landmarkgroup.values()[0].norm())
 
-        # update info widget text
-        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
+        info_wid.children[1].children[0].value = "> {} landmark points.".\
+            format(landmarkgroup.values()[0].n_points)
+        info_wid.children[1].children[1].value = "> Bounds: " \
+                                                 "[{0:.1f}-{1:.1f}]W, " \
+                                                 "[{2:.1f}-{3:.1f}]H.".\
+            format(min_b[0], max_b[0], min_b[1], max_b[1])
+        info_wid.children[1].children[2].value = "> Range: {0:.1f}W, " \
+                                                 "{1:.1f}H.".\
+            format(rang[0], rang[1])
+        info_wid.children[1].children[3].value = "> Centre of mass: " \
+                                                 "({0:.1f}, {1:.1f}).".\
+            format(cm[0], cm[1])
+        info_wid.children[1].children[4].value = "> Norm is {0:.2f}.".\
+            format(landmarkgroup.values()[0].norm())
 
     # create options widgets
     # The landmarks checkbox default value if the first image doesn't have
@@ -550,7 +478,8 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
                                         labels=all_labels)
     viewer_options_all = ipywidgets.ContainerWidget(children=[axes_mode_wid,
                                                     viewer_options_wid])
-    info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
+    info_wid = info_print(n_bullets=5,
+                          toggle_show_default=True, toggle_show_visible=False)
 
     # save figure widget
     initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
@@ -644,9 +573,9 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
                           toggle_button_font_weight='bold',
                           border_visible=False,
                           suboptions_border_visible=True)
-    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+    format_info_print(info_wid, font_size_in_pt='10pt', container_padding='6px',
                       container_margin='6px',
-                      container_border='1px solid black',
+                      container_border='1px solid gray',
                       toggle_button_font_weight='bold', border_visible=False)
     format_save_figure_options(save_figure_wid, container_padding='6px',
                                container_margin='6px',
@@ -872,21 +801,26 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
             min_b, max_b = landmarks[group][None].bounds()
             rang = landmarks[group][None].range()
             cm = landmarks[group][None].centre()
-            info_txt = r"""
-                {0} landmark points.
-                Bounds: [{1:.1f}-{2:.1f}]W, [{3:.1f}-{4:.1f}]H.
-                Range: {5:.1f}W, {6:.1f}H
-                Centre of mass: ({7:.1f}, {8:.1f})
-                Shape norm is {9:.2f}.
-            """.format(landmarks[group][None].n_points,
-                       min_b[0], max_b[0], min_b[1],
-                       max_b[1], rang[0], rang[1], cm[0], cm[1],
-                       landmarks[group][None].norm())
+            info_wid.children[1].children[0].value = "> {} landmark points.".\
+                format(landmarks[group][None].n_points)
+            info_wid.children[1].children[1].value = "> Bounds: " \
+                                                     "[{0:.1f}-{1:.1f}]W, " \
+                                                     "[{2:.1f}-{3:.1f}]H.".\
+                format(min_b[0], max_b[0], min_b[1], max_b[1])
+            info_wid.children[1].children[2].value = "> Range: {0:.1f}W, " \
+                                                     "{1:.1f}H.".\
+                format(rang[0], rang[1])
+            info_wid.children[1].children[3].value = "> Centre of mass: " \
+                                                     "({0:.1f}, {1:.1f}).".\
+                format(cm[0], cm[1])
+            info_wid.children[1].children[4].value = "> Norm is {0:.2f}.".\
+                format(landmarks[group][None].norm())
         else:
-            info_txt = "There are no landmarks."
-
-        # update info widget text
-        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
+            info_wid.children[1].children[0].value = "There are no landmarks."
+            info_wid.children[1].children[1].value = ""
+            info_wid.children[1].children[2].value = ""
+            info_wid.children[1].children[3].value = ""
+            info_wid.children[1].children[4].value = ""
 
     # create options widgets
     # The landmarks checkbox default value if the first image doesn't have
@@ -914,7 +848,8 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
                                         labels=all_labels)
     viewer_options_all = ipywidgets.ContainerWidget(children=[axes_mode_wid,
                                                     viewer_options_wid])
-    info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
+    info_wid = info_print(n_bullets=5,
+                          toggle_show_default=True, toggle_show_visible=False)
 
     # save figure widget
     initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
@@ -1014,9 +949,9 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
                           toggle_button_font_weight='bold',
                           border_visible=False,
                           suboptions_border_visible=True)
-    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+    format_info_print(info_wid, font_size_in_pt='10pt', container_padding='6px',
                       container_margin='6px',
-                      container_border='1px solid black',
+                      container_border='1px solid gray',
                       toggle_button_font_weight='bold', border_visible=False)
     format_save_figure_options(save_figure_wid, container_padding='6px',
                                container_margin='6px',
@@ -1239,6 +1174,8 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     def update_info(image, image_is_masked, image_has_landmarks, group):
         # Prepare masked (or non-masked) string
         masked_str = 'Masked Image' if image_is_masked else 'Image'
+        # get image path, if available
+        path_str = image.path if hasattr(image, 'path') else 'No path available.'
         # Display masked pixels if image is masked
         masked_pixels_str = (r'{} masked pixels (attached mask {:.1%} true)'.
                              format(image.n_true_pixels(),
@@ -1248,21 +1185,17 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         landmarks_str = (r'{} landmark points.'.
                          format(image.landmarks[group].lms.n_points)
                          if image_has_landmarks else '')
-        path_str = image.path if hasattr(image, 'path') else 'NO PATH'
 
-        # Create info string
-        info_txt = r"""
-             {} of size {} with {} channel{}
-             {}
-             {}
-             min={:.3f}, max={:.3f}
-             {}
-        """.format(masked_str, image._str_shape, image.n_channels,
-                   's' * (image.n_channels > 1), path_str, masked_pixels_str,
-                   image.pixels.min(), image.pixels.max(), landmarks_str)
-
-        # update info widget text
-        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
+        info_wid.children[1].children[0].value = "> {} of size {} with {} " \
+                                                 "channel{}".\
+            format(masked_str, image._str_shape, image.n_channels,
+                   's' * (image.n_channels > 1))
+        info_wid.children[1].children[1].value = "> Path: '{}'".format(path_str)
+        info_wid.children[1].children[2].visible = image_is_masked
+        info_wid.children[1].children[2].value = "> {}".format(masked_pixels_str)
+        info_wid.children[1].children[3].value = "> min={:.3f}, max={:.3f}.".\
+            format(image.pixels.min(), image.pixels.max())
+        info_wid.children[1].children[4].value = "> {}".format(landmarks_str)
 
     # channel options widget
     channel_options_wid = channel_options(channels_options_default,
@@ -1290,7 +1223,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                                         toggle_show_visible=False,
                                         toggle_show_default=True,
                                         labels=all_labels)
-    info_wid = info_print(toggle_show_default=True,
+    info_wid = info_print(n_bullets=5, toggle_show_default=True,
                           toggle_show_visible=False)
 
     # save figure widget
@@ -1416,9 +1349,9 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                           toggle_button_font_weight='bold',
                           border_visible=False,
                           suboptions_border_visible=True)
-    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+    format_info_print(info_wid, font_size_in_pt='10pt', container_padding='6px',
                       container_margin='6px',
-                      container_border='1px solid black',
+                      container_border='1px solid gray',
                       toggle_button_font_weight='bold', border_visible=False)
     format_save_figure_options(save_figure_wid, container_padding='6px',
                                container_margin='6px',

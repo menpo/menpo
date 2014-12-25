@@ -130,8 +130,7 @@ def channel_options(channels_options_default, plot_function=None,
     second_slider_wid = ipywidgets.IntSliderWidget(
         min=1, max=channels_options_default['n_channels'] - 1, step=1,
         value=second_slider_default, description='To',
-        visible=mode_default == "Multiple",
-        disabled=channels_options_default['n_channels'] == 1)
+        visible=mode_default == "Multiple")
     rgb_wid = ipywidgets.CheckboxWidget(
         value=channels_options_default['n_channels'] == 3 and
               channels_options_default['channels'] is None,
@@ -158,12 +157,11 @@ def channel_options(channels_options_default, plot_function=None,
                                                          glyph_use_negative])
     glyph_all = ipywidgets.ContainerWidget(children=[glyph_wid, glyph_options])
     multiple_checkboxes = ipywidgets.ContainerWidget(
-        children=[sum_wid, glyph_all,
-                  rgb_wid])
+        children=[sum_wid, glyph_all, rgb_wid])
     sliders = ipywidgets.ContainerWidget(
         children=[first_slider_wid, second_slider_wid])
-    all_but_radiobuttons = ipywidgets.ContainerWidget(children=[sliders,
-                                                                multiple_checkboxes])
+    all_but_radiobuttons = ipywidgets.ContainerWidget(
+        children=[sliders, multiple_checkboxes])
     mode_and_masked = ipywidgets.ContainerWidget(children=[mode, masked])
     all_but_toggle = ipywidgets.ContainerWidget(children=[mode_and_masked,
                                                           all_but_radiobuttons])
@@ -217,7 +215,6 @@ def channel_options(channels_options_default, plot_function=None,
             glyph_use_negative.value = False
 
     mode_selection_fun('', mode_default)
-    second_slider_wid.value - second_slider_default
     mode.on_trait_change(mode_selection_fun, 'value')
 
     # Define glyph visibility
@@ -909,7 +906,7 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
                 landmark_options_wid.children[1].value = True
 
 
-def info_print(toggle_show_default=True, toggle_show_visible=True):
+def info_print(n_bullets, toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget that can print information. Specifically, it has:
         1) A latex widget where user can write the info text in latex format.
@@ -934,7 +931,9 @@ def info_print(toggle_show_default=True, toggle_show_visible=True):
                                         visible=toggle_show_visible)
 
     # Create text widget
-    text_wid = ipywidgets.LatexWidget(value="$\\bullet~$")
+    children = [ipywidgets.LatexWidget(value="> menpo")
+                for _ in xrange(n_bullets)]
+    text_wid = ipywidgets.ContainerWidget(children=children)
 
     # Toggle button function
     def show_options(name, value):
@@ -984,11 +983,14 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
     border_visible : `boolean`, optional
         Defines whether to draw the border line around the widget.
     """
-    # latex widget formatting
-    info_wid.children[1].set_css({'border': '1px dashed gray',
+    # text widget formatting
+    info_wid.children[1].set_css({'border': container_border,
                                   'padding': '4px',
-                                  'margin-top': '5px',
-                                  'font-size': font_size_in_pt})
+                                  'margin-top': '1px'})
+
+    # set font size
+    for w in info_wid.children[1].children:
+        w.set_css({'font-size': font_size_in_pt})
 
     # set toggle button font bold
     info_wid.children[0].set_css('font-weight', toggle_button_font_weight)
