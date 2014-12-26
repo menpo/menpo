@@ -1053,6 +1053,8 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                                 'labels_keys': initial_labels_keys,
                                 'group': None,
                                 'with_labels': None}
+    image_options = {'interpolation': 'bilinear',
+                     'alpha': 1.0}
     markers_options = {'render_markers': True,
                        'marker_size': 20,
                        'marker_face_colour': ['r'],
@@ -1103,7 +1105,8 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                'markers': markers_options,
                'numbering': numbering_options,
                'legend': legend_options,
-               'figure': figure_options}
+               'figure': figure_options,
+               'image': image_options}
         viewer_options_default.append(tmp)
 
     # define plot function
@@ -1131,6 +1134,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         tmp3 = viewer_options_wid.selected_values[group_idx]['numbering']
         tmp4 = viewer_options_wid.selected_values[group_idx]['legend']
         tmp5 = viewer_options_wid.selected_values[group_idx]['figure']
+        tmp6 = viewer_options_wid.selected_values[group_idx]['image']
         new_figure_size = (tmp5['x_scale'] * figure_size[0],
                            tmp5['y_scale'] * figure_size[1])
         renderer = _visualize(
@@ -1165,7 +1169,8 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
             tmp4['legend_border_padding'], new_figure_size, tmp5['render_axes'],
             tmp5['axes_font_name'], tmp5['axes_font_size'],
             tmp5['axes_font_style'], tmp5['axes_x_limits'],
-            tmp5['axes_y_limits'], tmp5['axes_font_weight'])
+            tmp5['axes_y_limits'], tmp5['axes_font_weight'],
+            tmp6['interpolation'], tmp6['alpha'])
 
         # save the current figure id
         save_figure_wid.renderer[0] = renderer
@@ -1217,7 +1222,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     # viewer options widget
     viewer_options_wid = viewer_options(viewer_options_default,
                                         ['lines', 'markers', 'numbering',
-                                         'legend', 'figure_one'],
+                                         'legend', 'figure_one', 'image'],
                                         objects_names=all_groups,
                                         plot_function=plot_function,
                                         toggle_show_visible=False,
@@ -1490,7 +1495,8 @@ def _visualize(image, renderer, render_image, render_landmarks, image_is_masked,
                legend_font_weight, legend_font_size, render_legend,
                legend_font_style, legend_border_padding, figure_size,
                render_axes, axes_font_name, axes_font_size, axes_font_style,
-               axes_x_limits, axes_y_limits, axes_font_weight):
+               axes_x_limits, axes_y_limits, axes_font_weight, interpolation,
+               alpha):
     import matplotlib.pyplot as plt
 
     global glyph
@@ -1561,7 +1567,9 @@ def _visualize(image, renderer, render_image, render_landmarks, image_is_masked,
                             axes_font_weight=axes_font_weight,
                             axes_x_limits=axes_x_limits,
                             axes_y_limits=axes_y_limits,
-                            figure_size=figure_size)
+                            figure_size=figure_size,
+                            interpolation=interpolation,
+                            alpha=alpha)
                 else:
                     # image, landmarks, masked, not glyph
                     renderer = image.view_landmarks(
@@ -1604,7 +1612,8 @@ def _visualize(image, renderer, render_image, render_landmarks, image_is_masked,
                         axes_font_style=axes_font_style,
                         axes_font_weight=axes_font_weight,
                         axes_x_limits=axes_x_limits,
-                        axes_y_limits=axes_y_limits, figure_size=figure_size)
+                        axes_y_limits=axes_y_limits, figure_size=figure_size,
+                        interpolation=interpolation, alpha=alpha)
         else:
             # either there are not any landmark groups selected or they won't
             # be displayed
@@ -1621,7 +1630,8 @@ def _visualize(image, renderer, render_image, render_landmarks, image_is_masked,
                         axes_font_weight=axes_font_weight,
                         axes_x_limits=axes_x_limits,
                         axes_y_limits=axes_y_limits,
-                        figure_size=figure_size)
+                        figure_size=figure_size, interpolation=interpolation,
+                        alpha=alpha)
                 else:
                     # image, not landmarks, masked, not glyph
                     renderer = image.view(
@@ -1631,7 +1641,8 @@ def _visualize(image, renderer, render_image, render_landmarks, image_is_masked,
                         axes_font_style=axes_font_style,
                         axes_font_weight=axes_font_weight,
                         axes_x_limits=axes_x_limits,
-                        axes_y_limits=axes_y_limits, figure_size=figure_size)
+                        axes_y_limits=axes_y_limits, figure_size=figure_size,
+                        interpolation=interpolation, alpha=alpha)
             else:
                 if glyph_enabled or sum_enabled:
                     # image, not landmarks, not masked, glyph
@@ -1643,7 +1654,8 @@ def _visualize(image, renderer, render_image, render_landmarks, image_is_masked,
                         axes_font_style=axes_font_style,
                         axes_font_weight=axes_font_weight,
                         axes_x_limits=axes_x_limits,
-                        axes_y_limits=axes_y_limits, figure_size=figure_size)
+                        axes_y_limits=axes_y_limits, figure_size=figure_size,
+                        interpolation=interpolation, alpha=alpha)
                 else:
                     # image, not landmarks, not masked, not glyph
                     renderer = image.view(
@@ -1653,7 +1665,8 @@ def _visualize(image, renderer, render_image, render_landmarks, image_is_masked,
                         axes_font_style=axes_font_style,
                         axes_font_weight=axes_font_weight,
                         axes_x_limits=axes_x_limits,
-                        axes_y_limits=axes_y_limits, figure_size=figure_size)
+                        axes_y_limits=axes_y_limits, figure_size=figure_size,
+                        interpolation=interpolation, alpha=alpha)
     else:
         # image won't be displayed
         if render_landmarks and len(groups) > 0:

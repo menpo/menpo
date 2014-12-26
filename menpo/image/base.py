@@ -464,7 +464,8 @@ class Image(Vectorizable, LandmarkableViewable):
         return hist, bin_edges
 
     def view(self, figure_id=None, new_figure=False, channels=None,
-             render_axes=False, axes_font_name='sans-serif', axes_font_size=10,
+             interpolation='bilinear', alpha=1., render_axes=False,
+             axes_font_name='sans-serif', axes_font_size=10,
              axes_font_style='normal', axes_font_weight='normal',
              axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         r"""
@@ -477,6 +478,16 @@ class Image(Vectorizable, LandmarkableViewable):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
+        interpolation : {``none``, ``nearest``, ``bilinear``, ``bicubic``,
+                         ``spline16``, ``spline36``, ``hanning``, ``hamming``,
+                         ``hermite``, ``kaiser``, ``quadric``, ``catrom``,
+                         ``gaussian``, ``bessel``, ``mitchell``, ``sinc``,
+                         ``lanczos``}, optional
+            The interpolation used to render the image. For example, if
+            ``bilinear``, the image will be smooth and if ``nearest``, the
+            image will be pixelated.
+        alpha : `float`, optional
+            The alpha blending value, between 0 (transparent) and 1 (opaque).
         channels : `int` or `list` of `int` or ``all`` or `None`
             If `int` or `list` of `int`, the specified channel(s) will be
             rendered. If ``all``, all the channels will be rendered in subplots.
@@ -511,6 +522,7 @@ class Image(Vectorizable, LandmarkableViewable):
         pixels_to_view = self.pixels
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channels=channels).render(
+            interpolation=interpolation, alpha=alpha,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,

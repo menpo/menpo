@@ -317,10 +317,10 @@ class MaskedImage(Image):
                                copy=copy)
 
     def view(self, figure_id=None, new_figure=False, channels=None,
-             masked=True, render_axes=False, axes_font_name='sans-serif',
-             axes_font_size=10, axes_font_style='normal',
-             axes_font_weight='normal', axes_x_limits=None, axes_y_limits=None,
-             figure_size=(6, 4)):
+             masked=True, interpolation="bilinear", alpha=1., render_axes=False,
+             axes_font_name='sans-serif', axes_font_size=10,
+             axes_font_style='normal', axes_font_weight='normal',
+             axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
@@ -338,6 +338,16 @@ class MaskedImage(Image):
             If `None` and the image is not RGB, it is equivalent to ``all``.
         masked : `bool`, optional
             If ``True``, only the masked pixels will be rendered.
+        interpolation : {``none``, ``nearest``, ``bilinear``, ``bicubic``,
+                         ``spline16``, ``spline36``, ``hanning``, ``hamming``,
+                         ``hermite``, ``kaiser``, ``quadric``, ``catrom``,
+                         ``gaussian``, ``bessel``, ``mitchell``, ``sinc``,
+                         ``lanczos``}, optional
+            The interpolation used to render the image. For example, if
+            ``bilinear``, the image will be smooth and if ``nearest``, the
+            image will be pixelated.
+        alpha : `float`, optional
+            The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
         axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
@@ -375,7 +385,9 @@ class MaskedImage(Image):
                                              axes_font_weight=axes_font_weight,
                                              axes_x_limits=axes_x_limits,
                                              axes_y_limits=axes_y_limits,
-                                             figure_size=figure_size)
+                                             figure_size=figure_size,
+                                             interpolation=interpolation,
+                                             alpha=alpha)
 
     def crop_inplace(self, min_indices, max_indices,
                      constrain_to_boundary=True):

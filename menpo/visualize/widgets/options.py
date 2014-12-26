@@ -20,7 +20,8 @@ from .tools import (colour_selection, format_colour_selection,
                     index_selection_slider, index_selection_buttons,
                     format_index_selection, update_index_selection,
                     legend_options, format_legend_options,
-                    update_legend_options)
+                    update_legend_options, image_options, format_image_options,
+                    update_image_options)
 
 
 def channel_options(channels_options_default, plot_function=None,
@@ -2653,7 +2654,8 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
             objects_dict[g] = k
     selection = ipywidgets.DropdownWidget(values=objects_dict, value=0,
                                           description='Select',
-                                          visible=selection_visible and toggle_show_default)
+                                          visible=(selection_visible and
+                                                   toggle_show_default))
 
     # options widgets
     options_widgets = []
@@ -2678,6 +2680,13 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                                plot_function=plot_function,
                                show_checkbox_title='Render markers'))
             tab_titles.append('Markers')
+        elif o == 'image':
+            options_widgets.append(
+                image_options(viewer_options_default[0]['image'],
+                              toggle_show_visible=False,
+                              toggle_show_default=True,
+                              plot_function=plot_function))
+            tab_titles.append('Image')
         elif o == 'numbering':
             options_widgets.append(
                 numbering_options(viewer_options_default[0]['numbering'],
@@ -2738,6 +2747,10 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                 update_marker_options(
                     options_widgets[i],
                     viewer_options_default[value]['markers'])
+            elif tab == 'image':
+                update_image_options(
+                    options_widgets[i],
+                    viewer_options_default[value]['image'])
             elif tab == 'numbering':
                 update_numbering_options(
                     options_widgets[i],
@@ -2813,6 +2826,10 @@ def format_viewer_options(viewer_options_wid, container_padding='6px',
                 viewer_options_wid.children[1].children[1].children[k],
                 suboptions_border_visible=suboptions_border_visible,
                 border_visible=False)
+        elif o == 'image':
+            format_image_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                border_visible=suboptions_border_visible)
         elif o == 'numbering':
             format_numbering_options(
                 viewer_options_wid.children[1].children[1].children[k],
@@ -2858,6 +2875,10 @@ def update_viewer_options(viewer_options_wid, viewer_options_default,
             update_marker_options(
                 viewer_options_wid.children[1].children[1].children[k],
                 viewer_options_default['markers'])
+        elif o == 'image' and viewer_options_default.has_key('image'):
+            update_image_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                viewer_options_default['image'])
         elif o == 'numbering' and viewer_options_default.has_key('numbering'):
             update_numbering_options(
                 viewer_options_wid.children[1].children[1].children[k],

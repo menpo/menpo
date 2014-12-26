@@ -188,17 +188,18 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         super(MatplotlibImageViewer2d, self).__init__(figure_id, new_figure)
         self.image = image
 
-    def _render(self, render_axes=False, axes_font_name='sans-serif',
-                axes_font_size=10, axes_font_style='normal',
-                axes_font_weight='normal', axes_x_limits=None,
-                axes_y_limits=None, figure_size=(6, 4)):
+    def _render(self, interpolation='bilinear', alpha=1., render_axes=False,
+                axes_font_name='sans-serif', axes_font_size=10,
+                axes_font_style='normal', axes_font_weight='normal',
+                axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
         if len(self.image.shape) == 2:  # Single channels are viewed in Gray
-            plt.imshow(self.image, cmap=cm.Greys_r)
+            plt.imshow(self.image, cmap=cm.Greys_r,
+                       interpolation=interpolation, alpha=alpha)
         else:
-            plt.imshow(self.image)
+            plt.imshow(self.image, interpolation=interpolation, alpha=alpha)
 
         # render axes options
         if render_axes:
@@ -234,10 +235,10 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
         self.num_subplots = self.image.shape[2]
         self.plot_layout = self._subplot_layout(self.num_subplots)
 
-    def _render(self, render_axes=False, axes_font_name='sans-serif',
-                axes_font_size=10, axes_font_style='normal',
-                axes_font_weight='normal', axes_x_limits=None,
-                axes_y_limits=None, figure_size=(6, 4)):
+    def _render(self, interpolation='bilinear', alpha=1., render_axes=False,
+                axes_font_name='sans-serif', axes_font_size=10,
+                axes_font_style='normal', axes_font_weight='normal',
+                axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
@@ -265,7 +266,8 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
                 plt.ylim(axes_y_limits[::-1])
 
             # show image
-            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r)
+            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r,
+                       interpolation=interpolation, alpha=alpha)
 
             # Set figure size
             if figure_size is not None:

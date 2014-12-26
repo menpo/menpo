@@ -91,7 +91,8 @@ class LandmarkableViewable(Landmarkable, Viewable):
 
     def view_landmarks(self, channels=None, masked=True, group=None,
                        with_labels=None, without_labels=None,
-                       figure_id=None, new_figure=False, render_lines=True,
+                       figure_id=None, new_figure=False,
+                       interpolation='bilinear', alpha=1., render_lines=True,
                        line_colour='r', line_style='-', line_width=1,
                        render_markers=True, marker_style='o', marker_size=20,
                        marker_face_colour='r', marker_edge_colour='k',
@@ -140,6 +141,16 @@ class LandmarkableViewable(Landmarkable, Viewable):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
+        interpolation : {``none``, ``nearest``, ``bilinear``, ``bicubic``,
+                         ``spline16``, ``spline36``, ``hanning``, ``hamming``,
+                         ``hermite``, ``kaiser``, ``quadric``, ``catrom``,
+                         ``gaussian``, ``bessel``, ``mitchell``, ``sinc``,
+                         ``lanczos``}, optional
+            The interpolation used to render the image. For example, if
+            ``bilinear``, the image will be smooth and if ``nearest``, the
+            image will be pixelated.
+        alpha : `float`, optional
+            The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_lines : `bool`, optional
             If ``True``, the edges will be rendered.
         line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
@@ -274,10 +285,12 @@ class LandmarkableViewable(Landmarkable, Viewable):
         from menpo.image import MaskedImage
         if isinstance(self, MaskedImage):
             self_view = self.view(figure_id=figure_id, new_figure=new_figure,
-                                  channels=channels, masked=masked)
+                                  channels=channels, masked=masked,
+                                  interpolation=interpolation, alpha=alpha)
         else:
             self_view = self.view(figure_id=figure_id, new_figure=new_figure,
-                                  channels=channels)
+                                  channels=channels,
+                                  interpolation=interpolation, alpha=alpha)
 
         # Make sure axes are constrained to the image size
         if axes_x_limits is None:
