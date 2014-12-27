@@ -546,7 +546,7 @@ class PCAModel(MeanInstanceLinearModel):
                          axes_font_size=10, axes_font_style='normal',
                          axes_font_weight='normal', figure_size=(6, 4),
                          render_grid=True, grid_line_style='--',
-                         grid_line_width=1):
+                         grid_line_width=0.5):
         r"""
         Plot of the eigenvalues.
 
@@ -638,7 +638,7 @@ class PCAModel(MeanInstanceLinearModel):
                                axes_font_size=10, axes_font_style='normal',
                                axes_font_weight='normal', figure_size=(6, 4),
                                render_grid=True, grid_line_style='--',
-                               grid_line_width=1):
+                               grid_line_width=0.5):
         r"""
         Plot of the variance ratio captured by the eigenvalues.
 
@@ -737,7 +737,7 @@ class PCAModel(MeanInstanceLinearModel):
                                           axes_font_weight='normal',
                                           figure_size=(6, 4), render_grid=True,
                                           grid_line_style='--',
-                                          grid_line_width=1):
+                                          grid_line_width=0.5):
         r"""
         Plot of the variance ratio captured by the eigenvalues.
 
