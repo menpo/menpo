@@ -2295,11 +2295,3 @@ def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
                np.all([comp_lists(g1, g2) for g1, g2 in zip(labels1, labels2)])
     else:
         return False
-
-
-def _convert_iterations_to_groups(from_iter, to_iter, iter_str):
-    r"""
-    Function that generates a list of group labels given the range bounds and
-    the str to be used.
-    """
-    return ["{}{}".format(iter_str, i) for i in range(from_iter, to_iter + 1)]
