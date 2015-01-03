@@ -492,6 +492,10 @@ def colour_selection(default_colour_list, plot_function=None, title='Colour',
         g_wid.on_trait_change(plot_function, 'value')
         b_wid.on_trait_change(plot_function, 'value')
 
+        def tmp_plot_function(name):
+            plot_function('', True)
+        apply_to_all.on_click(tmp_plot_function)
+
     return colour_selection_wid
 
 
@@ -1013,38 +1017,9 @@ def update_line_options(line_options_wid, line_options_dict, labels=None):
 
     # update line_colour
     if 'line_colour' in line_options_dict.keys():
-        multiple = len(line_options_dict['line_colour']) > 1
-        if not multiple:
-            update_colour_selection(
-                line_options_wid.children[1].children[1].children[2],
-                line_options_dict['line_colour'])
-        else:
-            r_val = g_val = b_val = 0.
-            menu = line_options_dict['line_colour'][0]
-            if not isinstance(line_options_dict['line_colour'][0], str):
-                r_val = line_options_dict['line_colour'][0][0]
-                g_val = line_options_dict['line_colour'][0][1]
-                b_val = line_options_dict['line_colour'][0][2]
-                menu = 'custom'
-            line_options_wid.children[1].children[1].children[2].children[1].value = menu
-            line_options_wid.children[1].children[1].children[2].children[2].children[0].value = r_val
-            line_options_wid.children[1].children[1].children[2].children[2].children[1].value = g_val
-            line_options_wid.children[1].children[1].children[2].children[2].children[2].value = b_val
-
-            labels_dict = OrderedDict()
-            if labels is None:
-                for k in range(len(labels)):
-                    labels_dict["label {}".format(k)] = k
-            else:
-                for k, l in enumerate(labels):
-                    labels_dict[l] = k
-
-            line_options_wid.children[1].children[1].children[2].children[0].visible = multiple
-            line_options_wid.children[1].children[1].children[2].children[0].children[0].values = labels_dict
-            line_options_wid.children[1].children[1].children[2].children[0].children[0].value = 0
-
-            line_options_wid.children[1].children[1].children[2].selected_values = \
-                {'colour': line_options_dict['line_colour'], 'labels': labels}
+        update_colour_selection(
+            line_options_wid.children[1].children[1].children[2],
+            line_options_dict['line_colour'], labels=labels)
 
 
 def marker_options(marker_options_default, plot_function=None,
