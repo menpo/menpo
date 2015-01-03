@@ -528,7 +528,7 @@ class Image(Vectorizable, LandmarkableViewable):
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
             axes_y_limits=axes_y_limits, figure_size=figure_size)
 
-    def view_widget(self, popup=False):
+    def view_widget(self, popup=False, browser_style='buttons'):
         r"""
         Visualizes the image object using the :map:`visualize_images` widget.
         Currently only supports the rendering of 2D images.
@@ -537,9 +537,13 @@ class Image(Vectorizable, LandmarkableViewable):
         -----------
         popup : `bool`, optional
             If ``True``, the widget will appear as a popup window.
+        browser_style : {``buttons``, ``slider``}, optional
+            It defines whether the selector of the images will have the form of
+            plus/minus buttons or a slider.
         """
         from menpo.visualize import visualize_images
-        visualize_images(self, figure_size=(6, 4), popup=popup)
+        visualize_images(self, figure_size=(6, 4), popup=popup,
+                         browser_style=browser_style)
 
     def gradient(self, **kwargs):
         r"""

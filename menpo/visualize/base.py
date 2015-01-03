@@ -450,7 +450,11 @@ class ImageViewer(object):
                 use_subplots = False
         elif channels != 'all':
             if isinstance(channels, Iterable):
-                pixels = pixels[..., channels]
+                if len(channels) == 1:
+                    pixels = pixels[..., channels[0]]
+                    use_subplots = False
+                else:
+                    pixels = pixels[..., channels]
             else:
                 pixels = pixels[..., channels]
                 use_subplots = False

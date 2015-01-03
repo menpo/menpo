@@ -187,6 +187,7 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
     def __init__(self, figure_id, new_figure, image):
         super(MatplotlibImageViewer2d, self).__init__(figure_id, new_figure)
         self.image = image
+        self.axes_list = []
 
     def _render(self, interpolation='bilinear', alpha=1., render_axes=False,
                 axes_font_name='sans-serif', axes_font_size=10,
@@ -196,8 +197,8 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         import matplotlib.pyplot as plt
 
         if len(self.image.shape) == 2:  # Single channels are viewed in Gray
-            plt.imshow(self.image, cmap=cm.Greys_r,
-                       interpolation=interpolation, alpha=alpha)
+            plt.imshow(self.image, cmap=cm.Greys_r, interpolation=interpolation,
+                       alpha=alpha)
         else:
             plt.imshow(self.image, interpolation=interpolation, alpha=alpha)
 
@@ -222,7 +223,11 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
 
         # Set figure size
         if figure_size is not None:
-            plt.gcf().set_size_inches(np.asarray(figure_size))
+            self.figure.set_size_inches(np.asarray(figure_size))
+
+        # Store axes object
+        ax = plt.gca()
+        self.axes_list = [ax]
 
         return self
 
@@ -234,6 +239,7 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
         self.image = image
         self.num_subplots = self.image.shape[2]
         self.plot_layout = self._subplot_layout(self.num_subplots)
+        self.axes_list = []
 
     def _render(self, interpolation='bilinear', alpha=1., render_axes=False,
                 axes_font_name='sans-serif', axes_font_size=10,
@@ -244,7 +250,8 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
 
         p = self.plot_layout
         for i in range(self.image.shape[2]):
-            plt.subplot(p[0], p[1], 1 + i)
+            ax = plt.subplot(p[0], p[1], 1 + i)
+            self.axes_list.append(ax)
 
             # render axes options
             if render_axes:
@@ -269,9 +276,9 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
             plt.imshow(self.image[:, :, i], cmap=cm.Greys_r,
                        interpolation=interpolation, alpha=alpha)
 
-            # Set figure size
-            if figure_size is not None:
-                plt.gcf().set_size_inches(np.asarray(figure_size))
+        # Set figure size
+        if figure_size is not None:
+            self.figure.set_size_inches(np.asarray(figure_size))
         return self
 
 
@@ -353,7 +360,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
         # Set figure size
         if figure_size is not None:
-            plt.gcf().set_size_inches(np.asarray(figure_size))
+            self.figure.set_size_inches(np.asarray(figure_size))
 
         return self
 
@@ -480,7 +487,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
 
         # Set figure size
         if figure_size is not None:
-            plt.gcf().set_size_inches(np.asarray(figure_size))
+            self.figure.set_size_inches(np.asarray(figure_size))
 
         return self
 
@@ -637,10 +644,6 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
             'Must pass a list of marker edge widths with length n_curves or a '
             'single marker edge width for all curves.')
 
-        # turn grid on/off
-        plt.grid(render_grid, linestyle=grid_line_style,
-                 linewidth=grid_line_width)
-
         # plot
         ax = plt.gca()
         for i, y in enumerate(self.y_axis):
@@ -650,7 +653,8 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
             marker = marker_style[i]
             if not render_markers[i]:
                 marker = 'None'
-            plt.plot(self.x_axis, y, color=line_colour[i], linestyle=linestyle,
+            plt.plot(self.x_axis, y, color=line_colour[i],
+                     linestyle=linestyle,
                      linewidth=line_width[i], marker=marker,
                      markeredgecolor=marker_edge_colour[i],
                      markerfacecolor=marker_face_colour[i],
@@ -699,6 +703,12 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
             plt.xticks([])
             plt.yticks([])
 
+        # turn grid on/off
+        if render_grid:
+            plt.grid('on', linestyle=grid_line_style, linewidth=grid_line_width)
+        else:
+            plt.grid('off')
+
         # Set axes limits
         if self.x_axis_limits is not None:
             plt.xlim(self.x_axis_limits)
@@ -707,7 +717,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
 
         # Set figure size
         if figure_size is not None:
-            plt.gcf().set_size_inches(np.asarray(figure_size))
+            self.figure.set_size_inches(np.asarray(figure_size))
 
         return self
 
@@ -807,11 +817,12 @@ def _check_colours_list(render_flag, colours_list, n_objects, error_str):
 
 def _check_render_flag(render_flag, n_objects, error_str):
     if isinstance(render_flag, bool):
-        return [render_flag] * n_objects
+        render_flag = [render_flag] * n_objects
     elif isinstance(render_flag, list):
         if len(render_flag) == 1:
-            return render_flag * n_objects
+            render_flag *= n_objects
         elif len(render_flag) != n_objects:
             raise ValueError(error_str)
     else:
         raise ValueError(error_str)
+    return render_flag

@@ -16,7 +16,8 @@ from .tools import (colour_selection, format_colour_selection,
                     format_figure_options, update_figure_options,
                     figure_options_two_scales,
                     format_figure_options_two_scales,
-                    update_figure_options_two_scales,
+                    update_figure_options_two_scales, grid_options,
+                    format_grid_options, update_grid_options,
                     index_selection_slider, index_selection_buttons,
                     format_index_selection, update_index_selection,
                     legend_options, format_legend_options,
@@ -1430,16 +1431,21 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                               'axes_x_limits': None,
                               'axes_y_limits': None}
 
+            grid_options = {'render_grid': True,
+                            'grid_line_style': '--',
+                            'grid_line_width': 0.5}
+
             viewer_options_default = {'lines': lines_options,
                                       'markers': markers_options,
                                       'numbering': numbering_options,
                                       'legend': legend_options,
-                                      'figure': figure_options}
+                                      'figure': figure_options,
+                                      'grid': grid_options}
 
     options_tabs : `list` of `str`
         List that defines the ordering of the options tabs. It can take one of
         {``lines``, ``markers``, ``numbering``, ``figure_one``, ``figure_two``,
-        ``legend``}
+        ``legend``, ``grid``}
 
     objects_names : `list` of `str`, optional
         A list with the names of the objects that will be used in the selection
@@ -1547,6 +1553,14 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                                plot_function=plot_function,
                                show_checkbox_title='Render legend'))
             tab_titles.append('Legend')
+        elif o == 'grid':
+            options_widgets.append(
+                grid_options(viewer_options_default[0]['grid'],
+                             toggle_show_visible=False,
+                             toggle_show_default=True,
+                             plot_function=plot_function,
+                             show_checkbox_title='Render grid'))
+            tab_titles.append('Grid')
     options = ipywidgets.TabWidget(children=options_widgets)
 
     # Final widget
@@ -1593,6 +1607,10 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                 update_legend_options(
                     options_widgets[i],
                     viewer_options_default[value]['legend'])
+            elif tab == 'grid':
+                update_grid_options(
+                    options_widgets[i],
+                    viewer_options_default[value]['grid'])
     selection.on_trait_change(update_widgets, 'value')
 
     # Toggle button function
@@ -1674,6 +1692,11 @@ def format_viewer_options(viewer_options_wid, container_padding='6px',
                 viewer_options_wid.children[1].children[1].children[k],
                 suboptions_border_visible=suboptions_border_visible,
                 border_visible=False)
+        elif o == 'grid':
+            format_grid_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                suboptions_border_visible=suboptions_border_visible,
+                border_visible=False)
 
     # set titles
     for (k, tl) in enumerate(viewer_options_wid.tab_titles):
@@ -1693,7 +1716,7 @@ def format_viewer_options(viewer_options_wid, container_padding='6px',
 def update_viewer_options(viewer_options_wid, viewer_options_default,
                           labels=None):
     for k, o in enumerate(viewer_options_wid.options_tabs):
-        if o == 'lines' and 'lines' in viewer_options_default:
+        if o == 'lines' and viewer_options_default.has_key('lines'):
             update_line_options(
                 viewer_options_wid.children[1].children[1].children[k],
                 viewer_options_default['lines'], labels=labels)
@@ -1721,6 +1744,10 @@ def update_viewer_options(viewer_options_wid, viewer_options_default,
             update_legend_options(
                 viewer_options_wid.children[1].children[1].children[k],
                 viewer_options_default['legend'])
+        elif o == 'grid' and viewer_options_default.has_key('grid'):
+            update_grid_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                viewer_options_default['grid'])
 
 
 def save_figure_options(renderer, format_default='png', dpi_default=None,

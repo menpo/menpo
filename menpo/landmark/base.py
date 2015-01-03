@@ -300,15 +300,14 @@ class LandmarkableViewable(Landmarkable, Viewable):
 
         # Render landmarks
         landmark_view = None  # initialize viewer object
-        axes_list = plt.gcf().get_axes()  # get axis objects
         # useful in order to visualize the legend only for the last axis object
         render_legend_tmp = False
-        for i, ax in enumerate(axes_list):
+        for i, ax in enumerate(self_view.axes_list):
             # set current axis
             plt.sca(ax)
 
             # show legend only for the last axis object
-            if i == len(axes_list) - 1:
+            if i == len(self_view.axes_list) - 1:
                 render_legend_tmp = render_legend
 
             # viewer
@@ -516,7 +515,7 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
 
     def view(self, group=None, with_labels=None, without_labels=None,
              figure_id=None, new_figure=False, image_view=True,
-             render_lines=True, line_colour='k', line_style='-', line_width=1,
+             render_lines=True, line_colour=None, line_style='-', line_width=1,
              render_markers=True, marker_style='o', marker_size=20,
              marker_face_colour='r', marker_edge_colour='k',
              marker_edge_width=1., render_numbering=False,
@@ -558,8 +557,9 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         render_lines : `bool`, optional
             If ``True``, the edges will be rendered.
         line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                      ``(3, )`` `ndarray`, optional
-            The colour of the lines.
+                      ``(3, )`` `ndarray` or ``None``, optional
+            The colour of the lines. If ``None``, a different colour will be
+            automatically selected for each label.
         line_style : {``-``, ``--``, ``-.``, ``:``}, optional
             The style of the lines.
         line_width : `float`, optional
@@ -736,18 +736,22 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
             axes_y_limits=axes_y_limits, figure_size=figure_size)
 
-    def view_widget(self, popup=False):
+    def view_widget(self, popup=False, browser_style='buttons'):
         r"""
         Visualizes the landmark manager object using the
         :map:`visualize_landmarks` widget.
 
         Parameters
         -----------
-        popup : `boolean`, optional
-            If enabled, the widget will appear as a popup window.
+        popup : `bool`, optional
+            If ``True``, the widget will appear as a popup window.
+        browser_style : {``buttons``, ``slider``}, optional
+            It defines whether the selector of the landmark managers will have
+            the form of plus/minus buttons or a slider.
         """
         from menpo.visualize import visualize_landmarks
-        visualize_landmarks(self, figure_size=(6, 4), popup=popup)
+        visualize_landmarks(self, figure_size=(6, 4), popup=popup,
+                            browser_style=browser_style)
 
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
@@ -1124,8 +1128,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         render_lines : `bool`, optional
             If ``True``, the edges will be rendered.
         line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                      ``(3, )`` `ndarray`, optional
-            The colour of the lines.
+                      ``(3, )`` `ndarray` or ``None``, optional
+            The colour of the lines. If ``None``, a different colour will be
+            automatically selected for each label.
         line_style : {``-``, ``--``, ``-.``, ``:``}, optional
             The style of the lines.
         line_width : `float`, optional
@@ -1296,18 +1301,22 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
             axes_y_limits=axes_y_limits, figure_size=figure_size)
 
-    def view_widget(self, popup=False):
+    def view_widget(self, popup=False, browser_style='buttons'):
         r"""
         Visualizes the landmark group object using the
         :map:`visualize_landmarkgroups` widget.
 
         Parameters
         -----------
-        popup : `boolean`, optional
-            If enabled, the widget will appear as a popup window.
+        popup : `bool`, optional
+            If ``True``, the widget will appear as a popup window.
+        browser_style : {``buttons``, ``slider``}, optional
+            It defines whether the selector of the landmark managers will have
+            the form of plus/minus buttons or a slider.
         """
         from menpo.visualize import visualize_landmarkgroups
-        visualize_landmarkgroups(self, figure_size=(6, 4), popup=popup)
+        visualize_landmarkgroups(self, figure_size=(6, 4), popup=popup,
+                                 browser_style=browser_style)
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(

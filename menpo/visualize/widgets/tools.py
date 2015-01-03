@@ -838,7 +838,7 @@ def line_options(line_options_default, plot_function=None,
     line_width = ipywidgets.BoundedFloatTextWidget(description='Width',
                                                    value=line_options_default[
                                                        'line_width'],
-                                                   min=0.5)
+                                                   min=0.)
     line_style_dict = OrderedDict()
     line_style_dict['solid'] = '-'
     line_style_dict['dashed'] = '--'
@@ -1014,32 +1014,37 @@ def update_line_options(line_options_wid, line_options_dict, labels=None):
     # update line_colour
     if 'line_colour' in line_options_dict.keys():
         multiple = len(line_options_dict['line_colour']) > 1
-        r_val = g_val = b_val = 0.
-        menu = line_options_dict['line_colour'][0]
-        if not isinstance(line_options_dict['line_colour'][0], str):
-            r_val = line_options_dict['line_colour'][0][0]
-            g_val = line_options_dict['line_colour'][0][1]
-            b_val = line_options_dict['line_colour'][0][2]
-            menu = 'custom'
-        line_options_wid.children[1].children[1].children[2].children[1].value = menu
-        line_options_wid.children[1].children[1].children[2].children[2].children[0].value = r_val
-        line_options_wid.children[1].children[1].children[2].children[2].children[1].value = g_val
-        line_options_wid.children[1].children[1].children[2].children[2].children[2].value = b_val
-
-        labels_dict = OrderedDict()
-        if labels is None:
-            for k in range(len(labels)):
-                labels_dict["label {}".format(k)] = k
+        if not multiple:
+            update_colour_selection(
+                line_options_wid.children[1].children[1].children[2],
+                line_options_dict['line_colour'])
         else:
-            for k, l in enumerate(labels):
-                labels_dict[l] = k
+            r_val = g_val = b_val = 0.
+            menu = line_options_dict['line_colour'][0]
+            if not isinstance(line_options_dict['line_colour'][0], str):
+                r_val = line_options_dict['line_colour'][0][0]
+                g_val = line_options_dict['line_colour'][0][1]
+                b_val = line_options_dict['line_colour'][0][2]
+                menu = 'custom'
+            line_options_wid.children[1].children[1].children[2].children[1].value = menu
+            line_options_wid.children[1].children[1].children[2].children[2].children[0].value = r_val
+            line_options_wid.children[1].children[1].children[2].children[2].children[1].value = g_val
+            line_options_wid.children[1].children[1].children[2].children[2].children[2].value = b_val
 
-        line_options_wid.children[1].children[1].children[2].children[0].visible = multiple
-        line_options_wid.children[1].children[1].children[2].children[0].children[0].values = labels_dict
-        line_options_wid.children[1].children[1].children[2].children[0].children[0].value = 0
+            labels_dict = OrderedDict()
+            if labels is None:
+                for k in range(len(labels)):
+                    labels_dict["label {}".format(k)] = k
+            else:
+                for k, l in enumerate(labels):
+                    labels_dict[l] = k
 
-        line_options_wid.children[1].children[1].children[2].selected_values = \
-            {'colour': line_options_dict['line_colour'], 'labels': labels}
+            line_options_wid.children[1].children[1].children[2].children[0].visible = multiple
+            line_options_wid.children[1].children[1].children[2].children[0].children[0].values = labels_dict
+            line_options_wid.children[1].children[1].children[2].children[0].children[0].value = 0
+
+            line_options_wid.children[1].children[1].children[2].selected_values = \
+                {'colour': line_options_dict['line_colour'], 'labels': labels}
 
 
 def marker_options(marker_options_default, plot_function=None,
@@ -1106,10 +1111,10 @@ def marker_options(marker_options_default, plot_function=None,
         description=show_checkbox_title,
         value=marker_options_default['render_markers'])
     marker_size = ipywidgets.BoundedIntTextWidget(
-        description='Size', value=marker_options_default['marker_size'], min=1)
+        description='Size', value=marker_options_default['marker_size'], min=0)
     marker_edge_width = ipywidgets.BoundedFloatTextWidget(
         description='Edge width',
-        value=marker_options_default['marker_edge_width'], min=0.5)
+        value=marker_options_default['marker_edge_width'], min=0.)
     marker_style_dict = OrderedDict()
     marker_style_dict['point'] = '.'
     marker_style_dict['pixel'] = ','
@@ -1788,7 +1793,7 @@ def figure_options(figure_options_default, plot_function=None,
         visible=axes_visible)
     axes_font_size = ipywidgets.BoundedIntTextWidget(
         description='Size', value=figure_options_default['axes_font_size'],
-        min=2, visible=axes_visible)
+        min=0, visible=axes_visible)
     axes_font_style_dict = OrderedDict()
     axes_font_style_dict['normal'] = 'normal'
     axes_font_style_dict['italic'] = 'italic'
@@ -2232,7 +2237,7 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
         visible=axes_visible)
     axes_font_size = ipywidgets.BoundedIntTextWidget(
         description='Size', value=figure_options_default['axes_font_size'],
-        min=2, visible=axes_visible)
+        min=0, visible=axes_visible)
     axes_font_style_dict = OrderedDict()
     axes_font_style_dict['normal'] = 'normal'
     axes_font_style_dict['italic'] = 'italic'
@@ -2405,8 +2410,12 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
         axes_font_size.on_trait_change(plot_function, 'value')
         axes_font_style.on_trait_change(plot_function, 'value')
         axes_font_weight.on_trait_change(plot_function, 'value')
-        axes_x_limits.on_trait_change(plot_function, 'value')
-        axes_y_limits.on_trait_change(plot_function, 'value')
+        axes_x_limits_from.on_trait_change(plot_function, 'value')
+        axes_x_limits_to.on_trait_change(plot_function, 'value')
+        axes_x_limits_enable.on_trait_change(plot_function, 'value')
+        axes_y_limits_from.on_trait_change(plot_function, 'value')
+        axes_y_limits_to.on_trait_change(plot_function, 'value')
+        axes_y_limits_enable.on_trait_change(plot_function, 'value')
 
     return figure_options_wid
 
@@ -2678,7 +2687,7 @@ def legend_options(legend_options_default, plot_function=None,
         value=legend_options_default['legend_font_name'], description='Font')
     legend_font_size = ipywidgets.BoundedIntTextWidget(
         description='Size', value=legend_options_default['legend_font_size'],
-        min=2)
+        min=0)
     legend_font_style_dict = OrderedDict()
     legend_font_style_dict['normal'] = 'normal'
     legend_font_style_dict['italic'] = 'italic'
@@ -3247,6 +3256,214 @@ def update_legend_options(legend_options_wid, legend_options_dict):
         legend_options_wid.children[1].children[1].children[2].children[
             2].children[1].value = \
             legend_options_dict['legend_rounded_corners']
+
+
+def grid_options(grid_options_default, plot_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='Grid Object', show_checkbox_title='Render grid'):
+    r"""
+    Creates a widget with Grid Options. Specifically, it has:
+        1) A checkbox that controls grid's visibility.
+        2) A dropdown menu for grid style.
+        3) A bounded float text box for line width.
+        7) A toggle button that controls the visibility of all the above, i.e.
+           the grid options.
+
+    The structure of the widgets is the following:
+        grid_options_wid.children = [toggle_button, options]
+        options.children = [render_grid_checkbox, other_options]
+        other_options.children = [grid_style, grid_width]
+
+    The returned widget saves the selected values in the following dictionary:
+        grid_options_wid.selected_values
+
+    To fix the alignment within this widget please refer to
+    `format_grid_options()` function.
+
+    Parameters
+    ----------
+    grid_options_default : `dict`
+        The initial selected grid options.
+        Example:
+            line_options={'render_grid': True,
+                          'grid_line_width': 1,
+                          'grid_line_style': '-'}
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
+    show_checkbox_title : `str`, optional
+        The description of the show line checkbox.
+    """
+    import IPython.html.widgets as ipywidgets
+    # Create widgets
+    # toggle button
+    but = ipywidgets.ToggleButtonWidget(description=toggle_title,
+                                        value=toggle_show_default,
+                                        visible=toggle_show_visible)
+
+    # grid_line_style, grid_line_width
+    render_grid = ipywidgets.CheckboxWidget(
+        description=show_checkbox_title,
+        value=grid_options_default['render_grid'])
+    grid_line_width = ipywidgets.BoundedFloatTextWidget(
+        description='Width', value=grid_options_default['grid_line_width'],
+        min=0.)
+    grid_line_style_dict = OrderedDict()
+    grid_line_style_dict['solid'] = '-'
+    grid_line_style_dict['dashed'] = '--'
+    grid_line_style_dict['dash-dot'] = '-.'
+    grid_line_style_dict['dotted'] = ':'
+    grid_line_style = ipywidgets.DropdownWidget(
+        values=grid_line_style_dict,
+        value=grid_options_default['grid_line_style'], description='Style')
+
+    # Options widget
+    all_grid_options = ipywidgets.ContainerWidget(
+        children=[grid_line_style, grid_line_width])
+    options_wid = ipywidgets.ContainerWidget(
+        children=[render_grid, all_grid_options])
+
+    # Final widget
+    grid_options_wid = ipywidgets.ContainerWidget(children=[but, options_wid])
+
+    # Assign output
+    grid_options_wid.selected_values = grid_options_default
+
+    # line options visibility
+    def options_visible(name, value):
+        grid_line_style.disabled = not value
+        grid_line_width.disabled = not value
+    options_visible('', grid_options_default['render_grid'])
+    render_grid.on_trait_change(options_visible, 'value')
+
+    # get options functions
+    def save_render_grid(name, value):
+        grid_options_wid.selected_values['render_grid'] = value
+    render_grid.on_trait_change(save_render_grid, 'value')
+
+    def save_grid_line_width(name, value):
+        grid_options_wid.selected_values['grid_line_width'] = float(value)
+    grid_line_width.on_trait_change(save_grid_line_width, 'value')
+
+    def save_grid_line_style(name, value):
+        grid_options_wid.selected_values['grid_line_style'] = value
+    grid_line_style.on_trait_change(save_grid_line_style, 'value')
+
+    # Toggle button function
+    def toggle_fun(name, value):
+        options_wid.visible = value
+    toggle_fun('', toggle_show_default)
+    but.on_trait_change(toggle_fun, 'value')
+
+    # assign plot_function
+    if plot_function is not None:
+        render_grid.on_trait_change(plot_function, 'value')
+        grid_line_style.on_trait_change(plot_function, 'value')
+        grid_line_width.on_trait_change(plot_function, 'value')
+
+    return grid_options_wid
+
+
+def format_grid_options(grid_options_wid, container_padding='6px',
+                        container_margin='6px',
+                        container_border='1px solid black',
+                        toggle_button_font_weight='bold', border_visible=True,
+                        suboptions_border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given grid_options
+    widget. Usage example:
+        grid_options_wid = grid_options()
+        display(grid_options_wid)
+        format_grid_options(grid_options_wid)
+
+    Parameters
+    ----------
+    grid_options_wid :
+        The widget object generated by the `grid_options()` function.
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    suboptions_border_visible : `boolean`, optional
+        Defines whether to draw the border line around the line options, under
+        the show line checkbox.
+    """
+    # align grid options with checkbox
+    grid_options_wid.children[1].add_class('align-end')
+
+    # set gridlinewidth text box width
+    grid_options_wid.children[1].children[1].children[1].set_css('width', '1cm')
+
+    # border around options
+    if suboptions_border_visible:
+        grid_options_wid.children[1].children[1].set_css('border',
+                                                         container_border)
+
+    # set toggle button font bold
+    grid_options_wid.children[0].set_css('font-weight',
+                                         toggle_button_font_weight)
+
+    # margin and border around container widget
+    grid_options_wid.set_css('padding', container_padding)
+    grid_options_wid.set_css('margin', container_margin)
+    if border_visible:
+        grid_options_wid.set_css('border', container_border)
+
+
+def update_grid_options(grid_options_wid, grid_options_dict):
+    r"""
+    Function that updates the state of a given grid_options widget. Usage
+    example:
+        default_grid_options={'render_grid':True,
+                              'grid_line_width':2,
+                              'grid_line_style':'-'}
+        grid_options_wid = grid_options(default_grid_options)
+        display(grid_options_wid)
+        format_grid_options(grid_options_wid)
+        default_grid_options={'render_grid':False,
+                              'grid_line_width':4,
+                              'grid_line_style':'-'}
+        update_grid_options(grid_options_wid, default_grid_options)
+
+    Parameters
+    ----------
+    grid_options_wid :
+        The widget object generated by the `grid_options()` function.
+    grid_options_dict : `dict`
+        The new set of options. For example:
+            grid_options_dict={'render_grid':True,
+                               'grid_line_width':2,
+                               'grid_line_style':'-'}
+    """
+    # Assign new options dict to selected_values
+    grid_options_wid.selected_values = grid_options_dict
+
+    # update render grid checkbox
+    if 'render_grid' in grid_options_dict.keys():
+        grid_options_wid.children[1].children[0].value = \
+            grid_options_dict['render_grid']
+
+    # update grid_line_style dropdown menu
+    if 'grid_line_style' in grid_options_dict.keys():
+        grid_options_wid.children[1].children[1].children[0].value = \
+            grid_options_dict['grid_line_style']
+
+    # update grid_line_width text box
+    if 'grid_line_width' in grid_options_dict.keys():
+        grid_options_wid.children[1].children[1].children[1].value = \
+            float(grid_options_dict['grid_line_width'])
 
 
 def hog_options(toggle_show_default=True, toggle_show_visible=True):

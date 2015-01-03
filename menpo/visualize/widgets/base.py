@@ -1198,6 +1198,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
         info_wid.children[1].children[2].value = "> {}".format(masked_pixels_str)
         info_wid.children[1].children[3].value = "> min={:.3f}, max={:.3f}.".\
             format(image.pixels.min(), image.pixels.max())
+        info_wid.children[1].children[4].visible = image_has_landmarks
         info_wid.children[1].children[4].value = "> {}".format(landmarks_str)
 
     # channel options widget
