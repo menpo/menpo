@@ -3,33 +3,37 @@
 import numpy as np
 cimport numpy as np
 cimport cython
-from libc.stdlib cimport malloc, free
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void calc_augmented_centers(double[:,:] centres, long[:,:] offsets, long[:,:] augmented_centers):
-    cdef long total_index = 0
+cdef void calc_augmented_centers(double[:, :] centres, long long[:, :] offsets,
+                                 long long[:, :] augmented_centers):
+    cdef long long total_index = 0, i = 0, j = 0
+
     for i in range(centres.shape[0]):
         for j in range(offsets.shape[0]):
-            augmented_centers[total_index, 0] = <long> (centres[i, 0] + offsets[j, 0])
-            augmented_centers[total_index, 1] = <long> (centres[i, 1] + offsets[j, 1])
+            augmented_centers[total_index, 0] = <long long> (centres[i, 0] + offsets[j, 0])
+            augmented_centers[total_index, 1] = <long long> (centres[i, 1] + offsets[j, 1])
             total_index += 1
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void calc_slices(long[:, :] centres,
-                      long image_shape0,
-                      long image_shape1,
-                      long patch_shape0,
-                      long patch_shape1,
-                      long half_patch_shape0,
-                      long half_patch_shape1,
-                      long add_to_patch0,
-                      long add_to_patch1,
-                      long[:, :] ext_s_min,
-                      long[:, :] ext_s_max,
-                      long[:, :] ins_s_min,
-                      long[:, :] ins_s_max):
+cdef void calc_slices(long long[:, :] centres,
+                      long long image_shape0,
+                      long long image_shape1,
+                      long long patch_shape0,
+                      long long patch_shape1,
+                      long long half_patch_shape0,
+                      long long half_patch_shape1,
+                      long long add_to_patch0,
+                      long long add_to_patch1,
+                      long long[:, :] ext_s_min,
+                      long long[:, :] ext_s_max,
+                      long long[:, :] ins_s_min,
+                      long long[:, :] ins_s_max):
+    cdef long long i = 0
+
     for i in range(centres.shape[0]):
         c_min_new0 = centres[i, 0] - half_patch_shape0
         c_min_new1 = centres[i, 1] - half_patch_shape1
@@ -73,15 +77,15 @@ cdef void calc_slices(long[:, :] centres,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef void slice_image(double[:, :, :] image,
-                      long n_channels,
-                      long n_centres,
-                      long n_offsets,
-                      long[:, :] ext_s_min,
-                      long[:, :] ext_s_max,
-                      long[:, :] ins_s_min,
-                      long[:, :] ins_s_max,
+                      long long n_channels,
+                      long long n_centres,
+                      long long n_offsets,
+                      long long[:, :] ext_s_min,
+                      long long[:, :] ext_s_max,
+                      long long[:, :] ins_s_min,
+                      long long[:, :] ins_s_max,
                       double[:, :, :, :, :] patches):
-    cdef long total_index = 0
+    cdef long long total_index = 0, i = 0, j = 0
 
     for i in range(n_centres):
         for j in range(n_offsets):
@@ -99,29 +103,30 @@ cdef void slice_image(double[:, :, :] image,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef extract_patches(double[:,:,:] image, double[:,:] centres, long[:] patch_shape, long[:,:] offsets):
+cpdef extract_patches(double[:, :, :] image, double[:, :] centres,
+                      long long[:] patch_shape, long long[:, :] offsets):
     cdef:
-        long n_centres = centres.shape[0]
-        long n_offsets = offsets.shape[0]
-        long n_augmented_centres = n_centres * n_offsets
+        long long n_centres = centres.shape[0]
+        long long n_offsets = offsets.shape[0]
+        long long n_augmented_centres = n_centres * n_offsets
 
-        long[:, :] augmented_centers = np.empty([n_augmented_centres, 2], dtype=int)
+        long long[:, :] augmented_centers = np.empty([n_augmented_centres, 2], dtype=int)
 
-        long half_patch_shape0 = patch_shape[0] / 2
-        long half_patch_shape1 = patch_shape[1] / 2
-        long add_to_patch0 = patch_shape[0] % 2
-        long add_to_patch1 = patch_shape[1] % 2
-        long patch_shape0 = patch_shape[0]
-        long patch_shape1 = patch_shape[1]
-        long image_shape0 = image.shape[1]
-        long image_shape1 = image.shape[2]
-        long n_channels = image.shape[0]
+        long long half_patch_shape0 = patch_shape[0] / 2
+        long long half_patch_shape1 = patch_shape[1] / 2
+        long long add_to_patch0 = patch_shape[0] % 2
+        long long add_to_patch1 = patch_shape[1] % 2
+        long long patch_shape0 = patch_shape[0]
+        long long patch_shape1 = patch_shape[1]
+        long long image_shape0 = image.shape[1]
+        long long image_shape1 = image.shape[2]
+        long long n_channels = image.shape[0]
 
         # This could be faster with malloc
-        long[:,:] ext_s_max = np.empty([n_augmented_centres, 2], dtype=int)
-        long[:,:] ext_s_min = np.empty([n_augmented_centres, 2], dtype=int)
-        long[:,:] ins_s_max = np.empty([n_augmented_centres, 2], dtype=int)
-        long[:,:] ins_s_min = np.empty([n_augmented_centres, 2], dtype=int)
+        long long[:,:] ext_s_max = np.empty([n_augmented_centres, 2], dtype=np.longlong)
+        long long[:,:] ext_s_min = np.empty([n_augmented_centres, 2], dtype=np.longlong)
+        long long[:,:] ins_s_max = np.empty([n_augmented_centres, 2], dtype=np.longlong)
+        long long[:,:] ins_s_min = np.empty([n_augmented_centres, 2], dtype=np.longlong)
 
         np.ndarray[double, ndim=5] patches = np.zeros([n_centres,
                                                        n_offsets,

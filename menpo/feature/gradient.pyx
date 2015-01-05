@@ -16,9 +16,9 @@ cdef extern from "cpp/central_difference.h":
 @cython.wraparound(False)
 cpdef gradient_cython(np.ndarray[double, ndim=3] input):
 
-    cdef int n_channels = input.shape[0]
-    cdef int rows = input.shape[1]
-    cdef int cols = input.shape[2]
+    cdef long long n_channels = input.shape[0]
+    cdef long long rows = input.shape[1]
+    cdef long long cols = input.shape[2]
     cdef np.ndarray[double, ndim=3] output = np.zeros((n_channels * 2,
                                                        rows, cols))
 
