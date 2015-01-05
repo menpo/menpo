@@ -299,7 +299,7 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
 
 
 @ndfeature
-def igo(pixels, double_angles=False, verbose=False):
+def igo(pixels, double_angles=False, fast2d=True, verbose=False):
     r"""
     Represents a 2-dimensional IGO features image with N*C number of
     channels, where N is the number of channels of the original image and
@@ -336,7 +336,7 @@ def igo(pixels, double_angles=False, verbose=False):
     if double_angles:
         feat_channels = 4
     # compute gradients
-    grad = gradient(pixels)
+    grad = gradient(pixels, fast2d=fast2d)
     # compute angles
     grad_orient = np.angle(grad[1::2, ...] + 1j * grad[::2, ...])
     # compute igo image
@@ -376,7 +376,7 @@ def igo(pixels, double_angles=False, verbose=False):
 
 
 @ndfeature
-def es(image_data, verbose=False):
+def es(image_data, fast2d=True, verbose=False):
     r"""
     Represents a 2-dimensional Edge Structure (ES) features image with N*C
     number of channels, where N is the number of channels of the original
@@ -405,7 +405,7 @@ def es(image_data, verbose=False):
     # feature channels per image channel
     feat_channels = 2
     # compute gradients
-    grad = gradient(image_data)
+    grad = gradient(image_data, fast2d=fast2d)
     # compute magnitude
     grad_abs = np.abs(grad[::2, ...] + 1j * grad[1::2, ...])
     # compute es image
@@ -437,7 +437,8 @@ def es(image_data, verbose=False):
 
 @ndfeature
 def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
-          normalization='l1', sigmas=None, ring_radii=None, verbose=False):
+          normalization='l1', sigmas=None, ring_radii=None,
+          fast2d=True, verbose=False):
     r"""
     Computes a 2-dimensional Daisy features image with N*C number of channels,
     where N is the number of channels of the original image and C is the
@@ -529,7 +530,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     daisy_descriptor = _daisy(pixels, step=step, radius=radius, rings=rings,
                               histograms=histograms, orientations=orientations,
                               normalization=normalization, sigmas=sigmas,
-                              ring_radii=ring_radii)
+                              ring_radii=ring_radii, fast2d=fast2d)
 
     # print information
     if verbose:

@@ -6,7 +6,8 @@ from menpo.feature import gradient
 
 
 def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
-           normalization='l1', sigmas=None, ring_radii=None, visualize=False):
+           normalization='l1', sigmas=None, ring_radii=None,
+           visualize=False, fast2d=True):
     '''Extract DAISY feature descriptors densely for the given image.
 
     DAISY is a feature descriptor similar to SIFT formulated in a way that
@@ -97,7 +98,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     n_channels = img.shape[0]
 
     # Compute image gradient
-    grad = gradient(img)
+    grad = gradient(img, fast2d=fast2d)
 
     # For each pixel, select gradient with highest magnitude
     tmp_mag = np.zeros(img.shape)
