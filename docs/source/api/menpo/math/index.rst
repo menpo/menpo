@@ -3,13 +3,11 @@
 :mod:`menpo.math`
 =================
 
-Functions
----------
-
 .. toctree::
    :maxdepth: 1
 
-   circle_fit
-   log_gabor
-   eigenvalue_decomposition
-   principal_component_decomposition
+  eigenvalue_decomposition
+  dot_inplace_right
+  pca
+  dot_inplace_left
+  log_gabor

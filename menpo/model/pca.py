@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from menpo.math import principal_component_decomposition
+from menpo.math import pca, ipca
 from menpo.model.base import MeanInstanceLinearModel
 from menpo.visualize import print_dynamic, progress_bar_str
 
@@ -9,10 +9,9 @@ class PCAModel(MeanInstanceLinearModel):
     """A :map:`MeanInstanceLinearModel` where components are Principal
     Components.
 
-
     Principal Component Analysis (PCA) by eigenvalue decomposition of the
     data's scatter matrix. For details of the implementation of PCA, see
-    :map:`principal_component_decomposition`.
+    :map:`pca`.
 
     Parameters
     ----------
@@ -22,64 +21,21 @@ class PCAModel(MeanInstanceLinearModel):
         When True (True by default) PCA is performed after mean centering the
         data. If False the data is assumed to be centred, and the mean will
         be 0.
-    bias : bool, optional
-        When True (False by default) a biased estimator of the covariance
-        matrix is used. See notes.
     n_samples : int, optional
         If provided then ``samples``  must be an iterator  that yields
         ``n_samples``. If not provided then samples has to be a
         list (so we know how large the data matrix needs to be).
-
-    ..notes:
-
-    True bias mean that we calculate the covariance as
-
-    :math:`\frac{1}{N} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
-
-    instead of default
-
-    :math:`\frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
-
     """
-    def __init__(self, samples, centre=True, bias=False, verbose=False,
-                 n_samples=None):
-        # get the first element as the template and use it to configure the
-        # data matrix
-        if n_samples is None:
-            # samples is a list
-            n_samples = len(samples)
-            template = samples[0]
-            samples = samples[1:]
-        else:
-            # samples is an iterator
-            template = next(samples)
-        n_features = template.n_parameters
-        template_vector = template.as_vector()
-        data = np.zeros((n_samples, n_features), dtype=template_vector.dtype)
-        # now we can fill in the first element from the template
-        data[0] = template_vector
-        del template_vector
-        if verbose:
-            print('Allocated data matrix {:.2f}'
-                  'GB'.format(data.nbytes / 2 ** 30))
-        # 1-based as we have the template vector set already
-        for i, sample in enumerate(samples, 1):
-            if i >= n_samples:
-                break
-            if verbose:
-                print_dynamic(
-                    'Building data matrix from {} samples - {}'.format(
-                        n_samples,
-                    progress_bar_str(float(i + 1) / n_samples, show_bar=True)))
-            data[i] = sample.as_vector()
+    def __init__(self, samples, centre=True, n_samples=None, verbose=False):
+        # extract data matrix, template and number of samples
+        data, template, self.n_samples = extract_data(
+            samples, n_samples=n_samples, verbose=verbose)
 
         # compute pca
-        e_vectors, e_values, mean = principal_component_decomposition(
-            data, whiten=False,  centre=centre, bias=bias, inplace=True)
+        e_vectors, e_values, mean = pca(data, centre=centre, inplace=True)
 
         super(PCAModel, self).__init__(e_vectors, mean, template)
         self.centred = centre
-        self.biased = bias
         self._eigenvalues = e_values
         # start the active components as all the components
         self._n_active_components = int(self.n_components)
@@ -537,14 +493,63 @@ class PCAModel(MeanInstanceLinearModel):
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
 
+    def increment(self, samples, n_samples=None, forgetting_factor=1.0,
+                  verbose=False):
+        r"""
+        Update the eigenvectors, eigenvalues and mean vector of this model
+        by performing incremental PCA on the given samples.
+
+        Parameters
+        -----------
+        samples : list of :map:`Vectorizable`
+            List of new samples to update the model from.
+        n_samples : int, optional
+            If provided then ``samples``  must be an iterator  that yields
+            ``n_samples``. If not provided then samples has to be a
+            list (so we know how large the data matrix needs to be).
+        forgetting_factor : [0.0, 1.0] float, optional
+            Forgetting factor that weights the relative contribution of new
+            samples vs old samples. If 1.0, all samples are weighted equally
+            and, hence, the results is the exact same as performing batch
+            PCA on the concatenated list of old and new simples. If <1.0,
+            more emphasis is put on the new samples. See [1] for details.
+
+        References
+        ----------
+        .. [1] David Ross, Jongwoo Lim, Ruei-Sung Lin, Ming-Hsuan Yang.
+           "Incremental Learning for Robust Visual Tracking". IJCV, 2007.
+        """
+        # extract data matrix, template and number of samples
+        data, template, n_samples = extract_data(
+            samples, n_samples=n_samples, verbose=verbose)
+
+        # compute incremental pca
+        e_vectors, e_values, m_vector = ipca(
+            data, self._components, self._eigenvalues, self.n_samples,
+            m_a=self.mean_vector, f=forgetting_factor)
+
+        # if the number of active components is the same as the total number
+        # of components so it will be after this method is executed
+        reset = 1 if self.n_active_components == self.n_components else 0
+
+        # update mean, components, eigenvalues and number of samples
+        self.mean_vector = m_vector
+        self._components = e_vectors
+        self._eigenvalues = e_values
+        self.n_samples += n_samples
+
+        # reset the number of active components to the total number of
+        # components
+        if reset:
+            self.n_active_components = self.n_components
+
     def __str__(self):
         str_out = 'PCA Model \n'
         str_out = str_out + \
             ' - centred:             {}\n' \
-            ' - biased:               {}\n' \
             ' - # features:           {}\n' \
             ' - # active components:  {}\n'.format(
-            self.centred, self.biased, self.n_features,
+            self.centred, self.n_features,
             self.n_active_components)
         str_out = str_out + \
             ' - kept variance:        {:.2}  {:.1%}\n' \
@@ -556,3 +561,37 @@ class PCAModel(MeanInstanceLinearModel):
             ' - components shape:     {}\n'.format(
             self.n_components, self.components.shape)
         return str_out
+
+
+def extract_data(samples, n_samples=None, verbose=False):
+    # get the first element as the template and use it to configure the
+    # data matrix
+    if n_samples is None:
+        # samples is a list
+        n_samples = len(samples)
+        template = samples[0]
+        samples = samples[1:]
+    else:
+        # samples is an iterator
+        template = next(samples)
+    n_features = template.n_parameters
+    template_vector = template.as_vector()
+    data = np.zeros((n_samples, n_features), dtype=template_vector.dtype)
+    # now we can fill in the first element from the template
+    data[0] = template_vector
+    del template_vector
+    if verbose:
+        print('Allocated data matrix {:.2f}'
+              'GB'.format(data.nbytes / 2 ** 30))
+    # 1-based as we have the template vector set already
+    for i, sample in enumerate(samples, 1):
+        if i >= n_samples:
+            break
+        if verbose:
+            print_dynamic(
+                'Building data matrix from {} samples - {}'.format(
+                    n_samples,
+                progress_bar_str(float(i + 1) / n_samples, show_bar=True)))
+        data[i] = sample.as_vector()
+
+    return data, template, n_samples

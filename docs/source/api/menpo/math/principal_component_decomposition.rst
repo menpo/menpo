@@ -1,8 +1,7 @@
-.. _menpo-math-principal_component_decomposition:
+.. _menpo-math-pca:
 
-.. currentmodule:: menpo.math.decomposition
+.. currentmodule:: menpo.math
 
-principal_component_decomposition
+pca
 =================================
-
-.. autofunction:: principal_component_decomposition
+.. autofunction:: pca
