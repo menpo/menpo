@@ -1,10 +1,9 @@
 import numpy as np
 from numpy.testing import assert_allclose
 import random
-import math
 
 from menpo.image import Image, MaskedImage
-from menpo.feature import hog, lbp, es, igo, daisy, gradient
+from menpo.feature import hog, lbp, es, igo, daisy
 import menpo.io as mio
 
 
@@ -259,15 +258,6 @@ def test_lbp_values():
     image = Image([[0., 6., 0.], [5., 6., 13.], [0., 20., 0.]])
     lbp_img = lbp(image, radius=1, samples=4, mapping_type='ri', padding=False)
     assert_allclose(lbp_img.pixels, 4.)
-
-
-def test_gradient_sanity():
-    # Only a sanity check - does it run and generate sensible output?
-    image = Image(np.zeros([3, 120, 120]))
-    grad_image = gradient(image)
-    assert(type(grad_image) == Image)
-    assert(grad_image.shape == image.shape)
-    assert(grad_image.n_channels == image.n_channels * 2)
 
 
 def test_constrain_landmarks():

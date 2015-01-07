@@ -6,8 +6,7 @@ from menpo.feature import gradient
 
 
 def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
-           normalization='l1', sigmas=None, ring_radii=None,
-           visualize=False, fast2d=True):
+           normalization='l1', sigmas=None, ring_radii=None):
     '''Extract DAISY feature descriptors densely for the given image.
 
     DAISY is a feature descriptor similar to SIFT formulated in a way that
@@ -46,7 +45,6 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
           * 'l2': L2-normalization of each descriptor.
           * 'daisy': L2-normalization of individual histograms.
           * 'off': Disable normalization.
-
     sigmas : 1D array of float, optional
         Standard deviation of spatial Gaussian smoothing for the centre
         histogram and for each ring of histograms. The array of sigmas should
@@ -56,7 +54,6 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
         overrides the following parameter.
 
             ``rings = len(sigmas) - 1``
-
     ring_radii : 1D array of int, optional
         Radius (in pixels) for each ring. Specifying ring_radii overrides the
         following two parameters.
@@ -70,9 +67,6 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
 
             ``len(ring_radii) == len(sigmas) + 1``
 
-    visualize : bool, optional
-        Generate a visualization of the DAISY descriptors
-
     Returns
     -------
     descs : array
@@ -82,7 +76,6 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
             ``P = ceil((M - radius*2) / step)``
             ``Q = ceil((N - radius*2) / step)``
             ``R = (rings * histograms + 1) * orientations``
-
     descs_img : (M, N, 3) array (only if visualize==True)
         Visualization of the DAISY descriptors.
 
@@ -98,7 +91,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     n_channels = img.shape[0]
 
     # Compute image gradient
-    grad = gradient(img, fast2d=fast2d)
+    grad = gradient(img)
 
     # For each pixel, select gradient with highest magnitude
     tmp_mag = np.zeros(img.shape)

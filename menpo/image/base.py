@@ -787,14 +787,14 @@ class Image(Vectorizable, LandmarkableViewable):
                              'currently supported.')
 
         if sample_offsets is None:
-            sample_offsets_arr = np.zeros([1, 2], dtype=np.int64)
+            sample_offsets_arr = np.zeros([1, 2], dtype=np.intp)
         else:
             sample_offsets_arr = np.require(sample_offsets.points,
-                                            dtype=np.int64)
+                                            dtype=np.intp)
 
         single_array = extract_patches(self.pixels,
                                        patch_centers.points,
-                                       np.asarray(patch_size, dtype=np.int64),
+                                       np.asarray(patch_size, dtype=np.intp),
                                        sample_offsets_arr)
 
         if as_single_array:

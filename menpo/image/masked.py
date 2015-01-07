@@ -4,7 +4,6 @@ import numpy as np
 binary_erosion = None  # expensive, from scipy.ndimage
 
 from menpo.visualize.base import ImageViewer
-gradient = None  # avoid circular reference, from menpo.feature
 
 from .base import Image
 from .boolean import BooleanImage

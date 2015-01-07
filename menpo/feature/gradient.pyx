@@ -1,26 +1,33 @@
 # distutils: language = c++
-# distutils: sources = menpo/feature/cpp/central_difference.cpp
 
 import numpy as np
 cimport numpy as np
 cimport cython
 
 
+ctypedef fused DOUBLE_TYPES:
+    float
+    double
+
+
 cdef extern from "cpp/central_difference.h":
-    void central_difference(const double* input, const int rows,
-                            const int cols, const int n_channels,
-                            double* output)
+    void central_difference[T](const T* input, const Py_ssize_t rows,
+                               const Py_ssize_t cols, const Py_ssize_t n_channels,
+                               T* output)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef gradient_cython(np.ndarray[double, ndim=3] input):
+cpdef gradient_cython(np.ndarray[DOUBLE_TYPES, ndim=3] input):
 
-    cdef long long n_channels = input.shape[0]
-    cdef long long rows = input.shape[1]
-    cdef long long cols = input.shape[2]
-    cdef np.ndarray[double, ndim=3] output = np.zeros((n_channels * 2,
-                                                       rows, cols))
+    cdef Py_ssize_t n_channels = input.shape[0]
+    cdef Py_ssize_t rows = input.shape[1]
+    cdef Py_ssize_t cols = input.shape[2]
+    # Maintain the dtype that was passed in (float or double)
+    dtype = input.dtype
+    cdef np.ndarray[DOUBLE_TYPES, ndim=3] output = np.zeros((n_channels * 2,
+                                                            rows, cols),
+                                                            dtype=dtype)
 
     central_difference(&input[0,0,0], rows, cols, n_channels,
                        &output[0,0,0])

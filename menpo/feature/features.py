@@ -8,12 +8,45 @@ from .gradient import gradient_cython
 from .windowiterator import WindowIterator, WindowIteratorResult
 
 
+def _np_gradient(pixels):
+    """
+    This method is used in the case of multi-channel images (not 2D images).
+    The output ordering is identical to the gradient() method, returning
+    a 2 * n_channels image with gradients in order of the first axis derivative
+    over all the channels, then the second etc. For example, in the case of
+    a 3D image with 2 channels, the ordering would be:
+        I[:, 0, 0, 0] = [A_0, B_0, A_1, B_1, A_2, B_2]
+    where A and B are the 'channel' labels (synonymous with RGB for a colour
+    image) and 0,1,2 are the axis labels (synonymous with y,x for a 2D image).
+    """
+    n_dims = pixels.ndim - 1
+    grad_per_dim_per_channel = [np.gradient(g, edge_order=1)
+                                for g in pixels]
+    # Flatten out the separate dims
+    grad_per_channel = list(itertools.chain.from_iterable(
+        grad_per_dim_per_channel))
+    # Add a channel axis for broadcasting
+    grad_per_channel = [g[None, ...] for g in grad_per_channel]
+
+    # Permute the list so it is first axis, second axis, etc
+    grad_per_channel = [grad_per_channel[i::n_dims]
+                        for i in range(n_dims)]
+    grad_per_channel = list(itertools.chain.from_iterable(grad_per_channel))
+
+    # Concatenate gradient list into an array (the new_image)
+    return np.concatenate(grad_per_channel, axis=0)
+
+
 @ndfeature
-def gradient(pixels, fast2d=True):
+def gradient(pixels):
     r"""
     Calculates the gradient of an input image. The image is assumed to have
     channel information on the first axis. In the case of multiple channels,
     it returns the gradient over each axis over each channel as the first axis.
+
+    The gradient is computed using second order accurate central differences in
+    the interior and first order accurate one-side (forward or backwards)
+    differences at the boundaries.
 
     Parameters
     ----------
@@ -22,31 +55,20 @@ def gradient(pixels, fast2d=True):
         means an N-dimensional image is represented by an N+1 dimensional
         array.
 
-    fast2d : bool, optional
-        Enables faster gradient computation for 2-dimensional
-        multichannel image.
-
     Returns
     -------
-    gradient : ndarray, shape (C * length([X, Y, ..., Z], X, Y, ..., Z))
+    gradient : `ndarray`
         The gradient over each axis over each channel. Therefore, the
         first axis of the gradient of a 2D, single channel image, will have
         length `2`. The first axis of the gradient of a 2D, 3-channel image,
-        will have length `6`, the ordering being [Rd_x, Rd_y, Gd_x, Gd_y,
-        Bd_x, Bd_y].
+        will have length `6`, the ordering being
+        ``I[:, 0, 0] = [R0_y, G0_y, B0_y, R0_x, G0_x, B0_x]``.
 
     """
-    if fast2d and (len(pixels.shape) is 3):
+    if (pixels.ndim - 1) == 2:  # 2D Image
         return gradient_cython(pixels)
     else:
-        grad_per_dim_per_channel = [np.gradient(g) for g in pixels]
-        # Flatten out the separate dims
-        grad_per_channel = list(itertools.chain.from_iterable(
-            grad_per_dim_per_channel))
-        # Add a channel axis for broadcasting
-        grad_per_channel = [g[None, ...] for g in grad_per_channel]
-        # Concatenate gradient list into an array (the new_image)
-        return np.concatenate(grad_per_channel, axis=0)
+        return _np_gradient(pixels)
 
 
 @ndfeature
@@ -85,67 +107,49 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         window_width, window_unit, window_step_vertical,
         window_step_horizontal, window_step_unit, and padding to completely
         customize the HOG calculation.
-
-    window_height : float
+    window_height : `float`
         Defines the height of the window for the ImageWindowIterator
         object. The metric unit is defined by window_unit.
-
-    window_width : float
+    window_width : `float`
         Defines the width of the window for the ImageWindowIterator object.
         The metric unit is defined by window_unit.
-
     window_unit : 'blocks' or 'pixels'
         Defines the metric unit of the window_height and window_width
         parameters for the ImageWindowIterator object.
-
-    window_step_vertical : float
+    window_step_vertical : `float`
         Defines the vertical step by which the window is moved, thus it
         controls the features density. The metric unit is defined by
         window_step_unit.
-
-    window_step_horizontal : float
+    window_step_horizontal : `float`
         Defines the horizontal step by which the window is moved, thus it
         controls the features density. The metric unit is defined by
         window_step_unit.
-
     window_step_unit : 'pixels' or 'cells'
         Defines the metric unit of the window_step_vertical and
         window_step_horizontal parameters.
-
-    padding : bool
+    padding : `bool`
         Enables/disables padding for the close-to-boundary windows in the
         ImageWindowIterator object. When padding is enabled,
         the out-of-boundary pixels are set to zero.
-
     algorithm : 'dalaltriggs' or 'zhuramanan'
         Specifies the algorithm used to compute HOGs.
-
-    cell_size : float
+    cell_size : `float`
         Defines the cell size in pixels. This value is set to both the width
         and height of the cell. This option is valid for both algorithms.
-
-    block_size : float
+    block_size : `float`
         Defines the block size in cells. This value is set to both the width
         and height of the block. This option is valid only for the
         'dalaltriggs' algorithm.
-
     num_bins : float
         Defines the number of orientation histogram bins. This option is
         valid only for the 'dalaltriggs' algorithm.
-
-    signed_gradient : bool
+    signed_gradient : `bool`
         Flag that defines whether we use signed or unsigned gradient angles.
         This option is valid only for the 'dalaltriggs' algorithm.
-
-    l2_norm_clip : float
+    l2_norm_clip : `float`
         Defines the clipping value of the gradients' L2-norm. This option is
         valid only for the 'dalaltriggs' algorithm.
-
-    constrain_landmarks : bool
-        Flag that if enabled, it constrains landmarks that ended up outside of
-        the features image bounds.
-
-    verbose : bool
+    verbose : `bool`
         Flag to print HOG related information.
 
     Raises
@@ -175,7 +179,7 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
     ValueError
         Window step unit must be either pixels or cells
     """
-    # TODO: This is a temporal fix
+    # TODO: This is a temporary fix
     # flip axis
     pixels = np.rollaxis(pixels, 0, len(pixels.shape))
 
@@ -299,7 +303,7 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
 
 
 @ndfeature
-def igo(pixels, double_angles=False, fast2d=True, verbose=False):
+def igo(pixels, double_angles=False, verbose=False):
     r"""
     Represents a 2-dimensional IGO features image with N*C number of
     channels, where N is the number of channels of the original image and
@@ -307,18 +311,16 @@ def igo(pixels, double_angles=False, fast2d=True, verbose=False):
 
     Parameters
     ----------
-    pixels :  ndarray
+    pixels : `ndarray`
         The pixel data for the image, where the last axis represents the
         number of channels.
-
-    double_angles : bool
+    double_angles : `bool`
         Assume that phi represents the gradient orientations. If this flag
         is disabled, the features image is the concatenation of cos(phi)
         and sin(phi), thus 2 channels. If it is enabled, the features image
         is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi),
         thus 4 channels.
-
-    verbose : bool
+    verbose : `bool`
         Flag to print IGO related information.
 
     Raises
@@ -336,7 +338,7 @@ def igo(pixels, double_angles=False, fast2d=True, verbose=False):
     if double_angles:
         feat_channels = 4
     # compute gradients
-    grad = gradient(pixels, fast2d=fast2d)
+    grad = gradient(pixels)
     # compute angles
     grad_orient = np.angle(grad[1::2, ...] + 1j * grad[::2, ...])
     # compute igo image
@@ -376,7 +378,7 @@ def igo(pixels, double_angles=False, fast2d=True, verbose=False):
 
 
 @ndfeature
-def es(image_data, fast2d=True, verbose=False):
+def es(image_data, verbose=False):
     r"""
     Represents a 2-dimensional Edge Structure (ES) features image with N*C
     number of channels, where N is the number of channels of the original
@@ -385,13 +387,11 @@ def es(image_data, fast2d=True, verbose=False):
 
     Parameters
     ----------
-    image_data :  ndarray
+    image_data : `ndarray`
         The pixel data for the image, where the last axis represents the
         number of channels.
-    verbose : bool
+    verbose : `bool`
         Flag to print ES related information.
-
-        Default: False
 
     Raises
     -------
@@ -405,7 +405,7 @@ def es(image_data, fast2d=True, verbose=False):
     # feature channels per image channel
     feat_channels = 2
     # compute gradients
-    grad = gradient(image_data, fast2d=fast2d)
+    grad = gradient(image_data)
     # compute magnitude
     grad_abs = np.abs(grad[::2, ...] + 1j * grad[1::2, ...])
     # compute es image
@@ -438,7 +438,7 @@ def es(image_data, fast2d=True, verbose=False):
 @ndfeature
 def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
           normalization='l1', sigmas=None, ring_radii=None,
-          fast2d=True, verbose=False):
+          verbose=False):
     r"""
     Computes a 2-dimensional Daisy features image with N*C number of channels,
     where N is the number of channels of the original image and C is the
@@ -450,29 +450,22 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     pixels :  ndarray
         The pixel data for the image, where the last axis represents the
         number of channels.
-
     step : `int`, Optional
         The sampling step that defines the density of the output image.
-
     radius : `int`, Optional
         The radius (in pixels) of the outermost ring.
-
     rings : `int`, Optional
         The number of rings to be used.
-
     histograms : `int`, Optional
         The number of histograms sampled per ring.
-
     orientations : `int`, Optional
         The number of orientations (bins) per histogram.
-
     normalization : [ 'l1', 'l2', 'daisy', None ], Optional
         It defines how to normalize the descriptors
         If 'l1' then L1-normalization is applied at each descriptor.
         If 'l2' then L2-normalization is applied at each descriptor.
         If 'daisy' then L2-normalization is applied at individual histograms.
         If None then no normalization is employed.
-
     sigmas : 1D array of `float`, Optional
         Standard deviation of spatial Gaussian smoothing for the centre
         histogram and for each ring of histograms. The array of sigmas should
@@ -482,7 +475,6 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
         overrides the following parameter.
 
             ``rings = len(sigmas) - 1``
-
     ring_radii : 1D array of `int`, Optional
         Radius (in pixels) for each ring. Specifying ring_radii overrides the
         following two parameters.
@@ -495,7 +487,6 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
         histogram.
 
             ``len(ring_radii) == len(sigmas) + 1``
-
     verbose : `bool`
         Flag to print Daisy related information.
 
@@ -530,7 +521,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     daisy_descriptor = _daisy(pixels, step=step, radius=radius, rings=rings,
                               histograms=histograms, orientations=orientations,
                               normalization=normalization, sigmas=sigmas,
-                              ring_radii=ring_radii, fast2d=fast2d)
+                              ring_radii=ring_radii)
 
     # print information
     if verbose:
@@ -570,7 +561,6 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     pixels :  `ndarray`
         The pixel data for the image, where the last axis represents the
         number of channels.
-
     radius : `int` or `list` of `int`
         It defines the radius of the circle (or circles) at which the sampling
         points will be extracted. The radius (or radii) values must be greater
@@ -578,7 +568,6 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         they both need to have the same length.
 
         Default: None = [1, 2, 3, 4]
-
     samples : `int` or `list` of `int`
         It defines the number of sampling points that will be extracted at each
         circle. The samples value (or values) must be greater than zero. There
@@ -586,37 +575,31 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         have the same length.
 
         Default: None = [8, 8, 8, 8]
-
     mapping_type : ``'u2'`` or ``'ri'`` or ``'riu2'`` or ``'none'``
         It defines the mapping type of the LBP codes. Select 'u2' for uniform-2
         mapping, 'ri' for rotation-invariant mapping, 'riu2' for uniform-2 and
         rotation-invariant mapping and 'none' to use no mapping nd only the
         decimal values instead.
-
     window_step_vertical : float
         Defines the vertical step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
         The metric unit is defined by window_step_unit.
-
     window_step_horizontal : float
         Defines the horizontal step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
         The metric unit is defined by window_step_unit.
-
     window_step_unit : ``'pixels'`` or ``'window'``
         Defines the metric unit of the window_step_vertical and
         window_step_horizontal parameters for the ImageWindowIterator object.
-
-    padding : bool
+    padding : `bool`, optional
         Enables/disables padding for the close-to-boundary windows in the
         ImageWindowIterator object. When padding is enabled, the
         out-of-boundary pixels are set to zero.
-
     verbose : `bool`, optional
         Flag to print LBP related information.
-
     skip_checks : `bool`, optional
-        If True
+        If ``True``, will no validate any of the passed parameters.
+
     Raises
     -------
     ValueError
@@ -715,7 +698,7 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     # Compute LBP
     lbp_descriptor = iterator.LBP(radius, samples, mapping_type, verbose)
 
-    # TODO: This is a temporal fix
+    # TODO: This is a temporary fix
     # flip axis
     lbp_descriptor = WindowIteratorResult(
         np.ascontiguousarray(np.rollaxis(lbp_descriptor.pixels, -1)),
@@ -742,9 +725,14 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
 
 
 @ndfeature
-def no_op(image_data):
+def no_op(pixels):
     r"""
     A no operation feature - does nothing but return a copy of the pixels
     passed in.
+
+    Parameters
+    ----------
+    pixels : ndarray
+        Image pixels. Copied and returned unchanged.
     """
-    return image_data.copy()
+    return pixels.copy()
