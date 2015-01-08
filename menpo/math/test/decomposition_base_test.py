@@ -1,7 +1,6 @@
 import numpy as np
 from numpy.testing import assert_almost_equal
-from menpo.math import eigenvalue_decomposition, \
-    pca
+from menpo.math import eigenvalue_decomposition, pca, ipca
 
 # Positive semi-definite matrix
 cov_matrix = np.array([[3, 1], [1, 3]])
@@ -51,7 +50,7 @@ def pcd_samples_nocentre_test():
 
 
 def pcd_samples_yescentre_test():
-    output = pca(large_samples_data_matrix, centre=True,)
+    output = pca(large_samples_data_matrix, centre=True)
     eigenvectors, eigenvalues, mean_vector = output
 
     assert_almost_equal(eigenvalues, eigenvalues_centered_s)
@@ -106,3 +105,67 @@ def eigenvalue_decomposition_large_epsilon_test():
     sqrt_one_over_2 = np.sqrt(2.0) / 2.0
     assert_almost_equal(pos_eigenvectors,
                         [[sqrt_one_over_2], [sqrt_one_over_2]])
+
+
+def ipca_samples_yescentre_test():
+    n_a = large_samples_data_matrix.shape[0] / 2
+    A = large_samples_data_matrix[:n_a, :]
+    U_a, l_a, m_a = pca(A, centre=True)
+
+    B = large_samples_data_matrix[n_a:, :]
+    i_U, i_l, i_m = ipca(B, U_a, l_a, n_a, m_a=m_a)
+
+    b_U, b_l, b_m = pca(large_samples_data_matrix, centre=True)
+
+    assert_almost_equal(np.abs(i_U), np.abs(b_U))
+    assert_almost_equal(i_l, b_l)
+    assert_almost_equal(i_m, b_m)
+
+
+def ipca_samples_nocentre_test():
+    n_a = large_samples_data_matrix.shape[0] / 2
+    A = large_samples_data_matrix[:n_a, :]
+    U_a, l_a, m_a = pca(A, centre=False)
+
+    B = large_samples_data_matrix[n_a:, :]
+    i_U, i_l, i_m = ipca(B, U_a, l_a, n_a, m_a=m_a)
+
+    b_U, b_l, b_m = pca(large_samples_data_matrix, centre=False)
+
+    assert_almost_equal(np.abs(i_U), np.abs(b_U))
+    assert_almost_equal(i_l, b_l)
+    assert_almost_equal(i_m, b_m)
+
+
+def ipca_features_yescentre_test():
+    C = np.vstack((large_samples_data_matrix.T, large_samples_data_matrix.T))
+
+    n_a = C.shape[0] / 2
+    A = C[:n_a, :]
+    U_a, l_a, m_a = pca(A, centre=True)
+
+    B = C[n_a:, :]
+    i_U, i_l, i_m = ipca(B, U_a, l_a, n_a, m_a=m_a)
+
+    b_U, b_l, b_m = pca(C, centre=True)
+
+    assert_almost_equal(np.abs(i_U), np.abs(b_U))
+    assert_almost_equal(i_l, b_l)
+    assert_almost_equal(i_m, b_m)
+
+
+def ipca_features_nocentre_test():
+    C = np.vstack((large_samples_data_matrix.T, large_samples_data_matrix.T))
+
+    n_a = C.shape[0] / 2
+    A = C[:n_a, :]
+    U_a, l_a, m_a = pca(A, centre=False)
+
+    B = C[n_a:, :]
+    i_U, i_l, i_m = ipca(B, U_a, l_a, n_a, m_a=m_a)
+
+    b_U, b_l, b_m = pca(C, centre=False)
+
+    assert_almost_equal(np.abs(i_U), np.abs(b_U))
+    assert_almost_equal(i_l, b_l)
+    assert_almost_equal(i_m, b_m)
