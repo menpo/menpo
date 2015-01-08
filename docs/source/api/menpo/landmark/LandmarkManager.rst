@@ -1,10 +1,9 @@
 .. _menpo-landmark-LandmarkManager:
 
-.. currentmodule:: menpo.landmark.base
+.. currentmodule:: menpo.landmark
 
 LandmarkManager
 ===============
-
 .. autoclass:: LandmarkManager
   :members:
   :inherited-members:

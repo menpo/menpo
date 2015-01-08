@@ -1,10 +1,9 @@
 .. _menpo-model-LinearModel:
 
-.. currentmodule:: menpo.model.linear
+.. currentmodule:: menpo.model
 
 LinearModel
 ===========
-
 .. autoclass:: LinearModel
   :members:
   :inherited-members:

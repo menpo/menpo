@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from ..utils import _norm_path
-from menpo import menpo_src_dir_path
+from menpo.base import menpo_src_dir_path
 from menpo.visualize import progress_bar_str, print_dynamic
 
 
@@ -404,10 +404,13 @@ def _import(filepath, extensions_map, keep_importer=False,
     if not isinstance(built_objects, list):
         built_objects = [built_objects]
 
-    # attach path
+    # attach path if there is no x.path already.
     for x in built_objects:
-        x.path = path
-
+        if not hasattr(x, 'path'):
+            try:
+                x.path = path
+            except AttributeError:
+                pass  # that's fine! Probably a dict/list from PickleImporter.
     # handle landmarks
     if landmark_ext_map is not None:
         for x in built_objects:

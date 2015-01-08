@@ -3,16 +3,19 @@
 :mod:`menpo.visualize`
 ======================
 
-Classes
--------
-
 .. toctree::
    :maxdepth: 1
 
-   Viewable
-   PointCloudViewer2d
-   LandmarkViewer2d
-   LandmarkViewer
-   ImageViewer2d
-   PointCloudViewer
-   AlignmentViewer2d
+  LandmarkViewer
+  visualize_shapes
+  PointGraphViewer
+  AlignmentViewer2d
+  TriMeshViewer
+  PointCloudViewer
+  Viewable
+  LandmarkViewer2d
+  progress_bar_str
+  ImageViewer2d
+  visualize_images
+  print_dynamic
+  PointCloudViewer2d

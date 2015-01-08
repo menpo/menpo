@@ -1,10 +1,9 @@
 .. _menpo-model-PCAModel:
 
-.. currentmodule:: menpo.model.pca
+.. currentmodule:: menpo.model
 
 PCAModel
 ========
-
 .. autoclass:: PCAModel
   :members:
   :inherited-members:

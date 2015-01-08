@@ -1,10 +1,9 @@
 .. _menpo-landmark-LabellingError:
 
-.. currentmodule:: menpo.landmark.exceptions
+.. currentmodule:: menpo.landmark
 
 LabellingError
 ==============
-
 .. autoclass:: LabellingError
   :members:
   :inherited-members:
