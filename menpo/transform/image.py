@@ -50,7 +50,7 @@ class PointCloudToTcoords(Transform):
                                         [1, 0, 0],
                                         [0, 0, 1]]))
         # scale to get the units correct
-        scale = Scale(image_shape).pseudoinverse
+        scale = Scale(image_shape).pseudoinverse()
         self.flip_and_scale = scale.compose_before(flip_xy)
 
     def _apply(self, x, **kwargs):
