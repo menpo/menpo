@@ -39,7 +39,7 @@ class PCAModel(MeanInstanceLinearModel):
         self._eigenvalues = e_values
         # start the active components as all the components
         self._n_active_components = int(self.n_components)
-        self._trimmed_eigenvalues = None
+        self._trimmed_eigenvalues = np.array([])
 
     @property
     def n_active_components(self):
@@ -121,10 +121,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         type: float
         """
-        original_variance = self._eigenvalues.sum()
-        if self._trimmed_eigenvalues is not None:
-            original_variance += self._trimmed_eigenvalues.sum()
-        return original_variance
+        return self._eigenvalues.sum() + self._trimmed_eigenvalues.sum()
 
     def variance(self):
         r"""
@@ -227,16 +224,12 @@ class PCAModel(MeanInstanceLinearModel):
         """
         if self.n_active_components == self.n_components:
             noise_variance = 0.0
-            if self._trimmed_eigenvalues is not None:
+            if self._trimmed_eigenvalues.size is not 0:
                 noise_variance += self._trimmed_eigenvalues.mean()
         else:
-            if self._trimmed_eigenvalues is not None:
-                noise_variance = np.hstack(
-                    (self._eigenvalues[self.n_active_components:],
-                     self._trimmed_eigenvalues)).mean()
-            else:
-                noise_variance = (
-                    self._eigenvalues[self.n_active_components:].mean())
+            noise_variance = np.hstack(
+                (self._eigenvalues[self.n_active_components:],
+                 self._trimmed_eigenvalues)).mean()
         return noise_variance
 
     def noise_variance_ratio(self):
@@ -365,8 +358,9 @@ class PCAModel(MeanInstanceLinearModel):
             # set self.n_components to n_components
             self._components = self._components[:self.n_active_components]
             # store the eigenvalues associated to the discarded components
-            self._trimmed_eigenvalues = \
-                self._eigenvalues[self.n_active_components:]
+            self._trimmed_eigenvalues = np.hstack((
+                self._trimmed_eigenvalues,
+                self._eigenvalues[self.n_active_components:]))
             # make sure that the eigenvalues are trimmed too
             self._eigenvalues = self._eigenvalues[:self.n_active_components]
 
