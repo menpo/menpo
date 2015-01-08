@@ -111,7 +111,8 @@ class PCAModel(MeanInstanceLinearModel):
         type: (n_active_components, n_features) ndarray
         """
         return self.components / (
-            np.sqrt(self.eigenvalues + self.noise_variance())[:, None])
+            np.sqrt(self.eigenvalues * self.n_samples +
+                    self.noise_variance())[:, None])
 
     def original_variance(self):
         r"""
@@ -369,46 +370,6 @@ class PCAModel(MeanInstanceLinearModel):
             # make sure that the eigenvalues are trimmed too
             self._eigenvalues = self._eigenvalues[:self.n_active_components]
 
-    def distance_to_subspace(self, instance):
-        """
-        Returns a version of `instance` where all the basis of the model
-        have been projected out and which has been scaled by the inverse of
-        the `noise_variance`
-
-        Parameters
-        ----------
-        instance : :class:`menpo.base.Vectorizable`
-            A novel instance.
-
-        Returns
-        -------
-        scaled_projected_out : `self.instance_class`
-            A copy of `instance`, with all basis of the model projected out
-            and scaled by the inverse of the `noise_variance`.
-        """
-        vec_instance = self.distance_to_subspace_vector(instance.as_vector())
-        return instance.from_vector(vec_instance)
-
-    def distance_to_subspace_vector(self, vector_instance):
-        """
-        Returns a version of `instance` where all the basis of the model
-        have been projected out and which has been scaled by the inverse of
-        the `noise_variance`.
-
-        Parameters
-        ----------
-        vector_instance : (n_features,) ndarray
-            A novel vector.
-
-        Returns
-        -------
-        scaled_projected_out: (n_features,) ndarray
-            A copy of `vector_instance` with all basis of the model projected
-            out and scaled by the inverse of the `noise_variance`.
-        """
-        return (self.inverse_noise_variance() *
-                self.project_out_vectors(vector_instance))
-
     def project_whitened(self, instance):
         """
         Returns a sheared (non-orthogonal) reconstruction of `instance`.
@@ -442,8 +403,7 @@ class PCAModel(MeanInstanceLinearModel):
             A sheared (non-orthogonal) reconstruction of `vector_instance`
         """
         whitened_components = self.whitened_components()
-        weights = np.dot(vector_instance, whitened_components.T)
-        return np.dot(weights, whitened_components)
+        return np.dot(vector_instance, whitened_components.T)
 
     def orthonormalize_against_inplace(self, linear_model):
         r"""
