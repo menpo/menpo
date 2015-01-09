@@ -110,19 +110,6 @@ class Renderer(object):
         """
         pass
 
-    @abc.abstractmethod
-    def save_figure_widget(self, popup=True):
-        r"""
-        Method for saving the figure of the current `figure_id` to file using
-        a widget. It needs to be overridden by the renderer.
-
-        Parameters
-        ----------
-        popup : `bool`, optional
-            If ``True``, the widget will appear as a popup window.
-        """
-        pass
-
 
 class Viewable(object):
     r"""
