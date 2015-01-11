@@ -14,11 +14,10 @@ interfaces are:
 
 - :map:`Shape` - spatial data containers
 - :map:`Vectorizable` - efficient bi-directional conversion of types to a vector representation
-- :map:`Viewable` - :map:`view` method for easy interactive visualisation
+- :map:`Viewable` - viewing methods for easy interactive visualisation
 - :map:`Targetable` - objects that generate some spatial data
 - :map:`Transform` - flexible spatial transformations
 - :map:`Landmarkable` - objects that can be annotated with spatial labelled landmarks
-- :map:`DX`, :map:`DP` & :map:`DL` - derivatives in spatial, parameter, and landmark spaces
 
 Data containers
 ---------------
