@@ -1,8 +1,7 @@
 .. _api-index:
 
-###################
-  The Menpo API
-###################
+The Menpo API
+#############
 
 .. toctree::
    :maxdepth: 1
