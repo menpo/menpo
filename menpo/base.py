@@ -189,8 +189,8 @@ class Targetable(Copyable):
         """
 
     def set_target(self, new_target):
-        r"""Update this object so that it attempts to recreate the
-        ``new_target``.
+        r"""
+        Update this object so that it attempts to recreate the ``new_target``.
 
         Parameters
         ----------
