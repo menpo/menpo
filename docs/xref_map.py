@@ -55,21 +55,3 @@ xref_map = {
 'VComposable': ('class', 'menpo.transform.VComposable'),
 'VInvertible': ('class', 'menpo.transform.VInvertible')
 }
-#
-# 'GradientDescent': ('class', 'menpo.fit.gradientdescent.base.GradientDescent'),
-# 'AAM': ('class', 'menpo.fitmultilevel.aam.builder.AAM'),
-# 'AAMFitter': ('class', 'menpo.fitmultilevel.aam.base.AAMFitter'),
-# 'AAMMultilevelFittingResult': ('class', 'menpo.fitmultilevel.fittingresult.AAMMultilevelFittingResult'),
-# 'AppearanceLucasKanade': ('class', 'menpo.fit.lucaskanade.appearance.base.AppearanceLucasKanade'),
-# 'Fitter': ('class', 'menpo.fit.Fitter'),
-# 'FittingResult': ('class', 'menpo.fit.fittingresult.FittingResult'),
-# 'GlobalPDM': ('class', 'menpo.model.modelinstance.GlobalPDM'),
-# 'DL': ('class', 'menpo.base.DL'),
-# 'DP': ('class', 'menpo.base.DP'),
-# 'DX': ('class', 'menpo.base.DX'),
-# 'MultilevelFitter': ('class', 'menpo.fitmultilevel.MultilevelFitter'),
-# 'OrthoPDM':  ('class', 'menpo.model.modelinstance.OrthoPDM'),
-# 'OrthoMDTransform':  ('class', 'menpo.transform.modeldriven.OrthoMDTransform'),
-# 'PDM': ('class', 'menpo.model.PDM'),
-# 'ModelDrivenTransform': ('class', 'menpo.transform.ModelDrivenTransform'),
-# 'CLM': ('class', 'menpo.fitmultilevel.clm.builder.CLM'),
