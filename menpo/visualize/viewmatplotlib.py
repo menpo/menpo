@@ -189,10 +189,10 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         self.image = image
         self.axes_list = []
 
-    def _render(self, interpolation='bilinear', alpha=1., render_axes=False,
-                axes_font_name='sans-serif', axes_font_size=10,
-                axes_font_style='normal', axes_font_weight='normal',
-                axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
+    def render(self, interpolation='bilinear', alpha=1., render_axes=False,
+               axes_font_name='sans-serif', axes_font_size=10,
+               axes_font_style='normal', axes_font_weight='normal',
+               axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
@@ -241,10 +241,10 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
         self.plot_layout = self._subplot_layout(self.num_subplots)
         self.axes_list = []
 
-    def _render(self, interpolation='bilinear', alpha=1., render_axes=False,
-                axes_font_name='sans-serif', axes_font_size=10,
-                axes_font_style='normal', axes_font_weight='normal',
-                axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
+    def render(self, interpolation='bilinear', alpha=1., render_axes=False,
+               axes_font_name='sans-serif', axes_font_size=10,
+               axes_font_style='normal', axes_font_weight='normal',
+               axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
@@ -289,14 +289,14 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         self.points = points
         self.adjacency_array = adjacency_array
 
-    def _render(self, image_view=False, render_lines=True, line_colour='r',
-                line_style='-', line_width=1, render_markers=True,
-                marker_style='o', marker_size=20, marker_face_colour='r',
-                marker_edge_colour='k', marker_edge_width=1., render_axes=True,
-                axes_font_name='sans-serif', axes_font_size=10,
-                axes_font_style='normal', axes_font_weight='normal',
-                axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4),
-                label=None):
+    def render(self, image_view=False, render_lines=True, line_colour='r',
+               line_style='-', line_width=1, render_markers=True,
+               marker_style='o', marker_size=20, marker_face_colour='r',
+               marker_edge_colour='k', marker_edge_width=1., render_axes=True,
+               axes_font_name='sans-serif', axes_font_size=10,
+               axes_font_style='normal', axes_font_weight='normal',
+               axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4),
+               label=None):
         from matplotlib import collections as mc
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
@@ -373,28 +373,28 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
-    def _render(self, image_view=False, render_lines=True, line_colour='r',
-                line_style='-', line_width=1, render_markers=True,
-                marker_style='o', marker_size=20, marker_face_colour='r',
-                marker_edge_colour='k', marker_edge_width=1.,
-                render_numbering=False, numbers_horizontal_align='center',
-                numbers_vertical_align='bottom',
-                numbers_font_name='sans-serif', numbers_font_size=10,
-                numbers_font_style='normal',
-                numbers_font_weight='normal', numbers_font_colour='k',
-                render_legend=True, legend_title='',
-                legend_font_name='sans-serif',
-                legend_font_style='normal', legend_font_size=10,
-                legend_font_weight='normal', legend_marker_scale=None,
-                legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
-                legend_border_axes_pad=None, legend_n_columns=1,
-                legend_horizontal_spacing=None,
-                legend_vertical_spacing=None, legend_border=True,
-                legend_border_padding=None, legend_shadow=False,
-                legend_rounded_corners=False, render_axes=True,
-                axes_font_name='sans-serif', axes_font_size=10,
-                axes_font_style='normal', axes_font_weight='normal',
-                axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
+    def render(self, image_view=False, render_lines=True, line_colour='r',
+               line_style='-', line_width=1, render_markers=True,
+               marker_style='o', marker_size=20, marker_face_colour='r',
+               marker_edge_colour='k', marker_edge_width=1.,
+               render_numbering=False, numbers_horizontal_align='center',
+               numbers_vertical_align='bottom',
+               numbers_font_name='sans-serif', numbers_font_size=10,
+               numbers_font_style='normal',
+               numbers_font_weight='normal', numbers_font_colour='k',
+               render_legend=True, legend_title='',
+               legend_font_name='sans-serif',
+               legend_font_style='normal', legend_font_size=10,
+               legend_font_weight='normal', legend_marker_scale=None,
+               legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
+               legend_border_axes_pad=None, legend_n_columns=1,
+               legend_horizontal_spacing=None,
+               legend_vertical_spacing=None, legend_border=True,
+               legend_border_padding=None, legend_shadow=False,
+               legend_rounded_corners=False, render_axes=True,
+               axes_font_name='sans-serif', axes_font_size=10,
+               axes_font_style='normal', axes_font_weight='normal',
+               axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         import matplotlib.pyplot as plt
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
@@ -505,7 +505,7 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
                                                           new_figure)
         self.alignment_transform = alignment_transform
 
-    def _render(self, image=False, **kwargs):
+    def render(self, image=False, **kwargs):
         r"""
         Visualize how points are affected by the warp in 2 dimensions.
         """
@@ -579,24 +579,23 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         self.x_axis_limits = x_axis_limits
         self.y_axis_limits = y_axis_limits
 
-    def _render(self, render_lines=True, line_colour='r',
-                line_style='-', line_width=1, render_markers=True,
-                marker_style='o', marker_size=20, marker_face_colour='r',
-                marker_edge_colour='k', marker_edge_width=1.,
-                render_legend=True, legend_title='',
-                legend_font_name='sans-serif',
-                legend_font_style='normal', legend_font_size=10,
-                legend_font_weight='normal', legend_marker_scale=None,
-                legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
-                legend_border_axes_pad=None, legend_n_columns=1,
-                legend_horizontal_spacing=None,
-                legend_vertical_spacing=None, legend_border=True,
-                legend_border_padding=None, legend_shadow=False,
-                legend_rounded_corners=False, render_axes=True,
-                axes_font_name='sans-serif', axes_font_size=10,
-                axes_font_style='normal', axes_font_weight='normal',
-                figure_size=(6, 4), render_grid=True, grid_line_style='--',
-                grid_line_width=1):
+    def render(self, render_lines=True, line_colour='r',
+               line_style='-', line_width=1, render_markers=True,
+               marker_style='o', marker_size=20, marker_face_colour='r',
+               marker_edge_colour='k', marker_edge_width=1.,
+               render_legend=True, legend_title='',
+               legend_font_name='sans-serif', legend_font_style='normal',
+               legend_font_size=10, legend_font_weight='normal',
+               legend_marker_scale=None, legend_location=2,
+               legend_bbox_to_anchor=(1.05, 1.), legend_border_axes_pad=None,
+               legend_n_columns=1, legend_horizontal_spacing=None,
+               legend_vertical_spacing=None, legend_border=True,
+               legend_border_padding=None, legend_shadow=False,
+               legend_rounded_corners=False, render_axes=True,
+               axes_font_name='sans-serif', axes_font_size=10,
+               axes_font_style='normal', axes_font_weight='normal',
+               figure_size=(6, 4), render_grid=True, grid_line_style='--',
+               grid_line_width=1):
         import matplotlib.pyplot as plt
 
         # Check the viewer options that can be different for each plotted curve
@@ -728,7 +727,7 @@ class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
                                                            new_figure)
         self.image_list = image_list
 
-    def _render(self, interval=50, **kwargs):
+    def render(self, interval=50, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         import matplotlib.animation as animation
@@ -762,7 +761,7 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
         self.num_subplots = self.image_list[0].shape[2]
         self.plot_layout = self._subplot_layout(self.num_subplots)
 
-    def _render(self, interval=50, **kwargs):
+    def render(self, interval=50, **kwargs):
         import matplotlib.cm as cm
         import matplotlib.animation as animation
         import matplotlib.pyplot as plt

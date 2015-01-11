@@ -50,24 +50,8 @@ class Renderer(object):
         self.new_figure = new_figure
         self.figure = self.get_figure()
 
-    def render(self, **kwargs):
-        r"""
-        Render the object on the figure given at instantiation.
-
-        Parameters
-        ----------
-        kwargs : `dict`
-            Passed through to specific rendering engine.
-
-        Returns
-        -------
-        viewer : :map:`Renderer`
-            Pointer to `self`.
-        """
-        return self._render(**kwargs)
-
     @abc.abstractmethod
-    def _render(self, **kwargs):
+    def render(self, **kwargs):
         r"""
         Abstract method to be overridden by the renderer. This will implement
         the actual rendering code for a given object class.
@@ -75,7 +59,7 @@ class Renderer(object):
         Parameters
         ----------
         kwargs : `dict`
-            Options to be set when rendering.
+            Passed through to specific rendering engine.
 
         Returns
         -------
