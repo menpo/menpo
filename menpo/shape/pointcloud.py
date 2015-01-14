@@ -247,25 +247,18 @@ class PointCloud(Shape):
 
     def from_mask(self, mask):
         """
-        A 1D boolean array with the same number of elements as the number of
-        points in the pointcloud. This is then broadcast across the dimensions
-        of the pointcloud and returns a new pointcloud containing only those
-        points that were ``True`` in the mask.
+        Return a copy of this PointCloud which only contains some points.
 
         Parameters
         ----------
-        mask : ``(n_points,)`` `ndarray`
-            1D array of booleans
+        mask : any valid ndarray index
+            any valid indexer for a dimension of a numpy array
 
         Returns
         -------
         pointcloud : :map:`PointCloud`
             A new pointcloud that has been masked.
 
-        Raises
-        ------
-        ValueError
-            Mask must have same number of points as pointcloud.
         """
         pc = self.copy()
         pc.points = pc.points[mask, :]
