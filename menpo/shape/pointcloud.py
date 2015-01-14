@@ -267,9 +267,6 @@ class PointCloud(Shape):
         ValueError
             Mask must have same number of points as pointcloud.
         """
-        if mask.shape[0] != self.n_points:
-            raise ValueError('Mask must be a 1D boolean array of the same '
-                             'number of entries as points in this PointCloud.')
         pc = self.copy()
         pc.points = pc.points[mask, :]
         return pc
