@@ -72,7 +72,8 @@ class PCAModel(MeanInstanceLinearModel):
                         n_samples,
                     progress_bar_str(float(i + 1) / n_samples, show_bar=True)))
             data[i] = sample.as_vector()
-
+        if verbose:
+            print('')
         # compute pca
         e_vectors, e_values, mean = principal_component_decomposition(
             data, whiten=False,  centre=centre, bias=bias, inplace=True)
