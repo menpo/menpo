@@ -1,3 +1,4 @@
+# coding=utf-8
 import numpy as np
 from warnings import warn
 
@@ -73,16 +74,19 @@ class TriMesh(PointCloud):
 
     def tojson(self):
         r"""
-        Convert this `TriMesh` to a dictionary JSON representation.
+        Convert this :map:`TriMesh` to a dictionary representation suitable
+        for inclusion in the LJSON landmark format. Note that this enforces a
+        simpler representation, and as such is not suitable for
+        a permanent serialization of a :map:`TriMesh (to be clear,
+        :map:`TriMesh`'s serialized as part of a landmark set will be rebuilt
+        as a :map:`PointUndirectedGraph`).
 
         Returns
         -------
-        dictionary with 'points' and 'trilist' keys. Both are lists suitable
-        for use in the by the `json` standard library package.
+        dictionary with 'points' and 'connectivity' keys.
+
         """
-        json_dict = PointCloud.tojson(self)
-        json_dict['trilist'] = self.trilist.tolist()
-        return json_dict
+        return self.as_pointgraph().tojson()
 
     def from_mask(self, mask):
         """
