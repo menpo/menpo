@@ -36,7 +36,7 @@ def test_lenna_import():
     img = mio.import_builtin_asset('lenna.png')
     assert(img.shape == (512, 512))
     assert(img.n_channels == 3)
-    assert(img.landmarks['PTS'].n_landmarks == 68)
+    assert(img.landmarks['LJSON'].n_landmarks == 68)
 
 
 def test_path():
@@ -79,7 +79,7 @@ def test_ls_builtin_assets():
     assert(set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
                                             'einstein.jpg', 'einstein.pts',
                                             'lenna.png', 'breakingbad.pts',
-                                            'lenna.pts', 'takeo.ppm',
+                                            'lenna.ljson', 'takeo.ppm',
                                             'takeo.pts', 'tongue.jpg',
                                             'tongue.pts'})
 
