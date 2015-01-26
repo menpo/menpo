@@ -145,7 +145,8 @@ class TexturedTriMesh(TriMesh):
         json_dict['tcoords'] = self.tcoords.tojson()['points']
         return json_dict
 
-    def view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
+    def _view_3d(self, figure_id=None, new_figure=False, textured=True,
+                 **kwargs):
         r"""
         Visualize the :class:`TexturedTriMesh`. Only 3D objects are currently
         supported.
@@ -166,23 +167,45 @@ class TexturedTriMesh(TriMesh):
             If `self.n_dims != 3`.
         """
         if textured:
-            if self.n_dims == 3:
-                try:
-                    from menpo3d.visualize import TexturedTriMeshViewer3d
-                    return TexturedTriMeshViewer3d(
-                        figure_id, new_figure, self.points,
-                        self.trilist, self.texture,
-                        self.tcoords.points).render(**kwargs)
-                except ImportError:
-                    from menpo.visualize import Menpo3dErrorMessage
-                    raise ImportError(Menpo3dErrorMessage)
-            else:
-                raise ValueError("Only viewing of 3D textured meshes"
-                                 "is currently supported.")
+            try:
+                from menpo3d.visualize import TexturedTriMeshViewer3d
+                return TexturedTriMeshViewer3d(
+                    figure_id, new_figure, self.points,
+                    self.trilist, self.texture,
+                    self.tcoords.points).render(**kwargs)
+            except ImportError:
+                from menpo.visualize import Menpo3dErrorMessage
+                raise ImportError(Menpo3dErrorMessage)
         else:
             return super(TexturedTriMesh, self).view(figure_id=figure_id,
                                                      new_figure=new_figure,
                                                      **kwargs)
+
+    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
+                 render_lines=True, line_colour='r', line_style='-',
+                 line_width=1., render_markers=True, marker_style='o',
+                 marker_size=20, marker_face_colour='k', marker_edge_colour='k',
+                 marker_edge_width=1., render_axes=True,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=None,
+                 label=None):
+        import warnings
+        warnings.warn(Warning('2D Viewing of Textured TriMeshes is not '
+                              'supported, falling back to TriMesh viewing.'))
+        return TriMesh._view_2d(
+            self, figure_id=figure_id, new_figure=new_figure,
+            image_view=image_view, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width, render_axes=render_axes,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size, label=label)
 
     def __str__(self):
         return '{}\ntexture_shape: {}, n_texture_channels: {}'.format(

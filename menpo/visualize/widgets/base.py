@@ -1501,6 +1501,11 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
     if glyph is None:
         from menpo.visualize.image import glyph
 
+    # This makes the code shorter for dealing with masked images vs non-masked
+    # images
+    mask_arguments = ({'masked': masked_enabled}
+                      if image_is_masked else {})
+
     # plot
     if render_landmarks and not group == ' ':
         # show image with landmarks
@@ -1510,7 +1515,7 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
                              use_negative=glyph_use_negative,
                              channels=channels).\
                 view_landmarks(
-                    masked=masked_enabled, group=group, with_labels=with_labels,
+                    group=group, with_labels=with_labels,
                     without_labels=None, figure_id=renderer.figure_id,
                     new_figure=False, render_lines=render_lines,
                     line_colour=line_colour, line_style=line_style,
@@ -1549,11 +1554,10 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
                     axes_font_weight=axes_font_weight,
                     axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
                     figure_size=figure_size, interpolation=interpolation,
-                    alpha=alpha)
+                    alpha=alpha, **mask_arguments)
         else:
-            # image, landmarks, masked, not glyph
             renderer = image.view_landmarks(
-                channels=channels, masked=masked_enabled, group=group,
+                channels=channels, group=group,
                 with_labels=with_labels, without_labels=None,
                 figure_id=renderer.figure_id, new_figure=False,
                 render_lines=render_lines, line_colour=line_colour,
@@ -1590,60 +1594,29 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
                 axes_font_size=axes_font_size, axes_font_style=axes_font_style,
                 axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
                 axes_y_limits=axes_y_limits, figure_size=figure_size,
-                interpolation=interpolation, alpha=alpha)
+                interpolation=interpolation, alpha=alpha, **mask_arguments)
     else:
         # either there are not any landmark groups selected or they won't
         # be displayed
-        if image_is_masked:
-            if glyph_enabled or sum_enabled:
-                # image, not landmarks, masked, glyph
-                renderer = glyph(image, vectors_block_size=glyph_block_size,
-                                 use_negative=glyph_use_negative,
-                                 channels=channels).view(
-                    masked=masked_enabled, render_axes=render_axes,
-                    axes_font_name=axes_font_name,
-                    axes_font_size=axes_font_size,
-                    axes_font_style=axes_font_style,
-                    axes_font_weight=axes_font_weight,
-                    axes_x_limits=axes_x_limits,
-                    axes_y_limits=axes_y_limits,
-                    figure_size=figure_size, interpolation=interpolation,
-                    alpha=alpha)
-            else:
-                # image, not landmarks, masked, not glyph
-                renderer = image.view(
-                    masked=masked_enabled, channels=channels,
-                    render_axes=render_axes, axes_font_name=axes_font_name,
-                    axes_font_size=axes_font_size,
-                    axes_font_style=axes_font_style,
-                    axes_font_weight=axes_font_weight,
-                    axes_x_limits=axes_x_limits,
-                    axes_y_limits=axes_y_limits, figure_size=figure_size,
-                    interpolation=interpolation, alpha=alpha)
+        if glyph_enabled or sum_enabled:
+            # image, not landmarks, masked, glyph
+            renderer = glyph(image, vectors_block_size=glyph_block_size,
+                             use_negative=glyph_use_negative,
+                             channels=channels).view(
+                render_axes=render_axes, axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, figure_size=figure_size,
+                interpolation=interpolation, alpha=alpha, **mask_arguments)
         else:
-            if glyph_enabled or sum_enabled:
-                # image, not landmarks, not masked, glyph
-                renderer = glyph(image, vectors_block_size=glyph_block_size,
-                                 use_negative=glyph_use_negative,
-                                 channels=channels).view(
-                    render_axes=render_axes, axes_font_name=axes_font_name,
-                    axes_font_size=axes_font_size,
-                    axes_font_style=axes_font_style,
-                    axes_font_weight=axes_font_weight,
-                    axes_x_limits=axes_x_limits,
-                    axes_y_limits=axes_y_limits, figure_size=figure_size,
-                    interpolation=interpolation, alpha=alpha)
-            else:
-                # image, not landmarks, not masked, not glyph
-                renderer = image.view(
-                    channels=channels, render_axes=render_axes,
-                    axes_font_name=axes_font_name,
-                    axes_font_size=axes_font_size,
-                    axes_font_style=axes_font_style,
-                    axes_font_weight=axes_font_weight,
-                    axes_x_limits=axes_x_limits,
-                    axes_y_limits=axes_y_limits, figure_size=figure_size,
-                    interpolation=interpolation, alpha=alpha)
+            # image, not landmarks, masked, not glyph
+            renderer = image.view(
+                channels=channels, render_axes=render_axes,
+                axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+                axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, figure_size=figure_size,
+                interpolation=interpolation, alpha=alpha, **mask_arguments)
 
     # show plot
     plt.show()

@@ -1,5 +1,4 @@
 import abc
-import copy
 import numpy as np
 
 from menpo.base import Vectorizable

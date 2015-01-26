@@ -1,5 +1,3 @@
-# This has to go above the default importers to prevent cyclical importing
-import abc
 from collections import Iterable
 
 import numpy as np
@@ -39,8 +37,6 @@ class Renderer(object):
         be rendered on.
     """
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, figure_id, new_figure):
         if figure_id is not None and new_figure:
             raise ValueError("Conflicting arguments. figure_id cannot be "
@@ -50,7 +46,6 @@ class Renderer(object):
         self.new_figure = new_figure
         self.figure = self.get_figure()
 
-    @abc.abstractmethod
     def render(self, **kwargs):
         r"""
         Abstract method to be overridden by the renderer. This will implement
@@ -68,7 +63,6 @@ class Renderer(object):
         """
         pass
 
-    @abc.abstractmethod
     def get_figure(self):
         r"""
         Abstract method for getting the correct figure to render on. Should
@@ -81,7 +75,6 @@ class Renderer(object):
         """
         pass
 
-    @abc.abstractmethod
     def save_figure(self, **kwargs):
         r"""
         Abstract method for saving the figure of the current `figure_id` to
@@ -95,64 +88,78 @@ class Renderer(object):
         pass
 
 
-class Viewable(object):
+class viewwrapper(object):
     r"""
-    Abstract interface for objects that can visualize themselves.
+    This class abuses the Python descriptor protocol in order to dynamically
+    change the view method at runtime. Although this is more obviously achieved
+    through inheritance, the view methods practically amount to syntactic sugar
+    and so we want to maintain a single view method per class. We do not want
+    to add the mental overhead of implementing different 2D and 3D PointCloud
+    classes for example, since, outside of viewing, their implementations would
+    be identical.
+    Also note that we could have separated out viewing entirely and made the
+    check there, but the view method is an important paradigm in menpo that
+    we want to maintain.
+    Therefore, this function cleverly (and obscurely) returns the correct
+    view method for the dimensionality of the given object.
     """
 
-    __metaclass__ = abc.ABCMeta
+    def __init__(self, wrapped_func):
+        fname = wrapped_func.__name__
+        self._2d_fname = '_{}_2d'.format(fname)
+        self._3d_fname = '_{}_3d'.format(fname)
 
-    def view_on(self, figure_id, **kwargs):
-        r"""
-        View the object on a a specific figure specified by the given id.
+    def __get__(self, instance, instancetype):
+        if instance.n_dims == 2:
+            return getattr(instance, self._2d_fname)
+        elif instance.n_dims == 3:
+            return getattr(instance, self._3d_fname)
+        else:
+            def raise_not_supported(self):
+                r"""
+                Viewing of objects with greater than 3 dimensions is not
+                currently possible.
+                """
+                raise ValueError('Viewing of objects with greater than 3 '
+                                 'dimensions is not currently possible.')
+            return raise_not_supported
 
-        Parameters
-        ----------
-        figure_id : `object`
-            A unique identifier for a figure.
-        kwargs : `dict`
-            Passed through to specific rendering engine.
 
-        Returns
-        -------
-        viewer : :map:`Renderer`
-            The renderer instantiated.
-        """
-        return self.view(figure_id=figure_id, **kwargs)
+class Viewable(object):
+    r"""
+    Abstract interface for objects that can visualize themselves. This assumes
+    that the class has dimensionality as the view method checks the ``n_dims``
+    property to wire up the correct view method.
+    """
 
-    def view_new(self, **kwargs):
-        r"""
-        View the object on a new figure.
+    @viewwrapper
+    def view(self):
+        # See viewwrapper documentation for an explanation of how the view
+        # method works.
+        pass
 
-        Parameters
-        ----------
-        kwargs : `dict`
-            Passed through to specific rendering engine.
+    def _view_2d(self, **kwargs):
+        raise NotImplementedError('2D Viewing is not supported.')
 
-        Returns
-        -------
-        viewer : :map:`Renderer`
-            The renderer instantiated.
-        """
-        return self.view(new_figure=True, **kwargs)
+    def _view_3d(self, **kwargs):
+        raise NotImplementedError('3D Viewing is not supported.')
 
-    @abc.abstractmethod
-    def view(self, **kwargs):
-        r"""
-        View the object using the default rendering engine figure handling.
-        For example, the default behaviour for Matplotlib is that all draw
-        commands are applied to the same `figure` object.
 
-        Parameters
-        ----------
-        kwargs : `dict`
-            Passed through to specific rendering engine.
+class LandmarkableViewable(object):
+    r"""
+    Mixin for :map:`Landmarkable` and :map:`Viewable` objects. Provides a
+    single helper method for viewing Landmarks and self on the same figure.
+    """
 
-        Returns
-        -------
-        viewer : :map:`Renderer`
-            The renderer instantiated.
-        """
+    @viewwrapper
+    def view_landmarks(self, **kwargs):
+        pass
+
+    def _view_landmarks_2d(self, **kwargs):
+        raise NotImplementedError('2D Landmark Viewing is not supported.')
+
+    def _view_landmarks_3d(self, **kwargs):
+        raise NotImplementedError('3D Landmark Viewing is not supported.')
 
 
 from menpo.visualize.viewmatplotlib import (
@@ -171,183 +178,6 @@ AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
 MultiImageViewer2d = MatplotlibMultiImageViewer2d
 MultiImageSubplotsViewer2d = MatplotlibMultiImageSubplotsViewer2d
-
-
-class LandmarkViewer(object):
-    r"""
-    Base :map:`LandmarkGroup` viewer that abstracts away dimensionality.
-
-    Parameters
-    ----------
-    figure_id : `object`
-        A figure id. Could be any valid object that identifies a figure in a
-        given framework (`str`, `int`, `float`, etc.).
-    new_figure : `bool`
-        Whether the rendering engine should create a new figure.
-    group : `str`
-        The main label of the landmark set.
-    pointcloud : :map:`PointCloud`
-        The PointCloud representing the landmarks.
-    labels_to_masks : `dict(str, ndarray)`
-        A dictionary of labels to masks into the pointcloud that represent
-        which points belong to the given label.
-    """
-    def __init__(self, figure_id, new_figure, group, pointcloud,
-                 labels_to_masks):
-        self.pointcloud = pointcloud
-        self.group = group
-        self.labels_to_masks = labels_to_masks
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-
-    def render(self, **kwargs):
-        r"""
-        Select the correct type of landmark viewer for the given parent object.
-
-        Parameters
-        ----------
-        kwargs : `dict`
-            Passed through to landmark viewer.
-
-        Returns
-        -------
-        viewer : :map:`Renderer`
-            The rendering object.
-
-        Raises
-        ------
-        ValueError
-            Only 2D and 3D viewers are supported.
-        """
-        if self.pointcloud.n_dims == 2:
-            return LandmarkViewer2d(self.figure_id, self.new_figure,
-                                    self.group, self.pointcloud,
-                                    self.labels_to_masks).render(**kwargs)
-        elif self.pointcloud.n_dims == 3:
-            try:
-                from menpo3d.visualize import LandmarkViewer3d
-                return LandmarkViewer3d(self.figure_id, self.new_figure,
-                                        self.group, self.pointcloud,
-                                        self.labels_to_masks).render(**kwargs)
-            except ImportError:
-                raise ImportError(Menpo3dErrorMessage)
-        else:
-            raise ValueError("Only 2D and 3D landmarks are "
-                             "currently supported")
-
-
-class PointCloudViewer(object):
-    r"""
-    Base :map:`PointCloud` viewer that abstracts away dimensionality.
-
-    Note that in order to visualize a 2D :map:`PointCloud`, we treat it as a
-    :map:`PointGraph` with an empty adjacency array (no edges) and use the
-    :map:`PointGraphViewer` viewer.
-
-    Parameters
-    ----------
-    figure_id : `object`
-        A figure id. Could be any valid object that identifies a figure in a
-        given framework (`str`, `int`, `float`, etc.).
-    new_figure : `bool`
-        Whether the rendering engine should create a new figure.
-    points : ``(N, D)`` `ndarray`
-        The points to render.
-    """
-
-    def __init__(self, figure_id, new_figure, points):
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-        self.points = points
-
-    def render(self, **kwargs):
-        r"""
-        Select the correct type of pointcloud viewer for the given
-        pointcloud dimensionality.
-
-        Parameters
-        ----------
-        kwargs : `dict`
-            Passed through to pointcloud viewer.
-
-        Returns
-        -------
-        viewer : :map:`Renderer`
-            The rendering object.
-
-        Raises
-        ------
-        ValueError
-            Only 2D and 3D viewers are supported.
-        """
-        if self.points.shape[1] == 2:
-            # Create an empty adjacency array
-            adjacency_array = np.empty(0)
-            return PointGraphViewer2d(self.figure_id, self.new_figure,
-                                      self.points,
-                                      adjacency_array).render(**kwargs)
-        elif self.points.shape[1] == 3:
-            try:
-                from menpo3d.visualize import PointCloudViewer3d
-                return PointCloudViewer3d(self.figure_id, self.new_figure,
-                                          self.points).render(**kwargs)
-            except ImportError:
-                raise ImportError(Menpo3dErrorMessage)
-        else:
-            raise ValueError("Only 2D and 3D pointclouds are "
-                             "currently supported")
-
-
-class PointGraphViewer(object):
-    r"""
-    Base :map:`PointGraph` viewer that abstracts away dimensionality.
-
-    Parameters
-    ----------
-    figure_id : `object`
-        A figure id. Could be any valid object that identifies a figure in a
-        given framework (`str`, `int`, `float`, etc.).
-    new_figure : `bool`
-        Whether the rendering engine should create a new figure.
-    points : ``(N, D)`` `ndarray`
-        The points to render.
-    adjacency_array : ``(N, 2)`` `ndarray`
-        The adjacency array of the graph.
-    """
-
-    def __init__(self, figure_id, new_figure, points, adjacency_array):
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-        self.points = points
-        self.adjacency_array = adjacency_array
-
-    def render(self, **kwargs):
-        r"""
-        Select the correct type of pointgraph viewer for the given pointgraph
-        dimensionality.
-
-        Parameters
-        ----------
-        kwargs : `dict`
-            Passed through to pointgraph viewer.
-
-        Returns
-        -------
-        viewer : :map:`Renderer`
-            The rendering object.
-
-        Raises
-        ------
-        ValueError
-            Only 2D viewers are supported.
-        """
-        if self.points.shape[1] == 2:
-            return PointGraphViewer2d(self.figure_id, self.new_figure,
-                                      self.points,
-                                      self.adjacency_array).render(**kwargs)
-        else:
-            raise ValueError("Only 2D pointgraphs are "
-                             "currently supported")
 
 
 class ImageViewer(object):
@@ -488,64 +318,109 @@ class ImageViewer(object):
             raise ValueError("Only 2D images are currently supported")
 
 
-class TriMeshViewer(object):
+def view_image_landmarks(image, channels, masked, group,
+                         with_labels, without_labels, figure_id, new_figure,
+                         interpolation, alpha, render_lines, line_colour,
+                         line_style, line_width, render_markers, marker_style,
+                         marker_size, marker_face_colour, marker_edge_colour,
+                         marker_edge_width, render_numbering,
+                         numbers_horizontal_align, numbers_vertical_align,
+                         numbers_font_name, numbers_font_size,
+                         numbers_font_style, numbers_font_weight,
+                         numbers_font_colour, render_legend, legend_title,
+                         legend_font_name, legend_font_style, legend_font_size,
+                         legend_font_weight, legend_marker_scale,
+                         legend_location, legend_bbox_to_anchor,
+                         legend_border_axes_pad, legend_n_columns,
+                         legend_horizontal_spacing, legend_vertical_spacing,
+                         legend_border, legend_border_padding, legend_shadow,
+                         legend_rounded_corners, render_axes, axes_font_name,
+                         axes_font_size, axes_font_style, axes_font_weight,
+                         axes_x_limits, axes_y_limits, figure_size):
     r"""
-    Base :map:`TriMesh` viewer that abstracts away dimensionality.
+    This is a helper method that abstracts away the fact that viewing
+    images and masked images is identical apart from the mask. Therefore,
+    we do the class check in this method and then proceed identically whether
+    the image is masked or not.
 
-    Parameters
-    ----------
-    figure_id : `object`
-        A figure id. Could be any valid object that identifies a figure in a
-        given framework (`str`, `int`, `float`, etc.).
-    new_figure : `bool`
-        Whether the rendering engine should create a new figure.
-    points : ``(N, D)`` `ndarray`
-        The points to render.
-    trilist : `(M, 3)`` `ndarray`
-        The triangulation for the points.
+    See the documentation for _view_2d on Image or _view_2d on MaskedImage
+    for information about the parameters.
     """
+    import matplotlib.pyplot as plt
 
-    def __init__(self, figure_id, new_figure, points, trilist):
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-        self.points = points
-        self.trilist = trilist
+    if not image.has_landmarks:
+        raise ValueError('Image does not have landmarks attached, unable '
+                         'to view landmarks.')
 
-    def render(self, **kwargs):
-        r"""
-        Select the correct type of trimesh viewer for the given trimesh
-        dimensionality.
+    # Render self
+    from menpo.image import MaskedImage
+    if isinstance(image, MaskedImage):
+        self_view = image.view(figure_id=figure_id, new_figure=new_figure,
+                               channels=channels, masked=masked,
+                               interpolation=interpolation, alpha=alpha)
+    else:
+        self_view = image.view(figure_id=figure_id, new_figure=new_figure,
+                               channels=channels,
+                               interpolation=interpolation, alpha=alpha)
 
-        Parameters
-        ----------
-        kwargs : `dict`
-            Passed through to trimesh viewer.
+    # Make sure axes are constrained to the image size
+    if axes_x_limits is None:
+        axes_x_limits = [0, image.width - 1]
+    if axes_y_limits is None:
+        axes_y_limits = [0, image.height - 1]
 
-        Returns
-        -------
-        viewer : :map:`Renderer`
-            The rendering object.
+    # Render landmarks
+    landmark_view = None  # initialize viewer object
+    # useful in order to visualize the legend only for the last axis object
+    render_legend_tmp = False
+    for i, ax in enumerate(self_view.axes_list):
+        # set current axis
+        plt.sca(ax)
+        # show legend only for the last axis object
+        if i == len(self_view.axes_list) - 1:
+            render_legend_tmp = render_legend
 
-        Raises
-        ------
-        ValueError
-            Only 2D and 3D viewers are supported.
-        """
-        if self.points.shape[1] == 2:
-            from menpo.shape.mesh.base import trilist_to_adjacency_array
-            return PointGraphViewer2d(
-                self.figure_id, self.new_figure, self.points,
-                trilist_to_adjacency_array(self.trilist)).render(**kwargs)
-        elif self.points.shape[1] == 3:
-            try:
-                from menpo3d.visualize import TriMeshViewer3d
-                return TriMeshViewer3d(self.figure_id, self.new_figure,
-                                       self.points, self.trilist).render(**kwargs)
-            except ImportError:
-                raise ImportError(Menpo3dErrorMessage)
-        else:
-            raise ValueError("Only 2D and 3D TriMeshes "
-                             "are currently supported")
+        # viewer
+        landmark_view = image.landmarks.view(
+            with_labels=with_labels, without_labels=without_labels,
+            group=group, figure_id=self_view.figure_id, new_figure=False,
+            image_view=True, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_legend=render_legend_tmp, legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=figure_size)
+
+    return landmark_view
 
 
 class MultipleImageViewer(ImageViewer):

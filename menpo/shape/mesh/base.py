@@ -5,7 +5,6 @@ Delaunay = None  # expensive, from scipy.spatial
 
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from menpo.visualize import TriMeshViewer
 
 from .normals import compute_normals
 
@@ -186,15 +185,15 @@ class TriMesh(PointCloud):
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
 
-    def view(self, figure_id=None, new_figure=False, image_view=True,
-             render_lines=True, line_colour='r', line_style='-', line_width=1.,
-             render_markers=True, marker_style='o', marker_size=20,
-             marker_face_colour='k', marker_edge_colour='k',
-             marker_edge_width=1., render_axes=True,
-             axes_font_name='sans-serif', axes_font_size=10,
-             axes_font_style='normal', axes_font_weight='normal',
-             axes_x_limits=None, axes_y_limits=None, figure_size=None,
-             label=None):
+    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
+                 render_lines=True, line_colour='r', line_style='-',
+                 line_width=1., render_markers=True, marker_style='o',
+                 marker_size=20, marker_face_colour='k', marker_edge_colour='k',
+                 marker_edge_width=1., render_axes=True,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=None,
+                 label=None):
         r"""
         Visualization of the TriMesh.
 
@@ -264,19 +263,32 @@ class TriMesh(PointCloud):
         ValueError
             If `not self.n_dims in [2, 3]`.
         """
-        return TriMeshViewer(figure_id, new_figure, self.points,
-                             self.trilist).render(
-            image_view=image_view, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
-            marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            figure_size=figure_size, label=label)
+        from menpo.visualize import PointGraphViewer2d
+
+        return PointGraphViewer2d(
+            figure_id, new_figure, self.points,
+            trilist_to_adjacency_array(self.trilist)).render(
+                image_view=image_view, render_lines=render_lines,
+                line_colour=line_colour, line_style=line_style,
+                line_width=line_width, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
+                marker_edge_width=marker_edge_width, render_axes=render_axes,
+                axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+                axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, figure_size=figure_size,
+                label=label)
+
+    def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
+        try:
+            from menpo3d.visualize import TriMeshViewer3d
+            return TriMeshViewer3d(figure_id, new_figure,
+                                   self.points, self.trilist).render(**kwargs)
+        except ImportError:
+            from menpo.visualize import Menpo3dErrorMessage
+            raise ImportError(Menpo3dErrorMessage)
 
     def view_widget(self, popup=False, browser_style='buttons'):
         r"""

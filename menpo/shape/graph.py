@@ -1,11 +1,8 @@
-import abc
-
 import numpy as np
 
 from . import PointCloud
 from .adjacency import (mask_adjacency_array, mask_adjacency_array_tree,
                         reindex_adjacency_array)
-from menpo.visualize import PointGraphViewer
 
 
 class Graph(object):
@@ -63,7 +60,6 @@ class Graph(object):
     ValueError
         The vertices must be numbered starting from 0.
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, adjacency_array, copy=True):
         # check that adjacency_array has expected shape
@@ -104,7 +100,6 @@ class Graph(object):
         """
         return self.adjacency_array.max() + 1
 
-    @abc.abstractmethod
     def get_adjacency_matrix(self):
         r"""
         Returns the Adjacency Matrix of the graph, i.e. the boolean ndarray that
@@ -115,7 +110,6 @@ class Graph(object):
         """
         pass
 
-    @abc.abstractmethod
     def _get_adjacency_list(self):
         r"""
         Returns the Adjacency List of the graph, i.e. a list of length
@@ -876,7 +870,7 @@ class Tree(DirectedGraph):
             self.maximum_depth, self.n_vertices, self.n_leaves)
 
 
-class PointGraph(object):
+class PointGraph(Graph, PointCloud):
     r"""
     Class for defining a graph with geometry.
 
@@ -920,18 +914,21 @@ class PointGraph(object):
                v
                5
     """
-    def __init__(self, points, adjacency_array):
+    def __init__(self, points, adjacency_array, copy=True):
         _check_n_points(points, adjacency_array)
+        Graph.__init__(self, adjacency_array, copy=copy)
+        PointCloud.__init__(self, points, copy=copy)
 
-    def view(self, figure_id=None, new_figure=False, image_view=True,
-             render_lines=True, line_colour='r', line_style='-', line_width=1.,
-             render_markers=True, marker_style='o', marker_size=20,
-             marker_face_colour='k', marker_edge_colour='k',
-             marker_edge_width=1., render_axes=True,
-             axes_font_name='sans-serif', axes_font_size=10,
-             axes_font_style='normal', axes_font_weight='normal',
-             axes_x_limits=None, axes_y_limits=None, figure_size=None,
-             label=None):
+    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
+                 render_lines=True, line_colour='r',
+                 line_style='-', line_width=1.,
+                 render_markers=True, marker_style='o', marker_size=20,
+                 marker_face_colour='k', marker_edge_colour='k',
+                 marker_edge_width=1., render_axes=True,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=None,
+                 label=None):
         r"""
         Visualization of the PointGraph.
 
@@ -1001,8 +998,10 @@ class PointGraph(object):
         ValueError
             If `not self.n_dims in [2, 3]`.
         """
-        return PointGraphViewer(figure_id, new_figure, self.points,
-                                self.adjacency_array).render(
+        from menpo.visualize import PointGraphViewer2d
+        renderer = PointGraphViewer2d(figure_id, new_figure,
+                                      self.points, self.adjacency_array)
+        renderer.render(
             image_view=image_view, render_lines=render_lines,
             line_colour=line_colour, line_style=line_style,
             line_width=line_width, render_markers=render_markers,
@@ -1014,6 +1013,16 @@ class PointGraph(object):
             axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
             axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
             figure_size=figure_size, label=label)
+        return renderer
+
+    def _view_3d(self, figure_id=None, new_figure=False):
+        try:
+            from menpo3d.visualize import PointGraphViewer3d
+            return PointGraphViewer3d(figure_id, new_figure, self.points,
+                                      self.adjacency_array).render()
+        except ImportError:
+            from menpo.visualize import Menpo3dErrorMessage
+            raise ImportError(Menpo3dErrorMessage)
 
     def view_widget(self, popup=False, browser_style='buttons'):
         r"""
@@ -1033,7 +1042,7 @@ class PointGraph(object):
                               browser_style=browser_style)
 
 
-class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):
+class PointUndirectedGraph(PointGraph, UndirectedGraph):
     r"""
     Class for defining an Undirected Graph with geometry.
 
@@ -1068,9 +1077,8 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):
         instead of {n_vertices}.
     """
     def __init__(self, points, adjacency_array, copy=True):
-        super(PointUndirectedGraph, self).__init__(points, adjacency_array)
-        UndirectedGraph.__init__(self, adjacency_array, copy=copy)
-        PointCloud.__init__(self, points, copy=copy)
+        super(PointUndirectedGraph, self).__init__(points, adjacency_array,
+                                                   copy=copy)
 
     def from_mask(self, mask):
         """
@@ -1126,7 +1134,7 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):
         return json_dict
 
 
-class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
+class PointDirectedGraph(PointGraph, DirectedGraph):
     r"""
     Class for defining a Directed Graph with geometry.
 
@@ -1162,9 +1170,8 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
         instead of {n_vertices}.
     """
     def __init__(self, points, adjacency_array, copy=True):
-        super(PointDirectedGraph, self).__init__(points, adjacency_array)
-        DirectedGraph.__init__(self, adjacency_array, copy=copy)
-        PointCloud.__init__(self, points, copy=copy)
+        super(PointDirectedGraph, self).__init__(points, adjacency_array,
+                                                 copy=copy)
 
     def relative_location_edge(self, parent, child):
         r"""
@@ -1276,7 +1283,7 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
         return json_dict
 
 
-class PointTree(PointDirectedGraph, Tree, PointCloud):
+class PointTree(PointDirectedGraph, Tree):
     r"""
     Class for defining a Tree with geometry.
 
@@ -1311,9 +1318,9 @@ class PointTree(PointDirectedGraph, Tree, PointCloud):
         If ``False``, the ``adjacency_list`` will not be copied on assignment.
     """
     def __init__(self, points, adjacency_array, root_vertex, copy=True):
-        super(PointDirectedGraph, self).__init__(points, adjacency_array)
+        super(PointDirectedGraph, self).__init__(points, adjacency_array,
+                                                 copy=copy)
         Tree.__init__(self, adjacency_array, root_vertex, copy=copy)
-        PointCloud.__init__(self, points, copy=copy)
 
     def from_mask(self, mask):
         """

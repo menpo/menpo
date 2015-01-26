@@ -412,20 +412,20 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
             pc.points = pc.points[:, ::-1] if image_view else pc.points
-            pc.view_on(figure_id=self.figure_id, image_view=False,
-                       render_lines=render_lines, line_colour=line_colour[i],
-                       line_style=line_style, line_width=line_width,
-                       render_markers=render_markers, marker_style=marker_style,
-                       marker_size=marker_size,
-                       marker_face_colour=marker_face_colour,
-                       marker_edge_colour=marker_edge_colour,
-                       marker_edge_width=marker_edge_width,
-                       render_axes=render_axes, axes_font_name=axes_font_name,
-                       axes_font_size=axes_font_size,
-                       axes_font_style=axes_font_style,
-                       axes_font_weight=axes_font_weight, axes_x_limits=None,
-                       axes_y_limits=None, figure_size=figure_size,
-                       label='{0}: {1}'.format(self.group, label))
+            pc.view(figure_id=self.figure_id, image_view=False,
+                    render_lines=render_lines, line_colour=line_colour[i],
+                    line_style=line_style, line_width=line_width,
+                    render_markers=render_markers, marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_face_colour=marker_face_colour,
+                    marker_edge_colour=marker_edge_colour,
+                    marker_edge_width=marker_edge_width,
+                    render_axes=render_axes, axes_font_name=axes_font_name,
+                    axes_font_size=axes_font_size,
+                    axes_font_style=axes_font_style,
+                    axes_font_weight=axes_font_weight, axes_x_limits=None,
+                    axes_y_limits=None, figure_size=figure_size,
+                    label='{0}: {1}'.format(self.group, label))
 
             ax = plt.gca()
 
