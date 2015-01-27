@@ -822,21 +822,17 @@ class PCAModel(MeanInstanceLinearModel):
             figure_size=figure_size)
 
     def __str__(self):
-        str_out = 'PCA Model \n'
-        str_out = str_out + \
-            ' - centred:             {}\n' \
-            ' - biased:               {}\n' \
-            ' - # features:           {}\n' \
-            ' - # active components:  {}\n'.format(
-            self.centred, self.biased, self.n_features,
-            self.n_active_components)
-        str_out = str_out + \
-            ' - kept variance:        {:.2}  {:.1%}\n' \
-            ' - noise variance:       {:.2}  {:.1%}\n'.format(
-            self.variance(), self.variance_ratio(),
-            self.noise_variance(), self.noise_variance_ratio())
-        str_out = str_out + \
-            ' - total # components:   {}\n' \
-            ' - components shape:     {}\n'.format(
+        str_out = 'PCA Model \n'                             \
+                  ' - centred:              {}\n'            \
+                  ' - biased:               {}\n'            \
+                  ' - # features:           {}\n'            \
+                  ' - # active components:  {}\n'            \
+                  ' - kept variance:        {:.2}  {:.1%}\n' \
+                  ' - noise variance:       {:.2}  {:.1%}\n' \
+                  ' - total # components:   {}\n'            \
+                  ' - components shape:     {}\n'.format(
+            self.centred,  self.biased, self.n_features,
+            self.n_active_components, self.variance(), self.variance_ratio(),
+            self.noise_variance(), self.noise_variance_ratio(),
             self.n_components, self.components.shape)
         return str_out

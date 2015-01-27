@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from mock import patch
 from nose.tools import raises

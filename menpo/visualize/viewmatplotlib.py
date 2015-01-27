@@ -624,8 +624,8 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
             'line width for all curves.')
         marker_style = _check_colours_list(
             True, marker_style, n_curves,
-            'Must pass a list of marker styles with length n_curves or a single '
-            'marker style for all curves.')
+            'Must pass a list of marker styles with length n_curves or a '
+            'single marker style for all curves.')
         marker_size = _check_colours_list(
             True, marker_size, n_curves,
             'Must pass a list of marker sizes with length n_curves or a single '

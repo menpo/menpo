@@ -297,14 +297,11 @@ def update_index_selection(index_wid, index_selection_default,
     """
     import IPython.html.widgets as ipywidgets
     # check if update is required
-    if not (index_selection_default['min'] == index_wid.selected_values[
-        'min'] and
-                    index_selection_default['max'] == index_wid.selected_values[
-                    'max'] and
-                    index_selection_default['step'] ==
-                    index_wid.selected_values['step'] and
-                    index_selection_default['index'] ==
-                    index_wid.selected_values['index']):
+    index_wid_selected = index_wid.selected_values
+    if not (index_selection_default['min'] == index_wid_selected['min'] and
+            index_selection_default['max'] == index_wid_selected['max'] and
+            index_selection_default['step'] == index_wid_selected['step'] and
+            index_selection_default['index'] == index_wid_selected['index']):
         if isinstance(index_wid, ipywidgets.IntSliderWidget):
             # created by `index_selection_slider()` function
             index_wid.min = index_selection_default['min']
@@ -555,8 +552,11 @@ def update_colour_selection(colour_selection_wid, default_colour_list,
     """
     if labels is None:
         labels = colour_selection_wid.selected_values['labels']
-    if (_lists_are_the_same(colour_selection_wid.selected_values['colour'], default_colour_list) and
-        not _lists_are_the_same(colour_selection_wid.selected_values['labels'], labels)):
+
+    sel_colours = colour_selection_wid.selected_values['colour']
+    sel_labels = colour_selection_wid.selected_values['labels']
+    if (_lists_are_the_same(sel_colours, default_colour_list) and not
+        _lists_are_the_same(sel_labels, labels)):
         # the provided colours are the same, but the labels changed, so update
         # the labels
         colour_selection_wid.selected_values['labels'] = labels
@@ -565,10 +565,8 @@ def update_colour_selection(colour_selection_wid, default_colour_list,
             labels_dict[l] = k
         colour_selection_wid.children[0].children[0].values = labels_dict
         colour_selection_wid.children[0].children[0].value = 0
-    elif (not _lists_are_the_same(colour_selection_wid.selected_values['colour'],
-                                  default_colour_list) and
-          _lists_are_the_same(colour_selection_wid.selected_values['labels'],
-                              labels)):
+    elif (not _lists_are_the_same(sel_colours, default_colour_list) and
+          _lists_are_the_same(sel_labels, labels)):
         # the provided labels are the same, but the colours are different
         # assign colour
         colour_selection_wid.selected_values['colour'] = default_colour_list
@@ -584,19 +582,15 @@ def update_colour_selection(colour_selection_wid, default_colour_list,
             colour_selection_wid.children[2].children[2].value = b_val
         colour_selection_wid.children[1].value = default_colour
         colour_selection_wid.children[0].children[0].value = 0
-    elif (not _lists_are_the_same(colour_selection_wid.selected_values['colour'],
-                                  default_colour_list) and not
-          _lists_are_the_same(colour_selection_wid.selected_values['labels'],
-                              labels)):
+    elif (not _lists_are_the_same(sel_colours, default_colour_list) and not
+          _lists_are_the_same(sel_labels, labels)):
         # both the colours and the labels are different
         # assign colour
-        if (len(colour_selection_wid.selected_values['labels']) > 1 and
-                    len(labels) == 1):
+        if len(sel_labels) > 1 and len(labels) == 1:
             colour_selection_wid.children[1].description = \
                 colour_selection_wid.children[0].children[0].description
             colour_selection_wid.children[0].children[0].description = ''
-        elif (len(colour_selection_wid.selected_values['labels']) == 1 and
-                      len(labels) > 1):
+        elif len(sel_labels) == 1 and len(labels) > 1:
             colour_selection_wid.children[0].children[0].description = \
                 colour_selection_wid.children[1].description
             colour_selection_wid.children[1].description = ''
@@ -2426,7 +2420,7 @@ def format_figure_options_two_scales(figure_options_wid,
     """
     # align figure scale sliders and checkbox
     # figure_options_wid.children[1].remove_class('vbox')
-    #figure_options_wid.children[1].add_class('hbox')
+    # figure_options_wid.children[1].add_class('hbox')
     figure_options_wid.children[1].add_class('align-end')
 
     # fix figure scale sliders width
@@ -2862,7 +2856,8 @@ def legend_options(legend_options_default, plot_function=None,
     bbox_to_anchor_y.on_trait_change(save_bbox_to_anchor, 'value')
 
     def save_borderaxespad(name, value):
-        legend_options_wid.selected_values['legend_border_axes_pad'] = float(value)
+        key = 'legend_border_axes_pad'
+        legend_options_wid.selected_values[key] = float(value)
     legend_border_axes_pad.on_trait_change(save_borderaxespad, 'value')
 
     def save_n_columns(name, value):
@@ -2969,7 +2964,7 @@ def format_legend_options(legend_options_wid, container_padding='6px',
     # align font-related options
     # legend_options_wid.children[1].children[1].children[1].children[1].\
     #    remove_class('vbox')
-    #legend_options_wid.children[1].children[1].children[1].children[1].\
+    # legend_options_wid.children[1].children[1].children[1].children[1].\
     #    add_class('hbox')
 
     # set fontsize and title text box width
@@ -4015,7 +4010,8 @@ def lbp_options(toggle_show_default=True, toggle_show_visible=True):
     radius.on_trait_change(get_radius, 'value')
 
     def get_samples(name, value):
-        lbp_options_wid.options['samples'] = _convert_str_to_list_int(str(value))
+        str_val = _convert_str_to_list_int(str(value))
+        lbp_options_wid.options['samples'] = str_val
     samples.on_trait_change(get_samples, 'value')
 
     # Toggle button function
@@ -4403,7 +4399,7 @@ def _get_function_handle_from_string(s):
     Function that returns a function handle given the function code as a string.
     """
     try:
-        exec (s)
+        exec s
         function_name = s[4:s.find('(')]
         return eval(function_name), None
     except:

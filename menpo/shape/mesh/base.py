@@ -37,7 +37,7 @@ class TriMesh(PointCloud):
         In general this should only be used if you know what you are doing.
     """
     def __init__(self, points, trilist=None, copy=True):
-        #TODO add inheritance from Graph once implemented
+        # TODO: add inheritance from Graph once implemented
         super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
             global Delaunay

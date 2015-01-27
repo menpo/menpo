@@ -212,8 +212,8 @@ class MaskedImage(Image):
             # oh dear, couldn't avoid a copy. Did the user try to?
             if not copy:
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
-                    'copy can only be avoided if MaskedImage has an all_true'
-                    'mask.')
+                     'copy can only be avoided if MaskedImage has an all_true '
+                     'mask.')
 
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '

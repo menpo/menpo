@@ -9,12 +9,14 @@ class TcoordsToPointCloud(Transform):
     Converts unitary tcoords into a PointCloud that is suitable
     for directly indexing into the pixels of the texture (e.g. for manual
     mapping operations). The resulting tcoords behave just like image landmarks
-    do:
+    do
 
-     >>> texture = texturedtrimesh.texture
-     >>> t = TcoordsToPointCloud(texture.shape)
-     >>> tc_ps = t.apply(texturedtrimesh.tcoords)
-     >>> pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
+    ::
+
+        >>> texture = texturedtrimesh.texture
+        >>> t = TcoordsToPointCloud(texture.shape)
+        >>> tc_ps = t.apply(texturedtrimesh.tcoords)
+        >>> pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
 
     The operations that are performed are:
 

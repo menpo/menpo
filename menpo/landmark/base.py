@@ -531,9 +531,10 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         """
         unlabelled_points = np.sum(self._labels_to_masks.values(), axis=0) == 0
         if np.any(unlabelled_points):
-            raise ValueError('Every point in the landmark pointcloud must be '
-                             'labelled. Points {0} were unlabelled.'.format(
-                np.nonzero(unlabelled_points)))
+            nonzero = np.nonzero(unlabelled_points)
+            raise ValueError(
+                'Every point in the landmark pointcloud must be labelled. '
+                'Points {0} were unlabelled.'.format(nonzero))
 
     def _new_group_with_only_labels(self, labels):
         """

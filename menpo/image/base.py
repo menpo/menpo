@@ -815,9 +815,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                              "indices")
         min_bounded = self.constrain_points_to_bounds(min_indices)
         max_bounded = self.constrain_points_to_bounds(max_indices)
-        if not constrain_to_boundary and not (
-                    np.all(min_bounded == min_indices) or
-                    np.all(max_bounded == max_indices)):
+        all_max_bounded = np.all(min_bounded == min_indices)
+        all_min_bounded = np.all(max_bounded == max_indices)
+        if not (constrain_to_boundary or all_max_bounded or all_min_bounded):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
@@ -1591,9 +1591,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             range is outside of ``[0, 1]``
         """
         if self.n_dims != 2 or self.n_channels not in [1, 3]:
-            raise ValueError('Can only convert greyscale or RGB 2D images. '
-                             'Received a {} channel {}D image.'.format(
-                self.n_channels, self.n_dims))
+            raise ValueError(
+                'Can only convert greyscale or RGB 2D images. '
+                'Received a {} channel {}D image.'.format(self.n_channels,
+                                                          self.n_dims))
 
         # Slice off the channel for greyscale images
         pixels = self.pixels[..., 0] if self.n_channels == 1 else self.pixels

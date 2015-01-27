@@ -199,14 +199,14 @@ def ibug_face_68(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
         nose_connectivity, leye_connectivity, reye_connectivity,
         mouth_connectivity
     ])
 
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['jaw'] = jaw_indices
@@ -280,7 +280,6 @@ def ibug_face_66(landmark_group):
     inner_mouth_indices = np.hstack((48, np.arange(60, 63),
                                      54, np.arange(63, 66)))
 
-
     jaw_connectivity = _connectivity_from_array(jaw_indices)
     lbrow_connectivity = _connectivity_from_array(lbrow_indices)
     rbrow_connectivity = _connectivity_from_array(rbrow_indices)
@@ -293,8 +292,7 @@ def ibug_face_66(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
         nose_connectivity, leye_connectivity, reye_connectivity,
         mouth_connectivity])
@@ -302,7 +300,8 @@ def ibug_face_66(landmark_group):
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(60), np.arange(61, 64), np.arange(65, 68)))
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['jaw'] = jaw_indices
@@ -384,15 +383,15 @@ def ibug_face_51(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         lbrow_connectivity, rbrow_connectivity, nose_connectivity,
         leye_connectivity, reye_connectivity, mouth_connectivity])
 
     # Ignore the two inner mouth points
     ind = np.arange(17, 68)
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -475,14 +474,15 @@ def ibug_face_49(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         lbrow_connectivity, rbrow_connectivity, nose_connectivity,
         leye_connectivity, reye_connectivity, mouth_connectivity])
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(17, 60), np.arange(61, 64), np.arange(65, 68)))
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -641,7 +641,7 @@ def ibug_face_65_closed_mouth(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices)])
 
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
         nose_connectivity, leye_connectivity, reye_connectivity,
         mouth_connectivity])
@@ -649,7 +649,8 @@ def ibug_face_65_closed_mouth(landmark_group):
     # Ignore the two inner mouth points
     ind = np.arange(65)
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['jaw'] = jaw_indices
@@ -788,7 +789,7 @@ def lfpw_face(landmark_group):
          _connectivity_from_array(inner_mouth_indices)))
     nose_connectivity = _connectivity_from_array(nose_indices, close_loop=True)
 
-    total_connectivity = np.vstack(
+    total_conn = np.vstack(
         (chin_connectivity, leye_connectivity, reye_connectivity,
          lbrow_connectivity, rbrow_connectivity, mouth_connectivity,
          nose_connectivity))
@@ -796,7 +797,8 @@ def lfpw_face(landmark_group):
     # Ignore the two inner mouth points
     ind = np.arange(29)
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['chin'] = chin_indices
@@ -891,13 +893,13 @@ def ibug_open_eye(landmark_group):
     lower_el_connectivity += zip(lower_el_bottom, lower_el_bottom[1:])
     lower_el_connectivity += [(11, 0)]
 
-    total_connectivity = np.asarray(upper_el_connectivity +
-                                    lower_el_connectivity +
-                                    iris_connectivity.tolist() +
-                                    pupil_connectivity.tolist() +
-                                    sclera_connectivity)
+    total_conn = np.asarray(upper_el_connectivity +
+                            lower_el_connectivity +
+                            iris_connectivity.tolist() +
+                            pupil_connectivity.tolist() +
+                            sclera_connectivity)
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['upper_eyelid'] = upper_el_indices
@@ -956,9 +958,9 @@ def ibug_close_eye_points(landmark_group):
     lower_connectivity += zip(middle_indices, middle_indices[1:])
     lower_connectivity += [(11, 0)]
 
-    total_connectivity = np.asarray(upper_connectivity + lower_connectivity)
+    total_conn = np.asarray(upper_connectivity + lower_connectivity)
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['upper_eyelid'] = upper_indices
@@ -1181,12 +1183,12 @@ def ibug_hand(landmark_group):
     palm_connectivity = _connectivity_from_array(palm_indices,
                                                  close_loop=True)
 
-    total_connectivity = np.vstack((thumb_connectivity, index_connectivity,
-                                    middle_connectivity, ring_connectivity,
-                                    pinky_connectivity, palm_connectivity))
+    total_conn = np.vstack((thumb_connectivity, index_connectivity,
+                            middle_connectivity, ring_connectivity,
+                            pinky_connectivity, palm_connectivity))
 
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['thumb'] = thumb_indices
@@ -1304,14 +1306,14 @@ def lsp_pose(landmark_group):
     right_arm_connectivity = _connectivity_from_array(right_arm_indices)
     head_connectivity = _connectivity_from_array(head_indices)
 
-    total_connectivity = np.vstack([left_leg_connectivity,
-                                    right_leg_connectivity,
-                                    left_arm_connectivity,
-                                    right_arm_connectivity,
-                                    head_connectivity])
+    total_conn = np.vstack([left_leg_connectivity,
+                            right_leg_connectivity,
+                            left_arm_connectivity,
+                            right_arm_connectivity,
+                            head_connectivity])
 
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_leg'] = left_leg_indices
@@ -1422,12 +1424,12 @@ def streetscene_car_view_0(landmark_group):
     windshield_connectivity = _connectivity_from_array(windshield_indices,
                                                        close_loop=True)
 
-    total_connectivity = np.vstack((front_connectivity, bonnet_connectivity,
-                                    windshield_connectivity))
+    total_conn = np.vstack((front_connectivity, bonnet_connectivity,
+                            windshield_connectivity))
 
     ind = np.arange(8)
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['front'] = front_indices
@@ -1493,12 +1495,12 @@ def streetscene_car_view_1(landmark_group):
     left_side_connectivity = _connectivity_from_array(left_side_indices,
                                                       close_loop=True)
 
-    total_connectivity = np.vstack((front_connectivity, bonnet_connectivity,
-                                    windshield_connectivity, left_side_connectivity))
+    total_conn = np.vstack((front_connectivity, bonnet_connectivity,
+                            windshield_connectivity, left_side_connectivity))
 
     ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['front'] = front_indices
@@ -1553,11 +1555,11 @@ def streetscene_car_view_2(landmark_group):
     left_side_connectivity = _connectivity_from_array(left_side_indices,
                                                       close_loop=True)
 
-    total_connectivity = left_side_connectivity
+    total_conn = left_side_connectivity
 
     ind = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_side'] = left_side_indices
@@ -1613,20 +1615,20 @@ def streetscene_car_view_3(landmark_group):
     rear_indices = np.array([8, 9, 11, 10])
 
     left_side_connectivity = _connectivity_from_array(left_side_indices,
-                                                 close_loop=True)
+                                                      close_loop=True)
     rear_windshield_connectivity = _connectivity_from_array(
         rear_windshield_indices, close_loop=True)
     trunk_connectivity = _connectivity_from_array(trunk_indices,
                                                   close_loop=True)
     rear_connectivity = _connectivity_from_array(rear_indices, close_loop=True)
 
-    total_connectivity = np.vstack((left_side_connectivity,
-                                    rear_windshield_connectivity,
-                                    trunk_connectivity, rear_connectivity))
+    total_conn = np.vstack((left_side_connectivity,
+                            rear_windshield_connectivity,
+                            trunk_connectivity, rear_connectivity))
 
     ind = np.array([0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18])
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_side'] = left_side_indices
@@ -1693,13 +1695,13 @@ def streetscene_car_view_4(landmark_group):
     right_side_connectivity = _connectivity_from_array(right_side_indices,
                                                        close_loop=True)
 
-    total_connectivity = np.vstack((front_connectivity, bonnet_connectivity,
-                                    windshield_connectivity,
-                                    right_side_connectivity))
+    total_conn = np.vstack((front_connectivity, bonnet_connectivity,
+                            windshield_connectivity,
+                            right_side_connectivity))
 
     ind = np.hstack((np.arange(8), np.array([9, 11, 13, 15, 17, 19])))
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['front'] = front_indices
@@ -1754,11 +1756,11 @@ def streetscene_car_view_5(landmark_group):
     right_side_connectivity = _connectivity_from_array(right_side_indices,
                                                        close_loop=True)
 
-    total_connectivity = right_side_connectivity
+    total_conn = right_side_connectivity
 
     ind = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19])
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['right_side'] = right_side_indices
@@ -1821,13 +1823,13 @@ def streetscene_car_view_6(landmark_group):
                                                   close_loop=True)
     rear_connectivity = _connectivity_from_array(rear_indices, close_loop=True)
 
-    total_connectivity = np.vstack((right_side_connectivity,
-                                    rear_windshield_connectivity,
-                                    trunk_connectivity, rear_connectivity))
+    total_conn = np.vstack((right_side_connectivity,
+                            rear_windshield_connectivity,
+                            trunk_connectivity, rear_connectivity))
 
     ind = np.array([1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19])
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['right_side'] = right_side_indices
@@ -1889,12 +1891,12 @@ def streetscene_car_view_7(landmark_group):
                                                   close_loop=True)
     rear_connectivity = _connectivity_from_array(rear_indices, close_loop=True)
 
-    total_connectivity = np.vstack((rear_windshield_connectivity,
-                                    trunk_connectivity, rear_connectivity))
+    total_conn = np.vstack((rear_windshield_connectivity,
+                            trunk_connectivity, rear_connectivity))
 
     ind = np.arange(8, 16)
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['rear_windshield'] = rear_windshield_indices
@@ -1964,16 +1966,20 @@ def bu3dfe_83(landmark_group):
 
     reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
     leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    rbrow_connectivity = _connectivity_from_array(rbrow_indices, close_loop=True)
-    lbrow_connectivity = _connectivity_from_array(lbrow_indices, close_loop=True)
+    rbrow_connectivity = _connectivity_from_array(rbrow_indices,
+                                                  close_loop=True)
+    lbrow_connectivity = _connectivity_from_array(lbrow_indices,
+                                                  close_loop=True)
     rnose_connectivity = _connectivity_from_array(rnose_indicies)
     nostril_connectivity = _connectivity_from_array(nostril_indices)
     lnose_connectivity = _connectivity_from_array(lnose_indicies)
-    outermouth_connectivity = _connectivity_from_array(outermouth_indices, close_loop=True)
-    innermouth_connectivity = _connectivity_from_array(innermouth_indices, close_loop=True)
+    outermouth_connectivity = _connectivity_from_array(outermouth_indices,
+                                                       close_loop=True)
+    innermouth_connectivity = _connectivity_from_array(innermouth_indices,
+                                                       close_loop=True)
     jaw_connectivity = _connectivity_from_array(jaw_indices)
 
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         reye_connectivity, leye_connectivity,
         rbrow_connectivity, lbrow_connectivity,
         rnose_connectivity, nostril_connectivity, lnose_connectivity,
@@ -1982,7 +1988,7 @@ def bu3dfe_83(landmark_group):
     ])
 
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['right_eye'] = reye_indices

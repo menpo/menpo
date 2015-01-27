@@ -30,7 +30,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), popup=False,
 
     Parameters
     -----------
-    pointclouds : `list` of :map:`PointCloud` or :map:`PointGraph` or :map:`TriMesh` or subclass
+    pointclouds : `list` of :map:`PointCloud` or :map:`PointGraph` or subclasses
         The `list` of objects to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
@@ -189,7 +189,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), popup=False,
         button_title = 'Pointcloud Menu'
     # create popup widget if asked
     cont_wid = ipywidgets.TabWidget(children=[info_wid, viewer_options_all,
-                                   save_figure_wid])
+                                              save_figure_wid])
     if popup:
         wid = ipywidgets.PopupWidget(children=[logo_wid, cont_wid],
                                      button_text=button_title)
@@ -336,7 +336,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), popup=False,
                       'legend_rounded_corners': False}
     figure_options = {'x_scale': 1.,
                       'y_scale': 1.,
-                          'render_axes': False,
+                      'render_axes': False,
                       'axes_font_name': 'sans-serif',
                       'axes_font_size': 10,
                       'axes_font_style': 'normal',
@@ -745,7 +745,8 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), popup=False,
                            tmp5['y_scale'] * figure_size[1])
         n_labels = len(landmark_options_wid.selected_values['with_labels'])
 
-        renderer = landmarks[im][landmark_options_wid.selected_values['group']].view(
+        sel_group = landmark_options_wid.selected_values['group']
+        renderer = landmarks[im][sel_group].view(
             with_labels=landmark_options_wid.selected_values['with_labels'],
             figure_id=save_figure_wid.renderer[0].figure_id,
             new_figure=False, image_view=axes_mode_wid.value == 1,
@@ -1155,54 +1156,54 @@ def visualize_images(images, figure_size=(10, 8), popup=False,
             landmark_options_wid.selected_values['with_labels'],
             tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
             tmp1['line_colour'][:n_labels], tmp2['render_markers'],
-            tmp2['marker_style'], tmp2['marker_size'], tmp2['marker_edge_width'],
-            tmp2['marker_edge_colour'], tmp2['marker_face_colour'],
-            tmp3['render_numbering'], tmp3['numbers_font_name'],
-            tmp3['numbers_font_size'], tmp3['numbers_font_style'],
-            tmp3['numbers_font_weight'], tmp3['numbers_font_colour'][0],
-            tmp3['numbers_horizontal_align'], tmp3['numbers_vertical_align'],
-            tmp4['legend_n_columns'], tmp4['legend_border_axes_pad'],
-            tmp4['legend_rounded_corners'], tmp4['legend_title'],
-            tmp4['legend_horizontal_spacing'], tmp4['legend_shadow'],
-            tmp4['legend_location'], tmp4['legend_font_name'],
-            tmp4['legend_bbox_to_anchor'], tmp4['legend_border'],
-            tmp4['legend_marker_scale'], tmp4['legend_vertical_spacing'],
-            tmp4['legend_font_weight'], tmp4['legend_font_size'],
-            tmp4['render_legend'], tmp4['legend_font_style'],
-            tmp4['legend_border_padding'], new_figure_size, tmp5['render_axes'],
-            tmp5['axes_font_name'], tmp5['axes_font_size'],
-            tmp5['axes_font_style'], tmp5['axes_x_limits'],
-            tmp5['axes_y_limits'], tmp5['axes_font_weight'],
-            tmp6['interpolation'], tmp6['alpha'])
+            tmp2['marker_style'], tmp2['marker_size'],
+            tmp2['marker_edge_width'], tmp2['marker_edge_colour'],
+            tmp2['marker_face_colour'], tmp3['render_numbering'],
+            tmp3['numbers_font_name'], tmp3['numbers_font_size'],
+            tmp3['numbers_font_style'], tmp3['numbers_font_weight'],
+            tmp3['numbers_font_colour'][0], tmp3['numbers_horizontal_align'],
+            tmp3['numbers_vertical_align'], tmp4['legend_n_columns'],
+            tmp4['legend_border_axes_pad'], tmp4['legend_rounded_corners'],
+            tmp4['legend_title'], tmp4['legend_horizontal_spacing'],
+            tmp4['legend_shadow'], tmp4['legend_location'],
+            tmp4['legend_font_name'], tmp4['legend_bbox_to_anchor'],
+            tmp4['legend_border'], tmp4['legend_marker_scale'],
+            tmp4['legend_vertical_spacing'], tmp4['legend_font_weight'],
+            tmp4['legend_font_size'], tmp4['render_legend'],
+            tmp4['legend_font_style'], tmp4['legend_border_padding'],
+            new_figure_size, tmp5['render_axes'], tmp5['axes_font_name'],
+            tmp5['axes_font_size'], tmp5['axes_font_style'],
+            tmp5['axes_x_limits'], tmp5['axes_y_limits'],
+            tmp5['axes_font_weight'], tmp6['interpolation'], tmp6['alpha'])
 
         # save the current figure id
         save_figure_wid.renderer[0] = renderer
 
     # define function that updates info text
-    def update_info(image, image_is_masked, image_has_landmarks, group):
+    def update_info(img, image_is_masked, image_has_landmarks, group):
         # Prepare masked (or non-masked) string
         masked_str = 'Masked Image' if image_is_masked else 'Image'
         # get image path, if available
-        path_str = image.path if hasattr(image, 'path') else 'No path available.'
+        path_str = img.path if hasattr(img, 'path') else 'No path available.'
         # Display masked pixels if image is masked
         masked_pixels_str = (r'{} masked pixels (attached mask {:.1%} true)'.
-                             format(image.n_true_pixels(),
-                                    image.mask.proportion_true())
+                             format(img.n_true_pixels(),
+                                    img.mask.proportion_true())
                              if image_is_masked else '')
         # Display number of landmarks if image is landmarked
         landmarks_str = (r'{} landmark points.'.
-                         format(image.landmarks[group].lms.n_points)
+                         format(img.landmarks[group].lms.n_points)
                          if image_has_landmarks else '')
 
         info_wid.children[1].children[0].value = "> {} of size {} with {} " \
                                                  "channel{}".\
-            format(masked_str, image._str_shape, image.n_channels,
-                   's' * (image.n_channels > 1))
+            format(masked_str, img._str_shape, img.n_channels,
+                   's' * (img.n_channels > 1))
         info_wid.children[1].children[1].value = "> Path: '{}'".format(path_str)
         info_wid.children[1].children[2].visible = image_is_masked
         info_wid.children[1].children[2].value = "> {}".format(masked_pixels_str)
         info_wid.children[1].children[3].value = "> min={:.3f}, max={:.3f}.".\
-            format(image.pixels.min(), image.pixels.max())
+            format(img.pixels.min(), img.pixels.max())
         info_wid.children[1].children[4].visible = image_has_landmarks
         info_wid.children[1].children[4].value = "> {}".format(landmarks_str)
 

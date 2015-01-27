@@ -191,7 +191,7 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
             window_height_temp > pixels.shape[0]):
             raise ValueError("Window height must be >= block size and <= "
                              "image height")
-        if (window_width_temp < block_size*cell_size or
+        if (window_width_temp < block_size * cell_size or
             window_width_temp > pixels.shape[1]):
             raise ValueError("Window width must be >= block size and <= "
                              "image width")
@@ -519,8 +519,8 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
             info_str, pixels.shape[1], pixels.shape[0], pixels.shape[2])
         info_str = "{}  - Sampling step is {}.\n".format(info_str, step)
         info_str = "{}  - Radius of {} pixels, {} rings and {} histograms " \
-                   "with {} orientations.\n".format(
-                   info_str, radius, rings, histograms, orientations)
+                   "with {} orientations.\n".format(info_str, radius, rings,
+                                                    histograms, orientations)
         if not normalization == 'off':
             info_str = "{}  - Using {} normalization.\n".format(info_str,
                                                                 normalization)
