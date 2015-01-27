@@ -100,13 +100,13 @@ class PointCloud(Shape):
 
     def tojson(self):
         r"""
-        Convert this PointCloud to a dictionary JSON representation.
+        Convert this :map:`PointCloud` to a dictionary representation suitable
+        for inclusion in the LJSON landmark format.
 
         Returns
         -------
-        json_dict : `dict`
-            Dictionary with a 'points' key, the value of which is a list
-            suitable for use in the by the `json` standard library package.
+        dictionary with 'points' keys.
+
         """
         return {'points': self.points.tolist()}
 

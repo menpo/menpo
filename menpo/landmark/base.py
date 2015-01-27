@@ -574,24 +574,12 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         containing the label, spatial points and connectivity information.
         Suitable or use in the by the `json` standard library package.
         """
-        from menpo.shape import TriMesh, PointUndirectedGraph
+        labels = [{'mask': mask.nonzero()[0].tolist(),
+                   'label': label}
+                  for label, mask in self._labels_to_masks.items()]
 
-        groups = []
-        for label in self:
-            pcloud = self[label]
-            if isinstance(pcloud, TriMesh):
-                connectivity = [t.tolist()
-                                for t in pcloud.as_pointgraph().adjacency_array]
-            elif isinstance(pcloud, PointUndirectedGraph):
-                connectivity = [t.tolist()
-                                for t in pcloud.adjacency_array]
-            else:
-                connectivity = []
-            landmarks = [{'point': p.tolist()} for p in pcloud.points]
-            groups.append({'connectivity': connectivity,
-                           'label': label,
-                           'landmarks': landmarks})
-        return {'groups': groups}
+        return {'landmarks': self.lms.tojson(),
+                'labels': labels}
 
     def _view_2d(self, with_labels=None, without_labels=None, group='group',
                  figure_id=None, new_figure=False, image_view=True,

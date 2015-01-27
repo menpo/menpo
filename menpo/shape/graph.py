@@ -919,6 +919,20 @@ class PointGraph(Graph, PointCloud):
         Graph.__init__(self, adjacency_array, copy=copy)
         PointCloud.__init__(self, points, copy=copy)
 
+    def tojson(self):
+        r"""
+        Convert this :map:`PointGraph` to a dictionary representation suitable
+        for inclusion in the LJSON landmark format.
+
+        Returns
+        -------
+        dictionary with 'points' and 'connectivity' keys.
+
+        """
+        json_dict = PointCloud.tojson(self)
+        json_dict['connectivity'] = self.adjacency_array.tolist()
+        return json_dict
+
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r',
                  line_style='-', line_width=1.,
