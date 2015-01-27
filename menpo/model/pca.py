@@ -544,7 +544,7 @@ class PCAModel(MeanInstanceLinearModel):
                          marker_edge_colour='k', marker_edge_width=1.,
                          render_axes=True, axes_font_name='sans-serif',
                          axes_font_size=10, axes_font_style='normal',
-                         axes_font_weight='normal', figure_size=(10, 8),
+                         axes_font_weight='normal', figure_size=(10, 6),
                          render_grid=True, grid_line_style='--',
                          grid_line_width=0.5):
         r"""
@@ -636,7 +636,7 @@ class PCAModel(MeanInstanceLinearModel):
                                marker_edge_colour='k', marker_edge_width=1.,
                                render_axes=True, axes_font_name='sans-serif',
                                axes_font_size=10, axes_font_style='normal',
-                               axes_font_weight='normal', figure_size=(10, 8),
+                               axes_font_weight='normal', figure_size=(10, 6),
                                render_grid=True, grid_line_style='--',
                                grid_line_width=0.5):
         r"""
@@ -735,7 +735,7 @@ class PCAModel(MeanInstanceLinearModel):
                                           axes_font_size=10,
                                           axes_font_style='normal',
                                           axes_font_weight='normal',
-                                          figure_size=(10, 8), render_grid=True,
+                                          figure_size=(10, 6), render_grid=True,
                                           grid_line_style='--',
                                           grid_line_width=0.5):
         r"""
