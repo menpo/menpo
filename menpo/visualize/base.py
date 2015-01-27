@@ -381,9 +381,9 @@ def view_image_landmarks(image, channels, masked, group,
             render_legend_tmp = render_legend
 
         # viewer
-        landmark_view = image.landmarks.view(
+        landmark_view = image.landmarks[group].view(
             with_labels=with_labels, without_labels=without_labels,
-            group=group, figure_id=self_view.figure_id, new_figure=False,
+            figure_id=self_view.figure_id, new_figure=False,
             image_view=True, render_lines=render_lines,
             line_colour=line_colour, line_style=line_style,
             line_width=line_width, render_markers=render_markers,
