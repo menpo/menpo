@@ -1531,7 +1531,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
             options_widgets.append(
                 figure_options(viewer_options_default[0]['figure'],
                                plot_function=plot_function,
-                               figure_scale_bounds=(0.1, 2),
+                               figure_scale_bounds=(0.1, 4),
                                figure_scale_step=0.1, figure_scale_visible=True,
                                axes_visible=True, toggle_show_default=True,
                                toggle_show_visible=False))
@@ -1541,7 +1541,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                 figure_options_two_scales(
                     viewer_options_default[0]['figure'],
                     plot_function=plot_function, coupled_default=False,
-                    figure_scales_bounds=(0.1, 2), figure_scales_step=0.1,
+                    figure_scales_bounds=(0.1, 4), figure_scales_step=0.1,
                     figure_scales_visible=True, axes_visible=True,
                     toggle_show_default=True, toggle_show_visible=False))
             tab_titles.append('Figure/Axes')

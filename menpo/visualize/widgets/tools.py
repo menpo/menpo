@@ -1683,7 +1683,7 @@ def update_numbering_options(numbering_options_wid, numbering_options_dict):
 
 
 def figure_options(figure_options_default, plot_function=None,
-                   figure_scale_bounds=(0.1, 2), figure_scale_step=0.1,
+                   figure_scale_bounds=(0.1, 4), figure_scale_step=0.1,
                    figure_scale_visible=True, axes_visible=True,
                    toggle_show_default=True, toggle_show_visible=True):
     r"""
@@ -2114,7 +2114,7 @@ def update_figure_options(figure_options_wid, figure_options_dict):
 
 def figure_options_two_scales(figure_options_default, plot_function=None,
                               coupled_default=False,
-                              figure_scales_bounds=(0.1, 2),
+                              figure_scales_bounds=(0.1, 4),
                               figure_scales_step=0.1,
                               figure_scales_visible=True,
                               axes_visible=True, toggle_show_default=True,

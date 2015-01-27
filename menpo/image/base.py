@@ -467,7 +467,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                  interpolation='bilinear', alpha=1., render_axes=False,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
@@ -527,7 +527,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
             axes_y_limits=axes_y_limits, figure_size=figure_size)
 
-    def view_widget(self, popup=False, browser_style='buttons'):
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
         r"""
         Visualizes the image object using the :map:`visualize_images` widget.
         Currently only supports the rendering of 2D images.
@@ -539,16 +540,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         browser_style : {``buttons``, ``slider``}, optional
             It defines whether the selector of the images will have the form of
             plus/minus buttons or a slider.
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_images
-        visualize_images(self, figure_size=(6, 4), popup=popup,
+        visualize_images(self, figure_size=figure_size, popup=popup,
                          browser_style=browser_style)
 
     def _view_landmarks_2d(self, channels=None, group=None,
                            with_labels=None, without_labels=None,
                            figure_id=None, new_figure=False,
                            interpolation='bilinear', alpha=1.,
-                           render_lines=True, line_colour='r', line_style='-',
+                           render_lines=True, line_colour=None, line_style='-',
                            line_width=1, render_markers=True, marker_style='o',
                            marker_size=20, marker_face_colour='r',
                            marker_edge_colour='k', marker_edge_width=1.,
@@ -572,7 +575,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                            axes_font_name='sans-serif', axes_font_size=10,
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
-                           figure_size=(6, 4)):
+                           figure_size=(10, 8)):
         """
         Visualize the landmarks.
 
@@ -776,7 +779,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         relative to the newly cropped image.
 
         Parameters
-        -----------
+        ----------
         min_indices : (``n_dims``, ) `ndarray`
             The minimum index over each dimension.
         max_indices : (``n_dims``, ) `ndarray`

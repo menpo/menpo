@@ -307,7 +307,7 @@ class PointCloud(Shape):
                            axes_font_name='sans-serif', axes_font_size=10,
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
-                           figure_size=(6, 4)):
+                           figure_size=(10, 8)):
         """
         Visualize the landmarks.
 
@@ -456,11 +456,13 @@ class PointCloud(Shape):
         ValueError
             If the landmark manager doesn't contain the provided group label.
         """
+        if not self.has_landmarks:
+            raise ValueError('PointCloud does not have landmarks attached, '
+                             'unable to view landmarks.')
         self_view = self.view(figure_id=figure_id, new_figure=new_figure,
                               image_view=image_view, figure_size=figure_size)
-        landmark_view = self.landmarks.view(
-            with_labels=with_labels,
-            without_labels=without_labels, group=group,
+        landmark_view = self.landmarks[group].view(
+            with_labels=with_labels, without_labels=without_labels,
             figure_id=self_view.figure_id, new_figure=False,
             image_view=image_view, render_lines=render_lines,
             line_colour=line_colour, line_style=line_style,
@@ -519,7 +521,8 @@ class PointCloud(Shape):
             from menpo.visualize import Menpo3dErrorMessage
             raise ImportError(Menpo3dErrorMessage)
 
-    def view_widget(self, popup=False, browser_style='buttons'):
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
         r"""
         Visualization of the PointCloud using the :map:`visualize_pointclouds`
         widget.
@@ -531,9 +534,11 @@ class PointCloud(Shape):
         browser_style : {``buttons``, ``slider``}, optional
             It defines whether the selector of the PointCloud objects will have
             the form of plus/minus buttons or a slider.
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_pointclouds
-        visualize_pointclouds(self, popup=popup, figure_size=(6, 4),
+        visualize_pointclouds(self, popup=popup, figure_size=figure_size,
                               browser_style=browser_style)
 
     def _transform_self_inplace(self, transform):

@@ -192,7 +192,7 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
     def render(self, interpolation='bilinear', alpha=1., render_axes=False,
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
+               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
@@ -244,7 +244,7 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
     def render(self, interpolation='bilinear', alpha=1., render_axes=False,
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
+               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
@@ -295,7 +295,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
                marker_edge_colour='k', marker_edge_width=1., render_axes=True,
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4),
+               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
                label=None):
         from matplotlib import collections as mc
         import matplotlib.cm as cm
@@ -394,7 +394,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                legend_rounded_corners=False, render_axes=True,
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
+               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.pyplot as plt
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
@@ -594,7 +594,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
                legend_rounded_corners=False, render_axes=True,
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
-               figure_size=(6, 4), render_grid=True, grid_line_style='--',
+               figure_size=(10, 8), render_grid=True, grid_line_style='--',
                grid_line_width=1):
         import matplotlib.pyplot as plt
 

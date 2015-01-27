@@ -242,8 +242,8 @@ class LandmarkManager(MutableMapping, Transformable):
             group.lms._transform_inplace(transform)
         return self
 
-
-    def view_widget(self, popup=False, browser_style='buttons'):
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
         r"""
         Visualizes the landmark manager object using the
         :map:`visualize_landmarks` widget.
@@ -255,9 +255,11 @@ class LandmarkManager(MutableMapping, Transformable):
         browser_style : {``buttons``, ``slider``}, optional
             It defines whether the selector of the landmark managers will have
             the form of plus/minus buttons or a slider.
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_landmarks
-        visualize_landmarks(self, figure_size=(6, 4), popup=popup,
+        visualize_landmarks(self, figure_size=figure_size, popup=popup,
                             browser_style=browser_style)
 
     def __str__(self):
@@ -819,7 +821,8 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             from menpo.visualize import Menpo3dErrorMessage
             raise ImportError(Menpo3dErrorMessage)
 
-    def view_widget(self, popup=False, browser_style='buttons'):
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
         r"""
         Visualizes the landmark group object using the
         :map:`visualize_landmarkgroups` widget.
@@ -831,9 +834,11 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         browser_style : {``buttons``, ``slider``}, optional
             It defines whether the selector of the landmark managers will have
             the form of plus/minus buttons or a slider.
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_landmarkgroups
-        visualize_landmarkgroups(self, figure_size=(6, 4), popup=popup,
+        visualize_landmarkgroups(self, figure_size=figure_size, popup=popup,
                                  browser_style=browser_style)
 
     def __str__(self):

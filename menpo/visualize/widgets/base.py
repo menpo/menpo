@@ -19,7 +19,7 @@ from .tools import logo, format_logo
 glyph = None
 
 
-def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
+def visualize_pointclouds(pointclouds, figure_size=(10, 8), popup=False,
                           browser_style='buttons'):
     r"""
     Widget that allows browsing through a list of :map:`PointCLoud`,
@@ -200,7 +200,7 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
     ipydisplay.display(wid)
 
     # set final tab titles
-    tab_titles = ['Pointcloud info', 'Viewer options', 'Save figure']
+    tab_titles = ['Info', 'Viewer options', 'Save figure']
     for (k, tl) in enumerate(tab_titles):
         wid.children[1].set_title(k, tl)
 
@@ -239,7 +239,7 @@ def visualize_pointclouds(pointclouds, figure_size=(6, 4), popup=False,
     axes_mode_wid.value = 1
 
 
-def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
+def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), popup=False,
                              browser_style='buttons'):
     r"""
     Widget that allows browsing through a list of landmark groups.
@@ -475,6 +475,9 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
                                         toggle_show_visible=False,
                                         toggle_show_default=True,
                                         labels=all_labels)
+    # make the selection dropdown invisible, as ti is controlled by the
+    # landmarks selection
+    viewer_options_wid.children[1].children[0].visible = False
     viewer_options_all = ipywidgets.ContainerWidget(children=[axes_mode_wid,
                                                     viewer_options_wid])
     info_wid = info_print(n_bullets=5,
@@ -542,7 +545,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
     ipydisplay.display(wid)
 
     # set final tab titles
-    tab_titles = ['Shape info', 'Landmarks options', 'Viewer options',
+    tab_titles = ['Info', 'Landmarks options', 'Viewer options',
                   'Save figure']
     for (k, tl) in enumerate(tab_titles):
         wid.children[1].set_title(k, tl)
@@ -589,7 +592,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(6, 4), popup=False,
     axes_mode_wid.value = 1
 
 
-def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
+def visualize_landmarks(landmarks, figure_size=(10, 8), popup=False,
                         browser_style='buttons'):
     r"""
     Widget that allows browsing through a list of landmark managers.
@@ -742,8 +745,7 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
                            tmp5['y_scale'] * figure_size[1])
         n_labels = len(landmark_options_wid.selected_values['with_labels'])
 
-        renderer = landmarks[im].view(
-            group=landmark_options_wid.selected_values['group'],
+        renderer = landmarks[im][landmark_options_wid.selected_values['group']].view(
             with_labels=landmark_options_wid.selected_values['with_labels'],
             figure_id=save_figure_wid.renderer[0].figure_id,
             new_figure=False, image_view=axes_mode_wid.value == 1,
@@ -845,6 +847,9 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
                                         toggle_show_visible=False,
                                         toggle_show_default=True,
                                         labels=all_labels)
+    # make the selection dropdown invisible, as ti is controlled by the
+    # landmarks selection
+    viewer_options_wid.children[1].children[0].visible = False
     viewer_options_all = ipywidgets.ContainerWidget(children=[axes_mode_wid,
                                                     viewer_options_wid])
     info_wid = info_print(n_bullets=5,
@@ -910,7 +915,7 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
     ipydisplay.display(wid)
 
     # set final tab titles
-    tab_titles = ['Shape info', 'Landmarks options', 'Viewer options',
+    tab_titles = ['Info', 'Landmarks options', 'Viewer options',
                   'Save figure']
     for (k, tl) in enumerate(tab_titles):
         wid.children[1].set_title(k, tl)
@@ -965,7 +970,7 @@ def visualize_landmarks(landmarks, figure_size=(6, 4), popup=False,
     axes_mode_wid.value = 1
 
 
-def visualize_images(images, figure_size=(6, 4), popup=False,
+def visualize_images(images, figure_size=(10, 8), popup=False,
                      browser_style='buttons'):
     r"""
     Widget that allows browsing through a list of images.
@@ -977,7 +982,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     and saving the figure to file.
 
     Parameters
-    -----------
+    ----------
     images : `list` of :map:`Image` or subclass
         The `list` of images to be visualized.
     figure_size : (`int`, `int`), optional
@@ -1227,6 +1232,9 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
                                         toggle_show_visible=False,
                                         toggle_show_default=True,
                                         labels=all_labels)
+    # make the selection dropdown invisible, as ti is controlled by the
+    # landmarks selection
+    viewer_options_wid.children[1].children[0].visible = False
     info_wid = info_print(n_bullets=5, toggle_show_default=True,
                           toggle_show_visible=False)
 
@@ -1310,7 +1318,7 @@ def visualize_images(images, figure_size=(6, 4), popup=False,
     ipydisplay.display(wid)
 
     # set final tab titles
-    tab_titles = ['Image info', 'Channels options', 'Landmarks options',
+    tab_titles = ['Info', 'Channels options', 'Landmarks options',
                   'Viewer options', 'Save figure']
     for (k, tl) in enumerate(tab_titles):
         wid.children[1].set_title(k, tl)

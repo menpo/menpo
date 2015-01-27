@@ -321,7 +321,7 @@ class MaskedImage(Image):
                  render_axes=False, axes_font_name='sans-serif',
                  axes_font_size=10, axes_font_style='normal',
                  axes_font_weight='normal', axes_x_limits=None,
-                 axes_y_limits=None, figure_size=(6, 4)):
+                 axes_y_limits=None, figure_size=(10, 8)):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
@@ -418,7 +418,7 @@ class MaskedImage(Image):
                            axes_font_name='sans-serif', axes_font_size=10,
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
-                           figure_size=(6, 4)):
+                           figure_size=(10, 8)):
         """
         Visualize the landmarks.
 
