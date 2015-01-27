@@ -297,3 +297,11 @@ def menpo_src_dir_path():
     """
     from pathlib import Path  # to avoid cluttering the menpo.base namespace
     return Path(os.path.abspath(__file__)).parent
+
+
+class MenpoDeprecationWarning(Warning):
+    r"""
+    A warning that functionality in Menpo will be deprecated in a future major
+    release.
+    """
+    pass
