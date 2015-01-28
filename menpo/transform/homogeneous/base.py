@@ -1,5 +1,4 @@
 import abc
-import copy
 import numpy as np
 
 from menpo.base import Vectorizable
@@ -53,10 +52,10 @@ class HomogFamilyAlignment(Alignment):
 
         :type: ``type(self)``
         """
-        self_copy = self.copy()
-        self_copy._h_matrix = self._h_matrix_pseudoinverse()
-        self_copy._source, self_copy._target = self_copy._target, self_copy._source
-        return self_copy
+        selfcopy = self.copy()
+        selfcopy._h_matrix = self._h_matrix_pseudoinverse()
+        selfcopy._source, selfcopy._target = selfcopy._target, selfcopy._source
+        return selfcopy
 
 
 class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):

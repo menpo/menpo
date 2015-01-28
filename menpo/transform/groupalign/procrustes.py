@@ -12,8 +12,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     r"""
     Class for aligning multiple source shapes between them.
 
-    After construction, the :map:`AlignmentSimilarity` transforms used to map each
-    source optimally to the target can be found at `transforms`.
+    After construction, the :map:`AlignmentSimilarity` transforms used to map
+    each source optimally to the target can be found at `transforms`.
 
     Parameters
     ----------

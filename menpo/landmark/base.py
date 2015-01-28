@@ -5,7 +5,6 @@ import numpy as np
 
 from menpo.base import Copyable
 from menpo.transform.base import Transformable
-from menpo.visualize import LandmarkViewer
 from menpo.visualize.base import Viewable
 
 
@@ -28,20 +27,43 @@ class Landmarkable(Copyable):
 
     @abc.abstractproperty
     def n_dims(self):
+        """
+        The total number of dimensions.
+
+        :type: `int`
+        """
         pass
 
     @property
     def landmarks(self):
+        """
+        The landmarks object.
+
+        :type: :map:`LandmarkManager`
+        """
         if self._landmarks is None:
             self._landmarks = LandmarkManager()
         return self._landmarks
 
     @property
     def has_landmarks(self):
+        """
+        Whether the object has landmarks.
+
+        :type: `bool`
+        """
         return self._landmarks is not None
 
     @landmarks.setter
     def landmarks(self, value):
+        """
+        Landmarks setter.
+
+        Parameters
+        ----------
+        value : :map:`LandmarkManager`
+            The landmarks to set.
+        """
         # firstly, make sure the dim is correct. Note that the dim can be None
         lm_n_dims = value.n_dims
         if lm_n_dims is not None and lm_n_dims != self.n_dims:
@@ -60,69 +82,7 @@ class Landmarkable(Copyable):
         return self.landmarks.n_groups
 
 
-class LandmarkableViewable(Landmarkable, Viewable):
-    r"""
-    Mixin for :map:`Landmarkable` and :map:`Viewable` objects. Provides a
-    single helper method for viewing Landmarks and slf on the same figure.
-    """
-
-    def view_landmarks(self, figure_id=None, new_figure=False,
-                       group=None, render_numbering=True,
-                       render_legend=True,
-                       with_labels=None, without_labels=None,
-                       lmark_view_kwargs=None, obj_view_kwargs=None):
-        """
-        View all landmarks on the current shape, using the default
-        shape view method. Kwargs passed in here will be passed through
-        to the shapes view method.
-
-        Parameters
-        ----------
-        group : `str`, optional
-            If ``None``, show all groups, else show only the provided group.
-        render_numbering : `bool`, optional
-            If ``True``, also render the label names next to the landmarks.
-        render_legend : `bool`, optional
-            If ``True``, also render a legend showing the landmark group symbols
-            and colours.
-        with_labels : ``None`` or `str` or `list` of `str`, optional
-            If not ``None``, only show the given label(s). Should **not** be
-            used with the ``without_labels`` kwarg.
-        without_labels : ``None`` or `str` or `list` of `str`, optional
-            If not ``None``, show all except the given label(s). Should **not**
-            be used with the ``with_labels`` kwarg.
-        lmark_view_kwargs : `dict`, optional
-            Passed through to the landmark viewer.
-        obj_view_kwargs : `dict`, optional
-            Passed through to this object's viewer.
-
-        Raises
-        ------
-        ValueError
-            If both ``with_labels`` and ``without_labels`` are passed.
-        ValueError
-            If the landmark manager doesn't contain the provided group label.
-        """
-        # Can't expand None so need a dict by default, but don't want
-        # a mutual default kwarg
-        obj_view_kwargs = obj_view_kwargs or {}
-        lmark_view_kwargs = lmark_view_kwargs or {}
-
-        self_view = self.view(figure_id=figure_id, new_figure=new_figure,
-                              **obj_view_kwargs)
-        landmark_view = self.landmarks.view(figure_id=self_view.figure_id,
-                                            new_figure=False,
-                                            group=group,
-                                            targettype=type(self),
-                                            render_numbering=render_numbering,
-                                            render_legend=render_legend,
-                                            with_labels=with_labels,
-                                            without_labels=without_labels,
-                                            **lmark_view_kwargs)
-        return landmark_view
-
-
-class LandmarkManager(MutableMapping, Transformable, Viewable):
+class LandmarkManager(MutableMapping, Transformable):
     """
     Class for storing and manipulating Landmarks associated with an object.
     This involves managing the internal dictionary, as well as providing
@@ -138,6 +98,11 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
 
     @property
     def n_dims(self):
+        """
+        The total number of dimensions.
+
+        :type: `int`
+        """
         if self.n_groups != 0:
             # Python version independent way of getting the first value
             for v in self._landmark_groups.values():
@@ -151,7 +116,6 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
 
         Returns
         -------
-
         ``type(self)``
             A copy of this object
 
@@ -269,7 +233,7 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         """
         All the labels for the landmark set.
 
-        :type: list of `string`
+        :type: `list` of `str`
         """
         return self._landmark_groups.keys()
 
@@ -278,62 +242,25 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
             group.lms._transform_inplace(transform)
         return self
 
-    def view(self, figure_id=None, new_figure=False, group=None, **kwargs):
-        """
-        View all landmarks groups on the current manager.
-
-        Parameters
-        ----------
-        group : `str`, optional
-            If ``None``, show all groups, else show only the provided group.
-        render_numbering : `boolean`, optional
-            If ``True``, also render the label names next to the landmarks.
-        render_legend : `bool`, optional
-            If ``True``, also render the legend.
-        with_labels : None or `str` or list of `str`, optional
-            If not ``None``, only show the given label(s). Should **not** be
-            used with the ``without_labels`` kwarg.
-        without_labels : None or `str` or list of `str`, optional
-            If not ``None``, show all except the given label(s). Should **not**
-            be used with the ``with_labels`` kwarg.
-        kwargs : `dict`, optional
-            Passed through to the viewer.
-
-        Raises
-        ------
-        ValueError
-            If both ``with_labels`` and ``without_labels`` are passed.
-        ValueError
-            If the landmark manager doesn't contain the provided group label.
-        """
-        if group is None:
-            viewers = []
-            for g_label in self._landmark_groups:
-                v = self._landmark_groups[g_label].view(figure_id=figure_id,
-                                                        new_figure=new_figure,
-                                                        group=g_label,
-                                                        **kwargs)
-                viewers.append(v)
-            return viewers
-        elif group in self._landmark_groups:
-            return self._landmark_groups[group].view(
-                figure_id=figure_id, new_figure=new_figure,
-                group=group, **kwargs)
-        else:
-            raise ValueError('Unknown label {}'.format(group))
-
-    def view_widget(self, popup=False):
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
         r"""
         Visualizes the landmark manager object using the
-        menpo.visualize.widgets.visualize_shapes widget.
+        :map:`visualize_landmarks` widget.
 
         Parameters
         -----------
-        popup : `boolean`, optional
-            If enabled, the widget will appear as a popup window.
+        popup : `bool`, optional
+            If ``True``, the widget will appear as a popup window.
+        browser_style : {``buttons``, ``slider``}, optional
+            It defines whether the selector of the landmark managers will have
+            the form of plus/minus buttons or a slider.
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
         """
-        from menpo.visualize import visualize_shapes
-        visualize_shapes(self, figure_size=(7, 7), popup=popup)
+        from menpo.visualize import visualize_landmarks
+        visualize_landmarks(self, figure_size=figure_size, popup=popup,
+                            browser_style=browser_style)
 
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
@@ -360,14 +287,14 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
     ----------
     target : :map:`Landmarkable`
         The parent object of this landmark group.
-    group : `string`
+    group : `str`
         The label of the group.
     pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
-    labels_to_masks : `OrderedDict` of `string` to `boolean` `ndarrays`
+    labels_to_masks : `OrderedDict` of `str` to `bool` `ndarrays`
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
-    copy : `boolean`, optional
+    copy : `bool`, optional
         If ``True``, a copy of the :map:`PointCloud` is stored on the group.
 
     Raises
@@ -382,7 +309,6 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         If there exists any point in the pointcloud that is not covered
         by a label.
     """
-
     def __init__(self, pointcloud, labels_to_masks, copy=True):
         super(LandmarkGroup, self).__init__()
 
@@ -415,10 +341,8 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         Returns
         -------
-
         ``type(self)``
             A copy of this object
-
         """
         new = Copyable.copy(self)
         for k, v in new._labels_to_masks.items():
@@ -508,7 +432,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         """
         The list of labels that belong to this group.
 
-        :type: list of `string`
+        :type: `list` of `str`
         """
         return self._labels_to_masks.keys()
 
@@ -554,7 +478,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         Parameters
         ----------
-        labels : `string` or list of `string`, optional
+        labels : `str` or `list` of `str`, optional
             Labels that should be kept in the returned landmark group. If
             None is passed, and if there is only one label on this group,
             the label will be substituted automatically.
@@ -584,7 +508,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         Parameters
         ----------
-        label : `string`
+        label : `str`
             Label to exclude.
 
         Returns
@@ -607,9 +531,10 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         """
         unlabelled_points = np.sum(self._labels_to_masks.values(), axis=0) == 0
         if np.any(unlabelled_points):
-            raise ValueError('Every point in the landmark pointcloud must be '
-                             'labelled. Points {0} were unlabelled.'.format(
-                np.nonzero(unlabelled_points)))
+            nonzero = np.nonzero(unlabelled_points)
+            raise ValueError(
+                'Every point in the landmark pointcloud must be labelled. '
+                'Points {0} were unlabelled.'.format(nonzero))
 
     def _new_group_with_only_labels(self, labels):
         """
@@ -657,41 +582,176 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         return {'landmarks': self.lms.tojson(),
                 'labels': labels}
 
-    def view(self, figure_id=None, new_figure=False, targettype=None,
-              render_numbering=True, render_legend=True, group='group',
-              with_labels=None, without_labels=None, image_view=True,
-              **kwargs):
+    def _view_2d(self, with_labels=None, without_labels=None, group='group',
+                 figure_id=None, new_figure=False, image_view=True,
+                 render_lines=True, line_colour=None, line_style='-',
+                 line_width=1, render_markers=True, marker_style='o',
+                 marker_size=20, marker_face_colour='r', marker_edge_colour='k',
+                 marker_edge_width=1., render_numbering=False,
+                 numbers_horizontal_align='center',
+                 numbers_vertical_align='bottom',
+                 numbers_font_name='sans-serif', numbers_font_size=10,
+                 numbers_font_style='normal', numbers_font_weight='normal',
+                 numbers_font_colour='k', render_legend=True, legend_title='',
+                 legend_font_name='sans-serif', legend_font_style='normal',
+                 legend_font_size=10, legend_font_weight='normal',
+                 legend_marker_scale=None, legend_location=2,
+                 legend_bbox_to_anchor=(1.05, 1.), legend_border_axes_pad=None,
+                 legend_n_columns=1, legend_horizontal_spacing=None,
+                 legend_vertical_spacing=None, legend_border=True,
+                 legend_border_padding=None, legend_shadow=False,
+                 legend_rounded_corners=False, render_axes=True,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=None):
         """
-        View all landmarks. Kwargs passed in here will be passed through
-        to the shapes view method.
+        Visualize the landmark group.
 
         Parameters
         ----------
-        targettype : `type`, optional
-            Hint for the landmark viewer for the type of the object these
-            landmarks are attached to. If ``None``, The landmarks will be
-            visualized without special consideration for the type of the
-            target. Mainly used for :map:`Image` subclasses.
-        render_numbering : `bool`, optional
-            If `True`, also render the label numbers next to the landmarks.
-        render_legend : `bool`, optional
-            If ``True``, also render the legend.
-        group : `str`, optional
-            The group label to prepend before the semantic labels
-        with_labels : None or `str` or list of `str`, optional
+        with_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, only show the given label(s). Should **not** be
             used with the ``without_labels`` kwarg.
-        without_labels : None or `str` or list of `str`, optional
+        without_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, show all except the given label(s). Should **not**
             be used with the ``with_labels`` kwarg.
-        kwargs : `dict`, optional
-            Passed through to the viewer.
+        group : `str` or `None`, optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        image_view : `bool`, optional
+            If ``True``, the x and y axes are flipped.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray` or ``None``, optional
+            The colour of the lines. If ``None``, a different colour will be
+            automatically selected for each label.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : {``center``, ``right``, ``left``}, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : {``center``, ``top``, ``bottom``,
+                                  ``baseline``}, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                             ``fantasy``, ``monospace``}, optional
+            The font of the numbers.
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the numbers.
+        numbers_font_weight : {``ultralight``, ``light``, ``normal``,
+                               ``regular``, ``book``, ``medium``, ``roman``,
+                               ``semibold``, ``demibold``, ``demi``, ``bold``,
+                               ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the numbers.
+        numbers_font_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                              or ``(3, )`` `ndarray`, optional
+            The font colour of the numbers.
+        render_legend : `bool`, optional
+            If ``True``, the legend will be rendered.
+        legend_title : `str`, optional
+            The title of the legend.
+        legend_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                            ``fantasy``, ``monospace``}, optional
+            The font of the legend.
+        legend_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the legend.
+        legend_font_size : `int`, optional
+            The font size of the legend.
+        legend_font_weight : {``ultralight``, ``light``, ``normal``,
+                              ``regular``, ``book``, ``medium``, ``roman``,
+                              ``semibold``, ``demibold``, ``demi``, ``bold``,
+                              ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the legend.
+        legend_marker_scale : `float`, optional
+            The relative size of the legend markers with respect to the original
+        legend_location : `int`, optional
+            The location of the legend. The predefined values are:
+
+            =============== ===
+            'best'          0
+            'upper right'   1
+            'upper left'    2
+            'lower left'    3
+            'lower right'   4
+            'right'         5
+            'center left'   6
+            'center right'  7
+            'lower center'  8
+            'upper center'  9
+            'center'        10
+            =============== ===
+
+        legend_bbox_to_anchor : (`float`, `float`), optional
+            The bbox that the legend will be anchored.
+        legend_border_axes_pad : `float`, optional
+            The pad between the axes and legend border.
+        legend_n_columns : `int`, optional
+            The number of the legend's columns.
+        legend_horizontal_spacing : `float`, optional
+            The spacing between the columns.
+        legend_vertical_spacing : `float`, optional
+            The vertical space between the legend entries.
+        legend_border : `bool`, optional
+            If ``True``, a frame will be drawn around the legend.
+        legend_border_padding : `float`, optional
+            The fractional whitespace inside the legend border.
+        legend_shadow : `bool`, optional
+            If ``True``, a shadow will be drawn behind legend.
+        legend_rounded_corners : `bool`, optional
+            If ``True``, the frame's corners will be rounded (fancybox).
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
 
         Raises
         ------
         ValueError
             If both ``with_labels`` and ``without_labels`` are passed.
         """
+        from menpo.visualize import LandmarkViewer2d
         if with_labels is not None and without_labels is not None:
             raise ValueError('You may only pass one of `with_labels` or '
                              '`without_labels`.')
@@ -701,13 +761,74 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             lmark_group = self.without_labels(without_labels)
         else:
             lmark_group = self  # Fall through
+        landmark_viewer = LandmarkViewer2d(figure_id, new_figure,
+                                           group, lmark_group._pointcloud,
+                                           lmark_group._labels_to_masks)
+        return landmark_viewer.render(
+            image_view=image_view, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_legend=render_legend, legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=figure_size)
 
-        landmark_viewer = LandmarkViewer(figure_id, new_figure,
-                                         group, lmark_group._pointcloud,
-                                         lmark_group._labels_to_masks)
-        return landmark_viewer.render(render_numbering=render_numbering,
-                                      render_legend=render_legend,
-                                      image_view=image_view, **kwargs)
+    def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
+        try:
+            from menpo3d.visualize import LandmarkViewer3d
+            return LandmarkViewer3d(figure_id, new_figure,
+                                    self._pointcloud, self).render(**kwargs)
+        except ImportError:
+            from menpo.visualize import Menpo3dErrorMessage
+            raise ImportError(Menpo3dErrorMessage)
+
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
+        r"""
+        Visualizes the landmark group object using the
+        :map:`visualize_landmarkgroups` widget.
+
+        Parameters
+        -----------
+        popup : `bool`, optional
+            If ``True``, the widget will appear as a popup window.
+        browser_style : {``buttons``, ``slider``}, optional
+            It defines whether the selector of the landmark managers will have
+            the form of plus/minus buttons or a slider.
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
+        """
+        from menpo.visualize import visualize_landmarkgroups
+        visualize_landmarkgroups(self, figure_size=figure_size, popup=popup,
+                                 browser_style=browser_style)
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(

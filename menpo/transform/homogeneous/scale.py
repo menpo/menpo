@@ -151,7 +151,7 @@ class NonUniformScale(DiscreteAffine, Affine):
 
     @property
     def composes_inplace_with(self):
-        return (NonUniformScale, UniformScale)
+        return NonUniformScale, UniformScale
 
     def pseudoinverse(self):
         """

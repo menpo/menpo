@@ -308,7 +308,8 @@ class BuiltinAssets(object):
 import_builtin_asset = BuiltinAssets()
 
 for asset in ls_builtin_assets():
-    setattr(import_builtin_asset, asset.replace('.', '_'), import_builtin(asset))
+    setattr(import_builtin_asset, asset.replace('.', '_'),
+            import_builtin(asset))
 
 
 def image_paths(pattern):
@@ -337,9 +338,9 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
     if n_files == 0:
         raise ValueError('The glob {} yields no assets'.format(pattern))
     for i, asset in enumerate(_multi_import_generator(filepaths, extension_map,
-                                         landmark_resolver=landmark_resolver,
-                                         landmark_ext_map=landmark_ext_map,
-                                         importer_kwargs=importer_kwargs)):
+                              landmark_resolver=landmark_resolver,
+                              landmark_ext_map=landmark_ext_map,
+                              importer_kwargs=importer_kwargs)):
         if verbose:
             print_dynamic('- Loading {} assets: {}'.format(
                 n_files, progress_bar_str(float(i + 1) / n_files,

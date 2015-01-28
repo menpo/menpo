@@ -6,9 +6,9 @@ from menpo.visualize import print_dynamic, progress_bar_str
 
 
 class PCAModel(MeanInstanceLinearModel):
-    """A :map:`MeanInstanceLinearModel` where components are Principal
+    """
+    A :map:`MeanInstanceLinearModel` where components are Principal
     Components.
-
 
     Principal Component Analysis (PCA) by eigenvalue decomposition of the
     data's scatter matrix. For details of the implementation of PCA, see
@@ -537,22 +537,302 @@ class PCAModel(MeanInstanceLinearModel):
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
 
+    def plot_eigenvalues(self, figure_id=None, new_figure=False,
+                         render_lines=True, line_colour='b', line_style='-',
+                         line_width=2, render_markers=True, marker_style='o',
+                         marker_size=6, marker_face_colour='b',
+                         marker_edge_colour='k', marker_edge_width=1.,
+                         render_axes=True, axes_font_name='sans-serif',
+                         axes_font_size=10, axes_font_style='normal',
+                         axes_font_weight='normal', figure_size=(10, 6),
+                         render_grid=True, grid_line_style='--',
+                         grid_line_width=0.5):
+        r"""
+        Plot of the eigenvalues.
+
+        Parameters
+        ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        render_lines : `bool`, optional
+            If ``True``, the line will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
+        render_grid : `bool`, optional
+            If ``True``, the grid will be rendered.
+        grid_line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the grid lines.
+        grid_line_width : `float`, optional
+            The width of the grid lines.
+
+        Returns
+        -------
+        viewer : :map:`GraphPlotter`
+            The viewer object.
+        """
+        from menpo.visualize import GraphPlotter
+        return GraphPlotter(figure_id=figure_id, new_figure=new_figure,
+                            x_axis=range(self.n_active_components),
+                            y_axis=[self.eigenvalues], title='Eigenvalues',
+                            x_label='Component Number', y_label='Eigenvalue',
+                            x_axis_limits=(0, self.n_active_components - 1),
+                            y_axis_limits=None).render(
+            render_lines=render_lines, line_colour=line_colour,
+            line_style=line_style, line_width=line_width,
+            render_markers=render_markers, marker_style=marker_style,
+            marker_size=marker_size, marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width, render_legend=False,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, render_grid=render_grid,
+            grid_line_style=grid_line_style, grid_line_width=grid_line_width,
+            figure_size=figure_size)
+
+    def plot_eigenvalues_ratio(self, figure_id=None, new_figure=False,
+                               render_lines=True, line_colour='b',
+                               line_style='-', line_width=2,
+                               render_markers=True, marker_style='o',
+                               marker_size=6, marker_face_colour='b',
+                               marker_edge_colour='k', marker_edge_width=1.,
+                               render_axes=True, axes_font_name='sans-serif',
+                               axes_font_size=10, axes_font_style='normal',
+                               axes_font_weight='normal', figure_size=(10, 6),
+                               render_grid=True, grid_line_style='--',
+                               grid_line_width=0.5):
+        r"""
+        Plot of the variance ratio captured by the eigenvalues.
+
+        Parameters
+        ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        render_lines : `bool`, optional
+            If ``True``, the line will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
+        render_grid : `bool`, optional
+            If ``True``, the grid will be rendered.
+        grid_line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the grid lines.
+        grid_line_width : `float`, optional
+            The width of the grid lines.
+
+        Returns
+        -------
+        viewer : :map:`GraphPlotter`
+            The viewer object.
+        """
+        from menpo.visualize import GraphPlotter
+        return GraphPlotter(figure_id=figure_id, new_figure=new_figure,
+                            x_axis=range(self.n_active_components),
+                            y_axis=[self.eigenvalues_ratio()],
+                            title='Variance Ratio of Eigenvalues',
+                            x_label='Component Number',
+                            y_label='Variance Ratio',
+                            x_axis_limits=(0, self.n_active_components - 1),
+                            y_axis_limits=None).render(
+            render_lines=render_lines, line_colour=line_colour,
+            line_style=line_style, line_width=line_width,
+            render_markers=render_markers, marker_style=marker_style,
+            marker_size=marker_size, marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width, render_legend=False,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, render_grid=render_grid,
+            grid_line_style=grid_line_style, grid_line_width=grid_line_width,
+            figure_size=figure_size)
+
+    def plot_eigenvalues_cumulative_ratio(self, figure_id=None,
+                                          new_figure=False, render_lines=True,
+                                          line_colour='b', line_style='-',
+                                          line_width=2, render_markers=True,
+                                          marker_style='o', marker_size=6,
+                                          marker_face_colour='b',
+                                          marker_edge_colour='k',
+                                          marker_edge_width=1.,
+                                          render_axes=True,
+                                          axes_font_name='sans-serif',
+                                          axes_font_size=10,
+                                          axes_font_style='normal',
+                                          axes_font_weight='normal',
+                                          figure_size=(10, 6), render_grid=True,
+                                          grid_line_style='--',
+                                          grid_line_width=0.5):
+        r"""
+        Plot of the variance ratio captured by the eigenvalues.
+
+        Parameters
+        ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        render_lines : `bool`, optional
+            If ``True``, the line will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
+        render_grid : `bool`, optional
+            If ``True``, the grid will be rendered.
+        grid_line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the grid lines.
+        grid_line_width : `float`, optional
+            The width of the grid lines.
+
+        Returns
+        -------
+        viewer : :map:`GraphPlotter`
+            The viewer object.
+        """
+        from menpo.visualize import GraphPlotter
+        return GraphPlotter(figure_id=figure_id, new_figure=new_figure,
+                            x_axis=range(self.n_active_components),
+                            y_axis=[self.eigenvalues_cumulative_ratio()],
+                            title='Cumulative Variance Ratio of Eigenvalues',
+                            x_label='Component Number',
+                            y_label='Cumulative Variance Ratio',
+                            x_axis_limits=(0, self.n_active_components - 1),
+                            y_axis_limits=None).render(
+            render_lines=render_lines, line_colour=line_colour,
+            line_style=line_style, line_width=line_width,
+            render_markers=render_markers, marker_style=marker_style,
+            marker_size=marker_size, marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width, render_legend=False,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, render_grid=render_grid,
+            grid_line_style=grid_line_style, grid_line_width=grid_line_width,
+            figure_size=figure_size)
+
     def __str__(self):
-        str_out = 'PCA Model \n'
-        str_out = str_out + \
-            ' - centred:             {}\n' \
-            ' - biased:               {}\n' \
-            ' - # features:           {}\n' \
-            ' - # active components:  {}\n'.format(
-            self.centred, self.biased, self.n_features,
-            self.n_active_components)
-        str_out = str_out + \
-            ' - kept variance:        {:.2}  {:.1%}\n' \
-            ' - noise variance:       {:.2}  {:.1%}\n'.format(
-            self.variance(), self.variance_ratio(),
-            self.noise_variance(), self.noise_variance_ratio())
-        str_out = str_out + \
-            ' - total # components:   {}\n' \
-            ' - components shape:     {}\n'.format(
+        str_out = 'PCA Model \n'                             \
+                  ' - centred:              {}\n'            \
+                  ' - biased:               {}\n'            \
+                  ' - # features:           {}\n'            \
+                  ' - # active components:  {}\n'            \
+                  ' - kept variance:        {:.2}  {:.1%}\n' \
+                  ' - noise variance:       {:.2}  {:.1%}\n' \
+                  ' - total # components:   {}\n'            \
+                  ' - components shape:     {}\n'.format(
+            self.centred,  self.biased, self.n_features,
+            self.n_active_components, self.variance(), self.variance_ratio(),
+            self.noise_variance(), self.noise_variance_ratio(),
             self.n_components, self.components.shape)
         return str_out

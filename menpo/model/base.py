@@ -1,4 +1,3 @@
-import numpy as np
 from menpo.model.instancebacked import InstanceBackedModel
 from menpo.model.linear import LinearModel, MeanLinearModel
 

@@ -6,7 +6,6 @@ Delaunay = None  # expensive, from scipy.spatial
 
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from menpo.visualize import TriMeshViewer
 
 from .normals import compute_normals
 
@@ -27,23 +26,18 @@ class TriMesh(PointCloud):
 
     Parameters
     ----------
-    points : (N, D) ndarray
-        The set coordinates for the mesh.
-    trilist : (M, 3) ndarray, optional
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
+    trilist : ``(M, 3)`` `ndarray` or `None`, optional
         The triangle list. If `None`, a Delaunay triangulation of
         the points will be used instead.
-
-        Default: None
-    copy: bool, optional
-        If `False`, the points will not be copied on assignment.
+    copy: `bool`, optional
+        If ``False``, the points will not be copied on assignment.
         Any trilist will also not be copied.
         In general this should only be used if you know what you are doing.
-
-        Default: `False`
     """
-
     def __init__(self, points, trilist=None, copy=True):
-        #TODO add inheritance from Graph once implemented
+        # TODO: add inheritance from Graph once implemented
         super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
             global Delaunay
@@ -68,7 +62,7 @@ class TriMesh(PointCloud):
         r"""
         The number of triangles in the triangle list.
 
-        :type: int
+        :type: `int`
         """
         return len(self.trilist)
 
@@ -135,6 +129,19 @@ class TriMesh(PointCloud):
         return new_mask
 
     def as_pointgraph(self, copy=True):
+        """
+        Converts the TriMesh to a :map:`PointUndirectedGraph`.
+
+        Parameters
+        ----------
+        copy : `bool`
+            If ``True``, the graph will be a copy.
+
+        Returns
+        -------
+        pointgraph : :map:`PointUndirectedGraph`
+            The point graph.
+        """
         from .. import PointUndirectedGraph
         # Since we have triangles we need the last connection
         # that 'completes' the triangle
@@ -151,12 +158,12 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        normals : (`n_points`, 3) ndarray
+        normals : ``(n_points, 3)`` `ndarray`
             Normal at each point.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             If mesh is not 3D
         """
         if self.n_dims != 3:
@@ -170,36 +177,139 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        normals : (`n_tris`, 3) ndarray
+        normals : ``(n_tris, 3)`` `ndarray`
             Normal at each face.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             If mesh is not 3D
         """
         if self.n_dims != 3:
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
 
-    def view(self, figure_id=None, new_figure=False, **kwargs):
-        """
-        Visualize the TriMesh.
+    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
+                 render_lines=True, line_colour='r', line_style='-',
+                 line_width=1., render_markers=True, marker_style='o',
+                 marker_size=20, marker_face_colour='k', marker_edge_colour='k',
+                 marker_edge_width=1., render_axes=True,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=None,
+                 label=None):
+        r"""
+        Visualization of the TriMesh.
 
         Parameters
         ----------
-        kwargs : dict
-            Passed through to the viewer.
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        image_view : `bool`, optional
+            If ``True``, the x and y axes are flipped.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
+        label : `str`, optional
+            The name entry in case of a legend.
 
         Returns
         -------
-        viewer : :class:`menpo.visualize.base.Renderer`
+        viewer : :map:`TriMeshViewer`
             The viewer object.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             If `not self.n_dims in [2, 3]`.
         """
-        return TriMeshViewer(figure_id, new_figure,
-                             self.points, self.trilist).render(**kwargs)
+        from menpo.visualize import PointGraphViewer2d
+
+        return PointGraphViewer2d(
+            figure_id, new_figure, self.points,
+            trilist_to_adjacency_array(self.trilist)).render(
+                image_view=image_view, render_lines=render_lines,
+                line_colour=line_colour, line_style=line_style,
+                line_width=line_width, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
+                marker_edge_width=marker_edge_width, render_axes=render_axes,
+                axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+                axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, figure_size=figure_size,
+                label=label)
+
+    def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
+        try:
+            from menpo3d.visualize import TriMeshViewer3d
+            return TriMeshViewer3d(figure_id, new_figure,
+                                   self.points, self.trilist).render(**kwargs)
+        except ImportError:
+            from menpo.visualize import Menpo3dErrorMessage
+            raise ImportError(Menpo3dErrorMessage)
+
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
+        r"""
+        Visualization of the TriMesh using the :map:`visualize_pointclouds`
+        widget.
+
+        Parameters
+        ----------
+        popup : `bool`, optional
+            If ``True``, the widget will be rendered in a popup window.
+        browser_style : {``buttons``, ``slider``}, optional
+            It defines whether the selector of the TriMesh objects will have
+            the form of plus/minus buttons or a slider.
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
+        """
+        from menpo.visualize import visualize_pointclouds
+        visualize_pointclouds(self, popup=popup, figure_size=figure_size,
+                              browser_style=browser_style)

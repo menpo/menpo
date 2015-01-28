@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from mock import patch
 from nose.tools import raises
@@ -71,7 +70,8 @@ def test_import_landmark_file():
 def test_import_images():
     imgs = list(mio.import_images(mio.data_dir_path()))
     imgs_filenames = set(i.path.stem for i in imgs)
-    exp_imgs_filenames = {'einstein', 'takeo', 'breakingbad', 'lenna'}
+    exp_imgs_filenames = {'einstein', 'takeo', 'breakingbad', 'lenna',
+                          'menpo_thumbnail'}
     assert(len(exp_imgs_filenames - imgs_filenames) == 0)
 
 
@@ -81,12 +81,13 @@ def test_ls_builtin_assets():
                                             'lenna.png', 'breakingbad.pts',
                                             'lenna.ljson', 'takeo.ppm',
                                             'takeo.pts', 'tongue.jpg',
-                                            'tongue.pts'})
+                                            'tongue.pts',
+                                            'menpo_thumbnail.jpg'})
 
 
 def test_image_paths():
     ls = mio.image_paths(mio.data_dir_path())
-    assert(len(list(ls)) == 5)
+    assert(len(list(ls)) == 6)
 
 
 @raises(ValueError)

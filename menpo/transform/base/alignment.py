@@ -105,7 +105,7 @@ class Alignment(Targetable, Viewable):
         """
         return self.aligned_source()
 
-    def view(self, figure_id=None, new_figure=False, **kwargs):
+    def _view_2d(self, figure_id=None, new_figure=False, **kwargs):
         r"""
         Plots the source points and vectors that represent the shift from
         source to target.
@@ -118,9 +118,4 @@ class Alignment(Targetable, Viewable):
             Default: ``False``
         """
         from menpo.visualize import AlignmentViewer2d
-
-        if self.n_dims == 2:
-            return AlignmentViewer2d(figure_id, new_figure, self).render(
-                **kwargs)
-        else:
-            raise ValueError("Only 2D alignments can be viewed currently.")
+        return AlignmentViewer2d(figure_id, new_figure, self).render(**kwargs)

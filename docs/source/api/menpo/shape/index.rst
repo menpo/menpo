@@ -6,6 +6,13 @@
 .. toctree::
    :maxdepth: 1
 
+
+PointCloud
+--------------------
+
+.. toctree::
+   :maxdepth: 1
+
   PointCloud
 
 

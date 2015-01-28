@@ -247,7 +247,7 @@ class LM2Importer(LandmarkImporter):
 
         # Remove comments and blank lines
         landmark_text = [l for l in landmarks.splitlines()
-                         if (l.rstrip() and not '#' in l)]
+                         if (l.rstrip() and '#' not in l)]
 
         # First line says how many landmarks there are: 22 Landmarks
         # So pop it off the front
@@ -296,9 +296,9 @@ class LM2Importer(LandmarkImporter):
 def _parse_ljson_v1(lms_dict):
     from menpo.base import MenpoDeprecationWarning
     warnings.warn('LJSON v1 is deprecated. export_landmark_file{s}() will '
-                  'only save out LJSON v2 files. Please convert all LJSON files '
-                  'to v2 by importing into Menpo and re-exporting to overwrite '
-                  'the files.', MenpoDeprecationWarning)
+                  'only save out LJSON v2 files. Please convert all LJSON '
+                  'files to v2 by importing into Menpo and re-exporting to '
+                  'overwrite the files.', MenpoDeprecationWarning)
     all_points = []
     labels = []  # label per group
     labels_slices = []  # slices into the full pointcloud per label
