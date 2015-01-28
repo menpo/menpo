@@ -15,10 +15,8 @@ class Affine(Homogeneous):
     ----------
     h_matrix : ``(n_dims + 1, n_dims + 1)`` `ndarray`
         The homogeneous matrix of the affine transformation.
-
     copy : `bool`, optional
         If ``False`` avoid copying ``h_matrix`` for performance.
-
     skip_checks : `bool`, optional
         If ``True`` avoid sanity checks on ``h_matrix`` for performance.
     """
@@ -39,12 +37,10 @@ class Affine(Homogeneous):
 
         Parameters
         ----------
-        value : ndarray
+        value : `ndarray`
             The new homogeneous matrix to set
-
         copy : `bool`, optional
             If False do not copy the h_matrix. Useful for performance.
-
         skip_checks : `bool`, optional
             If True skip sanity checks on the matrix. Useful for performance.
         """
@@ -220,7 +216,6 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
     ----------
     source : :map:`PointCloud`
         The source pointcloud instance used in the alignment
-
     target : :map:`PointCloud`
         The target pointcloud instance used in the alignment
 
@@ -233,17 +228,19 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
     where `a` and `b` are the source and target homogeneous vectors
     respectively.
 
+    ::
+
        (M a)' = b'
        a' M' = b'
        a a' M' = a b'
 
-       `a a'` is of shape `(n_dim + 1, n_dim + 1)` and so can be inverted
-       to solve for M.
+    `a a'` is of shape `(n_dim + 1, n_dim + 1)` and so can be inverted
+    to solve for M.
 
-       This approach is the analytical linear least squares solution to
-       the problem at hand. It will have a solution as long as `(a a')`
-       is non-singular, which generally means at least 2 corresponding
-       points are required.
+    This approach is the analytical linear least squares solution to
+    the problem at hand. It will have a solution as long as `(a a')`
+    is non-singular, which generally means at least 2 corresponding
+    points are required.
     """
     def __init__(self, source, target):
         # first, initialize the alignment
@@ -283,25 +280,12 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         copy : `bool`, optional
             If False do not copy the h_matrix. Useful for performance.
         skip_checks : `bool`, optional
-            If True skip checking. Useful for performance.
+            If ``True`` skip checking. Useful for performance.
 
         Raises
         ------
         NotImplementedError
             If :attr:`h_matrix_is_mutable` returns ``False``.
-
-
-        Parameters
-        ----------
-
-        value : ndarray
-            The new homogeneous matrix to set
-
-        copy : bool, optional
-            If False do not copy the h_matrix. Useful for performance.
-
-        skip_checks : bool, optional
-            If True skip verification for performance.
         """
         Affine.set_h_matrix(self, value, copy=copy, skip_checks=skip_checks)
         # now update the state

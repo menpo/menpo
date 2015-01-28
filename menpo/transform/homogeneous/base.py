@@ -32,8 +32,7 @@ class HomogFamilyAlignment(Alignment):
 
         Returns
         -------
-
-        ``type(self)``
+        new_transform : ``type(self)``
             A copy of this object
 
         """
@@ -50,7 +49,10 @@ class HomogFamilyAlignment(Alignment):
         the transforms parameters. If the transform has a true inverse this
         is returned instead.
 
-        :type: ``type(self)``
+        Returns
+        -------
+        transform : ``type(self)``
+            The inverse of this transform.
         """
         selfcopy = self.copy()
         selfcopy._h_matrix = self._h_matrix_pseudoinverse()
@@ -87,9 +89,10 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     @property
     def h_matrix_is_mutable(self):
         r"""
-        True iff :meth:`set_h_matrix` is permitted on this type of transform.
-        If this returns ``False`` calls to :meth:``set_h_matrix` will raise
-        a NonImplimentedError.
+        ``True`` iff :meth:`set_h_matrix` is permitted on this type of
+        transform.
+        If this returns ``False`` calls to :meth:`set_h_matrix` will raise
+        a ``NotImplementedError``.
 
         :type: `bool`
         """

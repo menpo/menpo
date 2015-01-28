@@ -10,13 +10,13 @@ class Graph(object):
     Abstract class for Graph definitions and manipulation.
 
     Parameters
-    -----------
+    ----------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
 
         For an undirected graph, the order of an edge's vertices doesn't matter,
-        for example:
+        for example
 
         ::
 
@@ -31,8 +31,8 @@ class Graph(object):
                5
 
         For a directed graph, we assume that the vertices in the first column of
-        the `adjacency_array` are the parents and the vertices in the second
-        column of the `adjacency_array` are the children, for example:
+        the adjacency_array are the fathers and the vertices in the second
+        column of the adjacency_array are the children, for example
 
         ::
 
@@ -116,7 +116,7 @@ class Graph(object):
         n_vertices that for each vertex has a list of the vertex neighbours.
         If the graph is directed, the neighbours are children.
 
-        :type: `list` of `lists` with length n_vertices
+        :type: `list` of `lists` of len n_vertices
         """
         pass
 
@@ -129,7 +129,6 @@ class Graph(object):
         ----------
         start : `int`
             The vertex from which the path starts.
-
         end : `int`
             The vertex from which the path ends.
 
@@ -159,7 +158,6 @@ class Graph(object):
         ----------
         start : `int`
             The vertex from which the paths start.
-
         end : `int`
             The vertex from which the paths end.
 
@@ -190,7 +188,6 @@ class Graph(object):
         ----------
         start : `int`
             The vertex from which the paths start.
-
         end : `int`
             The vertex from which the paths end.
 
@@ -210,7 +207,6 @@ class Graph(object):
         ----------
         start : `int`
             The vertex from which the path starts.
-
         end : `int`
             The vertex from which the path ends.
 
@@ -275,7 +271,7 @@ class UndirectedGraph(Graph):
     Class for Undirected Graph definition and manipulation.
 
     Parameters
-    -----------
+    ----------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
@@ -337,8 +333,8 @@ class UndirectedGraph(Graph):
         r"""
         Returns the neighbours of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -359,8 +355,8 @@ class UndirectedGraph(Graph):
         r"""
         Returns the number of neighbours of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -385,7 +381,6 @@ class UndirectedGraph(Graph):
         ----------
         vertex_1 : `int`
             The first selected vertex.
-
         vertex_2 : `int`
             The second selected vertex.
 
@@ -420,12 +415,11 @@ class UndirectedGraph(Graph):
         Returns the minimum spanning tree given weights to the graph's edges
         using Kruskal's algorithm.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         weights : ``(n_vertices, n_vertices, )`` `ndarray`
             A matrix of the same size as the adjacency matrix that attaches a
             weight to each edge of the undirected graph.
-
         root_vertex : `int`
             The vertex that will be set as root in the output MST.
 
@@ -461,7 +455,7 @@ class DirectedGraph(Graph):
     Class for Directed Graph definition and manipulation.
 
     Parameters
-    -----------
+    ----------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
@@ -525,8 +519,8 @@ class DirectedGraph(Graph):
         r"""
         Returns the children of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -547,8 +541,8 @@ class DirectedGraph(Graph):
         r"""
         Returns the number of children of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -569,8 +563,8 @@ class DirectedGraph(Graph):
         r"""
         Returns the parents of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -592,8 +586,8 @@ class DirectedGraph(Graph):
         r"""
         Returns the number of parents of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -657,7 +651,7 @@ class Tree(DirectedGraph):
     Class for Tree definitions and manipulation.
 
     Parameters
-    -----------
+    ----------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the tree, i.e. an array containing the sets of
         the tree's edges. The numbering of vertices is assumed to start from 0.
@@ -721,8 +715,8 @@ class Tree(DirectedGraph):
         r"""
         Returns the depth of the specified vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -759,8 +753,8 @@ class Tree(DirectedGraph):
         r"""
         Returns a list of vertices at the specified depth.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         depth : `int`
             The selected depth.
 
@@ -779,8 +773,8 @@ class Tree(DirectedGraph):
         r"""
         Returns the number of vertices at the specified depth.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         depth : `int`
             The selected depth.
 
@@ -799,8 +793,8 @@ class Tree(DirectedGraph):
         r"""
         Returns whether the vertex is a leaf.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -847,8 +841,8 @@ class Tree(DirectedGraph):
         r"""
         Returns the parent of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -875,15 +869,15 @@ class PointGraph(Graph, PointCloud):
     Class for defining a graph with geometry.
 
     Parameters
-    -----------
-    points : ``(n_points, n_dims)`` `ndarray`
-        The array representing the points.
+    ----------
+    points : `ndarray`
+        The array of point locations.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
 
         For an undirected graph, the order of an edge's vertices doesn't matter,
-        for example:
+        for example
 
         ::
 
@@ -899,7 +893,7 @@ class PointGraph(Graph, PointCloud):
 
         For a directed graph, we assume that the vertices in the first column of
         the adjacency_array are the fathers and the vertices in the second
-        column of the adjacency_array are the children, for example:
+        column of the adjacency_array are the children, for example
 
         ::
 
@@ -1064,13 +1058,13 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
     Class for defining an Undirected Graph with geometry.
 
     Parameters
-    -----------
-    points : ``(n_points, n_dims)`` `ndarray`
-        The array representing the points.
+    ----------
+    points : `ndarray`
+        The array of point locations.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
-        For example:
+        For example
 
         ::
 
@@ -1156,13 +1150,13 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
     Class for defining a Directed Graph with geometry.
 
     Parameters
-    -----------
+    ----------
     points : ``(n_points, n_dims)`` `ndarray`
         The array representing the points.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
-        For example:
+        For example
 
         ::
 
@@ -1194,7 +1188,7 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
         r"""
         Returns the relative location between the provided vertices. That is
         if vertex j is the parent and vertex i is its child and vector l
-        denotes the coordinates of a vertex, then:
+        denotes the coordinates of a vertex, then
 
         ::
 
@@ -1205,7 +1199,6 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
         ----------
         parent : `int`
             The first selected vertex which is considered as the parent.
-
         child : `int`
             The second selected vertex which is considered as the child.
 
@@ -1305,7 +1298,7 @@ class PointTree(PointDirectedGraph, Tree):
     Class for defining a Tree with geometry.
 
     Parameters
-    -----------
+    ----------
     points : ``(n_points, n_dims)`` `ndarray`
         The array representing the points.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
@@ -1314,7 +1307,7 @@ class PointTree(PointDirectedGraph, Tree):
 
         We assume that the vertices in the first column of the adjacency_array
         are the fathers and the vertices in the second column of the
-        adjacency_array are the children, for example:
+        adjacency_array are the children, for example
 
         ::
 
@@ -1456,11 +1449,11 @@ def _has_cycles(adjacency_list, directed):
     r"""
     Function that checks if the provided directed graph has cycles.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The adjacency array of the directed graph.
-    directed : `boolean`
+    directed : `bool`
         Defines if the provided graph is directed or not.
     """
     def dfs(node, entered, exited, tree_edges, back_edges):

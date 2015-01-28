@@ -58,7 +58,7 @@ class Renderer(object):
 
         Returns
         -------
-        viewer : :map:`Renderer`
+        viewer : Renderer
             Pointer to `self`.
         """
         pass

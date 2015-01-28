@@ -21,10 +21,8 @@ class Alignment(Targetable, Viewable):
     ----------
     source : :map:`PointCloud`
         A PointCloud that the alignment will be based from
-
     target : :map:`PointCloud`
         A PointCloud that the alignment is targeted towards
-
     """
     def __init__(self, source, target):
         self._verify_source_and_target(source, target)

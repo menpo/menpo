@@ -47,7 +47,7 @@ def generate_module_index(module_name, module):
     breadcrumb = '.. _api-{}-index:\n\n'.format(module_name)
     title = ":mod:`{}`".format(module.__name__)
     title = "{}\n{}\n".format(title, '=' * len(title))
-    toctree = "\n.. toctree::\n   :maxdepth: 1\n\n  "
+    toctree = "\n.. toctree::\n  :maxdepth: 1\n\n  "
     items = [i for i, v in module.__dict__.items() if isclass(v) or
              is_func_or_partial(v)]
     return breadcrumb + title + toctree + "\n  ".join(items)

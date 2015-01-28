@@ -7,16 +7,16 @@ Image Types
 -----------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-   Image
-   BooleanImage
-   MaskedImage
+  Image
+  BooleanImage
+  MaskedImage
 
 Exceptions
 ----------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-   ImageBoundaryError
+  ImageBoundaryError
