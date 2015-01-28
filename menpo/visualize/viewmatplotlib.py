@@ -1,5 +1,3 @@
-import abc
-
 import numpy as np
 
 from menpo.visualize.base import Renderer
@@ -11,14 +9,12 @@ class MatplotlibRenderer(Renderer):
 
     Parameters
     ----------
-    figure_id : int or `None`
-        A figure id or `None`. `None` assumes we maintain the Matplotlib
+    figure_id : `int` or ``None``
+        A figure id or `None`. ``None`` assumes we maintain the Matplotlib
         state machine and use `plt.gcf()`.
-    new_figure : bool
-        If `True`, creates a new figure to render on.
+    new_figure : `bool`
+        If ``True``, creates a new figure to render on.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, figure_id, new_figure):
         super(MatplotlibRenderer, self).__init__(figure_id, new_figure)
@@ -34,9 +30,9 @@ class MatplotlibRenderer(Renderer):
 
     def get_figure(self):
         r"""
-        Gets the figure specified by the combination of `self.figure_id` and
-        `self.new_figure`. If `self.figure_id == None` then `plt.gcf()`
-        is used. `self.figure_id` is also set to the correct id of the figure
+        Gets the figure specified by the combination of ``self.figure_id`` and
+        ``self.new_figure``. If ``self.figure_id == None`` then ``plt.gcf()``
+        is used. ``self.figure_id`` is also set to the correct id of the figure
         if a new figure is created.
 
         Returns
@@ -71,17 +67,31 @@ class MatplotlibRenderer(Renderer):
             a `str`.
         dpi : `int` > 0 or None, optional
             The resolution in dots per inch.
-        face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                       ``(3, )`` `ndarray`, optional
+        face_colour : See Below, optional
             The face colour of the figure rectangle.
-        edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                       ``(3, )`` `ndarray`, optional
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or
+                ``(3, )`` `ndarray`
+
+        edge_colour : See Below, optional
             The edge colour of the figure rectangle.
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or
+                ``(3, )`` `ndarray`
+
         orientation : {``portrait``, ``landscape``}, optional
             The page orientation.
-        paper_type : {``letter``, ``legal``, ``executive``, ``ledger``,
-                      ``a0`` through ``a10``, ``b0` through ``b10``}, optional
+        paper_type : See Below, optional
             The type of the paper.
+            Example options ::
+
+                {``letter``, ``legal``, ``executive``, ``ledger``,
+                 ``a0`` through ``a10``, ``b0` through ``b10``}
+
         transparent : `bool`, optional
             If ``True``, the axes patches will all be transparent; the figure
             patch will also be transparent unless `face_colour` and/or
@@ -107,8 +117,8 @@ class MatplotlibRenderer(Renderer):
 
     def save_figure_widget(self, popup=True):
         r"""
-        Method for saving the figure of the current `figure_id` to file using
-        :map:`menpo.visualize.widgets.save_matplotlib_figure` widget.
+        Method for saving the figure of the current ``figure_id`` to file using
+        :func:`menpo.visualize.widgets.base.save_matplotlib_figure` widget.
 
         Parameters
         ----------
@@ -120,8 +130,6 @@ class MatplotlibRenderer(Renderer):
 
 
 class MatplotlibSubplots(object):
-
-    __metaclass__ = abc.ABCMeta
 
     def _subplot_layout(self, num_subplots):
         if num_subplots < 2:

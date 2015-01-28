@@ -1,4 +1,3 @@
-=======
 Welcome
 =======
 
@@ -18,7 +17,7 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-   userguide/index
-   api/index
+  userguide/index
+  api/index

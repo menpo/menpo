@@ -5,7 +5,7 @@ def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
     r"""
     Returns an `str` that visual demonstrates the specified progress percentage
     either in the form of a progress bar or in the form of a percentage. It can
-    be combined with the :function:`print_dynamic` function.
+    be combined with the :func:`print_dynamic` function.
 
     For example, this for loop:
 

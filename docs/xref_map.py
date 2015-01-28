@@ -8,6 +8,7 @@ xref_map = {
 'Copyable': ('class', 'menpo.base.Copyable'),
 'ComposableTransform': ('class', 'menpo.transform.ComposableTransform'),
 'DiscreteAffine': ('class', 'menpo.transform.DiscreteAffine'),
+'GraphPlotter': ('class', 'menpo.visualize.GraphPlotter'),
 'from_vector_inplace': ('function', 'menpo.base.Vectorizable.from_vector_inplace'),
 'from_vector': ('function', 'menpo.base.Vectorizable.from_vector'),
 'Homogeneous': ('class', 'menpo.transform.Homogeneous'),

@@ -6,7 +6,8 @@ from menpo.visualize import print_dynamic, progress_bar_str
 
 
 class PCAModel(MeanInstanceLinearModel):
-    r"""A :map:`MeanInstanceLinearModel` where components are Principal
+    r"""
+    A :map:`MeanInstanceLinearModel` where components are Principal
     Components.
 
     Principal Component Analysis (PCA) by eigenvalue decomposition of the
@@ -534,7 +535,7 @@ class PCAModel(MeanInstanceLinearModel):
         :meth:`trim_components` for details.
 
         Parameters
-        -----------
+        ----------
         linear_model : :map:`LinearModel`
             A second linear model to orthonormalize this against.
         """
@@ -587,43 +588,69 @@ class PCAModel(MeanInstanceLinearModel):
             If ``True``, a new figure is created.
         render_lines : `bool`, optional
             If ``True``, the line will be rendered.
-        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                      ``(3, )`` `ndarray`, optional
+        line_colour : See Below, optional
             The colour of the lines.
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or 
+                ``(3, )`` `ndarray`
+
         line_style : {``-``, ``--``, ``-.``, ``:``}, optional
             The style of the lines.
         line_width : `float`, optional
             The width of the lines.
         render_markers : `bool`, optional
             If ``True``, the markers will be rendered.
-        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
-                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
-                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+        marker_style : See Below, optional
             The style of the markers.
+            Example options ::
+
+                {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                 ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                 ``1``, ``2``, ``3``, ``4``, ``8``}
+
         marker_size : `int`, optional
             The size of the markers in points^2.
-        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+        marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
-        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or 
+                ``(3, )`` `ndarray`
+        marker_edge_colour : See Below, optional
             The edge colour of the markers.
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or 
+                ``(3, )`` `ndarray`
+
         marker_edge_width : `float`, optional
             The width of the markers' edge.
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
-        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                          ``monospace``}, optional
+        axes_font_name : See Below, optional
             The font of the axes.
+            Example options ::
+
+                {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                 ``monospace``}
+
         axes_font_size : `int`, optional
             The font size of the axes.
         axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
             The font style of the axes.
-        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
-                            ``book``, ``medium``, ``roman``, ``semibold``,
-                            ``demibold``, ``demi``, ``bold``, ``heavy``,
-                            ``extra bold``, ``black``}, optional
+        axes_font_weight : See Below, optional
             The font weight of the axes.
+            Example options ::
+
+                {``ultralight``, ``light``, ``normal``, ``regular``,
+                 ``book``, ``medium``, ``roman``, ``semibold``,
+                 ``demibold``, ``demi``, ``bold``, ``heavy``,
+                 ``extra bold``, ``black``}
+
         figure_size : (`float`, `float`) or `None`, optional
             The size of the figure in inches.
         render_grid : `bool`, optional
@@ -679,43 +706,69 @@ class PCAModel(MeanInstanceLinearModel):
             If ``True``, a new figure is created.
         render_lines : `bool`, optional
             If ``True``, the line will be rendered.
-        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                      ``(3, )`` `ndarray`, optional
+        line_colour : See Below, optional
             The colour of the lines.
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or 
+                ``(3, )`` `ndarray`
+
         line_style : {``-``, ``--``, ``-.``, ``:``}, optional
             The style of the lines.
         line_width : `float`, optional
             The width of the lines.
         render_markers : `bool`, optional
             If ``True``, the markers will be rendered.
-        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
-                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
-                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+        marker_style : See Below, optional
             The style of the markers.
+            Example options ::
+
+                {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                 ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                 ``1``, ``2``, ``3``, ``4``, ``8``}
+
         marker_size : `int`, optional
             The size of the markers in points^2.
-        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+        marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
-        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or 
+                ``(3, )`` `ndarray`
+        marker_edge_colour : See Below, optional
             The edge colour of the markers.
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or 
+                ``(3, )`` `ndarray`
+
         marker_edge_width : `float`, optional
             The width of the markers' edge.
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
-        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                          ``monospace``}, optional
+        axes_font_name : See Below, optional
             The font of the axes.
+            Example options ::
+
+                {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                 ``monospace``}
+
         axes_font_size : `int`, optional
             The font size of the axes.
         axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
             The font style of the axes.
-        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
-                            ``book``, ``medium``, ``roman``, ``semibold``,
-                            ``demibold``, ``demi``, ``bold``, ``heavy``,
-                            ``extra bold``, ``black``}, optional
+        axes_font_weight : See Below, optional
             The font weight of the axes.
+            Example options ::
+
+                {``ultralight``, ``light``, ``normal``, ``regular``,
+                 ``book``, ``medium``, ``roman``, ``semibold``,
+                 ``demibold``, ``demi``, ``bold``, ``heavy``,
+                 ``extra bold``, ``black``}
+
         figure_size : (`float`, `float`) or `None`, optional
             The size of the figure in inches.
         render_grid : `bool`, optional
@@ -778,43 +831,69 @@ class PCAModel(MeanInstanceLinearModel):
             If ``True``, a new figure is created.
         render_lines : `bool`, optional
             If ``True``, the line will be rendered.
-        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                      ``(3, )`` `ndarray`, optional
+        line_colour : See Below, optional
             The colour of the lines.
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or 
+                ``(3, )`` `ndarray`
+
         line_style : {``-``, ``--``, ``-.``, ``:``}, optional
             The style of the lines.
         line_width : `float`, optional
             The width of the lines.
         render_markers : `bool`, optional
             If ``True``, the markers will be rendered.
-        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
-                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
-                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+        marker_style : See Below, optional
             The style of the markers.
+            Example options ::
+
+                {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                 ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                 ``1``, ``2``, ``3``, ``4``, ``8``}
+
         marker_size : `int`, optional
             The size of the markers in points^2.
-        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+        marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
-        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or 
+                ``(3, )`` `ndarray`
+        marker_edge_colour : See Below, optional
             The edge colour of the markers.
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or 
+                ``(3, )`` `ndarray`
+
         marker_edge_width : `float`, optional
             The width of the markers' edge.
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
-        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                          ``monospace``}, optional
+        axes_font_name : See Below, optional
             The font of the axes.
+            Example options ::
+
+                {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                 ``monospace``}
+
         axes_font_size : `int`, optional
             The font size of the axes.
         axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
             The font style of the axes.
-        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
-                            ``book``, ``medium``, ``roman``, ``semibold``,
-                            ``demibold``, ``demi``, ``bold``, ``heavy``,
-                            ``extra bold``, ``black``}, optional
+        axes_font_weight : See Below, optional
             The font weight of the axes.
+            Example options ::
+
+                {``ultralight``, ``light``, ``normal``, ``regular``,
+                 ``book``, ``medium``, ``roman``, ``semibold``,
+                 ``demibold``, ``demi``, ``bold``, ``heavy``,
+                 ``extra bold``, ``black``}
+
         figure_size : (`float`, `float`) or `None`, optional
             The size of the figure in inches.
         render_grid : `bool`, optional

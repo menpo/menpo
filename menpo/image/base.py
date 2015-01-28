@@ -1514,7 +1514,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
                 ::
 
-                Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'
+                    Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'
 
             * ``average`` - intensity is an equal average of all three channels
             * ``channel`` - a specific channel is used

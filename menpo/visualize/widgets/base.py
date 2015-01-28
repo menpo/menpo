@@ -22,7 +22,7 @@ glyph = None
 def visualize_pointclouds(pointclouds, figure_size=(10, 8), popup=False,
                           browser_style='buttons'):
     r"""
-    Widget that allows browsing through a list of :map:`PointCLoud`,
+    Widget that allows browsing through a list of :map:`PointCloud`,
     :map:`PointGraph` or :map:`TriMesh`.
 
     The widget has options tabs regarding the renderer (lines, markers, figure,
