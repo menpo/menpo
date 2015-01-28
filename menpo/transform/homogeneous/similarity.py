@@ -12,9 +12,8 @@ class Similarity(Affine):
 
     Parameters
     ----------
-    h_matrix : (D + 1, D + 1) ndarray
+    h_matrix : ``(D + 1, D + 1)`` `ndarray`
         The homogeneous matrix of the similarity transform.
-
     """
 
     def __init__(self, h_matrix, copy=True, skip_checks=False):
@@ -26,9 +25,8 @@ class Similarity(Affine):
 
         Returns
         -------
-        str : string
+        string : `str`
             String representation of transform.
-
         """
         header = 'Similarity decomposing into:'
         list_str = [t._transform_str() for t in self.decompose()]
@@ -60,7 +58,6 @@ class Similarity(Affine):
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
-
         """
         if self.n_dims == 2:
             return 4
@@ -96,14 +93,13 @@ class Similarity(Affine):
 
         Returns
         -------
-        params : (P,) ndarray
+        params : (P,) `ndarray`
             The values that parameterise the transform.
 
         Raises
         ------
         DimensionalityError, NotImplementedError
             If the transform is not 2D
-
         """
         n_dims = self.n_dims
         if n_dims == 2:
@@ -126,13 +122,13 @@ class Similarity(Affine):
 
         Supports rebuilding from 2D parameter sets.
 
-        2D Similarity: 4 parameters::
+        2D Similarity: 4 parameters ::
 
             [a, b, tx, ty]
 
         Parameters
         ----------
-        p : (P,) ndarray
+        p : ``(P,)`` `ndarray`
             The array of parameters.
 
         Raises
@@ -165,19 +161,13 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
 
     Parameters
     ----------
-
     source : :map:`PointCloud`
-        The source pointcloud instance used in the alignment
-
+        The source pointcloud instance used in the alignment.
     target : :map:`PointCloud`
-        The target pointcloud instance used in the alignment
-
-    rotation: boolean, optional
-        If False, the rotation component of the similarity transform is not
+        The target pointcloud instance used in the alignment.
+    rotation: `bool`, optional
+        If ``False``, the rotation component of the similarity transform is not
         inferred.
-
-        Default: True
-
     """
     def __init__(self, source, target, rotation=True):
         HomogFamilyAlignment.__init__(self, source, target)
@@ -206,20 +196,19 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
 
         Supports rebuilding from 2D parameter sets.
 
-        2D Similarity: 4 parameters::
+        2D Similarity: 4 parameters ::
 
             [a, b, tx, ty]
 
         Parameters
         ----------
-        p : (P,) ndarray
+        p : ``(P,)`` `ndarray`
             The array of parameters.
 
         Raises
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
-
         """
         Similarity.from_vector_inplace(self, p)
         self._sync_target_from_state()
@@ -228,33 +217,29 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
 def procrustes_alignment(source, target, rotation=True):
     r"""
     Returns the similarity transform that aligns the source to the target.
+    Solves the standard orthogonal procrustes problem where the rotation
+    component is guaranteed
 
     Parameters
     ----------
-
-
-    source : :map:`PointCloud`
+    source : :map:`PointCloud`.
         The source pointcloud
-
     target : :map:`PointCloud`
-        The target pointcloud
-
+        The target pointcloud.
     rotation : `bool`, optional
-        If `True`, rotation is allowed in the Procrustes calculation. If
-        False, only scale and translation effects are used.
+        If ``True``, rotation is allowed in the Procrustes calculation. If
+        ``False``, only scale and translation is returned.
 
     Returns
     -------
-
-    :map:`Similarity`
+    similarity_transform : map:`Similarity`
         A :map:`Similarity Transform that optimally aligns the ``source`` to
         ``target``.
-
     """
     from .rotation import Rotation, optimal_rotation_matrix
     from .translation import Translation
     from .scale import UniformScale
-    # Compute the transforms we need - centering translations...
+    # Compute the transforms we need - centering translations
     tgt_t = Translation(-target.centre(), skip_checks=True)
     src_t = Translation(-source.centre(), skip_checks=True)
     # and a scale that matches the norm of the source to the norm of the target

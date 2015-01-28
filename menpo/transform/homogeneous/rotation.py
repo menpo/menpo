@@ -6,29 +6,38 @@ from .affine import DiscreteAffine
 from .similarity import Similarity
 
 
-def optimal_rotation_matrix(source, target):
+def optimal_rotation_matrix(source, target, allow_mirror=False):
     r"""
-    Performs an SVD on the corrolation matrix to find an optimal rotation
+    Performs an SVD on the correlation matrix to find an optimal rotation
     between source and target
 
     Parameters
     ----------
-
-    source: :class:`menpo.shape.PointCloud`
+    source: :map:`PointCloud`
         The source points to be aligned
-
-    target: :class:`menpo.shape.PointCloud`
+    target: :map:`PointCloud`
         The target points to be aligned
+    allow_mirror : `bool`, optional
+        If ``True``, the Kabsch algorithm check is not performed, and mirroring
+        of the Rotation matrix is permitted.
 
     Returns
     -------
-
-    ndarray
+    rot_matrix : `ndarray`
         The optimal square rotation matrix
     """
     correlation = np.dot(target.points.T, source.points)
     U, D, Vt = np.linalg.svd(correlation)
-    return np.dot(U, Vt)
+
+    if not allow_mirror:
+        # d = sgn(det(V * Ut))
+        d = np.sign(np.linalg.det(Vt.T.dot(U.T)))
+        E = np.eye(U.shape[0])
+        E[-1, -1] = d
+        # R = U * E * Vt, E = [[1, 0, 0], [0, 1, 0], [0, 0, d]] for 2D
+        return np.dot(U, np.dot(E, Vt))
+    else:
+        return np.dot(U, Vt)
 
 
 # TODO build rotations about axis, euler angles etc
