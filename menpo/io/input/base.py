@@ -62,10 +62,12 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
     r"""
     Single image (and associated landmarks) importer.
 
-    Iff an image file is found at `filepath`, returns a :map:`Image` or subclass
-    representing it. Landmark files sharing the same filename
-    will be imported and attached too. If the image defines a mask,
-    this mask will be imported.
+    If an image file is found at `filepath`, returns an :map:`Image` or
+    subclass representing it. By default, landmark files sharing the same
+    filename stem will be imported and attached with a group name based on the
+    extension of the landmark file, although this behavior can be customised
+    (see `landmark_resolver`). If the image defines a mask, this mask will be
+    imported.
 
     Parameters
     ----------
@@ -78,7 +80,12 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
         Default finds landmarks with the same name as the image file.
     normalise : `bool`, optional
         If ``True``, normalise the image pixels between 0 and 1 and convert
-        to floating point.
+        to floating point. If false, the native datatype of the image will be
+        maintained (commonly `uint8`). Note that in general Menpo assumes
+        :map:`Image` instances contain floating point data - if you disable
+        this flag you will have to manually convert the images you import to
+        floating point before doing most Menpo operations. This however can be
+        useful to save on memory usage if you only wish to view or crop images.
 
     Returns
     -------
