@@ -59,8 +59,7 @@ def same_name(asset):
 
 
 def import_image(filepath, landmark_resolver=same_name, normalise=True):
-    r"""
-    Single image (and associated landmarks) importer.
+    r"""Single image (and associated landmarks) importer.
 
     If an image file is found at `filepath`, returns an :map:`Image` or
     subclass representing it. By default, landmark files sharing the same
@@ -120,26 +119,31 @@ def import_landmark_file(filepath, asset=None):
 
 
 def import_pickle(filepath):
-    r"""Import a pickle file.
+    r"""Import a pickle file of arbitrary Python objects.
+
+    Menpo unambiguously uses ``.pkl`` as it's choice of extension for Pickle
+    files. Menpo also supports automatic importing and exporting of gzip
+    compressed pickle files - just choose a ``filepath`` ending ``pkl.gz`` and
+    gzip compression will automatically be applied. Compression can massively
+    reduce the filesize of a pickle file at the cost of longer import and
+    export times.
 
     Parameters
     ----------
     filepath : `str`
-        A relative or absolute filepath to an .pkl or .pkl.gz file.
+        A relative or absolute filepath to a ``.pkl`` or ``.pkl.gz`` file.
 
     Returns
     -------
-    `object`
+    object : `object`
         Whatever Python objects are present in the Pickle file
-
     """
     return _import(filepath, pickle_types)
 
 
 def import_images(pattern, max_images=None, landmark_resolver=same_name,
                   normalise=True, verbose=False):
-    r"""
-    Multiple image (and associated landmarks) importer.
+    r"""Multiple image (and associated landmarks) importer.
 
     For each image found yields an :map:`Image` or
     subclass representing it. By default, landmark files sharing the same
@@ -190,12 +194,12 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
 
     Examples
     --------
-    Import images at 20% scale from a huge collection
+    Import images at 20% scale from a huge collection:
 
-        >>> images = []
-        >>> for img in menpo.io.import_images('./massive_image_db/*'):
-        >>>    # rescale to a sensible size as we go
-        >>>    images.append(img.rescale(0.2))
+    >>> images = []
+    >>> for img in menpo.io.import_images('./massive_image_db/*'):
+    >>>    # rescale to a sensible size as we go
+    >>>    images.append(img.rescale(0.2))
     """
     kwargs = {'normalise': normalise}
     for asset in _import_glob_generator(pattern, image_types,
