@@ -101,7 +101,7 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
 def import_landmark_file(filepath, asset=None):
     r"""Single landmark group importer.
 
-    Iff an landmark file is found at ``filepath``, returns a
+    If a landmark file is found at ``filepath``, returns a
     :map:`LandmarkGroup` representing it.
 
     Parameters
@@ -219,7 +219,10 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
     Parameters
     ----------
     pattern : `str`
-        The glob path pattern to search for images.
+        A glob path pattern to search for landmark files. Every
+        landmark file found to match the glob will be imported one by one.
+        See :map:`landmark_file_paths` for more details of what landmark files
+        will be found.
 
     max_landmark_files : positive `int`, optional
         If not ``None``, only import the first ``max_landmark_files`` found.
@@ -228,16 +231,16 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
     verbose : `bool`, optional
         If ``True`` progress of the importing will be dynamically reported.
 
-    Yields
-    ------
-    :map:`LandmarkGroup`
-        Landmark found to match the glob pattern provided.
+    Returns
+    -------
+    generator : `generator` yielding :map:`LandmarkGroup`
+        Generator yielding :map:`LandmarkGroup` instances found to match the
+        glob pattern provided.
 
     Raises
     ------
     ValueError
         If no landmarks are found at the provided glob.
-
     """
     for asset in _import_glob_generator(pattern, image_landmark_types,
                                         max_assets=max_landmarks,
@@ -258,7 +261,8 @@ def import_pickles(pattern, max_pickles=None, verbose=False):
     Parameters
     ----------
     pattern : `str`
-        The glob path pattern to search for pickles.
+        The glob path pattern to search for pickles. Every pickle file found
+        to match the glob will be imported one by one.
 
     max_pickles : positive `int`, optional
         If not ``None``, only import the first ``max_pickles`` found.

@@ -19,6 +19,7 @@ xref_map = {
 'ImageViewer': ('class', 'menpo.visualize.ImageViewer'),
 'Invertible': ('class', 'menpo.transform.Invertible'),
 'Landmarkable': ('class', 'menpo.landmark.Landmarkable'),
+'landmark_file_paths': ('function', 'menpo.io.landmark_file_paths'),
 'LandmarkGroup': ('class', 'menpo.landmark.LandmarkGroup'),
 'LandmarkManager': ('class', 'menpo.landmark.LandmarkManager'),
 'LabellingError': ('class', 'menpo.landmark.LabellingError'),
