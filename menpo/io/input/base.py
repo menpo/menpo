@@ -596,6 +596,9 @@ def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
     """
     suffix = ''.join(filepath.suffixes)
     importer_type = extensions_map.get(suffix)
+    if (importer_type is None) and len(filepath.suffixes) > 1:
+        suffix = ''.join(filepath.suffix)
+        importer_type = extensions_map.get(suffix)
     if importer_type is None:
         raise ValueError("{} does not have a "
                          "suitable importer.".format(suffix))
