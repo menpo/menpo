@@ -70,7 +70,7 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
 
     Parameters
     ----------
-    filepath : `str`
+    filepath : `pathlib.Path` or `str`
         A relative or absolute filepath to an image file.
     landmark_resolver : `function`, optional
         This function will be used to find landmarks for the
@@ -101,19 +101,18 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
 def import_landmark_file(filepath, asset=None):
     r"""Single landmark group importer.
 
-    Iff an landmark file is found at `filepath`, returns a :class:`menpo
-    .landmarks.LandmarkGroup` representing it.
+    Iff an landmark file is found at ``filepath``, returns a
+    :map:`LandmarkGroup` representing it.
 
     Parameters
     ----------
-    filepath : `str`
+    filepath : `pathlib.Path` or `str`
         A relative or absolute filepath to an landmark file.
 
     Returns
     -------
-    :map:`LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The :map:`LandmarkGroup` that the file format represents.
-
     """
     return _import(filepath, image_landmark_types, asset=asset)
 
@@ -130,7 +129,7 @@ def import_pickle(filepath):
 
     Parameters
     ----------
-    filepath : `str`
+    filepath : `pathlib.Path` or `str`
         A relative or absolute filepath to a ``.pkl`` or ``.pkl.gz`` file.
 
     Returns
