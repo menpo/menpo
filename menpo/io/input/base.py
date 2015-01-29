@@ -184,8 +184,9 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
 
     Returns
     -------
-    `generator` of :map:`Image` or list of
-        Images found to match the glob pattern provided.
+    generator : `generator` yielding :map:`Image` or list of
+        Generator yielding :map:`Image` instances found to match the glob
+        pattern provided.
 
     Raises
     ------
@@ -250,6 +251,11 @@ def import_pickles(pattern, max_pickles=None, verbose=False):
 
     Note that this is a generator function.
 
+    Menpo unambiguously uses ``.pkl`` as it's choice of extension for pickle
+    files. Menpo also supports automatic importing of gzip compressed pickle
+    files - matching files with extension ``pkl.gz`` will be automatically
+    un-gzipped and imported.
+
     Parameters
     ----------
     pattern : `str`
@@ -262,10 +268,11 @@ def import_pickles(pattern, max_pickles=None, verbose=False):
     verbose : `bool`, optional
         If ``True`` progress of the importing will be dynamically reported.
 
-    Yields
-    ------
-    `object`
-        Whatever Python objects are present in the Pickle file
+    Returns
+    -------
+    generator : generator yielding `object`
+        Generator yielding whatever Python object is present in the pickle
+        files that match the glob pattern provided.
 
     Raises
     ------
