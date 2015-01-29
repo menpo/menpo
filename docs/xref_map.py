@@ -14,6 +14,7 @@ xref_map = {
 'Homogeneous': ('class', 'menpo.transform.Homogeneous'),
 'HomogFamilyAlignment': ('class', 'menpo.transform.HomogFamilyAlignment'),
 'Image': ('class', 'menpo.image.Image'),
+'image_paths': ('function', 'menpo.io.image_paths'),
 'ImageBoundaryError': ('class', 'menpo.image.ImageBoundaryError'),
 'ImageViewer': ('class', 'menpo.visualize.ImageViewer'),
 'Invertible': ('class', 'menpo.transform.Invertible'),

@@ -139,11 +139,14 @@ def import_pickle(filepath):
 def import_images(pattern, max_images=None, landmark_resolver=same_name,
                   normalise=True, verbose=False):
     r"""
-    Multiple image import generator.
+    Multiple image (and associated landmarks) importer.
 
-    Makes it's best effort to import and attach relevant related
-    information such as landmarks. It searches the directory for files that
-    begin with the same filename and end in a supported extension.
+    For each image found yields an :map:`Image` or
+    subclass representing it. By default, landmark files sharing the same
+    filename stem will be imported and attached with a group name based on the
+    extension of the landmark file, although this behavior can be customised
+    (see `landmark_resolver`). If the image defines a mask, this mask will be
+    imported.
 
     Note that this is a generator function. This allows for pre-processing
     of data to take place as data is imported (e.g. cropping images to
@@ -152,7 +155,9 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
     Parameters
     ----------
     pattern : `str`
-        The glob path pattern to search for images.
+        A glob path pattern to search for images. Every image found to match
+        the glob will be imported one by one. See :map:`image_paths` for more
+        details of what images will be found.
     max_images : positive `int`, optional
         If not ``None``, only import the first ``max_images`` found. Else,
         import all.
@@ -162,14 +167,20 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
         return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
         Default finds landmarks with the same name as the image file.
     normalise : `bool`, optional
-        If ``True``, normalise the images between 0.0 and 1.0 and convert
-        to ``np.float``.
+        If ``True``, normalise the image pixels between 0 and 1 and convert
+        to floating point. If false, the native datatype of the image will be
+        maintained (commonly `uint8`). Note that in general Menpo assumes
+        :map:`Image` instances contain floating point data - if you disable
+        this flag you will have to manually convert the images you import to
+        floating point before doing most Menpo operations. This however can be
+        useful to save on memory usage if you only wish to view or crop images.
     verbose : `bool`, optional
-        If ``True`` progress of the importing will be dynamically reported.
+        If ``True`` progress of the importing will be dynamically reported with
+        a progress bar.
 
-    Yields
-    ------
-    :map:`MaskedImage`
+    Returns
+    -------
+    `generator` of :map:`Image` or list of
         Images found to match the glob pattern provided.
 
     Raises
@@ -179,12 +190,12 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
 
     Examples
     --------
-    Import crops of the top 100 square pixels from a huge collection of images
+    Import images at 20% scale from a huge collection
 
         >>> images = []
-        >>> for im in import_images('./massive_image_db/*'):
-        >>>    im.crop_inplace((0, 0), (100, 100))  # crop to a sensible size as we go
-        >>>    images.append(im)
+        >>> for img in menpo.io.import_images('./massive_image_db/*'):
+        >>>    # rescale to a sensible size as we go
+        >>>    images.append(img.rescale(0.2))
     """
     kwargs = {'normalise': normalise}
     for asset in _import_glob_generator(pattern, image_types,
