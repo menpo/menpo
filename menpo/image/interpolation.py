@@ -12,32 +12,28 @@ xy_yx = Homogeneous(np.array([[0., 1., 0.],
 def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
                         cval=0.):
     r"""
-    Interpolation utilizing SciPy's map_coordinates function.
+    Interpolation utilizing scipy map_coordinates function.
 
     Parameters
     ----------
-    pixels : (M, N, ..., n_channels) ndarray
+    pixels : ``(M, N, ..., n_channels)`` `ndarray`
         The image to be sampled from, the final axis containing channel
         information
-
-    points_to_sample : (n_points, n_dims) ndarray
+    points_to_sample : ``(n_points, n_dims)`` `ndarray`
         The points which should be sampled from pixels
-
-    mode : {'constant', 'nearest', 'reflect', 'wrap'}, optional
+    mode : ``{constant, nearest, reflect, wrap}``, optional
         Points outside the boundaries of the input are filled according to the
         given mode
-
-    order : int, optional
+    order : `int,` optional
         The order of the spline interpolation. The order has to be in the
-        range 0-5
-
-    cval : float, optional
+        range [0, 5].
+    cval : `float`, optional
         The value that should be used for points that are sampled from
-        outside the image bounds if mode is 'constant'
+        outside the image bounds if mode is ``constant``.
 
     Returns
     -------
-    sampled_image : ndarray
+    sampled_image : `ndarray`
         The pixel information sampled at each of the points.
     """
     global map_coordinates
@@ -61,32 +57,30 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
 def cython_interpolation(pixels, template_shape, h_transform, mode='constant',
                          order=1, cval=0.):
     r"""
-    Interpolation utilizing skimage's fast cython warp function.
+    Interpolation utilizing skimage fast cython warp function. This method
+    assumes that the warp takes the form of a homogeneous transform, and
+    thus is much faster for operations such as scaling.
 
     Parameters
     ----------
-    pixels : (M, N, ..., n_channels) ndarray
+    pixels : ``(M, N, ..., n_channels)`` `ndarray`
         The image to be sampled from, the final axis containing channel
         information.
-
-    template_shape : tuple
+    template_shape : `tuple`
         The shape of the new image that will be sampled
-
-    mode : {'constant', 'nearest', 'reflect', 'wrap'}, optional
+    mode : ``{constant, nearest, reflect, wrap}``, optional
         Points outside the boundaries of the input are filled according to the
         given mode.
-
     order : int, optional
         The order of the spline interpolation. The order has to be in the
-        range 0-5.
-
-    cval : float, optional
+        range [0,5].
+    cval : `float`, optional
         The value that should be used for points that are sampled from
         outside the image bounds if mode is 'constant'
 
     Returns
     -------
-    sampled_image : ndarray
+    sampled_image : `ndarray`
         The pixel information sampled at each of the points.
     """
     # unfortunately they consider xy -> yx
