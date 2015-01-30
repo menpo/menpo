@@ -12,7 +12,7 @@ class BooleanImage(Image):
     the mask.
 
     Parameters
-    -----------
+    ----------
     mask_data : ``(M, N, ..., L)`` `ndarray`
         The binary mask data. Note that there is no channel axis - a 2D Mask
         Image is built from just a 2D numpy array of mask_data.
@@ -252,7 +252,7 @@ class BooleanImage(Image):
             the edge of the image. If ``False``, the bounds are left unchanged.
 
         Returns
-        --------
+        -------
         min_b : ``(D,)`` `ndarray`
             The minimum extent of the ``True`` mask region with the boundary
             along each dimension. If `constrain_to_bounds` was ``True``,

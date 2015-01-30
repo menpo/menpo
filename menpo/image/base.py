@@ -486,6 +486,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
+        channels : `int` or `list` of `int` or ``all`` or ``None``
+            If `int` or `list` of `int`, the specified channel(s) will be
+            rendered. If ``all``, all the channels will be rendered in subplots.
+            If ``None`` and the image is RGB, it will be rendered in RGB mode.
+            If ``None`` and the image is not RGB, it is equivalent to ``all``.
         interpolation : See Below, optional
             The interpolation used to render the image. For example, if
             ``bilinear``, the image will be smooth and if ``nearest``, the
@@ -498,11 +503,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
-        channels : `int` or `list` of `int` or ``all`` or ``None``
-            If `int` or `list` of `int`, the specified channel(s) will be
-            rendered. If ``all``, all the channels will be rendered in subplots.
-            If ``None`` and the image is RGB, it will be rendered in RGB mode.
-            If ``None`` and the image is not RGB, it is equivalent to ``all``.
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
         axes_font_name : See Below, optional
