@@ -601,7 +601,7 @@ def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
     # final suffix (.bar). (Note we first try '.foo.bar' as we want to catch
     # cases like 'pkl.gz')
     if importer_type is None and len(filepath.suffixes) > 1:
-        suffix = ''.join(filepath.suffix)
+        suffix = filepath.suffix
         importer_type = extensions_map.get(suffix)
     if importer_type is None:
         raise ValueError("{} does not have a "
