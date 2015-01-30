@@ -477,8 +477,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         r"""
-        View the image using the default image viewer. Currently only
-        supports the rendering of 2D images.
+        View the image using the default image viewer. This method will appear 
+        on the Image as ``view`` if the Image is 2D.
 
         Returns
         -------
@@ -486,40 +486,47 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
-        interpolation : {``none``, ``nearest``, ``bilinear``, ``bicubic``,
-                         ``spline16``, ``spline36``, ``hanning``, ``hamming``,
-                         ``hermite``, ``kaiser``, ``quadric``, ``catrom``,
-                         ``gaussian``, ``bessel``, ``mitchell``, ``sinc``,
-                         ``lanczos``}, optional
+        interpolation : See Below, optional
             The interpolation used to render the image. For example, if
             ``bilinear``, the image will be smooth and if ``nearest``, the
             image will be pixelated.
+            Example options ::
+
+                {none, nearest, bilinear, bicubic, spline16, spline36,
+                hanning, hamming, hermite, kaiser, quadric, catrom, gaussian,
+                bessel, mitchell, sinc, lanczos}
+
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
-        channels : `int` or `list` of `int` or ``all`` or `None`
+        channels : `int` or `list` of `int` or ``all`` or ``None``
             If `int` or `list` of `int`, the specified channel(s) will be
             rendered. If ``all``, all the channels will be rendered in subplots.
-            If `None` and the image is RGB, it will be rendered in RGB mode.
-            If `None` and the image is not RGB, it is equivalent to ``all``.
+            If ``None`` and the image is RGB, it will be rendered in RGB mode.
+            If ``None`` and the image is not RGB, it is equivalent to ``all``.
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
-        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                          ``monospace``}, optional
+        axes_font_name : See Below, optional
             The font of the axes.
+            Example options ::
+            
+                {serif, sans-serif, cursive, fantasy, monospace}
+
         axes_font_size : `int`, optional
             The font size of the axes.
         axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
             The font style of the axes.
-        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
-                            ``book``, ``medium``, ``roman``, ``semibold``,
-                            ``demibold``, ``demi``, ``bold``, ``heavy``,
-                            ``extra bold``, ``black``}, optional
+        axes_font_weight : See Below, optional
             The font weight of the axes.
-        axes_x_limits : (`float`, `float`) or `None`, optional
+            Example options ::
+            
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
             The limits of the x axis.
-        axes_y_limits : (`float`, `float`) or `None`, optional
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
             The limits of the y axis.
-        figure_size : (`float`, `float`) or `None`, optional
+        figure_size : (`float`, `float`) `tuple` or ``None``, optional
             The size of the figure in inches.
 
         Raises
@@ -545,10 +552,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ----------
         popup : `bool`, optional
             If ``True``, the widget will appear as a popup window.
-        browser_style : {``buttons``, ``slider``}, optional
+        browser_style : ``{buttons, slider}``, optional
             It defines whether the selector of the images will have the form of
             plus/minus buttons or a slider.
-        figure_size : (`int`, `int`), optional
+        figure_size : (`int`, `int`) `tuple`, optional
             The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_images
@@ -585,16 +592,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                            axes_x_limits=None, axes_y_limits=None,
                            figure_size=(10, 8)):
         """
-        Visualize the landmarks.
+        Visualize the landmarks. This method will appear on the Image as
+        ``view_landmarks`` if the Image is 2D.
 
         Parameters
         ----------
-        channels : `int` or `list` of `int` or ``all`` or `None`
+        channels : `int` or `list` of `int` or ``all`` or ``None``
             If `int` or `list` of `int`, the specified channel(s) will be
             rendered. If ``all``, all the channels will be rendered in subplots.
-            If `None` and the image is RGB, it will be rendered in RGB mode.
-            If `None` and the image is not RGB, it is equivalent to ``all``.
-        group : `str` or `None`, optional
+            If ``None`` and the image is RGB, it will be rendered in RGB mode.
+            If ``None`` and the image is not RGB, it is equivalent to ``all``.
+        group : `str` or``None`` optional
             The landmark group to be visualized. If ``None`` and there are more
             than one landmark groups, an error is raised.
         with_labels : ``None`` or `str` or `list` of `str`, optional
@@ -607,85 +615,114 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
-        interpolation : {``none``, ``nearest``, ``bilinear``, ``bicubic``,
-                         ``spline16``, ``spline36``, ``hanning``, ``hamming``,
-                         ``hermite``, ``kaiser``, ``quadric``, ``catrom``,
-                         ``gaussian``, ``bessel``, ``mitchell``, ``sinc``,
-                         ``lanczos``}, optional
+        interpolation : See Below, optional
             The interpolation used to render the image. For example, if
             ``bilinear``, the image will be smooth and if ``nearest``, the
-            image will be pixelated.
+            image will be pixelated. Example options ::
+
+                {none, nearest, bilinear, bicubic, spline16, spline36, hanning,
+                hamming, hermite, kaiser, quadric, catrom, gaussian, bessel,
+                mitchell, sinc, lanczos}
+
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_lines : `bool`, optional
             If ``True``, the edges will be rendered.
-        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                      ``(3, )`` `ndarray`, optional
+        line_colour : See Below, optional
             The colour of the lines.
-        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            Example options::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_style : ``{-, --, -., :}``, optional
             The style of the lines.
         line_width : `float`, optional
             The width of the lines.
         render_markers : `bool`, optional
             If ``True``, the markers will be rendered.
-        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
-                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
-                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
-            The style of the markers.
+        marker_style : See Below, optional
+            The style of the markers. Example options ::
+
+                {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
         marker_size : `int`, optional
             The size of the markers in points^2.
-        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+        marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
-        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+            Example options ::
+            
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_colour : See Below, optional
             The edge colour of the markers.
+            Example options ::
+            
+                {r, g, b, c, m, k, w}
+                or 
+                (3, ) ndarray
+
         marker_edge_width : `float`, optional
             The width of the markers' edge.
         render_numbering : `bool`, optional
             If ``True``, the landmarks will be numbered.
-        numbers_horizontal_align : {``center``, ``right``, ``left``}, optional
+        numbers_horizontal_align : ``{center, right, left}``, optional
             The horizontal alignment of the numbers' texts.
-        numbers_vertical_align : {``center``, ``top``, ``bottom``,
-                                  ``baseline``}, optional
+        numbers_vertical_align : ``{center, top, bottom, baseline}``, optional
             The vertical alignment of the numbers' texts.
-        numbers_font_name : {``serif``, ``sans-serif``, ``cursive``,
-                             ``fantasy``, ``monospace``}, optional
-            The font of the numbers.
+        numbers_font_name : See Below, optional
+            The font of the numbers. Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
         numbers_font_size : `int`, optional
             The font size of the numbers.
-        numbers_font_style : {``normal``, ``italic``, ``oblique``}, optional
+        numbers_font_style : ``{normal, italic, oblique}``, optional
             The font style of the numbers.
-        numbers_font_weight : {``ultralight``, ``light``, ``normal``,
-                               ``regular``, ``book``, ``medium``, ``roman``,
-                               ``semibold``, ``demibold``, ``demi``, ``bold``,
-                               ``heavy``, ``extra bold``, ``black``}, optional
+        numbers_font_weight : See Below, optional
             The font weight of the numbers.
-        numbers_font_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                              or ``(3, )`` `ndarray`, optional
+            Example options ::
+            
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        numbers_font_colour : See Below, optional
             The font colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         render_legend : `bool`, optional
             If ``True``, the legend will be rendered.
         legend_title : `str`, optional
             The title of the legend.
-        legend_font_name : {``serif``, ``sans-serif``, ``cursive``,
-                            ``fantasy``, ``monospace``}, optional
-            The font of the legend.
-        legend_font_style : {``normal``, ``italic``, ``oblique``}, optional
+        legend_font_name : See below, optional
+            The font of the legend. Example options ::
+            
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        legend_font_style : ``{normal, italic, oblique}``, optional
             The font style of the legend.
         legend_font_size : `int`, optional
             The font size of the legend.
-        legend_font_weight : {``ultralight``, ``light``, ``normal``,
-                              ``regular``, ``book``, ``medium``, ``roman``,
-                              ``semibold``, ``demibold``, ``demi``, ``bold``,
-                              ``heavy``, ``extra bold``, ``black``}, optional
+        legend_font_weight : See Below, optional
             The font weight of the legend.
+            Example options ::
+            
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
         legend_marker_scale : `float`, optional
             The relative size of the legend markers with respect to the original
         legend_location : `int`, optional
             The location of the legend. The predefined values are:
 
-            =============== ===
+            =============== ==
             'best'          0
             'upper right'   1
             'upper left'    2
@@ -697,9 +734,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             'lower center'  8
             'upper center'  9
             'center'        10
-            =============== ===
+            =============== ==
 
-        legend_bbox_to_anchor : (`float`, `float`), optional
+        legend_bbox_to_anchor : (`float`, `float`) `tuple`, optional
             The bbox that the legend will be anchored.
         legend_border_axes_pad : `float`, optional
             The pad between the axes and legend border.
@@ -719,23 +756,27 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True``, the frame's corners will be rounded (fancybox).
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
-        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                          ``monospace``}, optional
-            The font of the axes.
+        axes_font_name : See Below, optional
+            The font of the axes. Example options ::
+            
+                {serif, sans-serif, cursive, fantasy, monospace}
+
         axes_font_size : `int`, optional
             The font size of the axes.
-        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+        axes_font_style : ``{normal, italic, oblique}``, optional
             The font style of the axes.
-        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
-                            ``book``, ``medium``, ``roman``, ``semibold``,
-                            ``demibold``, ``demi``, ``bold``, ``heavy``,
-                            ``extra bold``, ``black``}, optional
+        axes_font_weight : See Below, optional
             The font weight of the axes.
-        axes_x_limits : (`float`, `float`) or `None`, optional
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold,demibold, demi, bold, heavy, extra bold, black}
+
+        axes_x_limits : (`float`, `float`) `tuple` or ``None`` optional
             The limits of the x axis.
-        axes_y_limits : (`float`, `float`) or `None`, optional
+        axes_y_limits : (`float`, `float`) `tuple` or ``None`` optional
             The limits of the y axis.
-        figure_size : (`float`, `float`) or `None`, optional
+        figure_size : (`float`, `float`) `tuple` or ``None`` optional
             The size of the figure in inches.
 
         Raises
@@ -885,7 +926,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         Parameters
         ----------
         group : `str`, optional
-            The key of the landmark set that should be used. If `None`,
+            The key of the landmark set that should be used. If ``None``
             and if there is only one set of landmarks, this set will be used.
         label : `str`, optional
             The label of of the landmark manager that you wish to use. If
@@ -925,15 +966,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ----------
         boundary_proportion : `float`
             Additional padding to be added all around the landmarks
-            bounds defined as a proportion of the landmarks' range. See
+            bounds defined as a proportion of the landmarks range. See
             the minimum parameter for a definition of how the range is
             calculated.
         group : `str`, optional
-            The key of the landmark set that should be used. If `None`,
+            The key of the landmark set that should be used. If ``None``
             and if there is only one set of landmarks, this set will be used.
         label : `str`, optional
             The label of of the landmark manager that you wish to use. If
-            `None` all landmarks in the group are used.
+           ``None`` all landmarks in the group are used.
         minimum : `bool`, optional
             If ``True`` the specified proportion is relative to the minimum
             value of the landmarks' per-dimension range; if ``False`` w.r.t. the
@@ -1065,9 +1106,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         Parameters
         ----------
-        group : `str` or `None`, optional
+        group : `str` or ``None`` optional
             The landmark group to use as patch centres.
-        label : `str` or `None`, optional
+        label : `str` or ``None`` optional
             The landmark label within the group to use as centres.
         patch_size : `tuple` or `ndarray`, optional
             The size of the patch to extract
@@ -1121,16 +1162,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         order : `int`, optional
             The order of interpolation. The order has to be in the range [0,5]
 
-            ========= ====================
+            ========= =====================
             Order     Interpolation
-            ========= ====================
+            ========= =====================
             0         Nearest-neighbor
             1         Bi-linear *(default)*
             2         Bi-quadratic
             3         Bi-cubic
             4         Bi-quartic
             5         Bi-quintic
-            ========= ====================
+            ========= =====================
 
         mode : ``{constant, nearest, reflect, wrap}``, optional
             Points outside the boundaries of the input are filled according
@@ -1410,26 +1451,26 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The diagonal_range range that we want the landmarks of the returned
             image to have.
         group : `str`, optional
-            The key of the landmark set that should be used. If `None`,
+            The key of the landmark set that should be used. If ``None``
             and if there is only one set of landmarks, this set will be used.
         label: `str`, optional
             The label of of the landmark manager that you wish to use. If
-            `None` all landmarks in the group are used.
-        round: {'ceil', 'floor', 'round'}, optional
+           ``None`` all landmarks in the group are used.
+        round : ``{ceil, floor, round}``, optional
             Rounding function to be applied to floating point shapes.
         order : `int`, optional
             The order of interpolation. The order has to be in the range [0,5]
 
-            ========= ====================
+            ========= =====================
             Order     Interpolation
-            ========= ====================
+            ========= =====================
             0         Nearest-neighbor
             1         Bi-linear *(default)*
             2         Bi-quadratic
             3         Bi-cubic
             4         Bi-quartic
             5         Bi-quintic
-            ========= ====================
+            ========= =====================
 
         Returns
         -------
@@ -1453,16 +1494,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         order : `int`, optional
             The order of interpolation. The order has to be in the range [0,5]
 
-            ========= ====================
+            ========= =====================
             Order     Interpolation
-            ========= ====================
+            ========= =====================
             0         Nearest-neighbor
             1         Bi-linear *(default)*
             2         Bi-quadratic
             3         Bi-cubic
             4         Bi-quartic
             5         Bi-quintic
-            ========= ====================
+            ========= =====================
 
         Returns
         -------
