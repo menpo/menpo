@@ -404,17 +404,31 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                axes_font_style='normal', axes_font_weight='normal',
                axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.pyplot as plt
+        import matplotlib.lines as mlines
+        from menpo.shape import PointGraph
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
+        # TODO: All marker and line options could be defined as lists...
         n_labels = len(self.labels_to_masks)
         line_colour = _check_colours_list(
             render_lines, line_colour, n_labels,
             'Must pass a list of line colours with length n_labels or a single '
             'line colour for all labels.')
+        marker_face_colour = _check_colours_list(
+            render_markers, marker_face_colour, n_labels,
+            'Must pass a list of marker face colours with length n_labels or '
+            'a single marker face colour for all labels.')
+        marker_edge_colour = _check_colours_list(
+            render_markers, marker_edge_colour, n_labels,
+            'Must pass a list of marker edge colours with length n_labels or '
+            'a single marker edge colour for all labels.')
 
         # Get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
+
+        # Initialize legend_handles list
+        legend_handles = []
 
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
@@ -425,15 +439,14 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                     line_style=line_style, line_width=line_width,
                     render_markers=render_markers, marker_style=marker_style,
                     marker_size=marker_size,
-                    marker_face_colour=marker_face_colour,
-                    marker_edge_colour=marker_edge_colour,
+                    marker_face_colour=marker_face_colour[i],
+                    marker_edge_colour=marker_edge_colour[i],
                     marker_edge_width=marker_edge_width,
                     render_axes=render_axes, axes_font_name=axes_font_name,
                     axes_font_size=axes_font_size,
                     axes_font_style=axes_font_style,
                     axes_font_weight=axes_font_weight, axes_x_limits=None,
-                    axes_y_limits=None, figure_size=figure_size,
-                    label='{0}: {1}'.format(self.group, label))
+                    axes_y_limits=None, figure_size=figure_size)
 
             ax = plt.gca()
 
@@ -448,6 +461,22 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                                 fontweight=numbers_font_weight,
                                 color=numbers_font_colour)
 
+            # set legend entry
+            if render_legend:
+                tmp_line = line_style
+                if not render_lines or not isinstance(pc, PointGraph):
+                    tmp_line = 'None'
+                tmp_marker = marker_style if render_markers else 'None'
+                legend_handles.append(
+                    mlines.Line2D([], [], linewidth=line_width,
+                                  linestyle=tmp_line, color=line_colour[i],
+                                  marker=tmp_marker,
+                                  markersize=marker_size ** 0.5,
+                                  markeredgewidth=marker_edge_width,
+                                  markeredgecolor=marker_edge_colour[i],
+                                  markerfacecolor=marker_face_colour[i],
+                                  label='{0}: {1}'.format(self.group, label)))
+
         # Plot on image mode
         if image_view:
             plt.gca().set_aspect('equal', adjustable='box')
@@ -460,8 +489,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                     'weight': legend_font_weight}
 
             # Render legend
-            ax.legend(title=legend_title, prop=prop, loc=legend_location,
-                      bbox_to_anchor=legend_bbox_to_anchor,
+            ax.legend(handles=legend_handles, title=legend_title, prop=prop,
+                      loc=legend_location, bbox_to_anchor=legend_bbox_to_anchor,
                       borderaxespad=legend_border_axes_pad,
                       ncol=legend_n_columns,
                       columnspacing=legend_horizontal_spacing,
