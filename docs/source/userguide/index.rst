@@ -7,6 +7,7 @@ Menpo. In particular, we want to try and explain some of the design decisions
 that we made and demonstrate why we think they are powerful concepts
 for exploring visual data.
 
+
 .. toctree::
 
   quick_start

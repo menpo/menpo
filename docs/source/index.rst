@@ -31,19 +31,12 @@ to easily manipulate and couple landmarks with images *and* meshes, is an
 important problem for building powerful models in areas such as facial
 point localisation.
 
-User Guide
-----------
+To get started, check out the User Guide for instructions on installation
+and some of the core concepts within Menpo.
 
 .. toctree::
   :maxdepth: 2
+  :hidden:
 
   userguide/index
-
-
-API Documentation
------------------
-
-.. toctree::
-  :maxdepth: 2
-
   api/index
