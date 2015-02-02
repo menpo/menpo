@@ -124,7 +124,7 @@ class ColouredTriMesh(TriMesh):
                  marker_edge_width=1., render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=None,
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
                  label=None):
         import warnings
         warnings.warn(Warning('2D Viewing of Coloured TriMeshes is not '

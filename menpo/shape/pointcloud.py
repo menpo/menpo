@@ -205,7 +205,7 @@ class PointCloud(Shape):
                  marker_edge_width=1., render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=None,
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
                  label=None, **kwargs):
         r"""
         Visualization of the PointCloud.
@@ -283,10 +283,10 @@ class PointCloud(Shape):
     def _view_landmarks_2d(self, group=None, with_labels=None,
                            without_labels=None, figure_id=None,
                            new_figure=False, image_view=True, render_lines=True,
-                           line_colour='r', line_style='-', line_width=1,
+                           line_colour=None, line_style='-', line_width=1,
                            render_markers=True, marker_style='o',
-                           marker_size=20, marker_face_colour='r',
-                           marker_edge_colour='k', marker_edge_width=1.,
+                           marker_size=20, marker_face_colour=None,
+                           marker_edge_colour=None, marker_edge_width=1.,
                            render_numbering=False,
                            numbers_horizontal_align='center',
                            numbers_vertical_align='bottom',
