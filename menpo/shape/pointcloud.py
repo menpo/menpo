@@ -614,7 +614,9 @@ class PointCloud(Shape):
         """
         try:
             from menpo3d.visualize import LandmarkViewer3d
-            return LandmarkViewer3d(figure_id, new_figure, self,
+            self_renderer = self.view(figure_id=figure_id,
+                                      new_figure=new_figure)
+            return LandmarkViewer3d(self_renderer.figure, False,  self,
                                     self.landmarks[group]).render()
         except ImportError:
             from menpo.visualize import Menpo3dErrorMessage
