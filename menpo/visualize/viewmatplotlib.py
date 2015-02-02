@@ -222,6 +222,8 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
                 l.set_fontweight(axes_font_weight)
         else:
             plt.axis('off')
+            plt.xticks([])
+            plt.yticks([])
 
         # Set axes limits
         if axes_x_limits is not None:
@@ -273,6 +275,8 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
                     l.set_fontweight(axes_font_weight)
             else:
                 plt.axis('off')
+                plt.xticks([])
+                plt.yticks([])
 
             # Set axes limits
             if axes_x_limits is not None:
@@ -353,6 +357,8 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
                 l.set_fontweight(axes_font_weight)
         else:
             plt.axis('off')
+            plt.xticks([])
+            plt.yticks([])
 
         # Plot on image mode
         if image_view:
