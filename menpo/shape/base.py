@@ -8,11 +8,11 @@ class Shape(Vectorizable, Transformable, Landmarkable, LandmarkableViewable,
             Viewable):
     """
     Abstract representation of shape. Shapes are :map:`Transformable`,
-    :map:`Vectorizable`, :map:`Landmarkable` and :map:`Viewable`. This base
-    class handles transforming landmarks when the shape is transformed.
-    Therefore, implementations of :map:`Shape` have to implement the abstract
-    :meth:`_transform_self_inplace` method that handles transforming the Shape
-    itself.
+    :map:`Vectorizable`, :map:`Landmarkable`, :map:`LandmarkableViewable` and
+    :map:`Viewable`. This base class handles transforming landmarks when the
+    shape is transformed. Therefore, implementations of :map:`Shape` have to
+    implement the abstract :meth:`_transform_self_inplace` method that handles
+    transforming the :map:`Shape` itself.
     """
 
     def _transform_inplace(self, transform):
@@ -21,12 +21,12 @@ class Shape(Vectorizable, Transformable, Landmarkable, LandmarkableViewable,
 
         Parameters
         ----------
-        transform : func
-            A function to transform the spatial data with
+        transform : `function`
+            A function to transform the spatial data with.
 
         Returns
         -------
-        self : `self`
+        self : `type(self)`
             A pointer to `self` (the result of :meth:`_transform_self_inplace`).
         """
         if self.has_landmarks:
@@ -36,17 +36,17 @@ class Shape(Vectorizable, Transformable, Landmarkable, LandmarkableViewable,
     def _transform_self_inplace(self, transform):
         """
         Implement this method to transform the concrete implementation of a
-        shape. This is then called by the Shape's :meth:`_transform_inplace` method,
-        which will have updated the landmarks beforehand.
+        shape. This is then called by the Shape's :meth:`_transform_inplace`
+        method, which will have updated the landmarks beforehand.
 
         Parameters
         ----------
-        transform : func
-            A function to transform the spatial data with
+        transform : `function`
+            A function to transform the spatial data with.
 
         Returns
         -------
-        self : `self`
+        self : `type(self)`
             A pointer to `self`.
         """
         pass

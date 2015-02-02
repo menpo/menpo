@@ -529,10 +529,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         figure_size : (`float`, `float`) `tuple` or ``None``, optional
             The size of the figure in inches.
 
-        Raises
-        ------
-        ValueError
-            If Image is not 2D
+        Returns
+        -------
+        viewer : :map:`ImageViewer`
+            The image viewing object.
         """
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            self.pixels, channels=channels).render(

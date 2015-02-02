@@ -28,7 +28,7 @@ class TriMesh(PointCloud):
     ----------
     points : ``(n_points, n_dims)`` `ndarray`
         The array representing the points.
-    trilist : ``(M, 3)`` `ndarray` or `None`, optional
+    trilist : ``(M, 3)`` `ndarray` or ``None``, optional
         The triangle list. If `None`, a Delaunay triangulation of
         the points will be used instead.
     copy: `bool`, optional
@@ -37,7 +37,6 @@ class TriMesh(PointCloud):
         In general this should only be used if you know what you are doing.
     """
     def __init__(self, points, trilist=None, copy=True):
-        # TODO: add inheritance from Graph once implemented
         super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
             global Delaunay
@@ -77,8 +76,8 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        dictionary with 'points' and 'connectivity' keys.
-
+        json : `dict`
+            Dictionary with ``points`` and ``connectivity`` keys.
         """
         return self.as_pointgraph().tojson()
 
@@ -134,7 +133,7 @@ class TriMesh(PointCloud):
 
         Parameters
         ----------
-        copy : `bool`
+        copy : `bool`, optional
             If ``True``, the graph will be a copy.
 
         Returns
@@ -199,73 +198,90 @@ class TriMesh(PointCloud):
                  axes_x_limits=None, axes_y_limits=None, figure_size=None,
                  label=None):
         r"""
-        Visualization of the TriMesh.
+        Visualization of the TriMesh in 2D.
 
-        Parameters
-        ----------
+        Returns
+        -------
         figure_id : `object`, optional
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
         image_view : `bool`, optional
-            If ``True``, the x and y axes are flipped.
+            If ``True`` the TriMesh will be viewed as if it is in the image
+            coordinate system.
         render_lines : `bool`, optional
             If ``True``, the edges will be rendered.
-        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                      ``(3, )`` `ndarray`, optional
+        line_colour : See Below, optional
             The colour of the lines.
-        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            Example options::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_style : ``{-, --, -., :}``, optional
             The style of the lines.
         line_width : `float`, optional
             The width of the lines.
         render_markers : `bool`, optional
             If ``True``, the markers will be rendered.
-        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
-                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
-                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
-            The style of the markers.
+        marker_style : See Below, optional
+            The style of the markers. Example options ::
+
+                {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
         marker_size : `int`, optional
             The size of the markers in points^2.
-        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+        marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
-        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_colour : See Below, optional
             The edge colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         marker_edge_width : `float`, optional
             The width of the markers' edge.
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
-        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                          ``monospace``}, optional
+        axes_font_name : See Below, optional
             The font of the axes.
+            Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
         axes_font_size : `int`, optional
             The font size of the axes.
         axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
             The font style of the axes.
-        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
-                            ``book``, ``medium``, ``roman``, ``semibold``,
-                            ``demibold``, ``demi``, ``bold``, ``heavy``,
-                            ``extra bold``, ``black``}, optional
+        axes_font_weight : See Below, optional
             The font weight of the axes.
-        axes_x_limits : (`float`, `float`) or `None`, optional
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
             The limits of the x axis.
-        axes_y_limits : (`float`, `float`) or `None`, optional
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
             The limits of the y axis.
-        figure_size : (`float`, `float`) or `None`, optional
+        figure_size : (`float`, `float`) `tuple` or ``None``, optional
             The size of the figure in inches.
         label : `str`, optional
             The name entry in case of a legend.
 
         Returns
         -------
-        viewer : :map:`TriMeshViewer`
+        viewer : :map:`PointGraphViewer2d`
             The viewer object.
-
-        Raises
-        ------
-        ValueError
-            If `not self.n_dims in [2, 3]`.
         """
         from menpo.visualize import PointGraphViewer2d
 
@@ -286,6 +302,21 @@ class TriMesh(PointCloud):
                 label=label)
 
     def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
+        r"""
+        Visualization of the TriMesh in 3D.
+
+        Parameters
+        ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+
+        Returns
+        -------
+        viewer : TriMeshViewer3D
+            The Menpo3D viewer object.
+        """
         try:
             from menpo3d.visualize import TriMeshViewer3d
             return TriMeshViewer3d(figure_id, new_figure,
@@ -304,10 +335,10 @@ class TriMesh(PointCloud):
         ----------
         popup : `bool`, optional
             If ``True``, the widget will be rendered in a popup window.
-        browser_style : {``buttons``, ``slider``}, optional
+        browser_style : ``{buttons, slider}``, optional
             It defines whether the selector of the TriMesh objects will have
             the form of plus/minus buttons or a slider.
-        figure_size : (`int`, `int`), optional
+        figure_size : (`int`, `int`) `tuple`, optional
             The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_pointclouds
