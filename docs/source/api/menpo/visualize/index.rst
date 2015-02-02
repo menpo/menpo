@@ -26,6 +26,7 @@ Viewers
   :maxdepth: 1
 
   AlignmentViewer2d
+  PointGraphViewer2d
   GraphPlotter
 
 

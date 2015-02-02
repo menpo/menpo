@@ -975,7 +975,7 @@ class PointGraph(Graph, PointCloud):
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
         image_view : `bool`, optional
-            If ``True`` the TriMesh will be viewed as if it is in the image
+            If ``True`` the PointGraph will be viewed as if it is in the image
             coordinate system.
         render_lines : `bool`, optional
             If ``True``, the edges will be rendered.
@@ -1253,8 +1253,8 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
 
         ::
 
-                    l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
-                              = [[x_i - x_j], [y_i - y_j]]
+            l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
+                      = [[x_i - x_j], [y_i - y_j]]
 
         Parameters
         ----------
@@ -1271,7 +1271,7 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
         Raises
         ------
         ValueError
-            Vertices ``parent`` and ``child}``are not connected with an edge.
+            Vertices ``parent`` and ``child`` are not connected with an edge.
         """
         if not self.is_edge(parent, child):
             raise ValueError('Vertices {} and {} are not connected '
@@ -1451,10 +1451,21 @@ class PointTree(PointDirectedGraph, Tree):
 
 def _unique_array_rows(array):
     r"""
-    Returns the unique rows of the given 2D ndarray.
+    Returns the unique rows of the given 2D array.
 
-    :type: `ndarray`
+    Parameters
+    ----------
+    array : `ndarray`
+        2D array to find the unique rows inside.
+
+    Returns
+    -------
+    unique_rows : `ndarray`
+        The unique rows of the given 2D array
     """
+    # The crazy looking method below comes from the following very clever
+    # stackoverflow post
+    # stackoverflow.com/questions/16970982/find-unique-rows-in-numpy-array
     tmp = array.ravel().view(np.dtype((np.void,
                                        array.dtype.itemsize * array.shape[1])))
     _, unique_idx = np.unique(tmp, return_index=True)
@@ -1463,8 +1474,21 @@ def _unique_array_rows(array):
 
 def _check_n_points(points, adjacency_array):
     r"""
-    Checks whether the points array and the adjacency_array have the same number
-    of points.
+    Checks whether the points array and the ``adjacency_array`` have the same
+    number of points. Thus it checks if the max index in the adjacency array
+    is the same as the number of points.
+
+    Parameters
+    ----------
+    points : `ndarray`
+        Points array to check the length of.
+    adjacency_array : `int ndarray`
+        The adjacency array to check the indices of.
+
+    Raises
+    ------
+    ValueError
+     If ``n_points != max(adjacency_array) + 1``.
     """
     if not points.shape[0] == adjacency_array.max() + 1:
         raise ValueError('A point for each graph vertex needs to be '
@@ -1509,7 +1533,8 @@ def _correct_tree_edges(edges, root_vertex):
 
 def _has_cycles(adjacency_list, directed):
     r"""
-    Function that checks if the provided directed graph has cycles.
+    Function that checks if the provided directed graph has cycles using a depth
+    first search.
 
     Parameters
     ----------
@@ -1517,6 +1542,11 @@ def _has_cycles(adjacency_list, directed):
         The adjacency array of the directed graph.
     directed : `bool`
         Defines if the provided graph is directed or not.
+
+    Returns
+    -------
+    has_cycles : `bool`
+        Whether the graph has cycles.
     """
     def dfs(node, entered, exited, tree_edges, back_edges):
         if node not in entered:

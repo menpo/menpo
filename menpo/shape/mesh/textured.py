@@ -183,8 +183,8 @@ class TexturedTriMesh(TriMesh):
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
         image_view : `bool`, optional
-            If ``True`` the TriMesh will be viewed as if it is in the image
-            coordinate system.
+            If ``True`` the TexturedTriMesh will be viewed as if it is in the
+            image coordinate system.
         render_lines : `bool`, optional
             If ``True``, the edges will be rendered.
         line_colour : See Below, optional
