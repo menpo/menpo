@@ -4,7 +4,7 @@
 ====================
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   lbp
   no_op
@@ -18,3 +18,12 @@
   imgfeature
   daisy
   ndfeature
+
+
+Widget
+------
+
+.. toctree::
+  :maxdepth: 1
+
+  features_selection_widget

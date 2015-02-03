@@ -1,10 +1,8 @@
 import numpy as np
-from numpy.testing import assert_allclose
-from nose.tools import raises
 
 from menpo.shape import PointCloud, TriMesh
 
-from menpo.transform import TransformChain, Homogeneous, Translation, Scale
+from menpo.transform import TransformChain, Translation, Scale
 from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.transform.piecewiseaffine import PiecewiseAffine
 

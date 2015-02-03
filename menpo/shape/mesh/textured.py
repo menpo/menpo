@@ -9,31 +9,25 @@ from .base import TriMesh
 
 class TexturedTriMesh(TriMesh):
     r"""
-    Combines a :class:`menpo.shape.mesh.base.TriMesh` with a texture. Also
-    encapsulates the texture coordinates required to render the texture on the
-    mesh.
+    Combines a :map:`TriMesh` with a texture. Also encapsulates the texture
+    coordinates required to render the texture on the mesh.
 
     Parameters
     ----------
-    points : (N, D) ndarray
-        The coordinates of the mesh.
-    tcoords : (N, 2) ndarray
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
+    tcoords : ``(N, 2)`` `ndarray`
         The texture coordinates for the mesh.
-    texture : :class:`menpo.image.base.Image`
+    texture : :map:`Image`
         The texture for the mesh.
-    trilist : (M, 3) ndarray, optional
-        The triangle list for the mesh. If `None`, a Delaunay triangulation
-        will be performed.
-
-        Default: `None`
-    copy: bool, optional
+    trilist : ``(M, 3)`` `ndarray` or `None`, optional
+        The triangle list. If `None`, a Delaunay triangulation of
+        the points will be used instead.
+    copy: `bool`, optional
         If `False`, the points, trilist and texture will not be copied on
         assignment.
         In general this should only be used if you know what you are doing.
-
-        Default: `False`
     """
-
     def __init__(self, points, tcoords, texture, trilist=None, copy=True):
         super(TexturedTriMesh, self).__init__(points, trilist=trilist,
                                               copy=copy)
@@ -51,9 +45,11 @@ class TexturedTriMesh(TriMesh):
         operations). The resulting tcoords behave just like image landmarks
         do:
 
-         >>> texture = texturedtrimesh.texture
-         >>> tc_ps = texturedtrimesh.tcoords_pixel_scaled()
-         >>> pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
+        ::
+
+            texture = texturedtrimesh.texture
+            tc_ps = texturedtrimesh.tcoords_pixel_scaled()
+            pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
 
         The operations that are performed are:
 
@@ -63,7 +59,7 @@ class TexturedTriMesh(TriMesh):
 
         Returns
         -------
-        tcoords_scaled : :class:`menpo.shape.PointCloud`
+        tcoords_scaled : :map:`PointCloud`
             A copy of the tcoords that behave like Image landmarks
         """
         scale = Scale(np.array(self.texture.shape)[::-1])
@@ -83,12 +79,12 @@ class TexturedTriMesh(TriMesh):
 
         Parameters
         ----------
-        flattened : (N,) ndarray
+        flattened : ``(N,)`` `ndarray`
             Vector representing a set of points.
 
         Returns
         --------
-        trimesh : :class:`TriMesh`
+        trimesh : :map:`TriMesh`
             A new trimesh created from the vector with self's trilist.
         """
         return TexturedTriMesh(flattened.reshape([-1, self.n_dims]),
@@ -130,36 +126,16 @@ class TexturedTriMesh(TriMesh):
             ttm.tcoords.points = ttm.tcoords.points[isolated_mask, :]
             return ttm
 
-    def tojson(self):
-        r"""
-        Convert this `TriMesh` to a dictionary JSON representation.
-
-        Returns
-        -------
-        dictionary with 'points', 'trilist' and 'tcoords' keys. Both are lists
-        suitable for use in the by the `json` standard library package.
-
-        Note that textures are best transmitted in a native format like jpeg
-        rather that in a JSON format. For this reason the texture itself is
-        not encoded. Consumers of this method (e.g. a web server serving
-        Menpo TexturedTriMeshes) could use the path property to locate the
-        original texture on disk for clients and serve this directly.
-        """
-        json_dict = TriMesh.tojson(self)
-        json_dict['tcoords'] = self.tcoords.tojson()['points']
-        return json_dict
-
-    def view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
+    def _view_3d(self, figure_id=None, new_figure=False, textured=True,
+                 **kwargs):
         r"""
         Visualize the :class:`TexturedTriMesh`. Only 3D objects are currently
         supported.
 
         Parameters
         ----------
-        textured : bool, optional
-            If `True`, render the texture.
-
-            Default: `True`
+        textured : `bool`, optional
+            If ``True``, render the texture.
 
         Returns
         -------
@@ -172,23 +148,45 @@ class TexturedTriMesh(TriMesh):
             If `self.n_dims != 3`.
         """
         if textured:
-            if self.n_dims == 3:
-                try:
-                    from menpo3d.visualize import TexturedTriMeshViewer3d
-                    return TexturedTriMeshViewer3d(
-                        figure_id, new_figure, self.points,
-                        self.trilist, self.texture,
-                        self.tcoords.points).render(**kwargs)
-                except ImportError:
-                    from menpo.visualize import Menpo3dErrorMessage
-                    raise ImportError(Menpo3dErrorMessage)
-            else:
-                raise ValueError("Only viewing of 3D textured meshes"
-                                 "is currently supported.")
+            try:
+                from menpo3d.visualize import TexturedTriMeshViewer3d
+                return TexturedTriMeshViewer3d(
+                    figure_id, new_figure, self.points,
+                    self.trilist, self.texture,
+                    self.tcoords.points).render(**kwargs)
+            except ImportError:
+                from menpo.visualize import Menpo3dErrorMessage
+                raise ImportError(Menpo3dErrorMessage)
         else:
             return super(TexturedTriMesh, self).view(figure_id=figure_id,
                                                      new_figure=new_figure,
                                                      **kwargs)
+
+    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
+                 render_lines=True, line_colour='r', line_style='-',
+                 line_width=1., render_markers=True, marker_style='o',
+                 marker_size=20, marker_face_colour='k', marker_edge_colour='k',
+                 marker_edge_width=1., render_axes=True,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
+                 label=None):
+        import warnings
+        warnings.warn(Warning('2D Viewing of Textured TriMeshes is not '
+                              'supported, falling back to TriMesh viewing.'))
+        return TriMesh._view_2d(
+            self, figure_id=figure_id, new_figure=new_figure,
+            image_view=image_view, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width, render_axes=render_axes,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size, label=label)
 
     def __str__(self):
         return '{}\ntexture_shape: {}, n_texture_channels: {}'.format(

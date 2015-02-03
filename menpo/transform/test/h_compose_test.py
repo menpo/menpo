@@ -5,8 +5,8 @@ from menpo.shape import PointCloud
 
 from menpo.transform import (Homogeneous, Scale, TransformChain,
                              NonUniformScale,
-                            UniformScale, Translation, Similarity, Rotation,
-                            AlignmentUniformScale, AlignmentRotation)
+                             UniformScale, Translation, Similarity, Rotation,
+                             AlignmentUniformScale, AlignmentRotation)
 
 # NON-INPLACE COMPOSE
 

@@ -4,4 +4,5 @@
 
 mean_pointcloud
 ===============
+
 .. autofunction:: mean_pointcloud

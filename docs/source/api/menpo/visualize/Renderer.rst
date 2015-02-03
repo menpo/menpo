@@ -1,10 +1,10 @@
-.. _menpo-visualize-ImageViewer2d:
+.. _menpo-visualize-Renderer:
 
 .. currentmodule:: menpo.visualize
 
-ImageViewer2d
-=============
-.. autoclass:: ImageViewer2d
+Renderer
+========
+.. autoclass:: Renderer
   :members:
   :inherited-members:
   :show-inheritance:

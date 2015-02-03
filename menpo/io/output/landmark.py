@@ -21,8 +21,9 @@ def LJSONExporter(landmark_group, file_handle):
     """
     lg_json = landmark_group.tojson()
     # Add version string
-    lg_json['version'] = 1
-    return json.dump(lg_json, file_handle)
+    lg_json['version'] = 2
+    return json.dump(lg_json, file_handle, indent=4, separators=(',', ': '),
+                     sort_keys=True)
 
 
 def PTSExporter(landmark_group, file_handle):

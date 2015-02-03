@@ -7,10 +7,10 @@ import scipy.linalg
 import PIL.Image as PILImage
 
 from menpo.base import Vectorizable
-from menpo.landmark import LandmarkableViewable
+from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
                              AlignmentUniformScale, Affine, Rotation)
-from menpo.visualize.base import ImageViewer
+from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .extract_patches import extract_patches
 
@@ -52,7 +52,7 @@ def indices_for_image_of_shape(shape):
     return np.indices(shape).reshape([len(shape), -1]).T
 
 
-class Image(Vectorizable, LandmarkableViewable):
+class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     r"""
     An n-dimensional image.
 
@@ -68,7 +68,6 @@ class Image(Vectorizable, LandmarkableViewable):
     image_data : ``(C, M, N ..., Q)`` `ndarray`
         Array representing the image pixels, with the first axis being
         channels.
-
     copy : `bool`, optional
         If ``False``, the ``image_data`` will not be copied on assignment.
         Note that this will miss out on additional checks. Further note that we
@@ -119,8 +118,8 @@ class Image(Vectorizable, LandmarkableViewable):
         mask : `ndarray` with shape of ``self.shape`` or :map:`BooleanImage`
             A mask to attach to the newly generated masked image.
         copy : `bool`, optional
-            If ``False``, the produced :map:`MaskedImage` will share pixels
-            with ``self``. Only suggested to be used for performance.
+            If ``False``, the produced :map:`MaskedImage` will share pixels with
+            ``self``. Only suggested to be used for performance.
 
         Returns
         -------
@@ -314,17 +313,12 @@ class Image(Vectorizable, LandmarkableViewable):
         ----------
         vector : (`n_parameters`,)
             A flattened vector of all pixels and channels of an image.
-
-        n_channels : int, optional
+        n_channels : `int`, optional
             If given, will assume that vector is the same shape as this image,
-            but with a possibly different number of channels
-
-            Default: Use the existing image channels
-
-        copy : bool, optional
-            If False the vector will not be copied in creating the new image.
-
-            Default: True
+            but with a possibly different number of channels.
+        copy : `bool`, optional
+            If ``False``, the vector will not be copied in creating the new
+            image.
 
         Returns
         -------
@@ -334,8 +328,8 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Raises
         ------
-
-        Warning : If the copy=False flag cannot be honored
+        Warning
+            If the copy=False flag cannot be honored
 
         """
         # This is useful for when we want to add an extra channel to an image
@@ -353,18 +347,16 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        vector : (`n_pixels`,) np.bool ndarray
-            A vector vector of all the pixels of a BooleanImage.
-
-        copy: bool, optional
-            If False, the vector will be set as the pixels. If True a copy of
-            the vector is taken.
-
-            Default: True
+        vector : (``n_pixels``,) `bool` `ndarray`
+            A vector vector of all the pixels of a :map:`BooleanImage`.
+        copy: `bool`, optional
+            If ``False``, the vector will be set as the pixels. If ``True``, a
+            copy of the vector is taken.
 
         Raises
         ------
-        Warning : If copy=False flag cannot be honored
+        Warning
+            If copy=False flag cannot be honored
 
         Notes
         -----
@@ -390,11 +382,11 @@ class Image(Vectorizable, LandmarkableViewable):
         Parameters
         ----------
         channels : `int` or `[int]`
-            The channel index or list of channel indices to retain
+            The channel index or `list` of channel indices to retain.
 
         Returns
         -------
-        image : type(self)
+        image : `type(self)`
             A copy of this image with only the channels requested.
         """
         copy = self.copy()
@@ -409,29 +401,28 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        keep_channels : bool, optional
-            If set to `False`, it returns a single histogram for all the
-            channels of the image. If set to `True`, it returns a list of
+        keep_channels : `bool`, optional
+            If set to ``False``, it returns a single histogram for all the
+            channels of the image. If set to ``True``, it returns a `list` of
             histograms, one for each channel.
-
-            Default: `True`
-        bins : 'unique', positive int or sequence of scalars, optional
-            If set equal to 'unique', the bins of the histograms are centred
+        bins : ``unique``, positive `int` or sequence of scalars, optional
+            If set equal to ``'unique'``, the bins of the histograms are centred
             on the unique values of each channel. If set equal to a positive
-            integer, then this is the number of bins. If set equal to a
+            `int`, then this is the number of bins. If set equal to a
             sequence of scalars, these will be used as bins centres.
-
-            Default: 'unique'
 
         Returns
         -------
-        hist : array or list with n_channels arrays
-            The histogram(s). If keep_channels=False, then hist is an array. If
-            keep_channels=True, then hist is a list with len(hist)=n_channels.
-        bin_edges : array or list with n_channels arrays
+        hist : `ndarray` or `list` with ``n_channels`` `ndarrays`
+            The histogram(s). If ``'keep_channels=False'``, then hist is an
+            `ndarray`. If ``'keep_channels=True'``, then hist is a `list` with
+            ``'len(hist)=n_channels'``.
+        bin_edges : `ndarray` or `list` with `n_channels` `ndarrays`
             An array or a list of arrays corresponding to the above histograms
             that store the bins' edges.
             The result in the case of list of arrays can be visualized as:
+
+            ::
 
                 for k in range(len(hist)):
                     plt.subplot(1,len(hist),k)
@@ -472,38 +463,314 @@ class Image(Vectorizable, LandmarkableViewable):
                 bin_edges.append(c_tmp)
         return hist, bin_edges
 
-    def view(self, figure_id=None, new_figure=False, channels=None,
-             **kwargs):
+    def _view_2d(self, figure_id=None, new_figure=False, channels=None,
+                 interpolation='bilinear', alpha=1., render_axes=False,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
 
         Returns
         -------
-        image_viewer : :class:`menpo.visualize.viewimage.ViewerImage`
-            The viewer the image is being shown within
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        interpolation : {``none``, ``nearest``, ``bilinear``, ``bicubic``,
+                         ``spline16``, ``spline36``, ``hanning``, ``hamming``,
+                         ``hermite``, ``kaiser``, ``quadric``, ``catrom``,
+                         ``gaussian``, ``bessel``, ``mitchell``, ``sinc``,
+                         ``lanczos``}, optional
+            The interpolation used to render the image. For example, if
+            ``bilinear``, the image will be smooth and if ``nearest``, the
+            image will be pixelated.
+        alpha : `float`, optional
+            The alpha blending value, between 0 (transparent) and 1 (opaque).
+        channels : `int` or `list` of `int` or ``all`` or `None`
+            If `int` or `list` of `int`, the specified channel(s) will be
+            rendered. If ``all``, all the channels will be rendered in subplots.
+            If `None` and the image is RGB, it will be rendered in RGB mode.
+            If `None` and the image is not RGB, it is equivalent to ``all``.
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             If Image is not 2D
         """
         pixels_to_view = np.rollaxis(self.pixels, 0, self.n_dims+1)
         return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view, channels=channels).render(**kwargs)
+                           self.pixels, channels=channels).render(
+            interpolation=interpolation, alpha=alpha,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=figure_size)
 
-    def view_widget(self, popup=False):
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
         r"""
-        Visualizes the image object using the
-        menpo.visualize.widgets.visualize_images widget.
+        Visualizes the image object using the :map:`visualize_images` widget.
+        Currently only supports the rendering of 2D images.
 
         Parameters
         -----------
-        popup : `boolean`, optional
-            If enabled, the widget will appear as a popup window.
+        popup : `bool`, optional
+            If ``True``, the widget will appear as a popup window.
+        browser_style : {``buttons``, ``slider``}, optional
+            It defines whether the selector of the images will have the form of
+            plus/minus buttons or a slider.
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_images
-        visualize_images(self, figure_size=(7, 7), popup=popup)
+        visualize_images(self, figure_size=figure_size, popup=popup,
+                         browser_style=browser_style)
+
+    def _view_landmarks_2d(self, channels=None, group=None,
+                           with_labels=None, without_labels=None,
+                           figure_id=None, new_figure=False,
+                           interpolation='bilinear', alpha=1.,
+                           render_lines=True, line_colour=None, line_style='-',
+                           line_width=1, render_markers=True, marker_style='o',
+                           marker_size=20, marker_face_colour=None,
+                           marker_edge_colour=None, marker_edge_width=1.,
+                           render_numbering=False,
+                           numbers_horizontal_align='center',
+                           numbers_vertical_align='bottom',
+                           numbers_font_name='sans-serif', numbers_font_size=10,
+                           numbers_font_style='normal',
+                           numbers_font_weight='normal',
+                           numbers_font_colour='k', render_legend=False,
+                           legend_title='', legend_font_name='sans-serif',
+                           legend_font_style='normal', legend_font_size=10,
+                           legend_font_weight='normal',
+                           legend_marker_scale=None,
+                           legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
+                           legend_border_axes_pad=None, legend_n_columns=1,
+                           legend_horizontal_spacing=None,
+                           legend_vertical_spacing=None, legend_border=True,
+                           legend_border_padding=None, legend_shadow=False,
+                           legend_rounded_corners=False, render_axes=False,
+                           axes_font_name='sans-serif', axes_font_size=10,
+                           axes_font_style='normal', axes_font_weight='normal',
+                           axes_x_limits=None, axes_y_limits=None,
+                           figure_size=(10, 8)):
+        """
+        Visualize the landmarks.
+
+        Parameters
+        ----------
+        channels : `int` or `list` of `int` or ``all`` or `None`
+            If `int` or `list` of `int`, the specified channel(s) will be
+            rendered. If ``all``, all the channels will be rendered in subplots.
+            If `None` and the image is RGB, it will be rendered in RGB mode.
+            If `None` and the image is not RGB, it is equivalent to ``all``.
+        group : `str` or `None`, optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
+        with_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, only show the given label(s). Should **not** be
+            used with the ``without_labels`` kwarg.
+        without_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, show all except the given label(s). Should **not**
+            be used with the ``with_labels`` kwarg.
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        interpolation : {``none``, ``nearest``, ``bilinear``, ``bicubic``,
+                         ``spline16``, ``spline36``, ``hanning``, ``hamming``,
+                         ``hermite``, ``kaiser``, ``quadric``, ``catrom``,
+                         ``gaussian``, ``bessel``, ``mitchell``, ``sinc``,
+                         ``lanczos``}, optional
+            The interpolation used to render the image. For example, if
+            ``bilinear``, the image will be smooth and if ``nearest``, the
+            image will be pixelated.
+        alpha : `float`, optional
+            The alpha blending value, between 0 (transparent) and 1 (opaque).
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : {``center``, ``right``, ``left``}, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : {``center``, ``top``, ``bottom``,
+                                  ``baseline``}, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                             ``fantasy``, ``monospace``}, optional
+            The font of the numbers.
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the numbers.
+        numbers_font_weight : {``ultralight``, ``light``, ``normal``,
+                               ``regular``, ``book``, ``medium``, ``roman``,
+                               ``semibold``, ``demibold``, ``demi``, ``bold``,
+                               ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the numbers.
+        numbers_font_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                              or ``(3, )`` `ndarray`, optional
+            The font colour of the numbers.
+        render_legend : `bool`, optional
+            If ``True``, the legend will be rendered.
+        legend_title : `str`, optional
+            The title of the legend.
+        legend_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                            ``fantasy``, ``monospace``}, optional
+            The font of the legend.
+        legend_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the legend.
+        legend_font_size : `int`, optional
+            The font size of the legend.
+        legend_font_weight : {``ultralight``, ``light``, ``normal``,
+                              ``regular``, ``book``, ``medium``, ``roman``,
+                              ``semibold``, ``demibold``, ``demi``, ``bold``,
+                              ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the legend.
+        legend_marker_scale : `float`, optional
+            The relative size of the legend markers with respect to the original
+        legend_location : `int`, optional
+            The location of the legend. The predefined values are:
+
+            =============== ===
+            'best'          0
+            'upper right'   1
+            'upper left'    2
+            'lower left'    3
+            'lower right'   4
+            'right'         5
+            'center left'   6
+            'center right'  7
+            'lower center'  8
+            'upper center'  9
+            'center'        10
+            =============== ===
+
+        legend_bbox_to_anchor : (`float`, `float`), optional
+            The bbox that the legend will be anchored.
+        legend_border_axes_pad : `float`, optional
+            The pad between the axes and legend border.
+        legend_n_columns : `int`, optional
+            The number of the legend's columns.
+        legend_horizontal_spacing : `float`, optional
+            The spacing between the columns.
+        legend_vertical_spacing : `float`, optional
+            The vertical space between the legend entries.
+        legend_border : `bool`, optional
+            If ``True``, a frame will be drawn around the legend.
+        legend_border_padding : `float`, optional
+            The fractional whitespace inside the legend border.
+        legend_shadow : `bool`, optional
+            If ``True``, a shadow will be drawn behind legend.
+        legend_rounded_corners : `bool`, optional
+            If ``True``, the frame's corners will be rounded (fancybox).
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
+
+        Raises
+        ------
+        ValueError
+            If both ``with_labels`` and ``without_labels`` are passed.
+        ValueError
+            If the landmark manager doesn't contain the provided group label.
+        """
+        from menpo.visualize import view_image_landmarks
+        return view_image_landmarks(
+            self, channels, False, group, with_labels, without_labels,
+            figure_id, new_figure, interpolation, alpha, render_lines,
+            line_colour, line_style, line_width, render_markers, marker_style,
+            marker_size, marker_face_colour, marker_edge_colour,
+            marker_edge_width, render_numbering, numbers_horizontal_align,
+            numbers_vertical_align, numbers_font_name, numbers_font_size,
+            numbers_font_style, numbers_font_weight, numbers_font_colour,
+            render_legend, legend_title, legend_font_name, legend_font_style,
+            legend_font_size, legend_font_weight, legend_marker_scale,
+            legend_location, legend_bbox_to_anchor, legend_border_axes_pad,
+            legend_n_columns, legend_horizontal_spacing,
+            legend_vertical_spacing, legend_border, legend_border_padding,
+            legend_shadow, legend_rounded_corners, render_axes, axes_font_name,
+            axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
+            axes_y_limits, figure_size)
+
+    def gradient(self, **kwargs):
+        r"""
+        Returns an :map:`Image` which is the gradient of this one. In the case
+        of multiple channels, it returns the gradient over each axis over
+        each channel as a flat `list`.
+
+        Returns
+        -------
+        gradient : :map:`Image`
+            The gradient over each axis over each channel. Therefore, the
+            gradient of a 2D, single channel image, will have length `2`.
+            The length of a 2D, 3-channel image, will have length `6`.
+        """
+        from menpo.feature import gradient
+        return gradient(self)
 
     def crop_inplace(self, min_indices, max_indices,
                      constrain_to_boundary=True):
@@ -513,19 +780,15 @@ class Image(Vectorizable, LandmarkableViewable):
         relative to the newly cropped image.
 
         Parameters
-        -----------
-        min_indices : (n_dims, ) ndarray
-            The minimum index over each dimension
-
-        max_indices : (n_dims, ) ndarray
-            The maximum index over each dimension
-
-        constrain_to_boundary : boolean, optional
-            If `True` the crop will be snapped to not go beyond this images
-            boundary. If `False`, an :map:`ImageBoundaryError` will be raised
+        ----------
+        min_indices : (``n_dims``, ) `ndarray`
+            The minimum index over each dimension.
+        max_indices : (``n_dims``, ) `ndarray`
+            The maximum index over each dimension.
+        constrain_to_boundary : `bool`, optional
+            If ``True`` the crop will be snapped to not go beyond this images
+            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
-
-            Default: `True`
 
         Returns
         -------
@@ -534,13 +797,12 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Raises
         ------
-        `ValueError`
+        ValueError
             `min_indices` and `max_indices` both have to be of length `n_dims`.
             All `max_indices` must be greater than `min_indices`.
-
-        `ImageBoundaryError`
-            Raised if `constrain_to_boundary` is `False`, and an attempt is
-            made to crop the image in a way that violates the image bounds.
+        ImageBoundaryError
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
+            to crop the image in a way that violates the image bounds.
 
         """
         min_indices = np.floor(min_indices)
@@ -554,9 +816,9 @@ class Image(Vectorizable, LandmarkableViewable):
                              "indices")
         min_bounded = self.constrain_points_to_bounds(min_indices)
         max_bounded = self.constrain_points_to_bounds(max_indices)
-        if not constrain_to_boundary and not (
-                    np.all(min_bounded == min_indices) or
-                    np.all(max_bounded == max_indices)):
+        all_max_bounded = np.all(min_bounded == min_indices)
+        all_min_bounded = np.all(max_bounded == max_indices)
+        if not (constrain_to_boundary or all_max_bounded or all_min_bounded):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
@@ -579,22 +841,18 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         -----------
-        min_indices : (n_dims, ) ndarray
-            The minimum index over each dimension
-
-        max_indices : (n_dims, ) ndarray
-            The maximum index over each dimension
-
-        constrain_to_boundary : boolean, optional
-            If `True` the crop will be snapped to not go beyond this images
-            boundary. If `False`, an :map:`ImageBoundaryError` will be raised
+        min_indices : (``n_dims``, ) `ndarray`
+            The minimum index over each dimension.
+        max_indices : (``n_dims``, ) `ndarray`
+            The maximum index over each dimension.
+        constrain_to_boundary : `bool`, optional
+            If ``True`` the crop will be snapped to not go beyond this images
+            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
-
-            Default: `True`
 
         Returns
         -------
-        cropped_image : :class:`type(self)`
+        cropped_image : `type(self)`
             A new instance of self, but cropped.
 
 
@@ -621,37 +879,29 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        group : string, Optional
+        group : `str`, optional
             The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
-
-            Default: `None`
-        label : string, Optional
+        label : `str`, optional
             The label of of the landmark manager that you wish to use. If
             `None` all landmarks in the group are used.
-
-            Default: `None`
-        boundary : int, Optional
+        boundary : `int`, optional
             An extra padding to be added all around the landmarks bounds.
-
-            Default: `0`
-        constrain_to_boundary : boolean, optional
-            If `True` the crop will be snapped to not go beyond this images
-            boundary. If `False`, an :map`ImageBoundaryError` will be raised if
-            an attempt is made to go beyond the edge of the image.
-
-            Default: `True`
+        constrain_to_boundary : `bool`, optional
+            If ``True`` the crop will be snapped to not go beyond this images
+            boundary. If ``False``, an :map`ImageBoundaryError` will be raised
+            if an attempt is made to go beyond the edge of the image.
 
         Returns
         -------
         image : :map:`Image`
-            This image, cropped to it's landmarks.
+            This image, cropped to its landmarks.
 
         Raises
         ------
         ImageBoundaryError
-            Raised if `constrain_to_boundary` is `False`, and an attempt is
-            made to crop the image in a way that violates the image bounds.
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
+            to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label]
         min_indices, max_indices = pc.bounds(boundary=boundary)
@@ -668,33 +918,25 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        boundary_proportion : float
+        boundary_proportion : `float`
             Additional padding to be added all around the landmarks
             bounds defined as a proportion of the landmarks' range. See
             the minimum parameter for a definition of how the range is
             calculated.
-        group : string, Optional
+        group : `str`, optional
             The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
-
-            Default: `None`
-        label : string, Optional
+        label : `str`, optional
             The label of of the landmark manager that you wish to use. If
             `None` all landmarks in the group are used.
-
-            Default: `None`
-        minimum : bool, Optional
-            If `True` the specified proportion is relative to the minimum
-            value of the landmarks' per-dimension range; if `False` w.r.t. the
+        minimum : `bool`, optional
+            If ``True`` the specified proportion is relative to the minimum
+            value of the landmarks' per-dimension range; if ``False`` w.r.t. the
             maximum value of the landmarks' per-dimension range.
-
-            Default: `True`
-        constrain_to_boundary : boolean, optional
-            If `True`, the crop will be snapped to not go beyond this images
-            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
-            an attempt is made to go beyond the edge of the image.
-
-            Default: `True`
+        constrain_to_boundary : `bool`, optional
+            If ``True``, the crop will be snapped to not go beyond this images
+            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
+            if an attempt is made to go beyond the edge of the image.
 
         Returns
         -------
@@ -719,18 +961,17 @@ class Image(Vectorizable, LandmarkableViewable):
 
     def constrain_points_to_bounds(self, points):
         r"""
-        Constrains the points provided to be within the bounds of this
-        image.
+        Constrains the points provided to be within the bounds of this image.
 
         Parameters
         ----------
-        points : (d,) ndarray
-            points to be snapped to the image boundaries
+        points : (``d``,) `ndarray`
+            Points to be snapped to the image boundaries.
 
         Returns
         -------
-        bounded_points : (d,) ndarray
-            points snapped to not stray outside the image edges
+        bounded_points : (``d``,) `ndarray`
+            Points snapped to not stray outside the image edges.
         """
         bounded_points = points.copy()
         # check we don't stray under any edges
@@ -761,7 +1002,7 @@ class Image(Vectorizable, LandmarkableViewable):
         ----------
         patch_centers : :map:`PointCloud`
             The centers to extract patches around.
-        patch_size : tuple or ndarray, optional
+        patch_size : `tuple` or `ndarray`, optional
             The size of the patch to extract
         sample_offsets : :map:`PointCloud`, optional
             The offsets to sample from within a patch. So (0,0) is the centre
@@ -773,7 +1014,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Returns
         -------
-        patches : list or ndarray
+        patches : `list` or `ndarray`
             Returns the extracted patches. Returns a list if ``as_single_array``
             is ``True`` and an ndarray if ``as_single_array`` is ``False``.
 
@@ -819,7 +1060,7 @@ class Image(Vectorizable, LandmarkableViewable):
             The landmark group to use as patch centres.
         label : `str` or `None`, optional
             The landmark label within the group to use as centres.
-        patch_size : tuple or ndarray, optional
+        patch_size : `tuple` or `ndarray`, optional
             The size of the patch to extract
         sample_offsets : :map:`PointCloud`, optional
             The offsets to sample from within a patch. So (0,0) is the centre
@@ -831,7 +1072,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Returns
         -------
-        patches : list or ndarray
+        patches : `list` or `ndarray`
             Returns the extracted patches. Returns a list if ``as_single_array``
             is ``True`` and an ndarray if ``as_single_array`` is ``False``.
 
@@ -856,18 +1097,14 @@ class Image(Vectorizable, LandmarkableViewable):
         Parameters
         ----------
         template_mask : :map:`BooleanImage`
-            Defines the shape of the result, and what pixels should be
-            sampled.
-
+            Defines the shape of the result, and what pixels should be sampled.
         transform : :map:`Transform`
             Transform **from the template space back to this image**.
             Defines, for each pixel location on the template, which pixel
             location should be sampled from on this image.
-
         warp_landmarks : `bool`, optional
-            If `True`, warped_image will have the same landmark dictionary
-            as self, but with each landmark updated to the warped position.
-
+            If ``True``, `warped_image` will have the same landmark dictionary
+            as `self`, but with each landmark updated to the warped position.
         order : `int`, optional
             The order of interpolation. The order has to be in the range 0-5:
             * 0: Nearest-neighbor
@@ -876,20 +1113,17 @@ class Image(Vectorizable, LandmarkableViewable):
             * 3: Bi-cubic
             * 4: Bi-quartic
             * 5: Bi-quintic
-
-        mode : `str`, optional
+        mode : {``constant, ``nearest``, ``reflect`` or ``wrap``}, optional
             Points outside the boundaries of the input are filled according
-            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
-
+            to the given mode.
         cval : `float`, optional
-            Used in conjunction with mode 'constant', the value outside
+            Used in conjunction with mode ``'constant'``, the value outside
             the image boundaries.
 
         Returns
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
-
         """
         if self.n_dims != transform.n_dims:
             raise ValueError(
@@ -915,10 +1149,10 @@ class Image(Vectorizable, LandmarkableViewable):
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
         r"""
-        Builds the warped image from the template mask and
-        sampled pixel values. Overridden for BooleanImage as we can't use
-        the usual from_vector_inplace method. All other Image classes share
-        the Image implementation.
+        Builds the warped image from the template mask and sampled pixel values.
+        Overridden for :map:`BooleanImage` as we can't use the usual
+        `from_vector_inplace()` method. All other :map:`Image` classes share the
+        :map:`Image` implementation.
         """
         warped_image = MaskedImage.blank(template_mask.shape,
                                          n_channels=self.n_channels,
@@ -933,19 +1167,16 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        template_shape : tuple or ndarray
+        template_shape : `tuple` or `ndarray`
             Defines the shape of the result, and what pixel indices should be
             sampled (all of them).
-
         transform : :map:`Transform`
             Transform **from the template_shape space back to this image**.
             Defines, for each index on template_shape, which pixel location
             should be sampled from on this image.
-
         warp_landmarks : `bool`, optional
-            If `True`, ``warped_image`` will have the same landmark dictionary
+            If ``True``, `warped_image` will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
-
         order : `int`, optional
             The order of interpolation. The order has to be in the range 0-5:
             * 0: Nearest-neighbor
@@ -954,13 +1185,11 @@ class Image(Vectorizable, LandmarkableViewable):
             * 3: Bi-cubic
             * 4: Bi-quartic
             * 5: Bi-quintic
-
-        mode : `str`, optional
+        mode : {``constant, ``nearest``, ``reflect`` or ``wrap``}, optional
             Points outside the boundaries of the input are filled according
-            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
-
+            to the given mode.
         cval : `float`, optional
-            Used in conjunction with mode 'constant', the value outside
+            Used in conjunction with mode ``'constant'``, the value outside
             the image boundaries.
 
         Returns
@@ -1006,11 +1235,10 @@ class Image(Vectorizable, LandmarkableViewable):
         ----------
         scale : `float` or `tuple` of `floats`
             The scale factor. If a tuple, the scale to apply to each dimension.
-            If a single float, the scale will be applied uniformly across
+            If a single `float`, the scale will be applied uniformly across
             each dimension.
-        round: {'ceil', 'floor', 'round'}
+        round: {``ceil``, ``floor``, ``round``}, optional
             Rounding function to be applied to floating point shapes.
-
         order : `int`, optional
             The order of interpolation. The order has to be in the range 0-5:
             * 0: Nearest-neighbor
@@ -1077,14 +1305,15 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        diagonal: int
-            The diagonal size of the new image
+        diagonal: `int`
+            The diagonal size of the new image.
+        round: {``ceil``, ``floor``, ``round``}, optional
+            Rounding function to be applied to floating point shapes.
 
         Returns
         -------
         rescaled_image : type(self)
             A copy of this image, rescaled.
-
         """
         return self.rescale(diagonal / self.diagonal, round=round)
 
@@ -1101,7 +1330,7 @@ class Image(Vectorizable, LandmarkableViewable):
             The reference shape to which the landmarks scale will be matched
             against.
         group : `str`, optional
-            The key of the landmark set that should be used. If None,
+            The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
         label : `str`, optional
             The label of of the landmark manager that you wish to use. If
@@ -1138,18 +1367,14 @@ class Image(Vectorizable, LandmarkableViewable):
         diagonal_range: ``(n_dims,)`` `ndarray`
             The diagonal_range range that we want the landmarks of the returned
             image to have.
-
         group : `str`, optional
-            The key of the landmark set that should be used. If None,
+            The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
-
         label: `str`, optional
             The label of of the landmark manager that you wish to use. If
             `None` all landmarks in the group are used.
-
         round: {'ceil', 'floor', 'round'}, optional
             Rounding function to be applied to floating point shapes.
-
         order : `int`, optional
             The order of interpolation. The order has to be in the range 0-5:
             * 0: Nearest-neighbor
@@ -1176,9 +1401,8 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        shape : tuple
+        shape : `tuple`
             The new shape to resize to.
-
         order : `int`, optional
             The order of interpolation. The order has to be in the range 0-5:
             * 0: Nearest-neighbor
@@ -1218,13 +1442,13 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        theta : ``float``
+        theta : `float`
             The angle of rotation about the origin
-        degrees : ``bool``, optional
-            If true theta is interpreted as a degree. If False, theta is
-            interpreted as radians.
+        degrees : `bool`, optional
+            If ``True``, `theta` is interpreted as a degree. If ``False``,
+            `theta` is interpreted as radians.
         cval : ``float``, optional
-            The value to be set outside the rotated image boundaries
+            The value to be set outside the rotated image boundaries.
         """
         if self.n_dims != 2:
             raise ValueError('Image rotation is presently only supported on '
@@ -1250,22 +1474,20 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        n_levels : int, optional
+        n_levels : `int`, optional
             Total number of levels in the pyramid, including the original
             unmodified image
-
-        downscale : float, optional
+        downscale : `float`, optional
             Downscale factor.
-
-        sigma : float, optional
-            Sigma for gaussian filter. Default is `downscale / 3.` which
+        sigma : `float`, optional
+            Sigma for gaussian filter. Default is ``downscale / 3.`` which
             corresponds to a filter mask twice the size of the scale factor
             that covers more than 99% of the gaussian distribution.
 
         Returns
         -------
-        image_pyramid:
-            Generator yielding pyramid layers as menpo image objects.
+        image_pyramid: `generator`
+            Generator yielding pyramid layers as :map:`Image` objects.
         """
         from menpo.feature import gaussian_filter
         if sigma is None:
@@ -1283,24 +1505,22 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        mode : {'average', 'luminosity', 'channel'}
-            'luminosity' - Calculates the luminance using the CCIR 601 formula
+        mode : {``average``, ``luminosity``, ``channel``}, optional
+            * ``luminosity`` - Calculates the luminance using the CCIR 601
+                               formula
 
-                `Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'`
+                ::
 
-            'average' - intensity is an equal average of all three channels
-            'channel' - a specific channel is used
+                    Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'
 
-            Default 'luminosity'
-
-        channel: int, optional
-            The channel to be taken. Only used if mode is 'channel'.
-
-            Default: None
+            * ``average`` - intensity is an equal average of all three channels
+            * ``channel`` - a specific channel is used
+        channel: `int`, optional
+            The channel to be taken. Only used if mode is ``'channel'``.
 
         Returns
         -------
-        greyscale_image: :class:`MaskedImage`
+        greyscale_image : :map:`MaskedImage`
             A copy of this image in greyscale.
         """
         greyscale = self.copy()
@@ -1369,9 +1589,10 @@ class Image(Vectorizable, LandmarkableViewable):
             range is outside of ``[0, 1]``
         """
         if self.n_dims != 2 or self.n_channels not in [1, 3]:
-            raise ValueError('Can only convert greyscale or RGB 2D images. '
-                             'Received a {} channel {}D image.'.format(
-                self.n_channels, self.n_dims))
+            raise ValueError(
+                'Can only convert greyscale or RGB 2D images. '
+                'Received a {} channel {}D image.'.format(self.n_channels,
+                                                          self.n_dims))
 
         # Slice off the channel for greyscale images
         if self.n_channels == 1:
@@ -1429,10 +1650,9 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-
-        mode : {'all', 'per_channel'}
-            If 'all', the normalization is over all channels. If
-            'per_channel', each channel individually is mean centred and
+        mode : {``all``, ``per_channel``}, optional
+            If ``'all'``, the normalization is over all channels. If
+            ``'per_channel'``, each channel individually is mean centred and
             normalized in variance.
         """
         self._normalize_inplace(np.std, mode=mode)
@@ -1444,10 +1664,9 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-
-        mode : {'all', 'per_channel'}
-            If 'all', the normalization is over all channels. If
-            'per_channel', each channel individually is mean centred and
+        mode : {``all``, ``per_channel``}, optional
+            If ``'all'``, the normalization is over all channels. If
+            ``'per_channel'``, each channel individually is mean centred and
             normalized in variance.
         """
         def scale_func(pixels, axis=None):

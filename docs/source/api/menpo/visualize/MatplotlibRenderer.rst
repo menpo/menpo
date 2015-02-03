@@ -1,10 +1,10 @@
-.. _menpo-visualize-PointCloudViewer2d:
+.. _menpo-visualize-MatplotlibRenderer:
 
 .. currentmodule:: menpo.visualize
 
-PointCloudViewer2d
+MatplotlibRenderer
 ==================
-.. autoclass:: PointCloudViewer2d
+.. autoclass:: MatplotlibRenderer
   :members:
   :inherited-members:
   :show-inheritance:

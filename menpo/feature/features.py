@@ -107,49 +107,49 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         window_width, window_unit, window_step_vertical,
         window_step_horizontal, window_step_unit, and padding to completely
         customize the HOG calculation.
-    window_height : `float`
+    window_height : `float`, optional
         Defines the height of the window for the ImageWindowIterator
         object. The metric unit is defined by window_unit.
-    window_width : `float`
+    window_width : `float`, optional
         Defines the width of the window for the ImageWindowIterator object.
         The metric unit is defined by window_unit.
-    window_unit : 'blocks' or 'pixels'
+    window_unit : 'blocks' or 'pixels', optional
         Defines the metric unit of the window_height and window_width
         parameters for the ImageWindowIterator object.
-    window_step_vertical : `float`
+    window_step_vertical : `float`, optional
         Defines the vertical step by which the window is moved, thus it
         controls the features density. The metric unit is defined by
         window_step_unit.
-    window_step_horizontal : `float`
+    window_step_horizontal : `float`, optional
         Defines the horizontal step by which the window is moved, thus it
         controls the features density. The metric unit is defined by
         window_step_unit.
-    window_step_unit : 'pixels' or 'cells'
+    window_step_unit : 'pixels' or 'cells', optional
         Defines the metric unit of the window_step_vertical and
         window_step_horizontal parameters.
-    padding : `bool`
+    padding : `bool`, optional
         Enables/disables padding for the close-to-boundary windows in the
         ImageWindowIterator object. When padding is enabled,
         the out-of-boundary pixels are set to zero.
-    algorithm : 'dalaltriggs' or 'zhuramanan'
+    algorithm : 'dalaltriggs' or 'zhuramanan', optional
         Specifies the algorithm used to compute HOGs.
-    cell_size : `float`
+    cell_size : `float`, optional
         Defines the cell size in pixels. This value is set to both the width
         and height of the cell. This option is valid for both algorithms.
-    block_size : `float`
+    block_size : `float`, optional
         Defines the block size in cells. This value is set to both the width
         and height of the block. This option is valid only for the
         'dalaltriggs' algorithm.
-    num_bins : float
+    num_bins : `float`, optional
         Defines the number of orientation histogram bins. This option is
         valid only for the 'dalaltriggs' algorithm.
-    signed_gradient : `bool`
+    signed_gradient : `bool`, optional
         Flag that defines whether we use signed or unsigned gradient angles.
         This option is valid only for the 'dalaltriggs' algorithm.
-    l2_norm_clip : `float`
+    l2_norm_clip : `float`, optional
         Defines the clipping value of the gradients' L2-norm. This option is
         valid only for the 'dalaltriggs' algorithm.
-    verbose : `bool`
+    verbose : `bool`, optional
         Flag to print HOG related information.
 
     Raises
@@ -314,13 +314,13 @@ def igo(pixels, double_angles=False, verbose=False):
     pixels : `ndarray`
         The pixel data for the image, where the last axis represents the
         number of channels.
-    double_angles : `bool`
+    double_angles : `bool`, optional
         Assume that phi represents the gradient orientations. If this flag
         is disabled, the features image is the concatenation of cos(phi)
         and sin(phi), thus 2 channels. If it is enabled, the features image
         is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi),
         thus 4 channels.
-    verbose : `bool`
+    verbose : `bool`, optional
         Flag to print IGO related information.
 
     Raises
@@ -390,7 +390,7 @@ def es(image_data, verbose=False):
     image_data : `ndarray`
         The pixel data for the image, where the last axis represents the
         number of channels.
-    verbose : `bool`
+    verbose : `bool`, optional
         Flag to print ES related information.
 
     Raises
@@ -437,8 +437,7 @@ def es(image_data, verbose=False):
 
 @ndfeature
 def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
-          normalization='l1', sigmas=None, ring_radii=None,
-          verbose=False):
+          normalization='l1', sigmas=None, ring_radii=None, verbose=False):
     r"""
     Computes a 2-dimensional Daisy features image with N*C number of channels,
     where N is the number of channels of the original image and C is the
@@ -450,23 +449,23 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     pixels :  ndarray
         The pixel data for the image, where the last axis represents the
         number of channels.
-    step : `int`, Optional
+    step : `int`, optional
         The sampling step that defines the density of the output image.
-    radius : `int`, Optional
+    radius : `int`, optional
         The radius (in pixels) of the outermost ring.
-    rings : `int`, Optional
+    rings : `int`, optional
         The number of rings to be used.
-    histograms : `int`, Optional
+    histograms : `int`, optional
         The number of histograms sampled per ring.
-    orientations : `int`, Optional
+    orientations : `int`, optional
         The number of orientations (bins) per histogram.
-    normalization : [ 'l1', 'l2', 'daisy', None ], Optional
+    normalization : [ 'l1', 'l2', 'daisy', None ], optional
         It defines how to normalize the descriptors
         If 'l1' then L1-normalization is applied at each descriptor.
         If 'l2' then L2-normalization is applied at each descriptor.
         If 'daisy' then L2-normalization is applied at individual histograms.
         If None then no normalization is employed.
-    sigmas : 1D array of `float`, Optional
+    sigmas : 1D array of `float`, optional
         Standard deviation of spatial Gaussian smoothing for the centre
         histogram and for each ring of histograms. The array of sigmas should
         be sorted from the centre and out. I.e. the first sigma value defines
@@ -475,7 +474,8 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
         overrides the following parameter.
 
             ``rings = len(sigmas) - 1``
-    ring_radii : 1D array of `int`, Optional
+
+    ring_radii : 1D array of `int`, optional
         Radius (in pixels) for each ring. Specifying ring_radii overrides the
         following two parameters.
 
@@ -487,6 +487,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
         histogram.
 
             ``len(ring_radii) == len(sigmas) + 1``
+
     verbose : `bool`
         Flag to print Daisy related information.
 
@@ -561,34 +562,36 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     pixels :  `ndarray`
         The pixel data for the image, where the last axis represents the
         number of channels.
-    radius : `int` or `list` of `int`
+    radius : `int` or `list` of `int`, optional
         It defines the radius of the circle (or circles) at which the sampling
         points will be extracted. The radius (or radii) values must be greater
         than zero. There must be a radius value for each samples value, thus
         they both need to have the same length.
 
         Default: None = [1, 2, 3, 4]
-    samples : `int` or `list` of `int`
+
+    samples : `int` or `list` of `int`, optional
         It defines the number of sampling points that will be extracted at each
         circle. The samples value (or values) must be greater than zero. There
         must be a samples value for each radius value, thus they both need to
         have the same length.
 
         Default: None = [8, 8, 8, 8]
+
     mapping_type : ``'u2'`` or ``'ri'`` or ``'riu2'`` or ``'none'``
         It defines the mapping type of the LBP codes. Select 'u2' for uniform-2
         mapping, 'ri' for rotation-invariant mapping, 'riu2' for uniform-2 and
         rotation-invariant mapping and 'none' to use no mapping nd only the
         decimal values instead.
-    window_step_vertical : float
+    window_step_vertical : `float`, optional
         Defines the vertical step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
         The metric unit is defined by window_step_unit.
-    window_step_horizontal : float
+    window_step_horizontal : `float`, optional
         Defines the horizontal step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
         The metric unit is defined by window_step_unit.
-    window_step_unit : ``'pixels'`` or ``'window'``
+    window_step_unit : ``'pixels'`` or ``'window'``, optional
         Defines the metric unit of the window_step_vertical and
         window_step_horizontal parameters for the ImageWindowIterator object.
     padding : `bool`, optional
@@ -598,7 +601,7 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     verbose : `bool`, optional
         Flag to print LBP related information.
     skip_checks : `bool`, optional
-        If ``True``, will no validate any of the passed parameters.
+        If ``True``, do not perform any validation of the parameters.
 
     Raises
     -------
@@ -732,7 +735,27 @@ def no_op(pixels):
 
     Parameters
     ----------
-    pixels : ndarray
-        Image pixels. Copied and returned unchanged.
+    pixels : `ndarray`
+        The pixels from the image, copied and returned.
+
+    Returns
+    -------
+    pixels : `ndarray`
+        A copy of the pixels that were passed in.
     """
     return pixels.copy()
+
+
+def features_selection_widget(popup=True):
+    r"""
+    Function that creates a widget that allows for easy selection of a features
+    function and its options.
+
+    Parameters
+    -----------
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
+    """
+    from menpo.visualize.widgets import features_selection
+
+    return features_selection(popup=popup)

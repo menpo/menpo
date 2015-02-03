@@ -1,14 +1,13 @@
 import numpy as np
 from warnings import warn
 from scipy.spatial.distance import cdist
-from menpo.visualize import PointCloudViewer
 from menpo.shape.base import Shape
 
 
 class PointCloud(Shape):
     r"""
-    An N-dimensional point cloud. This is internally represented as an ndarray
-    of shape (``n_points``, ``n_dims``). This class is important for dealing
+    An N-dimensional point cloud. This is internally represented as an `ndarray`
+    of shape ``(n_points, n_dims)``. This class is important for dealing
     with complex functionality such as viewing and representing metadata such
     as landmarks.
 
@@ -18,8 +17,7 @@ class PointCloud(Shape):
     ----------
     points : ``(n_points, n_dims)`` `ndarray`
         The array representing the points.
-
-    copy : `boolean`, optional
+    copy : `bool`, optional
         If ``False``, the points will not be copied on assignment. Note that
         this will miss out on additional checks. Further note that we still
         demand that the array is C-contiguous - if it isn't, a copy will be
@@ -58,14 +56,14 @@ class PointCloud(Shape):
 
     def h_points(self):
         r"""
-        homogeneous points of shape (``n_dims + 1``, ``n_points``)
+        Homogeneous points of shape ``(n_dims + 1, n_points)``
         """
         return np.concatenate((self.points.T, np.ones(self.n_points)[None, :]))
 
     def centre(self):
         r"""
         The mean of all the points in this PointCloud (in the centre of mass
-        sense)
+        sense).
 
         Returns
         -------
@@ -102,19 +100,26 @@ class PointCloud(Shape):
 
     def tojson(self):
         r"""
-        Convert this PointCloud to a dictionary JSON representation.
+        Convert this :map:`PointCloud` to a dictionary representation suitable
+        for inclusion in the LJSON landmark format.
 
         Returns
         -------
-        json_dict : `dict`
-            Dictionary with a 'points' key, the value of which is a list
-            suitable for use in the by the `json` standard library package.
+        dictionary with 'points' keys.
+
         """
         return {'points': self.points.tolist()}
 
     def from_vector_inplace(self, vector):
         r"""
-        Updates this PointCloud in-place with a new vector of parameters
+        Updates the points of this PointCloud in-place with the reshaped points
+        from the provided vector. Note that the vector should have the form
+        ``[x0, y0, x1, y1, ....., xn, yn]`` for 2D.
+
+        Parameters
+        ----------
+        vector : ``(n_points,)`` `ndarray`
+            The vector from which to create the points' array.
         """
         self.points = vector.reshape([-1, self.n_dims])
 
@@ -125,9 +130,8 @@ class PointCloud(Shape):
 
     def bounds(self, boundary=0):
         r"""
-        The minimum to maximum extent of the :map:`PointCloud`.
-        An optional boundary argument can be provided to expand the bounds
-        by a constant margin.
+        The minimum to maximum extent of the PointCloud. An optional boundary
+        argument can be provided to expand the bounds by a constant margin.
 
         Parameters
         ----------
@@ -152,7 +156,7 @@ class PointCloud(Shape):
 
     def range(self, boundary=0):
         r"""
-        The range of the extent of the :map:`PointCloud`.
+        The range of the extent of the PointCloud.
 
         Parameters
         ----------
@@ -195,9 +199,349 @@ class PointCloud(Shape):
                                   np.array([[0, 1], [1, 2], [2, 3], [3, 0]]),
                                   copy=False)
 
-    def view(self, figure_id=None, new_figure=False, **kwargs):
-        return PointCloudViewer(figure_id, new_figure,
-                                self.points).render(**kwargs)
+    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
+                 render_markers=True, marker_style='o', marker_size=20,
+                 marker_face_colour='r', marker_edge_colour='k',
+                 marker_edge_width=1., render_axes=True,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
+                 label=None, **kwargs):
+        r"""
+        Visualization of the PointCloud.
+
+        Parameters
+        ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        image_view : `bool`, optional
+            If ``True``, the x and y axes are flipped.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
+        label : `str`, optional
+            The name entry in case of a legend.
+
+        Returns
+        -------
+        viewer : :map:`PointCloudViewer`
+            The viewer object.
+        """
+        from menpo.visualize.base import PointGraphViewer2d
+        adjacency_array = np.empty(0)
+        renderer = PointGraphViewer2d(figure_id, new_figure,
+                                      self.points,
+                                      adjacency_array)
+        renderer.render(
+            image_view=image_view, render_lines=False, line_colour='b',
+            line_style='-', line_width=1., render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width, render_axes=render_axes,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size, label=label)
+        return renderer
+
+    def _view_landmarks_2d(self, group=None, with_labels=None,
+                           without_labels=None, figure_id=None,
+                           new_figure=False, image_view=True, render_lines=True,
+                           line_colour=None, line_style='-', line_width=1,
+                           render_markers=True, marker_style='o',
+                           marker_size=20, marker_face_colour=None,
+                           marker_edge_colour=None, marker_edge_width=1.,
+                           render_numbering=False,
+                           numbers_horizontal_align='center',
+                           numbers_vertical_align='bottom',
+                           numbers_font_name='sans-serif', numbers_font_size=10,
+                           numbers_font_style='normal',
+                           numbers_font_weight='normal',
+                           numbers_font_colour='k', render_legend=False,
+                           legend_title='', legend_font_name='sans-serif',
+                           legend_font_style='normal', legend_font_size=10,
+                           legend_font_weight='normal',
+                           legend_marker_scale=None, legend_location=2,
+                           legend_bbox_to_anchor=(1.05, 1.),
+                           legend_border_axes_pad=None, legend_n_columns=1,
+                           legend_horizontal_spacing=None,
+                           legend_vertical_spacing=None, legend_border=True,
+                           legend_border_padding=None, legend_shadow=False,
+                           legend_rounded_corners=False, render_axes=False,
+                           axes_font_name='sans-serif', axes_font_size=10,
+                           axes_font_style='normal', axes_font_weight='normal',
+                           axes_x_limits=None, axes_y_limits=None,
+                           figure_size=(10, 8)):
+        """
+        Visualize the landmarks.
+
+        Parameters
+        ----------
+        group : `str` or `None`, optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
+        with_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, only show the given label(s). Should **not** be
+            used with the ``without_labels`` kwarg.
+        without_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, show all except the given label(s). Should **not**
+            be used with the ``with_labels`` kwarg.
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        image_view : `bool`, optional
+            If ``True``, render the figure using the image axis orientation.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : {``center``, ``right``, ``left``}, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : {``center``, ``top``, ``bottom``,
+                                  ``baseline``}, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                             ``fantasy``, ``monospace``}, optional
+            The font of the numbers.
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the numbers.
+        numbers_font_weight : {``ultralight``, ``light``, ``normal``,
+                               ``regular``, ``book``, ``medium``, ``roman``,
+                               ``semibold``, ``demibold``, ``demi``, ``bold``,
+                               ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the numbers.
+        numbers_font_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                              or ``(3, )`` `ndarray`, optional
+            The font colour of the numbers.
+        render_legend : `bool`, optional
+            If ``True``, the legend will be rendered.
+        legend_title : `str`, optional
+            The title of the legend.
+        legend_font_name : {``serif``, ``sans-serif``, ``cursive``,
+                            ``fantasy``, ``monospace``}, optional
+            The font of the legend.
+        legend_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the legend.
+        legend_font_size : `int`, optional
+            The font size of the legend.
+        legend_font_weight : {``ultralight``, ``light``, ``normal``,
+                              ``regular``, ``book``, ``medium``, ``roman``,
+                              ``semibold``, ``demibold``, ``demi``, ``bold``,
+                              ``heavy``, ``extra bold``, ``black``}, optional
+            The font weight of the legend.
+        legend_marker_scale : `float`, optional
+            The relative size of the legend markers with respect to the original
+        legend_location : `int`, optional
+            The location of the legend. The predefined values are:
+
+            =============== ===
+            'best'          0
+            'upper right'   1
+            'upper left'    2
+            'lower left'    3
+            'lower right'   4
+            'right'         5
+            'center left'   6
+            'center right'  7
+            'lower center'  8
+            'upper center'  9
+            'center'        10
+            =============== ===
+
+        legend_bbox_to_anchor : (`float`, `float`), optional
+            The bbox that the legend will be anchored.
+        legend_border_axes_pad : `float`, optional
+            The pad between the axes and legend border.
+        legend_n_columns : `int`, optional
+            The number of the legend's columns.
+        legend_horizontal_spacing : `float`, optional
+            The spacing between the columns.
+        legend_vertical_spacing : `float`, optional
+            The vertical space between the legend entries.
+        legend_border : `bool`, optional
+            If ``True``, a frame will be drawn around the legend.
+        legend_border_padding : `float`, optional
+            The fractional whitespace inside the legend border.
+        legend_shadow : `bool`, optional
+            If ``True``, a shadow will be drawn behind legend.
+        legend_rounded_corners : `bool`, optional
+            If ``True``, the frame's corners will be rounded (fancybox).
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+                          ``monospace``}, optional
+            The font of the axes.
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
+                            ``book``, ``medium``, ``roman``, ``semibold``,
+                            ``demibold``, ``demi``, ``bold``, ``heavy``,
+                            ``extra bold``, ``black``}, optional
+            The font weight of the axes.
+        axes_x_limits : (`float`, `float`) or `None`, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) or `None`, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) or `None`, optional
+            The size of the figure in inches.
+
+        Raises
+        ------
+        ValueError
+            If both ``with_labels`` and ``without_labels`` are passed.
+        ValueError
+            If the landmark manager doesn't contain the provided group label.
+        """
+        if not self.has_landmarks:
+            raise ValueError('PointCloud does not have landmarks attached, '
+                             'unable to view landmarks.')
+        self_view = self.view(figure_id=figure_id, new_figure=new_figure,
+                              image_view=image_view, figure_size=figure_size)
+        landmark_view = self.landmarks[group].view(
+            with_labels=with_labels, without_labels=without_labels,
+            figure_id=self_view.figure_id, new_figure=False,
+            image_view=image_view, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_legend=render_legend, legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=figure_size)
+
+        return landmark_view
+
+    def _view_3d(self, figure_id=None, new_figure=False):
+        try:
+            from menpo3d.visualize import PointCloudViewer3d
+            return PointCloudViewer3d(figure_id, new_figure,
+                                      self.points).render()
+        except ImportError:
+            from menpo.visualize import Menpo3dErrorMessage
+            raise ImportError(Menpo3dErrorMessage)
+
+    def _view_landmarks_3d(self, figure_id=None, new_figure=False,
+                           group=None):
+        try:
+            from menpo3d.visualize import LandmarkViewer3d
+            self_renderer = self.view(figure_id=figure_id,
+                                      new_figure=new_figure)
+            return LandmarkViewer3d(self_renderer.figure, False,  self,
+                                    self.landmarks[group]).render()
+        except ImportError:
+            from menpo.visualize import Menpo3dErrorMessage
+            raise ImportError(Menpo3dErrorMessage)
+
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
+        r"""
+        Visualization of the PointCloud using the :map:`visualize_pointclouds`
+        widget.
+
+        Parameters
+        ----------
+        popup : `bool`, optional
+            If ``True``, the widget will be rendered in a popup window.
+        browser_style : {``buttons``, ``slider``}, optional
+            It defines whether the selector of the PointCloud objects will have
+            the form of plus/minus buttons or a slider.
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
+        """
+        from menpo.visualize import visualize_pointclouds
+        visualize_pointclouds(self, popup=popup, figure_size=figure_size,
+                              browser_style=browser_style)
 
     def _transform_self_inplace(self, transform):
         self.points = transform(self.points)
@@ -205,7 +549,7 @@ class PointCloud(Shape):
 
     def distance_to(self, pointcloud, **kwargs):
         r"""
-        Returns a distance matrix between this point cloud and another.
+        Returns a distance matrix between this PointCloud and another.
         By default the Euclidian distance is calculated - see
         `scipy.spatial.distance.cdist` for valid kwargs to change the metric
         and other properties.
@@ -231,7 +575,7 @@ class PointCloud(Shape):
 
     def norm(self, **kwargs):
         r"""
-        Returns the norm of this point cloud. This is a translation and
+        Returns the norm of this PointCloud. This is a translation and
         rotation invariant measure of the point cloud's intrinsic size - in
         other words, it is always taken around the point cloud's centre.
 
@@ -248,8 +592,8 @@ class PointCloud(Shape):
     def from_mask(self, mask):
         """
         A 1D boolean array with the same number of elements as the number of
-        points in the pointcloud. This is then broadcast across the dimensions
-        of the pointcloud and returns a new pointcloud containing only those
+        points in the PointCloud. This is then broadcast across the dimensions
+        of the PointCloud and returns a new PointCloud containing only those
         points that were ``True`` in the mask.
 
         Parameters

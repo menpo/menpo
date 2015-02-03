@@ -1,10 +1,10 @@
-.. _menpo-visualize-TriMeshViewer:
+.. _menpo-visualize-GraphPlotter:
 
 .. currentmodule:: menpo.visualize
 
-TriMeshViewer
-=============
-.. autoclass:: TriMeshViewer
+GraphPlotter
+============
+.. autoclass:: GraphPlotter
   :members:
   :inherited-members:
   :show-inheritance:

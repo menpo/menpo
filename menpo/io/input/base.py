@@ -308,7 +308,8 @@ class BuiltinAssets(object):
 import_builtin_asset = BuiltinAssets()
 
 for asset in ls_builtin_assets():
-    setattr(import_builtin_asset, asset.replace('.', '_'), import_builtin(asset))
+    setattr(import_builtin_asset, asset.replace('.', '_'),
+            import_builtin(asset))
 
 
 def image_paths(pattern):
@@ -337,9 +338,9 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
     if n_files == 0:
         raise ValueError('The glob {} yields no assets'.format(pattern))
     for i, asset in enumerate(_multi_import_generator(filepaths, extension_map,
-                                         landmark_resolver=landmark_resolver,
-                                         landmark_ext_map=landmark_ext_map,
-                                         importer_kwargs=importer_kwargs)):
+                              landmark_resolver=landmark_resolver,
+                              landmark_ext_map=landmark_ext_map,
+                              importer_kwargs=importer_kwargs)):
         if verbose:
             print_dynamic('- Loading {} assets: {}'.format(
                 n_files, progress_bar_str(float(i + 1) / n_files,
@@ -595,6 +596,13 @@ def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
     """
     suffix = ''.join(filepath.suffixes)
     importer_type = extensions_map.get(suffix)
+    # we couldn't find an importer for all the suffixes (e.g .foo.bar)
+    # maybe the file stem has '.' in it? -> try again but this time just use the
+    # final suffix (.bar). (Note we first try '.foo.bar' as we want to catch
+    # cases like 'pkl.gz')
+    if importer_type is None and len(filepath.suffixes) > 1:
+        suffix = filepath.suffix
+        importer_type = extensions_map.get(suffix)
     if importer_type is None:
         raise ValueError("{} does not have a "
                          "suitable importer.".format(suffix))

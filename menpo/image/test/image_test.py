@@ -172,7 +172,7 @@ def test_boolean_image_false_indices():
                                                      [1, 2]])))
 
 
-def test_boolean_image_false_indices_str():
+def test_boolean_image_str():
     image = BooleanImage.blank((2, 3))
     assert(image.__str__() == '3W x 2H 2D mask, 100.0% of which is True')
 
@@ -203,21 +203,21 @@ def test_boolean_image_from_vector_no_copy_raises():
 def test_boolean_image_invert_inplace():
     image = BooleanImage.blank((4, 4))
     image.invert_inplace()
-    assert(np.all(image.pixels == False))
+    assert(np.all(~image.pixels))
 
 
 def test_boolean_image_invert_inplace_double_noop():
     image = BooleanImage.blank((4, 4))
     image.invert_inplace()
     image.invert_inplace()
-    assert(np.all(image.pixels == True))
+    assert(np.all(image.pixels))
 
 
 def test_boolean_image_invert():
     image = BooleanImage.blank((4, 4))
     image2 = image.invert()
-    assert(np.all(image.pixels == True))
-    assert(np.all(image2.pixels == False))
+    assert(np.all(image.pixels))
+    assert(np.all(~image2.pixels))
 
 
 def test_boolean_bounds_false():

@@ -7,6 +7,7 @@ def setup(app):
     include the full package path. This makes the base classes much prettier.
     """
     app.add_role_to_domain('py', 'class', truncate_class_role)
+    return {'parallel_read_safe': True}
 
 
 def truncate_class_role(name, rawtext, text, lineno, inliner,
