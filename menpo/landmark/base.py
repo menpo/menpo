@@ -586,9 +586,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                  figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour=None, line_style='-',
                  line_width=1, render_markers=True, marker_style='o',
-                 marker_size=20, marker_face_colour='r', marker_edge_colour='k',
-                 marker_edge_width=1., render_numbering=False,
-                 numbers_horizontal_align='center',
+                 marker_size=20, marker_face_colour=None,
+                 marker_edge_colour=None, marker_edge_width=1.,
+                 render_numbering=False, numbers_horizontal_align='center',
                  numbers_vertical_align='bottom',
                  numbers_font_name='sans-serif', numbers_font_size=10,
                  numbers_font_style='normal', numbers_font_weight='normal',
@@ -603,7 +603,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                  legend_rounded_corners=False, render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=None):
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         """
         Visualize the landmark group.
 

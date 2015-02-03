@@ -169,7 +169,7 @@ class TexturedTriMesh(TriMesh):
                  marker_edge_width=1., render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=None,
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
                  label=None):
         r"""
         Visualization of the TriMesh in 2D. Currently, explicit textured TriMesh
