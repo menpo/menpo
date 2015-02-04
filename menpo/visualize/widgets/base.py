@@ -29,7 +29,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), popup=False,
     axes) and saving the figure to file.
 
     Parameters
-    -----------
+    ----------
     pointclouds : `list` of :map:`PointCloud` or :map:`PointGraph` or subclasses
         The `list` of objects to be visualized.
     figure_size : (`int`, `int`), optional
@@ -250,7 +250,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), popup=False,
     figure, axes) and saving the figure to file.
 
     Parameters
-    -----------
+    ----------
     landmarkgroups : `list` of :map:`LandmarkGroup` or subclass
         The `list` of landmark groups to be visualized.
     figure_size : (`int`, `int`), optional
@@ -603,7 +603,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), popup=False,
     and saving the figure to file.
 
     Parameters
-    -----------
+    ----------
     landmarks : `list` of :map:`LandmarkManager` or subclass
         The `list` of landmarks to be visualized.
     figure_size : (`int`, `int`), optional
@@ -1384,7 +1384,7 @@ def save_matplotlib_figure(renderer, popup=True):
     Widget that allows to save a figure generated with Matplotlib to file.
 
     Parameters
-    -----------
+    ----------
     renderer : :map:`MatplotlibRenderer`
         The Matplotlib renderer object.
     popup : `bool`, optional
@@ -1426,7 +1426,7 @@ def features_selection(popup=True):
     function closure.
 
     Parameters
-    -----------
+    ----------
     popup : `bool`, optional
         If ``True``, the widget will appear as a popup window.
 

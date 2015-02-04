@@ -249,7 +249,7 @@ class LandmarkManager(MutableMapping, Transformable):
         :map:`visualize_landmarks` widget.
 
         Parameters
-        -----------
+        ----------
         popup : `bool`, optional
             If ``True``, the widget will appear as a popup window.
         browser_style : {``buttons``, ``slider``}, optional
@@ -817,7 +817,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         :map:`visualize_landmarkgroups` widget.
 
         Parameters
-        -----------
+        ----------
         popup : `bool`, optional
             If ``True``, the widget will appear as a popup window.
         browser_style : {``buttons``, ``slider``}, optional

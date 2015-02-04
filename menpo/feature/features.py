@@ -699,7 +699,7 @@ def features_selection_widget(popup=True):
     function and its options.
 
     Parameters
-    -----------
+    ----------
     popup : `boolean`, optional
         If enabled, the widget will appear as a popup window.
     """

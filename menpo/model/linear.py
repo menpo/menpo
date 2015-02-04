@@ -128,7 +128,7 @@ class LinearModel(Copyable):
         linear reconstruction weights
 
         Parameters
-        -----------
+        ----------
         vector : (n_features,) ndarray
             A vectorized novel instance.
 
@@ -247,7 +247,7 @@ class LinearModel(Copyable):
         value error is raised.
 
         Parameters
-        -----------
+        ----------
         linear_model : :class:`LinearModel`
             A second linear model to orthonormalize this against.
         """

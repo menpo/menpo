@@ -65,7 +65,7 @@ class InstanceBackedModel(object):
         linear weightings.
 
         Parameters
-        -----------
+        ----------
         novel_instance : :class:`menpo.base.Vectorizable`
             A novel instance.
 

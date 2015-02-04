@@ -15,3 +15,4 @@ for exploring visual data.
   datatypes
   consistency
   vectorizing
+  visualization
