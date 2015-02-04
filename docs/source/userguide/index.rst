@@ -16,3 +16,4 @@ for exploring visual data.
   consistency
   vectorizing
   visualization
+  changelog
