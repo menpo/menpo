@@ -52,6 +52,32 @@ def indices_for_image_of_shape(shape):
     return np.indices(shape).reshape([len(shape), -1]).T
 
 
+def channels_to_back(image):
+    r"""
+    Roll the channels from the front to the back for an image. If the image
+    that is passed is already a numpy array, then that is also fine.
+
+    Always returns a numpy array because our :map:`Image` containers do not
+    support channels at the back.
+
+    Parameters
+    ----------
+    image : `ndarray` or :map:`Image` subclass
+        The pixels or image to roll the channel back for.
+
+    Returns
+    -------
+    rolled_pixels : `ndarray`
+        The numpy array of pixels with the channels on the last axis.
+    """
+    if isinstance(image, np.ndarray):
+        pixels = image
+    else:
+        pixels = image.pixels
+
+    return np.rollaxis(pixels, 0, pixels.ndim)
+
+
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     r"""
     An n-dimensional image.
@@ -519,7 +545,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ValueError
             If Image is not 2D
         """
-        pixels_to_view = np.rollaxis(self.pixels, 0, self.n_dims+1)
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            self.pixels, channels=channels).render(
             interpolation=interpolation, alpha=alpha,
@@ -1598,7 +1623,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if self.n_channels == 1:
             pixels = self.pixels[0, ...]
         else:
-            pixels = np.rollaxis(self.pixels, 0, self.n_dims+1)
+            pixels = channels_to_back(self.pixels)
         if pixels.dtype in [np.float64, np.float32, np.bool]:  # Type check
             if np.any((self.pixels < 0) | (self.pixels > 1)):  # Range check
                 raise ValueError('Pixel values are outside the range '

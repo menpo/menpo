@@ -375,9 +375,8 @@ class MaskedImage(Image):
             If Image is not 2D
         """
         mask = self.mask.mask if masked else None
-        pixels_to_view = np.rollaxis(self.pixels, 0, self.n_dims+1)
         return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view, channels=channels,
+                           self.pixels, channels=channels,
                            mask=mask).render(render_axes=render_axes,
                                              axes_font_name=axes_font_name,
                                              axes_font_size=axes_font_size,

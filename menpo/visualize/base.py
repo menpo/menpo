@@ -217,6 +217,13 @@ class ImageViewer(object):
             self._parse_channels(channels, pixels)
         self.pixels = self._masked_pixels(pixels, mask)
 
+        self._flip_image_channels()
+
+    def _flip_image_channels(self):
+        if self.pixels.ndim == 3:
+            from menpo.image.base import channels_to_back
+            self.pixels = channels_to_back(self.pixels)
+
     def _parse_channels(self, channels, pixels):
         r"""
         Parse `channels` parameter. If `channels` is `int` or `list`, keep it as
@@ -242,22 +249,22 @@ class ImageViewer(object):
         """
         # Flag to trigger ImageSubplotsViewer2d or ImageViewer2d
         use_subplots = True
-        n_channels = pixels.shape[2]
+        n_channels = pixels.shape[0]
         if channels is None:
             if n_channels == 1:
-                pixels = pixels[..., 0]
+                pixels = pixels[0, ...]
                 use_subplots = False
             elif n_channels == 3:
                 use_subplots = False
         elif channels != 'all':
             if isinstance(channels, Iterable):
                 if len(channels) == 1:
-                    pixels = pixels[..., channels[0]]
+                    pixels = pixels[channels[0], ...]
                     use_subplots = False
                 else:
-                    pixels = pixels[..., channels]
+                    pixels = pixels[channels, ...]
             else:
-                pixels = pixels[..., channels]
+                pixels = pixels[channels, ...]
                 use_subplots = False
 
         return pixels, use_subplots
@@ -284,7 +291,7 @@ class ImageViewer(object):
         """
         if mask is not None:
             nanmax = np.nanmax(pixels)
-            pixels[~mask] = nanmax + (0.01 * nanmax)
+            pixels[..., ~mask] = nanmax + (0.01 * nanmax)
         return pixels
 
     def render(self, **kwargs):
