@@ -2,7 +2,8 @@
 
 def dot_inplace_left(a, b, block_size=1000):
     r"""
-    ``a * b = c`` where ``a`` will be replaced inplace with ``c``.
+    Inplace dot product for memory efficiency. It computes ``a * b = c``, where
+    ``a`` will be replaced inplace with ``c``.
 
     Parameters
     ----------
@@ -40,7 +41,8 @@ def dot_inplace_left(a, b, block_size=1000):
 
 def dot_inplace_right(a, b, block_size=1000):
     r"""
-    ``a * b = c`` where ``b`` will be replaced inplace with ``c``.
+    Inplace dot product for memory efficiency. It computes ``a * b = c`` where
+    ``b`` will be replaced inplace with ``c``.
 
     Parameters
     ----------

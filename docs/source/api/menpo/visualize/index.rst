@@ -19,16 +19,6 @@ Abstract Classes
   MatplotlibRenderer
 
 
-Viewers
--------
-
-.. toctree::
-  :maxdepth: 1
-
-  AlignmentViewer2d
-  GraphPlotter
-
-
 Widgets
 -------
 
@@ -43,11 +33,12 @@ Widgets
   save_matplotlib_figure
 
 
-Text Utils
-----------
+Print Utilities
+---------------
 
 .. toctree::
   :maxdepth: 1
 
   print_dynamic
   progress_bar_str
+  print_bytes

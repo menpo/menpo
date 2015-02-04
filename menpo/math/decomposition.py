@@ -5,7 +5,7 @@ from .linalg import dot_inplace_right
 
 def eigenvalue_decomposition(S, eps=10**-10):
     r"""
-    Eigenvalue decomposition of a given covariance matrix.
+    Eigenvalue decomposition of a given covariance (or scatter) matrix.
 
     Parameters
     ----------
@@ -13,16 +13,15 @@ def eigenvalue_decomposition(S, eps=10**-10):
         Covariance/Scatter matrix
     eps : `float`, optional
         Small value to be used for the tolerance limit computation. The final
-        limit is computed as
+        limit is computed as ::
 
-        ::
             limit = np.max(np.abs(eigenvalues)) * eps
 
     Returns
     -------
     pos_eigenvectors : ``(N, p)`` `ndarray`
         The matrix with the eigenvectors corresponding to positive eigenvalues.
-    pos_eigenvalues : (p,) ndarray
+    pos_eigenvalues : ``(p,)`` `ndarray`
         The array of positive eigenvalues.
     """
     # compute eigenvalue decomposition
@@ -50,16 +49,17 @@ def eigenvalue_decomposition(S, eps=10**-10):
 def principal_component_decomposition(X, whiten=False, centre=True,
                                       bias=False, inplace=False):
     r"""
-    Apply PCA on the data matrix X. In the case where the data matrix is very
-    large, it is advisable to set `inplace=True`. However, note this this
-    destructively edits the data matrix by subtracting the mean inplace.
+    Apply Principal Component Analysis (PCA) on the data matrix `X`. In the case
+    where the data matrix is very large, it is advisable to set
+    ``inplace = True``. However, note this destructively edits the data matrix
+    by subtracting the mean inplace.
 
     Parameters
     ----------
-    x : ``(n_samples, n_features)`` `ndarray`
+    X : ``(n_samples, n_features)`` `ndarray`
         Training data.
     whiten : `bool`, optional
-        Normalise the eigenvectors to have unit magnitude
+        Normalise the eigenvectors to have unit magnitude.
     centre : `bool`, optional
         Whether to centre the data matrix. If ``False``, zero will be
         subtracted.

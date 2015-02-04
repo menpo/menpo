@@ -16,11 +16,12 @@ class Renderer(object):
 
     It is assumed that the renderers follow some form of stateful pattern for
     rendering to Figures. Therefore, the major interface for rendering involves
-    providing a `figure_id` or a boolean about whether a new figure should
-    be used. If neither are provided then the default state of the rendering
-    engine is assumed to be maintained.
+    providing a `figure_id` or a `bool` about whether a new figure should be
+    used. If neither are provided then the default state of the rendering engine
+    is assumed to be maintained.
 
-    Providing both a `figure_id` and `new_figure == True` is not a valid state.
+    Providing both a ``figure_id`` and ``new_figure == True`` is not a valid
+    state.
 
     Parameters
     ----------
@@ -58,7 +59,7 @@ class Renderer(object):
 
         Returns
         -------
-        viewer : Renderer
+        viewer : :map:`Renderer`
             Pointer to `self`.
         """
         pass
@@ -78,7 +79,7 @@ class Renderer(object):
     def save_figure(self, **kwargs):
         r"""
         Abstract method for saving the figure of the current `figure_id` to
-        file. It needs to be overridden by the renderer.
+        file. It will implement the actual saving code for a given object class.
 
         Parameters
         ----------
@@ -97,9 +98,11 @@ class viewwrapper(object):
     to add the mental overhead of implementing different 2D and 3D PointCloud
     classes for example, since, outside of viewing, their implementations would
     be identical.
+
     Also note that we could have separated out viewing entirely and made the
     check there, but the view method is an important paradigm in menpo that
     we want to maintain.
+
     Therefore, this function cleverly (and obscurely) returns the correct
     view method for the dimensionality of the given object.
     """
@@ -134,8 +137,10 @@ class Viewable(object):
 
     @viewwrapper
     def view(self):
-        # See viewwrapper documentation for an explanation of how the view
-        # method works.
+        r"""
+        Abstract method for viewing. See the :map:`viewwrapper` documentation
+        for an explanation of how the `view` method works.
+        """
         pass
 
     def _view_2d(self, **kwargs):
@@ -148,7 +153,7 @@ class Viewable(object):
 class LandmarkableViewable(object):
     r"""
     Mixin for :map:`Landmarkable` and :map:`Viewable` objects. Provides a
-    single helper method for viewing Landmarks and self on the same figure.
+    single helper method for viewing Landmarks and `self` on the same figure.
     """
 
     @viewwrapper
