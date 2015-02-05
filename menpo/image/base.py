@@ -531,7 +531,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         Returns
         -------
-        viewer : :map:`ImageViewer`
+        viewer : `ImageViewer`
             The image viewing object.
         """
         return ImageViewer(figure_id, new_figure, self.n_dims,
