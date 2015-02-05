@@ -138,7 +138,7 @@ def ibug_face_68(landmark_group):
     Apply the ibug's "standard" 68 point semantic labels (based on the
     original semantic labels of multiPIE) to the landmark group.
 
-    The group label will be 'ibug_face_68'.
+    The group label will be ``ibug_face_68``.
 
     The semantic labels applied are as follows:
 
@@ -158,7 +158,7 @@ def ibug_face_68(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_68'
+        The group label: ``ibug_face_68``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -230,7 +230,7 @@ def ibug_face_66(landmark_group):
     original semantic labels of multiPIE but ignoring the 2 points
     describing the inner mouth corners) to the landmark group.
 
-    The group label will be 'ibug_face_66'.
+    The group label will be ``ibug_face_66``.
 
     The semantic labels applied are as follows:
 
@@ -250,7 +250,7 @@ def ibug_face_66(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_66'
+        The group label: ``ibug_face_66``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -325,7 +325,7 @@ def ibug_face_51(landmark_group):
     original semantic labels of multiPIE but removing the annotations
     corresponding to the jaw region) to the landmark group.
 
-    The group label will be 'ibug_face_51'.
+    The group label will be ``ibug_face_51``.
 
     The semantic labels applied are as follows:
 
@@ -344,7 +344,7 @@ def ibug_face_51(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_51'
+        The group label: ``ibug_face_51``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -415,7 +415,7 @@ def ibug_face_49(landmark_group):
     corresponding to the jaw region and the 2 describing the inner mouth
     corners) to the landmark group.
 
-    The group label will be 'ibug_face_49'.
+    The group label will be ``ibug_face_49``.
 
     The semantic labels applied are as follows:
 
@@ -434,7 +434,7 @@ def ibug_face_49(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_49'
+        The group label: ``ibug_face_49``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -504,7 +504,7 @@ def ibug_face_68_trimesh(landmark_group):
     Apply the ibug's "standard" 68 point triangulation to the landmarks in
     the given landmark group.
 
-    The group label will be 'ibug_face_68_trimesh'.
+    The group label will be ``ibug_face_68_trimesh``.
 
     The semantic labels applied are as follows:
 
@@ -518,7 +518,7 @@ def ibug_face_68_trimesh(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_68_trimesh'
+        The group label: ``ibug_face_68_trimesh``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -580,7 +580,7 @@ def ibug_face_65_closed_mouth(landmark_group):
     the given landmark group - but ignore the 3 points that are coincident for
     a closed mouth. Therefore, there only 65 points are returned.
 
-    The group label will be 'ibug_face_65_closed_mouth'.
+    The group label will be ``ibug_face_65_closed_mouth``.
 
     The semantic labels applied are as follows:
 
@@ -600,7 +600,7 @@ def ibug_face_65_closed_mouth(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_65_closed_mouth'
+        The group label: ``ibug_face_65_closed_mouth``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -702,7 +702,7 @@ def imm_face(landmark_group):
         If the given landmark group contains less than 58 points
 
     References
-    -----------
+    ----------
     .. [1] http://www2.imm.dtu.dk/~aam/
     """
     group = 'imm_face'
@@ -724,7 +724,7 @@ def lfpw_face(landmark_group):
     Apply the 29 point semantic labels from the LFPW dataset to the
     landmarks in the given landmark group.
 
-    The group label will be 'lfpw_face'.
+    The group label will be ``lfpw_face``.
 
     The semantic labels applied are as follows:
 
@@ -744,7 +744,7 @@ def lfpw_face(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'lfpw_face'
+        The group label: ``lfpw_face``
     landmark_group: :map:`LandmarkGroup`
         New landmark group
 
@@ -754,7 +754,7 @@ def lfpw_face(landmark_group):
         If the given landmark group contains less than 29 points
 
     References
-    -----------
+    ----------
     .. [1] http://homes.cs.washington.edu/~neeraj/databases/lfpw/
     """
     from menpo.shape import PointUndirectedGraph
@@ -834,7 +834,7 @@ def ibug_open_eye(landmark_group):
     Apply the ibug's "standard" open eye semantic labels to the
     landmarks in the given landmark group.
 
-    The group label will be 'ibug_open_eye'.
+    The group label will be ``ibug_open_eye``.
 
     The semantic labels applied are as follows:
 
@@ -852,7 +852,7 @@ def ibug_open_eye(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_open_eye'
+        The group label: ``ibug_open_eye``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -917,7 +917,7 @@ def ibug_close_eye_points(landmark_group):
     Apply the ibug's "standard" close eye semantic labels to the
     landmarks in the given landmark group.
 
-    The group label will be 'ibug_close_eye'.
+    The group label will be ``ibug_close_eye``.
 
     The semantic labels applied are as follows:
 
@@ -932,7 +932,7 @@ def ibug_close_eye_points(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_close_eye'
+        The group label: ``ibug_close_eye``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -975,7 +975,7 @@ def ibug_open_eye_trimesh(landmark_group):
     Apply the ibug's "standard" open eye semantic labels to the
     landmarks in the given landmark group.
 
-    The group label will be 'ibug_open_eye_trimesh'.
+    The group label will be ``ibug_open_eye_trimesh``.
 
     The semantic labels applied are as follows:
 
@@ -989,7 +989,7 @@ def ibug_open_eye_trimesh(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_open_eye_trimesh'
+        The group label: ``ibug_open_eye_trimesh``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1040,7 +1040,7 @@ def ibug_close_eye_trimesh(landmark_group):
     Apply the ibug's "standard" close eye semantic labels to the
     landmarks in the given landmark group.
 
-    The group label will be 'ibug_close_eye_trimesh'.
+    The group label will be ``ibug_close_eye_trimesh``.
 
     The semantic labels applied are as follows:
 
@@ -1054,7 +1054,7 @@ def ibug_close_eye_trimesh(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_close_eye_trimesh'
+        The group label: ``ibug_close_eye_trimesh``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1091,7 +1091,7 @@ def ibug_tongue(landmark_group):
     Apply the ibug's "standard" tongue semantic labels to the landmarks in the
     given landmark group.
 
-    The group label will be 'ibug_tongue'.
+    The group label will be ``ibug_tongue``.
 
     The semantic labels applied are as follows:
 
@@ -1106,7 +1106,7 @@ def ibug_tongue(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_tongue'
+        The group label: ``ibug_tongue``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1128,7 +1128,7 @@ def ibug_hand(landmark_group):
     """
     Apply the ibug's "standard" 39 point semantic labels to the landmark group.
 
-    The group label will be 'ibug_hand'.
+    The group label will be ``ibug_hand``.
 
     The semantic labels applied are as follows:
 
@@ -1147,7 +1147,7 @@ def ibug_hand(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_hand'
+        The group label: ``ibug_hand``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1207,7 +1207,7 @@ def stickmen_pose(landmark_group):
     Apply the stickmen "standard" 12 point semantic labels to the landmark
     group.
 
-    The group label will be 'stickmen_pose'.
+    The group label will be ``stickmen_pose``.
 
     The semantic labels applied are as follows:
 
@@ -1226,7 +1226,7 @@ def stickmen_pose(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'stickmen_pose'
+        The group label: ``stickmen_pose``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1236,7 +1236,7 @@ def stickmen_pose(landmark_group):
         If the given landmark group contains less than 12 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.robots.ox.ac.uk/~vgg/data/stickmen/
     """
     group = 'stickmen_pose'
@@ -1257,7 +1257,7 @@ def lsp_pose(landmark_group):
     Apply the lsp "standard" 14 point semantic labels to the landmark
     group.
 
-    The group label will be 'lsp_pose'.
+    The group label will be ``lsp_pose``.
 
     The semantic labels applied are as follows:
 
@@ -1275,7 +1275,7 @@ def lsp_pose(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'lsp_pose'
+        The group label: ``lsp_pose``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1285,7 +1285,7 @@ def lsp_pose(landmark_group):
         If the given landmark group contains less than 14 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.comp.leeds.ac.uk/mat4saj/lsp.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1332,7 +1332,7 @@ def flic_pose(landmark_group):
     Apply the flic "standard" 11 point semantic labels to the landmark
     group.
 
-    The group label will be 'flic_pose'.
+    The group label will be ``flic_pose``.
 
     The semantic labels applied are as follows:
 
@@ -1349,7 +1349,7 @@ def flic_pose(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'flic_pose'
+        The group label: ``flic_pose``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1359,7 +1359,7 @@ def flic_pose(landmark_group):
         If the given landmark group contains less than 11 points
 
     References
-    -----------
+    ----------
     .. [1] http://vision.grasp.upenn.edu/cgi-bin/index.php?n=VideoLearning.FLIC
     """
     group = 'flic_pose'
@@ -1378,7 +1378,7 @@ def streetscene_car_view_0(landmark_group):
     Apply the 8 point semantic labels of the view 0  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_0'.
+    The group label will be ``streetscene_car_view_0``.
 
     The semantic labels applied are as follows:
 
@@ -1394,7 +1394,7 @@ def streetscene_car_view_0(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_0'
+        The group label: ``streetscene_car_view_0``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1404,7 +1404,7 @@ def streetscene_car_view_0(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1445,7 +1445,7 @@ def streetscene_car_view_1(landmark_group):
     Apply the 14 point semantic labels of the view 1  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_1'.
+    The group label will be ``streetscene_car_view_1``.
 
     The semantic labels applied are as follows:
 
@@ -1462,7 +1462,7 @@ def streetscene_car_view_1(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_1'
+        The group label: ``streetscene_car_view_1``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1472,7 +1472,7 @@ def streetscene_car_view_1(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1517,7 +1517,7 @@ def streetscene_car_view_2(landmark_group):
     Apply the 10 point semantic labels of the view 2  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_2'.
+    The group label will be ``streetscene_car_view_2``.
 
     The semantic labels applied are as follows:
 
@@ -1541,7 +1541,7 @@ def streetscene_car_view_2(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1573,7 +1573,7 @@ def streetscene_car_view_3(landmark_group):
     Apply the 14 point semantic labels of the view 3  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_2'.
+    The group label will be ``streetscene_car_view_2``.
 
     The semantic labels applied are as follows:
 
@@ -1590,7 +1590,7 @@ def streetscene_car_view_3(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_3'
+        The group label: ``streetscene_car_view_3``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1600,7 +1600,7 @@ def streetscene_car_view_3(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1645,7 +1645,7 @@ def streetscene_car_view_4(landmark_group):
     Apply the 14 point semantic labels of the view 4  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_4'.
+    The group label will be ``streetscene_car_view_4``.
 
     The semantic labels applied are as follows:
 
@@ -1672,7 +1672,7 @@ def streetscene_car_view_4(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1715,10 +1715,10 @@ def streetscene_car_view_4(landmark_group):
 
 def streetscene_car_view_5(landmark_group):
     """
-    Apply the 10 point semantic labels of the view 5  of the MIT Street Scene
+    Apply the 10 point semantic labels of the view 5 of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_5'.
+    The group label will be ``streetscene_car_view_5``.
 
     The semantic labels applied are as follows:
 
@@ -1732,7 +1732,7 @@ def streetscene_car_view_5(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_5'
+        The group label: ``streetscene_car_view_5``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1742,7 +1742,7 @@ def streetscene_car_view_5(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1774,7 +1774,7 @@ def streetscene_car_view_6(landmark_group):
     Apply the 14 point semantic labels of the view 6  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_6'.
+    The group label will be ``streetscene_car_view_6``.
 
     The semantic labels applied are as follows:
 
@@ -1791,7 +1791,7 @@ def streetscene_car_view_6(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_3'
+        The group label: ``streetscene_car_view_3``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1801,7 +1801,7 @@ def streetscene_car_view_6(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1846,7 +1846,7 @@ def streetscene_car_view_7(landmark_group):
     Apply the 8 point semantic labels of the view 0  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_7'.
+    The group label will be ``streetscene_car_view_7``.
 
     The semantic labels applied are as follows:
 
@@ -1862,7 +1862,7 @@ def streetscene_car_view_7(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_7'
+        The group label: ``streetscene_car_view_7``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
@@ -1872,7 +1872,7 @@ def streetscene_car_view_7(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1913,18 +1913,20 @@ def bu3dfe_83(landmark_group):
     Database 83 point facial annotation markup to this landmark group.
 
 
-    The group label will be 'bu3dfe_83'.
+    The group label will be ``bu3dfe_83``.
 
     The semantic labels applied are as follows:
 
-      - jaw
-      - left_eyebrow
-      - right_eyebrow
-      - nose
-      - left_eye
       - right_eye
-      - inner_mouth
+      - left_eye
+      - right_eyebrow
+      - left_eyebrow
+      - right_nose
+      - left_nose
+      - nostrils
       - outer_mouth
+      - inner_mouth
+      - jaw
 
     Parameters
     ----------
@@ -1934,14 +1936,14 @@ def bu3dfe_83(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_68'
+        The group label: ``bu3dfe_83``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
     :class:`menpo.landmark.exceptions.LabellingError`
-        If the given landmark group contains less than 68 points
+        If the given landmark group contains less than 83 points
 
     References
     ----------
@@ -1949,7 +1951,7 @@ def bu3dfe_83(landmark_group):
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'bu3dfe'
+    group = 'bu3dfe_83'
     n_points = 83
     _validate_input(landmark_group, n_points, group)
 
