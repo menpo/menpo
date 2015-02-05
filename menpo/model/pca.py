@@ -16,26 +16,25 @@ class PCAModel(MeanInstanceLinearModel):
 
     Parameters
     ----------
-    samples : list of :map:`Vectorizable`
+    samples : `list` of :map:`Vectorizable`
         List of samples to build the model from.
     centre : `bool`, optional
-        When ``True`` (True by default) PCA is performed after mean centering
-        the data. If ``False`` the data is assumed to be centred, and the mean
-        will be 0.
+        When ``True`` (default) PCA is performed after mean centering the data.
+        If ``False`` the data is assumed to be centred, and the mean will be
+        ``0``.
     bias : `bool`, optional
         When ``True`` a biased estimator of the covariance matrix is used.
         See notes.
     n_samples : `int`, optional
         If provided then ``samples``  must be an iterator  that yields
-        ``n_samples``. If not provided then samples has to be a
-        list (so we know how large the data matrix needs to be).
+        ``n_samples``. If not provided then samples has to be a `list` (so we
+        know how large the data matrix needs to be).
 
     Notes
     -----
-    True bias mean that we calculate the covariance as
-    :math:`\frac{1}{N} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
-    instead of default
-    :math:`\frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
+    True bias means that we calculate the covariance as
+    :math:`\frac{1}{N} \sum_{i=1}^N \mathbf{x}_i \mathbf{x}_i^T` instead of
+    default :math:`\frac{1}{N-1} \sum_{i=1}^N \mathbf{x}_i \mathbf{x}_i^T`.
     """
     def __init__(self, samples, centre=True, bias=False, verbose=False,
                  n_samples=None):
@@ -92,6 +91,21 @@ class PCAModel(MeanInstanceLinearModel):
 
     @n_active_components.setter
     def n_active_components(self, value):
+        r"""
+        Sets an updated number of active components on this model.
+
+        Parameters
+        ----------
+        value : `int`
+            The new number of active components.
+
+        Raises
+        ------
+        ValueError
+            Tried setting n_active_components to {value} - value needs to be a
+            float 0.0 < n_components < self._total_kept_variance_ratio ({}) or
+            an integer 1 < n_components < self.n_components ({})
+        """
         err_str = ("Tried setting n_active_components to {} - "
                    "value needs to be a float "
                    "0.0 < n_components < self._total_kept_variance_ratio "
@@ -132,7 +146,7 @@ class PCAModel(MeanInstanceLinearModel):
         r"""
         Returns the active components of the model.
 
-        :type: (n_active_components, n_features) `ndarray`
+        :type: ``(n_active_components, n_features)`` `ndarray`
         """
         return self._components[:self.n_active_components, :]
 
@@ -142,7 +156,7 @@ class PCAModel(MeanInstanceLinearModel):
         Returns the eigenvalues associated to the active components of the
         model, i.e. the amount of variance captured by each active component.
 
-        :type: (n_active_components,) `ndarray`
+        :type: ``(n_active_components,)`` `ndarray`
         """
         return self._eigenvalues[:self.n_active_components]
 
@@ -152,7 +166,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        whitened_components : (n_active_components, n_features) `ndarray`
+        whitened_components : ``(n_active_components, n_features)`` `ndarray`
             The whitened components.
         """
         return self.components / (
@@ -232,7 +246,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        eigenvalues_ratio : (n_active_components,) `ndarray`
+        eigenvalues_ratio : ``(n_active_components,)`` `ndarray`
             The active eigenvalues array scaled by the original variance.
         """
         return self.eigenvalues / self.original_variance()
@@ -245,7 +259,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        total_eigenvalues_ratio : (n_components,) `ndarray`
+        total_eigenvalues_ratio : ``(n_components,)`` `ndarray`
             Array of eigenvalues scaled by the original variance.
         """
         return self._eigenvalues / self.original_variance()
@@ -258,7 +272,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        eigenvalues_cumulative_ratio : (n_active_components,) `ndarray`
+        eigenvalues_cumulative_ratio : ``(n_active_components,)`` `ndarray`
             Array of cumulative eigenvalues.
         """
         return np.cumsum(self.eigenvalues_ratio())
@@ -271,7 +285,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        total_eigenvalues_cumulative_ratio : `ndarray`
+        total_eigenvalues_cumulative_ratio : ``(n_active_components,)`` `ndarray`
             Array of total cumulative eigenvalues.
         """
         return np.cumsum(self._total_eigenvalues_ratio())
@@ -279,9 +293,9 @@ class PCAModel(MeanInstanceLinearModel):
     def noise_variance(self):
         r"""
         Returns the average variance captured by the inactive components,
-        i.e. the sample noise assumed in a PPCA formulation.
+        i.e. the sample noise assumed in a Probabilistic PCA formulation.
 
-        If all components are active, noise variance is equal to 0.0
+        If all components are active, then ``noise_variance == 0.0``.
 
         Returns
         -------
@@ -343,19 +357,19 @@ class PCAModel(MeanInstanceLinearModel):
         index : `int`
             The component that is to be returned
         with_mean: `bool`, optional
-            If True, the component will be blended with the mean vector
+            If ``True``, the component will be blended with the mean vector
             before being returned. If not, the component is returned on it's
             own.
         scale : `float`, optional
             A scale factor that should be applied to the component. Only
-            valid in the case where with_mean is True. The scale is applied
-            in units of standard deviations (so a scale of 1.0
-            with_mean visualizes the mean plus 1 std. dev of the component
+            valid in the case where with_mean is ``True``. The scale is applied
+            in units of standard deviations (so a scale of ``1.0``
+            `with_mean` visualizes the mean plus ``1`` std. dev of the component
             in question).
 
         Returns
         -------
-        component_vector : `ndarray`
+        component_vector : ``(n_features,)`` `ndarray`
             The component vector of the given index.
         """
         if with_mean:
@@ -372,24 +386,25 @@ class PCAModel(MeanInstanceLinearModel):
 
         Parameters
         ----------
-        weights : (n_vectors, n_weights) ndarray or list of lists
-            The weightings for the first n_weights components that
+        weights : ``(n_vectors, n_weights)`` `ndarray` or `list` of `lists`
+            The weightings for the first `n_weights` components that
             should be used per instance that is to be produced
 
-            `weights[i, j]` is the linear contribution of the j'th
+            ``weights[i, j]`` is the linear contribution of the j'th
             principal component to the i'th instance vector produced. Note
-            that if n_weights < n_components, only the first n_weight
+            that if ``n_weights < n_components``, only the first ``n_weight``
             components are used in the reconstruction (i.e. unspecified
-            weights are implicitly 0)
-
-        Raises
-        ------
-        ValueError: If n_weights > n_components
+            weights are implicitly ``0``).
 
         Returns
         -------
-        vectors : (n_vectors, n_features) ndarray
+        vectors : ``(n_vectors, n_features)`` `ndarray`
             The instance vectors for the weighting provided.
+
+        Raises
+        ------
+        ValueError
+            If n_weights > n_components
         """
         weights = np.asarray(weights)  # if eg a list is provided
         n_instances, n_weights = weights.shape
@@ -405,28 +420,27 @@ class PCAModel(MeanInstanceLinearModel):
 
     def trim_components(self, n_components=None):
         r"""
-        Permanently trims the components down to a certain amount. The
-        number of active components will be automatically reset to this
-        particular value.
+        Permanently trims the components down to a certain amount. The number of
+        active components will be automatically reset to this particular value.
 
         This will reduce `self.n_components` down to `n_components`
-        (if None `self.n_active_components` will be used), freeing
-        up memory in the process.
+        (if ``None``, `self.n_active_components` will be used), freeing up
+        memory in the process.
 
         Once the model is trimmed, the trimmed components cannot be recovered.
 
         Parameters
         ----------
-        n_components: `int` >= 1 or `float` > 0.0, optional
+        n_components: `int` >= ``1`` or `float` > ``0.0`` or ``None``, optional
             The number of components that are kept or else the amount (ratio)
-            of variance that is kept. If None, `self.n_active_components` is
+            of variance that is kept. If ``None``, `self.n_active_components` is
             used.
 
         Notes
         -----
-        In case `n_components` is greater than the total number of
-        components or greater than the amount of variance
-        currently kept, this method does not perform any action.
+        In case `n_components` is greater than the total number of components or
+        greater than the amount of variance currently kept, this method does
+        not perform any action.
         """
         if n_components is None:
             # by default trim using the current n_active_components
@@ -471,12 +485,12 @@ class PCAModel(MeanInstanceLinearModel):
 
         Parameters
         ----------
-        vector_instance : (n_features,) `ndarray`
+        vector_instance : ``(n_features,)`` `ndarray`
             A novel vector.
 
         Returns
         -------
-        scaled_projected_out : (n_features,) `ndarray`
+        scaled_projected_out : ``(n_features,)`` `ndarray`
             A copy of `vector_instance` with all basis of the model projected
             out and scaled by the inverse of the `noise_variance`.
         """
@@ -502,17 +516,16 @@ class PCAModel(MeanInstanceLinearModel):
 
     def project_whitened_vector(self, vector_instance):
         """
-        Returns a sheared (non-orthogonal) reconstruction of
-        `vector_instance`.
+        Returns a sheared (non-orthogonal) reconstruction of `vector_instance`.
 
         Parameters
         ----------
-        vector_instance : (n_features,) `ndarray`
+        vector_instance : ``(n_features,)`` `ndarray`
             A novel vector.
 
         Returns
         -------
-        sheared_reconstruction : (n_features,) `ndarray`
+        sheared_reconstruction : ``(n_features,)`` `ndarray`
             A sheared (non-orthogonal) reconstruction of `vector_instance`
         """
         whitened_components = self.whitened_components()
@@ -530,9 +543,8 @@ class PCAModel(MeanInstanceLinearModel):
 
         The removed components will always be trimmed from the end of
         components (i.e. the components which capture the least variance).
-        If trimming is performed, `n_components` and
-        `n_available_components` would be altered - see
-        :meth:`trim_components` for details.
+        If trimming is performed, `n_components` and `n_available_components`
+        would be altered - see :meth:`trim_components` for details.
 
         Parameters
         ----------
@@ -595,6 +607,8 @@ class PCAModel(MeanInstanceLinearModel):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or 
                 ``(3, )`` `ndarray`
+                or
+                `list` of length ``3``
 
         line_style : {``-``, ``--``, ``-.``, ``:``}, optional
             The style of the lines.
@@ -619,6 +633,9 @@ class PCAModel(MeanInstanceLinearModel):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or 
                 ``(3, )`` `ndarray`
+                or
+                `list` of length ``3``
+
         marker_edge_colour : See Below, optional
             The edge colour of the markers.
             Example options ::
@@ -626,6 +643,8 @@ class PCAModel(MeanInstanceLinearModel):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or 
                 ``(3, )`` `ndarray`
+                or
+                `list` of length ``3``
 
         marker_edge_width : `float`, optional
             The width of the markers' edge.
@@ -651,7 +670,7 @@ class PCAModel(MeanInstanceLinearModel):
                  ``demibold``, ``demi``, ``bold``, ``heavy``,
                  ``extra bold``, ``black``}
 
-        figure_size : (`float`, `float`) or `None`, optional
+        figure_size : (`float`, `float`) or ``None``, optional
             The size of the figure in inches.
         render_grid : `bool`, optional
             If ``True``, the grid will be rendered.
@@ -662,7 +681,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        viewer : :map:`GraphPlotter`
+        viewer : :map:`MatplotlibRenderer`
             The viewer object.
         """
         from menpo.visualize import GraphPlotter
@@ -713,6 +732,8 @@ class PCAModel(MeanInstanceLinearModel):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or 
                 ``(3, )`` `ndarray`
+                or
+                `list` of length ``3``
 
         line_style : {``-``, ``--``, ``-.``, ``:``}, optional
             The style of the lines.
@@ -737,6 +758,9 @@ class PCAModel(MeanInstanceLinearModel):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or 
                 ``(3, )`` `ndarray`
+                or
+                `list` of length ``3``
+
         marker_edge_colour : See Below, optional
             The edge colour of the markers.
             Example options ::
@@ -744,6 +768,8 @@ class PCAModel(MeanInstanceLinearModel):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or 
                 ``(3, )`` `ndarray`
+                or
+                `list` of length ``3``
 
         marker_edge_width : `float`, optional
             The width of the markers' edge.
@@ -780,7 +806,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        viewer : :map:`GraphPlotter`
+        viewer : :map:`MatplotlibRenderer`
             The viewer object.
         """
         from menpo.visualize import GraphPlotter
@@ -838,6 +864,8 @@ class PCAModel(MeanInstanceLinearModel):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or 
                 ``(3, )`` `ndarray`
+                or
+                `list` of length ``3``
 
         line_style : {``-``, ``--``, ``-.``, ``:``}, optional
             The style of the lines.
@@ -862,6 +890,9 @@ class PCAModel(MeanInstanceLinearModel):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or 
                 ``(3, )`` `ndarray`
+                or
+                `list` of length ``3``
+
         marker_edge_colour : See Below, optional
             The edge colour of the markers.
             Example options ::
@@ -869,6 +900,8 @@ class PCAModel(MeanInstanceLinearModel):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or 
                 ``(3, )`` `ndarray`
+                or
+                `list` of length ``3``
 
         marker_edge_width : `float`, optional
             The width of the markers' edge.
@@ -905,7 +938,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        viewer : :map:`GraphPlotter`
+        viewer : :map:`MatplotlibRenderer`
             The viewer object.
         """
         from menpo.visualize import GraphPlotter
@@ -944,4 +977,3 @@ class PCAModel(MeanInstanceLinearModel):
             self.noise_variance(), self.noise_variance_ratio(),
             self.n_components, self.components.shape)
         return str_out
-

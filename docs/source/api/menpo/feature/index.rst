@@ -6,18 +6,21 @@
 .. toctree::
   :maxdepth: 1
 
-  lbp
+
+Features
+--------
+
+.. toctree::
+  :maxdepth: 1
+
   no_op
-  gaussian_filter
-  double_igo
-  sparse_hog
-  es
-  hog
   gradient
+  gaussian_filter
   igo
-  imgfeature
+  es
+  lbp
+  hog
   daisy
-  ndfeature
 
 
 Widget

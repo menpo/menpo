@@ -3,23 +3,10 @@ import sys
 
 def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
     r"""
-    Returns an `str` that visual demonstrates the specified progress percentage
-    either in the form of a progress bar or in the form of a percentage. It can
-    be combined with the :func:`print_dynamic` function.
-
-    For example, this for loop:
-
-    ::
-
-        n_iters = 2000
-        for k in range(n_iters):
-            print_dynamic(progress_bar_str(float(k) / (n_iters-1)))
-
-    prints a progress bar of the form:
-
-    ::
-
-        [=============       ] 68%
+    Returns an `str` of the specified progress percentage. The percentage is
+    represented either in the form of a progress bar or in the form of a
+    percentage number. It can be combined with the :func:`print_dynamic`
+    function.
 
     Parameters
     ----------
@@ -31,7 +18,7 @@ def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
     bar_marker : `str`, optional
         Defines the marker character that will be used to fill the bar.
     show_bar : `bool`, optional
-        If ``True``, the `str` includes the bar and then the percentage,
+        If ``True``, the `str` includes the bar followed by the percentage,
         e.g. ``'[=====     ] 50%'``
 
         If ``False``, the `str` includes only the percentage,
@@ -50,6 +37,18 @@ def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
         ``bar_length`` must be an integer >= ``1``
     ValueError
         ``bar_marker`` must be a string of length 1
+
+    Examples
+    --------
+    This for loop: ::
+
+        n_iters = 2000
+        for k in range(n_iters):
+            print_dynamic(progress_bar_str(float(k) / (n_iters-1)))
+
+    prints a progress bar of the form: ::
+
+        [=============       ] 68%
     """
     if percentage < 0:
         raise ValueError("percentage is not in the range [0, 1]")
@@ -84,16 +83,20 @@ def print_dynamic(str_to_print):
 
 def print_bytes(num):
     r"""
-    Returns a string of size provided in num with the appropriate format.
-    e.g. ::
+    Converts bytes to a sensible format to be printed. For example: ::
 
         print_bytes(12345) returns '12.06 KB'
         print_bytes(123456789) returns '117.74 MB'
 
     Parameters
     ----------
-    num : `int` > ``0``
+    num : `int`
         The size in bytes.
+
+    Raises
+    ------
+    ValueError
+        num must be int >= 0
     """
     if not isinstance(num, int) or num < 0:
         raise ValueError("num must be int >= 0")
