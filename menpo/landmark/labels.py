@@ -2008,8 +2008,7 @@ def bu3dfe_83(landmark_group):
 
 
 def labeller(landmarkable, group, label_func):
-    """
-    Takes a landmarkable object and a group label indicating which
+    """Assign labels to :map:`Landmarkable` object and a group label indicating which
     set of landmarks should have semantic meaning attached to them.
     The labelling function will add a new landmark group to each object that
     have been semantically annotated.
