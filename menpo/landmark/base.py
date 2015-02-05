@@ -282,7 +282,7 @@ class LandmarkManager(MutableMapping, Transformable):
 
 
 class LandmarkGroup(MutableMapping, Copyable, Viewable):
-    """
+    r"""
     An immutable object that holds a :map:`PointCloud` (or a subclass) and
     stores labels for each point. These labels are defined via masks on the
     :map:`PointCloud`. For this reason, the :map:`PointCloud` is considered to
@@ -293,13 +293,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
     Parameters
     ----------
-    target : :map:`Landmarkable`
-        The parent object of this landmark group.
-    group : `str`
-        The label of the group.
     pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
-    labels_to_masks : `OrderedDict` of `str` to `bool` `ndarrays`
+    labels_to_masks : `ordereddict` {`str` -> `bool ndarray`}
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
     copy : `bool`, optional
