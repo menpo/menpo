@@ -1,11 +1,11 @@
 /* Code References (using the class or map commands) */
-a>code.xref.py.py-class.docutils.literal {
+a>code.xref.py.py-class.docutils.literal,a>code.xref.py.py-function.docutils.literal {
     color: #2980B9;
     font-weight: bold;
     padding: 0;
     font-size: 90%;
 }
-a:hover>code.xref.py.py-class.docutils.literal {
+a:hover>code.xref.py.py-class.docutils.literal,a:hover>code.xref.py.py-function.docutils.literal {
     color: purple;
 }
 /* Class names */

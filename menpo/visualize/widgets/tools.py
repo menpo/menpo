@@ -4287,7 +4287,7 @@ class IntListTextWidget():
     `int`.
 
     Parameters
-    -----------
+    ----------
     value : `str` or `list` of `int`, Optional
         The initial value of the widget.
     description : `str`, Optional
@@ -4340,7 +4340,7 @@ class FloatListTextWidget(IntListTextWidget):
     `float`.
 
     Parameters
-    -----------
+    ----------
     value : `str` or `list` of `int`, Optional
         The initial value of the widget.
     description : `str`, Optional

@@ -702,7 +702,7 @@ def imm_face(landmark_group):
         If the given landmark group contains less than 58 points
 
     References
-    -----------
+    ----------
     .. [1] http://www2.imm.dtu.dk/~aam/
     """
     group = 'imm_face'
@@ -754,7 +754,7 @@ def lfpw_face(landmark_group):
         If the given landmark group contains less than 29 points
 
     References
-    -----------
+    ----------
     .. [1] http://homes.cs.washington.edu/~neeraj/databases/lfpw/
     """
     from menpo.shape import PointUndirectedGraph
@@ -1236,7 +1236,7 @@ def stickmen_pose(landmark_group):
         If the given landmark group contains less than 12 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.robots.ox.ac.uk/~vgg/data/stickmen/
     """
     group = 'stickmen_pose'
@@ -1285,7 +1285,7 @@ def lsp_pose(landmark_group):
         If the given landmark group contains less than 14 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.comp.leeds.ac.uk/mat4saj/lsp.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1359,7 +1359,7 @@ def flic_pose(landmark_group):
         If the given landmark group contains less than 11 points
 
     References
-    -----------
+    ----------
     .. [1] http://vision.grasp.upenn.edu/cgi-bin/index.php?n=VideoLearning.FLIC
     """
     group = 'flic_pose'
@@ -1404,7 +1404,7 @@ def streetscene_car_view_0(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1472,7 +1472,7 @@ def streetscene_car_view_1(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1541,7 +1541,7 @@ def streetscene_car_view_2(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1600,7 +1600,7 @@ def streetscene_car_view_3(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1672,7 +1672,7 @@ def streetscene_car_view_4(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1742,7 +1742,7 @@ def streetscene_car_view_5(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1801,7 +1801,7 @@ def streetscene_car_view_6(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
@@ -1872,7 +1872,7 @@ def streetscene_car_view_7(landmark_group):
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph

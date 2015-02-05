@@ -22,12 +22,13 @@ def gradient(pixels):
 
     Returns
     -------
-    gradient : :map:`Image` or subclass or ``(X, Y, ..., Z, C * length([X, Y, ..., Z]))`` `ndarray`
-        The output has the same type as the input ``pixels``. The gradient over
-        each axis over each channel. Therefore, the last axis of the gradient of
-        a 2D, single channel image, will have length ``2``. The last axis of
-        the gradient of a 2D, 3-channel image, will have length ``6``, the
-        ordering being ``[Rd_x, Rd_y, Gd_x, Gd_y, Bd_x, Bd_y]``.
+    gradient : ndarray, shape (X, Y, ..., Z, C * length([X, Y, ..., Z]))
+        The gradient over each axis over each channel. Therefore, the
+        last axis of the gradient of a 2D, single channel image, will have
+        length `2`. The last axis of the gradient of a 2D, 3-channel image,
+        will have length `6`, he ordering being [Rd_x, Rd_y, Gd_x, Gd_y,
+        Bd_x, Bd_y].
+
     """
     grad_per_dim_per_channel = [np.gradient(g) for g in
                                 np.rollaxis(pixels, -1)]

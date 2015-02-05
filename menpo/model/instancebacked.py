@@ -75,7 +75,7 @@ class InstanceBackedModel(object):
 
         Parameters
         ----------
-        novel_instance : :class:`Vectorizable`
+        novel_instance : :map:`Vectorizable`
             A novel instance.
 
         Returns

@@ -9,8 +9,7 @@ def mean_pointcloud(pointclouds):
     Parameters
     ----------
     pointclouds: `list` of :map:`PointCloud`
-        List of point cloud objects from which we want to
-        compute the mean.
+        List of point cloud objects from which we want to compute the mean.
 
     Returns
     -------
