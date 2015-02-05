@@ -2008,26 +2008,29 @@ def bu3dfe_83(landmark_group):
 
 
 def labeller(landmarkable, group, label_func):
-    """Assign labels to :map:`Landmarkable` object and a group label indicating which
-    set of landmarks should have semantic meaning attached to them.
-    The labelling function will add a new landmark group to each object that
-    have been semantically annotated.
+    """
+    Re-label an existing landmark group on a :map:`Landmarkable` object with a
+    new label set.
 
     Parameters
     ----------
     landmarkable: :map:`Landmarkable`
-        Landmarkable object
+        :map:`Landmarkable` that will have it's :map:`LandmarkManager`
+        augmented with a new :map:`LandmarkGroup`
     group: `str`
-        The group label of the landmark group to apply semantic labels to.
-    label_func: `func`
-        A labelling function taken from this module. `func` should take a
-        :map:`LandmarkGroup` and return a tuple of
-        (group label, new LandmarkGroup with semantic labels applied.)
+        The group label of the existing landmark group that should be
+        re-labelled. A copy of this group will be attached to it's landmark
+        manager with new labels. The group label of this new group and the
+        labels it will have is determined by ``label_func``
+    label_func: `func`  -> `(str, LandmarkGroup)`
+        A labelling function taken from this module, Takes as input a
+        :map:`LandmarkGroup` and returns a tuple of
+        (new group label, new LandmarkGroup with semantic labels applied).
 
     Returns
     -------
     landmarkable : :map:`Landmarkable`
-        Landmarkable with label (this is just for convenience,
+        Augmented ``landmarkable`` (this is just for convenience,
         the object will actually be modified in place)
     """
     new_group, lmark_group = label_func(landmarkable.landmarks[group])
