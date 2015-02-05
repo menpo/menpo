@@ -30,7 +30,7 @@ def gradient(pixels):
         Bd_x, Bd_y].
 
     """
-    grad_per_dim_per_channel = [np.gradient(g) for g in
+    grad_per_dim_per_channel = [np.gradient(g, edge_order=1) for g in
                                 np.rollaxis(pixels, -1)]
     # Flatten out the separate dims
     grad_per_channel = list(itertools.chain.from_iterable(
