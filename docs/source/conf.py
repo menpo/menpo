@@ -50,6 +50,9 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 import menpo
 
+# add an up to date mathjax path
+mathjax_path = 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

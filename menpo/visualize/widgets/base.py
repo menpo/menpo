@@ -22,15 +22,15 @@ glyph = None
 def visualize_pointclouds(pointclouds, figure_size=(10, 8), popup=False,
                           browser_style='buttons'):
     r"""
-    Widget that allows browsing through a list of :map:`PointCloud`,
-    :map:`PointGraph` or :map:`TriMesh`.
+    Widget that allows browsing through a `list` of :map:`PointCloud`,
+    :map:`PointGraph` or :map:`TriMesh` or subclasses.
 
     The widget has options tabs regarding the renderer (lines, markers, figure,
     axes) and saving the figure to file.
 
     Parameters
     ----------
-    pointclouds : `list` of :map:`PointCloud` or :map:`PointGraph` or subclasses
+    pointclouds : `list` of :map:`PointCloud` or :map:`PointGraph` or :map:`TriMesh` or subclasses
         The `list` of objects to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
@@ -242,7 +242,8 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), popup=False,
 def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), popup=False,
                              browser_style='buttons'):
     r"""
-    Widget that allows browsing through a list of landmark groups.
+    Widget that allows browsing through a `list` of :map:`LandmarkGroup`
+    (or subclass) objects.
 
     The landmark groups can have a combination of different attributes, e.g.
     different labels, number of points etc. The widget has options tabs
@@ -595,7 +596,8 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), popup=False,
 def visualize_landmarks(landmarks, figure_size=(10, 8), popup=False,
                         browser_style='buttons'):
     r"""
-    Widget that allows browsing through a list of landmark managers.
+    Widget that allows browsing through a `list` of :map:`LandmarkManager`
+    (or subclass) objects.
 
     The managers can have a combination of different attributes, e.g. different
     landmark groups and labels etc. The widget has options tabs regarding the
@@ -605,7 +607,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), popup=False,
     Parameters
     ----------
     landmarks : `list` of :map:`LandmarkManager` or subclass
-        The `list` of landmarks to be visualized.
+        The `list` of landmark managers to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
     popup : `bool`, optional
@@ -974,7 +976,8 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), popup=False,
 def visualize_images(images, figure_size=(10, 8), popup=False,
                      browser_style='buttons'):
     r"""
-    Widget that allows browsing through a list of images.
+    Widget that allows browsing through a `list` of :map:`Image` (or subclass)
+    objects.
 
     The images can have a combination of different attributes, e.g. masked or
     not, landmarked or not, without multiple landmark groups and labels etc.
@@ -1381,7 +1384,8 @@ def visualize_images(images, figure_size=(10, 8), popup=False,
 
 def save_matplotlib_figure(renderer, popup=True):
     r"""
-    Widget that allows to save a figure generated with Matplotlib to file.
+    Widget that allows to save a figure, which was generated with Matplotlib,
+    to file.
 
     Parameters
     ----------
@@ -1422,7 +1426,7 @@ def features_selection(popup=True):
     r"""
     Widget that allows selecting a features function and its options. The
     widget supports all features from :ref:`api-feature-index` and has a
-    preview tab. It returns a list of length one with the selected features
+    preview tab. It returns a `list` of length 1 with the selected features
     function closure.
 
     Parameters
@@ -1432,13 +1436,12 @@ def features_selection(popup=True):
 
     Returns
     -------
-    features_function : `list` of length 1
+    features_function : `list` of length ``1``
         The function closure of the features function using `functools.partial`.
-        So the function can be called as:
-
-        ::
+        So the function can be called as: ::
 
             features_image = features_function[0](image)
+
     """
     import IPython.display as ipydisplay
     import IPython.html.widgets as ipywidgets

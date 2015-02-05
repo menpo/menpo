@@ -7,8 +7,8 @@ from menpo.feature import ndfeature
 @ndfeature
 def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
     r"""
-    Create glyph of a feature image. If feature_data has negative values,
-    the use_negative flag controls whether there will be created a glyph of
+    Create glyph of a feature image. If `pixels` have negative values, the
+    `use_negative` flag controls whether there will be created a glyph of
     both positive and negative values concatenated the one on top of the
     other.
 
