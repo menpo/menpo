@@ -281,18 +281,6 @@ class Graph(object):
             raise ValueError('The vertex must be between '
                              '0 and {}.'.format(self.n_vertices - 1))
 
-    def tojson(self):
-        r"""
-        Convert the graph to a dictionary JSON representation.
-
-        Returns
-        -------
-        json : `dict`
-            Dictionary with ``adjacency_array`` key. Suitable or use in the by
-            the `json` standard library package.
-        """
-        return {'adjacency_array': self.adjacency_array.tolist()}
-
 
 class UndirectedGraph(Graph):
     r"""
@@ -1191,20 +1179,6 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
             pg.points = pg.points[mask, :]
             return pg
 
-    def tojson(self):
-        r"""
-        Convert this PointUndirectedGraph to a dictionary JSON representation.
-
-        Returns
-        -------
-        json : `dict`
-            Dictionary with ``points`` and ``adjacency_array`` keys. Both are
-            lists suitable or use in the by the `json` standard library package.
-        """
-        json_dict = PointCloud.tojson(self)
-        json_dict.update(UndirectedGraph.tojson(self))
-        return json_dict
-
 
 class PointDirectedGraph(PointGraph, DirectedGraph):
     r"""
@@ -1340,20 +1314,6 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
             pt.predecessors_list = pt._get_predecessors_list()
             return pt
 
-    def tojson(self):
-        r"""
-        Convert this `PointDirectedGraph` to a dictionary JSON representation.
-
-        Returns
-        -------
-        json : `dict`
-            Dictionary with ``points`` and ``adjacency_array`` keys. Both are
-            lists suitable or use in the by the `json` standard library package.
-        """
-        json_dict = PointCloud.tojson(self)
-        json_dict.update(DirectedGraph.tojson(self))
-        return json_dict
-
 
 class PointTree(PointDirectedGraph, Tree):
     r"""
@@ -1434,19 +1394,6 @@ class PointTree(PointDirectedGraph, Tree):
             pt.adjacency_list = pt._get_adjacency_list()
             pt.predecessors_list = pt._get_predecessors_list()
             return pt
-
-    def tojson(self):
-        r"""
-        Convert this `PointUndirectedGraph` to a dictionary JSON representation.
-
-        Returns
-        -------
-        dictionary with 'points' and 'adjacency_array' keys. Both are lists
-        suitable or use in the by the `json` standard library package.
-        """
-        json_dict = PointCloud.tojson(self)
-        json_dict.update(UndirectedGraph.tojson(self))
-        return json_dict
 
 
 def _unique_array_rows(array):
