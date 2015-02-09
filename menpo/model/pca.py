@@ -416,7 +416,8 @@ class PCAModel(MeanInstanceLinearModel):
 
     def project_whitened(self, instance):
         """
-        Returns a sheared (non-orthogonal) reconstruction of `instance`.
+        Projects the `instance` onto the whitened components, retrieving the 
+        whitened linear weightings.
 
         Parameters
         ----------
@@ -425,15 +426,15 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        sheared_reconstruction : `self.instance_class`
-            A sheared (non-orthogonal) reconstruction of `instance`.
+        projected : (n_components,)
+            A vector of whitened linear weightings
         """
-        vector_instance = self.project_whitened_vector(instance.as_vector())
-        return instance.from_vector(vector_instance)
+        return self.project_whitened_vector(instance.as_vector())
 
     def project_whitened_vector(self, vector_instance):
         """
-        Returns a sheared (non-orthogonal) reconstruction of `vector_instance`.
+        Projects the `vector_instance` onto the whitened components, 
+        retrieving the whitened linear weightings.
 
         Parameters
         ----------
@@ -442,8 +443,8 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        sheared_reconstruction : ``(n_features,)`` `ndarray`
-            A sheared (non-orthogonal) reconstruction of `vector_instance`
+        projected : ``(n_features,)`` `ndarray`
+            A vector of whitened linear weightings
         """
         whitened_components = self.whitened_components()
         return np.dot(vector_instance, whitened_components.T)
