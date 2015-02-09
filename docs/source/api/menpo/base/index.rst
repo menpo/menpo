@@ -8,16 +8,16 @@ Core
 Core interfaces of Menpo.
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-   Copyable
-   Vectorizable
-   Targetable
+  Copyable
+  Vectorizable
+  Targetable
 
 Convenience
 -----------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-   menpo_src_dir_path
+  menpo_src_dir_path

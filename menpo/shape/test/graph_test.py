@@ -87,14 +87,14 @@ def test_adjacency_matrix():
                               [True, True, False, False, True, False],
                               [False, False, False, False, True, True],
                               [False, False, False, False, False, False],
-                              [False, False, False, False, False, False],]))
+                              [False, False, False, False, False, False]]))
     assert_allclose(g_undirected.get_adjacency_matrix(),
                     np.array([[False, True, True, False, False, False],
                               [True, False, True, True, False, False],
                               [True, True, False, False, True, False],
                               [False, True, False, False, True, True],
                               [False, False, True, True, False, False],
-                              [False, False, False, True, False, False],]))
+                              [False, False, False, True, False, False]]))
     assert_allclose(g_tree.get_adjacency_matrix(),
                     np.array([[False, True, True, False, False, False, False, False, False],
                               [False, False, False, True, True, False, False, False, False],
@@ -104,7 +104,7 @@ def test_adjacency_matrix():
                               [False, False, False, False, False, False, False, False, True],
                               [False, False, False, False, False, False, False, False, False],
                               [False, False, False, False, False, False, False, False, False],
-                              [False, False, False, False, False, False, False, False, False],]))
+                              [False, False, False, False, False, False, False, False, False]]))
 
 
 def test_n_paths():

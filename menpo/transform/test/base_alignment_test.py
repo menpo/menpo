@@ -70,7 +70,7 @@ def alignment_alignment_error_test():
     assert_equal(error, np.linalg.norm(al.source.points - al.target.points))
 
 
-@raises(ValueError)
+@raises(NotImplementedError)
 def alignment_view_non_2d_test():
     al = MockedAlignment(target_3d, target_3d)
     al.view()
