@@ -2,26 +2,26 @@
 
 def dot_inplace_left(a, b, block_size=1000):
     r"""
-    a * b = c where ``a`` will be replaced inplace with ``c``.
+    Inplace dot product for memory efficiency. It computes ``a * b = c``, where
+    ``a`` will be replaced inplace with ``c``.
 
     Parameters
     ----------
-
-    a : ndarray, shape (n_big, k)
+    a : ``(n_big, k)`` `ndarray`
         First array to dot - assumed to be large. Will be damaged by this
         function call as it is used to store the output inplace.
-    b : ndarray, shape (k, n_small), n_small <= k
+    b : ``(k, n_small)`` `ndarray`, ``n_small <= k``
         The second array to dot - assumed to be small. ``n_small`` must be
         smaller than ``k`` so the result can be stored within the memory space
         of ``a``.
-    block_size : int, optional
+    block_size : `int`, optional
         The size of the block of ``a`` that will be dotted against ``b`` in
         each iteration. larger block sizes increase the time performance of the
         dot product at the cost of a higher memory overhead for the operation.
 
     Returns
     -------
-    c : ndarray, shape (n_big, n_small)
+    c : ``(n_big, n_small)`` `ndarray`
         The output of the operation. Exactly the same as a memory view onto
         ``a`` (``a[:, :n_small]``) as ``a`` is modified inplace to store the
         result.
@@ -41,19 +41,19 @@ def dot_inplace_left(a, b, block_size=1000):
 
 def dot_inplace_right(a, b, block_size=1000):
     r"""
-    a * b = c where ``b`` will be replaced inplace with ``c``.
+    Inplace dot product for memory efficiency. It computes ``a * b = c`` where
+    ``b`` will be replaced inplace with ``c``.
 
     Parameters
     ----------
-
-    a : ndarray, shape (n_small, k), n_small <= k
+    a : ``(n_small, k)`` `ndarray`, n_small <= k
         The first array to dot - assumed to be small. ``n_small`` must be
         smaller than ``k`` so the result can be stored within the memory space
         of ``b``.
-    b : ndarray, shape (k, n_big)
+    b : ``(k, n_big)`` `ndarray`
         Second array to dot - assumed to be large. Will be damaged by this
         function call as it is used to store the output inplace.
-    block_size : int, optional
+    block_size : `int`, optional
         The size of the block of ``b`` that ``a`` will be dotted against
         in each iteration. larger block sizes increase the time performance of
         the dot product at the cost of a higher memory overhead for the
@@ -61,7 +61,7 @@ def dot_inplace_right(a, b, block_size=1000):
 
     Returns
     -------
-    c : ndarray, shape (n_small, n_big)
+    c : ``(n_small, n_big)`` `ndarray`
         The output of the operation. Exactly the same as a memory view onto
         ``b`` (``b[:n_small]``) as ``b`` is modified inplace to store the
         result.

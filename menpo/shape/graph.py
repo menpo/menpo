@@ -1,11 +1,8 @@
-import abc
-
 import numpy as np
 
 from . import PointCloud
 from .adjacency import (mask_adjacency_array, mask_adjacency_array_tree,
                         reindex_adjacency_array)
-from menpo.visualize import PointGraphViewer
 
 
 class Graph(object):
@@ -13,13 +10,16 @@ class Graph(object):
     Abstract class for Graph definitions and manipulation.
 
     Parameters
-    -----------
+    ----------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
 
         For an undirected graph, the order of an edge's vertices doesn't matter,
-        for example:
+        for example
+
+        ::
+
                |---0---|        adjacency_array = ndarray([[0, 1],
                |       |                                   [0, 2],
                |       |                                   [1, 2],
@@ -31,8 +31,11 @@ class Graph(object):
                5
 
         For a directed graph, we assume that the vertices in the first column of
-        the adjacency_array are the fathers and the vertices in the second
-        column of the adjacency_array are the children, for example:
+        the ``adjacency_array`` are the fathers and the vertices in the second
+        column of ``the adjacency_array`` are the children, for example
+
+        ::
+
                |-->0<--|        adjacency_array = ndarray([[1, 0],
                |       |                                   [2, 0],
                |       |                                   [1, 2],
@@ -52,12 +55,11 @@ class Graph(object):
     ValueError
         You must provide at least one edge.
     ValueError
-        Adjacency list must contain the sets of connected edges and thus must
-        have shape (n_edges, 2).
+        ``adjacency_list`` must contain the sets of connected edges and thus
+        must have shape ``(n_edges, 2)``.
     ValueError
         The vertices must be numbered starting from 0.
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, adjacency_array, copy=True):
         # check that adjacency_array has expected shape
@@ -83,7 +85,7 @@ class Graph(object):
     @property
     def n_edges(self):
         r"""
-        Returns the number of the graph's edges.
+        Returns the number of the graph edges.
 
         :type: `int`
         """
@@ -92,35 +94,33 @@ class Graph(object):
     @property
     def n_vertices(self):
         r"""
-        Returns the number of the graph's vertices.
+        Returns the number of the graph vertices.
 
         :type: `int`
         """
         return self.adjacency_array.max() + 1
 
-    @abc.abstractmethod
     def get_adjacency_matrix(self):
         r"""
-        Returns the Adjacency Matrix of the graph, i.e. the boolean ndarray that
-        with True and False if there is an edge connecting the two vertices or
-        not respectively.
+        Returns the adjacency matrix of the graph, i.e. the boolean `ndarray`
+        that is ``True`` and ``False`` if there is an edge connecting the two
+        vertices or not respectively.
 
         :type: ``(n_vertices, n_vertices, )`` `ndarray`
         """
         pass
 
-    @abc.abstractmethod
     def _get_adjacency_list(self):
         r"""
-        Returns the Adjacency List of the graph, i.e. a list of length
-        n_vertices that for each vertex has a list of the vertex neighbours.
+        Returns the adjacency list of the graph, i.e. a list of length
+        ``n_vertices`` that for each vertex has a list of the vertex neighbours.
         If the graph is directed, the neighbours are children.
 
-        :type: `list` of `lists` of len n_vertices
+        :type: `list` of `list` of ``len(n_vertices)``
         """
         pass
 
-    def find_path(self, start, end, path=[]):
+    def find_path(self, start, end, path=None):
         r"""
         Returns a list with the first path (without cycles) found from start
         vertex to end vertex.
@@ -129,15 +129,18 @@ class Graph(object):
         ----------
         start : `int`
             The vertex from which the path starts.
-
         end : `int`
             The vertex from which the path ends.
+        path : `list`, optional
+            An existing path to append to.
 
         Returns
         -------
         path : `list`
             The path's vertices.
         """
+        if path is None:
+            path = []
         path = path + [start]
         if start == end:
             return path
@@ -159,15 +162,18 @@ class Graph(object):
         ----------
         start : `int`
             The vertex from which the paths start.
-
         end : `int`
             The vertex from which the paths end.
+        path : `list`, optional
+            An existing path to append to.
 
         Returns
         -------
         paths : `list` of `list`
             The list containing all the paths from start to end.
         """
+        if path is None:
+            path = []
         path = path + [start]
         if start == end:
             return [path]
@@ -190,7 +196,6 @@ class Graph(object):
         ----------
         start : `int`
             The vertex from which the paths start.
-
         end : `int`
             The vertex from which the paths end.
 
@@ -201,7 +206,7 @@ class Graph(object):
         """
         return len(self.find_all_paths(start, end))
 
-    def find_shortest_path(self, start, end, path=[]):
+    def find_shortest_path(self, start, end, path=None):
         r"""
         Returns a list with the shortest path (without cycles) found from start
         vertex to end vertex.
@@ -210,15 +215,18 @@ class Graph(object):
         ----------
         start : `int`
             The vertex from which the path starts.
-
         end : `int`
             The vertex from which the path ends.
+        path : `list`, optional
+            An existing path to append to.
 
         Returns
         -------
         path : `list`
             The shortest path's vertices.
         """
+        if path is None:
+            path = []
         path = path + [start]
         if start == end:
             return path
@@ -236,18 +244,33 @@ class Graph(object):
     def has_cycles(self):
         r"""
         Checks if the graph has at least one cycle.
+
+        Returns
+        -------
+        has_cycles : `bool`
+            If the graph has cycles.
         """
         pass
 
     def is_tree(self):
         r"""
         Checks if the graph is tree.
+
+        Returns
+        -------
+        is_true : `bool`
+            If the graph is a tree.
         """
         return not self.has_cycles() and self.n_edges == self.n_vertices - 1
 
     def _check_vertex(self, vertex):
         r"""
         Checks that a given vertex is valid.
+
+        Parameters
+        ----------
+        vertex : `int`
+            Index of a given vertex.
 
         Raises
         ------
@@ -256,25 +279,53 @@ class Graph(object):
         """
         if vertex > self.n_vertices - 1 or vertex < 0:
             raise ValueError('The vertex must be between '
-                             '0 and {}.'.format(self.n_vertices-1))
-
-    def tojson(self):
-        r"""
-        Convert the graph to a dictionary JSON representation.
-
-        Returns
-        -------
-        dictionary with 'adjacency_array' key. Suitable or use in the by the
-        `json` standard library package.
-        """
-        return {'adjacency_array': self.adjacency_array.tolist()}
+                             '0 and {}.'.format(self.n_vertices - 1))
 
 
 class UndirectedGraph(Graph):
     r"""
     Class for Undirected Graph definition and manipulation.
+
+    Parameters
+    ----------
+    adjacency_array : ``(n_edges, 2, )`` `ndarray`
+        The Adjacency Array of the graph, i.e. an array containing the sets of
+        the graph's edges. The numbering of vertices is assumed to start from 0.
+        For example:
+
+        ::
+
+               |---0---|        adjacency_array = ndarray([[0, 1],
+               |       |                                   [0, 2],
+               |       |                                   [1, 2],
+               1-------2                                   [1, 3],
+               |       |                                   [2, 4],
+               |       |                                   [3, 4],
+               3-------4                                   [3, 5]])
+               |
+               5
+
+    copy : `bool`, optional
+        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+
+    Raises
+    ------
+    ValueError
+        You must provide at least one edge.
+    ValueError
+        Adjacency list must contain the sets of connected edges and thus must
+        have shape (n_edges, 2).
+    ValueError
+        The vertices must be numbered starting from 0.
     """
     def get_adjacency_matrix(self):
+        r"""
+        Returns the adjacency matrix of the graph, i.e. the boolean `ndarray`
+        that is ``True`` and ``False`` if there is an edge connecting the two
+        vertices or not respectively.
+
+        :type: ``(n_vertices, n_vertices, )`` `ndarray`
+        """
         adjacency_mat = np.zeros((self.n_vertices, self.n_vertices),
                                  dtype=np.bool)
         for e in range(self.n_edges):
@@ -298,8 +349,8 @@ class UndirectedGraph(Graph):
         r"""
         Returns the neighbours of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -320,8 +371,8 @@ class UndirectedGraph(Graph):
         r"""
         Returns the number of neighbours of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -346,7 +397,6 @@ class UndirectedGraph(Graph):
         ----------
         vertex_1 : `int`
             The first selected vertex.
-
         vertex_2 : `int`
             The second selected vertex.
 
@@ -381,18 +431,17 @@ class UndirectedGraph(Graph):
         Returns the minimum spanning tree given weights to the graph's edges
         using Kruskal's algorithm.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         weights : ``(n_vertices, n_vertices, )`` `ndarray`
             A matrix of the same size as the adjacency matrix that attaches a
             weight to each edge of the undirected graph.
-
         root_vertex : `int`
             The vertex that will be set as root in the output MST.
 
         Returns
         -------
-        mst : :class:`menpo.shape.Tree`
+        mst : :map:`Tree`
             The computed minimum spanning tree.
 
         Raises
@@ -400,7 +449,7 @@ class UndirectedGraph(Graph):
         ValueError
             Provided graph is not an UndirectedGraph.
         ValueError
-            Assymetric weights provided.
+            Asymmetric weights provided.
         """
         # compute the edges of the minimum spanning tree
         from menpo.external.PADS.MinimumSpanningTree import MinimumSpanningTree
@@ -420,9 +469,52 @@ class UndirectedGraph(Graph):
 class DirectedGraph(Graph):
     r"""
     Class for Directed Graph definition and manipulation.
+
+    Parameters
+    ----------
+    adjacency_array : ``(n_edges, 2, )`` `ndarray`
+        The Adjacency Array of the graph, i.e. an array containing the sets of
+        the graph's edges. The numbering of vertices is assumed to start from 0.
+
+        We assume that the vertices in the first column of the
+        ``adjacency_array`` are the parents and the vertices in the second
+        column of the ``adjacency_array`` are the children, for example:
+
+        ::
+
+               |-->0<--|        adjacency_array = ndarray([[1, 0],
+               |       |                                   [2, 0],
+               |       |                                   [1, 2],
+               1<----->2                                   [2, 1],
+               |       |                                   [1, 3],
+               v       v                                   [2, 4],
+               3------>4                                   [3, 4],
+               |                                           [3, 5]])
+               v
+               5
+
+    copy : `bool`, optional
+        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+
+    Raises
+    ------
+    ValueError
+        You must provide at least one edge.
+    ValueError
+        Adjacency list must contain the sets of connected edges and thus must
+        have shape (n_edges, 2).
+    ValueError
+        The vertices must be numbered starting from 0.
     """
 
     def get_adjacency_matrix(self):
+        r"""
+        Returns the Adjacency Matrix of the graph, i.e. the boolean `ndarray`
+        that is ``True`` and ``False`` if there is an edge connecting the two
+        vertices or not respectively.
+
+        :type: ``(n_vertices, n_vertices, )`` `ndarray`
+        """
         adjacency_mat = np.zeros((self.n_vertices, self.n_vertices),
                                  dtype=np.bool)
         for e in range(self.n_edges):
@@ -443,8 +535,8 @@ class DirectedGraph(Graph):
         r"""
         Returns the children of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -465,8 +557,8 @@ class DirectedGraph(Graph):
         r"""
         Returns the number of children of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -478,7 +570,7 @@ class DirectedGraph(Graph):
         Raises
         ------
         ValueError
-            The vertex must be between 0 and {n_vertices-1}.
+            The vertex must be in the range ``[0, n_vertices - 1]``.
         """
         self._check_vertex(vertex)
         return len(self.children(vertex))
@@ -487,8 +579,8 @@ class DirectedGraph(Graph):
         r"""
         Returns the parents of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -500,7 +592,7 @@ class DirectedGraph(Graph):
         Raises
         ------
         ValueError
-            The vertex must be between 0 and {n_vertices-1}.
+            The vertex must be in the range ``[0, n_vertices - 1]``.
         """
         self._check_vertex(vertex)
         adj = self.get_adjacency_matrix()
@@ -510,8 +602,8 @@ class DirectedGraph(Graph):
         r"""
         Returns the number of parents of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -523,7 +615,7 @@ class DirectedGraph(Graph):
         Raises
         ------
         ValueError
-            The vertex must be between 0 and {n_vertices-1}.
+            The vertex must be in the range ``[0, n_vertices - 1]``.
         """
         self._check_vertex(vertex)
         return len(self.parent(vertex))
@@ -548,7 +640,7 @@ class DirectedGraph(Graph):
         Raises
         ------
         ValueError
-            The vertex must be between 0 and {n_vertices-1}.
+            The vertex must be in the range ``[0, n_vertices - 1]``.
         """
         self._check_vertex(parent)
         self._check_vertex(child)
@@ -561,7 +653,7 @@ class DirectedGraph(Graph):
         Returns
         -------
         has_cycles : `bool`
-            True if it has at least one cycle.
+            ``True`` if it has at least one cycle.
         """
         return _has_cycles(self.adjacency_list, True)
 
@@ -575,14 +667,16 @@ class Tree(DirectedGraph):
     Class for Tree definitions and manipulation.
 
     Parameters
-    -----------
+    ----------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the tree, i.e. an array containing the sets of
         the tree's edges. The numbering of vertices is assumed to start from 0.
 
-        We assume that the vertices in the first column of the adjacency_array
-        are the fathers and the vertices in the second column of the
-        adjacency_array are the children, for example:
+        We assume that the vertices in the first column of the
+        ``adjacency_array`` are the parents and the vertices in the second
+        column of the ``adjacency_array`` are the children, for example:
+
+        ::
 
                    0            adjacency_array = ndarray([[0, 1],
                    |                                       [0, 2],
@@ -597,7 +691,6 @@ class Tree(DirectedGraph):
 
     root_vertex : `int`
         The vertex that will be considered as root.
-
     copy : `bool`, optional
         If ``False``, the ``adjacency_list`` will not be copied on assignment.
 
@@ -606,7 +699,7 @@ class Tree(DirectedGraph):
     ValueError
         The provided edges do not represent a tree.
     ValueError
-        The root_vertex must be between 0 and n_vertices-1.
+        The root_vertex must be in the range ``[0, n_vertices - 1]``.
     """
     def __init__(self, adjacency_array, root_vertex, copy=True):
         super(Tree, self).__init__(adjacency_array, copy=copy)
@@ -621,9 +714,9 @@ class Tree(DirectedGraph):
 
     def _get_predecessors_list(self):
         r"""
-        Returns the Predecessors List of the tree, i.e. a list of length
-        n_vertices that for each vertex it has its parent. The value of the
-        root vertex is None.
+        Returns the predecessors list of the tree, i.e. a list of length
+        ``n_vertices`` that for each vertex it has its parent. The value of the
+        root vertex is ``None``.
 
         :type: `list` of len n_vertices
         """
@@ -638,8 +731,8 @@ class Tree(DirectedGraph):
         r"""
         Returns the depth of the specified vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -651,7 +744,7 @@ class Tree(DirectedGraph):
         Raises
         ------
         ValueError
-            The vertex must be between 0 and {n_vertices-1}.
+            The vertex must be in the range ``[0, n_vertices - 1]``.
         """
         self._check_vertex(vertex)
         parent = vertex
@@ -676,8 +769,8 @@ class Tree(DirectedGraph):
         r"""
         Returns a list of vertices at the specified depth.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         depth : `int`
             The selected depth.
 
@@ -696,8 +789,8 @@ class Tree(DirectedGraph):
         r"""
         Returns the number of vertices at the specified depth.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         depth : `int`
             The selected depth.
 
@@ -716,8 +809,8 @@ class Tree(DirectedGraph):
         r"""
         Returns whether the vertex is a leaf.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -729,7 +822,7 @@ class Tree(DirectedGraph):
         Raises
         ------
         ValueError
-            The vertex must be between 0 and {n_vertices-1}.
+            The vertex must be in the range ``[0, n_vertices - 1]``.
         """
         self._check_vertex(vertex)
         return len(self.children(vertex)) == 0
@@ -764,8 +857,8 @@ class Tree(DirectedGraph):
         r"""
         Returns the parent of the selected vertex.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         vertex : `int`
             The selected vertex.
 
@@ -777,7 +870,7 @@ class Tree(DirectedGraph):
         Raises
         ------
         ValueError
-            The vertex must be between 0 and {n_vertices-1}.
+            The vertex must be in the range ``[0, n_vertices - 1]``.
         """
         self._check_vertex(vertex)
         return self.predecessors_list[vertex]
@@ -787,21 +880,23 @@ class Tree(DirectedGraph):
             self.maximum_depth, self.n_vertices, self.n_leaves)
 
 
-class PointGraph(object):
+class PointGraph(Graph, PointCloud):
     r"""
     Class for defining a graph with geometry.
 
     Parameters
-    -----------
+    ----------
     points : `ndarray`
         The array of point locations.
-
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
-        The Adjacency Array of the graph, i.e. an array containing the sets of
+        The adjacency array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
 
         For an undirected graph, the order of an edge's vertices doesn't matter,
-        for example:
+        for example
+
+        ::
+
                |---0---|        adjacency_array = ndarray([[0, 1],
                |       |                                   [0, 2],
                |       |                                   [1, 2],
@@ -813,8 +908,11 @@ class PointGraph(object):
                5
 
         For a directed graph, we assume that the vertices in the first column of
-        the adjacency_array are the fathers and the vertices in the second
-        column of the adjacency_array are the children, for example:
+        the ``adjacency_array`` are the fathers and the vertices in the second
+        column of the ``adjacency_array`` are the children, for example
+
+        ::
+
                |-->0<--|        adjacency_array = ndarray([[1, 0],
                |       |                                   [2, 0],
                |       |                                   [1, 2],
@@ -826,28 +924,198 @@ class PointGraph(object):
                v
                5
     """
-    def __init__(self, points, adjacency_array):
+    def __init__(self, points, adjacency_array, copy=True):
         _check_n_points(points, adjacency_array)
+        Graph.__init__(self, adjacency_array, copy=copy)
+        PointCloud.__init__(self, points, copy=copy)
 
-    def view(self, figure_id=None, new_figure=False, **kwargs):
-        return PointGraphViewer(figure_id, new_figure,
-                                self.points,
-                                self.adjacency_array).render(**kwargs)
+    def tojson(self):
+        r"""
+        Convert this :map:`PointGraph` to a dictionary representation suitable
+        for inclusion in the LJSON landmark format.
+
+        Returns
+        -------
+        json : `dict`
+         Dictionary with ``points`` and ``connectivity`` keys.
+        """
+        json_dict = PointCloud.tojson(self)
+        json_dict['connectivity'] = self.adjacency_array.tolist()
+        return json_dict
+
+    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
+                 render_lines=True, line_colour='r',
+                 line_style='-', line_width=1.,
+                 render_markers=True, marker_style='o', marker_size=20,
+                 marker_face_colour='k', marker_edge_colour='k',
+                 marker_edge_width=1., render_axes=True,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
+                 label=None):
+        r"""
+        Visualization of the pointgraph in 2D.
+
+        Returns
+        -------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        image_view : `bool`, optional
+            If ``True`` the PointGraph will be viewed as if it is in the image
+            coordinate system.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : See Below, optional
+            The colour of the lines.
+            Example options::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_style : ``{-, --, -., :}``, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : See Below, optional
+            The style of the markers. Example options ::
+
+                {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : See Below, optional
+            The face (filling) colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_colour : See Below, optional
+            The edge colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : See Below, optional
+            The font of the axes.
+            Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : See Below, optional
+            The font weight of the axes.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) `tuple` or ``None``, optional
+            The size of the figure in inches.
+        label : `str`, optional
+            The name entry in case of a legend.
+
+        Returns
+        -------
+        viewer : :map:`PointGraphViewer2d`
+            The viewer object.
+        """
+        from menpo.visualize import PointGraphViewer2d
+        renderer = PointGraphViewer2d(figure_id, new_figure,
+                                      self.points, self.adjacency_array)
+        renderer.render(
+            image_view=image_view, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width, render_axes=render_axes,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size, label=label)
+        return renderer
+
+    def _view_3d(self, figure_id=None, new_figure=False):
+        r"""
+        Visualization of the TriMesh in 3D.
+
+        Parameters
+        ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+
+        Returns
+        -------
+        viewer : PointGraphViewer3d
+            The Menpo3D viewer object.
+        """
+        try:
+            from menpo3d.visualize import PointGraphViewer3d
+            return PointGraphViewer3d(figure_id, new_figure, self.points,
+                                      self.adjacency_array).render()
+        except ImportError:
+            from menpo.visualize import Menpo3dErrorMessage
+            raise ImportError(Menpo3dErrorMessage)
+
+    def view_widget(self, popup=False, browser_style='buttons',
+                    figure_size=(10, 8)):
+        r"""
+        Visualization of the PointGraph using the :map:`visualize_pointclouds`
+        widget.
+
+        Parameters
+        ----------
+        popup : `bool`, optional
+            If ``True``, the widget will be rendered in a popup window.
+        browser_style : ``{buttons, slider}``, optional
+            It defines whether the selector of the PointGraph objects will have
+            the form of plus/minus buttons or a slider.
+        figure_size : (`int`, `int`) `tuple`, optional
+            The initial size of the rendered figure.
+        """
+        from menpo.visualize import visualize_pointclouds
+        visualize_pointclouds(self, popup=popup, figure_size=figure_size,
+                              browser_style=browser_style)
 
 
-class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):
+class PointUndirectedGraph(PointGraph, UndirectedGraph):
     r"""
     Class for defining an Undirected Graph with geometry.
 
     Parameters
-    -----------
+    ----------
     points : `ndarray`
         The array of point locations.
-
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
-        The Adjacency Array of the graph, i.e. an array containing the sets of
+        The adjacency array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
-        For example:
+        For example
+
+        ::
+
                |---0---|        adjacency_array = ndarray([[0, 1],
                |       |                                   [0, 2],
                |       |                                   [1, 2],
@@ -864,13 +1132,12 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):
     Raises
     ------
     ValueError
-        A point for each graph vertex needs to be passed. Got {n_points} points
-        instead of {n_vertices}.
+        A point for each graph vertex needs to be passed. Got ``n_points``
+        points instead of ``n_vertices``.
     """
     def __init__(self, points, adjacency_array, copy=True):
-        super(PointUndirectedGraph, self).__init__(points, adjacency_array)
-        UndirectedGraph.__init__(self, adjacency_array, copy=copy)
-        PointCloud.__init__(self, points, copy=copy)
+        super(PointUndirectedGraph, self).__init__(points, adjacency_array,
+                                                   copy=copy)
 
     def from_mask(self, mask):
         """
@@ -912,33 +1179,22 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):
             pg.points = pg.points[mask, :]
             return pg
 
-    def tojson(self):
-        r"""
-        Convert this `PointUndirectedGraph` to a dictionary JSON representation.
 
-        Returns
-        -------
-        dictionary with 'points' and 'adjacency_array' keys. Both are lists
-        suitable or use in the by the `json` standard library package.
-        """
-        json_dict = PointCloud.tojson(self)
-        json_dict.update(UndirectedGraph.tojson(self))
-        return json_dict
-
-
-class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
+class PointDirectedGraph(PointGraph, DirectedGraph):
     r"""
-    Class for defining a Directed Graph with geometry.
+    Class for defining a directed graph with geometry.
 
     Parameters
-    -----------
-    points : `ndarray`
-        The array of point locations.
-
+    ----------
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
-        The Adjacency Array of the graph, i.e. an array containing the sets of
+        The adjacency array of the graph, i.e. an array containing the sets of
         the graph's edges. The numbering of vertices is assumed to start from 0.
-        For example:
+        For example
+
+        ::
+
                |-->0<--|        adjacency_array = ndarray([[1, 0],
                |       |                                   [2, 0],
                |       |                                   [1, 2],
@@ -960,36 +1216,36 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
         instead of {n_vertices}.
     """
     def __init__(self, points, adjacency_array, copy=True):
-        super(PointDirectedGraph, self).__init__(points, adjacency_array)
-        DirectedGraph.__init__(self, adjacency_array, copy=copy)
-        PointCloud.__init__(self, points, copy=copy)
+        super(PointDirectedGraph, self).__init__(points, adjacency_array,
+                                                 copy=copy)
 
     def relative_location_edge(self, parent, child):
         r"""
         Returns the relative location between the provided vertices. That is
         if vertex j is the parent and vertex i is its child and vector l
-        denotes the coordinates of a vertex, then:
+        denotes the coordinates of a vertex, then
 
-                    l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
-                              = [[x_i - x_j], [y_i - y_j]]
+        ::
+
+            l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
+                      = [[x_i - x_j], [y_i - y_j]]
 
         Parameters
         ----------
         parent : `int`
             The first selected vertex which is considered as the parent.
-
         child : `int`
             The second selected vertex which is considered as the child.
 
         Returns
         -------
-        relative_location : `ndarray`
+        relative_location : ``(2,)`` `ndarray`
             The relative location vector.
 
         Raises
         ------
         ValueError
-            Vertices {parent} and {child} are not connected with an edge.
+            Vertices ``parent`` and ``child`` are not connected with an edge.
         """
         if not self.is_edge(parent, child):
             raise ValueError('Vertices {} and {} are not connected '
@@ -1002,12 +1258,14 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
         vertex j is the parent and vertex i is its child and vector l denotes
         the coordinates of a vertex, then:
 
+        ::
+
                     l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
                               = [[x_i - x_j], [y_i - y_j]]
 
         Returns
         -------
-        relative_locations : `ndarray`
+        relative_locations : ``(n_vertexes, 2)`` `ndarray`
             The relative locations vector.
         """
         parents = [p[0] for p in self.adjacency_array]
@@ -1056,36 +1314,24 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
             pt.predecessors_list = pt._get_predecessors_list()
             return pt
 
-    def tojson(self):
-        r"""
-        Convert this `PointDirectedGraph` to a dictionary JSON representation.
 
-        Returns
-        -------
-        dictionary with 'points' and 'adjacency_array' keys. Both are lists
-        suitable or use in the by the `json` standard library package.
-        """
-        json_dict = PointCloud.tojson(self)
-        json_dict.update(DirectedGraph.tojson(self))
-        return json_dict
-
-
-class PointTree(PointDirectedGraph, Tree, PointCloud):
+class PointTree(PointDirectedGraph, Tree):
     r"""
     Class for defining a Tree with geometry.
 
     Parameters
-    -----------
-    points : `ndarray`
-        The array of point locations.
-
+    ----------
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The Adjacency Array of the tree, i.e. an array containing the sets of
         the tree's edges. The numbering of vertices is assumed to start from 0.
 
-        We assume that the vertices in the first column of the adjacency_array
-        are the fathers and the vertices in the second column of the
-        adjacency_array are the children, for example:
+        We assume that the vertices in the first column of the
+        ``adjacency_array`` are the fathers and the vertices in the second
+        column of the ``adjacency_array`` are the children, for example:
+
+        ::
 
                    0            adjacency_array = ndarray([[0, 1],
                    |                                       [0, 2],
@@ -1100,14 +1346,13 @@ class PointTree(PointDirectedGraph, Tree, PointCloud):
 
     root_vertex : `int`
         The root vertex of the tree.
-
     copy : `bool`, optional
         If ``False``, the ``adjacency_list`` will not be copied on assignment.
     """
     def __init__(self, points, adjacency_array, root_vertex, copy=True):
-        super(PointDirectedGraph, self).__init__(points, adjacency_array)
+        super(PointDirectedGraph, self).__init__(points, adjacency_array,
+                                                 copy=copy)
         Tree.__init__(self, adjacency_array, root_vertex, copy=copy)
-        PointCloud.__init__(self, points, copy=copy)
 
     def from_mask(self, mask):
         """
@@ -1150,26 +1395,24 @@ class PointTree(PointDirectedGraph, Tree, PointCloud):
             pt.predecessors_list = pt._get_predecessors_list()
             return pt
 
-    def tojson(self):
-        r"""
-        Convert this `PointUndirectedGraph` to a dictionary JSON representation.
-
-        Returns
-        -------
-        dictionary with 'points' and 'adjacency_array' keys. Both are lists
-        suitable or use in the by the `json` standard library package.
-        """
-        json_dict = PointCloud.tojson(self)
-        json_dict.update(UndirectedGraph.tojson(self))
-        return json_dict
-
 
 def _unique_array_rows(array):
     r"""
-    Returns the unique rows of the given 2D ndarray.
+    Returns the unique rows of the given 2D array.
 
-    :type: `ndarray`
+    Parameters
+    ----------
+    array : `ndarray`
+        2D array to find the unique rows inside.
+
+    Returns
+    -------
+    unique_rows : `ndarray`
+        The unique rows of the given 2D array
     """
+    # The crazy looking method below comes from the following very clever
+    # stackoverflow post
+    # stackoverflow.com/questions/16970982/find-unique-rows-in-numpy-array
     tmp = array.ravel().view(np.dtype((np.void,
                                        array.dtype.itemsize * array.shape[1])))
     _, unique_idx = np.unique(tmp, return_index=True)
@@ -1178,8 +1421,21 @@ def _unique_array_rows(array):
 
 def _check_n_points(points, adjacency_array):
     r"""
-    Checks whether the points array and the adjacency_array have the same number
-    of points.
+    Checks whether the points array and the ``adjacency_array`` have the same
+    number of points. Thus it checks if the max index in the adjacency array
+    is the same as the number of points.
+
+    Parameters
+    ----------
+    points : `ndarray`
+        Points array to check the length of.
+    adjacency_array : `int ndarray`
+        The adjacency array to check the indices of.
+
+    Raises
+    ------
+    ValueError
+     If ``n_points != max(adjacency_array) + 1``.
     """
     if not points.shape[0] == adjacency_array.max() + 1:
         raise ValueError('A point for each graph vertex needs to be '
@@ -1224,15 +1480,20 @@ def _correct_tree_edges(edges, root_vertex):
 
 def _has_cycles(adjacency_list, directed):
     r"""
-    Function that checks if the provided directed graph has cycles.
+    Function that checks if the provided directed graph has cycles using a depth
+    first search.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The adjacency array of the directed graph.
-
-    directed : `boolean`
+    directed : `bool`
         Defines if the provided graph is directed or not.
+
+    Returns
+    -------
+    has_cycles : `bool`
+        Whether the graph has cycles.
     """
     def dfs(node, entered, exited, tree_edges, back_edges):
         if node not in entered:

@@ -5,11 +5,17 @@ from .linalg import dot_inplace_right
 
 def eigenvalue_decomposition(C, eps=1e-10):
     r"""
+    Eigenvalue decomposition of a given covariance (or scatter) matrix.
 
     Parameters
     ----------
-    C : (N, N)  ndarray
+    C : ``(N, N)`` `ndarray`
         Covariance/Scatter matrix
+    eps : `float`, optional
+        Small value to be used for the tolerance limit computation. The final
+        limit is computed as ::
+
+            limit = np.max(np.abs(eigenvalues)) * eps
 
     eps : float, optional
         Tolerance value for positive eigenvalue. Those eigenvalues smaller
@@ -18,8 +24,10 @@ def eigenvalue_decomposition(C, eps=1e-10):
 
     Returns
     -------
-    pos_eigenvectors: (N, p) ndarray
-    pos_eigenvalues: (p,) ndarray
+    pos_eigenvectors : ``(N, p)`` `ndarray`
+        The matrix with the eigenvectors corresponding to positive eigenvalues.
+    pos_eigenvalues : ``(p,)`` `ndarray`
+        The array of positive eigenvalues.
     """
     # compute eigenvalue decomposition
     eigenvalues, eigenvectors = np.linalg.eigh(C)
@@ -45,9 +53,10 @@ def eigenvalue_decomposition(C, eps=1e-10):
 
 def pca(X, centre=True, inplace=False, eps=1e-10):
     r"""
-    Apply PCA on the data matrix X. In the case where the data matrix is very
-    large, it is advisable to set `inplace=True`. However, note this this
-    destructively edits the data matrix by subtracting the mean inplace.
+    Apply Principal Component Analysis (PCA) on the data matrix `X`. In the case
+    where the data matrix is very large, it is advisable to set
+    ``inplace = True``. However, note this destructively edits the data matrix
+    by subtracting the mean inplace.
 
     Parameters
     ----------

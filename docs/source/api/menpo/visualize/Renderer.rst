@@ -1,10 +1,10 @@
-.. _menpo-visualize-TriMeshViewer:
+.. _menpo-visualize-Renderer:
 
 .. currentmodule:: menpo.visualize
 
-TriMeshViewer
-=============
-.. autoclass:: TriMeshViewer
+Renderer
+========
+.. autoclass:: Renderer
   :members:
   :inherited-members:
   :show-inheritance:

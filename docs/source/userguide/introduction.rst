@@ -14,11 +14,9 @@ interfaces are:
 
 - :map:`Shape` - spatial data containers
 - :map:`Vectorizable` - efficient bi-directional conversion of types to a vector representation
-- :map:`Viewable` - :map:`view` method for easy interactive visualisation
 - :map:`Targetable` - objects that generate some spatial data
 - :map:`Transform` - flexible spatial transformations
 - :map:`Landmarkable` - objects that can be annotated with spatial labelled landmarks
-- :map:`DX`, :map:`DP` & :map:`DL` - derivatives in spatial, parameter, and landmark spaces
 
 Data containers
 ---------------
@@ -29,5 +27,8 @@ to expect:
 
 - :map:`Image` - n-dimensional image with k-channels of data
 - :map:`MaskedImage` - As :map:`Image`, but with a boolean mask
+- :map:`BooleanImage` - As boolean image that is used for masking images.
 - :map:`PointCloud` - n-dimensional ordered point collection
+- :map:`PointUndirectedGraph` - n-dimensional ordered point collection with directed connectivity
+- :map:`PointDirectedGraph` - n-dimensional ordered point collection with undirected connectivity
 - :map:`TriMesh` - As :map:`PointCloud`, but with a triangulation

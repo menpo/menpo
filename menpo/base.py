@@ -144,8 +144,7 @@ class Vectorizable(Copyable):
 
 
 class Targetable(Copyable):
-    """Interface for objects that can produce a :attr:`target` :map:`PointCloud`.
-
+    """Interface for objects that can produce a target :map:`PointCloud`.
 
     This could for instance be the result of an alignment or a generation of a
     :map:`PointCloud` instance from a shape model.
@@ -154,8 +153,10 @@ class Targetable(Copyable):
 
      - what a target is: see :attr:`target`
      - how to set a target: see :meth:`set_target`
-     - how to update the object after a target is set: see :meth:`_sync_state_from_target`
-     - how to produce a new target after the changes: see :meth:`_new_target_from_state`
+     - how to update the object after a target is set:
+       see :meth:`_sync_state_from_target`
+     - how to produce a new target after the changes:
+       see :meth:`_new_target_from_state`
 
     Note that :meth:`_sync_target_from_state` needs to be triggered as
     appropriate by subclasses e.g. when :map:`from_vector_inplace` is
@@ -188,8 +189,8 @@ class Targetable(Copyable):
         """
 
     def set_target(self, new_target):
-        r"""Update this object so that it attempts to recreate the
-        ``new_target``.
+        r"""
+        Update this object so that it attempts to recreate the ``new_target``.
 
         Parameters
         ----------
@@ -297,3 +298,11 @@ def menpo_src_dir_path():
     """
     from pathlib import Path  # to avoid cluttering the menpo.base namespace
     return Path(os.path.abspath(__file__)).parent
+
+
+class MenpoDeprecationWarning(Warning):
+    r"""
+    A warning that functionality in Menpo will be deprecated in a future major
+    release.
+    """
+    pass
