@@ -1,5 +1,4 @@
 import abc
-import copy
 import numpy as np
 
 from menpo.base import Vectorizable
@@ -33,8 +32,7 @@ class HomogFamilyAlignment(Alignment):
 
         Returns
         -------
-
-        ``type(self)``
+        new_transform : ``type(self)``
             A copy of this object
 
         """
@@ -43,6 +41,23 @@ class HomogFamilyAlignment(Alignment):
         new.__dict__ = self.__dict__.copy()
         new._h_matrix = new._h_matrix.copy()
         return new
+
+    def pseudoinverse(self):
+        r"""
+        The pseudoinverse of the transform - that is, the transform that
+        results from swapping source and target, or more formally, negating
+        the transforms parameters. If the transform has a true inverse this
+        is returned instead.
+
+        Returns
+        -------
+        transform : ``type(self)``
+            The inverse of this transform.
+        """
+        selfcopy = self.copy()
+        selfcopy._h_matrix = self._h_matrix_pseudoinverse()
+        selfcopy._source, selfcopy._target = selfcopy._target, selfcopy._source
+        return selfcopy
 
 
 class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
@@ -74,9 +89,10 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     @property
     def h_matrix_is_mutable(self):
         r"""
-        True iff :meth:`set_h_matrix` is permitted on this type of transform.
-        If this returns ``False`` calls to :meth:``set_h_matrix` will raise
-        a NonImplimentedError.
+        ``True`` iff :meth:`set_h_matrix` is permitted on this type of
+        transform.
+        If this returns ``False`` calls to :meth:`set_h_matrix` will raise
+        a ``NotImplementedError``.
 
         :type: `bool`
         """
@@ -355,9 +371,13 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     def has_true_inverse(self):
         return True
 
-    def _build_pseudoinverse(self):
-        return Homogeneous(np.linalg.inv(self.h_matrix), copy=False,
-                           skip_checks=True)
+    def pseudoinverse(self):
+        # Skip the checks as we know inverse of a homogeneous is a homogeneous
+        return self.__class__(self._h_matrix_pseudoinverse(), copy=False,
+                              skip_checks=True)
+
+    def _h_matrix_pseudoinverse(self):
+        return np.linalg.inv(self.h_matrix)
 
 from .affine import Affine
 from .similarity import Similarity

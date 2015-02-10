@@ -6,23 +6,19 @@ requirements:
   build:
     - python
     - setuptools
-    - numpy 1.9.0
-    - cython 0.21
+    - numpy >=1.9.1,<1.10
+    - cython 0.21*
 
   run:
     - python
     - pathlib 1.0  # [py2k]
 
     # Scientific Python Stack
-    - numpy 1.9.0
-    - scipy 0.14.0
-    - matplotlib 1.4.0
-    - scikit-learn 0.15.2
-    - pillow  2.5.1
+    - numpy >=1.9.1,<1.10
+    - scipy 0.15.*
+    - matplotlib 1.4.*
+    - pillow  2.7.0
     - cyvlfeat 0.2
-
-    # Other
-    - wrapt 1.9.0
 
     # Convienience dependences (not strictly required)
     - mock

@@ -1,10 +1,9 @@
 .. _menpo-transform-Rotation:
 
-.. currentmodule:: menpo.transform.homogeneous.rotation
+.. currentmodule:: menpo.transform
 
 Rotation
 ========
-
 .. autoclass:: Rotation
   :members:
   :inherited-members:

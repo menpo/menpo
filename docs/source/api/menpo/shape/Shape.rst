@@ -4,7 +4,6 @@
 
 Shape
 =====
-
 .. autoclass:: Shape
   :members:
   :inherited-members:

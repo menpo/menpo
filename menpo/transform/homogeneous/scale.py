@@ -151,19 +151,15 @@ class NonUniformScale(DiscreteAffine, Affine):
 
     @property
     def composes_inplace_with(self):
-        return (NonUniformScale, UniformScale)
+        return NonUniformScale, UniformScale
 
-    def _build_pseudoinverse(self):
+    def pseudoinverse(self):
         """
         The inverse scale.
 
         :type: :class:`NonUniformScale`
         """
         return NonUniformScale(1.0 / self.scale, skip_checks=True)
-
-    def d_dp(self, points):
-        # TODO d_dp on NonUniformScale
-        return NotImplementedError("d_dp is not implemented on a NonUniformScale")
 
 
 class UniformScale(DiscreteAffine, Similarity):
@@ -237,17 +233,13 @@ class UniformScale(DiscreteAffine, Similarity):
     def composes_inplace_with(self):
         return UniformScale
 
-    def _build_pseudoinverse(self):
+    def pseudoinverse(self):
         r"""
         The inverse scale.
 
         :type: type(self)
         """
         return UniformScale(1.0 / self.scale, self.n_dims, skip_checks=True)
-
-    def d_dp(self, points):
-        # TODO d_dp on UniformScale
-        raise NotImplementedError("d_dp is not implemented on UniformScale.")
 
 
 class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):

@@ -258,10 +258,10 @@ def test_daisy_values():
     image = Image([[1, 2, 3, 4], [2, 1, 3, 4], [1, 2, 3, 4], [2, 1, 3, 4]])
     daisy_img = daisy(image, step=1, rings=2, radius=1, orientations=8,
                       histograms=8)
-    assert_allclose(np.around(daisy_img.pixels[0, 0, 10], 6), 0.000196)
-    assert_allclose(np.around(daisy_img.pixels[0, 1, 20], 6), 0.002842)
-    assert_allclose(np.around(daisy_img.pixels[1, 0, 30], 6), 0.006205)
-    assert_allclose(np.around(daisy_img.pixels[1, 1, 40], 6), 0.001946)
+    assert_allclose(np.around(daisy_img.pixels[0, 0, 10], 6), 0.000261)
+    assert_allclose(np.around(daisy_img.pixels[0, 1, 20], 6), 0.002853)
+    assert_allclose(np.around(daisy_img.pixels[1, 0, 30], 6), 0.007266)
+    assert_allclose(np.around(daisy_img.pixels[1, 1, 40], 6), 0.001971)
 
 
 def test_sift_values():
@@ -293,8 +293,8 @@ def test_lbp_values():
 def test_constrain_landmarks():
     breaking_bad = mio.import_builtin_asset('breakingbad.jpg').as_masked()
     breaking_bad.crop_to_landmarks_inplace(boundary=20)
-    breaking_bad.constrain_mask_to_landmarks()
     breaking_bad = breaking_bad.resize([50, 50])
+    breaking_bad.constrain_mask_to_landmarks()
     hog_b = hog(breaking_bad, mode='sparse')
     x = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[1] - 1)
     y = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[0] - 1)

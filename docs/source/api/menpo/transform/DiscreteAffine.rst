@@ -4,7 +4,6 @@
 
 DiscreteAffine
 ==============
-
 .. autoclass:: DiscreteAffine
   :members:
   :inherited-members:

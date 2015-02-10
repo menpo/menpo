@@ -144,8 +144,7 @@ class Vectorizable(Copyable):
 
 
 class Targetable(Copyable):
-    """Interface for objects that can produce a :attr:`target` :map:`PointCloud`.
-
+    """Interface for objects that can produce a target :map:`PointCloud`.
 
     This could for instance be the result of an alignment or a generation of a
     :map:`PointCloud` instance from a shape model.
@@ -154,8 +153,10 @@ class Targetable(Copyable):
 
      - what a target is: see :attr:`target`
      - how to set a target: see :meth:`set_target`
-     - how to update the object after a target is set: see :meth:`_sync_state_from_target`
-     - how to produce a new target after the changes: see :meth:`_new_target_from_state`
+     - how to update the object after a target is set:
+       see :meth:`_sync_state_from_target`
+     - how to produce a new target after the changes:
+       see :meth:`_new_target_from_state`
 
     Note that :meth:`_sync_target_from_state` needs to be triggered as
     appropriate by subclasses e.g. when :map:`from_vector_inplace` is
@@ -188,8 +189,8 @@ class Targetable(Copyable):
         """
 
     def set_target(self, new_target):
-        r"""Update this object so that it attempts to recreate the
-        ``new_target``.
+        r"""
+        Update this object so that it attempts to recreate the ``new_target``.
 
         Parameters
         ----------
@@ -285,95 +286,6 @@ class Targetable(Copyable):
         pass
 
 
-class DP(object):
-    r"""Object that is able to take it's own derivative wrt parametrization.
-
-    The parametrization of objects is typically defined by the
-    :map:`Vectorizable` interface. As a result, :map:`DP` is a mix-in that
-    should be inherited along with :map:`Vectorizable`.
-    """
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def d_dp(self, points):
-        r"""The derivative of this spatial object wrt parametrization changes
-        evaluated at points.
-
-        Parameters
-        ----------
-        points : ``(n_points, n_dims)`` `ndarray`
-            The spatial points at which the derivative should be evaluated.
-
-        Returns
-        -------
-        d_dp : ``(n_points, n_parameters, n_dims)`` `ndarray`
-            The jacobian wrt parametrization.
-
-            ``d_dp[i, j, k]`` is the scalar differential change that the
-            k'th dimension of the i'th point experiences due to a first order
-            change in the j'th scalar in the parametrization vector.
-        """
-
-
-class DX(object):
-    r"""Object that is able to take it's own derivative wrt spatial changes.
-    """
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def d_dx(self, points):
-        r"""The first order derivative of this spatial object wrt spatial
-        changes evaluated at points.
-
-        Parameters
-        ----------
-        points : ``(n_points, n_dims)`` `ndarray`
-            The spatial points at which the derivative should be evaluated.
-
-        Returns
-        -------
-        d_dx : ``(n_points, n_dims, n_dims)`` `ndarray`
-            The jacobian wrt spatial changes.
-
-            ``d_dx[i, j, k]`` is the scalar differential change that the
-            j'th dimension of the i'th point experiences due to a first order
-            change in the k'th dimension.
-
-            It may be the case that the jacobian is constant across space -
-            in this case axis zero may have length ``1`` to allow for
-            broadcasting.
-        """
-
-
-class DL(object):
-    r"""Object that is able to take it's own derivative wrt landmark changes.
-    """
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def d_dl(self, points):
-        r"""The derivative of this spatial object wrt spatial changes in anchor
-        landmark points or centres, evaluated at points.
-
-        Parameters
-        ----------
-        points : ``(n_points, n_dims)`` `ndarray`
-            The spatial points at which the derivative should be evaluated.
-
-        Returns
-        -------
-        d_dl : ``(n_points, n_centres, n_dims)`` `ndarray`
-            The jacobian wrt landmark changes.
-
-            ``d_dl[i, k, m]`` is the scalar differential change that the
-            any dimension of the i'th point experiences due to a first order
-            change in the m'th dimension of the k'th landmark point.
-
-            Note that at present this assumes that the change in every
-            dimension is equal.
-        """
-
-
 def menpo_src_dir_path():
     r"""The path to the top of the menpo Python package.
 
@@ -381,7 +293,16 @@ def menpo_src_dir_path():
 
     Returns
     -------
-    path : str
+    path : ``pathlib.Path``
         The full path to the top of the Menpo package
     """
-    return os.path.split(os.path.abspath(__file__))[0]
+    from pathlib import Path  # to avoid cluttering the menpo.base namespace
+    return Path(os.path.abspath(__file__)).parent
+
+
+class MenpoDeprecationWarning(Warning):
+    r"""
+    A warning that functionality in Menpo will be deprecated in a future major
+    release.
+    """
+    pass

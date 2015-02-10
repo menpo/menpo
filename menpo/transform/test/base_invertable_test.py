@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from menpo import Vectorizable
+from menpo.base import Vectorizable
 from menpo.transform.base import VInvertible
 
 
@@ -18,7 +18,7 @@ class MockedVInvertable(VInvertible, Vectorizable):
     def _as_vector(self):
         return self.vector
 
-    def _build_pseudoinverse(self):
+    def pseudoinverse(self):
         m = MockedVInvertable()
         m.vector = -self.vector
         return m

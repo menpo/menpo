@@ -114,7 +114,7 @@ def _relabel_group_from_dict(pointcloud, labels_to_ranges):
         If the given pointcloud contains less than ``n_expected_points``
         points.
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     n_points = pointcloud.n_points
     masks = OrderedDict()
@@ -128,7 +128,7 @@ def _relabel_group_from_dict(pointcloud, labels_to_ranges):
     adjacency_array = np.vstack(adjacency_lists)
 
     new_landmark_group = LandmarkGroup(
-        PointGraph(pointcloud.points, adjacency_array), masks)
+        PointUndirectedGraph(pointcloud.points, adjacency_array), masks)
 
     return new_landmark_group
 
@@ -138,7 +138,7 @@ def ibug_face_68(landmark_group):
     Apply the ibug's "standard" 68 point semantic labels (based on the
     original semantic labels of multiPIE) to the landmark group.
 
-    The group label will be 'ibug_face_68'.
+    The group label will be ``ibug_face_68``.
 
     The semantic labels applied are as follows:
 
@@ -158,20 +158,20 @@ def ibug_face_68(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_68'
+        The group label: ``ibug_face_68``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
     ----------
     .. [1] http://www.multipie.org/
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_68'
     n_points = 68
@@ -199,14 +199,14 @@ def ibug_face_68(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
         nose_connectivity, leye_connectivity, reye_connectivity,
         mouth_connectivity
     ])
 
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['jaw'] = jaw_indices
@@ -230,7 +230,7 @@ def ibug_face_66(landmark_group):
     original semantic labels of multiPIE but ignoring the 2 points
     describing the inner mouth corners) to the landmark group.
 
-    The group label will be 'ibug_face_66'.
+    The group label will be ``ibug_face_66``.
 
     The semantic labels applied are as follows:
 
@@ -250,20 +250,20 @@ def ibug_face_66(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_66'
+        The group label: ``ibug_face_66``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
     ----------
     .. [1] http://www.multipie.org/
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_66'
     n_points = 66
@@ -280,7 +280,6 @@ def ibug_face_66(landmark_group):
     inner_mouth_indices = np.hstack((48, np.arange(60, 63),
                                      54, np.arange(63, 66)))
 
-
     jaw_connectivity = _connectivity_from_array(jaw_indices)
     lbrow_connectivity = _connectivity_from_array(lbrow_indices)
     rbrow_connectivity = _connectivity_from_array(rbrow_indices)
@@ -293,8 +292,7 @@ def ibug_face_66(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
         nose_connectivity, leye_connectivity, reye_connectivity,
         mouth_connectivity])
@@ -302,7 +300,8 @@ def ibug_face_66(landmark_group):
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(60), np.arange(61, 64), np.arange(65, 68)))
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['jaw'] = jaw_indices
@@ -326,7 +325,7 @@ def ibug_face_51(landmark_group):
     original semantic labels of multiPIE but removing the annotations
     corresponding to the jaw region) to the landmark group.
 
-    The group label will be 'ibug_face_51'.
+    The group label will be ``ibug_face_51``.
 
     The semantic labels applied are as follows:
 
@@ -345,20 +344,20 @@ def ibug_face_51(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_51'
+        The group label: ``ibug_face_51``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
     ----------
     .. [1] http://www.multipie.org/
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_51'
     n_points = 51
@@ -384,15 +383,15 @@ def ibug_face_51(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         lbrow_connectivity, rbrow_connectivity, nose_connectivity,
         leye_connectivity, reye_connectivity, mouth_connectivity])
 
     # Ignore the two inner mouth points
     ind = np.arange(17, 68)
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -416,7 +415,7 @@ def ibug_face_49(landmark_group):
     corresponding to the jaw region and the 2 describing the inner mouth
     corners) to the landmark group.
 
-    The group label will be 'ibug_face_49'.
+    The group label will be ``ibug_face_49``.
 
     The semantic labels applied are as follows:
 
@@ -435,20 +434,20 @@ def ibug_face_49(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_49'
+        The group label: ``ibug_face_49``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
     ----------
     .. [1] http://www.multipie.org/
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_49'
     n_points = 49
@@ -475,14 +474,15 @@ def ibug_face_49(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         lbrow_connectivity, rbrow_connectivity, nose_connectivity,
         leye_connectivity, reye_connectivity, mouth_connectivity])
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(17, 60), np.arange(61, 64), np.arange(65, 68)))
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -504,7 +504,7 @@ def ibug_face_68_trimesh(landmark_group):
     Apply the ibug's "standard" 68 point triangulation to the landmarks in
     the given landmark group.
 
-    The group label will be 'ibug_face_68_trimesh'.
+    The group label will be ``ibug_face_68_trimesh``.
 
     The semantic labels applied are as follows:
 
@@ -518,13 +518,13 @@ def ibug_face_68_trimesh(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_68_trimesh'
+        The group label: ``ibug_face_68_trimesh``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
@@ -580,7 +580,7 @@ def ibug_face_65_closed_mouth(landmark_group):
     the given landmark group - but ignore the 3 points that are coincident for
     a closed mouth. Therefore, there only 65 points are returned.
 
-    The group label will be 'ibug_face_65_closed_mouth'.
+    The group label will be ``ibug_face_65_closed_mouth``.
 
     The semantic labels applied are as follows:
 
@@ -600,20 +600,20 @@ def ibug_face_65_closed_mouth(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_face_65_closed_mouth'
+        The group label: ``ibug_face_65_closed_mouth``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 68 points
 
     References
     ----------
     .. [1] http://www.multipie.org/
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_65_closed_mouth'
     n_points = 65
@@ -641,7 +641,7 @@ def ibug_face_65_closed_mouth(landmark_group):
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices)])
 
-    total_connectivity = np.vstack([
+    total_conn = np.vstack([
         jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
         nose_connectivity, leye_connectivity, reye_connectivity,
         mouth_connectivity])
@@ -649,7 +649,8 @@ def ibug_face_65_closed_mouth(landmark_group):
     # Ignore the two inner mouth points
     ind = np.arange(65)
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['jaw'] = jaw_indices
@@ -671,7 +672,7 @@ def imm_face(landmark_group):
     Apply the 58 point semantic labels from the IMM dataset to the
     landmarks in the given landmark group.
 
-    The group label will be 'imm_face'.
+    The group label will be ``imm_face``.
 
     The semantic labels applied are as follows:
 
@@ -685,23 +686,23 @@ def imm_face(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group : `str`
-        The group label: 'imm_face'
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+        The group label: ``imm_face``
+    landmark_group : :map:`LandmarkGroup`
         New landmark group
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 58 points
 
     References
-    -----------
+    ----------
     .. [1] http://www2.imm.dtu.dk/~aam/
     """
     group = 'imm_face'
@@ -723,7 +724,7 @@ def lfpw_face(landmark_group):
     Apply the 29 point semantic labels from the LFPW dataset to the
     landmarks in the given landmark group.
 
-    The group label will be 'lfpw_face'.
+    The group label will be ``lfpw_face``.
 
     The semantic labels applied are as follows:
 
@@ -743,20 +744,20 @@ def lfpw_face(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'lfpw_face'
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+        The group label: ``lfpw_face``
+    landmark_group: :map:`LandmarkGroup`
         New landmark group
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 29 points
 
     References
-    -----------
+    ----------
     .. [1] http://homes.cs.washington.edu/~neeraj/databases/lfpw/
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'lfpw_face'
     n_points = 29
@@ -788,7 +789,7 @@ def lfpw_face(landmark_group):
          _connectivity_from_array(inner_mouth_indices)))
     nose_connectivity = _connectivity_from_array(nose_indices, close_loop=True)
 
-    total_connectivity = np.vstack(
+    total_conn = np.vstack(
         (chin_connectivity, leye_connectivity, reye_connectivity,
          lbrow_connectivity, rbrow_connectivity, mouth_connectivity,
          nose_connectivity))
@@ -796,7 +797,8 @@ def lfpw_face(landmark_group):
     # Ignore the two inner mouth points
     ind = np.arange(29)
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['chin'] = chin_indices
@@ -832,7 +834,7 @@ def ibug_open_eye(landmark_group):
     Apply the ibug's "standard" open eye semantic labels to the
     landmarks in the given landmark group.
 
-    The group label will be 'ibug_open_eye'.
+    The group label will be ``ibug_open_eye``.
 
     The semantic labels applied are as follows:
 
@@ -850,16 +852,16 @@ def ibug_open_eye(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_open_eye'
+        The group label: ``ibug_open_eye``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 38 points
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_open_eye'
     n_expected_points = 38
@@ -891,13 +893,13 @@ def ibug_open_eye(landmark_group):
     lower_el_connectivity += zip(lower_el_bottom, lower_el_bottom[1:])
     lower_el_connectivity += [(11, 0)]
 
-    total_connectivity = np.asarray(upper_el_connectivity +
-                                    lower_el_connectivity +
-                                    iris_connectivity.tolist() +
-                                    pupil_connectivity.tolist() +
-                                    sclera_connectivity)
+    total_conn = np.asarray(upper_el_connectivity +
+                            lower_el_connectivity +
+                            iris_connectivity.tolist() +
+                            pupil_connectivity.tolist() +
+                            sclera_connectivity)
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['upper_eyelid'] = upper_el_indices
@@ -915,7 +917,7 @@ def ibug_close_eye_points(landmark_group):
     Apply the ibug's "standard" close eye semantic labels to the
     landmarks in the given landmark group.
 
-    The group label will be 'ibug_close_eye'.
+    The group label will be ``ibug_close_eye``.
 
     The semantic labels applied are as follows:
 
@@ -930,16 +932,16 @@ def ibug_close_eye_points(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_close_eye'
+        The group label: ``ibug_close_eye``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 17 points
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_close_eye'
     n_expected_points = 17
@@ -956,9 +958,9 @@ def ibug_close_eye_points(landmark_group):
     lower_connectivity += zip(middle_indices, middle_indices[1:])
     lower_connectivity += [(11, 0)]
 
-    total_connectivity = np.asarray(upper_connectivity + lower_connectivity)
+    total_conn = np.asarray(upper_connectivity + lower_connectivity)
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['upper_eyelid'] = upper_indices
@@ -973,7 +975,7 @@ def ibug_open_eye_trimesh(landmark_group):
     Apply the ibug's "standard" open eye semantic labels to the
     landmarks in the given landmark group.
 
-    The group label will be 'ibug_open_eye_trimesh'.
+    The group label will be ``ibug_open_eye_trimesh``.
 
     The semantic labels applied are as follows:
 
@@ -987,13 +989,13 @@ def ibug_open_eye_trimesh(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_open_eye_trimesh'
+        The group label: ``ibug_open_eye_trimesh``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 38 points
     """
     from menpo.shape import TriMesh
@@ -1038,7 +1040,7 @@ def ibug_close_eye_trimesh(landmark_group):
     Apply the ibug's "standard" close eye semantic labels to the
     landmarks in the given landmark group.
 
-    The group label will be 'ibug_close_eye_trimesh'.
+    The group label will be ``ibug_close_eye_trimesh``.
 
     The semantic labels applied are as follows:
 
@@ -1052,13 +1054,13 @@ def ibug_close_eye_trimesh(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_close_eye_trimesh'
+        The group label: ``ibug_close_eye_trimesh``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 38 points
     """
     from menpo.shape import TriMesh
@@ -1089,7 +1091,7 @@ def ibug_tongue(landmark_group):
     Apply the ibug's "standard" tongue semantic labels to the landmarks in the
     given landmark group.
 
-    The group label will be 'ibug_tongue'.
+    The group label will be ``ibug_tongue``.
 
     The semantic labels applied are as follows:
 
@@ -1104,13 +1106,13 @@ def ibug_tongue(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_tongue'
+        The group label: ``ibug_tongue``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 19 points
     """
     group = 'ibug_tongue'
@@ -1126,7 +1128,7 @@ def ibug_hand(landmark_group):
     """
     Apply the ibug's "standard" 39 point semantic labels to the landmark group.
 
-    The group label will be 'ibug_hand'.
+    The group label will be ``ibug_hand``.
 
     The semantic labels applied are as follows:
 
@@ -1145,16 +1147,16 @@ def ibug_hand(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'ibug_hand'
+        The group label: ``ibug_hand``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 39 points
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_hand'
     n_points = landmark_group.lms.n_points
@@ -1181,12 +1183,12 @@ def ibug_hand(landmark_group):
     palm_connectivity = _connectivity_from_array(palm_indices,
                                                  close_loop=True)
 
-    total_connectivity = np.vstack((thumb_connectivity, index_connectivity,
-                                    middle_connectivity, ring_connectivity,
-                                    pinky_connectivity, palm_connectivity))
+    total_conn = np.vstack((thumb_connectivity, index_connectivity,
+                            middle_connectivity, ring_connectivity,
+                            pinky_connectivity, palm_connectivity))
 
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['thumb'] = thumb_indices
@@ -1205,7 +1207,7 @@ def stickmen_pose(landmark_group):
     Apply the stickmen "standard" 12 point semantic labels to the landmark
     group.
 
-    The group label will be 'stickmen_pose'.
+    The group label will be ``stickmen_pose``.
 
     The semantic labels applied are as follows:
 
@@ -1224,17 +1226,17 @@ def stickmen_pose(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'stickmen_pose'
+        The group label: ``stickmen_pose``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 12 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.robots.ox.ac.uk/~vgg/data/stickmen/
     """
     group = 'stickmen_pose'
@@ -1255,7 +1257,7 @@ def lsp_pose(landmark_group):
     Apply the lsp "standard" 14 point semantic labels to the landmark
     group.
 
-    The group label will be 'lsp_pose'.
+    The group label will be ``lsp_pose``.
 
     The semantic labels applied are as follows:
 
@@ -1273,20 +1275,20 @@ def lsp_pose(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'lsp_pose'
+        The group label: ``lsp_pose``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 14 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.comp.leeds.ac.uk/mat4saj/lsp.html
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'lsp_pose'
     n_points = landmark_group.lms.n_points
@@ -1304,14 +1306,14 @@ def lsp_pose(landmark_group):
     right_arm_connectivity = _connectivity_from_array(right_arm_indices)
     head_connectivity = _connectivity_from_array(head_indices)
 
-    total_connectivity = np.vstack([left_leg_connectivity,
-                                    right_leg_connectivity,
-                                    left_arm_connectivity,
-                                    right_arm_connectivity,
-                                    head_connectivity])
+    total_conn = np.vstack([left_leg_connectivity,
+                            right_leg_connectivity,
+                            left_arm_connectivity,
+                            right_arm_connectivity,
+                            head_connectivity])
 
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points, total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_leg'] = left_leg_indices
@@ -1330,7 +1332,7 @@ def flic_pose(landmark_group):
     Apply the flic "standard" 11 point semantic labels to the landmark
     group.
 
-    The group label will be 'flic_pose'.
+    The group label will be ``flic_pose``.
 
     The semantic labels applied are as follows:
 
@@ -1347,17 +1349,17 @@ def flic_pose(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'flic_pose'
+        The group label: ``flic_pose``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 11 points
 
     References
-    -----------
+    ----------
     .. [1] http://vision.grasp.upenn.edu/cgi-bin/index.php?n=VideoLearning.FLIC
     """
     group = 'flic_pose'
@@ -1376,7 +1378,7 @@ def streetscene_car_view_0(landmark_group):
     Apply the 8 point semantic labels of the view 0  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_0'.
+    The group label will be ``streetscene_car_view_0``.
 
     The semantic labels applied are as follows:
 
@@ -1392,20 +1394,20 @@ def streetscene_car_view_0(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_0'
+        The group label: ``streetscene_car_view_0``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_0'
     n_points = 8
@@ -1422,12 +1424,12 @@ def streetscene_car_view_0(landmark_group):
     windshield_connectivity = _connectivity_from_array(windshield_indices,
                                                        close_loop=True)
 
-    total_connectivity = np.vstack((front_connectivity, bonnet_connectivity,
-                                    windshield_connectivity))
+    total_conn = np.vstack((front_connectivity, bonnet_connectivity,
+                            windshield_connectivity))
 
     ind = np.arange(8)
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['front'] = front_indices
@@ -1443,7 +1445,7 @@ def streetscene_car_view_1(landmark_group):
     Apply the 14 point semantic labels of the view 1  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_1'.
+    The group label will be ``streetscene_car_view_1``.
 
     The semantic labels applied are as follows:
 
@@ -1460,20 +1462,20 @@ def streetscene_car_view_1(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_1'
+        The group label: ``streetscene_car_view_1``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_1'
     n_points = 14
@@ -1493,12 +1495,12 @@ def streetscene_car_view_1(landmark_group):
     left_side_connectivity = _connectivity_from_array(left_side_indices,
                                                       close_loop=True)
 
-    total_connectivity = np.vstack((front_connectivity, bonnet_connectivity,
-                                    windshield_connectivity, left_side_connectivity))
+    total_conn = np.vstack((front_connectivity, bonnet_connectivity,
+                            windshield_connectivity, left_side_connectivity))
 
     ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['front'] = front_indices
@@ -1515,7 +1517,7 @@ def streetscene_car_view_2(landmark_group):
     Apply the 10 point semantic labels of the view 2  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_2'.
+    The group label will be ``streetscene_car_view_2``.
 
     The semantic labels applied are as follows:
 
@@ -1535,14 +1537,14 @@ def streetscene_car_view_2(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_2'
     n_points = 10
@@ -1553,11 +1555,11 @@ def streetscene_car_view_2(landmark_group):
     left_side_connectivity = _connectivity_from_array(left_side_indices,
                                                       close_loop=True)
 
-    total_connectivity = left_side_connectivity
+    total_conn = left_side_connectivity
 
     ind = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_side'] = left_side_indices
@@ -1571,7 +1573,7 @@ def streetscene_car_view_3(landmark_group):
     Apply the 14 point semantic labels of the view 3  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_2'.
+    The group label will be ``streetscene_car_view_2``.
 
     The semantic labels applied are as follows:
 
@@ -1588,20 +1590,20 @@ def streetscene_car_view_3(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_3'
+        The group label: ``streetscene_car_view_3``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_3'
     n_points = 14
@@ -1613,20 +1615,20 @@ def streetscene_car_view_3(landmark_group):
     rear_indices = np.array([8, 9, 11, 10])
 
     left_side_connectivity = _connectivity_from_array(left_side_indices,
-                                                 close_loop=True)
+                                                      close_loop=True)
     rear_windshield_connectivity = _connectivity_from_array(
         rear_windshield_indices, close_loop=True)
     trunk_connectivity = _connectivity_from_array(trunk_indices,
                                                   close_loop=True)
     rear_connectivity = _connectivity_from_array(rear_indices, close_loop=True)
 
-    total_connectivity = np.vstack((left_side_connectivity,
-                                    rear_windshield_connectivity,
-                                    trunk_connectivity, rear_connectivity))
+    total_conn = np.vstack((left_side_connectivity,
+                            rear_windshield_connectivity,
+                            trunk_connectivity, rear_connectivity))
 
     ind = np.array([0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18])
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['left_side'] = left_side_indices
@@ -1643,7 +1645,7 @@ def streetscene_car_view_4(landmark_group):
     Apply the 14 point semantic labels of the view 4  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_4'.
+    The group label will be ``streetscene_car_view_4``.
 
     The semantic labels applied are as follows:
 
@@ -1666,14 +1668,14 @@ def streetscene_car_view_4(landmark_group):
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_4'
     n_points = 14
@@ -1693,13 +1695,13 @@ def streetscene_car_view_4(landmark_group):
     right_side_connectivity = _connectivity_from_array(right_side_indices,
                                                        close_loop=True)
 
-    total_connectivity = np.vstack((front_connectivity, bonnet_connectivity,
-                                    windshield_connectivity,
-                                    right_side_connectivity))
+    total_conn = np.vstack((front_connectivity, bonnet_connectivity,
+                            windshield_connectivity,
+                            right_side_connectivity))
 
     ind = np.hstack((np.arange(8), np.array([9, 11, 13, 15, 17, 19])))
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['front'] = front_indices
@@ -1713,10 +1715,10 @@ def streetscene_car_view_4(landmark_group):
 
 def streetscene_car_view_5(landmark_group):
     """
-    Apply the 10 point semantic labels of the view 5  of the MIT Street Scene
+    Apply the 10 point semantic labels of the view 5 of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_5'.
+    The group label will be ``streetscene_car_view_5``.
 
     The semantic labels applied are as follows:
 
@@ -1730,20 +1732,20 @@ def streetscene_car_view_5(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_5'
+        The group label: ``streetscene_car_view_5``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_5'
     n_points = 10
@@ -1754,11 +1756,11 @@ def streetscene_car_view_5(landmark_group):
     right_side_connectivity = _connectivity_from_array(right_side_indices,
                                                        close_loop=True)
 
-    total_connectivity = right_side_connectivity
+    total_conn = right_side_connectivity
 
     ind = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19])
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['right_side'] = right_side_indices
@@ -1772,7 +1774,7 @@ def streetscene_car_view_6(landmark_group):
     Apply the 14 point semantic labels of the view 6  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_6'.
+    The group label will be ``streetscene_car_view_6``.
 
     The semantic labels applied are as follows:
 
@@ -1789,20 +1791,20 @@ def streetscene_car_view_6(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_3'
+        The group label: ``streetscene_car_view_3``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_6'
     n_points = 14
@@ -1821,13 +1823,13 @@ def streetscene_car_view_6(landmark_group):
                                                   close_loop=True)
     rear_connectivity = _connectivity_from_array(rear_indices, close_loop=True)
 
-    total_connectivity = np.vstack((right_side_connectivity,
-                                    rear_windshield_connectivity,
-                                    trunk_connectivity, rear_connectivity))
+    total_conn = np.vstack((right_side_connectivity,
+                            rear_windshield_connectivity,
+                            trunk_connectivity, rear_connectivity))
 
     ind = np.array([1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19])
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['right_side'] = right_side_indices
@@ -1844,7 +1846,7 @@ def streetscene_car_view_7(landmark_group):
     Apply the 8 point semantic labels of the view 0  of the MIT Street Scene
     Car dataset to the landmark group.
 
-    The group label will be 'streetscene_car_view_7'.
+    The group label will be ``streetscene_car_view_7``.
 
     The semantic labels applied are as follows:
 
@@ -1860,20 +1862,20 @@ def streetscene_car_view_7(landmark_group):
     Returns
     -------
     group : `str`
-        The group label: 'streetscene_car_view_7'
+        The group label: ``streetscene_car_view_7``
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 20 points
 
     References
-    -----------
+    ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointGraph
+    from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_7'
     n_points = 8
@@ -1889,12 +1891,12 @@ def streetscene_car_view_7(landmark_group):
                                                   close_loop=True)
     rear_connectivity = _connectivity_from_array(rear_indices, close_loop=True)
 
-    total_connectivity = np.vstack((rear_windshield_connectivity,
-                                    trunk_connectivity, rear_connectivity))
+    total_conn = np.vstack((rear_windshield_connectivity,
+                            trunk_connectivity, rear_connectivity))
 
     ind = np.arange(8, 16)
     new_landmark_group = LandmarkGroup(
-        PointGraph(landmark_group.lms.points[ind], total_connectivity),
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['rear_windshield'] = rear_windshield_indices
@@ -1905,29 +1907,132 @@ def streetscene_car_view_7(landmark_group):
     return group, new_landmark_group
 
 
-def labeller(landmarkable, group, label_func):
+def bu3dfe_83(landmark_group):
     """
-    Takes a landmarkable object and a group label indicating which
-    set of landmarks should have semantic meaning attached to them.
-    The labelling function will add a new landmark group to each object that
-    have been semantically annotated.
+    Apply the BU-3DFE (Binghamton University 3D Facial Expression)
+    Database 83 point facial annotation markup to this landmark group.
+
+
+    The group label will be ``bu3dfe_83``.
+
+    The semantic labels applied are as follows:
+
+      - right_eye
+      - left_eye
+      - right_eyebrow
+      - left_eyebrow
+      - right_nose
+      - left_nose
+      - nostrils
+      - outer_mouth
+      - inner_mouth
+      - jaw
 
     Parameters
     ----------
-    landmarkable: :class:`menpo.landmark.base.Landmarkable`
-        Landmarkable object
-    group: string
-        The group label of the landmark group to apply semantic labels to.
-    label_func: func
-        A labelling function taken from this module. `func` should take a
-        :class:`menpo.landmark.base.LandmarkGroup` and
-        return a tuple of (group label, new LandmarkGroup with semantic labels
-        applied.)
+    landmark_group : :map:`LandmarkGroup`
+        The landmark group to apply semantic labels to.
 
     Returns
     -------
-    landmarkable : :class:`menpo.landmark.base.Landmarkable`
-        landmarkable with label (this is just for convenience,
+    group : `str`
+        The group label: ``bu3dfe_83``
+    landmark_group : :map:`LandmarkGroup`
+        New landmark group.
+
+    Raises
+    ------
+    :class:`menpo.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 83 points
+
+    References
+    ----------
+    .. [1] http://www.cs.binghamton.edu/~lijun/Research/3DFE/3DFE_Analysis.html
+    """
+    from menpo.shape import PointUndirectedGraph
+
+    group = 'bu3dfe_83'
+    n_points = 83
+    _validate_input(landmark_group, n_points, group)
+
+    reye_indices = np.arange(0, 8)
+    leye_indices = np.arange(8, 16)
+    rbrow_indices = np.arange(16, 26)
+    lbrow_indices = np.arange(26, 36)
+    rnose_indicies = np.arange(36, 39)
+    lnose_indicies = np.arange(39, 42)
+    nostril_indices = np.arange(42, 48)
+    outermouth_indices = np.arange(48, 60)
+    innermouth_indices = np.arange(60, 68)
+    jaw_indices = np.arange(68, 83)
+
+    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
+    rbrow_connectivity = _connectivity_from_array(rbrow_indices,
+                                                  close_loop=True)
+    lbrow_connectivity = _connectivity_from_array(lbrow_indices,
+                                                  close_loop=True)
+    rnose_connectivity = _connectivity_from_array(rnose_indicies)
+    nostril_connectivity = _connectivity_from_array(nostril_indices)
+    lnose_connectivity = _connectivity_from_array(lnose_indicies)
+    outermouth_connectivity = _connectivity_from_array(outermouth_indices,
+                                                       close_loop=True)
+    innermouth_connectivity = _connectivity_from_array(innermouth_indices,
+                                                       close_loop=True)
+    jaw_connectivity = _connectivity_from_array(jaw_indices)
+
+    total_conn = np.vstack([
+        reye_connectivity, leye_connectivity,
+        rbrow_connectivity, lbrow_connectivity,
+        rnose_connectivity, nostril_connectivity, lnose_connectivity,
+        outermouth_connectivity, innermouth_connectivity,
+        jaw_connectivity
+    ])
+
+    new_landmark_group = LandmarkGroup(
+        PointUndirectedGraph(landmark_group.lms.points, total_conn),
+        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+
+    new_landmark_group['right_eye'] = reye_indices
+    new_landmark_group['left_eye'] = leye_indices
+    new_landmark_group['right_eyebrow'] = rbrow_indices
+    new_landmark_group['left_eyebrow'] = lbrow_indices
+    new_landmark_group['right_nose'] = rnose_indicies
+    new_landmark_group['left_nose'] = lnose_indicies
+    new_landmark_group['nostrils'] = nostril_indices
+    new_landmark_group['outer_mouth'] = outermouth_indices
+    new_landmark_group['inner_mouth'] = innermouth_indices
+    new_landmark_group['jaw'] = jaw_indices
+
+    del new_landmark_group['all']  # Remove pointless all group
+
+    return group, new_landmark_group
+
+
+def labeller(landmarkable, group, label_func):
+    """
+    Re-label an existing landmark group on a :map:`Landmarkable` object with a
+    new label set.
+
+    Parameters
+    ----------
+    landmarkable: :map:`Landmarkable`
+        :map:`Landmarkable` that will have it's :map:`LandmarkManager`
+        augmented with a new :map:`LandmarkGroup`
+    group: `str`
+        The group label of the existing landmark group that should be
+        re-labelled. A copy of this group will be attached to it's landmark
+        manager with new labels. The group label of this new group and the
+        labels it will have is determined by ``label_func``
+    label_func: `func`  -> `(str, LandmarkGroup)`
+        A labelling function taken from this module, Takes as input a
+        :map:`LandmarkGroup` and returns a tuple of
+        (new group label, new LandmarkGroup with semantic labels applied).
+
+    Returns
+    -------
+    landmarkable : :map:`Landmarkable`
+        Augmented ``landmarkable`` (this is just for convenience,
         the object will actually be modified in place)
     """
     new_group, lmark_group = label_func(landmarkable.landmarks[group])

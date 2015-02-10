@@ -2,7 +2,6 @@
 
 Menpo's Data Types
 ==================
-
 Menpo is a high level software package. It is not a replacement for scikit-image,
 scikit-learn, or opencv - it ties all these types of packages together in to a
 unified framework for building and fitting deformable models. As a result, most
@@ -12,7 +11,6 @@ simple numpy arrays.
 
 Why have data types - what's wrong with numpy arrays?
 -----------------------------------------------------
-
 Menpo's data types are thin wrappers around numpy arrays. They give semantic
 meaning to the underlying array through providing clearly named and consistent
 properties. As an example let's take a look at :map:`PointCloud`, Menpo's
@@ -41,7 +39,7 @@ If we take a look at the properties we can see they are trivial::
     def n_dims(self):
         return self.points.shape[1]
 
-Using these properties makes code much more readable in algorthms accepting
+Using these properties makes code much more readable in algorithms accepting
 Menpo's types. Let's imagine a routine that does some operation on an image
 and a related point cloud. If it accepted numpy arrays, we might see something
 like this on the top line::
@@ -71,7 +69,7 @@ across Menpo, and it aids greatly in keeping the code readable.
 Key points
 ----------
 1. **Containers store the underlying numpy array in an easy to access
-attribute.** For the :map:`PointCloud` family see the ``.points`` attrubute. On
+attribute.** For the :map:`PointCloud` family see the ``.points`` attribute. On
 :map:`Image` and subclasses, the actual data array is stored at ``.pixels``.
 
 2. **Importing assets though** :ref:`api-io-index` **will result in our data
@@ -83,5 +81,5 @@ for an image and you will get an :map:`Image` object.
 argument if you want to avoid copying a large numpy array for performance.
 
 4. **Containers perform sanity checks**. This helps catch obvious bugs like
-misshaping an array. You can sometimes supress them for extra performance with
+misshaping an array. You can sometimes suppress them for extra performance with
 the ``skip_checks=True`` keyword argument.

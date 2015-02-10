@@ -20,6 +20,7 @@ install:
 - wget https://raw.githubusercontent.com/jabooth/condaci/v0.2.0/condaci.py -O condaci.py
 - python condaci.py setup $PYTHON_VERSION --channel $BINSTAR_USER
 - export PATH=$HOME/miniconda/bin:$PATH
+- conda config --add channels $BINSTAR_USER/channel/master
 
 script:
 - python condaci.py auto ./conda --binstaruser $BINSTAR_USER --binstarkey $BINSTAR_KEY

@@ -1,7 +1,7 @@
 import numpy as np
 
 from menpo.base import Targetable
-from menpo.visualize.base import Viewable, AlignmentViewer2d
+from menpo.visualize.base import Viewable
 
 
 class Alignment(Targetable, Viewable):
@@ -21,10 +21,8 @@ class Alignment(Targetable, Viewable):
     ----------
     source : :map:`PointCloud`
         A PointCloud that the alignment will be based from
-
     target : :map:`PointCloud`
         A PointCloud that the alignment is targeted towards
-
     """
     def __init__(self, source, target):
         self._verify_source_and_target(source, target)
@@ -105,7 +103,7 @@ class Alignment(Targetable, Viewable):
         """
         return self.aligned_source()
 
-    def view(self, figure_id=None, new_figure=False, **kwargs):
+    def _view_2d(self, figure_id=None, new_figure=False, **kwargs):
         r"""
         Plots the source points and vectors that represent the shift from
         source to target.
@@ -117,8 +115,5 @@ class Alignment(Targetable, Viewable):
 
             Default: ``False``
         """
-        if self.n_dims == 2:
-            return AlignmentViewer2d(figure_id, new_figure, self).render(
-                **kwargs)
-        else:
-            raise ValueError("Only 2D alignments can be viewed currently.")
+        from menpo.visualize import AlignmentViewer2d
+        return AlignmentViewer2d(figure_id, new_figure, self).render(**kwargs)

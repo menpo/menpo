@@ -28,19 +28,18 @@ if on_rtd:
             else:
                 return Mock()
 
-    MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn', 'skimage',
+    MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn',
                     'scipy.linalg', 'numpy.stats', 'scipy.misc', 'PIL.Image',
-                    'cyassimp', 'cyrasterize', 'matplotlib', 'mayavi',
-                    'skimage.transform', 'matplotlib.pyplot', 'scipy.spatial',
-                    'skimage.transform.pyramids', 'scipy.spatial.distance',
-                    'numpy.dtype', 'scipy.ndimage',
-                    'cyrasterize.base', 'vrml', 'vrml.vrml97',
-                    'vrml.vrml97.parser', 'vrml.vrml97.basenodes', 'vrml.node',
-                    'scipy.linalg.blas']
+                    'matplotlib', 'matplotlib.pyplot', 'scipy.spatial',
+                    'scipy.spatial.distance', 'IPython', 'IPython.display',
+                    'IPython.html', 'IPython.html.widgets',
+                    'numpy.dtype', 'scipy.ndimage', 'scipy.linalg.blas']
     # Masking our Cython modules
     MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
-                     'menpo.image.feature.cppimagewindowiterator',
-                     'menpo.shape.mesh.normals']
+                     'menpo.feature.windowiterator',
+                     'menpo.shape.mesh.normals',
+                     'menpo.external.skimage._warps_cy',
+                     'menpo.image.extract_patches']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = Mock()
 
@@ -51,10 +50,13 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 import menpo
 
+# add an up to date mathjax path
+mathjax_path = 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+needs_sphinx = '1.3'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -64,8 +66,9 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.mathjax',
               'sphinx.ext.viewcode',
               'sphinx.ext.autosummary',
-              'numpydoc',
+              'sphinx.ext.napoleon',
               'sphinxext.ref_prettify',
+              'sphinxext.theme_hack',
               'sphinxmapxrefrole']
 
 # Import the mapping dictionary and set it for sphinxmapxrefrole
@@ -74,10 +77,17 @@ xref_mapping_dict = xref_map
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+html_static_path = ['_static']
 
 # Otherwise Sphinx emits thousands of warnings
-numpydoc_show_class_members = False
-numpydoc_class_members_toctree = False
+napoleon_include_special_with_doc = False
+napoleon_numpy_docstring = True
+napoleon_use_rtype = False
+napoleon_use_ivar = False
+napoleon_use_param = True
+napoleon_use_admonition_for_examples = True
+napoleon_use_admonition_for_notes = True
+napoleon_use_admonition_for_references = True
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -88,13 +98,13 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'index'
 
-# Sort attributes by type (functions seperate from properties)
+# Sort attributes by type (functions separate from properties)
 autodoc_member_order = 'groupwise'
 
 # General information about the project.
 project = u'Menpo'
 authors = (u'Joan Alabort-i-Medina, Epameinondas Antonakos, James Booth,'
-            ' Patrick Snape, and Stefanos Zafeiriou')
+           u' Patrick Snape, and Stefanos Zafeiriou')
 copyright = u'2014, ' + authors
 
 # The version info for the project you're documenting, acts as replacement for
@@ -135,7 +145,7 @@ exclude_patterns = ['_build', '**/test/**']
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+#pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
@@ -290,7 +300,7 @@ man_pages = [
 texinfo_documents = [
     ('index', 'Menpo', u'Menpo Documentation',
      authors,
-     'Menpo', 'One line description of project.',
+     'Menpo', 'Python framework for manipulating annotated data.',
      'Miscellaneous'),
 ]
 

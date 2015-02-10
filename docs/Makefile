@@ -2,7 +2,8 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+N_CORES       = $(shell getconf _NPROCESSORS_ONLN)
+SPHINXOPTS    = -j $(N_CORES)
 SPHINXBUILD   = sphinx-build
 PAPER         =
 SRC_DIR       = source

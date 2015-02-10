@@ -55,7 +55,7 @@ class Transform(Copyable):
 
         None if the transform is not dimension specific.
 
-        :type: int or None
+        :type: `int` or ``None``
         """
         return None
 
@@ -66,7 +66,7 @@ class Transform(Copyable):
 
         None if the output of the transform is not dimension specific.
 
-        :type: int or None
+        :type: `int` or ``None``
         """
         # most Transforms don't change the dimensionality of their input.
         return self.n_dims
@@ -218,9 +218,9 @@ class Transformable(Copyable):
     Interface for objects that know how be transformed by the
     :map:`Transform` interface.
 
-    When :map:`apply_inplace` is called on an object, the
+    When `Transform.apply_inplace` is called on an object, the
     :meth:`_transform_inplace` method is called, passing in the transforms'
-    :map:`_apply` function.
+    :meth:`_apply` function.
 
     This allows for the object to define how it should transform itself.
     """

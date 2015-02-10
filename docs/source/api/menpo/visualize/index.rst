@@ -3,23 +3,42 @@
 :mod:`menpo.visualize`
 ======================
 
-Classes
+.. toctree::
+  :maxdepth: 1
+
+
+Abstract Classes
+----------------
+
+.. toctree::
+  :maxdepth: 1
+
+  Renderer
+  Viewable
+  LandmarkableViewable
+  MatplotlibRenderer
+
+
+Widgets
 -------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-   Viewable
-   PointCloudViewer2d
-   PointCloudViewer3d
-   TriMeshViewer3d
-   TexturedTriMeshViewer3d
-   LandmarkViewer3d
-   LandmarkViewer2d
-   LandmarkViewer
-   ImageViewer2d
-   TriMeshViewer2d
-   PointCloudViewer
-   TriMeshViewer
-   VectorViewer3d
-   AlignmentViewer2d
+  visualize_images
+  visualize_landmarks
+  visualize_landmarkgroups
+  visualize_pointclouds
+  features_selection
+  save_matplotlib_figure
+
+
+Print Utilities
+---------------
+
+.. toctree::
+  :maxdepth: 1
+
+  print_dynamic
+  progress_bar_str
+  print_bytes

@@ -1,10 +1,9 @@
 .. _menpo-transform-Similarity:
 
-.. currentmodule:: menpo.transform.homogeneous.similarity
+.. currentmodule:: menpo.transform
 
 Similarity
 ==========
-
 .. autoclass:: Similarity
   :members:
   :inherited-members:
