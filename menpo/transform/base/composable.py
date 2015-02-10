@@ -1,5 +1,3 @@
-import abc
-
 from menpo.transform.base import Transform
 from functools import reduce
 
@@ -11,7 +9,7 @@ class ComposableTransform(Transform):
     natural way.
     """
 
-    @abc.abstractproperty
+    @property
     def composes_inplace_with(self):
         r"""
         The :map:`Transform` s that this transform composes inplace
@@ -203,7 +201,6 @@ class ComposableTransform(Transform):
         self_copy._compose_after_inplace(transform)
         return self_copy
 
-    @abc.abstractmethod
     def _compose_before_inplace(self, transform):
         r"""
         Specialised inplace composition. This should be overridden to
@@ -216,7 +213,6 @@ class ComposableTransform(Transform):
             Transform to be applied **after** ``self``
         """
 
-    @abc.abstractmethod
     def _compose_after_inplace(self, transform):
         r"""
         Specialised inplace composition. This should be overridden to
@@ -240,7 +236,6 @@ class VComposable(object):
     These can be tuned for performance.
     """
 
-    @abc.abstractmethod
     def compose_after_from_vector_inplace(self, vector):
         r"""
         Specialised inplace composition with a vector. This should be

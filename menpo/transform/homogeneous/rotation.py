@@ -1,4 +1,3 @@
-import abc
 import numpy as np
 
 from .base import HomogFamilyAlignment
@@ -44,7 +43,6 @@ class Rotation(DiscreteAffine, Similarity):
     rotation_matrix : (D, D) `ndarray`
         A valid, square rotation matrix
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, rotation_matrix, skip_checks=False):
         h_matrix = np.eye(rotation_matrix.shape[0] + 1)

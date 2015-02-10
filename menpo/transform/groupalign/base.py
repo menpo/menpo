@@ -1,4 +1,3 @@
-import abc
 
 
 class MultipleAlignment(object):
@@ -22,8 +21,6 @@ class MultipleAlignment(object):
         Need at least two sources to align
 
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, sources, target=None):
         from menpo.shape import PointCloud

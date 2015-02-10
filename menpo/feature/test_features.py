@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 from numpy.testing import assert_allclose
 import random
@@ -144,10 +145,8 @@ def test_hog_channels_zhuramanan():
                       window_step_horizontal=3,
                       window_step_unit='pixels', padding=True)
         length_per_block = 31
-        n_blocks_horizontal = round(np.float(window_width[0])
-                                       / np.float(cell_size[i, 0])) - 2
-        n_blocks_vertical = round(np.float(window_height[0])
-                                     / np.float(cell_size[i, 0])) - 2
+        n_blocks_horizontal = round(window_width[0] / cell_size[i, 0]) - 2
+        n_blocks_vertical = round(window_height[0] / cell_size[i, 0]) - 2
         n_channels = n_blocks_horizontal * n_blocks_vertical * length_per_block
         assert_allclose(hog_img.n_channels, n_channels)
 
@@ -157,8 +156,8 @@ def test_lbp_channels():
     n_combs = np.random.randint(1, 6, [n_cases, 1])
     channels = np.random.randint(1, 4, [n_cases, 1])
     for i in range(n_cases):
-        radius = random.sample(xrange(1, 10), n_combs[i, 0])
-        samples = random.sample(xrange(4, 12), n_combs[i, 0])
+        radius = random.sample(range(1, 10), n_combs[i, 0])
+        samples = random.sample(range(4, 12), n_combs[i, 0])
         image = MaskedImage(np.random.randn(40, 40, channels[i, 0]))
         lbp_img = lbp(image, radius=radius, samples=samples,
                       window_step_vertical=3, window_step_horizontal=3,

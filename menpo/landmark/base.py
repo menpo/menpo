@@ -1,4 +1,3 @@
-import abc
 from collections import OrderedDict, MutableMapping
 
 import numpy as np
@@ -20,12 +19,9 @@ class Landmarkable(Copyable):
     useful tasks like label filtering and viewing.
     """
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self):
         self._landmarks = None
 
-    @abc.abstractproperty
     def n_dims(self):
         """
         The total number of dimensions.
@@ -243,7 +239,9 @@ class LandmarkManager(MutableMapping, Transformable):
 
         :type: `list` of `str`
         """
-        return self._landmark_groups.keys()
+        # Convert to list so that we can index immediately, as keys()
+        # is a generator in Python 3
+        return list(self._landmark_groups.keys())
 
     def _transform_inplace(self, transform):
         for group in self._landmark_groups.values():
@@ -531,7 +529,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         If any one point is not covered by a label, then raise a
         ``ValueError``.
         """
-        unlabelled_points = np.sum(self._labels_to_masks.values(), axis=0) == 0
+        # values is a generator in Python 3, so convert to list
+        labels_values = list(self._labels_to_masks.values())
+        unlabelled_points = np.sum(labels_values, axis=0) == 0
         if np.any(unlabelled_points):
             nonzero = np.nonzero(unlabelled_points)
             raise ValueError(

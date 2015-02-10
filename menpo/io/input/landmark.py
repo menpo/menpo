@@ -1,4 +1,3 @@
-import abc
 from collections import OrderedDict
 import json
 import warnings
@@ -20,8 +19,6 @@ class LandmarkImporter(Importer):
     filepath : string
         Absolute filepath of the landmarks.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, filepath):
         super(LandmarkImporter, self).__init__(filepath)
@@ -51,7 +48,6 @@ class LandmarkImporter(Importer):
         return LandmarkGroup(self.pointcloud,
                              self.labels_to_masks)
 
-    @abc.abstractmethod
     def _parse_format(self, asset=None):
         r"""
         Read the landmarks file from disk, parse it in to semantic labels and
@@ -94,7 +90,6 @@ class ASFImporter(LandmarkImporter):
     def __init__(self, filepath):
         super(ASFImporter, self).__init__(filepath)
 
-    @abc.abstractmethod
     def _build_points(self, xs, ys):
         r"""
         Determines the ordering of points within the landmarks. For meshes
@@ -118,7 +113,7 @@ class ASFImporter(LandmarkImporter):
         xs = np.empty([count, 1])
         ys = np.empty([count, 1])
         connectivity = np.empty([count, 2], dtype=np.int)
-        for i in xrange(count):
+        for i in range(count):
             # Though unpacked, they are still all strings
             # Only unpack the first 7
             (path_num, path_type, xpos, ypos,
@@ -172,7 +167,6 @@ class PTSImporter(LandmarkImporter):
     def __init__(self, filepath):
         super(PTSImporter, self).__init__(filepath)
 
-    @abc.abstractmethod
     def _build_points(self, xs, ys):
         r"""
         Determines the ordering of points within the landmarks. For meshes
@@ -260,7 +254,7 @@ class LM2Importer(LandmarkImporter):
             raise ImportError("LM2 landmarks are incorrectly formatted. "
                               "Expected a list of labels beginning with "
                               "'Labels:' but found '{0}'".format(labels_str))
-        for i in xrange(num_points):
+        for i in range(num_points):
             # Lowercase, remove spaces and replace with underscores
             l = landmark_text.pop(0)
             l = '_'.join(l.lower().split())
@@ -275,7 +269,7 @@ class LM2Importer(LandmarkImporter):
                               "but found '{0}'".format(coords_str))
         xs = []
         ys = []
-        for i in xrange(num_points):
+        for i in range(num_points):
             p = landmark_text.pop(0).split()
             xs.append(float(p[0]))
             ys.append(float(p[1]))
@@ -371,7 +365,7 @@ class LJSONImporter(LandmarkImporter):
 
     """
     def _parse_format(self, asset=None):
-        with open(self.filepath, 'rb') as f:
+        with open(self.filepath, 'r') as f:
             # lms_dict is now a dict rep of the JSON
             lms_dict = json.load(f, object_pairs_hook=OrderedDict)
         v = lms_dict.get('version')

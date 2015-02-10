@@ -5,6 +5,7 @@ import numpy as np
 import scipy.linalg
 import PIL.Image as PILImage
 
+from menpo.compatibility import basestring
 from menpo.base import Vectorizable
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
@@ -444,7 +445,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         >>>     plt.bar(centre, hist[k], align='center', width=width)
         """
         # parse options
-        if isinstance(bins, str):
+        if isinstance(bins, basestring):
             if bins == 'unique':
                 bins = 0
             else:

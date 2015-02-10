@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 from scipy import sqrt, pi, arctan2, cos, sin, exp
 from scipy.ndimage import gaussian_filter
@@ -110,7 +111,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     # Compute gradient orientation and magnitude and their contribution
     # to the histograms.
     b = np.concatenate([(grad_mag_ind == i)[..., None]
-                        for i in xrange(n_channels)], axis=-1)
+                        for i in range(n_channels)], axis=-1)
     grad_mag = tmp_mag[b].reshape(tmp_mag.shape[:2])
     grad_ori = tmp_ori[b].reshape(tmp_ori.shape[:2])
     orientation_kappa = orientations / pi

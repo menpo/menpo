@@ -1,4 +1,3 @@
-import abc
 
 
 class Invertible(object):
@@ -9,7 +8,7 @@ class Invertible(object):
     Has to be implemented in conjunction with :map:`Transform`.
     """
 
-    @abc.abstractproperty
+    @property
     def has_true_inverse(self):
         r"""`True` if the pseudoinverse is an exact inverse.
 

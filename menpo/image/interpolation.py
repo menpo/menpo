@@ -44,7 +44,7 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
     # Note that map_coordinates uses the opposite (dims, points) convention
     # to us so we transpose
     points_to_sample_t = points_to_sample.T
-    for i in xrange(pixels.shape[-1]):
+    for i in range(pixels.shape[-1]):
         sampled_pixel_values.append(map_coordinates(pixels[..., i],
                                                     points_to_sample_t,
                                                     mode=mode,
@@ -89,7 +89,7 @@ def cython_interpolation(pixels, template_shape, h_transform, mode='constant',
     # Loop over every channel in image - we know last axis is always channels
     # Note that map_coordinates uses the opposite (dims, points) convention
     # to us so we transpose
-    for i in xrange(pixels.shape[-1]):
+    for i in range(pixels.shape[-1]):
         warped_channels.append(_warp_fast(pixels[..., i], matrix,
                                           output_shape=template_shape,
                                           mode=mode, order=order, cval=cval))

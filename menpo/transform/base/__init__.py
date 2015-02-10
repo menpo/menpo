@@ -1,4 +1,3 @@
-import abc
 from menpo.base import Copyable
 
 
@@ -46,7 +45,6 @@ class Transform(Copyable):
     For inversion, see the :map:`Invertible` and :map:`VInvertible` mix-ins.
     For alignment, see the :map:`Alignment` mix-in.
     """
-    __metaclass__ = abc.ABCMeta
 
     @property
     def n_dims(self):
@@ -71,7 +69,6 @@ class Transform(Copyable):
         # most Transforms don't change the dimensionality of their input.
         return self.n_dims
 
-    @abc.abstractmethod
     def _apply(self, x, **kwargs):
         r"""
         Applies the transform to the array ``x``, returning the result.
@@ -224,9 +221,7 @@ class Transformable(Copyable):
 
     This allows for the object to define how it should transform itself.
     """
-    __metaclass__ = abc.ABCMeta
 
-    @abc.abstractmethod
     def _transform_inplace(self, transform):
         r"""
         Apply the given transform function to ``self`` inplace.

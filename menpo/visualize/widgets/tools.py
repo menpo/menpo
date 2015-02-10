@@ -1,5 +1,8 @@
 from collections import OrderedDict
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 
 # Global variables to try and reduce overhead of loading the logo
@@ -4399,7 +4402,7 @@ def _get_function_handle_from_string(s):
     Function that returns a function handle given the function code as a string.
     """
     try:
-        exec s
+        exec(s)
         function_name = s[4:s.find('(')]
         return eval(function_name), None
     except:
