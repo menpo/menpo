@@ -496,7 +496,7 @@ class PCAModel(MeanInstanceLinearModel):
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
 
-    def increment(self, samples, n_samples=None, forgetting_factor=1.0,
+    def increment(self, samples, n_new_samples=None, forgetting_factor=1.0,
                   verbose=False):
         r"""
         Update the eigenvectors, eigenvalues and mean vector of this model
@@ -522,9 +522,9 @@ class PCAModel(MeanInstanceLinearModel):
         .. [1] David Ross, Jongwoo Lim, Ruei-Sung Lin, Ming-Hsuan Yang.
            "Incremental Learning for Robust Visual Tracking". IJCV, 2007.
         """
-        # extract data matrix, template and number of samples
-        data, template, n_samples = extract_data(
-            samples, n_samples=n_samples, verbose=verbose)
+        # build a data matrix from the new samples
+        data = as_matrix(samples, length=n_new_samples, verbose=verbose)
+        n_new_samples = data.shape[1]
 
         # compute incremental pca
         e_vectors, e_values, m_vector = ipca(
@@ -533,13 +533,13 @@ class PCAModel(MeanInstanceLinearModel):
 
         # if the number of active components is the same as the total number
         # of components so it will be after this method is executed
-        reset = 1 if self.n_active_components == self.n_components else 0
+        reset = (self.n_active_components == self.n_components)
 
         # update mean, components, eigenvalues and number of samples
         self.mean_vector = m_vector
         self._components = e_vectors
         self._eigenvalues = e_values
-        self.n_samples += n_samples
+        self.n_samples += n_new_samples
 
         # reset the number of active components to the total number of
         # components
