@@ -4,10 +4,33 @@
 =================
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
+
+
+Decomposition
+-------------
+
+.. toctree::
+  :maxdepth: 1
 
   eigenvalue_decomposition
-  dot_inplace_right
   principal_component_decomposition
+
+
+Linear Algebra
+--------------
+
+.. toctree::
+  :maxdepth: 1
+
+  dot_inplace_right
   dot_inplace_left
+
+
+Convolution
+-----------
+
+.. toctree::
+  :maxdepth: 1
+
   log_gabor

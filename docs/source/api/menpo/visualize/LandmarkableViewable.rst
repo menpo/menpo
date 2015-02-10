@@ -1,6 +1,6 @@
-.. _menpo-landmark-LandmarkableViewable:
+.. _menpo-visualize-LandmarkableViewable:
 
-.. currentmodule:: menpo.landmark
+.. currentmodule:: menpo.visualize
 
 LandmarkableViewable
 ====================

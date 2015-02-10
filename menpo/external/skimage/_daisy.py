@@ -7,7 +7,7 @@ from menpo.feature import gradient
 
 def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
            normalization='l1', sigmas=None, ring_radii=None, visualize=False):
-    '''Extract DAISY feature descriptors densely for the given image.
+    r"""Extract DAISY feature descriptors densely for the given image.
 
     DAISY is a feature descriptor similar to SIFT formulated in a way that
     allows for fast dense extraction. Typically, this is practical for
@@ -91,7 +91,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
            baseline stereo." Pattern Analysis and Machine Intelligence, IEEE
            Transactions on 32.5 (2010): 815-830.
     .. [2] http://cvlab.epfl.ch/alumni/tola/daisy.html
-    '''
+    """
     # Compute image derivatives.
     # Get number of input image's channels
     n_channels = img.shape[-1]

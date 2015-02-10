@@ -5,16 +5,24 @@ from .linalg import dot_inplace_right
 
 def eigenvalue_decomposition(S, eps=10**-10):
     r"""
+    Eigenvalue decomposition of a given covariance (or scatter) matrix.
 
     Parameters
     ----------
-    S : (N, N)  ndarray
+    S : ``(N, N)`` `ndarray`
         Covariance/Scatter matrix
+    eps : `float`, optional
+        Small value to be used for the tolerance limit computation. The final
+        limit is computed as ::
+
+            limit = np.max(np.abs(eigenvalues)) * eps
 
     Returns
     -------
-    pos_eigenvectors: (N, p) ndarray
-    pos_eigenvalues: (p,) ndarray
+    pos_eigenvectors : ``(N, p)`` `ndarray`
+        The matrix with the eigenvectors corresponding to positive eigenvalues.
+    pos_eigenvalues : ``(p,)`` `ndarray`
+        The array of positive eigenvalues.
     """
     # compute eigenvalue decomposition
     eigenvalues, eigenvectors = np.linalg.eigh(S)
@@ -41,41 +49,35 @@ def eigenvalue_decomposition(S, eps=10**-10):
 def principal_component_decomposition(X, whiten=False, centre=True,
                                       bias=False, inplace=False):
     r"""
-    Apply PCA on the data matrix X. In the case where the data matrix is very
-    large, it is advisable to set `inplace=True`. However, note this this
-    destructively edits the data matrix by subtracting the mean inplace.
+    Apply Principal Component Analysis (PCA) on the data matrix `X`. In the case
+    where the data matrix is very large, it is advisable to set
+    ``inplace = True``. However, note this destructively edits the data matrix
+    by subtracting the mean inplace.
 
     Parameters
     ----------
-    x : (n_samples, n_features) ndarray
-        Training data
-    whiten : bool, optional
-        Normalise the eigenvectors to have unit magnitude
-
-        Default: `False`
-    centre : bool, optional
-        Whether to centre the data matrix. If `False`, zero will be subtracted.
-
-        Default: `True`
-    bias : bool, optional
-        Whether to use a biased estimate of the number of samples. If `False`,
-        subtracts `1` from the number of samples.
-
-        Default: `False`
-    inplace : bool, optional
+    X : ``(n_samples, n_features)`` `ndarray`
+        Training data.
+    whiten : `bool`, optional
+        Normalise the eigenvectors to have unit magnitude.
+    centre : `bool`, optional
+        Whether to centre the data matrix. If ``False``, zero will be
+        subtracted.
+    bias : `bool`, optional
+        Whether to use a biased estimate of the number of samples. If ``False``,
+        subtracts ``1`` from the number of samples.
+    inplace : `bool`, optional
         Whether to do the mean subtracting inplace or not. This is crucial if
         the data matrix is greater than half the available memory size.
 
-        Default: `False`
-
     Returns
     -------
-    eigenvectors : (n_components, n_features) ndarray
-        The eigenvectors of the data matrix
-    eigenvalues : (n_components,) ndarray
-        The positive eigenvalues from the data matrix
-    mean_vector : (n_components,) ndarray
-        The mean that was subtracted from the dataset
+    eigenvectors : ``(n_components, n_features)`` `ndarray`
+        The eigenvectors of the data matrix.
+    eigenvalues : ``(n_components,)`` `ndarray`
+        The positive eigenvalues from the data matrix.
+    mean_vector : ``(n_components,)`` `ndarray`
+        The mean that was subtracted from the dataset.
     """
     n_samples, n_features = X.shape
 

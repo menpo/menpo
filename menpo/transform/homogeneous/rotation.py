@@ -41,7 +41,7 @@ class Rotation(DiscreteAffine, Similarity):
 
     Parameters
     ----------
-    rotation_matrix : (D, D) ndarray
+    rotation_matrix : (D, D) `ndarray`
         A valid, square rotation matrix
     """
     __metaclass__ = abc.ABCMeta
@@ -58,10 +58,10 @@ class Rotation(DiscreteAffine, Similarity):
 
         Parameters
         ----------
-        theta : float
+        theta : `float`
             The angle of rotation about the origin
-        degrees : bool, optional
-            If true theta is interpreted as a degree. If False, theta is
+        degrees : `bool`, optional
+            If ``True`` theta is interpreted as a degree. If ``False``, theta is
             interpreted as radians.
 
         Returns
@@ -84,7 +84,7 @@ class Rotation(DiscreteAffine, Similarity):
         r"""
         The rotation matrix.
 
-        :type: (D, D) ndarray
+        :type: (D, D) `ndarray`
         """
         return self.linear_component
 
@@ -98,7 +98,7 @@ class Rotation(DiscreteAffine, Similarity):
                 raise ValueError("Trying to update the rotation "
                                  "matrix to a different dimension")
             # TODO actually check I am a valid rotation
-            # TODO slightly dodgey here accessing _h_matrix
+            # TODO slightly dodgy here accessing _h_matrix
         self._h_matrix[:-1, :-1] = value
 
     def _transform_str(self):
