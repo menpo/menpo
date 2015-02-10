@@ -1,8 +1,7 @@
 from __future__ import division
 import numpy as np
-from menpo.math import pca, ipca
+from menpo.math import pca, ipca, as_matrix
 from menpo.model.base import MeanInstanceLinearModel
-from menpo.visualize import print_dynamic, progress_bar_str
 
 
 class PCAModel(MeanInstanceLinearModel):
@@ -16,21 +15,22 @@ class PCAModel(MeanInstanceLinearModel):
 
     Parameters
     ----------
-    samples : `list` of :map:`Vectorizable`
-        List of samples to build the model from.
+    samples : `list` or `iterable` of :map:`Vectorizable`
+        List or iterable of samples to build the model from.
     centre : `bool`, optional
         When ``True`` (default) PCA is performed after mean centering the data.
         If ``False`` the data is assumed to be centred, and the mean will be
         ``0``.
     n_samples : `int`, optional
-        If provided then ``samples``  must be an iterator  that yields
+        If provided then ``samples``  must be an iterator that yields
         ``n_samples``. If not provided then samples has to be a `list` (so we
         know how large the data matrix needs to be).
      """
     def __init__(self, samples, centre=True, n_samples=None, verbose=False):
-        # extract data matrix, template and number of samples
-        data, template, self.n_samples = extract_data(
-            samples, n_samples=n_samples, verbose=verbose)
+        # build a data matrix from all the samples
+        data, template = as_matrix(samples, length=n_samples,
+                                   return_template=True, verbose=verbose)
+        self.n_samples = data.shape[1]
 
         # compute pca
         e_vectors, e_values, mean = pca(data, centre=centre, inplace=True)
@@ -944,37 +944,3 @@ class PCAModel(MeanInstanceLinearModel):
             self.noise_variance(), self.noise_variance_ratio(),
             self.n_components, self.components.shape)
         return str_out
-
-
-def extract_data(samples, n_samples=None, verbose=False):
-    # get the first element as the template and use it to configure the
-    # data matrix
-    if n_samples is None:
-        # samples is a list
-        n_samples = len(samples)
-        template = samples[0]
-        samples = samples[1:]
-    else:
-        # samples is an iterator
-        template = next(samples)
-    n_features = template.n_parameters
-    template_vector = template.as_vector()
-    data = np.zeros((n_samples, n_features), dtype=template_vector.dtype)
-    # now we can fill in the first element from the template
-    data[0] = template_vector
-    del template_vector
-    if verbose:
-        print('Allocated data matrix {:.2f}'
-              'GB'.format(data.nbytes / 2 ** 30))
-    # 1-based as we have the template vector set already
-    for i, sample in enumerate(samples, 1):
-        if i >= n_samples:
-            break
-        if verbose:
-            print_dynamic(
-                'Building data matrix from {} samples - {}'.format(
-                    n_samples,
-                progress_bar_str(float(i + 1) / n_samples, show_bar=True)))
-        data[i] = sample.as_vector()
-
-    return data, template, n_samples
