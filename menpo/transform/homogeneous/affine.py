@@ -5,8 +5,9 @@ from functools import reduce
 
 
 class Affine(Homogeneous):
-    r"""Base class for all n-dimensional affine transformations. Provides
-    methods to break the transform down into it's constituent
+    r"""
+    Base class for all ``n``-dimensional affine transformations. Provides
+    methods to break the transform down into its constituent
     scale/rotation/translation, to view the homogeneous matrix equivalent,
     and to chain this transform with other affine transformations.
 
@@ -25,23 +26,42 @@ class Affine(Homogeneous):
 
     @classmethod
     def init_identity(cls, n_dims):
+        r"""
+        Creates an identity matrix Affine transform.
+
+        Parameters
+        ----------
+        n_dims : `int`
+            The number of dimensions.
+
+        Returns
+        -------
+        identity : :class:`Affine`
+            The identity matrix transform.
+        """
         return cls(np.eye(n_dims + 1))
 
     @property
     def h_matrix(self):
+        r"""
+        The homogeneous matrix defining this transform.
+
+        :type: ``(n_dims + 1, n_dims + 1)`` `ndarray`
+        """
         return self._h_matrix
 
     def _set_h_matrix(self, value, copy=True, skip_checks=False):
-        r"""Updates the h_matrix, performing sanity checks.
+        r"""
+        Updates the `h_matrix`, performing sanity checks.
 
         Parameters
         ----------
         value : `ndarray`
             The new homogeneous matrix to set
         copy : `bool`, optional
-            If False do not copy the h_matrix. Useful for performance.
+            If ``False`` do not copy the h_matrix. Useful for performance.
         skip_checks : `bool`, optional
-            If True skip sanity checks on the matrix. Useful for performance.
+            If ``True`` skip sanity checks on the matrix. Useful for performance.
         """
         if not skip_checks:
             shape = value.shape
@@ -64,7 +84,8 @@ class Affine(Homogeneous):
 
     @property
     def linear_component(self):
-        r"""The linear component of this affine transform.
+        r"""
+        The linear component of this affine transform.
 
         :type: ``(n_dims, n_dims)`` `ndarray`
         """
@@ -72,20 +93,22 @@ class Affine(Homogeneous):
 
     @property
     def translation_component(self):
-        r"""The translation component of this affine transform.
+        r"""
+        The translation component of this affine transform.
 
         :type: ``(n_dims,)`` `ndarray`
         """
         return self.h_matrix[:-1, -1]
 
     def decompose(self):
-        r"""Decompose this transform into discrete Affine Transforms.
+        r"""
+        Decompose this transform into discrete Affine Transforms.
 
         Useful for understanding the effect of a complex composite transform.
 
         Returns
         -------
-        transforms : list of :map:`DiscreteAffine`
+        transforms : `list` of :map:`DiscreteAffine`
             Equivalent to this affine transform, such that::
 
                 reduce(lambda x,y: x.chain(y), self.decompose()) == self
@@ -107,7 +130,7 @@ class Affine(Homogeneous):
 
         Returns
         -------
-        str : string
+        str : `str`
             String representation of transform.
         """
         header = 'Affine decomposing into:'
@@ -120,13 +143,12 @@ class Affine(Homogeneous):
 
         Parameters
         ----------
-        x : (N, D) ndarray
+        x : ``(N, D)`` `ndarray`
             Array to apply this transform to.
-
 
         Returns
         -------
-        transformed_x : (N, D) ndarray
+        transformed_x : ``(N, D)`` `ndarray`
             The transformed array.
         """
         return np.dot(x, self.linear_component.T) + self.translation_component
@@ -134,7 +156,7 @@ class Affine(Homogeneous):
     @property
     def n_parameters(self):
         r"""
-        `n_dims * (n_dims + 1)` parameters - every element of the matrix bar
+        ``n_dims * (n_dims + 1)`` parameters - every element of the matrix but
         the homogeneous part.
 
         :type: int
@@ -203,13 +225,16 @@ class Affine(Homogeneous):
 
     @property
     def composes_inplace_with(self):
+        r"""
+        :class:`Affine` can swallow composition with any other :class:`Affine`.
+        """
         return Affine
 
 
 class AlignmentAffine(HomogFamilyAlignment, Affine):
     r"""
-    Constructs an Affine by finding the optimal affine transform to align
-    source to target.
+    Constructs an :class:`Affine` by finding the optimal affine transform to
+    align `source` to `target`.
 
     Parameters
     ----------
@@ -220,26 +245,21 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
 
     Notes
     -----
-    We want to find the optimal transform M which satisfies
-
-        M a = b
-
-    where `a` and `b` are the source and target homogeneous vectors
-    respectively.
-
-    ::
+    We want to find the optimal transform M which satisfies :math:`M a = b`
+    where :math:`a` and :math:`b` are the `source` and `target` homogeneous
+    vectors respectively. ::
 
        (M a)' = b'
        a' M' = b'
        a a' M' = a b'
 
     `a a'` is of shape `(n_dim + 1, n_dim + 1)` and so can be inverted
-    to solve for M.
+    to solve for `M`.
 
-    This approach is the analytical linear least squares solution to
-    the problem at hand. It will have a solution as long as `(a a')`
-    is non-singular, which generally means at least 2 corresponding
-    points are required.
+    This approach is the analytical linear least squares solution to the
+    problem at hand. It will have a solution as long as `(a a')` is
+    non-singular, which generally means at least 2 corresponding points are
+    required.
     """
     def __init__(self, source, target):
         # first, initialize the alignment
@@ -251,7 +271,14 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
     @staticmethod
     def _build_alignment_h_matrix(source, target):
         r"""
-        Returns the optimal alignment of source to target.
+        Returns the optimal alignment of `source` to `target`.
+
+        Parameters
+        ----------
+        source : :map:`PointCloud`
+            The source pointcloud instance used in the alignment
+        target : :map:`PointCloud`
+            The target pointcloud instance used in the alignment
         """
         a = source.h_points()
         b = target.h_points()
@@ -274,10 +301,10 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
 
         Parameters
         ----------
-        value : ndarray
+        value : `ndarray`
             The new homogeneous matrix to set
         copy : `bool`, optional
-            If False do not copy the h_matrix. Useful for performance.
+            If ``False`` do not copy the h_matrix. Useful for performance.
         skip_checks : `bool`, optional
             If ``True`` skip checking. Useful for performance.
 
@@ -297,7 +324,8 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         Affine.set_h_matrix(self, optimal_h, copy=False, skip_checks=True)
 
     def as_non_alignment(self):
-        r"""Returns a copy of this affine without it's alignment nature.
+        r"""
+        Returns a copy of this :map:`Affine` without its alignment nature.
 
         Returns
         -------
@@ -311,15 +339,15 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
 class DiscreteAffine(object):
     r"""
     A discrete Affine transform operation (such as a :meth:`Scale`,
-    :class:`Translation` or :meth:`Rotation`). Has to be able to invertable.
-    Make sure you inherit from :class:`DiscreteAffine` first,
-    for optimal `decompose()` behavior.
+    :class:`Translation` or :meth:`Rotation`). Has to be invertable. Make sure
+    you inherit from :class:`DiscreteAffine` first, for optimal
+    `decompose()` behavior.
     """
 
     def decompose(self):
         r"""
         A :class:`DiscreteAffine` is already maximally decomposed -
-        return a copy of self in a list.
+        return a copy of self in a `list`.
 
         Returns
         -------

@@ -107,7 +107,8 @@ class Vectorizable(Copyable):
         raise NotImplementedError()
 
     def from_vector_inplace(self, vector):
-        """Update the state of this object from a vector form.
+        """
+        Update the state of this object from a vector form.
 
         Parameters
         ----------
@@ -117,7 +118,8 @@ class Vectorizable(Copyable):
         raise NotImplementedError()
 
     def from_vector(self, vector):
-        """Build a new instance of the object from it's vectorized state.
+        """
+        Build a new instance of the object from it's vectorized state.
 
         ``self`` is used to fill out the missing state required to
         rebuild a full object from it's standardized flattened state. This
