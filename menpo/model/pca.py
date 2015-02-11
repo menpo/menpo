@@ -1,8 +1,7 @@
 from __future__ import division
 import numpy as np
-from menpo.math import principal_component_decomposition
+from menpo.math import pca, ipca, as_matrix
 from menpo.model.base import MeanInstanceLinearModel
-from menpo.visualize import print_dynamic, progress_bar_str
 
 
 class PCAModel(MeanInstanceLinearModel):
@@ -12,73 +11,37 @@ class PCAModel(MeanInstanceLinearModel):
 
     Principal Component Analysis (PCA) by eigenvalue decomposition of the
     data's scatter matrix. For details of the implementation of PCA, see
-    :map:`principal_component_decomposition`.
+    :map:`pca`.
 
     Parameters
     ----------
-    samples : `list` of :map:`Vectorizable`
-        List of samples to build the model from.
+    samples : `list` or `iterable` of :map:`Vectorizable`
+        List or iterable of samples to build the model from.
     centre : `bool`, optional
         When ``True`` (default) PCA is performed after mean centering the data.
         If ``False`` the data is assumed to be centred, and the mean will be
         ``0``.
-    bias : `bool`, optional
-        When ``True`` a biased estimator of the covariance matrix is used.
-        See notes.
     n_samples : `int`, optional
-        If provided then ``samples``  must be an iterator  that yields
+        If provided then ``samples``  must be an iterator that yields
         ``n_samples``. If not provided then samples has to be a `list` (so we
         know how large the data matrix needs to be).
-
-    Notes
-    -----
-    True bias means that we calculate the covariance as
-    :math:`\frac{1}{N} \sum_{i=1}^N \mathbf{x}_i \mathbf{x}_i^T` instead of
-    default :math:`\frac{1}{N-1} \sum_{i=1}^N \mathbf{x}_i \mathbf{x}_i^T`.
-    """
-    def __init__(self, samples, centre=True, bias=False, verbose=False,
-                 n_samples=None):
-        # get the first element as the template and use it to configure the
-        # data matrix
-        if n_samples is None:
-            # samples is a list
-            n_samples = len(samples)
-            template = samples[0]
-            samples = samples[1:]
-        else:
-            # samples is an iterator
-            template = next(samples)
-        n_features = template.n_parameters
-        template_vector = template.as_vector()
-        data = np.zeros((n_samples, n_features), dtype=template_vector.dtype)
-        # now we can fill in the first element from the template
-        data[0] = template_vector
-        del template_vector
-        if verbose:
-            print('Allocated data matrix {:.2f}'
-                  'GB'.format(data.nbytes / 2 ** 30))
-        # 1-based as we have the template vector set already
-        for i, sample in enumerate(samples, 1):
-            if i >= n_samples:
-                break
-            if verbose:
-                print_dynamic(
-                    'Building data matrix from {} samples - {}'.format(
-                        n_samples,
-                    progress_bar_str(float(i + 1) / n_samples, show_bar=True)))
-            data[i] = sample.as_vector()
+     """
+    def __init__(self, samples, centre=True, n_samples=None, verbose=False):
+        # build a data matrix from all the samples
+        data, template = as_matrix(samples, length=n_samples,
+                                   return_template=True, verbose=verbose)
+        # (n_samples, n_features)
+        self.n_samples = data.shape[0]
 
         # compute pca
-        e_vectors, e_values, mean = principal_component_decomposition(
-            data, whiten=False,  centre=centre, bias=bias, inplace=True)
+        e_vectors, e_values, mean = pca(data, centre=centre, inplace=True)
 
         super(PCAModel, self).__init__(e_vectors, mean, template)
         self.centred = centre
-        self.biased = bias
         self._eigenvalues = e_values
         # start the active components as all the components
         self._n_active_components = int(self.n_components)
-        self._trimmed_eigenvalues = None
+        self._trimmed_eigenvalues = np.array([])
 
     @property
     def n_active_components(self):
@@ -170,7 +133,8 @@ class PCAModel(MeanInstanceLinearModel):
             The whitened components.
         """
         return self.components / (
-            np.sqrt(self.eigenvalues + self.noise_variance())[:, None])
+            np.sqrt(self.eigenvalues * self.n_samples +
+                    self.noise_variance())[:, None])
 
     def original_variance(self):
         r"""
@@ -182,10 +146,7 @@ class PCAModel(MeanInstanceLinearModel):
         optional_variance : `float`
             The variance captured by the model.
         """
-        original_variance = self._eigenvalues.sum()
-        if self._trimmed_eigenvalues is not None:
-            original_variance += self._trimmed_eigenvalues.sum()
-        return original_variance
+        return self._eigenvalues.sum() + self._trimmed_eigenvalues.sum()
 
     def variance(self):
         r"""
@@ -304,16 +265,12 @@ class PCAModel(MeanInstanceLinearModel):
         """
         if self.n_active_components == self.n_components:
             noise_variance = 0.0
-            if self._trimmed_eigenvalues is not None:
+            if self._trimmed_eigenvalues.size is not 0:
                 noise_variance += self._trimmed_eigenvalues.mean()
         else:
-            if self._trimmed_eigenvalues is not None:
-                noise_variance = np.hstack(
-                    (self._eigenvalues[self.n_active_components:],
-                     self._trimmed_eigenvalues)).mean()
-            else:
-                noise_variance = (
-                    self._eigenvalues[self.n_active_components:].mean())
+            noise_variance = np.hstack(
+                (self._eigenvalues[self.n_active_components:],
+                 self._trimmed_eigenvalues)).mean()
         return noise_variance
 
     def noise_variance_ratio(self):
@@ -452,54 +409,16 @@ class PCAModel(MeanInstanceLinearModel):
             # set self.n_components to n_components
             self._components = self._components[:self.n_active_components]
             # store the eigenvalues associated to the discarded components
-            self._trimmed_eigenvalues = \
-                self._eigenvalues[self.n_active_components:]
+            self._trimmed_eigenvalues = np.hstack((
+                self._trimmed_eigenvalues,
+                self._eigenvalues[self.n_active_components:]))
             # make sure that the eigenvalues are trimmed too
             self._eigenvalues = self._eigenvalues[:self.n_active_components]
 
-    def distance_to_subspace(self, instance):
-        """
-        Returns a version of `instance` where all the basis of the model
-        have been projected out and which has been scaled by the inverse of
-        the `noise_variance`
-
-        Parameters
-        ----------
-        instance : :map:`Vectorizable`
-            A novel instance.
-
-        Returns
-        -------
-        scaled_projected_out : `self.instance_class`
-            A copy of `instance`, with all basis of the model projected out
-            and scaled by the inverse of the `noise_variance`.
-        """
-        vec_instance = self.distance_to_subspace_vector(instance.as_vector())
-        return instance.from_vector(vec_instance)
-
-    def distance_to_subspace_vector(self, vector_instance):
-        """
-        Returns a version of `instance` where all the basis of the model
-        have been projected out and which has been scaled by the inverse of
-        the `noise_variance`.
-
-        Parameters
-        ----------
-        vector_instance : ``(n_features,)`` `ndarray`
-            A novel vector.
-
-        Returns
-        -------
-        scaled_projected_out : ``(n_features,)`` `ndarray`
-            A copy of `vector_instance` with all basis of the model projected
-            out and scaled by the inverse of the `noise_variance`.
-        """
-        return (self.inverse_noise_variance() *
-                self.project_out_vectors(vector_instance))
-
     def project_whitened(self, instance):
         """
-        Returns a sheared (non-orthogonal) reconstruction of `instance`.
+        Projects the `instance` onto the whitened components, retrieving the 
+        whitened linear weightings.
 
         Parameters
         ----------
@@ -508,15 +427,15 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        sheared_reconstruction : `self.instance_class`
-            A sheared (non-orthogonal) reconstruction of `instance`.
+        projected : (n_components,)
+            A vector of whitened linear weightings
         """
-        vector_instance = self.project_whitened_vector(instance.as_vector())
-        return instance.from_vector(vector_instance)
+        return self.project_whitened_vector(instance.as_vector())
 
     def project_whitened_vector(self, vector_instance):
         """
-        Returns a sheared (non-orthogonal) reconstruction of `vector_instance`.
+        Projects the `vector_instance` onto the whitened components, 
+        retrieving the whitened linear weightings.
 
         Parameters
         ----------
@@ -525,12 +444,11 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        sheared_reconstruction : ``(n_features,)`` `ndarray`
-            A sheared (non-orthogonal) reconstruction of `vector_instance`
+        projected : ``(n_features,)`` `ndarray`
+            A vector of whitened linear weightings
         """
         whitened_components = self.whitened_components()
-        weights = np.dot(vector_instance, whitened_components.T)
-        return np.dot(weights, whitened_components)
+        return np.dot(vector_instance, whitened_components.T)
 
     def orthonormalize_against_inplace(self, linear_model):
         r"""
@@ -578,6 +496,57 @@ class PCAModel(MeanInstanceLinearModel):
 
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
+
+    def increment(self, samples, n_samples=None, forgetting_factor=1.0,
+                  verbose=False):
+        r"""
+        Update the eigenvectors, eigenvalues and mean vector of this model
+        by performing incremental PCA on the given samples.
+
+        Parameters
+        ----------
+        samples : `list` of :map:`Vectorizable`
+            List of new samples to update the model from.
+        n_samples : `int`, optional
+            If provided then ``samples``  must be an iterator that yields
+            ``n_samples``. If not provided then samples has to be a
+            list (so we know how large the data matrix needs to be).
+        forgetting_factor : ``[0.0, 1.0]`` `float`, optional
+            Forgetting factor that weights the relative contribution of new
+            samples vs old samples. If 1.0, all samples are weighted equally
+            and, hence, the results is the exact same as performing batch
+            PCA on the concatenated list of old and new simples. If <1.0,
+            more emphasis is put on the new samples. See [1] for details.
+
+        References
+        ----------
+        .. [1] David Ross, Jongwoo Lim, Ruei-Sung Lin, Ming-Hsuan Yang.
+           "Incremental Learning for Robust Visual Tracking". IJCV, 2007.
+        """
+        # build a data matrix from the new samples
+        data = as_matrix(samples, length=n_samples, verbose=verbose)
+        # (n_samples, n_features)
+        n_new_samples = data.shape[0]
+
+        # compute incremental pca
+        e_vectors, e_values, m_vector = ipca(
+            data, self._components, self._eigenvalues, self.n_samples,
+            m_a=self.mean_vector, f=forgetting_factor)
+
+        # if the number of active components is the same as the total number
+        # of components so it will be after this method is executed
+        reset = (self.n_active_components == self.n_components)
+
+        # update mean, components, eigenvalues and number of samples
+        self.mean_vector = m_vector
+        self._components = e_vectors
+        self._eigenvalues = e_values
+        self.n_samples += n_new_samples
+
+        # reset the number of active components to the total number of
+        # components
+        if reset:
+            self.n_active_components = self.n_components
 
     def plot_eigenvalues(self, figure_id=None, new_figure=False,
                          render_lines=True, line_colour='b', line_style='-',
