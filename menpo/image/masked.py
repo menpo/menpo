@@ -57,7 +57,7 @@ class MaskedImage(Image):
                                                    mask.shape))
         else:
             # no mask provided - make the default.
-            self.mask = BooleanImage.blank(self.shape, fill=True)
+            self.mask = BooleanImage.init_blank(self.shape, fill=True)
 
     def as_unmasked(self, copy=True):
         r"""
@@ -83,7 +83,7 @@ class MaskedImage(Image):
         return img
 
     @classmethod
-    def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
+    def init_blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
         r"""
         Returns a blank image
 

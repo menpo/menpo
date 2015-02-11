@@ -46,7 +46,7 @@ class BooleanImage(Image):
                                   "BooleanImage.")
 
     @classmethod
-    def blank(cls, shape, fill=True, round='ceil', **kwargs):
+    def init_blank(cls, shape, fill=True, round='ceil', **kwargs):
         r"""
         Returns a blank :map:`BooleanImage` of the requested shape
 

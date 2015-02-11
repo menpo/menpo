@@ -14,7 +14,7 @@ n_images = 5
 image_shape = (10, 10)
 mask = np.zeros(image_shape, dtype=np.bool)
 mask[:2] = True
-template = MaskedImage.blank(image_shape, mask=mask)
+template = MaskedImage.init_blank(image_shape, mask=mask)
 
 matrix = np.random.random([n_images, 20])
 

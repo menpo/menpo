@@ -139,7 +139,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return img
 
     @classmethod
-    def blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
+    def init_blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
         r"""
         Returns a blank image.
 
@@ -1222,9 +1222,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Sampled value to rebuild the masked image from.
         """
         from menpo.image import MaskedImage
-        warped_image = MaskedImage.blank(template_mask.shape,
-                                         n_channels=self.n_channels,
-                                         mask=template_mask)
+        warped_image = MaskedImage.init_blank(template_mask.shape,
+                                              n_channels=self.n_channels,
+                                              mask=template_mask)
         warped_image.from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 

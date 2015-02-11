@@ -28,19 +28,19 @@ def test_image_height():
 
 def test_image_blank():
     image = Image(np.zeros((6, 4, 1)))
-    image_blank = Image.blank((6, 4))
+    image_blank = Image.init_blank((6, 4))
     assert(np.all(image_blank.pixels == image.pixels))
 
 
 def test_image_blank_fill():
     image = Image(np.ones((6, 4, 1)) * 7)
-    image_blank = Image.blank((6, 4), fill=7)
+    image_blank = Image.init_blank((6, 4), fill=7)
     assert(np.all(image_blank.pixels == image.pixels))
 
 
 def test_image_blank_n_channels():
     image = Image(np.zeros((6, 4, 7)))
-    image_blank = Image.blank((6, 4), n_channels=7)
+    image_blank = Image.init_blank((6, 4), n_channels=7)
     assert(np.all(image_blank.pixels == image.pixels))
 
 
@@ -143,29 +143,29 @@ def test_image_from_vector_custom_channels_no_copy():
 
 @raises(ValueError)
 def test_boolean_image_wrong_round():
-    BooleanImage.blank((12, 12), round='ads')
+    BooleanImage.init_blank((12, 12), round='ads')
 
 
 def test_boolean_image_proportion_true():
-    image = BooleanImage.blank((10, 10))
+    image = BooleanImage.init_blank((10, 10))
     image.pixels[:7] = False
     assert(image.proportion_true() == 0.3)
 
 
 def test_boolean_image_proportion_false():
-    image = BooleanImage.blank((10, 10))
+    image = BooleanImage.init_blank((10, 10))
     image.pixels[:7] = False
     assert(image.proportion_false() == 0.7)
 
 
 def test_boolean_image_proportion_sums():
-    image = BooleanImage.blank((10, 10))
+    image = BooleanImage.init_blank((10, 10))
     image.pixels[:7] = False
     assert(image.proportion_true() + image.proportion_false() == 1)
 
 
 def test_boolean_image_false_indices():
-    image = BooleanImage.blank((2, 3))
+    image = BooleanImage.init_blank((2, 3))
     image.pixels[0, 1] = False
     image.pixels[1, 2] = False
     assert(np.all(image.false_indices() == np.array([[0, 1],
@@ -173,27 +173,27 @@ def test_boolean_image_false_indices():
 
 
 def test_boolean_image_str():
-    image = BooleanImage.blank((2, 3))
+    image = BooleanImage.init_blank((2, 3))
     assert(image.__str__() == '3W x 2H 2D mask, 100.0% of which is True')
 
 
 def test_boolean_image_from_vector():
     vector = np.zeros(16, dtype=np.bool)
-    image = BooleanImage.blank((4, 4))
+    image = BooleanImage.init_blank((4, 4))
     image2 = image.from_vector(vector)
     assert(np.all(image2.as_vector() == vector))
 
 
 def test_boolean_image_from_vector_no_copy():
     vector = np.zeros(16, dtype=np.bool)
-    image = BooleanImage.blank((4, 4))
+    image = BooleanImage.init_blank((4, 4))
     image2 = image.from_vector(vector, copy=False)
     assert(is_same_array(image2.pixels.ravel(), vector))
 
 
 def test_boolean_image_from_vector_no_copy_raises():
     vector = np.zeros(16, dtype=np.bool)
-    image = BooleanImage.blank((4, 4))
+    image = BooleanImage.init_blank((4, 4))
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         image.from_vector(vector[::-1], copy=False)
@@ -201,27 +201,27 @@ def test_boolean_image_from_vector_no_copy_raises():
 
 
 def test_boolean_image_invert_inplace():
-    image = BooleanImage.blank((4, 4))
+    image = BooleanImage.init_blank((4, 4))
     image.invert_inplace()
     assert(np.all(~image.pixels))
 
 
 def test_boolean_image_invert_inplace_double_noop():
-    image = BooleanImage.blank((4, 4))
+    image = BooleanImage.init_blank((4, 4))
     image.invert_inplace()
     image.invert_inplace()
     assert(np.all(image.pixels))
 
 
 def test_boolean_image_invert():
-    image = BooleanImage.blank((4, 4))
+    image = BooleanImage.init_blank((4, 4))
     image2 = image.invert()
     assert(np.all(image.pixels))
     assert(np.all(~image2.pixels))
 
 
 def test_boolean_bounds_false():
-    mask = BooleanImage.blank((8, 8), fill=True)
+    mask = BooleanImage.init_blank((8, 8), fill=True)
     mask.pixels[1, 2] = False
     mask.pixels[5, 4] = False
     mask.pixels[3:2, 3] = False
@@ -232,7 +232,7 @@ def test_boolean_bounds_false():
 
 @raises(TypeError)
 def test_boolean_prevent_order_kwarg():
-    mask = BooleanImage.blank((8, 8), fill=True)
+    mask = BooleanImage.init_blank((8, 8), fill=True)
     mask.warp_to_mask(mask, None, order=4)
 
 
@@ -272,7 +272,7 @@ def test_mask_creation_basics():
 
 
 def test_mask_blank():
-    mask = BooleanImage.blank((56, 12, 3))
+    mask = BooleanImage.init_blank((56, 12, 3))
     assert (np.all(mask.pixels))
 
 
@@ -297,27 +297,27 @@ def test_boolean_copy_false_non_boolean():
 
 
 def test_mask_blank_rounding_floor():
-    mask = BooleanImage.blank((56.1, 12.1), round='floor')
+    mask = BooleanImage.init_blank((56.1, 12.1), round='floor')
     assert_allclose(mask.shape, (56, 12))
 
 
 def test_mask_blank_rounding_ceil():
-    mask = BooleanImage.blank((56.1, 12.1), round='ceil')
+    mask = BooleanImage.init_blank((56.1, 12.1), round='ceil')
     assert_allclose(mask.shape, (57, 13))
 
 
 def test_mask_blank_rounding_round():
-    mask = BooleanImage.blank((56.1, 12.6), round='round')
+    mask = BooleanImage.init_blank((56.1, 12.6), round='round')
     assert_allclose(mask.shape, (56, 13))
 
 
 def test_mask_blank_false_fill():
-    mask = BooleanImage.blank((56, 12, 3), fill=False)
+    mask = BooleanImage.init_blank((56, 12, 3), fill=False)
     assert (np.all(~mask.pixels))
 
 
 def test_mask_n_true_n_false():
-    mask = BooleanImage.blank((64, 14), fill=False)
+    mask = BooleanImage.init_blank((64, 14), fill=False)
     assert_equal(mask.n_true(), 0)
     assert_equal(mask.n_false(), 64 * 14)
     mask.mask[0, 0] = True
@@ -327,7 +327,7 @@ def test_mask_n_true_n_false():
 
 
 def test_mask_true_indices():
-    mask = BooleanImage.blank((64, 14, 51), fill=False)
+    mask = BooleanImage.init_blank((64, 14, 51), fill=False)
     mask.mask[0, 2, 5] = True
     mask.mask[5, 13, 4] = True
     true_indices = mask.true_indices()
@@ -336,7 +336,7 @@ def test_mask_true_indices():
 
 
 def test_mask_false_indices():
-    mask = BooleanImage.blank((64, 14, 51), fill=True)
+    mask = BooleanImage.init_blank((64, 14, 51), fill=True)
     mask.mask[0, 2, 5] = False
     mask.mask[5, 13, 4] = False
     false_indices = mask.false_indices()
@@ -345,7 +345,7 @@ def test_mask_false_indices():
 
 
 def test_mask_true_bounding_extent():
-    mask = BooleanImage.blank((64, 14, 51), fill=False)
+    mask = BooleanImage.init_blank((64, 14, 51), fill=False)
     mask.mask[0, 13, 5] = True
     mask.mask[5, 2, 4] = True
     tbe = mask.bounds_true()
@@ -677,27 +677,27 @@ def test_image_extract_channels_multiple_reversed():
 
 
 def test_diagonal_greyscale():
-    image = Image.blank((100, 250), n_channels=1)
+    image = Image.init_blank((100, 250), n_channels=1)
     assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
 
 
 def test_diagonal_color():
-    image = Image.blank((100, 250), n_channels=3)
+    image = Image.init_blank((100, 250), n_channels=3)
     assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
 
 
 def test_diagonal_greyscale_ndim():
-    image = Image.blank((100, 250, 50), n_channels=1)
+    image = Image.init_blank((100, 250, 50), n_channels=1)
     assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
 
 
 def test_diagonal_kchannel_ndim():
-    image = Image.blank((100, 250, 50), n_channels=5)
+    image = Image.init_blank((100, 250, 50), n_channels=5)
     assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
 
 
 def test_rescale_to_diagonal():
-    image = Image.blank((8, 6), n_channels=2)
+    image = Image.init_blank((8, 6), n_channels=2)
     assert image.diagonal == 10
     rescaled = image.rescale_to_diagonal(5)
     assert rescaled.shape == (4, 3)
