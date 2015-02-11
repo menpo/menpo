@@ -61,8 +61,7 @@ class MaskedImage(Image):
 
     @classmethod
     def init_blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
-        r"""
-        Returns a blank image
+        r"""Generate a blank masked image
 
         Parameters
         ----------
@@ -86,13 +85,13 @@ class MaskedImage(Image):
 
         ::
 
-            super(SubClass, cls).blank(shape,**kwargs)
+            super(SubClass, cls).init_blank(shape,**kwargs)
 
         in order to appropriately propagate the subclass type to ``cls``.
 
         Returns
         -------
-        blank_image : :class:`MaskedImage`
+        blank_image : :map:`MaskedImage`
             A new masked image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
