@@ -56,7 +56,7 @@ class Rotation(DiscreteAffine, Similarity):
         return Rotation(np.eye(n_dims))
 
     @classmethod
-    def from_2d_ccw_angle(cls, theta, degrees=True):
+    def init_from_2d_ccw_angle(cls, theta, degrees=True):
         r"""
         Convenience constructor for 2D CCW rotations about the origin
 

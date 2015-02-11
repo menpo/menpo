@@ -1553,7 +1553,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                              '2D images')
         # create a translation that moves the centre of the image to the origin
         t = Translation(self.centre)
-        r = Rotation.from_2d_ccw_angle(theta, degrees=degrees)
+        r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
         r_about_centre = t.pseudoinverse().compose_before(r).compose_before(t)
         return self.warp_to_shape(self.shape, r_about_centre.pseudoinverse(),
                                   warp_landmarks=True, cval=cval)
