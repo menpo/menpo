@@ -59,17 +59,18 @@ def same_name(asset):
 
 
 def import_image(filepath, landmark_resolver=same_name, normalise=True):
-    r"""
-    Single image (and associated landmarks) importer.
+    r"""Single image (and associated landmarks) importer.
 
-    Iff an image file is found at `filepath`, returns a :map:`Image` or subclass
-    representing it. Landmark files sharing the same filename
-    will be imported and attached too. If the image defines a mask,
-    this mask will be imported.
+    If an image file is found at `filepath`, returns an :map:`Image` or
+    subclass representing it. By default, landmark files sharing the same
+    filename stem will be imported and attached with a group name based on the
+    extension of the landmark file, although this behavior can be customised
+    (see `landmark_resolver`). If the image defines a mask, this mask will be
+    imported.
 
     Parameters
     ----------
-    filepath : `str`
+    filepath : `pathlib.Path` or `str`
         A relative or absolute filepath to an image file.
     landmark_resolver : `function`, optional
         This function will be used to find landmarks for the
@@ -78,7 +79,12 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
         Default finds landmarks with the same name as the image file.
     normalise : `bool`, optional
         If ``True``, normalise the image pixels between 0 and 1 and convert
-        to floating point.
+        to floating point. If false, the native datatype of the image will be
+        maintained (commonly `uint8`). Note that in general Menpo assumes
+        :map:`Image` instances contain floating point data - if you disable
+        this flag you will have to manually convert the images you import to
+        floating point before doing most Menpo operations. This however can be
+        useful to save on memory usage if you only wish to view or crop images.
 
     Returns
     -------
@@ -95,48 +101,55 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
 def import_landmark_file(filepath, asset=None):
     r"""Single landmark group importer.
 
-    Iff an landmark file is found at `filepath`, returns a :class:`menpo
-    .landmarks.LandmarkGroup` representing it.
+    If a landmark file is found at ``filepath``, returns a
+    :map:`LandmarkGroup` representing it.
 
     Parameters
     ----------
-    filepath : `str`
+    filepath : `pathlib.Path` or `str`
         A relative or absolute filepath to an landmark file.
 
     Returns
     -------
-    :map:`LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The :map:`LandmarkGroup` that the file format represents.
-
     """
     return _import(filepath, image_landmark_types, asset=asset)
 
 
 def import_pickle(filepath):
-    r"""Import a pickle file.
+    r"""Import a pickle file of arbitrary Python objects.
+
+    Menpo unambiguously uses ``.pkl`` as it's choice of extension for Pickle
+    files. Menpo also supports automatic importing and exporting of gzip
+    compressed pickle files - just choose a ``filepath`` ending ``pkl.gz`` and
+    gzip compression will automatically be applied. Compression can massively
+    reduce the filesize of a pickle file at the cost of longer import and
+    export times.
 
     Parameters
     ----------
-    filepath : `str`
-        A relative or absolute filepath to an .pkl or .pkl.gz file.
+    filepath : `pathlib.Path` or `str`
+        A relative or absolute filepath to a ``.pkl`` or ``.pkl.gz`` file.
 
     Returns
     -------
-    `object`
+    object : `object`
         Whatever Python objects are present in the Pickle file
-
     """
     return _import(filepath, pickle_types)
 
 
 def import_images(pattern, max_images=None, landmark_resolver=same_name,
                   normalise=True, verbose=False):
-    r"""
-    Multiple image import generator.
+    r"""Multiple image (and associated landmarks) importer.
 
-    Makes it's best effort to import and attach relevant related
-    information such as landmarks. It searches the directory for files that
-    begin with the same filename and end in a supported extension.
+    For each image found yields an :map:`Image` or
+    subclass representing it. By default, landmark files sharing the same
+    filename stem will be imported and attached with a group name based on the
+    extension of the landmark file, although this behavior can be customised
+    (see `landmark_resolver`). If the image defines a mask, this mask will be
+    imported.
 
     Note that this is a generator function. This allows for pre-processing
     of data to take place as data is imported (e.g. cropping images to
@@ -145,7 +158,9 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
     Parameters
     ----------
     pattern : `str`
-        The glob path pattern to search for images.
+        A glob path pattern to search for images. Every image found to match
+        the glob will be imported one by one. See :map:`image_paths` for more
+        details of what images will be found.
     max_images : positive `int`, optional
         If not ``None``, only import the first ``max_images`` found. Else,
         import all.
@@ -155,15 +170,22 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
         return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
         Default finds landmarks with the same name as the image file.
     normalise : `bool`, optional
-        If ``True``, normalise the images between 0.0 and 1.0 and convert
-        to ``np.float``.
+        If ``True``, normalise the image pixels between 0 and 1 and convert
+        to floating point. If false, the native datatype of the image will be
+        maintained (commonly `uint8`). Note that in general Menpo assumes
+        :map:`Image` instances contain floating point data - if you disable
+        this flag you will have to manually convert the images you import to
+        floating point before doing most Menpo operations. This however can be
+        useful to save on memory usage if you only wish to view or crop images.
     verbose : `bool`, optional
-        If ``True`` progress of the importing will be dynamically reported.
+        If ``True`` progress of the importing will be dynamically reported with
+        a progress bar.
 
-    Yields
-    ------
-    :map:`MaskedImage`
-        Images found to match the glob pattern provided.
+    Returns
+    -------
+    generator : `generator` yielding :map:`Image` or list of
+        Generator yielding :map:`Image` instances found to match the glob
+        pattern provided.
 
     Raises
     ------
@@ -172,12 +194,12 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
 
     Examples
     --------
-    Import crops of the top 100 square pixels from a huge collection of images
+    Import images at 20% scale from a huge collection:
 
-        >>> images = []
-        >>> for im in import_images('./massive_image_db/*'):
-        >>>    im.crop_inplace((0, 0), (100, 100))  # crop to a sensible size as we go
-        >>>    images.append(im)
+    >>> images = []
+    >>> for img in menpo.io.import_images('./massive_image_db/*'):
+    >>>    # rescale to a sensible size as we go
+    >>>    images.append(img.rescale(0.2))
     """
     kwargs = {'normalise': normalise}
     for asset in _import_glob_generator(pattern, image_types,
@@ -197,7 +219,10 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
     Parameters
     ----------
     pattern : `str`
-        The glob path pattern to search for images.
+        A glob path pattern to search for landmark files. Every
+        landmark file found to match the glob will be imported one by one.
+        See :map:`landmark_file_paths` for more details of what landmark files
+        will be found.
 
     max_landmark_files : positive `int`, optional
         If not ``None``, only import the first ``max_landmark_files`` found.
@@ -206,16 +231,16 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
     verbose : `bool`, optional
         If ``True`` progress of the importing will be dynamically reported.
 
-    Yields
-    ------
-    :map:`LandmarkGroup`
-        Landmark found to match the glob pattern provided.
+    Returns
+    -------
+    generator : `generator` yielding :map:`LandmarkGroup`
+        Generator yielding :map:`LandmarkGroup` instances found to match the
+        glob pattern provided.
 
     Raises
     ------
     ValueError
         If no landmarks are found at the provided glob.
-
     """
     for asset in _import_glob_generator(pattern, image_landmark_types,
                                         max_assets=max_landmarks,
@@ -228,10 +253,16 @@ def import_pickles(pattern, max_pickles=None, verbose=False):
 
     Note that this is a generator function.
 
+    Menpo unambiguously uses ``.pkl`` as it's choice of extension for pickle
+    files. Menpo also supports automatic importing of gzip compressed pickle
+    files - matching files with extension ``pkl.gz`` will be automatically
+    un-gzipped and imported.
+
     Parameters
     ----------
     pattern : `str`
-        The glob path pattern to search for pickles.
+        The glob path pattern to search for pickles. Every pickle file found
+        to match the glob will be imported one by one.
 
     max_pickles : positive `int`, optional
         If not ``None``, only import the first ``max_pickles`` found.
@@ -240,10 +271,11 @@ def import_pickles(pattern, max_pickles=None, verbose=False):
     verbose : `bool`, optional
         If ``True`` progress of the importing will be dynamically reported.
 
-    Yields
-    ------
-    `object`
-        Whatever Python objects are present in the Pickle file
+    Returns
+    -------
+    generator : generator yielding `object`
+        Generator yielding whatever Python object is present in the pickle
+        files that match the glob pattern provided.
 
     Raises
     ------
@@ -308,7 +340,8 @@ class BuiltinAssets(object):
 import_builtin_asset = BuiltinAssets()
 
 for asset in ls_builtin_assets():
-    setattr(import_builtin_asset, asset.replace('.', '_'), import_builtin(asset))
+    setattr(import_builtin_asset, asset.replace('.', '_'),
+            import_builtin(asset))
 
 
 def image_paths(pattern):
@@ -337,9 +370,9 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
     if n_files == 0:
         raise ValueError('The glob {} yields no assets'.format(pattern))
     for i, asset in enumerate(_multi_import_generator(filepaths, extension_map,
-                                         landmark_resolver=landmark_resolver,
-                                         landmark_ext_map=landmark_ext_map,
-                                         importer_kwargs=importer_kwargs)):
+                              landmark_resolver=landmark_resolver,
+                              landmark_ext_map=landmark_ext_map,
+                              importer_kwargs=importer_kwargs)):
         if verbose:
             print_dynamic('- Loading {} assets: {}'.format(
                 n_files, progress_bar_str(float(i + 1) / n_files,
@@ -595,6 +628,13 @@ def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
     """
     suffix = ''.join(filepath.suffixes)
     importer_type = extensions_map.get(suffix)
+    # we couldn't find an importer for all the suffixes (e.g .foo.bar)
+    # maybe the file stem has '.' in it? -> try again but this time just use the
+    # final suffix (.bar). (Note we first try '.foo.bar' as we want to catch
+    # cases like 'pkl.gz')
+    if importer_type is None and len(filepath.suffixes) > 1:
+        suffix = filepath.suffix
+        importer_type = extensions_map.get(suffix)
     if importer_type is None:
         raise ValueError("{} does not have a "
                          "suitable importer.".format(suffix))

@@ -123,7 +123,7 @@ def index_alpha_beta(i, ij, ik, points):
     triangle throws a TriangleContainmentError.
 
     Parameters
-    -----------
+    ----------
     i : (`n_tris`, 2) ndarray
         The coordinate of the i'th point of each triangle
 
@@ -291,7 +291,6 @@ class AbstractPWA(Alignment, Transform, Invertible):
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
 
-
     @abc.abstractmethod
     def index_alpha_beta(self, points):
         """
@@ -306,7 +305,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
         triangle throws a TriangleContainmentError.
 
         Parameters
-        -----------
+        ----------
         points : (K, 2) ndarray
             Points to test.
 

@@ -1,0 +1,31 @@
+/* Code References (using the class or map commands) */
+a>code.xref.py.py-class.docutils.literal,a>code.xref.py.py-function.docutils.literal {
+    color: #2980B9;
+    font-weight: bold;
+    padding: 0;
+    font-size: 90%;
+}
+a:hover>code.xref.py.py-class.docutils.literal,a:hover>code.xref.py.py-function.docutils.literal {
+    color: purple;
+}
+/* Class names */
+code.descclassname, code.descname {
+    background-color: transparent;
+    font-size: 100% !important;
+    border: none;
+    padding: 0;
+    color: #000000;
+}
+/* Inline Code */
+code.docutils.literal {
+    color: #000000;
+    font-weight: bold;
+}
+/* Inline Code Links e.g. for module links*/
+a>code.docutils.literal {
+    color: gray;
+    font-weight: bold;
+    border: none;
+    background: transparent;
+    font-size: 80%;
+}

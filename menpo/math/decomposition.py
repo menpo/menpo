@@ -3,21 +3,31 @@ import numpy as np
 from .linalg import dot_inplace_right
 
 
-def eigenvalue_decomposition(S, eps=10**-10):
+def eigenvalue_decomposition(C, eps=1e-10):
     r"""
+    Eigenvalue decomposition of a given covariance (or scatter) matrix.
 
     Parameters
     ----------
-    S : (N, N)  ndarray
+    C : ``(N, N)`` `ndarray`
         Covariance/Scatter matrix
+    eps : `float`, optional
+        Tolerance value for positive eigenvalue. Those eigenvalues smaller
+        than the specified eps value, together with their corresponding
+        eigenvectors, will be automatically discarded. The final
+        limit is computed as ::
+
+            limit = np.max(np.abs(eigenvalues)) * eps
 
     Returns
     -------
-    pos_eigenvectors: (N, p) ndarray
-    pos_eigenvalues: (p,) ndarray
+    pos_eigenvectors : ``(N, p)`` `ndarray`
+        The matrix with the eigenvectors corresponding to positive eigenvalues.
+    pos_eigenvalues : ``(p,)`` `ndarray`
+        The array of positive eigenvalues.
     """
     # compute eigenvalue decomposition
-    eigenvalues, eigenvectors = np.linalg.eigh(S)
+    eigenvalues, eigenvectors = np.linalg.eigh(C)
     # sort eigenvalues from largest to smallest
     index = np.argsort(eigenvalues)[::-1]
     eigenvalues = eigenvalues[index]
@@ -38,112 +48,178 @@ def eigenvalue_decomposition(S, eps=10**-10):
     return pos_eigenvectors, pos_eigenvalues
 
 
-def principal_component_decomposition(X, whiten=False, centre=True,
-                                      bias=False, inplace=False):
+def pca(X, centre=True, inplace=False, eps=1e-10):
     r"""
-    Apply PCA on the data matrix X. In the case where the data matrix is very
-    large, it is advisable to set `inplace=True`. However, note this this
-    destructively edits the data matrix by subtracting the mean inplace.
+    Apply Principal Component Analysis (PCA) on the data matrix `X`. In the case
+    where the data matrix is very large, it is advisable to set
+    ``inplace = True``. However, note this destructively edits the data matrix
+    by subtracting the mean inplace.
 
     Parameters
     ----------
-    x : (n_samples, n_features) ndarray
-        Training data
-    whiten : bool, optional
-        Normalise the eigenvectors to have unit magnitude
-
-        Default: `False`
-    centre : bool, optional
+    X : ``(n_samples, n_dims)`` `ndarray`
+        Data matrix.
+    centre : `bool`, optional
         Whether to centre the data matrix. If `False`, zero will be subtracted.
-
-        Default: `True`
-    bias : bool, optional
-        Whether to use a biased estimate of the number of samples. If `False`,
-        subtracts `1` from the number of samples.
-
-        Default: `False`
-    inplace : bool, optional
+    inplace : `bool`, optional
         Whether to do the mean subtracting inplace or not. This is crucial if
         the data matrix is greater than half the available memory size.
-
-        Default: `False`
+    eps : `float`, optional
+        Tolerance value for positive eigenvalue. Those eigenvalues smaller
+        than the specified eps value, together with their corresponding
+        eigenvectors, will be automatically discarded.
 
     Returns
     -------
-    eigenvectors : (n_components, n_features) ndarray
-        The eigenvectors of the data matrix
-    eigenvalues : (n_components,) ndarray
-        The positive eigenvalues from the data matrix
-    mean_vector : (n_components,) ndarray
-        The mean that was subtracted from the dataset
+    U (eigenvectors) : ``(``(n_components, n_dims)``)`` `ndarray`
+        Eigenvectors of the data matrix.
+    l (eigenvalues) : ``(n_components,)`` `ndarray`
+        Positive eigenvalues of the data matrix.
+    m (mean vector) : ``(n_dimensions,)`` `ndarray`
+        Mean that was subtracted from the data matrix.
     """
-    n_samples, n_features = X.shape
-
-    if bias:
-        N = n_samples
-    else:
-        N = n_samples - 1.0
+    n, d = X.shape
 
     if centre:
         # centre data
-        mean_vector = np.mean(X, axis=0)
+        # m (mean vector): d
+        m = np.mean(X, axis=0)
     else:
-        mean_vector = np.zeros(n_features)
+        m = np.zeros(d)
 
     # This is required if the data matrix is very large!
     if inplace:
-        X -= mean_vector
+        X -= m
     else:
-        X = X - mean_vector
+        X = X - m
 
-    if n_features < n_samples:
+    if d < n:
         # compute covariance matrix
-        # S:  n_features  x  n_features
-        S = np.dot(X.T, X) / N
-        # S should be perfectly symmetrical, but numerical error can creep
-        # in. Enforce symmetry here to avoid creating complex
-        # eigenvectors from eigendecomposition
-        S = (S + S.T) / 2.0
+        # C (covariance): d x d
+        C = np.dot(X.T, X) / (n - 1)
+        # C should be perfectly symmetrical, but numerical error can creep
+        # in. Enforce symmetry here to avoid creating complex eigenvectors
+        C = (C + C.T) / 2.0
 
         # perform eigenvalue decomposition
-        # eigenvectors:  n_features x  n_features
-        # eigenvalues:   n_features
-        eigenvectors, eigenvalues = eigenvalue_decomposition(S)
+        # U (eigenvectors): d x n
+        # s (eigenvalues):  n
+        U, l = eigenvalue_decomposition(C, eps=eps)
 
-        if whiten:
-            # whiten eigenvectors
-            eigenvectors *= np.sqrt(1.0 / eigenvalues)
-
-        # transpose eigenvectors
-        # eigenvectors:  n_samples  x  n_features
-        eigenvectors = eigenvectors.T
+        # transpose U
+        # U: n x d
+        U = U.T
 
     else:
-        # n_features > n_samples
-        # compute covariance matrix
-        # S:  n_samples  x  n_samples
-        S = np.dot(X, X.T) / N
-        # S should be perfectly symmetrical, but numerical error can creep
-        # in. Enforce symmetry here to avoid creating complex
-        # eigenvectors from eigendecomposition
-        S = (S + S.T) / 2.0
+        # d > n
+        # compute small covariance matrix
+        # C (covariance): n x n
+        C = np.dot(X, X.T) / (n - 1)
+        # C should be perfectly symmetrical, but numerical error can creep
+        # in. Enforce symmetry here to avoid creating complex eigenvectors
+        C = (C + C.T) / 2.0
 
         # perform eigenvalue decomposition
-        # eigenvectors:  n_samples  x  n_samples
-        # eigenvalues:   n_samples
-        eigenvectors_s, eigenvalues = eigenvalue_decomposition(S)
+        # V (eigenvectors): n x n
+        # s (eigenvalues):  n
+        V, l = eigenvalue_decomposition(C, eps=eps)
 
         # compute final eigenvectors
-        # eigenvectors:  n_samples  x  n_features
-        if whiten:
-            w = (N * eigenvalues) ** -1.0
-        else:
-            w = np.sqrt(1.0 / (N * eigenvalues))
-
+        # U: n x d
+        w = np.sqrt(1.0 / ((n - 1) * l))
         dot = dot_inplace_right if inplace else np.dot
-        eigenvectors = dot(eigenvectors_s.T, X)
+        U = dot(V.T, X)
+        U *= w[:, None]
 
-        # whiten, and we are done.
-        eigenvectors *= w[:, None]
+    return U, l, m
 
-    return eigenvectors, eigenvalues, mean_vector
+
+def ipca(B, U_a, l_a, n_a, m_a=None, f=1.0, eps=1e-10):
+    r"""
+    Perform Incremental PCA on the eigenvectors ``U_a``, eigenvalues ``l_a`` and
+    mean vector ``m_a`` (if present) given a new data matrix ``B``.
+
+    Parameters
+    ----------
+    B : ``(n_samples, n_dims)`` `ndarray`
+        New data matrix.
+    U_a : ``(n_components, n_dims)`` `ndarray`
+        Eigenvectors to be updated.
+    l_a : (n_components) `ndarray`
+        Eigenvalues to be updated.
+    n_a : `int`
+        Total number of samples used to produce U_a, s_a and m_a.
+    m_a : ``(n_dims,)`` `ndarray`, optional
+        Mean to be updated. If ``None`` or ``(n_dims,)`` `ndarray` filled
+        with 0s the data matrix will not be centred.
+    f : ``[0, 1]`` `float`, optional
+        Forgetting factor that weights the relative contribution of new
+        samples vs old samples. If 1.0, all samples are weighted equally
+        and, hence, the results is the exact same as performing batch
+        PCA on the concatenated list of old and new simples. If <1.0,
+        more emphasis is put on the new samples. See [1] for details.
+    eps : `float`, optional
+        Tolerance value for positive eigenvalue. Those eigenvalues smaller
+        than the specified eps value, together with their corresponding
+        eigenvectors, will be automatically discarded.
+
+    Returns
+    -------
+    U (eigenvectors) : ``(n_components, n_dims)`` `ndarray`
+        Updated eigenvectors.
+    s (eigenvalues) : ``(n_components,)`` `ndarray`
+        Updated positive eigenvalues.
+    m (mean vector) : ``(n_dims,)`` `ndarray`
+        Updated mean.
+
+    References
+    ----------
+    .. [1] David Ross, Jongwoo Lim, Ruei-Sung Lin, Ming-Hsuan Yang.
+       "Incremental Learning for Robust Visual Tracking". IJCV, 2007.
+    """
+    # multiply current eigenvalues by total number of samples and square
+    # root them to obtain singular values of the original data.
+    s_a = np.sqrt((n_a - 1) * l_a)
+
+    # obtain number of dimensions and number of samples of new data.
+    n_b, d = B.shape
+    # multiply the number of samples of the original data by the forgetting
+    # factor
+    n_a *= f
+    # total number of samples
+    n = n_a + n_b
+
+    if m_a is not None and not np.all(m_a == 0):
+        # centred ipca; compute mean of new data
+        m_b = np.mean(B, axis=0)
+        # compute new mean
+        m = (n_a / n) * m_a + (n_b / n) * m_b
+        # centre new data
+        B = B - m_b
+        # augment centred data with extra sample
+        B = np.vstack((B, np.sqrt((n_a * n_b) / n) * (m_b - m_a)))
+    else:
+        m = np.zeros(d)
+
+    # project out current eigenspace out of data matrix
+    PB = B - B.dot(U_a.T).dot(U_a)
+    # orthogonalise the previous projection using QR
+    B_tilde = np.linalg.qr(PB.T)[0].T
+
+    # form R matrix
+    S_a = np.diag(s_a)
+    R = np.hstack((np.vstack((f * S_a, B.dot(U_a.T))),
+                   np.vstack((np.zeros((S_a.shape[0], B_tilde.shape[0])),
+                              PB.dot(B_tilde.T)))))
+
+    # compute SVD of R
+    U_tilde, s_tilde, Vt_tilde = np.linalg.svd(R)
+
+    # compute new eigenvalues
+    l = s_tilde ** 2 / (n - 1)
+    # keep only positive eigenvalues within tolerance
+    l = l[l > eps]
+
+    U = Vt_tilde.dot(np.vstack((U_a, B_tilde)))[:len(l), :]
+
+    return U, l, m
