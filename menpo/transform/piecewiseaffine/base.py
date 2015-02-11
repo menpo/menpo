@@ -323,7 +323,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
         All `points` must be contained in a source triangle. Check
         `error.points_outside_source_domain` to handle this case.
         """
-        pass
+        raise NotImplementedError()
 
     @property
     def has_true_inverse(self):

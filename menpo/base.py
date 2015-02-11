@@ -104,6 +104,7 @@ class Vectorizable(Copyable):
             The core representation of the object, flattened into a
             single vector.
         """
+        raise NotImplementedError()
 
     def from_vector_inplace(self, vector):
         """Update the state of this object from a vector form.
@@ -113,6 +114,7 @@ class Vectorizable(Copyable):
         vector : ``(n_parameters,)`` `ndarray`
             Flattened representation of this object
         """
+        raise NotImplementedError()
 
     def from_vector(self, vector):
         """Build a new instance of the object from it's vectorized state.
@@ -181,6 +183,7 @@ class Targetable(Copyable):
 
         :type: :map:`PointCloud`
         """
+        raise NotImplementedError()
 
     def set_target(self, new_target):
         r"""
@@ -253,6 +256,7 @@ class Targetable(Copyable):
         new_target : :map:`PointCloud`
             The new target that will be set.
         """
+        raise NotImplementedError()
 
     def _sync_target_from_state(self):
         new_target = self._new_target_from_state()
@@ -265,7 +269,7 @@ class Targetable(Copyable):
         -------
         object : ``type(self)``
         """
-        pass
+        raise NotImplementedError()
 
     def _sync_state_from_target(self):
         r"""Synchronizes the object state to be correct after changes to the
@@ -274,7 +278,7 @@ class Targetable(Copyable):
         Called automatically from the target setter. This is called after the
         target is updated - only handle synchronization here.
         """
-        pass
+        raise NotImplementedError()
 
 
 def menpo_src_dir_path():

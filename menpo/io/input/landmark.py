@@ -55,7 +55,7 @@ class LandmarkImporter(Importer):
 
         Set the `self.label` and `self.pointcloud` attributes.
         """
-        pass
+        raise NotImplementedError()
 
 
 class ASFImporter(LandmarkImporter):
@@ -95,7 +95,7 @@ class ASFImporter(LandmarkImporter):
         Determines the ordering of points within the landmarks. For meshes
         `x` is the first axis, where as for images `y` is the first axis.
         """
-        pass
+        raise NotImplementedError()
 
     def _parse_format(self, asset=None):
         with open(self.filepath, 'r') as f:
@@ -172,7 +172,7 @@ class PTSImporter(LandmarkImporter):
         Determines the ordering of points within the landmarks. For meshes
         `x` is the first axis, where as for images `y` is the first axis.
         """
-        pass
+        raise NotImplementedError()
 
     def _parse_format(self, asset=None):
         f = open(self.filepath, 'r')

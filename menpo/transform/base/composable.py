@@ -20,6 +20,7 @@ class ComposableTransform(Transform):
 
         :type: :map:`Transform` or tuple of :map:`Transform` s
         """
+        raise NotImplementedError()
 
     @property
     def composes_with(self):
@@ -212,6 +213,7 @@ class ComposableTransform(Transform):
         transform : :attr:`composes_inplace_with`
             Transform to be applied **after** ``self``
         """
+        raise NotImplementedError()
 
     def _compose_after_inplace(self, transform):
         r"""
@@ -224,7 +226,7 @@ class ComposableTransform(Transform):
         transform : :attr:`composes_inplace_with`
             Transform to be applied **before** ``self``
         """
-
+        raise NotImplementedError()
 
 class VComposable(object):
     r"""
@@ -247,7 +249,7 @@ class VComposable(object):
         vector : ``(n_parameters,)`` ndarray
             Vector to update the transform state with.
         """
-
+        raise NotImplementedError()
 
 class TransformChain(ComposableTransform):
     r"""

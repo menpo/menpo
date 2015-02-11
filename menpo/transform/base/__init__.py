@@ -89,6 +89,7 @@ class Transform(Copyable):
         transformed : ``(n_points, n_dims_output)`` `ndarray`
             The transformed array
         """
+        raise NotImplementedError()
 
     def apply_inplace(self, x, **kwargs):
         r"""
@@ -236,6 +237,7 @@ class Transformable(Copyable):
         transformed : ``type(self)``
             The transformed object, having been transformed in place.
         """
+        raise NotImplementedError()
 
     def _transform(self, transform):
         r"""

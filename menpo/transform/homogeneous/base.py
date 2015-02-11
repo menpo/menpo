@@ -24,6 +24,7 @@ class HomogFamilyAlignment(Alignment):
             A version of this transform with the same transform behavior but
             without the alignment logic.
         """
+        raise NotImplementedError()
 
     def copy(self):
         r"""

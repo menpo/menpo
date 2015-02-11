@@ -28,7 +28,7 @@ class Landmarkable(Copyable):
 
         :type: `int`
         """
-        pass
+        raise NotImplementedError()
 
     @property
     def landmarks(self):

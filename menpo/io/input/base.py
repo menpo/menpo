@@ -677,7 +677,7 @@ class Importer(object):
             :class:`menpo.shape.mesh.base.Trimesh`. If multiple objects need
             to be returned from one importer, a list must be returned.
         """
-        pass
+        raise NotImplementedError()
 
 
 # Avoid circular imports

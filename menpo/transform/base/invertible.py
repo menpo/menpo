@@ -14,6 +14,7 @@ class Invertible(object):
 
         :type: `bool`
         """
+        raise NotImplementedError()
 
     def pseudoinverse(self):
         r"""
@@ -24,7 +25,7 @@ class Invertible(object):
 
         :type: ``type(self)``
         """
-
+        raise NotImplementedError()
 
 class VInvertible(Invertible):
     r"""
