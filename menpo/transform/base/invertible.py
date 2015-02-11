@@ -3,15 +3,16 @@ import abc
 
 class Invertible(object):
     r"""
-    Mix-in for invertible transforms. Provides an interface for
-    taking the `psuedo` or true inverse of a transform.
+    Mix-in for invertible transforms. Provides an interface for taking the
+    `pseudo` or true inverse of a transform.
 
     Has to be implemented in conjunction with :map:`Transform`.
     """
 
     @abc.abstractproperty
     def has_true_inverse(self):
-        r"""`True` if the pseudoinverse is an exact inverse.
+        r"""
+        ``True`` if the pseudoinverse is an exact inverse.
 
         :type: `bool`
         """
@@ -19,7 +20,7 @@ class Invertible(object):
     def pseudoinverse(self):
         r"""
         The pseudoinverse of the transform - that is, the transform that
-        results from swapping source and target, or more formally, negating
+        results from swapping `source` and `target`, or more formally, negating
         the transforms parameters. If the transform has a true inverse this
         is returned instead.
 

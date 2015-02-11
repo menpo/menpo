@@ -17,7 +17,7 @@ class HomogFamilyAlignment(Alignment):
     @abc.abstractmethod
     def as_non_alignment(self):
         r"""
-        Returns a copy of this transform without it's alignment nature.
+        Returns a copy of this transform without its alignment nature.
 
         Returns
         -------
@@ -34,7 +34,6 @@ class HomogFamilyAlignment(Alignment):
         -------
         new_transform : ``type(self)``
             A copy of this object
-
         """
         new = self.__class__.__new__(self.__class__)
         # Shallow copy everything except the h_matrix
@@ -62,7 +61,7 @@ class HomogFamilyAlignment(Alignment):
 
 class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     r"""
-    A simple n-dimensional homogeneous transformation.
+    A simple ``n``-dimensional homogeneous transformation.
 
     Adds a unit homogeneous coordinate to points, performs the dot
     product, re-normalizes by division by the homogeneous coordinate,
@@ -76,9 +75,9 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     h_matrix : ``(n_dims + 1, n_dims + 1)`` `ndarray`
         The homogeneous matrix defining this transform.
     copy : `bool`, optional
-        If False avoid copying ``h_matrix``. Useful for performance.
+        If ``False``, avoid copying ``h_matrix``. Useful for performance.
     skip_checks : `bool`, optional
-        If True avoid sanity checks on the ``h_matrix``. Useful for
+        If ``True``, avoid sanity checks on the ``h_matrix``. Useful for
         performance.
     """
     def __init__(self, h_matrix, copy=True, skip_checks=False):
@@ -91,6 +90,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         r"""
         ``True`` iff :meth:`set_h_matrix` is permitted on this type of
         transform.
+
         If this returns ``False`` calls to :meth:`set_h_matrix` will raise
         a ``NotImplementedError``.
 
@@ -100,13 +100,13 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
     def from_vector(self, vector):
         """
-        Build a new instance of the object from it's vectorized state.
+        Build a new instance of the object from its vectorized state.
 
-        ``self`` is used to fill out the missing state required to
-        rebuild a full object from it's standardized flattened state. This
-        is the default implementation, which is which is a ``deepcopy`` of the
-        object followed by a call to :meth:`from_vector_inplace()`. This method
-        can be overridden for a performance benefit if desired.
+        ``self`` is used to fill out the missing state required to rebuild a
+        full object from it's standardized flattened state. This is the default
+        implementation, which is a ``deepcopy`` of the object followed by a call
+        to :meth:`from_vector_inplace()`. This method can be overridden for a
+        performance benefit if desired.
 
         Parameters
         ----------
@@ -115,7 +115,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
         Returns
         -------
-        transform : ``type(self)``
+        transform : :class:`Homogeneous`
            An new instance of this class.
         """
         # avoid the deepcopy with an efficient copy
@@ -135,17 +135,35 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
         Returns
         -------
-        string : ``str``
+        string : `str`
             String representation of transform.
         """
         return 'Homogeneous'
 
     @classmethod
     def identity(cls, n_dims):
+        r"""
+        Creates an identity matrix Homogeneous transform.
+
+        Parameters
+        ----------
+        n_dims : `int`
+            The number of dimensions.
+
+        Returns
+        -------
+        identity : :class:`Homogeneous`
+            The identity matrix transform.
+        """
         return Homogeneous(np.eye(n_dims + 1))
 
     @property
     def h_matrix(self):
+        r"""
+        The homogeneous matrix defining this transform.
+
+        :type: ``(n_dims + 1, n_dims + 1)`` `ndarray`
+        """
         return self._h_matrix
 
     def set_h_matrix(self, value, copy=True, skip_checks=False):
@@ -160,12 +178,12 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
         Parameters
         ----------
-        value : ndarray
-            The new homogeneous matrix to set
+        value : `ndarray`
+            The new homogeneous matrix to set.
         copy : `bool`, optional
-            If False do not copy the h_matrix. Useful for performance.
+            If ``False``, do not copy the h_matrix. Useful for performance.
         skip_checks : `bool`, optional
-            If True skip checking. Useful for performance.
+            If ``True``, skip checking. Useful for performance.
 
         Raises
         ------
@@ -180,23 +198,23 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
     def _set_h_matrix(self, value, copy=True, skip_checks=False):
         r"""
-        Actually updates the h_matrix, optionally performing sanity checks.
+        Actually updates the ``h_matrix``, optionally performing sanity checks.
 
         Called by :meth:`set_h_matrix` on classes that have
         :attr:`h_matrix_is_mutable` as ``True``.
 
         Every subclass should invoke this method internally when the
-        h_matrix needs to be set in order to get the most sanity checking
+        ``h_matrix`` needs to be set in order to get the most sanity checking
         possible.
 
         Parameters
         ----------
-        value : ndarray
+        value : `ndarray`
             The new homogeneous matrix to set
         copy : `bool`, optional
-            If False do not copy the h_matrix. Useful for performance.
+            If ``False``, do not copy the h_matrix. Useful for performance.
         skip_checks : `bool`, optional
-            If True skip checking. Useful for performance.
+            If ``True``, skip checking. Useful for performance.
         """
         if copy:
             value = value.copy()
@@ -204,10 +222,20 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
     @property
     def n_dims(self):
+        r"""
+        The dimensionality of the data the transform operates on.
+
+        :type: `int`
+        """
         return self.h_matrix.shape[1] - 1
 
     @property
     def n_dims_output(self):
+        r"""
+        The output of the data from the transform.
+
+        :type: `int`
+        """
         # doesn't have to be a square homogeneous matrix...
         return self.h_matrix.shape[0] - 1
 
@@ -223,14 +251,23 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return self.h_matrix.ravel()
 
     def from_vector_inplace(self, vector):
+        """
+        Update the state of this object from a vector form.
+
+        Parameters
+        ----------
+        vector : ``(n_parameters,)`` `ndarray`
+            Flattened representation of this object
+        """
         self.set_h_matrix(vector.reshape(self.h_matrix.shape),
                           copy=True, skip_checks=True)
 
     @property
     def composes_inplace_with(self):
         r"""
-        Homogeneous can swallow composition with any other Homogeneous,
-        subclasses will have to override and be more specific.
+        :class:`Homogeneous` can swallow composition with any other
+        :class:`Homogeneous`, subclasses will have to override and be more
+        specific.
         """
         return Homogeneous
 
@@ -260,11 +297,11 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
         Parameters
         ----------
-        transform : :class:`Homogeneous`
+        t : :class:`Homogeneous`
             Transform to be applied **after** self
 
         Returns
-        --------
+        -------
         transform : :class:`Homogeneous`
             The resulting homogeneous transform.
         """
@@ -315,11 +352,11 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
         Parameters
         ----------
-        transform : :class:`Homogeneous`
+        t : :class:`Homogeneous`
             Transform to be applied **before** self
 
         Returns
-        --------
+        -------
         transform : :class:`Homogeneous`
             The resulting homogeneous transform.
         """
@@ -369,9 +406,22 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
     @property
     def has_true_inverse(self):
+        r"""
+        The pseudoinverse is an exact inverse.
+
+        :type: ``True``
+        """
         return True
 
     def pseudoinverse(self):
+        r"""
+        The pseudoinverse of the transform - that is, the transform that
+        results from swapping `source` and `target`, or more formally, negating
+        the transforms parameters. If the transform has a true inverse this
+        is returned instead.
+
+        :type: :class:`Homogeneous`
+        """
         # Skip the checks as we know inverse of a homogeneous is a homogeneous
         return self.__class__(self._h_matrix_pseudoinverse(), copy=False,
                               skip_checks=True)
