@@ -112,32 +112,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                     "was provided".format(image_data.ndim))
         self.pixels = image_data
 
-    def as_masked(self, mask=None, copy=True):
-        r"""
-        Return a copy of this image with an attached mask behavior.
-
-        A custom mask may be provided, or ``None``. See the :map:`MaskedImage`
-        constructor for details of how the kwargs will be handled.
-
-        Parameters
-        ----------
-        mask : ``(self.shape)`` `ndarray` or :map:`BooleanImage`
-            A mask to attach to the newly generated masked image.
-        copy : `bool`, optional
-            If ``False``, the produced :map:`MaskedImage` will share pixels with
-            ``self``. Only suggested to be used for performance.
-
-        Returns
-        -------
-        masked_image : :map:`MaskedImage`
-            An image with the same pixels and landmarks as this one, but with
-            a mask.
-        """
-        from menpo.image import MaskedImage
-        img = MaskedImage(self.pixels, mask=mask, copy=copy)
-        img.landmarks = self.landmarks
-        return img
-
     @classmethod
     def init_blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
         r"""
@@ -168,6 +142,32 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
         # We know there is no need to copy
         return cls(pixels, copy=False)
+
+    def as_masked(self, mask=None, copy=True):
+        r"""
+        Return a copy of this image with an attached mask behavior.
+
+        A custom mask may be provided, or ``None``. See the :map:`MaskedImage`
+        constructor for details of how the kwargs will be handled.
+
+        Parameters
+        ----------
+        mask : ``(self.shape)`` `ndarray` or :map:`BooleanImage`
+            A mask to attach to the newly generated masked image.
+        copy : `bool`, optional
+            If ``False``, the produced :map:`MaskedImage` will share pixels with
+            ``self``. Only suggested to be used for performance.
+
+        Returns
+        -------
+        masked_image : :map:`MaskedImage`
+            An image with the same pixels and landmarks as this one, but with
+            a mask.
+        """
+        from menpo.image import MaskedImage
+        img = MaskedImage(self.pixels, mask=mask, copy=copy)
+        img.landmarks = self.landmarks
+        return img
 
     @property
     def n_dims(self):

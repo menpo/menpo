@@ -37,14 +37,6 @@ class BooleanImage(Image):
                      'Please ensure the data you pass is C-contiguous.')
         super(BooleanImage, self).__init__(mask_data, copy=copy)
 
-    def as_masked(self, mask=None, copy=True):
-        r"""
-        Impossible for a :map:`BooleanImage` to be transformed to a
-        :map:`MaskedImage`.
-        """
-        raise NotImplementedError("as_masked cannot be invoked on a "
-                                  "BooleanImage.")
-
     @classmethod
     def init_blank(cls, shape, fill=True, round='ceil', **kwargs):
         r"""
@@ -73,6 +65,14 @@ class BooleanImage(Image):
         else:
             mask = np.zeros(shape, dtype=np.bool)
         return cls(mask, copy=False)
+
+    def as_masked(self, mask=None, copy=True):
+        r"""
+        Impossible for a :map:`BooleanImage` to be transformed to a
+        :map:`MaskedImage`.
+        """
+        raise NotImplementedError("as_masked cannot be invoked on a "
+                                  "BooleanImage.")
 
     @property
     def mask(self):
