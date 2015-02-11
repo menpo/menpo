@@ -80,7 +80,7 @@ class NonUniformScale(DiscreteAffine, Affine):
         Affine.__init__(self, h_matrix, skip_checks=True, copy=False)
 
     @classmethod
-    def identity(cls, n_dims):
+    def init_identity(cls, n_dims):
         r"""
         Creates an identity transform.
 
@@ -211,7 +211,7 @@ class UniformScale(DiscreteAffine, Similarity):
                             skip_checks=True)
 
     @classmethod
-    def identity(cls, n_dims):
+    def init_identity(cls, n_dims):
         r"""
         Creates an identity transform.
 

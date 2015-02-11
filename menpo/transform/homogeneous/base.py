@@ -1,4 +1,3 @@
-import abc
 import numpy as np
 
 from menpo.base import Vectorizable
@@ -14,7 +13,7 @@ class HomogFamilyAlignment(Alignment):
     Note that subclasses should inherit from :map:`HomogFamilyAlignment` first
     to have the correct copy behavior.
     """
-    @abc.abstractmethod
+
     def as_non_alignment(self):
         r"""
         Returns a copy of this transform without its alignment nature.
@@ -25,6 +24,7 @@ class HomogFamilyAlignment(Alignment):
             A version of this transform with the same transform behavior but
             without the alignment logic.
         """
+        raise NotImplementedError()
 
     def copy(self):
         r"""
@@ -85,6 +85,23 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # Delegate setting to the most specialized setter method possible
         self._set_h_matrix(h_matrix, copy=copy, skip_checks=skip_checks)
 
+    @classmethod
+    def init_identity(cls, n_dims):
+        r"""
+        Creates an identity matrix Homogeneous transform.
+
+        Parameters
+        ----------
+        n_dims : `int`
+            The number of dimensions.
+
+        Returns
+        -------
+        identity : :class:`Homogeneous`
+            The identity matrix transform.
+        """
+        return Homogeneous(np.eye(n_dims + 1))
+
     @property
     def h_matrix_is_mutable(self):
         r"""
@@ -139,23 +156,6 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
             String representation of transform.
         """
         return 'Homogeneous'
-
-    @classmethod
-    def identity(cls, n_dims):
-        r"""
-        Creates an identity matrix Homogeneous transform.
-
-        Parameters
-        ----------
-        n_dims : `int`
-            The number of dimensions.
-
-        Returns
-        -------
-        identity : :class:`Homogeneous`
-            The identity matrix transform.
-        """
-        return Homogeneous(np.eye(n_dims + 1))
 
     @property
     def h_matrix(self):

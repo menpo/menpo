@@ -1,4 +1,3 @@
-import abc
 import numpy as np
 
 from .base import Homogeneous, HomogFamilyAlignment
@@ -26,7 +25,7 @@ class Affine(Homogeneous):
                              skip_checks=skip_checks)
 
     @classmethod
-    def identity(cls, n_dims):
+    def init_identity(cls, n_dims):
         r"""
         Creates an identity matrix Affine transform.
 
@@ -344,8 +343,6 @@ class DiscreteAffine(object):
     you inherit from :class:`DiscreteAffine` first, for optimal
     `decompose()` behavior.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def decompose(self):
         r"""

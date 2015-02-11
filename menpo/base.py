@@ -1,4 +1,3 @@
-import abc
 import os.path
 
 # To debug the Copyable interface, simply uncomment lines 11-23 below and the
@@ -13,11 +12,11 @@ import os.path
 #
 # def print_copyable_log():
 #     print('Has .copy() but not Copyable:')
-#     for k, v in alien_copies.iteritems():
+#     for k, v in alien_copies.items():
 #         print('  {:15}|  {}'.format(k, ', '.join(v)))
 #
 #     print('\nNo .copy() (shallow copied):')
-#     for k, v in non_copies.iteritems():
+#     for k, v in non_copies.items():
 #         print('  {:15}|  {}'.format(k, ', '.join(v)))
 
 
@@ -49,7 +48,7 @@ class Copyable(object):
         """
         # print('copy called on {}'.format(type(self).__name__))
         new = self.__class__.__new__(self.__class__)
-        for k, v in self.__dict__.iteritems():
+        for k, v in self.__dict__.items():
             try:
                 new.__dict__[k] = v.copy()
                 # if not isinstance(v, Copyable):
@@ -69,8 +68,6 @@ class Vectorizable(Copyable):
     statistical analysis of objects, which commonly requires the data
     to be provided as a single vector.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     @property
     def n_parameters(self):
@@ -96,7 +93,6 @@ class Vectorizable(Copyable):
         v.flags.writeable = False
         return v
 
-    @abc.abstractmethod
     def _as_vector(self, **kwargs):
         """
         Returns a flattened representation of the object as a single
@@ -108,8 +104,8 @@ class Vectorizable(Copyable):
             The core representation of the object, flattened into a
             single vector.
         """
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def from_vector_inplace(self, vector):
         """
         Update the state of this object from a vector form.
@@ -119,6 +115,7 @@ class Vectorizable(Copyable):
         vector : ``(n_parameters,)`` `ndarray`
             Flattened representation of this object
         """
+        raise NotImplementedError()
 
     def from_vector(self, vector):
         """
@@ -165,7 +162,6 @@ class Targetable(Copyable):
     called. This will in turn trigger :meth:`_new_target_from_state`, which each
     subclass must implement.
     """
-    __metaclass__ = abc.ABCMeta
 
     @property
     def n_dims(self):
@@ -183,12 +179,13 @@ class Targetable(Copyable):
         """
         return self.target.n_points
 
-    @abc.abstractproperty
+    @property
     def target(self):
         r"""The current :map:`PointCloud` that this object produces.
 
         :type: :map:`PointCloud`
         """
+        raise NotImplementedError()
 
     def set_target(self, new_target):
         r"""
@@ -249,7 +246,6 @@ class Targetable(Copyable):
                 "- new target has to have the same number of points as the"
                 " old".format(self.target.n_points, new_target.n_points))
 
-    @abc.abstractmethod
     def _target_setter(self, new_target):
         r"""Sets the target to the new value.
 
@@ -262,12 +258,12 @@ class Targetable(Copyable):
         new_target : :map:`PointCloud`
             The new target that will be set.
         """
+        raise NotImplementedError()
 
     def _sync_target_from_state(self):
         new_target = self._new_target_from_state()
         self._target_setter_with_verification(new_target)
 
-    @abc.abstractmethod
     def _new_target_from_state(self):
         r"""Generate a new target that is correct after changes to the object.
 
@@ -275,9 +271,8 @@ class Targetable(Copyable):
         -------
         object : ``type(self)``
         """
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def _sync_state_from_target(self):
         r"""Synchronizes the object state to be correct after changes to the
         target.
@@ -285,7 +280,7 @@ class Targetable(Copyable):
         Called automatically from the target setter. This is called after the
         target is updated - only handle synchronization here.
         """
-        pass
+        raise NotImplementedError()
 
 
 def menpo_src_dir_path():

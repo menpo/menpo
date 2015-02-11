@@ -1,4 +1,3 @@
-import abc
 from collections import OrderedDict, MutableMapping
 
 import numpy as np
@@ -20,19 +19,16 @@ class Landmarkable(Copyable):
     useful tasks like label filtering and viewing.
     """
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self):
         self._landmarks = None
 
-    @abc.abstractproperty
     def n_dims(self):
         """
         The total number of dimensions.
 
         :type: `int`
         """
-        pass
+        raise NotImplementedError()
 
     @property
     def landmarks(self):
@@ -243,7 +239,9 @@ class LandmarkManager(MutableMapping, Transformable):
 
         :type: `list` of `str`
         """
-        return self._landmark_groups.keys()
+        # Convert to list so that we can index immediately, as keys()
+        # is a generator in Python 3
+        return list(self._landmark_groups.keys())
 
     def _transform_inplace(self, transform):
         for group in self._landmark_groups.values():
@@ -338,6 +336,29 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         else:
             self._pointcloud = pointcloud
             self._labels_to_masks = labels_to_masks
+
+    @classmethod
+    def init_with_all_label(cls, pointcloud, copy=True):
+        r"""
+        Static constructor to create a :map:`LandmarkGroup` with a single
+        default 'all' label that covers all points.
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            The pointcloud representing the landmarks.
+        copy : `boolean`, optional
+            If ``True``, a copy of the :map:`PointCloud` is stored on the group.
+
+        Returns
+        -------
+        lmark_group : :map:`LandmarkGroup`
+            Landmark group wrapping the given pointcloud with a single label
+            called 'all' that is ``True`` for all points.
+        """
+        labels_to_masks = OrderedDict(
+            [('all', np.ones(pointcloud.n_points, dtype=np.bool))])
+        return LandmarkGroup(pointcloud, labels_to_masks, copy=copy)
 
     def copy(self):
         r"""
@@ -531,7 +552,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         If any one point is not covered by a label, then raise a
         ``ValueError``.
         """
-        unlabelled_points = np.sum(self._labels_to_masks.values(), axis=0) == 0
+        # values is a generator in Python 3, so convert to list
+        labels_values = list(self._labels_to_masks.values())
+        unlabelled_points = np.sum(labels_values, axis=0) == 0
         if np.any(unlabelled_points):
             nonzero = np.nonzero(unlabelled_points)
             raise ValueError(

@@ -1,4 +1,3 @@
-import abc
 import numpy as np
 
 from .base import HomogFamilyAlignment
@@ -43,7 +42,6 @@ class Rotation(DiscreteAffine, Similarity):
     skip_checks : `bool`, optional
         If ``True`` avoid sanity checks on ``rotation_matrix`` for performance.
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, rotation_matrix, skip_checks=False):
         h_matrix = np.eye(rotation_matrix.shape[0] + 1)
@@ -51,7 +49,24 @@ class Rotation(DiscreteAffine, Similarity):
         self.set_rotation_matrix(rotation_matrix, skip_checks=skip_checks)
 
     @classmethod
-    def from_2d_ccw_angle(cls, theta, degrees=True):
+    def init_identity(cls, n_dims):
+        r"""
+        Creates an identity transform.
+
+        Parameters
+        ----------
+        n_dims : `int`
+            The number of dimensions.
+
+        Returns
+        -------
+        identity : :class:`Rotation`
+            The identity matrix transform.
+        """
+        return Rotation(np.eye(n_dims))
+
+    @classmethod
+    def init_from_2d_ccw_angle(cls, theta, degrees=True):
         r"""
         Convenience constructor for 2D CCW rotations about the origin.
 
@@ -73,23 +88,6 @@ class Rotation(DiscreteAffine, Similarity):
             theta = theta * np.pi / 180.0
         return Rotation(np.array([[np.cos(theta), -np.sin(theta)],
                                   [np.sin(theta),  np.cos(theta)]]))
-
-    @classmethod
-    def identity(cls, n_dims):
-        r"""
-        Creates an identity transform.
-
-        Parameters
-        ----------
-        n_dims : `int`
-            The number of dimensions.
-
-        Returns
-        -------
-        identity : :class:`Rotation`
-            The identity matrix transform.
-        """
-        return Rotation(np.eye(n_dims))
 
     @property
     def rotation_matrix(self):

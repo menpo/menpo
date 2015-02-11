@@ -2,6 +2,7 @@ import gzip
 from functools import partial
 from pathlib import Path
 
+from menpo.compatibility import basestring, str
 from .extensions import landmark_types, image_types, pickle_types
 from ..utils import _norm_path
 

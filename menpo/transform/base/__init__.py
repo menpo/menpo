@@ -1,4 +1,3 @@
-import abc
 from menpo.base import Copyable
 
 
@@ -48,7 +47,6 @@ class Transform(Copyable):
 
     For alignment, see the :map:`Alignment` mix-in.
     """
-    __metaclass__ = abc.ABCMeta
 
     @property
     def n_dims(self):
@@ -73,7 +71,6 @@ class Transform(Copyable):
         # most Transforms don't change the dimensionality of their input.
         return self.n_dims
 
-    @abc.abstractmethod
     def _apply(self, x, **kwargs):
         r"""
         Applies the transform to the array ``x``, returning the result.
@@ -94,6 +91,7 @@ class Transform(Copyable):
         transformed : ``(n_points, n_dims_output)`` `ndarray`
             The transformed array
         """
+        raise NotImplementedError()
 
     def apply_inplace(self, x, **kwargs):
         r"""
@@ -226,9 +224,7 @@ class Transformable(Copyable):
 
     This allows for the object to define how it should transform itself.
     """
-    __metaclass__ = abc.ABCMeta
 
-    @abc.abstractmethod
     def _transform_inplace(self, transform):
         r"""
         Apply the given transform function to ``self`` inplace.
@@ -243,6 +239,7 @@ class Transformable(Copyable):
         transformed : ``type(self)``
             The transformed object, having been transformed in place.
         """
+        raise NotImplementedError()
 
     def _transform(self, transform):
         r"""

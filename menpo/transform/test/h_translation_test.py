@@ -31,7 +31,7 @@ def test_translation_2d_from_vector():
                      [0, 1, params[1]],
                      [0, 0, 1]])
 
-    tr = Translation.identity(2).from_vector(params)
+    tr = Translation.init_identity(2).from_vector(params)
 
     assert_almost_equal(tr.h_matrix, homo)
 
@@ -49,7 +49,7 @@ def test_translation_3d_from_vector():
                      [0, 0, 1, params[2]],
                      [0, 0, 0, 1]])
 
-    tr = Translation.identity(3).from_vector(params)
+    tr = Translation.init_identity(3).from_vector(params)
 
     assert_almost_equal(tr.h_matrix, homo)
 
@@ -85,14 +85,14 @@ def test_translation_from_list():
 
 
 def test_translation_identity_2d():
-    assert_allclose(Translation.identity(2).h_matrix, np.eye(3))
+    assert_allclose(Translation.init_identity(2).h_matrix, np.eye(3))
 
 
 def test_translation_identity_3d():
-    assert_allclose(Translation.identity(3).h_matrix, np.eye(4))
+    assert_allclose(Translation.init_identity(3).h_matrix, np.eye(4))
 
 
 def test_translation_decompose_optional():
-    t = Translation.identity(2)
+    t = Translation.init_identity(2)
     d = t.decompose()
     assert np.all(d[0].h_matrix == t.h_matrix)
