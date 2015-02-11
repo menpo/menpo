@@ -12,15 +12,12 @@ def eigenvalue_decomposition(C, eps=1e-10):
     C : ``(N, N)`` `ndarray`
         Covariance/Scatter matrix
     eps : `float`, optional
-        Small value to be used for the tolerance limit computation. The final
+        Tolerance value for positive eigenvalue. Those eigenvalues smaller
+        than the specified eps value, together with their corresponding
+        eigenvectors, will be automatically discarded. The final
         limit is computed as ::
 
             limit = np.max(np.abs(eigenvalues)) * eps
-
-    eps : float, optional
-        Tolerance value for positive eigenvalue. Those eigenvalues smaller
-        than the specified eps value, together with their corresponding
-        eigenvectors, will be automatically discarded.
 
     Returns
     -------
@@ -60,28 +57,25 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
 
     Parameters
     ----------
-    X : (n_samples, n_dimensions) ndarray
+    X : ``(n_samples, n_dims)`` `ndarray`
         Data matrix.
-
-    centre : bool, optional
+    centre : `bool`, optional
         Whether to centre the data matrix. If `False`, zero will be subtracted.
-
-    inplace : bool, optional
+    inplace : `bool`, optional
         Whether to do the mean subtracting inplace or not. This is crucial if
         the data matrix is greater than half the available memory size.
-
-    eps : float, optional
+    eps : `float`, optional
         Tolerance value for positive eigenvalue. Those eigenvalues smaller
         than the specified eps value, together with their corresponding
         eigenvectors, will be automatically discarded.
 
     Returns
     -------
-    U (eigenvectors) : (n_components, n_dimensions) ndarray
+    U (eigenvectors) : ``(``(n_components, n_dims)``)`` `ndarray`
         Eigenvectors of the data matrix.
-    l (eigenvalues) : (n_components,) ndarray
+    l (eigenvalues) : ``(n_components,)`` `ndarray`
         Positive eigenvalues of the data matrix.
-    m (mean vector) : (n_dimensions,) ndarray
+    m (mean vector) : ``(n_dimensions,)`` `ndarray`
         Mean that was subtracted from the data matrix.
     """
     n, d = X.shape
@@ -142,46 +136,40 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
 
 def ipca(B, U_a, l_a, n_a, m_a=None, f=1.0, eps=1e-10):
     r"""
-    Perform Incremental PCA on the eigenvectors U_a, eigenvalues l_a and
-    mean vector m_a (if present) given a new data matrix B.
+    Perform Incremental PCA on the eigenvectors ``U_a``, eigenvalues ``l_a`` and
+    mean vector ``m_a`` (if present) given a new data matrix ``B``.
 
     Parameters
     ----------
-    B : (n_samples, n_dimensions) ndarray
+    B : ``(n_samples, n_dims)`` `ndarray`
         New data matrix.
-
-    U_a : (n_components, n_dimensions) ndarray
+    U_a : ``(n_components, n_dims)`` `ndarray`
         Eigenvectors to be updated.
-
-    l_a : (n_components) ndarray
+    l_a : (n_components) `ndarray`
         Eigenvalues to be updated.
-
-    n_a : int
+    n_a : `int`
         Total number of samples used to produce U_a, s_a and m_a.
-
-    m_a : (n_dimensions) ndarray, optional
-        Mean to be updated. If `None` or (n_dimensions,) ndarray filled
+    m_a : ``(n_dims,)`` `ndarray`, optional
+        Mean to be updated. If ``None`` or ``(n_dims,)`` `ndarray` filled
         with 0s the data matrix will not be centred.
-
-    f : [0, 1] float, optional
+    f : ``[0, 1]`` `float`, optional
         Forgetting factor that weights the relative contribution of new
         samples vs old samples. If 1.0, all samples are weighted equally
         and, hence, the results is the exact same as performing batch
         PCA on the concatenated list of old and new simples. If <1.0,
         more emphasis is put on the new samples. See [1] for details.
-
-    eps : float, optional
+    eps : `float`, optional
         Tolerance value for positive eigenvalue. Those eigenvalues smaller
         than the specified eps value, together with their corresponding
         eigenvectors, will be automatically discarded.
 
     Returns
     -------
-    U (eigenvectors) : (n_components, n_dimensions) ndarray
+    U (eigenvectors) : ``(n_components, n_dims)`` `ndarray`
         Updated eigenvectors.
-    s (eigenvalues) : (n_components,) ndarray
+    s (eigenvalues) : ``(n_components,)`` `ndarray`
         Updated positive eigenvalues.
-    m (mean vector) : (n_dimensions,) ndarray
+    m (mean vector) : ``(n_dims,)`` `ndarray`
         Updated mean.
 
     References

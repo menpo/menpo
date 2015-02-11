@@ -30,7 +30,8 @@ class PCAModel(MeanInstanceLinearModel):
         # build a data matrix from all the samples
         data, template = as_matrix(samples, length=n_samples,
                                    return_template=True, verbose=verbose)
-        self.n_samples = data.shape[1]
+        # (n_samples, n_features)
+        self.n_samples = data.shape[0]
 
         # compute pca
         e_vectors, e_values, mean = pca(data, centre=centre, inplace=True)
@@ -496,21 +497,21 @@ class PCAModel(MeanInstanceLinearModel):
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
 
-    def increment(self, samples, n_new_samples=None, forgetting_factor=1.0,
+    def increment(self, samples, n_samples=None, forgetting_factor=1.0,
                   verbose=False):
         r"""
         Update the eigenvectors, eigenvalues and mean vector of this model
         by performing incremental PCA on the given samples.
 
         Parameters
-        -----------
-        samples : list of :map:`Vectorizable`
+        ----------
+        samples : `list` of :map:`Vectorizable`
             List of new samples to update the model from.
-        n_samples : int, optional
-            If provided then ``samples``  must be an iterator  that yields
+        n_samples : `int`, optional
+            If provided then ``samples``  must be an iterator that yields
             ``n_samples``. If not provided then samples has to be a
             list (so we know how large the data matrix needs to be).
-        forgetting_factor : [0.0, 1.0] float, optional
+        forgetting_factor : ``[0.0, 1.0]`` `float`, optional
             Forgetting factor that weights the relative contribution of new
             samples vs old samples. If 1.0, all samples are weighted equally
             and, hence, the results is the exact same as performing batch
@@ -523,8 +524,9 @@ class PCAModel(MeanInstanceLinearModel):
            "Incremental Learning for Robust Visual Tracking". IJCV, 2007.
         """
         # build a data matrix from the new samples
-        data = as_matrix(samples, length=n_new_samples, verbose=verbose)
-        n_new_samples = data.shape[1]
+        data = as_matrix(samples, length=n_samples, verbose=verbose)
+        # (n_samples, n_features)
+        n_new_samples = data.shape[0]
 
         # compute incremental pca
         e_vectors, e_values, m_vector = ipca(

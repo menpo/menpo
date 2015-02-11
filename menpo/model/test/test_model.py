@@ -2,8 +2,7 @@ import numpy as np
 from nose.tools import raises
 from numpy.testing import assert_allclose, assert_equal, assert_almost_equal
 from menpo.shape import PointCloud
-from menpo.model import LinearModel, MeanLinearModel, PCAModel
-from menpo.model import InstanceLinearModel, MeanInstanceLinearModel
+from menpo.model import LinearModel, PCAModel
 
 
 def test_linear_model_creation():
@@ -225,4 +224,3 @@ def test_pca_increment_noncentred():
                         np.abs(bpca_model.components))
     assert_almost_equal(ipca_model.eigenvalues, bpca_model.eigenvalues)
     assert_almost_equal(ipca_model.mean_vector, bpca_model.mean_vector)
-

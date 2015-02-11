@@ -3,5 +3,5 @@
 .. currentmodule:: menpo.math
 
 pca
-=================================
+===
 .. autofunction:: pca
