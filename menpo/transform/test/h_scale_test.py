@@ -65,7 +65,7 @@ def test_nonuniformscale2d_from_vector():
                      [0, scale[1], 0],
                      [0, 0, 1]])
 
-    tr = NonUniformScale.identity(2).from_vector(scale)
+    tr = NonUniformScale.init_identity(2).from_vector(scale)
 
     assert_almost_equal(tr.h_matrix, homo)
 
@@ -189,16 +189,16 @@ def test_scale_zero_scale_raise_valuerror():
 
 
 def test_uniformscale_identity_2d():
-    assert_allclose(UniformScale.identity(2).h_matrix, np.eye(3))
+    assert_allclose(UniformScale.init_identity(2).h_matrix, np.eye(3))
 
 
 def test_uniformscale_identity_3d():
-    assert_allclose(UniformScale.identity(3).h_matrix, np.eye(4))
+    assert_allclose(UniformScale.init_identity(3).h_matrix, np.eye(4))
 
 
 def test_nonuniformscale_identity_2d():
-    assert_allclose(NonUniformScale.identity(2).h_matrix, np.eye(3))
+    assert_allclose(NonUniformScale.init_identity(2).h_matrix, np.eye(3))
 
 
 def test_nonuniformscale_identity_3d():
-    assert_allclose(NonUniformScale.identity(3).h_matrix, np.eye(4))
+    assert_allclose(NonUniformScale.init_identity(3).h_matrix, np.eye(4))

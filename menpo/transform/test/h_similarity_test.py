@@ -38,7 +38,7 @@ def test_similarity_2d_from_vector():
                      [params[1], params[0] + 1, params[3]],
                      [0, 0, 1]])
 
-    sim = Similarity.identity(2).from_vector(params)
+    sim = Similarity.init_identity(2).from_vector(params)
 
     assert_almost_equal(sim.h_matrix, homo)
 
@@ -75,10 +75,10 @@ def test_similarity_set_h_matrix_raises_notimplementederror():
 
 
 def test_similarity_identity_2d():
-    assert_allclose(Similarity.identity(2).h_matrix,
+    assert_allclose(Similarity.init_identity(2).h_matrix,
                     np.eye(3))
 
 
 def test_similarity_identity_3d():
-    assert_allclose(Similarity.identity(3).h_matrix,
+    assert_allclose(Similarity.init_identity(3).h_matrix,
                     np.eye(4))

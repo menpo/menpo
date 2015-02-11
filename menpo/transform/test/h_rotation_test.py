@@ -61,12 +61,12 @@ def test_3d_rotation_inverse_eye():
 
 @raises(NotImplementedError)
 def test_rotation3d_from_vector_raises_notimplementederror():
-    Rotation.identity(3).from_vector(0)
+    Rotation.init_identity(3).from_vector(0)
 
 
 @raises(NotImplementedError)
 def test_rotation3d_as_vector_raises_notimplementederror():
-    Rotation.identity(3).as_vector()
+    Rotation.init_identity(3).as_vector()
 
 
 @raises(NotImplementedError)
@@ -91,8 +91,8 @@ def test_rotation_set_h_matrix_raises_notimplementederror():
 
 
 def test_rotation2d_identity():
-    assert_allclose(Rotation.identity(2).h_matrix, np.eye(3))
+    assert_allclose(Rotation.init_identity(2).h_matrix, np.eye(3))
 
 
 def test_rotation3d_identity():
-    assert_allclose(Rotation.identity(3).h_matrix, np.eye(4))
+    assert_allclose(Rotation.init_identity(3).h_matrix, np.eye(4))

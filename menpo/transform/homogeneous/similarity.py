@@ -20,6 +20,10 @@ class Similarity(Affine):
     def __init__(self, h_matrix, copy=True, skip_checks=False):
         Affine.__init__(self, h_matrix, copy=copy, skip_checks=skip_checks)
 
+    @classmethod
+    def init_identity(cls, n_dims):
+        return cls(np.eye(n_dims + 1), copy=False, skip_checks=True)
+
     def _transform_str(self):
         r"""
         A string representation explaining what this similarity transform does.
@@ -37,10 +41,6 @@ class Similarity(Affine):
     @property
     def h_matrix_is_mutable(self):
         return False
-
-    @classmethod
-    def identity(cls, n_dims):
-        return cls(np.eye(n_dims + 1), copy=False, skip_checks=True)
 
     @property
     def n_parameters(self):
@@ -263,7 +263,7 @@ def procrustes_alignment(source, target, rotation=True):
 
     # start building the Procrustes Alignment - src translation followed by
     # scale
-    p = Similarity.identity(source.n_dims)
+    p = Similarity.init_identity(source.n_dims)
     p.compose_before_inplace(src_t)
     p.compose_before_inplace(src_s)
 

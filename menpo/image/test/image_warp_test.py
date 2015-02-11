@@ -25,7 +25,7 @@ multi_expected = rgb_image.crop([50, 50],
 def test_warp_gray():
     rgb_image = mio.import_builtin_asset('takeo.ppm')
     gray_image = rgb_image.as_greyscale()
-    target_transform = Affine.identity(2).from_vector(initial_params)
+    target_transform = Affine.init_identity(2).from_vector(initial_params)
     warped_im = gray_image.warp_to_mask(template_mask, target_transform)
 
     assert(warped_im.shape == gray_template.shape)
@@ -34,7 +34,7 @@ def test_warp_gray():
 
 def test_warp_multi():
     rgb_image = mio.import_builtin_asset('takeo.ppm')
-    target_transform = Affine.identity(2).from_vector(initial_params)
+    target_transform = Affine.init_identity(2).from_vector(initial_params)
     warped_im = rgb_image.warp_to_mask(template_mask, target_transform)
 
     assert(warped_im.shape == rgb_template.shape)
@@ -46,7 +46,7 @@ def test_warp_to_mask_boolean():
     b.pixels[:, :5] = False
     template_mask = BooleanImage.init_blank((10, 10))
     template_mask.pixels[:5, :] = False
-    t = Affine.identity(2)
+    t = Affine.init_identity(2)
     warped_mask = b.warp_to_mask(template_mask, t)
     assert(type(warped_mask) == BooleanImage)
     result = template_mask.pixels.copy()
@@ -59,7 +59,7 @@ def test_warp_to_mask_image():
     img.pixels[:, :5, :] = 0.5
     template_mask = BooleanImage.init_blank((10, 10))
     template_mask.pixels[5:, :] = False
-    t = Affine.identity(2)
+    t = Affine.init_identity(2)
     warped_img = img.warp_to_mask(template_mask, t)
     assert(type(warped_img) == MaskedImage)
     result = Image.init_blank((10, 10), n_channels=2).pixels
@@ -75,7 +75,7 @@ def test_warp_to_mask_masked_image():
     img.pixels[...] = 2.5
     template_mask = BooleanImage.init_blank((10, 10), fill=False)
     template_mask.pixels[:5, :5] = True
-    t = Affine.identity(2)
+    t = Affine.init_identity(2)
     warped_img = img.warp_to_mask(template_mask, t)
     assert(type(warped_img) == MaskedImage)
     result = Image.init_blank((10, 10), n_channels=2).pixels

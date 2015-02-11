@@ -60,7 +60,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
                                    for t in self.transforms])
         # rescale the new_target to be the same size as the original about
         # it's centre
-        rescale = Similarity.identity(new_tgt.n_dims)
+        rescale = Similarity.init_identity(new_tgt.n_dims)
 
         s = UniformScale(self.initial_target_scale / new_tgt.norm(),
                          self.n_dims, skip_checks=True)

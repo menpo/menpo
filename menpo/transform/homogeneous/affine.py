@@ -25,7 +25,7 @@ class Affine(Homogeneous):
                              skip_checks=skip_checks)
 
     @classmethod
-    def identity(cls, n_dims):
+    def init_identity(cls, n_dims):
         return cls(np.eye(n_dims + 1))
 
     @property
