@@ -23,7 +23,7 @@ class Translation(DiscreteAffine, Similarity):
                             skip_checks=skip_checks)
 
     @classmethod
-    def identity(cls, n_dims):
+    def init_identity(cls, n_dims):
         return Translation(np.zeros(n_dims))
 
     def _transform_str(self):

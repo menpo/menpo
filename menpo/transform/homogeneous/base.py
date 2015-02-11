@@ -86,6 +86,10 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # Delegate setting to the most specialized setter method possible
         self._set_h_matrix(h_matrix, copy=copy, skip_checks=skip_checks)
 
+    @classmethod
+    def init_identity(cls, n_dims):
+        return Homogeneous(np.eye(n_dims + 1))
+
     @property
     def h_matrix_is_mutable(self):
         r"""
@@ -139,10 +143,6 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
             String representation of transform.
         """
         return 'Homogeneous'
-
-    @classmethod
-    def identity(cls, n_dims):
-        return Homogeneous(np.eye(n_dims + 1))
 
     @property
     def h_matrix(self):

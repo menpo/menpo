@@ -57,35 +57,11 @@ class MaskedImage(Image):
                                                    mask.shape))
         else:
             # no mask provided - make the default.
-            self.mask = BooleanImage.blank(self.shape, fill=True)
-
-    def as_unmasked(self, copy=True):
-        r"""
-        Return a copy of this image without the masking behavior.
-
-        By default the mask is simply discarded. In the future more options
-        may be possible.
-
-        Parameters
-        ----------
-        copy : `bool`, optional
-            If ``False``, the produced :map:`Image` will share pixels with
-            ``self``. Only suggested to be used for performance.
-
-        Returns
-        -------
-        image : :map:`Image`
-            An image with the same pixels and landmarks as this one, but with
-            no mask.
-        """
-        img = Image(self.pixels, copy=copy)
-        img.landmarks = self.landmarks
-        return img
+            self.mask = BooleanImage.init_blank(self.shape, fill=True)
 
     @classmethod
-    def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
-        r"""
-        Returns a blank image
+    def init_blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
+        r"""Generate a blank masked image
 
         Parameters
         ----------
@@ -109,13 +85,13 @@ class MaskedImage(Image):
 
         ::
 
-            super(SubClass, cls).blank(shape,**kwargs)
+            super(SubClass, cls).init_blank(shape,**kwargs)
 
         in order to appropriately propagate the subclass type to ``cls``.
 
         Returns
         -------
-        blank_image : :class:`MaskedImage`
+        blank_image : :map:`MaskedImage`
             A new masked image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
@@ -125,6 +101,29 @@ class MaskedImage(Image):
         else:
             pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
         return cls(pixels, copy=False, mask=mask)
+
+    def as_unmasked(self, copy=True):
+        r"""
+        Return a copy of this image without the masking behavior.
+
+        By default the mask is simply discarded. In the future more options
+        may be possible.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            If ``False``, the produced :map:`Image` will share pixels with
+            ``self``. Only suggested to be used for performance.
+
+        Returns
+        -------
+        image : :map:`Image`
+            An image with the same pixels and landmarks as this one, but with
+            no mask.
+        """
+        img = Image(self.pixels, copy=copy)
+        img.landmarks = self.landmarks
+        return img
 
     def n_true_pixels(self):
         r"""

@@ -337,6 +337,29 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             self._pointcloud = pointcloud
             self._labels_to_masks = labels_to_masks
 
+    @classmethod
+    def init_with_all_label(cls, pointcloud, copy=True):
+        r"""
+        Static constructor to create a :map:`LandmarkGroup` with a single
+        default 'all' label that covers all points.
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            The pointcloud representing the landmarks.
+        copy : `boolean`, optional
+            If ``True``, a copy of the :map:`PointCloud` is stored on the group.
+
+        Returns
+        -------
+        lmark_group : :map:`LandmarkGroup`
+            Landmark group wrapping the given pointcloud with a single label
+            called 'all' that is ``True`` for all points.
+        """
+        labels_to_masks = OrderedDict(
+            [('all', np.ones(pointcloud.n_points, dtype=np.bool))])
+        return LandmarkGroup(pointcloud, labels_to_masks, copy=copy)
+
     def copy(self):
         r"""
         Generate an efficient copy of this :map:`LandmarkGroup`.

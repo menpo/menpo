@@ -50,7 +50,11 @@ class Rotation(DiscreteAffine, Similarity):
         self.set_rotation_matrix(rotation_matrix, skip_checks=skip_checks)
 
     @classmethod
-    def from_2d_ccw_angle(cls, theta, degrees=True):
+    def init_identity(cls, n_dims):
+        return Rotation(np.eye(n_dims))
+
+    @classmethod
+    def init_from_2d_ccw_angle(cls, theta, degrees=True):
         r"""
         Convenience constructor for 2D CCW rotations about the origin
 
@@ -72,10 +76,6 @@ class Rotation(DiscreteAffine, Similarity):
             theta = theta * np.pi / 180.0
         return Rotation(np.array([[np.cos(theta), -np.sin(theta)],
                                   [np.sin(theta),  np.cos(theta)]]))
-
-    @classmethod
-    def identity(cls, n_dims):
-        return Rotation(np.eye(n_dims))
 
     @property
     def rotation_matrix(self):
