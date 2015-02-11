@@ -1,4 +1,3 @@
-import abc
 import numpy as np
 
 from .base import Homogeneous, HomogFamilyAlignment
@@ -316,8 +315,6 @@ class DiscreteAffine(object):
     Make sure you inherit from :class:`DiscreteAffine` first,
     for optimal `decompose()` behavior.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def decompose(self):
         r"""

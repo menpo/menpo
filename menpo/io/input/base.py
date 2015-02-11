@@ -1,4 +1,3 @@
-import abc
 import os
 from pathlib import Path
 
@@ -451,7 +450,7 @@ def _import(filepath, extensions_map, keep_importer=False,
             # paths
             if lm_paths is None:
                 continue
-            for group_name, lm_path in lm_paths.iteritems():
+            for group_name, lm_path in lm_paths.items():
                 lms = _import(lm_path, landmark_ext_map, asset=x)
                 if x.n_dims == lms.n_dims:
                     x.landmarks[group_name] = lms
@@ -657,7 +656,6 @@ class Importer(object):
     filepath : string
         An absolute filepath
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, filepath):
         self.filepath = os.path.abspath(os.path.expanduser(filepath))
@@ -665,7 +663,6 @@ class Importer(object):
         self.extension = os.path.splitext(self.filepath)[1]
         self.folder = os.path.dirname(self.filepath)
 
-    @abc.abstractmethod
     def build(self):
         r"""
         Performs the heavy lifting for the importer class. This actually reads
@@ -680,7 +677,7 @@ class Importer(object):
             :class:`menpo.shape.mesh.base.Trimesh`. If multiple objects need
             to be returned from one importer, a list must be returned.
         """
-        pass
+        raise NotImplementedError()
 
 
 # Avoid circular imports

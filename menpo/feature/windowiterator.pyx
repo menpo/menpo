@@ -4,16 +4,10 @@
 import numpy as np
 cimport numpy as np
 from libcpp cimport bool
-from libcpp.string cimport string
 from collections import namedtuple
 
 WindowIteratorResult = namedtuple('WindowInteratorResult', ('pixels',
                                                             'centres'))
-
-cdef extern from "math.h":
-    double ceil(double)
-    double round(double)
-    double floor(double)
 
 cdef extern from "cpp/ImageWindowIterator.h":
     cdef cppclass ImageWindowIterator:
@@ -166,7 +160,7 @@ cdef class WindowIterator:
                 info_str, <int>self.iterator._numberOfWindowsHorizontally,
                 <int>self.iterator._numberOfWindowsVertically,
                 <int>hog.descriptorLengthPerWindow)
-            print info_str
+            print(info_str)
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], hog)
         del hog
         return WindowIteratorResult(np.ascontiguousarray(outputImage),
@@ -238,7 +232,7 @@ cdef class WindowIterator:
                 info_str, <int>self.iterator._numberOfWindowsHorizontally,
                 <int>self.iterator._numberOfWindowsVertically,
                 <int>lbp.descriptorLengthPerWindow)
-            print info_str
+            print(info_str)
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], lbp)
         del lbp
         return WindowIteratorResult(np.ascontiguousarray(outputImage),

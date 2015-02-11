@@ -1,5 +1,3 @@
-import abc
-
 from menpo.transform.base import Transform
 from functools import reduce
 
@@ -11,7 +9,7 @@ class ComposableTransform(Transform):
     natural way.
     """
 
-    @abc.abstractproperty
+    @property
     def composes_inplace_with(self):
         r"""
         The :map:`Transform` s that this transform composes inplace
@@ -22,6 +20,7 @@ class ComposableTransform(Transform):
 
         :type: :map:`Transform` or tuple of :map:`Transform` s
         """
+        raise NotImplementedError()
 
     @property
     def composes_with(self):
@@ -203,7 +202,6 @@ class ComposableTransform(Transform):
         self_copy._compose_after_inplace(transform)
         return self_copy
 
-    @abc.abstractmethod
     def _compose_before_inplace(self, transform):
         r"""
         Specialised inplace composition. This should be overridden to
@@ -215,8 +213,8 @@ class ComposableTransform(Transform):
         transform : :attr:`composes_inplace_with`
             Transform to be applied **after** ``self``
         """
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def _compose_after_inplace(self, transform):
         r"""
         Specialised inplace composition. This should be overridden to
@@ -228,7 +226,7 @@ class ComposableTransform(Transform):
         transform : :attr:`composes_inplace_with`
             Transform to be applied **before** ``self``
         """
-
+        raise NotImplementedError()
 
 class VComposable(object):
     r"""
@@ -240,7 +238,6 @@ class VComposable(object):
     These can be tuned for performance.
     """
 
-    @abc.abstractmethod
     def compose_after_from_vector_inplace(self, vector):
         r"""
         Specialised inplace composition with a vector. This should be
@@ -252,7 +249,7 @@ class VComposable(object):
         vector : ``(n_parameters,)`` ndarray
             Vector to update the transform state with.
         """
-
+        raise NotImplementedError()
 
 class TransformChain(ComposableTransform):
     r"""

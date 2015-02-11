@@ -1,4 +1,3 @@
-import abc
 import numpy as np
 
 from menpo.base import Vectorizable
@@ -14,7 +13,7 @@ class HomogFamilyAlignment(Alignment):
     Note that subclasses should inherit from :map:`HomogFamilyAlignment` first
     to have the correct copy behavior.
     """
-    @abc.abstractmethod
+
     def as_non_alignment(self):
         r"""
         Returns a copy of this transform without it's alignment nature.
@@ -25,6 +24,7 @@ class HomogFamilyAlignment(Alignment):
             A version of this transform with the same transform behavior but
             without the alignment logic.
         """
+        raise NotImplementedError()
 
     def copy(self):
         r"""

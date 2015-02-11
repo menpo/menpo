@@ -17,7 +17,8 @@ def _connectivity_from_array(array, close_loop=False):
     If ``close_loop`` is true, add an extra connection from the last point to
     the first.
     """
-    conn = zip(array, array[1:])
+    # zip is a generator - need a list in this case
+    conn = list(zip(array, array[1:]))
     if close_loop:
         conn.append((array[-1], array[0]))
     return np.asarray(conn)
