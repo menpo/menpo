@@ -340,7 +340,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             self._labels_to_masks = labels_to_masks
 
     @classmethod
-    def create_with_all_label(cls, pointcloud, copy=True):
+    def init_with_all_label(cls, pointcloud, copy=True):
         r"""
         Static constructor to create a :map:`LandmarkGroup` with a single
         default 'all' label that covers all points.

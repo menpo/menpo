@@ -204,7 +204,7 @@ def ibug_face_68(landmark_group):
         mouth_connectivity
     ])
 
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['jaw'] = jaw_indices
@@ -296,7 +296,7 @@ def ibug_face_66(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(60), np.arange(61, 64), np.arange(65, 68)))
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['jaw'] = jaw_indices
@@ -383,7 +383,7 @@ def ibug_face_51(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.arange(17, 68)
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -471,7 +471,7 @@ def ibug_face_49(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(17, 60), np.arange(61, 64), np.arange(65, 68)))
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -636,7 +636,7 @@ def ibug_face_65_closed_mouth(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.arange(65)
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['jaw'] = jaw_indices
@@ -781,7 +781,7 @@ def lfpw_face(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.arange(29)
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['chin'] = chin_indices
@@ -880,7 +880,7 @@ def ibug_open_eye(landmark_group):
                             iris_connectivity.tolist() +
                             pupil_connectivity.tolist() +
                             sclera_connectivity)
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['upper_eyelid'] = upper_el_indices
@@ -939,7 +939,7 @@ def ibug_close_eye_points(landmark_group):
     lower_connectivity += [(11, 0)]
 
     total_conn = np.asarray(upper_connectivity + lower_connectivity)
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['upper_eyelid'] = upper_indices
@@ -1165,7 +1165,7 @@ def ibug_hand(landmark_group):
                             middle_connectivity, ring_connectivity,
                             pinky_connectivity, palm_connectivity))
 
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['thumb'] = thumb_indices
@@ -1288,7 +1288,7 @@ def lsp_pose(landmark_group):
                             right_arm_connectivity,
                             head_connectivity])
 
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['left_leg'] = left_leg_indices
@@ -1402,7 +1402,7 @@ def streetscene_car_view_0(landmark_group):
                             windshield_connectivity))
 
     ind = np.arange(8)
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['front'] = front_indices
@@ -1471,7 +1471,7 @@ def streetscene_car_view_1(landmark_group):
                             windshield_connectivity, left_side_connectivity))
 
     ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['front'] = front_indices
@@ -1528,7 +1528,7 @@ def streetscene_car_view_2(landmark_group):
     total_conn = left_side_connectivity
 
     ind = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['left_side'] = left_side_indices
@@ -1595,7 +1595,7 @@ def streetscene_car_view_3(landmark_group):
                             trunk_connectivity, rear_connectivity))
 
     ind = np.array([0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18])
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['left_side'] = left_side_indices
@@ -1666,7 +1666,7 @@ def streetscene_car_view_4(landmark_group):
                             right_side_connectivity))
 
     ind = np.hstack((np.arange(8), np.array([9, 11, 13, 15, 17, 19])))
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['front'] = front_indices
@@ -1723,7 +1723,7 @@ def streetscene_car_view_5(landmark_group):
     total_conn = right_side_connectivity
 
     ind = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19])
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['right_side'] = right_side_indices
@@ -1790,7 +1790,7 @@ def streetscene_car_view_6(landmark_group):
                             trunk_connectivity, rear_connectivity))
 
     ind = np.array([1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19])
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['right_side'] = right_side_indices
@@ -1855,7 +1855,7 @@ def streetscene_car_view_7(landmark_group):
                             trunk_connectivity, rear_connectivity))
 
     ind = np.arange(8, 16)
-    new_landmark_group = LandmarkGroup.create_with_all_label(
+    new_landmark_group = LandmarkGroup.init_with_all_label(
         PointUndirectedGraph(landmark_group.lms.points[ind],
                              total_conn))
 
