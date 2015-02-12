@@ -782,8 +782,7 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         If None, then nothing is assigned.
     """
     import IPython.html.widgets as ipywidgets
-    # check if the new group_keys and labels_keys are the same as the old
-    # ones
+    # check if the new group_keys and labels_keys are the same as the old ones
     if not _compare_groups_and_labels(
             group_keys, labels_keys,
             landmark_options_wid.selected_values['group_keys'],

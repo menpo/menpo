@@ -48,7 +48,7 @@ class Landmarkable(Copyable):
 
         :type: `bool`
         """
-        return self._landmarks is not None
+        return self._landmarks is not None and self.landmarks.n_groups != 0
 
     @landmarks.setter
     def landmarks(self, value):
