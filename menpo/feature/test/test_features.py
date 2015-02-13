@@ -133,9 +133,9 @@ def test_hog_channels_zhuramanan():
     cell_size = np.random.randint(2, 10, [n_cases])
     channels = np.random.randint(1, 4, [n_cases])
     for i in range(n_cases):
-        image = MaskedImage(np.random.randn(channels[i, 0], 40, 40))
-        win_width = np.random.randint(3 * cell_size[i, 0], 40, 1)
-        win_height = np.random.randint(3 * cell_size[i, 0], 40, 1)
+        image = MaskedImage(np.random.randn(channels[i], 40, 40))
+        win_width = np.random.randint(3 * cell_size[i], 40, 1)
+        win_height = np.random.randint(3 * cell_size[i], 40, 1)
         hog_img = hog(image, mode='dense', algorithm='zhuramanan',
                       cell_size=cell_size[i],
                       window_height=win_height[0],
@@ -274,3 +274,6 @@ def test_constrain_landmarks():
     y = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[0] - 1)
     assert_allclose(len(x[0]) + len(y[0]), 0)
 
+
+
+test_hog_channels_zhuramanan()

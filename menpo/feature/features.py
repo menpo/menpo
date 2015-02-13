@@ -333,16 +333,10 @@ def igo(pixels, double_angles=False, verbose=False):
 
     Parameters
     ----------
-<<<<<<< HEAD
-    pixels : `ndarray`
-        The pixel data for the image, where the last axis represents the
-        number of channels.
-=======
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
         dimension is interpreted as channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
->>>>>>> upstream/master
     double_angles : `bool`, optional
         Assume that ``phi`` represents the gradient orientations.
 
