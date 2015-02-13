@@ -1,11 +1,11 @@
 .. _menpo-io-import_builtin_asset:
 
-.. currentmodule:: menpo.io.input.base
+.. currentmodule:: menpo.io
 
 import_builtin_asset
 ====================
 
-.. function:: import_builtin_asset()
+.. function:: import_builtin_asset
 
     This is a dynamically generated method. This method is designed to
     automatically generate import methods for each data file in the ``data``
@@ -16,5 +16,5 @@ import_builtin_asset
 
     ::
 
-        import menpo.io as mio
-        bb_image = mio.import_builtin_asset.breakingbad_jpg()
+        >>> import menpo
+        >>> bb_image = menpo.io.import_builtin_asset.breakingbad_jpg()

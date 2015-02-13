@@ -14,7 +14,8 @@ Decomposition
   :maxdepth: 1
 
   eigenvalue_decomposition
-  principal_component_decomposition
+  pca
+  ipca
 
 
 Linear Algebra
@@ -25,6 +26,8 @@ Linear Algebra
 
   dot_inplace_right
   dot_inplace_left
+  as_matrix
+  from_matrix
 
 
 Convolution

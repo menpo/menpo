@@ -6,30 +6,26 @@ from .rbf import R2LogR2RBF
 # Note we inherit from Alignment first to get it's n_dims behavior
 class ThinPlateSplines(Alignment, Transform, Invertible):
     r"""
-    The thin plate splines (TPS) alignment between 2D source and target
+    The thin plate splines (TPS) alignment between 2D `source` and `target`
     landmarks.
 
-    `kernel` can be used to specify an alternative kernel function. If
-    `None` is supplied, the :class:`menpo.basis.rbf.R2LogR2` kernel will be
-    used.
+    ``kernel`` can be used to specify an alternative kernel function. If
+    ``None`` is supplied, the :class:`R2LogR2RBF` kernel will be used.
 
     Parameters
     ----------
-    source : (N, 2) ndarray
+    source : ``(N, 2)`` `ndarray`
         The source points to apply the tps from
-    target : (N, 2) ndarray
+    target : ``(N, 2)`` `ndarray`
         The target points to apply the tps to
-    kernel : :class:`menpo.basis.rbf.BasisFunction`, optional
+    kernel : :class:`menpo.transform.rbf.RadialBasisFunction`, optional
         The kernel to apply.
-
-        Default: :class:`menpo.basis.rbf.R2LogR2`
 
     Raises
     ------
     ValueError
         TPS is only with on 2-dimensional data
     """
-
     def __init__(self, source, target, kernel=None):
         Alignment.__init__(self, source, target)
         if self.n_dims != 2:
@@ -61,18 +57,23 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
         self._build_coefficients()
 
     def _apply(self, points, **kwargs):
-        """
+        r"""
         Performs a TPS transform on the given points.
 
         Parameters
         ----------
-        points : (N, D) ndarray
+        points : ``(N, D)`` `ndarray`
             The points to transform.
 
         Returns
-        --------
-        f : (N, D) ndarray
+        -------
+        f : ``(N, D)`` `ndarray`
             The transformed points
+
+        Raises
+        ------
+        ValueError
+            TPS can only be applied to 2D data.
         """
         if points.shape[1] != self.n_dims:
             raise ValueError('TPS can only be applied to 2D data.')
@@ -96,7 +97,18 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
 
     @property
     def has_true_inverse(self):
+        r"""
+        :type: ``False``
+        """
         return False
 
     def pseudoinverse(self):
+        r"""
+        The pseudoinverse of the transform - that is, the transform that
+        results from swapping `source` and `target`, or more formally, negating
+        the transforms parameters. If the transform has a true inverse this
+        is returned instead.
+
+        :type: ``type(self)``
+        """
         return ThinPlateSplines(self.target, self.source, kernel=self.kernel)

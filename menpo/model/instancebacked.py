@@ -1,23 +1,28 @@
 
 class InstanceBackedModel(object):
     r"""
-    Mixin for models constructed from a set of Vectorizable objects.
-    Allows for models where visualizing the meaning of a set of components
+    Mixin for models constructed from a set of :map:`Vectorizable` objects.
+    Supports models for which visualizing the meaning of a set of components
     is trivial. Requires that the following attributes to be present:
 
-    n_components
-    components
+    1. `n_components`
+    2. `components`
 
     and the following methods implemented:
 
-    component_vector(index)
-    instance_vectors(weightings)
-    project_vector(vector)
-    reconstruct_vectors(vectors, n_components)
-    project_out_vector(vector)
+    1. `component_vector(index)`
+    2. `instance_vectors(weightings)`
+    3. `project_vector(vector)`
+    4. `reconstruct_vectors(vectors, n_components)`
+    5. `project_out_vector(vector)`
 
     The constructor takes an instance of :map:`Vectorizable`. This is used for
     all conversions to and from numpy vectors and instances.
+
+    Parameters
+    ----------
+    template_instance : :map:`Vectorizable`
+        The template instance.
     """
 
     def __init__(self, template_instance):
@@ -25,31 +30,35 @@ class InstanceBackedModel(object):
 
     def component(self, index):
         r"""
-        Return a particular component of the linear model.
+        A particular component of the model, in vectorized form.
 
         Parameters
         ----------
-        index : int
-            The component that is to be returned
+        index : `int`
+            The component that is to be returned.
 
-        :type: `type(self.template_instance)`
+        Returns
+        -------
+        component_vector : `type(self.template_instance)`
+            The component vector.
         """
         return self.template_instance.from_vector(self.component_vector(index))
 
     def instance(self, weights):
         """
-        Creates a new instance of the model using the first `len(weights)`
+        Creates a new instance of the model using the first ``len(weights)``
         components.
 
         Parameters
         ----------
-        weights : (n_weights,) ndarray or list
-            `weights[i]` is the linear contribution of the i'th component
+        weights : ``(n_weights,)`` `ndarray` or `list`
+            ``weights[i]`` is the linear contribution of the i'th component
             to the instance vector.
 
         Raises
         ------
-        ValueError: If n_weights > n_components
+        ValueError
+            If n_weights > n_components
 
         Returns
         -------
@@ -65,14 +74,14 @@ class InstanceBackedModel(object):
         linear weightings.
 
         Parameters
-        -----------
-        novel_instance : :class:`menpo.base.Vectorizable`
+        ----------
+        novel_instance : :map:`Vectorizable`
             A novel instance.
 
         Returns
         -------
-        projected : (n_components,)
-            A vector of optimal linear weightings
+        projected : ``(n_components,)`` `ndarray`
+            A vector of optimal linear weightings.
         """
         return self.project_vector(instance.as_vector())
 
@@ -81,16 +90,16 @@ class InstanceBackedModel(object):
         Projects a `instance` onto the linear space and rebuilds from the
         weights found.
 
-        Syntactic sugar for:
+        Syntactic sugar for: ::
 
-            >>> instance(project(instance))
+            instance(project(instance))
 
         but faster, as it avoids the conversion that takes place each time.
 
         Parameters
         ----------
-        instance : :class:`menpo.base.Vectorizable`
-            A novel instance of Vectorizable
+        instance : :class:`Vectorizable`
+            A novel instance of :class:`Vectorizable`.
 
         Returns
         -------
@@ -107,8 +116,8 @@ class InstanceBackedModel(object):
 
         Parameters
         ----------
-        instance : :class:`menpo.base.Vectorizable`
-            A novel instance.
+        instance : :class:`Vectorizable`
+            A novel instance of :class:`Vectorizable`.
 
         Returns
         -------

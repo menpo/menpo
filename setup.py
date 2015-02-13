@@ -25,11 +25,11 @@ else:
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
-    install_requires = ['numpy==1.9.1',
-                        'scipy==0.14.0',
-                        'matplotlib==1.4.0',
-                        'pillow==2.5.1',
-                        'Cython==0.21']
+    install_requires = ['numpy>=1.9.1,<1.10',
+                        'scipy>=0.15,<0.16',
+                        'matplotlib>=1.4,<1.5',
+                        'pillow==2.7.0',
+                        'Cython>=0.21,<0.22']
 
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')
@@ -52,6 +52,11 @@ setup(name='menpo',
       ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=install_requires,
-      package_data={'menpo': ['data/*']},
-      tests_require=['nose==1.3.4', 'mock==1.0.1']
+      package_data={'menpo': ['data/*',
+                              'feature/cpp/*.cpp',
+                              'feature/cpp/*.h',
+                              'transform/piecewiseaffine/fastpwa/*.c',
+                              'transform/piecewiseaffine/fastpwa/*.h'],
+                    '': ['*.pxd', '*.pyx']},
+      tests_require=['nose', 'mock']
 )

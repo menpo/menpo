@@ -1,10 +1,12 @@
 import numpy as np
 from mock import patch, PropertyMock
 from nose.tools import raises
+import sys
 
 import menpo.io as mio
 from menpo.image import Image
 
+builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
 test_lg = mio.import_landmark_file(mio.data_path_to('breakingbad.pts'))
 test_img = Image(np.random.random([100, 100]))
@@ -202,7 +204,7 @@ def test_export_pickle(mock_open, exists, pickle_dump):
 
 @patch('menpo.io.output.pickle.pickle.dump')
 @patch('menpo.io.output.base.Path.exists')
-@patch('__builtin__.open')
+@patch('{}.open'.format(builtins_str))
 def test_export_pickle_with_path_uses_open(mock_open, exists, pickle_dump):
     exists.return_value = False
     fake_path = '/fake/fake.pkl.gz'

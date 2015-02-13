@@ -23,8 +23,8 @@ Landmarks & Labeller
 .. toctree::
   :maxdepth: 1
 
-  LandmarkGroup
   LandmarkManager
+  LandmarkGroup
   labeller
 
 

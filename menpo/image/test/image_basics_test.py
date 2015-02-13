@@ -23,7 +23,7 @@ def test_masked_image_as_unmasked():
 
 @raises(NotImplementedError)
 def test_boolean_image_as_masked_raises_not_implemented_error():
-    b_img = BooleanImage.blank((4, 5))
+    b_img = BooleanImage.init_blank((4, 5))
     b_img.as_masked()
 
 
@@ -37,13 +37,13 @@ def test_warp_to_shape_preserves_path():
 def test_warp_to_mask_preserves_path():
     bb = menpo.io.import_builtin_asset.breakingbad_jpg()
     no_op = UniformScale(1.0, n_dims=2)
-    bb2 = bb.warp_to_mask(BooleanImage.blank((10, 10)), no_op)
+    bb2 = bb.warp_to_mask(BooleanImage.init_blank((10, 10)), no_op)
     assert hasattr(bb2, 'path')
     assert bb2.path == bb.path
 
 
 def test_warp_to_shape_boolean_preserves_path():
-    i1 = BooleanImage.blank((10, 10))
+    i1 = BooleanImage.init_blank((10, 10))
     i1.path = Path('.')
     i2 = i1.rescale(0.8)
     assert hasattr(i2, 'path')

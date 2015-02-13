@@ -10,10 +10,10 @@ class MatplotlibRenderer(Renderer):
     Parameters
     ----------
     figure_id : `int` or ``None``
-        A figure id or `None`. ``None`` assumes we maintain the Matplotlib
+        A figure id or ``None``. ``None`` assumes we maintain the Matplotlib
         state machine and use `plt.gcf()`.
     new_figure : `bool`
-        If ``True``, creates a new figure to render on.
+        If ``True``, it creates a new figure to render on.
     """
 
     def __init__(self, figure_id, new_figure):
@@ -65,7 +65,7 @@ class MatplotlibRenderer(Renderer):
         format : `str`
             The format to use. This must match the file path if the file path is
             a `str`.
-        dpi : `int` > 0 or None, optional
+        dpi : `int` > 0 or ``None``, optional
             The resolution in dots per inch.
         face_colour : See Below, optional
             The face colour of the figure rectangle.
@@ -74,6 +74,8 @@ class MatplotlibRenderer(Renderer):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or
                 ``(3, )`` `ndarray`
+                or
+                `list` of len 3
 
         edge_colour : See Below, optional
             The edge colour of the figure rectangle.
@@ -82,6 +84,8 @@ class MatplotlibRenderer(Renderer):
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                 or
                 ``(3, )`` `ndarray`
+                or
+                `list` of len 3
 
         orientation : {``portrait``, ``landscape``}, optional
             The page orientation.
@@ -536,7 +540,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
 
     def _build_sub_pointclouds(self):
         sub_pointclouds = []
-        for label, indices in self.labels_to_masks.iteritems():
+        for label, indices in self.labels_to_masks.items():
             mask = self.labels_to_masks[label]
             sub_pointclouds.append((label, self.pointcloud.from_mask(mask)))
         return sub_pointclouds

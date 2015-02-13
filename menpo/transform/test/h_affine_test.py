@@ -6,11 +6,11 @@ from menpo.transform import Affine, NonUniformScale
 
 
 def test_affine_identity_2d():
-    assert_allclose(Affine.identity(2).h_matrix, np.eye(3))
+    assert_allclose(Affine.init_identity(2).h_matrix, np.eye(3))
 
 
 def test_affine_identity_3d():
-    assert_allclose(Affine.identity(3).h_matrix, np.eye(4))
+    assert_allclose(Affine.init_identity(3).h_matrix, np.eye(4))
 
 
 def test_basic_2d_affine():
@@ -99,8 +99,8 @@ def test_affine_non_square_h_matrix():
 
 
 def test_affine_compose_inplace_affine():
-    a = Affine.identity(2)
-    b = Affine.identity(2)
+    a = Affine.init_identity(2)
+    b = Affine.init_identity(2)
     a.compose_before_inplace(b)
     assert(np.all(a.h_matrix == b.h_matrix))
 

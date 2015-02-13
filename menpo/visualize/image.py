@@ -8,8 +8,8 @@ from menpo.feature import ndfeature
 @ndfeature
 def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
     r"""
-    Create glyph of a feature image. If feature_data has negative values,
-    the use_negative flag controls whether there will be created a glyph of
+    Create glyph of a feature image. If `pixels` have negative values, the
+    `use_negative` flag controls whether there will be created a glyph of
     both positive and negative values concatenated the one on top of the
     other.
 
@@ -67,7 +67,7 @@ def _create_feature_glyph(feature, vbs):
     # construct a "glyph" for each orientation
     block_image_temp = np.zeros((vbs, vbs))
     # Create a vertical line of ones, to be the first vector
-    block_image_temp[:, round(vbs / 2) - 1:round(vbs / 2) + 1] = 1
+    block_image_temp[:, np.round(vbs / 2) - 1:np.round(vbs / 2) + 1] = 1
     block_im = np.zeros((block_image_temp.shape[0],
                          block_image_temp.shape[1],
                          num_bins))

@@ -1,4 +1,3 @@
-import abc
 from collections import OrderedDict, MutableMapping
 
 import numpy as np
@@ -20,19 +19,16 @@ class Landmarkable(Copyable):
     useful tasks like label filtering and viewing.
     """
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self):
         self._landmarks = None
 
-    @abc.abstractproperty
     def n_dims(self):
         """
         The total number of dimensions.
 
         :type: `int`
         """
-        pass
+        raise NotImplementedError()
 
     @property
     def landmarks(self):
@@ -83,14 +79,22 @@ class Landmarkable(Copyable):
 
 
 class LandmarkManager(MutableMapping, Transformable):
-    """
-    Class for storing and manipulating Landmarks associated with an object.
-    This involves managing the internal dictionary, as well as providing
-    convenience functions for operations like viewing.
+    """Store for :map:`LandmarkGroup` instances associated with an object
 
-    A LandmarkManager ensures that all it's Landmarks are of the
-    same dimensionality.
+    Every :map:`Landmarkable` instance has an instance of this class available
+    at the ``.landmarks`` property.  It is through this class that all access
+    to landmarks attached to instances is handled. In general the
+    :map:`LandmarkManager` provides a dictionary-like interface for storing
+    landmarks. :map:`LandmarkGroup` instances are stored under string keys -
+    these keys are refereed to as the **group name**. A special case is
+    where there is a single unambiguous :map:`LandmarkGroup` attached to a
+    :map:`LandmarkManager` - in this case ``None`` can be used as a key to
+    access the sole group.
 
+
+    Note that all landmarks stored on a :map:`Landmarkable` in it's attached
+    :map:`LandmarkManager` are automatically transformed and copied with their
+    parent object.
     """
     def __init__(self):
         super(LandmarkManager, self).__init__()
@@ -235,7 +239,9 @@ class LandmarkManager(MutableMapping, Transformable):
 
         :type: `list` of `str`
         """
-        return self._landmark_groups.keys()
+        # Convert to list so that we can index immediately, as keys()
+        # is a generator in Python 3
+        return list(self._landmark_groups.keys())
 
     def _transform_inplace(self, transform):
         for group in self._landmark_groups.values():
@@ -249,7 +255,7 @@ class LandmarkManager(MutableMapping, Transformable):
         :map:`visualize_landmarks` widget.
 
         Parameters
-        -----------
+        ----------
         popup : `bool`, optional
             If ``True``, the widget will appear as a popup window.
         browser_style : {``buttons``, ``slider``}, optional
@@ -274,7 +280,7 @@ class LandmarkManager(MutableMapping, Transformable):
 
 
 class LandmarkGroup(MutableMapping, Copyable, Viewable):
-    """
+    r"""
     An immutable object that holds a :map:`PointCloud` (or a subclass) and
     stores labels for each point. These labels are defined via masks on the
     :map:`PointCloud`. For this reason, the :map:`PointCloud` is considered to
@@ -285,13 +291,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
     Parameters
     ----------
-    target : :map:`Landmarkable`
-        The parent object of this landmark group.
-    group : `str`
-        The label of the group.
     pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
-    labels_to_masks : `OrderedDict` of `str` to `bool` `ndarrays`
+    labels_to_masks : `ordereddict` {`str` -> `bool ndarray`}
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
     copy : `bool`, optional
@@ -334,6 +336,29 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         else:
             self._pointcloud = pointcloud
             self._labels_to_masks = labels_to_masks
+
+    @classmethod
+    def init_with_all_label(cls, pointcloud, copy=True):
+        r"""
+        Static constructor to create a :map:`LandmarkGroup` with a single
+        default 'all' label that covers all points.
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            The pointcloud representing the landmarks.
+        copy : `boolean`, optional
+            If ``True``, a copy of the :map:`PointCloud` is stored on the group.
+
+        Returns
+        -------
+        lmark_group : :map:`LandmarkGroup`
+            Landmark group wrapping the given pointcloud with a single label
+            called 'all' that is ``True`` for all points.
+        """
+        labels_to_masks = OrderedDict(
+            [('all', np.ones(pointcloud.n_points, dtype=np.bool))])
+        return LandmarkGroup(pointcloud, labels_to_masks, copy=copy)
 
     def copy(self):
         r"""
@@ -473,14 +498,13 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         return self._pointcloud.n_dims
 
     def with_labels(self, labels=None):
-        """
-        Returns a new landmark group that contains only the given labels.
+        """A new landmark group that contains only the certain labels
 
         Parameters
         ----------
         labels : `str` or `list` of `str`, optional
             Labels that should be kept in the returned landmark group. If
-            None is passed, and if there is only one label on this group,
+            ``None`` is passed, and if there is only one label on this group,
             the label will be substituted automatically.
 
         Returns
@@ -502,14 +526,13 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         return self._new_group_with_only_labels(labels)
 
     def without_labels(self, labels):
-        """
-        Returns a new landmark group that contains all labels EXCEPT the given
+        """A new landmark group that excludes certain labels
         label.
 
         Parameters
         ----------
-        label : `str`
-            Label to exclude.
+        labels : `str` or `list` of `str`
+            Labels that should be excluded in the returned landmark group.
 
         Returns
         -------
@@ -529,7 +552,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         If any one point is not covered by a label, then raise a
         ``ValueError``.
         """
-        unlabelled_points = np.sum(self._labels_to_masks.values(), axis=0) == 0
+        # values is a generator in Python 3, so convert to list
+        labels_values = list(self._labels_to_masks.values())
+        unlabelled_points = np.sum(labels_values, axis=0) == 0
         if np.any(unlabelled_points):
             nonzero = np.nonzero(unlabelled_points)
             raise ValueError(
@@ -571,9 +596,8 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         Returns
         -------
-        Dictionary with 'groups' key. Groups contains a landmark label set,
-        containing the label, spatial points and connectivity information.
-        Suitable or use in the by the `json` standard library package.
+        json : ``dict``
+            Dictionary conforming to the LJSON v2 specification.
         """
         labels = [{'mask': mask.nonzero()[0].tolist(),
                    'label': label}
@@ -817,7 +841,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         :map:`visualize_landmarkgroups` widget.
 
         Parameters
-        -----------
+        ----------
         popup : `bool`, optional
             If ``True``, the widget will appear as a popup window.
         browser_style : {``buttons``, ``slider``}, optional
