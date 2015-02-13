@@ -425,7 +425,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         copy = self.copy()
         if not isinstance(channels, list):
             channels = [channels]  # ensure we don't remove the channel axis
-        copy.pixels = self.pixels[channels, ...]
+        copy.pixels = self.pixels[channels]
         return copy
 
     def as_histogram(self, keep_channels=True, bins='unique'):
@@ -1110,8 +1110,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             sample_offsets_arr = np.require(sample_offsets.points,
                                             dtype=np.intp)
 
-        single_array = extract_patches(self.pixels,
-                                       patch_centers.points,
+        single_array = extract_patches(self.pixels, patch_centers.points,
                                        np.asarray(patch_size, dtype=np.intp),
                                        sample_offsets_arr)
 
@@ -1738,7 +1737,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         # Slice off the channel for greyscale images
         if self.n_channels == 1:
-            pixels = self.pixels[0, ...]
+            pixels = self.pixels[0]
         else:
             pixels = channels_to_back(self.pixels)
         if pixels.dtype in [np.float64, np.float32, np.bool]:  # Type check

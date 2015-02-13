@@ -134,7 +134,7 @@ class BooleanImage(Image):
             return self.indices()
         else:
             # Ignore the channel axis
-            return np.vstack(np.nonzero(self.pixels[0, ...])).T
+            return np.vstack(np.nonzero(self.pixels[0])).T
 
     def false_indices(self):
         r"""
@@ -143,7 +143,7 @@ class BooleanImage(Image):
         :type: ``(n_dims, n_false)`` `ndarray`
         """
         # Ignore the channel axis
-        return np.vstack(np.nonzero(~self.pixels[0, ...])).T
+        return np.vstack(np.nonzero(~self.pixels[0])).T
 
     def __str__(self):
         return ('{} {}D mask, {:.1%} '
@@ -367,7 +367,7 @@ class BooleanImage(Image):
                 (1,) + warped_img.shape)
         else:
             # we have to fill out mask with the sampled mask..
-            warped_img.pixels[..., warped_img.mask] = sampled_pixel_values
+            warped_img.pixels[:, warped_img.mask] = sampled_pixel_values
         return warped_img
 
     def constrain_to_landmarks(self, group=None, label=None, trilist=None):

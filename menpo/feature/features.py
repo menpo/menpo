@@ -98,7 +98,7 @@ def gaussian_filter(pixels, sigma):
         from scipy.ndimage import gaussian_filter as scipy_gaussian_filter
     output = np.empty(pixels.shape)
     for dim in range(pixels.shape[0]):
-        scipy_gaussian_filter(pixels[dim, ...], sigma, output=output[dim, ...])
+        scipy_gaussian_filter(pixels[dim], sigma, output=output[dim])
     return output
 
 
@@ -378,15 +378,15 @@ def igo(pixels, double_angles=False, verbose=False):
     # compute gradients
     grad = gradient(pixels)
     # compute angles
-    grad_orient = np.angle(grad[1::2, ...] + 1j * grad[::2, ...])
+    grad_orient = np.angle(grad[1::2] + 1j * grad[::2])
     # compute igo image
     igo_pixels = np.empty((pixels.shape[0] * feat_channels,
                            pixels.shape[1], pixels.shape[2]))
-    igo_pixels[1::feat_channels, ...] = np.cos(grad_orient)
-    igo_pixels[::feat_channels, ...] = np.sin(grad_orient)
+    igo_pixels[1::feat_channels] = np.cos(grad_orient)
+    igo_pixels[::feat_channels] = np.sin(grad_orient)
     if double_angles:
-        igo_pixels[3::feat_channels, ...] = np.cos(2 * grad_orient)
-        igo_pixels[2::feat_channels, ...] = np.sin(2 * grad_orient)
+        igo_pixels[3::feat_channels] = np.cos(2 * grad_orient)
+        igo_pixels[2::feat_channels] = np.sin(2 * grad_orient)
 
     # print information
     if verbose:
@@ -447,13 +447,13 @@ def es(pixels, verbose=False):
     # compute gradients
     grad = gradient(pixels)
     # compute magnitude
-    grad_abs = np.abs(grad[::2, ...] + 1j * grad[1::2, ...])
+    grad_abs = np.abs(grad[::2] + 1j * grad[1::2])
     # compute es image
     grad_abs = grad_abs + np.median(grad_abs)
     es_pixels = np.empty((pixels.shape[0] * feat_channels,
                           pixels.shape[1], pixels.shape[2]))
-    es_pixels[::feat_channels, ...] = grad[::2, ...] / grad_abs
-    es_pixels[1::feat_channels, ...] = grad[1::2, ...] / grad_abs
+    es_pixels[::feat_channels] = grad[::2] / grad_abs
+    es_pixels[1::feat_channels] = grad[1::2] / grad_abs
     # print information
     if verbose:
         info_str = "ES Features:\n"

@@ -27,9 +27,9 @@ def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
     """
     # first, choose the appropriate channels
     if channels is None:
-        pixels = pixels[:4, ...]
+        pixels = pixels[:4]
     elif channels != 'all':
-        pixels = pixels[channels, ...]
+        pixels = pixels[channels]
     else:
         pixels = pixels
 

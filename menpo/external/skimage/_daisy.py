@@ -98,8 +98,8 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     tmp_mag = np.zeros(img.shape)
     tmp_ori = np.zeros(img.shape)
     for c in range(n_channels):
-        tmp_mag[c, ...] = np.sqrt(grad[2*c, ...] ** 2 + grad[2*c+1, ...] ** 2)
-        tmp_ori[c, ...] = np.arctan2(grad[2*c+1, ...], grad[2*c, ...])
+        tmp_mag[c] = np.sqrt(grad[2 * c] ** 2 + grad[2 * c + 1] ** 2)
+        tmp_ori[c] = np.arctan2(grad[2 * c + 1], grad[2 * c])
     grad_mag_ind = np.argmax(tmp_mag, axis=0)
 
     # Compute gradient orientation and magnitude and their contribution
@@ -114,25 +114,23 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     hist = np.empty((orientations,) + img.shape[1:], dtype=float)
     for i, o in enumerate(orientation_angles):
         # Weigh bin contribution by the circular normal distribution
-        hist[i, :, :] = np.exp(orientation_kappa * np.cos(grad_ori - o))
+        hist[i] = np.exp(orientation_kappa * np.cos(grad_ori - o))
         # Weigh bin contribution by the gradient magnitude
-        hist[i, :, :] = np.multiply(hist[i, :, :], grad_mag)
+        hist[i] = np.multiply(hist[i], grad_mag)
 
     # Smooth orientation histograms for the centre and all rings.
     sigmas = [sigmas[0]] + sigmas
     hist_smooth = np.empty((rings + 1,) + hist.shape, dtype=float)
     for i in range(rings + 1):
         for j in range(orientations):
-            hist_smooth[i, j, :, :] = gaussian_filter(hist[j, :, :],
-                                                      sigma=sigmas[i])
+            hist_smooth[i, j] = gaussian_filter(hist[j], sigma=sigmas[i])
 
     # Assemble descriptor grid.
     theta = [2 * np.pi * j / histograms for j in range(histograms)]
     desc_dims = (rings * histograms + 1) * orientations
     descs = np.zeros((desc_dims, img.shape[-2] - 2 * radius,
                       img.shape[-1] - 2 * radius))
-    descs[:orientations, :, :] = hist_smooth[0, :, radius:-radius,
-                                             radius:-radius]
+    descs[:orientations] = hist_smooth[0, :, radius:-radius, radius:-radius]
 
     idx = orientations
     for i in range(rings):
@@ -141,9 +139,8 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
             y_max = descs.shape[1] + y_min
             x_min = radius + int(np.round(ring_radii[i] * np.cos(theta[j])))
             x_max = descs.shape[2] + x_min
-            descs[idx:idx + orientations, :, :] = hist_smooth[i + 1, :,
-                                                              y_min:y_max,
-                                                              x_min:x_max]
+            descs[idx:idx + orientations] = hist_smooth[i + 1, :, y_min:y_max,
+                                                                  x_min:x_max]
             idx += orientations
     descs = descs[:, ::step, ::step]
 
