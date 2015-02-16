@@ -1129,7 +1129,7 @@ def visualize_images(images, figure_size=(10, 8), popup=False,
             im = image_number_wid.selected_values['index']
 
         # update info text widget
-        image_has_landmarks = images[im].landmarks.n_groups != 0
+        image_has_landmarks = images[im].has_landmarks
         image_is_masked = isinstance(images[im], MaskedImage)
         update_info(images[im], image_is_masked, image_has_landmarks,
                     landmark_options_wid.selected_values['group'])
@@ -1148,7 +1148,7 @@ def visualize_images(images, figure_size=(10, 8), popup=False,
         renderer = _visualize(
             images[im], save_figure_wid.renderer[0],
             landmark_options_wid.selected_values['render_landmarks'],
-            channel_options_wid.selected_values['image_is_masked'],
+            image_is_masked,
             channel_options_wid.selected_values['masked_enabled'],
             channel_options_wid.selected_values['channels'],
             channel_options_wid.selected_values['glyph_enabled'],

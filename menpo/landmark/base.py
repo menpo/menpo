@@ -1,4 +1,5 @@
 from collections import OrderedDict, MutableMapping
+import fnmatch
 
 import numpy as np
 
@@ -48,7 +49,7 @@ class Landmarkable(Copyable):
 
         :type: `bool`
         """
-        return self._landmarks is not None
+        return self._landmarks is not None and self.landmarks.n_groups != 0
 
     @landmarks.setter
     def landmarks(self, value):
@@ -242,6 +243,41 @@ class LandmarkManager(MutableMapping, Transformable):
         # Convert to list so that we can index immediately, as keys()
         # is a generator in Python 3
         return list(self._landmark_groups.keys())
+
+    def keys_matching(self, glob_pattern):
+        r"""
+        Yield only landmark group names (keys) matching a given glob.
+
+        Parameters
+        ----------
+        glob_pattern : `str`
+            A glob pattern e.g. 'frontal_face_*'
+
+        Yields
+        ------
+        keys: group labels that match the glob pattern
+        """
+        for key in fnmatch.filter(self.keys(), glob_pattern):
+            yield key
+
+    def items_matching(self, glob_pattern):
+        r"""
+        Yield only items ``(group, LandmarkGroup)`` where the key matches a
+        given glob.
+
+        Parameters
+        ----------
+        glob_pattern : `str`
+            A glob pattern e.g. 'frontal_face_*'
+
+        Yields
+        ------
+        item : ``(group, LandmarkGroup)``
+            Tuple of group, LandmarkGroup where the group matches the glob
+        """
+        for k, v in self.items():
+            if fnmatch.fnmatch(k, glob_pattern):
+                yield k, v
 
     def _transform_inplace(self, transform):
         for group in self._landmark_groups.values():
