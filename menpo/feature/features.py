@@ -568,7 +568,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     if verbose:
         info_str = "Daisy Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[1], pixels.shape[0], pixels.shape[2])
+            info_str, pixels.shape[2], pixels.shape[1], pixels.shape[0])
         info_str = "{}  - Sampling step is {}.\n".format(info_str, step)
         info_str = "{}  - Radius of {} pixels, {} rings and {} histograms " \
                    "with {} orientations.\n".format(
@@ -579,8 +579,8 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
         else:
             info_str = "{}  - No normalization emplyed.\n".format(info_str)
         info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, daisy_descriptor.shape[1], daisy_descriptor.shape[0],
-            daisy_descriptor.shape[2])
+            info_str, daisy_descriptor.shape[2], daisy_descriptor.shape[1],
+            daisy_descriptor.shape[0])
         print(info_str)
 
     return daisy_descriptor
