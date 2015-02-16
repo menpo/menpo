@@ -75,7 +75,9 @@ class PILImporter(Importer):
         np_pixels = np.array(p, dtype=dtype, copy=True)
         if len(np_pixels.shape) is 3:
             np_pixels = np.rollaxis(np_pixels, -1)
-        return np_pixels / 255.0 if normalise else np_pixels
+        # Somewhat surprisingly, this multiplication is quite a bit faster than
+        # just dividing by 255, presumably due to divide by zero checks.
+        return np_pixels * (1.0 / 255.0) if normalise else np_pixels
 
 
 class PILGIFImporter(PILImporter):
