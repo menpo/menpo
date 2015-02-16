@@ -236,10 +236,10 @@ def test_daisy_values():
                    [2., 1., 3., 4.]])
     daisy_img = daisy(image, step=1, rings=2, radius=1, orientations=8,
                       histograms=8)
-    assert_allclose(np.around(daisy_img.pixels[10, 0, 0], 6), 0.000117)
-    assert_allclose(np.around(daisy_img.pixels[20, 0, 1], 6), 0.002526)
-    assert_allclose(np.around(daisy_img.pixels[30, 1, 0], 6), 0.025932)
-    assert_allclose(np.around(daisy_img.pixels[40, 1, 1], 6), 0.002076)
+    assert_allclose(np.around(daisy_img.pixels[10, 0, 0], 6), 0.001355)
+    assert_allclose(np.around(daisy_img.pixels[20, 0, 1], 6), 0.032237)
+    assert_allclose(np.around(daisy_img.pixels[30, 1, 0], 6), 0.002032)
+    assert_allclose(np.around(daisy_img.pixels[40, 1, 1], 6), 0.000163)
 
 
 def test_lbp_values():
