@@ -207,10 +207,10 @@ def test_igo_values():
     image = Image([[1., 2.], [2., 1.]])
     igo_img = igo(image)
     res = np.array(
-        [[[0.70710678, -0.70710678],
-          [0.70710678, -0.70710678]],
-         [[0.70710678, 0.70710678],
-          [-0.70710678, -0.70710678]]])
+        [[[0.70710678, 0.70710678],
+          [-0.70710678, -0.70710678]],
+         [[0.70710678, -0.70710678],
+          [0.70710678, -0.70710678]]])
     assert_allclose(igo_img.pixels, res)
     image = Image([[0., 0.], [0., 0.]])
     igo_img = igo(image)
@@ -221,13 +221,8 @@ def test_igo_values():
 def test_es_values():
     image = Image([[1., 2.], [2., 1.]])
     es_img = es(image)
-    k = 1 / (2 * (2**0.5))
+    k = 1.0 / (2 * (2 ** 0.5))
     res = np.array([[[k, -k], [k, -k]], [[k, k], [-k, -k]]])
-    assert_allclose(es_img.pixels, res)
-    image = Image([[0., 0.], [0., 0.]])
-    es_img = es(image)
-    res = np.array([[[np.nan, np.nan], [np.nan, np.nan]],
-                    [[np.nan, np.nan], [np.nan, np.nan]]])
     assert_allclose(es_img.pixels, res)
 
 

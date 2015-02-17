@@ -835,7 +835,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         r"""
         Returns an :map:`Image` which is the gradient of this one. In the case
         of multiple channels, it returns the gradient over each axis over
-        each channel as a flat `list`.
+        each channel as a flat `list`. Take care to note the ordering of
+        the returned gradient (the gradient over each spatial dimension
+        is taken over each channel).
+
+        The first axis of the gradient of a 2D, 3-channel image,
+        will have length `6`, the ordering being
+        ``I[:, 0, 0] = [R0_y, G0_y, B0_y, R0_x, G0_x, B0_x]``. To be clear,
+        all the ``y``-gradients are returned over each channel, then all
+        the ``x``-gradients.
 
         Returns
         -------

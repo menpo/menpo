@@ -62,8 +62,9 @@ def gradient(pixels):
         first axis of the gradient of a 2D, single channel image, will have
         length `2`. The first axis of the gradient of a 2D, 3-channel image,
         will have length `6`, the ordering being
-        ``I[:, 0, 0] = [R0_y, G0_y, B0_y, R0_x, G0_x, B0_x]``.
-
+        ``I[:, 0, 0] = [R0_y, G0_y, B0_y, R0_x, G0_x, B0_x]``. To be clear,
+        all the ``y``-gradients are returned over each channel, then all
+        the ``x``-gradients.
     """
     if (pixels.ndim - 1) == 2:  # 2D Image
         return gradient_cython(pixels)
@@ -371,36 +372,42 @@ def igo(pixels, double_angles=False, verbose=False):
     if len(pixels.shape) != 3:
         raise ValueError('IGOs only work on 2D images. Expects image data '
                          'to be 3D, channels + shape.')
+    n_img_chnls = pixels.shape[0]
     # feature channels per image channel
-    feat_channels = 2
+    feat_chnls = 2
     if double_angles:
-        feat_channels = 4
+        feat_chnls = 4
+
     # compute gradients
     grad = gradient(pixels)
     # compute angles
-    grad_orient = np.angle(grad[1::2] + 1j * grad[::2])
+    grad_orient = np.angle(grad[:n_img_chnls] + 1j * grad[n_img_chnls:])
     # compute igo image
-    igo_pixels = np.empty((pixels.shape[0] * feat_channels,
+    igo_pixels = np.empty((n_img_chnls * feat_chnls,
                            pixels.shape[1], pixels.shape[2]))
-    igo_pixels[1::feat_channels] = np.cos(grad_orient)
-    igo_pixels[::feat_channels] = np.sin(grad_orient)
+
     if double_angles:
-        igo_pixels[3::feat_channels] = np.cos(2 * grad_orient)
-        igo_pixels[2::feat_channels] = np.sin(2 * grad_orient)
+        dbl_grad_orient = 2 * grad_orient
+        # y angles
+        igo_pixels[:n_img_chnls] = np.sin(grad_orient)
+        igo_pixels[n_img_chnls:n_img_chnls*2] = np.sin(dbl_grad_orient)
+
+        # x angles
+        igo_pixels[n_img_chnls*2:n_img_chnls*3] = np.cos(grad_orient)
+        igo_pixels[n_img_chnls*3:] = np.cos(dbl_grad_orient)
+    else:
+        igo_pixels[:n_img_chnls] = np.sin(grad_orient)  # y
+        igo_pixels[n_img_chnls:] = np.cos(grad_orient)  # x
 
     # print information
     if verbose:
         info_str = "IGO Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[2], pixels.shape[1],
-            pixels.shape[0])
-        if double_angles:
-            info_str = "{}  - Double angles are enabled.\n".format(info_str)
-        else:
-            info_str = "{}  - Double angles are disabled.\n".format(info_str)
+            info_str, pixels.shape[2], pixels.shape[1], n_img_chnls)
+        info_str = "{}  - Double angles are {}.\n".format(
+            info_str, 'enabled' if double_angles else 'disabled')
         info_str = "{}Output image size {}W x {}H with {} channels.".format(
-            info_str, igo_pixels.shape[2], igo_pixels.shape[1],
-            igo_pixels.shape[0])
+            info_str, igo_pixels.shape[2], igo_pixels.shape[1], n_img_chnls)
         print(info_str)
     return igo_pixels
 
@@ -442,27 +449,28 @@ def es(pixels, verbose=False):
     if len(pixels.shape) != 3:
         raise ValueError('ES features only work on 2D images. Expects '
                          'image data to be 3D, channels + shape.')
+    n_img_chnls = pixels.shape[0]
     # feature channels per image channel
     feat_channels = 2
     # compute gradients
     grad = gradient(pixels)
     # compute magnitude
-    grad_abs = np.abs(grad[::2] + 1j * grad[1::2])
+    grad_abs = np.abs(grad[:n_img_chnls] + 1j * grad[n_img_chnls:])
     # compute es image
     grad_abs = grad_abs + np.median(grad_abs)
     es_pixels = np.empty((pixels.shape[0] * feat_channels,
                           pixels.shape[1], pixels.shape[2]))
-    es_pixels[::feat_channels] = grad[::2] / grad_abs
-    es_pixels[1::feat_channels] = grad[1::2] / grad_abs
+
+    es_pixels[:n_img_chnls] = grad[:n_img_chnls] / grad_abs
+    es_pixels[n_img_chnls:] = grad[n_img_chnls:] / grad_abs
+
     # print information
     if verbose:
         info_str = "ES Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[2], pixels.shape[1],
-            pixels.shape[0])
+            info_str, pixels.shape[2], pixels.shape[1], n_img_chnls)
         info_str = "{}Output image size {}W x {}H with {} channels.".format(
-            info_str, es_pixels.shape[2], es_pixels.shape[1],
-            es_pixels.shape[0])
+            info_str, es_pixels.shape[2], es_pixels.shape[1], n_img_chnls)
         print(info_str)
     return es_pixels
 
