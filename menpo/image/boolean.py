@@ -26,7 +26,7 @@ class BooleanImage(Image):
     def __init__(self, mask_data, copy=True):
         # Add a channel dimension. We do this little reshape trick to add
         # the axis because this maintains C-contiguous'ness
-        mask_data = mask_data.reshape(mask_data.shape + (1,))
+        mask_data = mask_data.reshape((1,) + mask_data.shape)
         # If we are trying not to copy, but the data we have isn't boolean,
         # then unfortunately, we forced to copy anyway!
         if mask_data.dtype != np.bool:
@@ -82,7 +82,7 @@ class BooleanImage(Image):
 
         :type: ``(M, N, ..., L)``, `bool ndarray`
         """
-        return self.pixels[..., 0]
+        return self.pixels[0, ...]
 
     def n_true(self):
         r"""
@@ -134,7 +134,7 @@ class BooleanImage(Image):
             return self.indices()
         else:
             # Ignore the channel axis
-            return np.vstack(np.nonzero(self.pixels[..., 0])).T
+            return np.vstack(np.nonzero(self.pixels[0])).T
 
     def false_indices(self):
         r"""
@@ -143,7 +143,7 @@ class BooleanImage(Image):
         :type: ``(n_dims, n_false)`` `ndarray`
         """
         # Ignore the channel axis
-        return np.vstack(np.nonzero(~self.pixels[..., 0])).T
+        return np.vstack(np.nonzero(~self.pixels[0])).T
 
     def __str__(self):
         return ('{} {}D mask, {:.1%} '
@@ -364,10 +364,10 @@ class BooleanImage(Image):
         if warped_img.all_true():
             # great, just reshape the sampled_pixel_values
             warped_img.pixels = sampled_pixel_values.reshape(
-                warped_img.shape + (1,))
+                (1,) + warped_img.shape)
         else:
             # we have to fill out mask with the sampled mask..
-            warped_img.pixels[warped_img.mask] = sampled_pixel_values
+            warped_img.pixels[:, warped_img.mask] = sampled_pixel_values
         return warped_img
 
     def constrain_to_landmarks(self, group=None, label=None, trilist=None):

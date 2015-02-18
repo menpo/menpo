@@ -618,7 +618,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         self.x_axis = x_axis
         self.y_axis = y_axis
         if legend_entries is None:
-            legend_entries = ["Curve {}".format(i) for i in range(len(y_axis))]
+            legend_entries = ['Curve {}'.format(i) for i in range(len(y_axis))]
         self.legend_entries = legend_entries
         self.title = title
         self.x_label = x_label
@@ -628,7 +628,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
 
     def render(self, render_lines=True, line_colour='r',
                line_style='-', line_width=1, render_markers=True,
-               marker_style='o', marker_size=20, marker_face_colour='r',
+               marker_style='o', marker_size=6, marker_face_colour='r',
                marker_edge_colour='k', marker_edge_width=1.,
                render_legend=True, legend_title='',
                legend_font_name='sans-serif', legend_font_style='normal',

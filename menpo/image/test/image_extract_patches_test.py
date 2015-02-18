@@ -70,7 +70,7 @@ def test_squared_even_patches_single_array():
     patches = image.extract_patches(image.landmarks['PTS'].lms,
                                     as_single_array=True,
                                     patch_size=patch_shape)
-    assert_equals(patches.shape, ((68,) + patch_shape + (3,)))
+    assert_equals(patches.shape, ((68, 1, 3) + patch_shape))
 
 
 def test_squared_even_patches_sample_offsets():

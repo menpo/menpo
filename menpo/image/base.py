@@ -12,7 +12,7 @@ from menpo.transform import (Translation, NonUniformScale,
                              AlignmentUniformScale, Affine, Rotation)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
-from .extract_patches import extract_patches_cython
+from .extract_patches import extract_patches
 
 
 class ImageBoundaryError(ValueError):
@@ -61,6 +61,32 @@ def indices_for_image_of_shape(shape):
     return np.indices(shape).reshape([len(shape), -1]).T
 
 
+def channels_to_back(image):
+    r"""
+    Roll the channels from the front to the back for an image. If the image
+    that is passed is already a numpy array, then that is also fine.
+
+    Always returns a numpy array because our :map:`Image` containers do not
+    support channels at the back.
+
+    Parameters
+    ----------
+    image : `ndarray` or :map:`Image` subclass
+        The pixels or image to roll the channel back for.
+
+    Returns
+    -------
+    rolled_pixels : `ndarray`
+        The numpy array of pixels with the channels on the last axis.
+    """
+    if isinstance(image, np.ndarray):
+        pixels = image
+    else:
+        pixels = image.pixels
+
+    return np.rollaxis(pixels, 0, pixels.ndim)
+
+
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     r"""
     An n-dimensional image.
@@ -73,9 +99,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     same data-type (`float64`).
 
     Parameters
-    ----------
-    image_data : ``(M, N ..., Q, C)`` `ndarray`
-        Array representing the image pixels, with the last axis being
+    -----------
+    image_data : ``(C, M, N ..., Q)`` `ndarray`
+        Array representing the image pixels, with the first axis being
         channels.
     copy : `bool`, optional
         If ``False``, the ``image_data`` will not be copied on assignment.
@@ -104,11 +130,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             # Degenerate case whereby we can just put the extra axis
             # on ourselves
             if image_data.ndim == 2:
-                image_data = image_data[..., None]
+                image_data = image_data[None, ...]
             if image_data.ndim < 2:
                 raise ValueError(
-                    "Pixel array has to be 2D (2D shape, implicitly "
-                    "1 channel) or 3D+ (2D+ shape, n_channels) "
+                    "Pixel array has to be 2D (implicitly 1 channel, "
+                    "2D shape) or 3D+ (n_channels, 2D+ shape) "
                     " - a {}D array "
                     "was provided".format(image_data.ndim))
         self.pixels = image_data
@@ -138,10 +164,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # Ensure that the '+' operator means concatenate tuples
         shape = tuple(np.ceil(shape).astype(np.int))
         if fill == 0:
-            pixels = np.zeros(shape + (n_channels,), dtype=dtype)
+            pixels = np.zeros((n_channels,) + shape, dtype=dtype)
         else:
-            pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
-        # We know there is no need to copy
+            pixels = np.ones((n_channels,) + shape, dtype=dtype) * fill
+        # We know there is no need to copy...
         return cls(pixels, copy=False)
 
     def as_masked(self, mask=None, copy=True):
@@ -187,7 +213,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         :type: `int`
         """
-        return self.pixels[..., 0].size
+        return self.pixels[0, ...].size
 
     @property
     def n_elements(self):
@@ -206,7 +232,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         :type: `int`
         """
-        return self.pixels.shape[-1]
+        return self.pixels.shape[0]
 
     @property
     def width(self):
@@ -214,11 +240,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         The width of the image.
 
         This is the width according to image semantics, and is thus the size
-        of the **second** dimension.
+        of the **last** dimension.
 
         :type: `int`
         """
-        return self.pixels.shape[1]
+        return self.pixels.shape[-1]
 
     @property
     def height(self):
@@ -226,11 +252,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         The height of the image.
 
         This is the height according to image semantics, and is thus the size
-        of the **first** dimension.
+        of the **second to last** dimension.
 
         :type: `int`
         """
-        return self.pixels.shape[0]
+        return self.pixels.shape[-2]
 
     @property
     def shape(self):
@@ -240,7 +266,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         :type: `tuple`
         """
-        return self.pixels.shape[:-1]
+        return self.pixels.shape[1:]
 
     @property
     def diagonal(self):
@@ -291,8 +317,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             ========== =============================
             Value      Return shape
             ========== =============================
-            `False`    ``(n_pixels * n_channels,)``
-            `True`     ``(n_pixels, n_channels)``
+            `False`    ``(n_channels * n_pixels,)``
+            `True`     ``(n_channels, n_pixels)``
             ========== =============================
 
         Returns
@@ -302,7 +328,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             and channel information.
         """
         if keep_channels:
-            return self.pixels.reshape([-1, self.n_channels])
+            return self.pixels.reshape([self.n_channels, -1])
         else:
             return self.pixels.ravel()
 
@@ -342,7 +368,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # This is useful for when we want to add an extra channel to an image
         # but maintain the shape. For example, when calculating the gradient
         n_channels = self.n_channels if n_channels is None else n_channels
-        image_data = vector.reshape(self.shape + (n_channels,))
+        image_data = vector.reshape((n_channels,) + self.shape)
         new_image = Image(image_data, copy=copy)
         new_image.landmarks = self.landmarks
         return new_image
@@ -399,7 +425,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         copy = self.copy()
         if not isinstance(channels, list):
             channels = [channels]  # ensure we don't remove the channel axis
-        copy.pixels = self.pixels[..., channels]
+        copy.pixels = self.pixels[channels]
         return copy
 
     def as_histogram(self, keep_channels=True, bins='unique'):
@@ -456,7 +482,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                              "sequence of scalars.")
         # compute histogram
         vec = self.as_vector(keep_channels=keep_channels)
-        if len(vec.shape) == 1 or vec.shape[1] == 1:
+        if len(vec.shape) == 1 or vec.shape[0] == 1:
             if bins == 0:
                 bins = np.unique(vec)
             hist, bin_edges = np.histogram(vec, bins=bins)
@@ -464,10 +490,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             hist = []
             bin_edges = []
             num_bins = bins
-            for ch in range(vec.shape[1]):
+            for ch in range(vec.shape[0]):
                 if bins == 0:
-                    num_bins = np.unique(vec[:, ch])
-                h_tmp, c_tmp = np.histogram(vec[:, ch], bins=num_bins)
+                    num_bins = np.unique(vec[ch, :])
+                h_tmp, c_tmp = np.histogram(vec[ch, :], bins=num_bins)
                 hist.append(h_tmp)
                 bin_edges.append(c_tmp)
         return hist, bin_edges
@@ -809,7 +835,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         r"""
         Returns an :map:`Image` which is the gradient of this one. In the case
         of multiple channels, it returns the gradient over each axis over
-        each channel as a flat `list`.
+        each channel as a flat `list`. Take care to note the ordering of
+        the returned gradient (the gradient over each spatial dimension
+        is taken over each channel).
+
+        The first axis of the gradient of a 2D, 3-channel image,
+        will have length `6`, the ordering being
+        ``I[:, 0, 0] = [R0_y, G0_y, B0_y, R0_x, G0_x, B0_x]``. To be clear,
+        all the ``y``-gradients are returned over each channel, then all
+        the ``x``-gradients.
 
         Returns
         -------
@@ -874,7 +908,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         slices = [slice(int(min_i), int(max_i))
                   for min_i, max_i in
                   zip(list(min_bounded), list(max_bounded))]
-        self.pixels = self.pixels[slices].copy()
+        self.pixels = self.pixels[
+            [slice(0, self.n_channels, None)] + slices].copy()
         # update all our landmarks
         lm_translation = Translation(-min_bounded)
         lm_translation.apply_inplace(self.landmarks)
@@ -1032,8 +1067,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def extract_patches(self, patch_centers, patch_size=(16, 16),
                         sample_offsets=None, as_single_array=False):
         r"""
-        Extract a set of patches from an image. Given a set of patch centers and
-        a patch size, patches are extracted from within the image, centred
+        Extract a set of patches from an image. Given a set of patch centers
+        and a patch size, patches are extracted from within the image, centred
         on the given coordinates. Sample offsets denote a set of offsets to
         extract from within a patch. This is very useful if you want to extract
         a dense set of features around a set of landmarks and simply sample the
@@ -1078,21 +1113,19 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                              'currently supported.')
 
         if sample_offsets is None:
-            sample_offsets_arr = np.zeros([1, 2], dtype=np.int64)
+            sample_offsets_arr = np.zeros([1, 2], dtype=np.intp)
         else:
             sample_offsets_arr = np.require(sample_offsets.points,
-                                            dtype=np.int64)
+                                            dtype=np.intp)
 
-        single_array = extract_patches_cython(self.pixels,
-                                              patch_centers.points,
-                                              np.asarray(patch_size,
-                                                         dtype=np.int64),
-                                              sample_offsets_arr)
+        single_array = extract_patches(self.pixels, patch_centers.points,
+                                       np.asarray(patch_size, dtype=np.intp),
+                                       sample_offsets_arr)
 
         if as_single_array:
             return single_array
         else:
-            return [Image(p, copy=False) for p in single_array]
+            return [Image(o, copy=False) for p in single_array for o in p]
 
     def extract_patches_around_landmarks(
             self, group=None, label=None, patch_size=(16, 16),
@@ -1193,7 +1226,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         template_points = template_mask.true_indices()
         points_to_sample = transform.apply(template_points)
         # we want to sample each channel in turn, returning a vector of
-        # sampled pixels. Store those in a (n_pixels, n_channels) array.
+        # sampled pixels. Store those in a (n_channels, n_pixels) array.
         sampled_pixel_values = scipy_interpolation(
             self.pixels, points_to_sample, order=order, mode=mode, cval=cval)
         # set any nan values to 0
@@ -1289,7 +1322,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_pixels = sampled.reshape(template_shape + (self.n_channels,))
+        warped_pixels = sampled.reshape((self.n_channels,) + template_shape)
         warped_image = Image(warped_pixels, copy=False)
 
         # warp landmarks if requested.
@@ -1655,19 +1688,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                            [1.0, -0.272, -0.647],
                                            [1.0, -1.106, 1.703]]))
             coef = T[0, :]
-            pixels = np.dot(greyscale.pixels, coef.T)
+            pixels = np.rollaxis(greyscale.pixels, 0, self.n_dims+1)
+            pixels = np.dot(pixels, coef.T)
         elif mode == 'average':
-            pixels = np.mean(greyscale.pixels, axis=-1)
+            pixels = np.mean(greyscale.pixels, axis=0)
         elif mode == 'channel':
             if channel is None:
                 raise ValueError("For the 'channel' mode you have to provide"
                                  " a channel index")
-            pixels = greyscale.pixels[..., channel].copy()
+            pixels = greyscale.pixels[channel, ...].copy()
         else:
             raise ValueError("Unknown mode {} - expected 'luminosity', "
                              "'average' or 'channel'.".format(mode))
 
-        greyscale.pixels = pixels[..., None]
+        greyscale.pixels = pixels[None, ...]
         return greyscale
 
     def as_PILImage(self):
@@ -1710,7 +1744,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                                           self.n_dims))
 
         # Slice off the channel for greyscale images
-        pixels = self.pixels[..., 0] if self.n_channels == 1 else self.pixels
+        if self.n_channels == 1:
+            pixels = self.pixels[0]
+        else:
+            pixels = channels_to_back(self.pixels)
         if pixels.dtype in [np.float64, np.float32, np.bool]:  # Type check
             if np.any((self.pixels < 0) | (self.pixels > 1)):  # Range check
                 raise ValueError('Pixel values are outside the range '
@@ -1793,8 +1830,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             scale_factor = scale_func(centered_pixels)
 
         elif mode == 'per_channel':
-            centered_pixels = pixels - np.mean(pixels, axis=0)
-            scale_factor = scale_func(centered_pixels, axis=0)
+            centered_pixels = pixels - np.mean(pixels, axis=1)[..., None]
+            scale_factor = scale_func(centered_pixels, axis=1)[..., None]
         else:
             raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
                              "was provided instead".format(mode))

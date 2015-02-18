@@ -4,7 +4,6 @@ import numpy as np
 binary_erosion = None  # expensive, from scipy.ndimage
 
 from menpo.visualize.base import ImageViewer
-gradient = None  # avoid circular reference, from menpo.feature
 
 from .base import Image
 from .boolean import BooleanImage
@@ -19,8 +18,8 @@ class MaskedImage(Image):
 
     Parameters
     ----------
-    image_data :  ``(M, N ..., Q, C)`` `ndarray`
-        The pixel data for the image, where the last axis represents the
+    image_data :  ``(C, M, N ..., Q)`` `ndarray`
+        The pixel data for the image, where the first axis represents the
         number of channels.
     mask : ``(M, N)`` `bool ndarray` or :map:`BooleanImage`, optional
         A binary array representing the mask. Must be the same
@@ -97,9 +96,9 @@ class MaskedImage(Image):
         # Ensure that the '+' operator means concatenate tuples
         shape = tuple(np.ceil(shape).astype(np.int))
         if fill == 0:
-            pixels = np.zeros(shape + (n_channels,), dtype=dtype)
+            pixels = np.zeros((n_channels,) + shape, dtype=dtype)
         else:
-            pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
+            pixels = np.ones((n_channels,) + shape, dtype=dtype) * fill
         return cls(pixels, copy=False, mask=mask)
 
     def as_unmasked(self, copy=True):
@@ -169,11 +168,11 @@ class MaskedImage(Image):
         r"""
         Get the pixels covered by the `True` values in the mask.
 
-        :type: ``(mask.n_true, n_channels)`` `ndarray`
+        :type: ``(n_channels, mask.n_true)`` `ndarray`
         """
         if self.mask.all_true():
             return self.pixels
-        return self.pixels[self.mask.mask]
+        return self.pixels[..., self.mask.mask]
 
     def set_masked_pixels(self, pixels, copy=True):
         r"""
@@ -195,7 +194,7 @@ class MaskedImage(Image):
         """
         if self.mask.all_true():
             # reshape the vector into the image again
-            pixels = pixels.reshape(self.shape + (self.n_channels,))
+            pixels = pixels.reshape((self.n_channels,) + self.shape)
             if not copy:
                 if not pixels.flags.c_contiguous:
                     warn('The copy flag was NOT honoured. A copy HAS been '
@@ -207,7 +206,7 @@ class MaskedImage(Image):
                 pixels = pixels.copy()
             self.pixels = pixels
         else:
-            self.pixels[self.mask.mask] = pixels
+            self.pixels[..., self.mask.mask] = pixels
             # oh dear, couldn't avoid a copy. Did the user try to?
             if not copy:
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
@@ -242,7 +241,7 @@ class MaskedImage(Image):
             Vectorized image
         """
         if keep_channels:
-            return self.masked_pixels().reshape([-1, self.n_channels])
+            return self.masked_pixels().reshape([self.n_channels, -1])
         else:
             return self.masked_pixels().ravel()
 
@@ -277,14 +276,14 @@ class MaskedImage(Image):
         # This is useful for when we want to add an extra channel to an image
         # but maintain the shape. For example, when calculating the gradient
         n_channels = self.n_channels if n_channels is None else n_channels
-        # Creates zeros of size (M x N x ... x n_channels)
+        # Creates zeros of size (n_channels x M x N x ...)
         if self.mask.all_true():
             # we can just reshape the array!
-            image_data = vector.reshape((self.shape + (n_channels,)))
+            image_data = vector.reshape(((n_channels,) + self.shape))
         else:
-            image_data = np.zeros(self.shape + (n_channels,))
-            pixels_per_channel = vector.reshape((-1, n_channels))
-            image_data[self.mask.mask] = pixels_per_channel
+            image_data = np.zeros((n_channels,) + self.shape)
+            pixels_per_channel = vector.reshape((n_channels, -1))
+            image_data[..., self.mask.mask] = pixels_per_channel
         new_image = MaskedImage(image_data, mask=self.mask)
         new_image.landmarks = self.landmarks
         return new_image
@@ -309,7 +308,7 @@ class MaskedImage(Image):
         Warning
             If ``copy=False`` cannot be honored.
         """
-        self.set_masked_pixels(vector.reshape((-1, self.n_channels)),
+        self.set_masked_pixels(vector.reshape((self.n_channels, -1)),
                                copy=copy)
 
     def _view_2d(self, figure_id=None, new_figure=False, channels=None,
@@ -379,9 +378,8 @@ class MaskedImage(Image):
             If Image is not 2D
         """
         mask = self.mask.mask if masked else None
-        pixels_to_view = self.pixels
         return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view, channels=channels,
+                           self.pixels, channels=channels,
                            mask=mask).render(render_axes=render_axes,
                                              axes_font_name=axes_font_name,
                                              axes_font_size=axes_font_size,
@@ -871,10 +869,9 @@ class MaskedImage(Image):
         if mode == 'all':
             centered_pixels = pixels - np.mean(pixels)
             scale_factor = scale_func(centered_pixels)
-
         elif mode == 'per_channel':
-            centered_pixels = pixels - np.mean(pixels, axis=0)
-            scale_factor = scale_func(centered_pixels, axis=0)
+            centered_pixels = pixels - np.mean(pixels, axis=1)[..., None]
+            scale_factor = scale_func(centered_pixels, axis=1)[..., None]
         else:
             raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
                              "was provided instead".format(mode))
@@ -890,45 +887,6 @@ class MaskedImage(Image):
         else:
             Image.from_vector_inplace(self,
                                       normalized_pixels.flatten())
-
-    def gradient(self, nullify_values_at_mask_boundaries=False):
-        r"""
-        Returns a :map:`MaskedImage` which is the gradient of this one. In the
-        case of multiple channels, it returns the gradient over each axis over
-        each channel as a flat list.
-
-        Parameters
-        ----------
-        nullify_values_at_mask_boundaries : `bool`, optional
-            If ``True`` a one pixel boundary is set to 0 around the edge of
-            the ``True`` mask region. This is useful in situations where
-            there is absent data in the image which will cause erroneous
-            gradient settings.
-
-        Returns
-        -------
-        gradient : :map:`MaskedImage`
-            The gradient over each axis over each channel. Therefore, the
-            gradient of a 2D, single channel image, will have length `2`.
-            The length of a 2D, 3-channel image, will have length `6`.
-        """
-        global binary_erosion, gradient
-        if gradient is None:
-            from menpo.feature import gradient  # avoid circular reference
-        # use the feature to take the gradient as normal
-        grad_image = gradient(self)
-        if nullify_values_at_mask_boundaries:
-            if binary_erosion is None:
-                from scipy.ndimage import binary_erosion  # expensive
-            # Erode the edge of the mask in by one pixel
-            eroded_mask = binary_erosion(self.mask.mask, iterations=1)
-
-            # replace the eroded mask with the diff between the two
-            # masks. This is only true in the region we want to nullify.
-            np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
-            # nullify all the boundary values in the grad image
-            grad_image.pixels[eroded_mask] = 0.0
-        return grad_image
 
     def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
@@ -991,3 +949,34 @@ class MaskedImage(Image):
             mask[x.flatten(), y.flatten()] = True
 
         self.mask = BooleanImage(mask)
+
+    def set_boundary_pixels(self, value=0.0, n_pixels=1):
+        r"""
+        Returns a copy of this :map:`MaskedImage` for which n pixels along
+        the its mask boundary have been set to a particular value. This is
+        useful in situations where there is absent data in the image which
+        can cause, for example, erroneous computations of gradient or features.
+
+        Parameters
+        ----------
+        value : float or (n_channels, 1) ndarray
+        n_pixels : int, optional
+            The number of pixels along the mask boundary that will be set to 0.
+
+        Returns
+        -------
+         : :map:`MaskedImage`
+            The copy of the image for which the n pixels along its mask
+            boundary have been set to a particular value.
+        """
+        global binary_erosion
+        if binary_erosion is None:
+            from scipy.ndimage import binary_erosion  # expensive
+        # Erode the edge of the mask in by one pixel
+        eroded_mask = binary_erosion(self.mask.mask, iterations=n_pixels)
+
+        # replace the eroded mask with the diff between the two
+        # masks. This is only true in the region we want to nullify.
+        np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
+        # set all the boundary pixels to a particular value
+        self.pixels[..., eroded_mask] = value

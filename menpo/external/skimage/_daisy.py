@@ -45,7 +45,6 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
           * 'l2': L2-normalization of each descriptor.
           * 'daisy': L2-normalization of individual histograms.
           * 'off': Disable normalization.
-
     sigmas : 1D array of float, optional
         Standard deviation of spatial Gaussian smoothing for the centre
         histogram and for each ring of histograms. The array of sigmas should
@@ -55,7 +54,6 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
         overrides the following parameter.
 
             ``rings = len(sigmas) - 1``
-
     ring_radii : 1D array of int, optional
         Radius (in pixels) for each ring. Specifying ring_radii overrides the
         following two parameters.
@@ -73,7 +71,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     -------
     descs : array
         Grid of DAISY descriptors for the given image as an array
-        dimensionality  (P, Q, R) where
+        dimensionality  (P, Q, R) where ::
 
             ``P = ceil((M - radius*2) / step)``
             ``Q = ceil((N - radius*2) / step)``
@@ -91,51 +89,44 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     """
     # Compute image derivatives.
     # Get number of input image's channels
-    n_channels = img.shape[-1]
+    n_channels = img.shape[0]
 
     # Compute image gradient
     grad = gradient(img)
 
     # For each pixel, select gradient with highest magnitude
-    tmp_mag = np.zeros(img.shape)
-    tmp_ori = np.zeros(img.shape)
+    grad_mag = np.zeros(img.shape[1:])
+    grad_ori = np.zeros(img.shape[1:])
     for c in range(n_channels):
-        tmp_mag[..., c] = np.sqrt(grad[..., 2*c] ** 2 + grad[..., 2*c+1] ** 2)
-        tmp_ori[..., c] = np.arctan2(grad[..., 2*c+1], grad[..., 2*c])
-    grad_mag_ind = np.argmax(tmp_mag, axis=2)
+        c_grad_mag = np.sqrt(grad[c] ** 2 + grad[c + n_channels] ** 2)
+        tmp_max_mask = c_grad_mag > grad_mag
+        grad_mag[tmp_max_mask] = c_grad_mag[tmp_max_mask]
+        grad_ori[tmp_max_mask] = np.arctan2(grad[c][tmp_max_mask],
+                                            grad[c + n_channels][tmp_max_mask])
 
-    # Compute gradient orientation and magnitude and their contribution
-    # to the histograms.
-    b = np.concatenate([(grad_mag_ind == i)[..., None]
-                        for i in range(n_channels)], axis=-1)
-    grad_mag = tmp_mag[b].reshape(tmp_mag.shape[:2])
-    grad_ori = tmp_ori[b].reshape(tmp_ori.shape[:2])
     orientation_kappa = orientations / np.pi
     orientation_angles = [2 * o * np.pi / orientations - np.pi
                           for o in range(orientations)]
-    hist = np.empty((orientations,) + img.shape[:2], dtype=float)
+    hist = np.empty((orientations,) + img.shape[1:], dtype=float)
     for i, o in enumerate(orientation_angles):
         # Weigh bin contribution by the circular normal distribution
-        hist[i, :, :] = np.exp(orientation_kappa * np.cos(grad_ori - o))
+        hist[i] = np.exp(orientation_kappa * np.cos(grad_ori - o))
         # Weigh bin contribution by the gradient magnitude
-        hist[i, :, :] = np.multiply(hist[i, :, :], grad_mag)
+        hist[i] = hist[i] * grad_mag
 
-    # Smooth orientation histograms for the centre and all rings.
+    # Smooth orientation histograms for the center and all rings.
     sigmas = [sigmas[0]] + sigmas
     hist_smooth = np.empty((rings + 1,) + hist.shape, dtype=float)
     for i in range(rings + 1):
         for j in range(orientations):
-            hist_smooth[i, j, :, :] = gaussian_filter(hist[j, :, :],
-                                                      sigma=sigmas[i])
+            hist_smooth[i, j] = gaussian_filter(hist[j], sigma=sigmas[i])
 
     # Assemble descriptor grid.
     theta = [2 * np.pi * j / histograms for j in range(histograms)]
     desc_dims = (rings * histograms + 1) * orientations
-    descs = np.zeros((desc_dims, img.shape[0] - 2 * radius,
-                      img.shape[1] - 2 * radius))
-    descs[:orientations, :, :] = hist_smooth[0, :, radius:-radius,
-                                             radius:-radius]
-
+    descs = np.empty((desc_dims, img.shape[1] - 2 * radius,
+                      img.shape[2] - 2 * radius))
+    descs[:orientations] = hist_smooth[0, :, radius:-radius, radius:-radius]
     idx = orientations
     for i in range(rings):
         for j in range(histograms):
@@ -143,27 +134,24 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
             y_max = descs.shape[1] + y_min
             x_min = radius + int(np.round(ring_radii[i] * np.cos(theta[j])))
             x_max = descs.shape[2] + x_min
-            descs[idx:idx + orientations, :, :] = hist_smooth[i + 1, :,
-                                                              y_min:y_max,
-                                                              x_min:x_max]
+            descs[idx:idx + orientations] = hist_smooth[i + 1, :,
+                                                        y_min:y_max,
+                                                        x_min:x_max]
             idx += orientations
     descs = descs[:, ::step, ::step]
-    descs = descs.swapaxes(0, 1).swapaxes(1, 2)
 
     # Normalize descriptors.
     if normalization != 'off':
         descs += 1e-10
         if normalization == 'l1':
-            descs /= np.sum(descs, axis=2)[:, :, np.newaxis]
+            descs /= np.sum(descs, axis=0)
         elif normalization == 'l2':
-            descs /= np.sqrt(np.sum(descs ** 2, axis=2))[:, :, np.newaxis]
+            descs /= np.sqrt(np.sum(descs ** 2, axis=0))
         elif normalization == 'daisy':
             for i in range(0, desc_dims, orientations):
-                norms = np.sqrt(np.sum(descs[:, :, i:i + orientations] ** 2,
-                                axis=2))
-                descs[:, :, i:i + orientations] /= norms[:, :, np.newaxis]
+                norms = np.sqrt(np.sum(descs[i:i + orientations] ** 2, axis=0))
+                descs[i:i + orientations] /= norms
 
-    # Change axes so that the channels go to the final axis
-    descs = np.ascontiguousarray(descs)
+    descs = np.require(descs, requirements=['C'])
 
     return descs
