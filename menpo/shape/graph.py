@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse import csgraph, csr_matrix
 
 from . import PointCloud
 from .adjacency import (mask_adjacency_array, mask_adjacency_array_tree,
@@ -11,44 +12,14 @@ class Graph(object):
 
     Parameters
     ----------
-    adjacency_array : ``(n_edges, 2, )`` `ndarray`
-        The Adjacency Array of the graph, i.e. an array containing the sets of
-        the graph's edges. The numbering of vertices is assumed to start from 0.
+    adjacency_matrix : ``(n_vertices, n_vertices, )`` `ndarray` or `csr_matrix`
+        The adjacency matrix of the graph in which the rows represent source
+        vertices and columns represent destination vertices. The matrix stores
+        the weight of each edge. The non-edges must be represented with zeros.
 
-        For an undirected graph, the order of an edge's vertices doesn't matter,
-        for example
-
-        ::
-
-               |---0---|        adjacency_array = ndarray([[0, 1],
-               |       |                                   [0, 2],
-               |       |                                   [1, 2],
-               1-------2                                   [1, 3],
-               |       |                                   [2, 4],
-               |       |                                   [3, 4],
-               3-------4                                   [3, 5]])
-               |
-               5
-
-        For a directed graph, we assume that the vertices in the first column of
-        the ``adjacency_array`` are the fathers and the vertices in the second
-        column of ``the adjacency_array`` are the children, for example
-
-        ::
-
-               |-->0<--|        adjacency_array = ndarray([[1, 0],
-               |       |                                   [2, 0],
-               |       |                                   [1, 2],
-               1<----->2                                   [2, 1],
-               |       |                                   [1, 3],
-               v       v                                   [2, 4],
-               3------>4                                   [3, 4],
-               |                                           [3, 5]])
-               v
-               5
-
+        :note: The adjacency matrix of an undirected graph must be symmetric.
     copy : `bool`, optional
-        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+        If ``False``, the ``adjacency_matrix`` will not be copied on assignment.
 
     Raises
     ------
@@ -59,28 +30,128 @@ class Graph(object):
         must have shape ``(n_edges, 2)``.
     ValueError
         The vertices must be numbered starting from 0.
+
+    Examples
+    --------
+    The following undirected graph ::
+
+        |---0---|
+        |       |
+        |       |
+        1-------2
+        |       |
+        |       |
+        3-------4
+        |
+        |
+        5
+
+    can be defined as ::
+
+        import numpy as np
+        adjacency_matrix = np.array([[0, 1, 1, 0, 0, 0],
+                                     [1, 0, 1, 1, 0, 0],
+                                     [1, 1, 0, 0, 1, 0],
+                                     [0, 1, 0, 0, 1, 1],
+                                     [0, 0, 1, 1, 0, 0],
+                                     [0, 0, 0, 1, 0, 0]])
+
+    or ::
+
+        from scipy.sparse import csr_matrix
+        adjacency_matrix = csr_matrix(
+                            ([1] * 14,
+                             ([0, 1, 0, 2, 1, 2, 1, 3, 2, 4, 3, 4, 3, 5],
+                              [1, 0, 2, 0, 2, 1, 3, 1, 4, 2, 4, 3, 5, 3])),
+                            shape=(6, 6))
+
+
+    The following directed graph ::
+
+        |-->0<--|
+        |       |
+        |       |
+        1<----->2
+        |       |
+        v       v
+        3------>4
+        |
+        v
+        5
+
+    can be represented as ::
+
+        import numpy as np
+        adjacency_matrix = np.array([[0, 0, 0, 0, 0, 0],
+                                     [1, 0, 1, 0, 0, 0],
+                                     [1, 1, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 1, 0],
+                                     [0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0]])
+
+    or ::
+
+        from scipy.sparse import csr_matrix
+        adjacency_matrix = csr_matrix(
+                            ([1] * 14,
+                             ([1, 2, 1, 2, 1, 2, 3, 3],
+                              [0, 0, 2, 1, 3, 4, 4, 5])),
+                            shape=(6, 6))
+
+    Finally, the following graph with isolated vertices ::
+
+            0---|
+                |
+                |
+        1       2
+                |
+                |
+        3-------4
+
+
+        5
+
+    can be defined as ::
+
+        import numpy as np
+        adjacency_matrix = np.array([[0, 0, 1, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0],
+                                     [1, 0, 0, 0, 1, 0],
+                                     [0, 0, 0, 0, 1, 0],
+                                     [0, 0, 1, 1, 0, 0],
+                                     [0, 0, 0, 0, 0, 0]])
+
+    or ::
+
+        from scipy.sparse import csr_matrix
+        adjacency_matrix = csr_matrix(
+                            ([1] * 6,
+                             ([0, 2, 2, 4, 3, 4],
+                              [2, 0, 4, 2, 4, 3])),
+                            shape=(6, 6))
     """
+    def __init__(self, adjacency_matrix, copy=True):
+        # check if adjacency_matrix is numpy.ndarray or scipy.sparse.csr_matrix
+        if isinstance(adjacency_matrix, np.ndarray):
+            # it is numpy.ndarray, convert it to scipy.sparse.csr_matrix
+            adjacency_matrix = csr_matrix(adjacency_matrix)
+        elif not (isinstance(adjacency_matrix, np.ndarray) or
+                  isinstance(adjacency_matrix, csr_matrix)):
+            raise ValueError('adjacency_matrix must be either a numpy.ndarray'
+                             'or a scipy.sparse.csr_matrix.')
 
-    def __init__(self, adjacency_array, copy=True):
-        # check that adjacency_array has expected shape
-        if adjacency_array.size == 0:
-            raise ValueError('You must provide at least one edge.')
-        if adjacency_array.shape[1] != 2:
-            raise ValueError('Adjacency list must contain the sets of '
-                             'connected edges and thus must have shape '
-                             '(n_edges, 2).')
-        # check that numbering of vertices is zero-based
-        if adjacency_array.min() != 0:
-            raise ValueError('The vertices must be numbered starting from 0.')
+        # check that adjacency_matrix has expected shape
+        if adjacency_matrix.shape[0] == 1:
+            raise ValueError('Graph must have at least two vertices.')
+        elif adjacency_matrix.shape[0] != adjacency_matrix.shape[1]:
+            raise ValueError('adjacency_matrix must be square '
+                             '(n_vertices, n_vertices, ).')
 
-        # keep unique rows of adjacency_array
-        adjacency_array = _unique_array_rows(adjacency_array)
-
+        # store adjacency_matrix
         if copy:
-            self.adjacency_array = adjacency_array.copy()
+            self.adjacency_matrix = adjacency_matrix.copy()
         else:
-            self.adjacency_array = adjacency_array
-        self.adjacency_list = self._get_adjacency_list()
+            self.adjacency_matrix = adjacency_matrix
 
     @property
     def n_edges(self):
@@ -89,7 +160,7 @@ class Graph(object):
 
         :type: `int`
         """
-        return self.adjacency_array.shape[0]
+        return self.adjacency_matrix.shape[0]
 
     @property
     def n_vertices(self):
