@@ -1,9 +1,13 @@
+import sys
 import numpy as np
 from mock import patch
 from nose.tools import raises
 from PIL import Image as PILImage
 import menpo.io as mio
 import warnings
+
+
+builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
 
 @raises(ValueError)
@@ -275,7 +279,7 @@ def test_importing_GIF_non_pallete_exception(is_file, mock_image):
 
 
 @patch('menpo.io.input.landmark.json.load')
-@patch('__builtin__.open')
+@patch('{}.open'.format(builtins_str))
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
     v1_ljson = { "groups": [
@@ -303,7 +307,7 @@ def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
 
 
 @patch('menpo.io.input.landmark.json.load')
-@patch('__builtin__.open')
+@patch('{}.open'.format(builtins_str))
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
     v2_ljson = { "labels": [

@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import json
 import warnings
+import itertools
 
 import numpy as np
 

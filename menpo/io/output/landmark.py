@@ -30,8 +30,8 @@ def LJSONExporter(landmark_group, file_handle):
     filtered_points = [None if np.isnan(x) else x
                        for x in itertools.chain(*points)]
     # Recreate tuples
-    lg_json['landmarks']['points'] = zip(filtered_points[::2],
-                                         filtered_points[1::2])
+    lg_json['landmarks']['points'] = list(zip(filtered_points[::2],
+                                              filtered_points[1::2]))
 
     return json.dump(lg_json, file_handle, indent=4, separators=(',', ': '),
                      sort_keys=True, allow_nan=False)
