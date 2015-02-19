@@ -642,6 +642,19 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         return {'landmarks': self.lms.tojson(),
                 'labels': labels}
 
+    def has_nan_values(self):
+        """
+        Tests if the LandmarkGroup contains ``nan`` values or
+        not. This is particularly useful for annotations with unknown values or
+        non-visible landmarks that have been mapped to ``nan`` values.
+
+        Returns
+        -------
+        has_nan_values : `bool`
+            If the LandmarkGroup contains ``nan`` values.
+        """
+        return self._pointcloud.has_nan_values()
+
     def _view_2d(self, with_labels=None, without_labels=None, group='group',
                  figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour=None, line_style='-',

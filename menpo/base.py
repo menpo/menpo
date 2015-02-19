@@ -143,7 +143,7 @@ class Vectorizable(Copyable):
 
     def has_nan_values(self):
         """
-        Tests if the vectorized form of the object contans ``nan`` values or
+        Tests if the vectorized form of the object contains ``nan`` values or
         not. This is particularly useful for objects with unknown values that
         have been mapped to ``nan`` values.
 
