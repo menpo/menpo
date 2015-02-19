@@ -334,7 +334,7 @@ def _parse_ljson_v2(lms_dict):
     connectivity = lms_dict['landmarks'].get('connectivity')
 
     # Don't create a PointUndirectedGraph with no connectivity
-    if connectivity is None:
+    if connectivity is None or len(connectivity) == 0:
         pcloud = PointCloud(points)
     else:
         pcloud = PointUndirectedGraph(points, np.vstack(connectivity))
