@@ -3,6 +3,7 @@ from mock import patch
 from nose.tools import raises
 from PIL import Image as PILImage
 import menpo.io as mio
+import warnings
 
 
 @raises(ValueError)
@@ -290,8 +291,12 @@ def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
     mock_dict.return_value = v1_ljson
     is_file.return_value = True
 
-    lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+    with warnings.catch_warnings(record=True) as w:
+        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
     nan_points = np.isnan(lmark.lms.points)
+
+    # Should raise deprecation warning
+    assert len(w) == 1
     assert nan_points[2, 0]  # y-coord None point is nan
     assert not nan_points[2, 1]  # x-coord point is not nan
     assert np.all(nan_points[4:, :]) # all of leye label is nan
