@@ -782,8 +782,7 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         If None, then nothing is assigned.
     """
     import IPython.html.widgets as ipywidgets
-    # check if the new group_keys and labels_keys are the same as the old
-    # ones
+    # check if the new group_keys and labels_keys are the same as the old ones
     if not _compare_groups_and_labels(
             group_keys, labels_keys,
             landmark_options_wid.selected_values['group_keys'],
@@ -938,7 +937,7 @@ def info_print(n_bullets, toggle_show_default=True, toggle_show_visible=True):
 
     # Create text widget
     children = [ipywidgets.LatexWidget(value="> menpo")
-                for _ in xrange(n_bullets)]
+                for _ in range(n_bullets)]
     text_wid = ipywidgets.ContainerWidget(children=children)
 
     # Toggle button function
@@ -2152,7 +2151,7 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
             lbp_options_wid.visible = False
             daisy_options_wid.visible = False
             no_options_wid.visible = True
-            for name, f in tmp.iteritems():
+            for name, f in tmp.items():
                 if f == value:
                     no_options_wid.value = "{}: No available " \
                                            "options.".format(name)
@@ -2185,7 +2184,7 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
     def preview_function(name, old_value, value):
         if value == 2:
             # extracting features message
-            for name, f in tmp.iteritems():
+            for name, f in tmp.items():
                 if f == features_options_wid.function.func:
                     val1 = name
             preview_output.value = "Previewing {} features...".format(val1)

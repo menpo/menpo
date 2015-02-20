@@ -4,6 +4,7 @@ from scipy.misc import imrotate
 from menpo.feature import ndfeature
 
 
+# TODO: Needs fixing ...
 @ndfeature
 def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
     r"""
@@ -26,11 +27,16 @@ def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
     """
     # first, choose the appropriate channels
     if channels is None:
-        pixels = pixels[..., :4]
+        pixels = pixels[:4]
     elif channels != 'all':
-        pixels = pixels[..., channels]
+        pixels = pixels[channels]
     else:
         pixels = pixels
+
+    # TODO: This is a temporal fix
+    # flip axis
+    pixels = np.rollaxis(pixels, 0, len(pixels.shape))
+
     # compute the glyph
     negative_weights = -pixels
     scale = np.maximum(pixels.max(), negative_weights.max())
@@ -42,7 +48,7 @@ def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
         neg = neg * 255 / scale
         glyph_image = np.concatenate((pos, neg))
     # return as c-contiguous
-    return np.ascontiguousarray(glyph_image[..., None])  # add a channel axis
+    return np.ascontiguousarray(glyph_image[None, ...])  # add a channel axis
 
 
 def _create_feature_glyph(feature, vbs):
@@ -61,7 +67,7 @@ def _create_feature_glyph(feature, vbs):
     # construct a "glyph" for each orientation
     block_image_temp = np.zeros((vbs, vbs))
     # Create a vertical line of ones, to be the first vector
-    block_image_temp[:, round(vbs / 2) - 1:round(vbs / 2) + 1] = 1
+    block_image_temp[:, np.round(vbs / 2) - 1:np.round(vbs / 2) + 1] = 1
     block_im = np.zeros((block_image_temp.shape[0],
                          block_image_temp.shape[1],
                          num_bins))

@@ -4,7 +4,7 @@ Kruskal's algorithm for minimum spanning trees. D. Eppstein, April 2006.
 
 NOTE: This file is different from the original to fit with menpo's structure.
 """
-from UnionFind import UnionFind
+from .UnionFind import UnionFind
 
 from menpo.shape import UndirectedGraph
 

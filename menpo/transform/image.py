@@ -6,12 +6,10 @@ from menpo.transform import Transform, Homogeneous, Scale
 
 class TcoordsToPointCloud(Transform):
     r"""
-    Converts unitary tcoords into a PointCloud that is suitable
+    Converts unitary tcoords into a :map:`PointCloud` that is suitable
     for directly indexing into the pixels of the texture (e.g. for manual
     mapping operations). The resulting tcoords behave just like image landmarks
-    do
-
-    ::
+    do ::
 
         >>> texture = texturedtrimesh.texture
         >>> t = TcoordsToPointCloud(texture.shape)
@@ -24,9 +22,14 @@ class TcoordsToPointCloud(Transform):
     - Scaling the tcoords by the image shape (denormalising them)
     - Permuting the axis so that
 
+    Parameters
+    ----------
+    image_shape : `tuple`
+        The image shape
+
     Returns
     -------
-    tcoords_scaled : :class:`menpo.shape.PointCloud`
+    tcoords_scaled : :map:`PointCloud`
         A copy of the tcoords that behave like Image landmarks
     """
     def __init__(self, image_shape):
@@ -45,6 +48,19 @@ class TcoordsToPointCloud(Transform):
 
 
 class PointCloudToTcoords(Transform):
+    r"""
+    Converts a :map:`PointCloud` to unitary tcoords.
+
+    Parameters
+    ----------
+    image_shape : `tuple`
+        The image shape
+
+    Returns
+    -------
+    tcoords_scaled : :map:`PointCloud`
+        A copy of the tcoords that behave like Image landmarks
+    """
 
     def __init__(self, image_shape):
         # flip axis 0 and axis 1 so indexing is as expected
@@ -52,7 +68,7 @@ class PointCloudToTcoords(Transform):
                                         [1, 0, 0],
                                         [0, 0, 1]]))
         # scale to get the units correct
-        scale = Scale(image_shape).pseudoinverse
+        scale = Scale(image_shape).pseudoinverse()
         self.flip_and_scale = scale.compose_before(flip_xy)
 
     def _apply(self, x, **kwargs):

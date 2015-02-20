@@ -16,8 +16,8 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
 
     Parameters
     ----------
-    pixels : ``(M, N, ..., n_channels)`` `ndarray`
-        The image to be sampled from, the final axis containing channel
+    pixels : ``(n_channels, M, N, ...)`` `ndarray`
+        The image to be sampled from, the first axis containing channel
         information
     points_to_sample : ``(n_points, n_dims)`` `ndarray`
         The points which should be sampled from pixels
@@ -40,18 +40,18 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
     if map_coordinates is None:
         from scipy.ndimage import map_coordinates  # expensive
     sampled_pixel_values = []
-    # Loop over every channel in image - we know last axis is always channels
+    # Loop over every channel in image - we know first axis is always channels
     # Note that map_coordinates uses the opposite (dims, points) convention
     # to us so we transpose
     points_to_sample_t = points_to_sample.T
-    for i in xrange(pixels.shape[-1]):
-        sampled_pixel_values.append(map_coordinates(pixels[..., i],
+    for i in range(pixels.shape[0]):
+        sampled_pixel_values.append(map_coordinates(pixels[i],
                                                     points_to_sample_t,
                                                     mode=mode,
                                                     order=order,
                                                     cval=cval))
-    sampled_pixel_values = [v.reshape([-1, 1]) for v in sampled_pixel_values]
-    return np.concatenate(sampled_pixel_values, axis=1)
+    sampled_pixel_values = [v.reshape([1, -1]) for v in sampled_pixel_values]
+    return np.concatenate(sampled_pixel_values, axis=0)
 
 
 def cython_interpolation(pixels, template_shape, h_transform, mode='constant',
@@ -63,8 +63,8 @@ def cython_interpolation(pixels, template_shape, h_transform, mode='constant',
 
     Parameters
     ----------
-    pixels : ``(M, N, ..., n_channels)`` `ndarray`
-        The image to be sampled from, the final axis containing channel
+    pixels : ``(n_channels, M, N, ...)`` `ndarray`
+        The image to be sampled from, the first axis containing channel
         information.
     template_shape : `tuple`
         The shape of the new image that will be sampled
@@ -89,9 +89,9 @@ def cython_interpolation(pixels, template_shape, h_transform, mode='constant',
     # Loop over every channel in image - we know last axis is always channels
     # Note that map_coordinates uses the opposite (dims, points) convention
     # to us so we transpose
-    for i in xrange(pixels.shape[-1]):
-        warped_channels.append(_warp_fast(pixels[..., i], matrix,
+    for i in range(pixels.shape[0]):
+        warped_channels.append(_warp_fast(pixels[i], matrix,
                                           output_shape=template_shape,
                                           mode=mode, order=order, cval=cval))
-    warped_channels = [v.reshape([-1, 1]) for v in warped_channels]
-    return np.concatenate(warped_channels, axis=1)
+    warped_channels = [v.reshape([1, -1]) for v in warped_channels]
+    return np.concatenate(warped_channels, axis=0)
