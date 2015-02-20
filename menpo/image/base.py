@@ -2,7 +2,6 @@ from __future__ import division
 from warnings import warn
 
 import numpy as np
-import scipy.linalg
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
@@ -13,6 +12,13 @@ from menpo.transform import (Translation, NonUniformScale,
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .extract_patches import extract_patches
+
+
+# Cache the greyscale luminosity coefficients as they are invariant.
+_greyscale_luminosity_coef = np.linalg.inv(
+    np.array([[1.0, 0.956, 0.621],
+              [1.0, -0.272, -0.647],
+              [1.0, -1.106, 1.703]]))[0, :]
 
 
 class ImageBoundaryError(ValueError):
@@ -1682,15 +1688,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 raise ValueError("The 'luminosity' mode only works on RGB"
                                  "images. {} channels found, "
                                  "3 expected.".format(self.n_channels))
-
-            # cache the luminosity coefficients as they are invariant
-            if not hasattr(self, '_luminosity_coefficients'):
-                # Invert the transformation matrix to get more precise values
-                T = scipy.linalg.inv(np.array([[1.0, 0.956, 0.621],
-                                               [1.0, -0.272, -0.647],
-                                               [1.0, -1.106, 1.703]]))
-                self._luminosity_coefficients = T[0, :]
-            pixels = np.einsum('i,ikl->kl', self._luminosity_coefficients,
+            pixels = np.einsum('i,ikl->kl', _greyscale_luminosity_coef,
                                greyscale.pixels)
         elif mode == 'average':
             pixels = np.mean(greyscale.pixels, axis=0)
