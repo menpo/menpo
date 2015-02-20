@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import csgraph, csr_matrix
+from scipy.sparse import csgraph, csr_matrix, triu
 
 from . import PointCloud
 from .adjacency import (mask_adjacency_array, mask_adjacency_array_tree,
@@ -14,26 +14,33 @@ class Graph(object):
     ----------
     adjacency_matrix : ``(n_vertices, n_vertices, )`` `ndarray` or `csr_matrix`
         The adjacency matrix of the graph in which the rows represent source
-        vertices and columns represent destination vertices. The matrix stores
-        the weight of each edge. The non-edges must be represented with zeros.
+        vertices and columns represent destination vertices. The non-edges must
+        be represented with zeros and the edges can have a weight value.
 
-        :note: The adjacency matrix of an undirected graph must be symmetric.
+        The adjacency matrix of an undirected graph must be symmetric.
+    directed : `bool`
+        If ``True``, the graph is considered directed. If ``False``, the graph
+        is considered undirected.
     copy : `bool`, optional
         If ``False``, the ``adjacency_matrix`` will not be copied on assignment.
 
     Raises
     ------
     ValueError
-        You must provide at least one edge.
+        adjacency_matrix must be either a numpy.ndarray or a
+        scipy.sparse.csr_matrix.
     ValueError
-        ``adjacency_list`` must contain the sets of connected edges and thus
-        must have shape ``(n_edges, 2)``.
+        Graph must have at least two vertices.
     ValueError
-        The vertices must be numbered starting from 0.
+        adjacency_matrix must be square (n_vertices, n_vertices, ),
+        ({adjacency_matrix.shape[0]}, {adjacency_matrix.shape[1]}) given
+        instead.
+    ValueError
+        The adjacency matrix of an undirected graph must be symmetric.
 
     Examples
     --------
-    The following undirected graph ::
+    The adjacency matrix of the following undirected graph ::
 
         |---0---|
         |       |
@@ -66,7 +73,7 @@ class Graph(object):
                             shape=(6, 6))
 
 
-    The following directed graph ::
+    The adjacency matrix of the following directed graph ::
 
         |-->0<--|
         |       |
@@ -83,9 +90,9 @@ class Graph(object):
 
         import numpy as np
         adjacency_matrix = np.array([[0, 0, 0, 0, 0, 0],
-                                     [1, 0, 1, 0, 0, 0],
-                                     [1, 1, 0, 0, 0, 0],
-                                     [0, 0, 0, 0, 1, 0],
+                                     [1, 0, 1, 1, 0, 0],
+                                     [1, 1, 0, 0, 1, 0],
+                                     [0, 0, 0, 0, 1, 1],
                                      [0, 0, 0, 0, 0, 0],
                                      [0, 0, 0, 0, 0, 0]])
 
@@ -93,12 +100,13 @@ class Graph(object):
 
         from scipy.sparse import csr_matrix
         adjacency_matrix = csr_matrix(
-                            ([1] * 14,
+                            ([1] * 8,
                              ([1, 2, 1, 2, 1, 2, 3, 3],
                               [0, 0, 2, 1, 3, 4, 4, 5])),
                             shape=(6, 6))
 
-    Finally, the following graph with isolated vertices ::
+    Finally, the adjacency matrix of the following graph with isolated
+    vertices ::
 
             0---|
                 |
@@ -130,7 +138,7 @@ class Graph(object):
                               [2, 0, 4, 2, 4, 3])),
                             shape=(6, 6))
     """
-    def __init__(self, adjacency_matrix, copy=True):
+    def __init__(self, adjacency_matrix, directed, copy=True):
         # check if adjacency_matrix is numpy.ndarray or scipy.sparse.csr_matrix
         if isinstance(adjacency_matrix, np.ndarray):
             # it is numpy.ndarray, convert it to scipy.sparse.csr_matrix
@@ -145,65 +153,156 @@ class Graph(object):
             raise ValueError('Graph must have at least two vertices.')
         elif adjacency_matrix.shape[0] != adjacency_matrix.shape[1]:
             raise ValueError('adjacency_matrix must be square '
-                             '(n_vertices, n_vertices, ).')
+                             '(n_vertices, n_vertices, ), ({}, {}) given '
+                             'instead'.format(adjacency_matrix.shape[0],
+                                              adjacency_matrix.shape[1]))
 
-        # store adjacency_matrix
+        # check if adjacency matrix of undirected graph is symmetric
+        if not directed and not _is_symmetric(adjacency_matrix):
+            raise ValueError('The adjacency matrix of an undirected graph must '
+                             'be symmetric.')
+
+        # store adjacency_matrix and directed
+        self._directed = directed
         if copy:
             self.adjacency_matrix = adjacency_matrix.copy()
         else:
             self.adjacency_matrix = adjacency_matrix
 
     @property
-    def n_edges(self):
+    def vertices(self):
         r"""
-        Returns the number of the graph edges.
+        Returns the `list` of vertices.
+
+        :type: `list`
+        """
+        return range(self.adjacency_matrix.shape[0])
+
+    @property
+    def n_vertices(self):
+        r"""
+        Returns the number of vertices.
 
         :type: `int`
         """
         return self.adjacency_matrix.shape[0]
 
     @property
-    def n_vertices(self):
+    def edges(self):
         r"""
-        Returns the number of the graph vertices.
+        Returns the `ndarray` of edges, i.e. all the pairs of vertices that are
+        connected with an edge.
+
+        :type: ``(n_edges, 2, )`` `ndarray`
+        """
+        pass
+
+    @property
+    def n_edges(self):
+        r"""
+        Returns the number of edges.
 
         :type: `int`
         """
-        return self.adjacency_array.max() + 1
+        return self.edges.shape[0]
 
-    def get_adjacency_matrix(self):
+    def isolated_vertices(self):
         r"""
-        Returns the adjacency matrix of the graph, i.e. the boolean `ndarray`
-        that is ``True`` and ``False`` if there is an edge connecting the two
-        vertices or not respectively.
+        Returns the isolated vertices of the graph (if any), i.e. the vertices
+        that have no edge connections.
 
-        :type: ``(n_vertices, n_vertices, )`` `ndarray`
+        Returns
+        -------
+        isolated_vertices : `list`
+            A `list` of the isolated vertices. If there aren't any, it returns
+            an empty `list`.
         """
-        pass
+        all_vertices = set(range(self.n_vertices))
+        # find the set difference between {0, 1, ..., n_vertices} and the set
+        # of rows (columns) that have at least one non-zero element.
+        rows = all_vertices.difference(set(self.adjacency_matrix.nonzero()[0]))
+        cols = all_vertices.difference(set(self.adjacency_matrix.nonzero()[1]))
+        return list(rows.intersection(cols))
 
-    def _get_adjacency_list(self):
+    def has_isolated_vertices(self):
         r"""
-        Returns the adjacency list of the graph, i.e. a list of length
-        ``n_vertices`` that for each vertex has a list of the vertex neighbours.
-        If the graph is directed, the neighbours are children.
+        Whether the graph has any isolated vertices, i.e. vertices with no edge
+        connections.
 
-        :type: `list` of `list` of ``len(n_vertices)``
+        Returns
+        -------
+        has_isolated_vertices : `bool`
+            ``True`` if the graph has at least one isolated vertex.
         """
-        pass
+        return len(self.isolated_vertices()) > 0
+
+    def get_adjacency_list(self):
+        r"""
+        Returns the adjacency list of the graph, i.e. a `list` of length
+        ``n_vertices`` that for each vertex has a `list` of the vertex
+        neighbours. If the graph is directed, the neighbours are children.
+
+        Returns
+        -------
+        adjacency_list : `list` of `list` of length ``n_vertices``
+            The adjacency list of the graph.
+        """
+        # initialize list with empty lists
+        adjacency_list = [[] for _ in range(self.n_vertices)]
+
+        # get rows/columns of edges
+        rows, cols = self.adjacency_matrix.nonzero()
+
+        # store them accordingly
+        for i in range(rows.shape[0]):
+            from_v = rows[i]
+            to_v = cols[i]
+            adjacency_list[from_v].append(to_v)
+        return adjacency_list
+
+    def is_edge(self, vertex_1, vertex_2, skip_checks=False):
+        r"""
+        Whether there is an edge between the provided vertices.
+
+        Parameters
+        ----------
+        vertex_1 : `int`
+            The first selected vertex.
+        vertex_2 : `int`
+            The second selected vertex.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertices will be checked.
+
+        Returns
+        -------
+        is_edge : `bool`
+            ``True`` if there is an edge connecting ``vertex_1`` and
+            ``vertex_2``.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        if not skip_checks:
+            self._check_vertex(vertex_1)
+            self._check_vertex(vertex_2)
+        return self.adjacency_matrix[vertex_1, vertex_2] != 0
 
     def find_path(self, start, end, path=None):
         r"""
-        Returns a list with the first path (without cycles) found from start
-        vertex to end vertex.
+        Returns a `list` with the first path (without cycles) found from the
+        ``start`` vertex to the ``end`` vertex.
 
         Parameters
         ----------
         start : `int`
             The vertex from which the path starts.
         end : `int`
-            The vertex from which the path ends.
-        path : `list`, optional
-            An existing path to append to.
+            The vertex to which the path ends.
+        path : `list` or ``None``, optional
+            An existing path to append to. If ``None``, the initial path is
+            empty.
 
         Returns
         -------
@@ -277,40 +376,111 @@ class Graph(object):
         """
         return len(self.find_all_paths(start, end))
 
-    def find_shortest_path(self, start, end, path=None):
+    def find_all_shortest_paths(self, algorithm='auto', unweighted=False):
         r"""
-        Returns a list with the shortest path (without cycles) found from start
-        vertex to end vertex.
+        Returns the distances and predecessors arrays of the graph's shortest
+        paths.
+
+        Parameters
+        ----------
+        algorithm : 'str', see below, optional
+            The algorithm to be used. Possible options are:
+
+            ================ =========================================
+            'dijkstra'       Dijkstra's algorithm with Fibonacci heaps
+            'bellman-ford'   Bellman-Ford algorithm
+            'johnson'        Johnson's algorithm
+            'floyd-warshall' Floyd-Warshall algorithm
+            'auto'           Select the best among the above
+            ================ =========================================
+
+        unweighted : `bool`, optional
+            If ``True``, then find unweighted distances. That is, rather than
+            finding the path between each vertex such that the sum of weights is
+            minimized, find the path such that the number of edges is minimized.
+
+        Returns
+        -------
+        distances : ``(n_vertices, n_vertices,)`` `ndarray`
+            The matrix of distances between all graph vertices.
+            ``distances[i,j]`` gives the shortest distance from vertex ``i`` to
+            vertex ``j`` along the graph.
+        predecessors : ``(n_vertices, n_vertices,)`` `ndarray`
+            The matrix of predecessors, which can be used to reconstruct the
+            shortest paths. Each entry ``predecessors[i, j]`` gives the index of
+            the previous vertex in the path from vertex ``i`` to vertex ``j``.
+            If no path exists between vertices ``i`` and ``j``, then
+            ``predecessors[i, j] = -9999``.
+        """
+        # find costs and predecessors of all shortest paths
+        return csgraph.shortest_path(self.adjacency_matrix,
+                                     directed=self._directed, method=algorithm,
+                                     unweighted=unweighted,
+                                     return_predecessors=True)
+
+    def find_shortest_path(self, start, end, algorithm='auto', unweighted=False,
+                           skip_checks=False):
+        r"""
+        Returns a `list` with the shortest path (without cycles) found from
+        ``start`` vertex to ``end`` vertex.
 
         Parameters
         ----------
         start : `int`
             The vertex from which the path starts.
         end : `int`
-            The vertex from which the path ends.
-        path : `list`, optional
-            An existing path to append to.
+            The vertex to which the path ends.
+        algorithm : 'str', see below, optional
+            The algorithm to be used. Possible options are:
+
+            ================ =========================================
+            'dijkstra'       Dijkstra's algorithm with Fibonacci heaps
+            'bellman-ford'   Bellman-Ford algorithm
+            'johnson'        Johnson's algorithm
+            'floyd-warshall' Floyd-Warshall algorithm
+            'auto'           Select the best among the above
+            ================ =========================================
+
+        unweighted : `bool`, optional
+            If ``True``, then find unweighted distances. That is, rather than
+            finding the path such that the sum of weights is minimized, find
+            the path such that the number of edges is minimized.
+        skip_checks : `bool`, optional
+            If ``True``, then input arguments won't pass through checks. Useful
+            for efficiency.
 
         Returns
         -------
         path : `list`
-            The shortest path's vertices.
+            The shortest path's vertices, including ``start`` and ``end``. If
+            there was not path connecting the vertices, then an empty `list` is
+            returned.
+        distance : `int` or `float`
+            The distance (cost) of the path from ``start`` to ``end``.
         """
-        if path is None:
+        # checks
+        if not skip_checks:
+            self._check_vertex(start)
+            self._check_vertex(end)
+
+        # find distances and predecessors of all shortest paths
+        (distances, predecessors) = self.find_all_shortest_paths(
+            algorithm=algorithm, unweighted=unweighted)
+
+        # retrieve shortest path and its distance
+        if predecessors[start, end] < 0:
             path = []
-        path = path + [start]
-        if start == end:
-            return path
-        if start > self.n_vertices - 1 or start < 0:
-            return None
-        shortest = None
-        for v in self.adjacency_list[start]:
-            if v not in path:
-                newpath = self.find_shortest_path(v, end, path)
-                if newpath:
-                    if not shortest or len(newpath) < len(shortest):
-                        shortest = newpath
-        return shortest
+            distance = np.inf
+        else:
+            path = [end]
+            distance = 0
+            i = None
+            while (i != start):
+                i = predecessors[start, path[-1]]
+                path.append(i)
+                distance += distances[start, path[-1]]
+            path.reverse()
+        return path, distance
 
     def has_cycles(self):
         r"""
@@ -319,9 +489,9 @@ class Graph(object):
         Returns
         -------
         has_cycles : `bool`
-            If the graph has cycles.
+            ``True`` if the graph has cycles.
         """
-        pass
+        return _has_cycles(self.get_adjacency_list(), self._directed)
 
     def is_tree(self):
         r"""
@@ -359,64 +529,74 @@ class UndirectedGraph(Graph):
 
     Parameters
     ----------
-    adjacency_array : ``(n_edges, 2, )`` `ndarray`
-        The Adjacency Array of the graph, i.e. an array containing the sets of
-        the graph's edges. The numbering of vertices is assumed to start from 0.
-        For example:
+    adjacency_matrix : ``(n_vertices, n_vertices, )`` `ndarray` or `csr_matrix`
+        The adjacency matrix of the graph in which the rows represent source
+        vertices and columns represent destination vertices. The non-edges must
+        be represented with zeros and the edges can have a weight value.
 
-        ::
-
-               |---0---|        adjacency_array = ndarray([[0, 1],
-               |       |                                   [0, 2],
-               |       |                                   [1, 2],
-               1-------2                                   [1, 3],
-               |       |                                   [2, 4],
-               |       |                                   [3, 4],
-               3-------4                                   [3, 5]])
-               |
-               5
-
+        :Note: ``adjacency_matrix`` must be symmetric.
     copy : `bool`, optional
-        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+        If ``False``, the ``adjacency_matrix`` will not be copied on assignment.
 
     Raises
     ------
     ValueError
-        You must provide at least one edge.
+        adjacency_matrix must be either a numpy.ndarray or a
+        scipy.sparse.csr_matrix.
     ValueError
-        Adjacency list must contain the sets of connected edges and thus must
-        have shape (n_edges, 2).
+        Graph must have at least two vertices.
     ValueError
-        The vertices must be numbered starting from 0.
+        adjacency_matrix must be square (n_vertices, n_vertices, ),
+        ({adjacency_matrix.shape[0]}, {adjacency_matrix.shape[1]}) given
+        instead.
+    ValueError
+        The adjacency matrix of an undirected graph must be symmetric.
+
+    Examples
+    --------
+    The following undirected graph ::
+
+        |---0---|
+        |       |
+        |       |
+        1-------2
+        |       |
+        |       |
+        3-------4
+        |
+        |
+        5
+
+    can be defined as ::
+
+        import numpy as np
+        adjacency_matrix = np.array([[0, 1, 1, 0, 0, 0],
+                                     [1, 0, 1, 1, 0, 0],
+                                     [1, 1, 0, 0, 1, 0],
+                                     [0, 1, 0, 0, 1, 1],
+                                     [0, 0, 1, 1, 0, 0],
+                                     [0, 0, 0, 1, 0, 0]])
+        graph = UndirectedGraph(adjacency_matrix)
+
+    or ::
+
+        from scipy.sparse import csr_matrix
+        adjacency_matrix = csr_matrix(
+                            ([1] * 14,
+                             ([0, 1, 0, 2, 1, 2, 1, 3, 2, 4, 3, 4, 3, 5],
+                              [1, 0, 2, 0, 2, 1, 3, 1, 4, 2, 4, 3, 5, 3])),
+                            shape=(6, 6))
+        graph = UndirectedGraph(adjacency_matrix)
     """
-    def get_adjacency_matrix(self):
-        r"""
-        Returns the adjacency matrix of the graph, i.e. the boolean `ndarray`
-        that is ``True`` and ``False`` if there is an edge connecting the two
-        vertices or not respectively.
+    def __init__(self, adjacency_matrix, copy=True):
+        super(UndirectedGraph, self).__init__(adjacency_matrix, directed=False,
+                                              copy=copy)
 
-        :type: ``(n_vertices, n_vertices, )`` `ndarray`
-        """
-        adjacency_mat = np.zeros((self.n_vertices, self.n_vertices),
-                                 dtype=np.bool)
-        for e in range(self.n_edges):
-            v1 = self.adjacency_array[e, 0]
-            v2 = self.adjacency_array[e, 1]
-            adjacency_mat[v1, v2] = True
-            adjacency_mat[v2, v1] = True
+    @property
+    def edges(self):
+        return np.vstack(triu(self.adjacency_matrix).nonzero()).T
 
-        return adjacency_mat
-
-    def _get_adjacency_list(self):
-        adjacency_list = [[] for _ in range(self.n_vertices)]
-        for e in range(self.n_edges):
-            v1 = self.adjacency_array[e, 0]
-            v2 = self.adjacency_array[e, 1]
-            adjacency_list[v1].append(v2)
-            adjacency_list[v2].append(v1)
-        return adjacency_list
-
-    def neighbours(self, vertex):
+    def neighbours(self, vertex, skip_checks=False):
         r"""
         Returns the neighbours of the selected vertex.
 
@@ -424,6 +604,8 @@ class UndirectedGraph(Graph):
         ----------
         vertex : `int`
             The selected vertex.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertex will be checked.
 
         Returns
         -------
@@ -435,10 +617,12 @@ class UndirectedGraph(Graph):
         ValueError
             The vertex must be between 0 and {n_vertices-1}.
         """
-        self._check_vertex(vertex)
-        return self.adjacency_list[vertex]
+        # check given vertex
+        if not skip_checks:
+            self._check_vertex(vertex)
+        return list(self.adjacency_matrix[vertex, :].nonzero()[1])
 
-    def n_neighbours(self, vertex):
+    def n_neighbours(self, vertex, skip_checks=False):
         r"""
         Returns the number of neighbours of the selected vertex.
 
@@ -446,6 +630,8 @@ class UndirectedGraph(Graph):
         ----------
         vertex : `int`
             The selected vertex.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertex will be checked.
 
         Returns
         -------
@@ -457,56 +643,18 @@ class UndirectedGraph(Graph):
         ValueError
             The vertex must be between 0 and {n_vertices-1}.
         """
-        self._check_vertex(vertex)
+        # check given vertex
+        if not skip_checks:
+            self._check_vertex(vertex)
         return len(self.neighbours(vertex))
 
-    def is_edge(self, vertex_1, vertex_2):
+    def minimum_spanning_tree(self, root_vertex):
         r"""
-        Returns whether there is an edge between the provided vertices.
+        Returns the minimum spanning tree of the graph using Kruskal's
+        algorithm.
 
         Parameters
         ----------
-        vertex_1 : `int`
-            The first selected vertex.
-        vertex_2 : `int`
-            The second selected vertex.
-
-        Returns
-        -------
-        is_edge : `bool`
-            True if there is an edge.
-
-        Raises
-        ------
-        ValueError
-            The vertex must be between 0 and {n_vertices-1}.
-        """
-        self._check_vertex(vertex_1)
-        self._check_vertex(vertex_2)
-        return (vertex_1 in self.adjacency_list[vertex_2] or
-                vertex_2 in self.adjacency_list[vertex_1])
-
-    def has_cycles(self):
-        r"""
-        Whether the graph has at least on cycle.
-
-        Returns
-        -------
-        has_cycles : `bool`
-            True if it has at least one cycle.
-        """
-        return _has_cycles(self.adjacency_list, False)
-
-    def minimum_spanning_tree(self, weights, root_vertex):
-        r"""
-        Returns the minimum spanning tree given weights to the graph's edges
-        using Kruskal's algorithm.
-
-        Parameters
-        ----------
-        weights : ``(n_vertices, n_vertices, )`` `ndarray`
-            A matrix of the same size as the adjacency matrix that attaches a
-            weight to each edge of the undirected graph.
         root_vertex : `int`
             The vertex that will be set as root in the output MST.
 
@@ -514,27 +662,16 @@ class UndirectedGraph(Graph):
         -------
         mst : :map:`Tree`
             The computed minimum spanning tree.
-
-        Raises
-        ------
-        ValueError
-            Provided graph is not an UndirectedGraph.
-        ValueError
-            Asymmetric weights provided.
         """
-        # compute the edges of the minimum spanning tree
-        from menpo.external.PADS.MinimumSpanningTree import MinimumSpanningTree
-        tree_edges = MinimumSpanningTree(self, weights)
-
-        # Correct the tree edges so that they have the correct format
-        # (i.e. ndarray of pairs in the form (parent, child)) using BFS
-        tree_edges = _correct_tree_edges(tree_edges, root_vertex)
-
-        return Tree(np.array(tree_edges), root_vertex)
+        mst_adjacency = csgraph.minimum_spanning_tree(self.adjacency_matrix)
+        return Tree(mst_adjacency, root_vertex)
 
     def __str__(self):
-        return "Undirected graph of {} vertices and {} edges.".format(
-            self.n_vertices, self.n_edges)
+        isolated = ''
+        if self.has_isolated_vertices():
+            isolated = " ({} isolated)".format(len(self.isolated_vertices()))
+        return "Undirected graph of {} vertices{} and {} " \
+               "edges.".format(self.n_vertices, isolated, self.n_edges)
 
 
 class DirectedGraph(Graph):
@@ -594,7 +731,7 @@ class DirectedGraph(Graph):
             adjacency_mat[parent, child] = True
         return adjacency_mat
 
-    def _get_adjacency_list(self):
+    def get_adjacency_list(self):
         adjacency_list = [[] for _ in range(self.n_vertices)]
         for e in range(self.n_edges):
             parent = self.adjacency_array[e, 0]
@@ -716,17 +853,6 @@ class DirectedGraph(Graph):
         self._check_vertex(parent)
         self._check_vertex(child)
         return child in self.adjacency_list[parent]
-
-    def has_cycles(self):
-        r"""
-        Whether the graph has at least on cycle.
-
-        Returns
-        -------
-        has_cycles : `bool`
-            ``True`` if it has at least one cycle.
-        """
-        return _has_cycles(self.adjacency_list, True)
 
     def __str__(self):
         return "Directed graph of {} vertices and {} edges.".format(
@@ -1246,7 +1372,7 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
             if len(masked_adj) == 0:
                 raise ValueError('The provided mask deletes all edges.')
             pg.adjacency_array = reindex_adjacency_array(masked_adj)
-            pg.adjacency_list = pg._get_adjacency_list()
+            pg.adjacency_list = pg.get_adjacency_list()
             pg.points = pg.points[mask, :]
             return pg
 
@@ -1381,7 +1507,7 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
                 raise ValueError('The provided mask deletes all edges.')
             pt.adjacency_array = reindex_adjacency_array(masked_adj)
             pt.points = pt.points[mask, :]
-            pt.adjacency_list = pt._get_adjacency_list()
+            pt.adjacency_list = pt.get_adjacency_list()
             pt.predecessors_list = pt._get_predecessors_list()
             return pt
 
@@ -1462,9 +1588,26 @@ class PointTree(PointDirectedGraph, Tree):
                 raise ValueError('The provided mask deletes all edges.')
             pt.adjacency_array = reindex_adjacency_array(masked_adj)
             pt.points = pt.points[mask, :]
-            pt.adjacency_list = pt._get_adjacency_list()
+            pt.adjacency_list = pt.get_adjacency_list()
             pt.predecessors_list = pt._get_predecessors_list()
             return pt
+
+
+def _is_symmetric(array):
+    r"""
+    Check if an array is symmetric.
+
+    Parameters
+    ----------
+    array : `ndarray` or `scipy.sparse.csr_matrix`
+        The array to check.
+
+    Returns
+    -------
+    is_symmetric : `bool`
+        ``True`` if the array is symmetric.
+    """
+    return np.allclose(array.transpose().nonzero(), array.nonzero())
 
 
 def _unique_array_rows(array):
@@ -1551,13 +1694,13 @@ def _correct_tree_edges(edges, root_vertex):
 
 def _has_cycles(adjacency_list, directed):
     r"""
-    Function that checks if the provided directed graph has cycles using a depth
-    first search.
+    Function that checks if the provided directed graph has cycles using a Depth
+    First Search (DFS).
 
     Parameters
     ----------
-    adjacency_array : ``(n_edges, 2, )`` `ndarray`
-        The adjacency array of the directed graph.
+    adjacency_list : `list` of `list` of length ``n_vertices``
+        The adjacency list of the graph.
     directed : `bool`
         Defines if the provided graph is directed or not.
 
