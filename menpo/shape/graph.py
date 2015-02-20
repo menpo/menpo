@@ -267,9 +267,9 @@ class Graph(object):
         Parameters
         ----------
         vertex_1 : `int`
-            The first selected vertex.
+            The first selected vertex. Parent if the graph is directed.
         vertex_2 : `int`
-            The second selected vertex.
+            The second selected vertex. Child if the graph is directed.
         skip_checks : `bool`, optional
             If ``False``, the given vertices will be checked.
 
@@ -530,9 +530,8 @@ class UndirectedGraph(Graph):
     Parameters
     ----------
     adjacency_matrix : ``(n_vertices, n_vertices, )`` `ndarray` or `csr_matrix`
-        The adjacency matrix of the graph in which the rows represent source
-        vertices and columns represent destination vertices. The non-edges must
-        be represented with zeros and the edges can have a weight value.
+        The adjacency matrix of the graph. The non-edges must be represented
+        with zeros and the edges can have a weight value.
 
         :Note: ``adjacency_matrix`` must be symmetric.
     copy : `bool`, optional
@@ -585,6 +584,40 @@ class UndirectedGraph(Graph):
                             ([1] * 14,
                              ([0, 1, 0, 2, 1, 2, 1, 3, 2, 4, 3, 4, 3, 5],
                               [1, 0, 2, 0, 2, 1, 3, 1, 4, 2, 4, 3, 5, 3])),
+                            shape=(6, 6))
+        graph = UndirectedGraph(adjacency_matrix)
+
+    The adjacency matrix of the following graph with isolated vertices ::
+
+            0---|
+                |
+                |
+        1       2
+                |
+                |
+        3-------4
+
+
+        5
+
+    can be defined as ::
+
+        import numpy as np
+        adjacency_matrix = np.array([[0, 0, 1, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0],
+                                     [1, 0, 0, 0, 1, 0],
+                                     [0, 0, 0, 0, 1, 0],
+                                     [0, 0, 1, 1, 0, 0],
+                                     [0, 0, 0, 0, 0, 0]])
+        graph = UndirectedGraph(adjacency_matrix)
+
+    or ::
+
+        from scipy.sparse import csr_matrix
+        adjacency_matrix = csr_matrix(
+                            ([1] * 6,
+                             ([0, 2, 2, 4, 3, 4],
+                              [2, 0, 4, 2, 4, 3])),
                             shape=(6, 6))
         graph = UndirectedGraph(adjacency_matrix)
     """
@@ -643,10 +676,7 @@ class UndirectedGraph(Graph):
         ValueError
             The vertex must be between 0 and {n_vertices-1}.
         """
-        # check given vertex
-        if not skip_checks:
-            self._check_vertex(vertex)
-        return len(self.neighbours(vertex))
+        return len(self.neighbours(vertex, skip_checks=skip_checks))
 
     def minimum_spanning_tree(self, root_vertex):
         r"""
@@ -680,66 +710,104 @@ class DirectedGraph(Graph):
 
     Parameters
     ----------
-    adjacency_array : ``(n_edges, 2, )`` `ndarray`
-        The Adjacency Array of the graph, i.e. an array containing the sets of
-        the graph's edges. The numbering of vertices is assumed to start from 0.
-
-        We assume that the vertices in the first column of the
-        ``adjacency_array`` are the parents and the vertices in the second
-        column of the ``adjacency_array`` are the children, for example:
-
-        ::
-
-               |-->0<--|        adjacency_array = ndarray([[1, 0],
-               |       |                                   [2, 0],
-               |       |                                   [1, 2],
-               1<----->2                                   [2, 1],
-               |       |                                   [1, 3],
-               v       v                                   [2, 4],
-               3------>4                                   [3, 4],
-               |                                           [3, 5]])
-               v
-               5
-
+    adjacency_matrix : ``(n_vertices, n_vertices, )`` `ndarray` or `csr_matrix`
+        The adjacency matrix of the graph in which the rows represent source
+        vertices and columns represent destination vertices. The non-edges must
+        be represented with zeros and the edges can have a weight value.
     copy : `bool`, optional
-        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+        If ``False``, the ``adjacency_matrix`` will not be copied on assignment.
 
     Raises
     ------
     ValueError
-        You must provide at least one edge.
+        adjacency_matrix must be either a numpy.ndarray or a
+        scipy.sparse.csr_matrix.
     ValueError
-        Adjacency list must contain the sets of connected edges and thus must
-        have shape (n_edges, 2).
+        Graph must have at least two vertices.
     ValueError
-        The vertices must be numbered starting from 0.
+        adjacency_matrix must be square (n_vertices, n_vertices, ),
+        ({adjacency_matrix.shape[0]}, {adjacency_matrix.shape[1]}) given
+        instead.
+
+    Examples
+    --------
+    The following directed graph ::
+
+        |-->0<--|
+        |       |
+        |       |
+        1<----->2
+        |       |
+        v       v
+        3------>4
+        |
+        v
+        5
+
+    can be defined as ::
+
+        import numpy as np
+        adjacency_matrix = np.array([[0, 0, 0, 0, 0, 0],
+                                     [1, 0, 1, 1, 0, 0],
+                                     [1, 1, 0, 0, 1, 0],
+                                     [0, 0, 0, 0, 1, 1],
+                                     [0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0]])
+        graph = DirectedGraph(adjacency_matrix)
+
+    or ::
+
+        from scipy.sparse import csr_matrix
+        adjacency_matrix = csr_matrix(
+                            ([1] * 8,
+                             ([1, 2, 1, 2, 1, 2, 3, 3],
+                              [0, 0, 2, 1, 3, 4, 4, 5])),
+                            shape=(6, 6))
+        graph = DirectedGraph(adjacency_matrix)
+
+    The following graph with isolated vertices ::
+
+            0<--|
+                |
+                |
+        1       2
+                |
+                v
+        3------>4
+
+
+        5
+
+    can be defined as ::
+
+        import numpy as np
+        adjacency_matrix = np.array([[0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0],
+                                     [1, 0, 0, 0, 1, 0],
+                                     [0, 0, 0, 0, 1, 0],
+                                     [0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0]])
+        graph = DirectedGraph(adjacency_matrix)
+
+    or ::
+
+        from scipy.sparse import csr_matrix
+        adjacency_matrix = csr_matrix(
+                            ([1] * 3,
+                             ([2, 2, 3],
+                              [0, 4, 4])),
+                            shape=(6, 6))
+        graph = DirectedGraph(adjacency_matrix)
     """
+    def __init__(self, adjacency_matrix, copy=True):
+        super(DirectedGraph, self).__init__(adjacency_matrix, directed=True,
+                                            copy=copy)
 
-    def get_adjacency_matrix(self):
-        r"""
-        Returns the Adjacency Matrix of the graph, i.e. the boolean `ndarray`
-        that is ``True`` and ``False`` if there is an edge connecting the two
-        vertices or not respectively.
+    @property
+    def edges(self):
+        return np.vstack(self.adjacency_matrix.nonzero()).T
 
-        :type: ``(n_vertices, n_vertices, )`` `ndarray`
-        """
-        adjacency_mat = np.zeros((self.n_vertices, self.n_vertices),
-                                 dtype=np.bool)
-        for e in range(self.n_edges):
-            parent = self.adjacency_array[e, 0]
-            child = self.adjacency_array[e, 1]
-            adjacency_mat[parent, child] = True
-        return adjacency_mat
-
-    def get_adjacency_list(self):
-        adjacency_list = [[] for _ in range(self.n_vertices)]
-        for e in range(self.n_edges):
-            parent = self.adjacency_array[e, 0]
-            child = self.adjacency_array[e, 1]
-            adjacency_list[parent].append(child)
-        return adjacency_list
-
-    def children(self, vertex):
+    def children(self, vertex, skip_checks=False):
         r"""
         Returns the children of the selected vertex.
 
@@ -747,6 +815,8 @@ class DirectedGraph(Graph):
         ----------
         vertex : `int`
             The selected vertex.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertex will be checked.
 
         Returns
         -------
@@ -758,10 +828,11 @@ class DirectedGraph(Graph):
         ValueError
             The vertex must be between 0 and {n_vertices-1}.
         """
-        self._check_vertex(vertex)
-        return self.adjacency_list[vertex]
+        if not skip_checks:
+            self._check_vertex(vertex)
+        return list(self.adjacency_matrix[vertex, :].nonzero()[1])
 
-    def n_children(self, vertex):
+    def n_children(self, vertex, skip_checks=False):
         r"""
         Returns the number of children of the selected vertex.
 
@@ -774,16 +845,17 @@ class DirectedGraph(Graph):
         -------
         n_children : `int`
             The number of children.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertex will be checked.
 
         Raises
         ------
         ValueError
             The vertex must be in the range ``[0, n_vertices - 1]``.
         """
-        self._check_vertex(vertex)
-        return len(self.children(vertex))
+        return len(self.children(vertex, skip_checks=skip_checks))
 
-    def parent(self, vertex):
+    def parents(self, vertex, skip_checks=False):
         r"""
         Returns the parents of the selected vertex.
 
@@ -791,10 +863,12 @@ class DirectedGraph(Graph):
         ----------
         vertex : `int`
             The selected vertex.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertex will be checked.
 
         Returns
         -------
-        parent : `list`
+        parents : `list`
             The list of parents.
 
         Raises
@@ -802,11 +876,11 @@ class DirectedGraph(Graph):
         ValueError
             The vertex must be in the range ``[0, n_vertices - 1]``.
         """
-        self._check_vertex(vertex)
-        adj = self.get_adjacency_matrix()
-        return list(np.where(adj[:, vertex])[0])
+        if not skip_checks:
+            self._check_vertex(vertex)
+        return list(self.adjacency_matrix[:, vertex].nonzero()[0])
 
-    def n_parent(self, vertex):
+    def n_parents(self, vertex, skip_checks=False):
         r"""
         Returns the number of parents of the selected vertex.
 
@@ -814,10 +888,12 @@ class DirectedGraph(Graph):
         ----------
         vertex : `int`
             The selected vertex.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertex will be checked.
 
         Returns
         -------
-        n_parent : `int`
+        n_parents : `int`
             The number of parents.
 
         Raises
@@ -825,38 +901,14 @@ class DirectedGraph(Graph):
         ValueError
             The vertex must be in the range ``[0, n_vertices - 1]``.
         """
-        self._check_vertex(vertex)
-        return len(self.parent(vertex))
-
-    def is_edge(self, parent, child):
-        r"""
-        Returns whether there is an edge between the provided vertices.
-
-        Parameters
-        ----------
-        parent : `int`
-            The first selected vertex which is considered as the parent.
-
-        child : `int`
-            The second selected vertex which is considered as the child.
-
-        Returns
-        -------
-        is_edge : `bool`
-            True if there is an edge.
-
-        Raises
-        ------
-        ValueError
-            The vertex must be in the range ``[0, n_vertices - 1]``.
-        """
-        self._check_vertex(parent)
-        self._check_vertex(child)
-        return child in self.adjacency_list[parent]
+        return len(self.parents(vertex, skip_checks=skip_checks))
 
     def __str__(self):
-        return "Directed graph of {} vertices and {} edges.".format(
-            self.n_vertices, self.n_edges)
+        isolated = ''
+        if self.has_isolated_vertices():
+            isolated = " ({} isolated)".format(len(self.isolated_vertices()))
+        return "Directed graph of {} vertices{} and {} " \
+               "edges.".format(self.n_vertices, isolated, self.n_edges)
 
 
 class Tree(DirectedGraph):
