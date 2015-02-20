@@ -84,7 +84,7 @@ def channels_to_back(image):
     else:
         pixels = image.pixels
 
-    return np.rollaxis(pixels, 0, pixels.ndim)
+    return np.ascontiguousarray(np.rollaxis(pixels, 0, pixels.ndim))
 
 
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
@@ -1760,6 +1760,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if pixels.dtype != np.uint8:
             raise ValueError('Unexpected data type - {}.'.format(pixels.dtype))
         return PILImage.fromarray(pixels)
+
+    def rolled_channels(self):
+        r"""
+        Returns the pixels matrix, with the channels rolled to the back axis.
+        This may be required for interacting with external code bases that
+        require images to have channels as the last axis, rather than the
+        menpo convention of channels as the first axis.
+
+        Returns
+        -------
+        rolled_channels : `ndarray`
+            Pixels with channels as the back (last) axis.
+        """
+        return channels_to_back(self)
 
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(
