@@ -694,6 +694,7 @@ class UndirectedGraph(Graph):
             The computed minimum spanning tree.
         """
         mst_adjacency = csgraph.minimum_spanning_tree(self.adjacency_matrix)
+        print mst_adjacency
         return Tree(mst_adjacency, root_vertex)
 
     def __str__(self):
@@ -917,66 +918,108 @@ class Tree(DirectedGraph):
 
     Parameters
     ----------
-    adjacency_array : ``(n_edges, 2, )`` `ndarray`
-        The Adjacency Array of the tree, i.e. an array containing the sets of
-        the tree's edges. The numbering of vertices is assumed to start from 0.
+    adjacency_matrix : ``(n_vertices, n_vertices, )`` `ndarray` or `csr_matrix`
+        The adjacency matrix of the tree in which the rows represent parents
+        and columns represent children. The non-edges must be represented with
+        zeros and the edges can have a weight value.
 
-        We assume that the vertices in the first column of the
-        ``adjacency_array`` are the parents and the vertices in the second
-        column of the ``adjacency_array`` are the children, for example:
-
-        ::
-
-                   0            adjacency_array = ndarray([[0, 1],
-                   |                                       [0, 2],
-                ___|___                                    [1, 3],
-               1       2                                   [1, 4],
-               |       |                                   [2, 5],
-              _|_      |                                   [3, 6],
-             3   4     5                                   [4, 7],
-             |   |     |                                   [5, 8]])
-             |   |     |
-             6   7     8
-
+        :Note: A tree must not have isolated vertices.
     root_vertex : `int`
-        The vertex that will be considered as root.
+        The vertex to be set as root.
     copy : `bool`, optional
-        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+        If ``False``, the ``adjacency_matrix`` will not be copied on assignment.
 
     Raises
     ------
     ValueError
+        adjacency_matrix must be either a numpy.ndarray or a
+        scipy.sparse.csr_matrix.
+    ValueError
+        Graph must have at least two vertices.
+    ValueError
+        adjacency_matrix must be square (n_vertices, n_vertices, ),
+        ({adjacency_matrix.shape[0]}, {adjacency_matrix.shape[1]}) given
+        instead.
+    ValueError
         The provided edges do not represent a tree.
     ValueError
         The root_vertex must be in the range ``[0, n_vertices - 1]``.
+
+    Examples
+    --------
+    The following tree ::
+
+               0
+               |
+            ___|___
+           1       2
+           |       |
+          _|_      |
+         3   4     5
+         |   |     |
+         |   |     |
+         6   7     8
+
+    can be defined as ::
+
+        import numpy as np
+        adjacency_matrix = np.array([[0, 1, 1, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 1, 1, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 1, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 1, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 1, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0, 1],
+                                     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0, 0]])
+        tree = Tree(adjacency_matrix, root_vertex=0)
+
+    or ::
+
+        from scipy.sparse import csr_matrix
+        adjacency_matrix = csr_matrix(
+                            ([1] * 8,
+                             ([0, 0, 1, 1, 2, 3, 4, 5],
+                              [1, 2, 3, 4, 5, 6, 7, 8])),
+                            shape=(9, 9))
+        tree = Tree(adjacency_matrix, root_vertex=0)
     """
-    def __init__(self, adjacency_array, root_vertex, copy=True):
-        super(Tree, self).__init__(adjacency_array, copy=copy)
-        # check if provided adjacency_array represents a tree
+    def __init__(self, adjacency_matrix, root_vertex, copy=True):
+        super(Tree, self).__init__(adjacency_matrix, copy=copy)
+        # check if the provided tree has isolated vertices
+        if self.has_isolated_vertices():
+            raise ValueError('A tree cannot have isolated vertices.')
+        # check if provided adjacency_matrix represents a tree
         if not (self.is_tree() and self.n_edges == self.n_vertices - 1):
             raise ValueError('The provided edges do not represent a tree.')
         # check if root_vertex is valid
         self._check_vertex(root_vertex)
-
+        # store root and predecessors list
         self.root_vertex = root_vertex
         self.predecessors_list = self._get_predecessors_list()
 
     def _get_predecessors_list(self):
         r"""
-        Returns the predecessors list of the tree, i.e. a list of length
-        ``n_vertices`` that for each vertex it has its parent. The value of the
+        Returns the predecessors list of the tree, i.e. a `list` of length
+        ``n_vertices`` that stores the parent for each vertex. The value of the
         root vertex is ``None``.
 
-        :type: `list` of len n_vertices
+        :type: `list` of length ``n_vertices``
         """
+        # initialize list with None
         predecessors_list = [None] * self.n_vertices
-        for e in range(self.n_edges):
-            parent = self.adjacency_array[e, 0]
-            child = self.adjacency_array[e, 1]
+
+        # get rows/columns of edges
+        parents, children = self.adjacency_matrix.nonzero()
+
+        # store them accordingly
+        for i in range(children.shape[0]):
+            parent = parents[i]
+            child = children[i]
             predecessors_list[child] = parent
         return predecessors_list
 
-    def depth_of_vertex(self, vertex):
+    def depth_of_vertex(self, vertex, skip_checks=False):
         r"""
         Returns the depth of the specified vertex.
 
@@ -984,6 +1027,8 @@ class Tree(DirectedGraph):
         ----------
         vertex : `int`
             The selected vertex.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertex will be checked.
 
         Returns
         -------
@@ -995,7 +1040,8 @@ class Tree(DirectedGraph):
         ValueError
             The vertex must be in the range ``[0, n_vertices - 1]``.
         """
-        self._check_vertex(vertex)
+        if not skip_checks:
+            self._check_vertex(vertex)
         parent = vertex
         depth = 0
         while not parent == self.root_vertex:
@@ -1054,32 +1100,35 @@ class Tree(DirectedGraph):
                 n_ver += 1
         return n_ver
 
-    def is_leaf(self, vertex):
+    def is_leaf(self, vertex, skip_checks=False):
         r"""
-        Returns whether the vertex is a leaf.
+        Whether the vertex is a leaf.
 
         Parameters
         ----------
         vertex : `int`
             The selected vertex.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertex will be checked.
 
         Returns
         -------
         is_leaf : `bool`
-            If True, then selected vertex is a leaf.
+            If ``True``, then selected vertex is a leaf.
 
         Raises
         ------
         ValueError
             The vertex must be in the range ``[0, n_vertices - 1]``.
         """
-        self._check_vertex(vertex)
+        if not skip_checks:
+            self._check_vertex(vertex)
         return len(self.children(vertex)) == 0
 
     @property
     def leaves(self):
         r"""
-        Returns a list with the all leaves of the tree.
+        Returns a `list` with the all leaves of the tree.
 
         :type: `list`
         """
@@ -1096,13 +1145,9 @@ class Tree(DirectedGraph):
 
         :type: `int`
         """
-        n_leaves = 0
-        for v in range(self.n_vertices):
-            if self.is_leaf(v):
-                n_leaves += 1
-        return n_leaves
+        return len(self.leaves)
 
-    def parent(self, vertex):
+    def parent(self, vertex, skip_checks=False):
         r"""
         Returns the parent of the selected vertex.
 
@@ -1110,6 +1155,8 @@ class Tree(DirectedGraph):
         ----------
         vertex : `int`
             The selected vertex.
+        skip_checks : `bool`, optional
+            If ``False``, the given vertex will be checked.
 
         Returns
         -------
@@ -1121,7 +1168,8 @@ class Tree(DirectedGraph):
         ValueError
             The vertex must be in the range ``[0, n_vertices - 1]``.
         """
-        self._check_vertex(vertex)
+        if not skip_checks:
+            self._check_vertex(vertex)
         return self.predecessors_list[vertex]
 
     def __str__(self):

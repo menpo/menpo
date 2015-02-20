@@ -1,35 +1,29 @@
 import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
+from scipy.sparse import csr_matrix
 
 from menpo.shape import UndirectedGraph, DirectedGraph, Tree
 
 # Define adjacency arrays
-adj_undirected = np.array([[0, 1],
-                           [0, 2],
-                           [1, 2],
-                           [1, 3],
-                           [2, 4],
-                           [3, 4],
-                           [3, 5]])
+adj_undirected = np.array([[0, 1, 1, 0, 0, 0],
+                           [1, 0, 1, 1, 0, 0],
+                           [1, 1, 0, 0, 1, 0],
+                           [0, 1, 0, 0, 1, 1],
+                           [0, 0, 1, 1, 0, 0],
+                           [0, 0, 0, 1, 0, 0]])
 g_undirected = UndirectedGraph(adj_undirected)
-adj_directed = np.array([[1, 0],
-                         [2, 0],
-                         [1, 2],
-                         [2, 1],
-                         [1, 3],
-                         [2, 4],
-                         [3, 4],
-                         [3, 5]])
+adj_directed = csr_matrix(([1] * 3, ([2, 2, 3], [0, 4, 4])), shape=(6, 6))
 g_directed = DirectedGraph(adj_directed)
-adj_tree = np.array([[0, 1],
-                     [0, 2],
-                     [1, 3],
-                     [1, 4],
-                     [2, 5],
-                     [3, 6],
-                     [4, 7],
-                     [5, 8]])
+adj_tree = np.array([[0, 1, 1, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 1, 1, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 1, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 1, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 1, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 1],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0]])
 g_tree = Tree(adj_tree, 0)
 
 
@@ -42,21 +36,21 @@ def test_create_graph_exception():
 
 @raises(ValueError)
 def test_create_tree_exception_1():
-    adj = np.array([[0, 1],
-                    [0, 2],
-                    [1, 3],
-                    [1, 4],
-                    [2, 5],
-                    [3, 6],
-                    [4, 7],
-                    [5, 8],
-                    [0, 4]])
+    adj = csr_matrix(([1] * 8, ([0, 0, 1, 1, 2, 3, 4, 5, 0],
+                                [1, 2, 3, 4, 5, 6, 7, 8, 4])), shape=(9, 9))
     Tree(adj, 0)
 
 
 @raises(ValueError)
 def test_create_tree_exception_2():
     Tree(adj_tree, 20)
+
+
+@raises(ValueError)
+def test_create_tree_exception_3():
+    adj = csr_matrix(([1] * 8, ([0, 0, 1, 1, 2, 3, 4, 5],
+                                [1, 2, 3, 4, 5, 6, 7, 8])), shape=(10, 10))
+    Tree(adj, 0)
 
 
 def test_n_edges():
@@ -72,39 +66,12 @@ def test_n_vertices():
 
 
 def test_adjacency_list():
-    assert (g_directed.adjacency_list ==
+    assert (g_directed.get_adjacency_list() ==
             [[], [0, 2, 3], [0, 1, 4], [4, 5], [], []])
-    assert (g_undirected.adjacency_list ==
+    assert (g_undirected.get_adjacency_list() ==
             [[1, 2], [0, 2, 3], [0, 1, 4], [1, 4, 5], [2, 3], [3]])
-    assert (g_tree.adjacency_list ==
+    assert (g_tree.get_adjacency_list() ==
             [[1, 2], [3, 4], [5], [6], [7], [8], [], [], []])
-
-
-def test_adjacency_matrix():
-    assert_allclose(g_directed.get_adjacency_matrix(),
-                    np.array([[False, False, False, False, False, False],
-                              [True, False, True, True, False, False],
-                              [True, True, False, False, True, False],
-                              [False, False, False, False, True, True],
-                              [False, False, False, False, False, False],
-                              [False, False, False, False, False, False]]))
-    assert_allclose(g_undirected.get_adjacency_matrix(),
-                    np.array([[False, True, True, False, False, False],
-                              [True, False, True, True, False, False],
-                              [True, True, False, False, True, False],
-                              [False, True, False, False, True, True],
-                              [False, False, True, True, False, False],
-                              [False, False, False, True, False, False]]))
-    assert_allclose(g_tree.get_adjacency_matrix(),
-                    np.array([[False, True, True, False, False, False, False, False, False],
-                              [False, False, False, True, True, False, False, False, False],
-                              [False, False, False, False, False, True, False, False, False],
-                              [False, False, False, False, False, False, True, False, False],
-                              [False, False, False, False, False, False, False, True, False],
-                              [False, False, False, False, False, False, False, False, True],
-                              [False, False, False, False, False, False, False, False, False],
-                              [False, False, False, False, False, False, False, False, False],
-                              [False, False, False, False, False, False, False, False, False]]))
 
 
 def test_n_paths():
@@ -135,8 +102,8 @@ def test_find_shortest_path():
 def test_neighbours_children_parent():
     assert (g_directed.children(3) == [4, 5])
     assert (g_directed.n_children(0) == 0)
-    assert (g_directed.parent(0) == [1, 2])
-    assert (g_directed.n_parent(3) == 1)
+    assert (g_directed.parents(0) == [1, 2])
+    assert (g_directed.n_parents(3) == 1)
 
     assert (g_undirected.neighbours(1) == [0, 2, 3])
     assert (g_undirected.n_neighbours(3) == 3)
@@ -158,26 +125,18 @@ def test_tree():
 
 
 def test_minimum_spanning_tree():
-    adjacency_array = np.array([[3, 1],
-                                [2, 3],
-                                [0, 3],
-                                [2, 0],
-                                [0, 1]])
-    weights = np.array([[0, 11, 13, 12],
-                        [11, 0, 0, 14],
-                        [13, 0, 0, 10],
-                        [12, 14, 10, 0]])
-    g = UndirectedGraph(adjacency_array)
-    t = g.minimum_spanning_tree(weights, root_vertex=0)
+    adjacency_matrix = np.array([[0, 11, 13, 12],
+                                 [11, 0, 0, 14],
+                                 [13, 0, 0, 10],
+                                 [12, 14, 10, 0]])
+    g = UndirectedGraph(adjacency_matrix)
+    t = g.minimum_spanning_tree(root_vertex=0)
     assert t.n_edges == 3
-    assert_allclose(t.adjacency_array, np.array([[0, 1], [0, 3], [3, 2]]))
-    assert t.adjacency_list == [[1, 3], [], [], [2]]
-    assert_allclose(t.get_adjacency_matrix(),
-                    np.array([[False, True, False, True],
-                              [False, False, False, False],
-                              [False, False, False, False],
-                              [False, False, True, False]]))
-    assert t.predecessors_list == [None, 0, 3, 0]
+    assert_allclose(t.adjacency_matrix, csr_matrix(([11., 12., 10.],
+                                                    ([0, 0, 2], [1, 3, 3])),
+                                                   shape=(4, 4)))
+    assert t.adjacency_list == [[1, 3], [], [3], []]
+    assert t.predecessors_list == [None, 0, None, 2]
 
 
 def test_is_edge():
