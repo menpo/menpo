@@ -1683,20 +1683,22 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                  "images. {} channels found, "
                                  "3 expected.".format(self.n_channels))
 
-            # Invert the transformation matrix to get more precise values
-            T = scipy.linalg.inv(np.array([[1.0, 0.956, 0.621],
-                                           [1.0, -0.272, -0.647],
-                                           [1.0, -1.106, 1.703]]))
-            coef = T[0, :]
-            pixels = np.rollaxis(greyscale.pixels, 0, self.n_dims+1)
-            pixels = np.dot(pixels, coef.T)
+            # cache the luminosity coefficients as they are invariant
+            if not hasattr(self, '_luminosity_coefficients'):
+                # Invert the transformation matrix to get more precise values
+                T = scipy.linalg.inv(np.array([[1.0, 0.956, 0.621],
+                                               [1.0, -0.272, -0.647],
+                                               [1.0, -1.106, 1.703]]))
+                self._luminosity_coefficients = T[0, :]
+            pixels = np.einsum('i,ikl->kl', self._luminosity_coefficients,
+                               greyscale.pixels)
         elif mode == 'average':
             pixels = np.mean(greyscale.pixels, axis=0)
         elif mode == 'channel':
             if channel is None:
                 raise ValueError("For the 'channel' mode you have to provide"
                                  " a channel index")
-            pixels = greyscale.pixels[channel, ...].copy()
+            pixels = greyscale.pixels[channel, ...]
         else:
             raise ValueError("Unknown mode {} - expected 'luminosity', "
                              "'average' or 'channel'.".format(mode))
