@@ -64,11 +64,30 @@ def test_n_edges():
     assert_allclose(g_isolated.n_edges, 3)
 
 
+def test_edges():
+    assert_allclose(g_directed.edges, np.array([[1, 0], [1, 2], [1, 3], [2, 0],
+                                                [2, 1], [2, 4], [3, 4],
+                                                [3, 5]]))
+    assert_allclose(g_undirected.edges, np.array([[0, 1], [0, 2], [1, 2],
+                                                  [1, 3], [2, 4], [3, 4],
+                                                  [3, 5]]))
+    assert_allclose(g_tree.edges, np.array([[0, 1], [0, 2], [1, 3], [1, 4],
+                                            [2, 5], [3, 6], [4, 7], [5, 8]]))
+    assert_allclose(g_isolated.edges, np.array([[0, 2], [2, 4], [3, 4]]))
+
+
 def test_n_vertices():
     assert_allclose(g_directed.n_vertices, 6)
     assert_allclose(g_undirected.n_vertices, 6)
     assert_allclose(g_tree.n_vertices, 9)
     assert_allclose(g_isolated.n_vertices, 6)
+
+
+def test_vertices():
+    assert (g_directed.vertices == [0, 1, 2, 3, 4, 5])
+    assert (g_undirected.vertices == [0, 1, 2, 3, 4, 5])
+    assert (g_tree.vertices == [0, 1, 2, 3, 4, 5, 6, 7, 8])
+    assert (g_isolated.vertices == [0, 1, 2, 3, 4, 5])
 
 
 def test_adjacency_list():

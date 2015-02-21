@@ -299,11 +299,11 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
 
 
 class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, points, adjacency_array):
+    def __init__(self, figure_id, new_figure, points, edges):
         super(MatplotlibPointGraphViewer2d, self).__init__(figure_id,
                                                            new_figure)
         self.points = points
-        self.adjacency_array = adjacency_array
+        self.edges = edges
 
     def render(self, image_view=False, render_lines=True, line_colour='r',
                line_style='-', line_width=1, render_markers=True,
@@ -324,10 +324,10 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
         # Check if graph has edges to be rendered (for example a PointCLoud
         # won't have any edges)
-        if render_lines and np.array(self.adjacency_array).shape[0] > 0:
+        if render_lines and np.array(self.edges).shape[0] > 0:
             # Get edges to be rendered
-            lines = zip(points[self.adjacency_array[:, 0], :],
-                        points[self.adjacency_array[:, 1], :])
+            lines = zip(points[self.edges[:, 0], :],
+                        points[self.edges[:, 1], :])
 
             # Draw line objects
             lc = mc.LineCollection(lines, colors=line_colour,
