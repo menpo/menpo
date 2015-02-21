@@ -3,7 +3,13 @@ from numpy.testing import assert_allclose
 from nose.tools import raises
 from scipy.sparse import csr_matrix
 
-from menpo.shape import UndirectedGraph, DirectedGraph, Tree
+from menpo.shape import (UndirectedGraph, DirectedGraph, Tree,
+                         PointUndirectedGraph, PointDirectedGraph, PointTree)
+
+# Points for point graphs
+points = np.array([[10, 30], [0, 20], [20, 20], [0, 10], [20, 10], [0, 0]])
+points2 = np.array([[30, 30], [10, 20], [50, 20], [0, 10], [20, 10],
+                    [50, 10], [0, 0], [20, 0], [50, 0]])
 
 # Define adjacency arrays
 adj_undirected = np.array([[0, 1, 1, 0, 0, 0],
@@ -13,9 +19,11 @@ adj_undirected = np.array([[0, 1, 1, 0, 0, 0],
                            [0, 0, 1, 1, 0, 0],
                            [0, 0, 0, 1, 0, 0]])
 g_undirected = UndirectedGraph(adj_undirected)
+pg_undirected = PointUndirectedGraph(points, adj_undirected)
 adj_directed = csr_matrix(([1] * 8, ([1, 2, 1, 2, 1, 2, 3, 3],
                                      [0, 0, 2, 1, 3, 4, 4, 5])), shape=(6, 6))
 g_directed = DirectedGraph(adj_directed)
+pg_directed = PointDirectedGraph(points, adj_directed)
 adj_tree = np.array([[0, 1, 1, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 1, 1, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -26,9 +34,11 @@ adj_tree = np.array([[0, 1, 1, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0, 0]])
 g_tree = Tree(adj_tree, 0)
+pg_tree = PointTree(points2, adj_tree, 0)
 adj_isolated = csr_matrix(([1] * 6, ([0, 2, 2, 4, 3, 4], [2, 0, 4, 2, 4, 3])),
                           shape=(6, 6))
 g_isolated = UndirectedGraph(adj_isolated)
+pg_isolated = PointUndirectedGraph(points, adj_isolated)
 
 
 @raises(ValueError)
@@ -88,6 +98,17 @@ def test_vertices():
     assert (g_undirected.vertices == [0, 1, 2, 3, 4, 5])
     assert (g_tree.vertices == [0, 1, 2, 3, 4, 5, 6, 7, 8])
     assert (g_isolated.vertices == [0, 1, 2, 3, 4, 5])
+
+
+def test_isolated_vertices():
+    assert (g_directed.isolated_vertices() == [])
+    assert not g_directed.has_isolated_vertices()
+    assert (g_undirected.isolated_vertices() == [])
+    assert not g_undirected.has_isolated_vertices()
+    assert (g_tree.isolated_vertices() == [])
+    assert not g_tree.has_isolated_vertices()
+    assert (g_isolated.isolated_vertices() == [1, 5])
+    assert g_isolated.has_isolated_vertices()
 
 
 def test_adjacency_list():
@@ -196,3 +217,48 @@ def test_is_tree():
     assert not g_directed.is_tree()
     assert g_tree.is_tree()
     assert not g_isolated.is_tree()
+
+
+def test_from_mask():
+    assert (pg_directed.from_mask(
+        np.array([False, False, True,
+                  True, True, False])).get_adjacency_list() == [[2], [2], []])
+    assert (pg_undirected.from_mask(
+        np.array([True, False, True,
+                  True, True, False])).get_adjacency_list() ==
+            [[1], [0, 3], [3], [1, 2]])
+    assert (pg_tree.from_mask(
+        np.array([True, False, True, True, True,
+                  True, True, True, False])).get_adjacency_list() ==
+            [[1], [2], []])
+    assert (pg_isolated.from_mask(
+        np.array([True, True, False,
+                  True, True, False])).get_adjacency_list() ==
+            [[], [], [3], [2]])
+
+
+@raises(ValueError)
+def test_from_mask_errors():
+    pg_directed.from_mask(np.array([False, False, False, False, False, False]))
+    pg_undirected.from_mask(np.array([False, False, False, False, False, True]))
+    pg_tree.from_mask(np.array([False, True, True, True, True, True, True,
+                                True, True]))
+    pg_isolated.from_mask(np.array([True, True, False, True, False, True]))
+
+
+def test_relative_locations():
+    assert_allclose(pg_tree.relative_location_edge(5, 8), np.array([0, -10]))
+    assert_allclose(pg_tree.relative_locations(), np.array([[-20, -10],
+                                                            [20, -10],
+                                                            [-10, -10],
+                                                            [10, -10],
+                                                            [0, -10],
+                                                            [0, -10],
+                                                            [0, -10],
+                                                            [0, -10]]))
+
+
+@raises(ValueError)
+def test_relative_locations():
+    pg_tree.relative_location_edge(8, 5)
+    pg_tree.relative_location_edge(0, 6)

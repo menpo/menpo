@@ -1821,8 +1821,8 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
         relative_locations : ``(n_vertexes, 2)`` `ndarray`
             The relative locations vector.
         """
-        parents = [p[0] for p in self.adjacency_array]
-        children = [p[1] for p in self.adjacency_array]
+        parents = list(self.adjacency_matrix.nonzero()[0])
+        children = list(self.adjacency_matrix.nonzero()[1])
         return self.points[children] - self.points[parents]
 
     def from_mask(self, mask):
