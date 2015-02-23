@@ -1486,7 +1486,7 @@ class PointGraph(Graph, PointCloud):
     @classmethod
     def init_from_edges(cls, points, edges, copy=True, skip_checks=False):
         r"""
-        Construct :map:`PointGraph` from edges array.
+        Construct a PointGraph from edges array.
 
         Parameters
         ----------
@@ -1580,8 +1580,8 @@ class PointGraph(Graph, PointCloud):
 
     def tojson(self):
         r"""
-        Convert this :map:`PointGraph` to a dictionary representation suitable
-        for inclusion in the LJSON landmark format.
+        Convert this PointGraph to a dictionary representation suitable for
+        inclusion in the LJSON landmark format.
 
         Returns
         -------
@@ -1603,7 +1603,7 @@ class PointGraph(Graph, PointCloud):
                  axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
                  label=None):
         r"""
-        Visualization of the :map:`PointGraph` in 2D.
+        Visualization of the PointGraph in 2D.
 
         Returns
         -------
@@ -1707,7 +1707,7 @@ class PointGraph(Graph, PointCloud):
 
     def _view_3d(self, figure_id=None, new_figure=False):
         r"""
-        Visualization of the :map:`PointGraph` in 3D.
+        Visualization of the PointGraph in 3D.
 
         Parameters
         ----------
@@ -1732,8 +1732,8 @@ class PointGraph(Graph, PointCloud):
     def view_widget(self, popup=False, browser_style='buttons',
                     figure_size=(10, 8)):
         r"""
-        Visualization of the :map:`PointGraph` using the
-        :map:`visualize_pointclouds` widget.
+        Visualization of the PointGraph using the :map:`visualize_pointclouds`
+        widget.
 
         Parameters
         ----------
