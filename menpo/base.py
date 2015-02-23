@@ -141,6 +141,20 @@ class Vectorizable(Copyable):
         new.from_vector_inplace(vector)
         return new
 
+    def has_nan_values(self):
+        """
+        Tests if the vectorized form of the object contains ``nan`` values or
+        not. This is particularly useful for objects with unknown values that
+        have been mapped to ``nan`` values.
+
+        Returns
+        -------
+        has_nan_values : `bool`
+            If the vectorized object contains ``nan`` values.
+        """
+        import numpy as np
+        return np.any(np.isnan(self.as_vector()))
+
 
 class Targetable(Copyable):
     """Interface for objects that can produce a target :map:`PointCloud`.

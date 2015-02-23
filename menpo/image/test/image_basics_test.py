@@ -14,6 +14,17 @@ def test_image_as_masked():
     assert(np.all(m_img.pixels == img.pixels))
 
 
+def test_image_has_nan_values():
+    img = Image(np.random.rand(3, 3, 1), copy=False)
+    img.pixels[0, 0, 0] = np.nan
+    assert img.has_nan_values()
+
+
+def test_image_no_nan_values():
+    img = Image(np.random.rand(3, 3, 1), copy=False)
+    assert not img.has_nan_values()
+
+
 def test_masked_image_as_unmasked():
     m_img = MaskedImage(np.random.rand(3, 3, 1), copy=False)
     img = m_img.as_unmasked()

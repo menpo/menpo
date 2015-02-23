@@ -2,7 +2,6 @@ from __future__ import division
 from warnings import warn
 
 import numpy as np
-import scipy.linalg
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
@@ -13,6 +12,10 @@ from menpo.transform import (Translation, NonUniformScale,
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .extract_patches import extract_patches
+
+
+# Cache the greyscale luminosity coefficients as they are invariant.
+_greyscale_luminosity_coef = None
 
 
 class ImageBoundaryError(ValueError):
@@ -84,7 +87,7 @@ def channels_to_back(image):
     else:
         pixels = image.pixels
 
-    return np.rollaxis(pixels, 0, pixels.ndim)
+    return np.ascontiguousarray(np.rollaxis(pixels, 0, pixels.ndim))
 
 
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
@@ -1682,21 +1685,22 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 raise ValueError("The 'luminosity' mode only works on RGB"
                                  "images. {} channels found, "
                                  "3 expected.".format(self.n_channels))
-
-            # Invert the transformation matrix to get more precise values
-            T = scipy.linalg.inv(np.array([[1.0, 0.956, 0.621],
-                                           [1.0, -0.272, -0.647],
-                                           [1.0, -1.106, 1.703]]))
-            coef = T[0, :]
-            pixels = np.rollaxis(greyscale.pixels, 0, self.n_dims+1)
-            pixels = np.dot(pixels, coef.T)
+            # Only compute the coefficients once.
+            global _greyscale_luminosity_coef
+            if _greyscale_luminosity_coef is None:
+                _greyscale_luminosity_coef = np.linalg.inv(
+                    np.array([[1.0, 0.956, 0.621],
+                              [1.0, -0.272, -0.647],
+                              [1.0, -1.106, 1.703]]))[0, :]
+            pixels = np.einsum('i,ikl->kl', _greyscale_luminosity_coef,
+                               greyscale.pixels)
         elif mode == 'average':
             pixels = np.mean(greyscale.pixels, axis=0)
         elif mode == 'channel':
             if channel is None:
                 raise ValueError("For the 'channel' mode you have to provide"
                                  " a channel index")
-            pixels = greyscale.pixels[channel, ...].copy()
+            pixels = greyscale.pixels[channel, ...]
         else:
             raise ValueError("Unknown mode {} - expected 'luminosity', "
                              "'average' or 'channel'.".format(mode))
@@ -1758,6 +1762,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if pixels.dtype != np.uint8:
             raise ValueError('Unexpected data type - {}.'.format(pixels.dtype))
         return PILImage.fromarray(pixels)
+
+    def rolled_channels(self):
+        r"""
+        Returns the pixels matrix, with the channels rolled to the back axis.
+        This may be required for interacting with external code bases that
+        require images to have channels as the last axis, rather than the
+        menpo convention of channels as the first axis.
+
+        Returns
+        -------
+        rolled_channels : `ndarray`
+            Pixels with channels as the back (last) axis.
+        """
+        return channels_to_back(self)
 
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(
