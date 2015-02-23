@@ -147,9 +147,8 @@ class TriMesh(PointCloud):
         from ..graph import _convert_edges_to_symmetric_adjacency_matrix
         # Since we have triangles we need the last connection
         # that 'completes' the triangle
-        adjacency_array = trilist_to_adjacency_array(self.trilist)
         adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
-            adjacency_array, self.points.shape[0])
+            trilist_to_adjacency_array(self.trilist), self.points.shape[0])
         pg = PointUndirectedGraph(self.points, adjacency_matrix, copy=copy,
                                   skip_checks=skip_checks)
         # This is always a copy
