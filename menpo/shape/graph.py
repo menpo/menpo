@@ -2,8 +2,6 @@ import numpy as np
 from scipy.sparse import csgraph, csr_matrix, triu
 
 from . import PointCloud
-from .adjacency import (mask_adjacency_array, mask_adjacency_array_tree,
-                        reindex_adjacency_array)
 
 
 class Graph(object):
@@ -136,8 +134,7 @@ class Graph(object):
                                                  [2, 0, 4, 2, 4, 3])),
                                       shape=(6, 6))
     """
-    def __init__(self, adjacency_matrix, directed, copy=True,
-                 skip_checks=False):
+    def __init__(self, adjacency_matrix, copy=True, skip_checks=False):
         # check if adjacency_matrix is numpy.ndarray or scipy.sparse.csr_matrix
         if isinstance(adjacency_matrix, np.ndarray):
             # it is numpy.ndarray, convert it to scipy.sparse.csr_matrix
@@ -158,16 +155,102 @@ class Graph(object):
                                                   adjacency_matrix.shape[1]))
 
             # check if adjacency matrix of undirected graph is symmetric
-            if not directed and not _is_symmetric(adjacency_matrix):
-                raise ValueError('The adjacency matrix of an undirected graph must '
-                                 'be symmetric.')
+            if not self._directed and not _is_symmetric(adjacency_matrix):
+                raise ValueError('The adjacency matrix of an undirected graph '
+                                 'must be symmetric.')
 
-        # store adjacency_matrix and directed
-        self._directed = directed
+        # store adjacency_matrix
         if copy:
             self.adjacency_matrix = adjacency_matrix.copy()
         else:
             self.adjacency_matrix = adjacency_matrix
+
+    @classmethod
+    def init_from_edges(cls, edges, n_vertices, skip_checks=False):
+        r"""
+        Initialize graph from edges array.
+
+        Parameters
+        ----------
+        edges : ``(n_edges, 2, )`` `ndarray`
+            The `ndarray` of edges, i.e. all the pairs of vertices that are
+            connected with an edge.
+        n_vertices : `int`
+            The total number of vertices, assuming that the numbering of
+            vertices starts from ``0``. ``edges`` and ``n_vertices`` can be
+            defined in a way to set isolated vertices.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
+
+        Examples
+        --------
+        The following undirected graph ::
+
+            |---0---|
+            |       |
+            |       |
+            1-------2
+            |       |
+            |       |
+            3-------4
+            |
+            |
+            5
+
+        can be defined as ::
+
+            from menpo.shape import UndirectedGraph
+            import numpy as np
+            edges = np.array([[0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1],
+                              [1, 3], [3, 1], [2, 4], [4, 2], [3, 4], [4, 3],
+                              [3, 5], [5, 3]])
+            graph = UndirectedGraph.init_from_edges(edges, n_vertices=6)
+
+
+        The following directed graph ::
+
+            |-->0<--|
+            |       |
+            |       |
+            1<----->2
+            |       |
+            v       v
+            3------>4
+            |
+            v
+            5
+
+        can be represented as ::
+
+            from menpo.shape import DirectedGraph
+            import numpy as np
+            edges = np.array([[1, 0], [2, 0], [1, 2], [2, 1], [1, 3], [2, 4],
+                              [3, 4], [3, 5]])
+            graph = DirectedGraph.init_from_edges(edges, n_vertices=6)
+
+        Finally, the following graph with isolated vertices ::
+
+                0---|
+                    |
+                    |
+            1       2
+                    |
+                    |
+            3-------4
+
+
+            5
+
+        can be defined as ::
+
+            from menpo.shape import UndirectedGraph
+            import numpy as np
+            edges = np.array([[0, 2], [2, 0], [2, 4], [4, 2], [3, 4], [4, 3]])
+            graph = UndirectedGraph.init_from_edges(edges, n_vertices=6)
+
+        """
+        adjacency_matrix = _convert_edges_to_adjacency_matrix(edges, n_vertices)
+        return cls(adjacency_matrix, copy=False, skip_checks=skip_checks)
 
     @property
     def vertices(self):
@@ -617,9 +700,75 @@ class UndirectedGraph(Graph):
         graph = UndirectedGraph(adjacency_matrix)
     """
     def __init__(self, adjacency_matrix, copy=True, skip_checks=False):
-        super(UndirectedGraph, self).__init__(adjacency_matrix, directed=False,
-                                              copy=copy,
+        self._directed = False
+        super(UndirectedGraph, self).__init__(adjacency_matrix, copy=copy,
                                               skip_checks=skip_checks)
+
+    @classmethod
+    def init_from_edges(cls, edges, n_vertices, skip_checks=False):
+        r"""
+        Initialize graph from edges array.
+
+        Parameters
+        ----------
+        edges : ``(n_edges, 2, )`` `ndarray`
+            The `ndarray` of edges, i.e. all the pairs of vertices that are
+            connected with an edge.
+        n_vertices : `int`
+            The total number of vertices, assuming that the numbering of
+            vertices starts from ``0``. ``edges`` and ``n_vertices`` can be
+            defined in a way to set isolated vertices.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
+
+        Examples
+        --------
+        The following undirected graph ::
+
+            |---0---|
+            |       |
+            |       |
+            1-------2
+            |       |
+            |       |
+            3-------4
+            |
+            |
+            5
+
+        can be defined as ::
+
+            from menpo.shape import UndirectedGraph
+            import numpy as np
+            edges = np.array([[0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1],
+                              [1, 3], [3, 1], [2, 4], [4, 2], [3, 4], [4, 3],
+                              [3, 5], [5, 3]])
+            graph = UndirectedGraph.init_from_edges(edges, n_vertices=6)
+
+        Finally, the following graph with isolated vertices ::
+
+                0---|
+                    |
+                    |
+            1       2
+                    |
+                    |
+            3-------4
+
+
+            5
+
+        can be defined as ::
+
+            from menpo.shape import UndirectedGraph
+            import numpy as np
+            edges = np.array([[0, 2], [2, 0], [2, 4], [4, 2], [3, 4], [4, 3]])
+            graph = UndirectedGraph.init_from_edges(edges, n_vertices=6)
+
+        """
+        adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
+            edges, n_vertices)
+        return cls(adjacency_matrix, copy=False, skip_checks=skip_checks)
 
     @property
     def edges(self):
@@ -797,8 +946,9 @@ class DirectedGraph(Graph):
         graph = DirectedGraph(adjacency_matrix)
     """
     def __init__(self, adjacency_matrix, copy=True, skip_checks=False):
-        super(DirectedGraph, self).__init__(adjacency_matrix, directed=True,
-                                            copy=copy, skip_checks=skip_checks)
+        self._directed = True
+        super(DirectedGraph, self).__init__(adjacency_matrix, copy=copy,
+                                            skip_checks=skip_checks)
 
     @property
     def edges(self):
@@ -1325,14 +1475,108 @@ class PointGraph(Graph, PointCloud):
                                                  [2, 0, 4, 2, 4, 3])),
                                       shape=(6, 6))
     """
-    def __init__(self, points, adjacency_matrix, directed, copy=True,
-                 skip_checks=False):
+    def __init__(self, points, adjacency_matrix, copy=True, skip_checks=False):
         if not skip_checks:
             # check the number of points
             _check_n_points(points, adjacency_matrix)
-        Graph.__init__(self, adjacency_matrix, copy=copy, directed=directed,
+        Graph.__init__(self, adjacency_matrix, copy=copy,
                        skip_checks=skip_checks)
         PointCloud.__init__(self, points, copy=copy)
+
+    @classmethod
+    def init_from_edges(cls, points, edges, copy=True, skip_checks=False):
+        r"""
+        Construct :map:`PointGraph` from edges array.
+
+        Parameters
+        ----------
+        points : ``(n_vertices, n_dims, )`` `ndarray`
+            The array of point locations.
+        edges : ``(n_edges, 2, )`` `ndarray`
+            The `ndarray` of edges, i.e. all the pairs of vertices that are
+            connected with an edge.
+        copy : `bool`, optional
+            If ``False``, the ``adjacency_matrix`` will not be copied on
+            assignment.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
+
+        Examples
+        --------
+        The following undirected graph ::
+
+            |---0---|
+            |       |
+            |       |
+            1-------2
+            |       |
+            |       |
+            3-------4
+            |
+            |
+            5
+
+        can be defined as ::
+
+            from menpo.shape import PointUndirectedGraph
+            import numpy as np
+            points = np.array([[10, 30], [0, 20], [20, 20], [0, 10], [20, 10],
+                               [0, 0]])
+            edges = np.array([[0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1],
+                              [1, 3], [3, 1], [2, 4], [4, 2], [3, 4], [4, 3],
+                              [3, 5], [5, 3]])
+            graph = PointUndirectedGraph.init_from_edges(points, edges)
+
+
+        The following directed graph ::
+
+            |-->0<--|
+            |       |
+            |       |
+            1<----->2
+            |       |
+            v       v
+            3------>4
+            |
+            v
+            5
+
+        can be represented as ::
+
+            from menpo.shape import PointDirectedGraph
+            import numpy as np
+            points = np.array([[10, 30], [0, 20], [20, 20], [0, 10], [20, 10],
+                               [0, 0]])
+            edges = np.array([[1, 0], [2, 0], [1, 2], [2, 1], [1, 3], [2, 4],
+                              [3, 4], [3, 5]])
+            graph = PointDirectedGraph.init_from_edges(points, edges)
+
+        Finally, the following graph with isolated vertices ::
+
+                0---|
+                    |
+                    |
+            1       2
+                    |
+                    |
+            3-------4
+
+
+            5
+
+        can be defined as ::
+
+            from menpo.shape import PointUndirectedGraph
+            import numpy as np
+            points = np.array([[10, 30], [0, 20], [20, 20], [0, 10], [20, 10],
+                               [0, 0]])
+            edges = np.array([[0, 2], [2, 0], [2, 4], [4, 2], [3, 4], [4, 3]])
+            graph = PointUndirectedGraph.init_from_edges(points, edges)
+
+        """
+        adjacency_matrix = _convert_edges_to_adjacency_matrix(edges,
+                                                              points.shape[0])
+        return cls(points, adjacency_matrix, copy=copy, skip_checks=skip_checks)
 
     def tojson(self):
         r"""
@@ -1618,9 +1862,82 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
         graph = PointUndirectedGraph(points, adjacency_matrix)
     """
     def __init__(self, points, adjacency_matrix, copy=True, skip_checks=False):
+        self._directed = False
         super(PointUndirectedGraph, self).__init__(points, adjacency_matrix,
-                                                   directed=False, copy=copy,
+                                                   copy=copy,
                                                    skip_checks=skip_checks)
+
+    @classmethod
+    def init_from_edges(cls, points, edges, copy=True, skip_checks=False):
+        r"""
+        Construct a :map:`PointUndirectedGraph` from edges array.
+
+        Parameters
+        ----------
+        points : ``(n_vertices, n_dims, )`` `ndarray`
+            The array of point locations.
+        edges : ``(n_edges, 2, )`` `ndarray`
+            The `ndarray` of edges, i.e. all the pairs of vertices that are
+            connected with an edge.
+        copy : `bool`, optional
+            If ``False``, the ``adjacency_matrix`` will not be copied on
+            assignment.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
+
+        Examples
+        --------
+        The following undirected graph ::
+
+            |---0---|
+            |       |
+            |       |
+            1-------2
+            |       |
+            |       |
+            3-------4
+            |
+            |
+            5
+
+        can be defined as ::
+
+            from menpo.shape import PointUndirectedGraph
+            import numpy as np
+            points = np.array([[10, 30], [0, 20], [20, 20], [0, 10], [20, 10],
+                               [0, 0]])
+            edges = np.array([[0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1],
+                              [1, 3], [3, 1], [2, 4], [4, 2], [3, 4], [4, 3],
+                              [3, 5], [5, 3]])
+            graph = PointUndirectedGraph.init_from_edges(points, edges)
+
+
+        Finally, the following graph with isolated vertices ::
+
+                0---|
+                    |
+                    |
+            1       2
+                    |
+                    |
+            3-------4
+
+
+            5
+
+        can be defined as ::
+
+            from menpo.shape import PointUndirectedGraph
+            import numpy as np
+            points = np.array([[10, 30], [0, 20], [20, 20], [0, 10], [20, 10],
+                               [0, 0]])
+            edges = np.array([[0, 2], [2, 0], [2, 4], [4, 2], [3, 4], [4, 3]])
+            graph = PointUndirectedGraph.init_from_edges(points, edges)
+
+        """
+        adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
+            edges, points.shape[0])
+        return cls(points, adjacency_matrix, copy=copy, skip_checks=skip_checks)
 
     def from_mask(self, mask):
         """
@@ -1768,8 +2085,9 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
         graph = PointDirectedGraph(points, adjacency_matrix)
     """
     def __init__(self, points, adjacency_matrix, copy=True, skip_checks=False):
+        self._directed = True
         super(PointDirectedGraph, self).__init__(points, adjacency_matrix,
-                                                 directed=True, copy=copy,
+                                                 copy=copy,
                                                  skip_checks=skip_checks)
 
     def relative_location_edge(self, parent, child):
@@ -1956,6 +2274,57 @@ class PointTree(PointDirectedGraph, Tree):
         Tree.__init__(self, adjacency_matrix, root_vertex, copy=copy,
                       skip_checks=skip_checks)
 
+    @classmethod
+    def init_from_edges(cls, points, edges, root_vertex, copy=True,
+                        skip_checks=False):
+        r"""
+        Construct a :map:`PointTree` from edges array.
+
+        Parameters
+        ----------
+        points : ``(n_vertices, n_dims, )`` `ndarray`
+            The array of point locations.
+        edges : ``(n_edges, 2, )`` `ndarray`
+            The `ndarray` of edges, i.e. all the pairs of vertices that are
+            connected with an edge.
+        root_vertex : `int`
+            That vertex that will be set as root.
+        copy : `bool`, optional
+            If ``False``, the ``adjacency_matrix`` will not be copied on
+            assignment.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
+
+        Examples
+        --------
+        The following tree ::
+
+                   0
+                   |
+                ___|___
+               1       2
+               |       |
+              _|_      |
+             3   4     5
+             |   |     |
+             |   |     |
+             6   7     8
+
+        can be defined as ::
+
+            from menpo.shape import PointTree
+            import numpy as np
+            points = np.array([[30, 30], [10, 20], [50, 20], [0, 10], [20, 10],
+                               [50, 10], [0, 0], [20, 0], [50, 0]])
+            edges = np.array([[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [3, 6],
+                              [4, 7], [5, 8]])
+            tree = PointTree.init_from_edges(points, edges, root_vertex=0)
+        """
+        adjacency_matrix = _convert_edges_to_adjacency_matrix(edges,
+                                                              points.shape[0])
+        return cls(points, adjacency_matrix, root_vertex=root_vertex,
+                   copy=copy, skip_checks=skip_checks)
+
     def from_mask(self, mask):
         """
         A 1D boolean array with the same number of elements as the number of
@@ -2133,3 +2502,59 @@ def _isolated_vertices(adjacency_matrix):
     rows = all_vertices.difference(set(adjacency_matrix.nonzero()[0]))
     cols = all_vertices.difference(set(adjacency_matrix.nonzero()[1]))
     return list(rows.intersection(cols))
+
+
+def _convert_edges_to_adjacency_matrix(edges, n_vertices):
+    r"""
+    Converts an edges array to and adjacency matrix.
+
+    Parameters
+    ----------
+    edges : ``(n_edges, 2, )`` `ndarray`
+        The `ndarray` of edges, i.e. all the pairs of vertices that are
+        connected with an edge.
+    n_vertices : `int`
+        The total number of vertices, assuming that the numbering of
+        vertices starts from ``0``. ``edges`` and ``n_vertices`` can be
+        defined in a way to set isolated vertices.
+
+    Returns
+    -------
+    adjacency_matrix : ``(n_vertices, n_vertices, )`` `csr_matrix`
+        The adjacency matrix of the graph in which the rows represent source
+        vertices and columns represent destination vertices.
+    """
+    if isinstance(edges, list):
+        edges = np.array(edges)
+    return csr_matrix(([1] * edges.shape[0], (edges[:, 0], edges[:, 1])),
+                      shape=(n_vertices, n_vertices))
+
+
+def _convert_edges_to_symmetric_adjacency_matrix(edges, n_vertices):
+    r"""
+    Converts an edges array to and adjacency matrix.
+
+    Parameters
+    ----------
+    edges : ``(n_edges, 2, )`` `ndarray`
+        The `ndarray` of edges, i.e. all the pairs of vertices that are
+        connected with an edge.
+    n_vertices : `int`
+        The total number of vertices, assuming that the numbering of
+        vertices starts from ``0``. ``edges`` and ``n_vertices`` can be
+        defined in a way to set isolated vertices.
+
+    Returns
+    -------
+    adjacency_matrix : ``(n_vertices, n_vertices, )`` `csr_matrix`
+        The adjacency matrix of the graph in which the rows represent source
+        vertices and columns represent destination vertices.
+    """
+    if isinstance(edges, list):
+        edges = np.array(edges)
+    rows = np.hstack((edges[:, 0], edges[:, 1]))
+    cols = np.hstack((edges[:, 1], edges[:, 0]))
+    adjacency_matrix = csr_matrix(([1] * rows.shape[0], (rows, cols)),
+                                  shape=(n_vertices, n_vertices))
+    adjacency_matrix[adjacency_matrix.nonzero()] = 1
+    return adjacency_matrix

@@ -1,6 +1,7 @@
 import numpy as np
 from warnings import warn
 from scipy.spatial.distance import cdist
+
 from menpo.shape.base import Shape
 
 
@@ -194,11 +195,13 @@ class PointCloud(Shape):
             The axis aligned bounding box of the PointCloud.
         """
         from .graph import PointDirectedGraph
+        from scipy.sparse import csr_matrix
         min_p, max_p = self.bounds()
+        adjacency_matrix = csr_matrix(([1] * 4, ([0, 1, 2, 3], [1, 2, 3, 0])),
+                                      shape=(4, 4))
         return PointDirectedGraph(np.array([min_p, [max_p[0], min_p[1]],
                                             max_p, [min_p[0], max_p[1]]]),
-                                  np.array([[0, 1], [1, 2], [2, 3], [3, 0]]),
-                                  copy=False)
+                                  adjacency_matrix, copy=False)
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_markers=True, marker_style='o', marker_size=20,

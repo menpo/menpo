@@ -415,7 +415,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.pyplot as plt
         import matplotlib.lines as mlines
-        from menpo.shape import PointGraph
+        from menpo.shape import PointCloud, TriMesh
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
@@ -474,7 +474,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             # set legend entry
             if render_legend:
                 tmp_line = line_style
-                if not render_lines or not isinstance(pc, PointGraph):
+                if (not render_lines or isinstance(pc, PointCloud) or
+                        isinstance(pc, TriMesh)):
                     tmp_line = 'None'
                 tmp_marker = marker_style if render_markers else 'None'
                 legend_handles.append(
