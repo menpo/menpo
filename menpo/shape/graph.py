@@ -837,7 +837,17 @@ class UndirectedGraph(Graph):
         -------
         mst : :map:`Tree`
             The computed minimum spanning tree.
+
+        Raises
+        ------
+        ValueError
+            Cannot compute minimum spanning tree of a graph with isolated
+            vertices
         """
+        # check if graph has isolated vertices
+        if self.has_isolated_vertices():
+            raise ValueError('Cannot compute minimum spanning tree of a graph '
+                             'with isolated vertices.')
         # Compute MST. It returns an undirected graph.
         mst_adjacency = csgraph.minimum_spanning_tree(self.adjacency_matrix)
         # Get directed tree from the above undirected graph using DFS.
@@ -1977,6 +1987,39 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
                 self.points.copy())
             return PointUndirectedGraph(points, adjacency_matrix, copy=False,
                                         skip_checks=False)
+
+    def minimum_spanning_tree(self, root_vertex):
+        r"""
+        Returns the minimum spanning tree of the graph using Kruskal's
+        algorithm.
+
+        Parameters
+        ----------
+        root_vertex : `int`
+            The vertex that will be set as root in the output MST.
+
+        Returns
+        -------
+        mst : :map:`PointTree`
+            The computed minimum spanning tree with the `points` of `self`.
+
+        Raises
+        ------
+        ValueError
+            Cannot compute minimum spanning tree of a graph with isolated
+            vertices
+        """
+        # check if graph has isolated vertices
+        if self.has_isolated_vertices():
+            raise ValueError('Cannot compute minimum spanning tree of a graph '
+                             'with isolated vertices.')
+        # Compute MST. It returns an undirected graph.
+        mst_adjacency = csgraph.minimum_spanning_tree(self.adjacency_matrix)
+        # Get directed tree from the above undirected graph using DFS.
+        mst_adjacency = csgraph.depth_first_tree(mst_adjacency, root_vertex,
+                                                 directed=False)
+        # remove isolated vertices from the points
+        return PointTree(self.points, mst_adjacency, root_vertex, copy=True)
 
 
 class PointDirectedGraph(PointGraph, DirectedGraph):
