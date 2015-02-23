@@ -314,7 +314,7 @@ def _parse_ljson_v1(lms_dict):
         if conn:
             # Offset relative connectivity according to the current index
             conn = offset + np.asarray(conn)
-            connectivity.append(conn)
+            connectivity += conn.tolist()
         for p in lms:
             all_points.append(p['point'])
         offset += len(lms)
