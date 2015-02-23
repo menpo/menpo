@@ -117,10 +117,10 @@ def test_n_vertices():
 
 
 def test_vertices():
-    assert (g_directed.vertices == [0, 1, 2, 3, 4, 5])
-    assert (g_undirected.vertices == [0, 1, 2, 3, 4, 5])
-    assert (g_tree.vertices == [0, 1, 2, 3, 4, 5, 6, 7, 8])
-    assert (g_isolated.vertices == [0, 1, 2, 3, 4, 5])
+    assert (list(g_directed.vertices) == [0, 1, 2, 3, 4, 5])
+    assert (list(g_undirected.vertices) == [0, 1, 2, 3, 4, 5])
+    assert (list(g_tree.vertices) == [0, 1, 2, 3, 4, 5, 6, 7, 8])
+    assert (list(g_isolated.vertices) == [0, 1, 2, 3, 4, 5])
 
 
 def test_isolated_vertices():
