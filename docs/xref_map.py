@@ -40,6 +40,7 @@ xref_map = {
 'Shape': ('class', 'menpo.shape.Shape'),
 'PointTree': ('class', 'menpo.shape.PointTree'),
 'PointUndirectedGraph': ('class', 'menpo.shape.PointUndirectedGraph'),
+'R2LogR2RBF': ('class', 'menpo.transform.R2LogR2RBF'),
 'Renderer': ('class', 'menpo.visualize.Renderer'),
 'Rotation': ('class', 'menpo.shape.Rotation'),
 'Scale': ('class', 'menpo.shape.Scale'),

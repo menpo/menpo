@@ -1,8 +1,13 @@
+import sys
 import numpy as np
 from mock import patch
 from nose.tools import raises
 from PIL import Image as PILImage
 import menpo.io as mio
+import warnings
+
+
+builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
 
 @raises(ValueError)
@@ -36,6 +41,16 @@ def test_lenna_import():
     assert(img.shape == (512, 512))
     assert(img.n_channels == 3)
     assert(img.landmarks['LJSON'].n_landmarks == 68)
+
+
+def test_import_builtin_ljson():
+    lmarks = mio.import_builtin_asset('lenna.ljson')
+    assert(lmarks.n_landmarks == 68)
+
+
+def test_import_builtin_pts():
+    lmarks = mio.import_builtin_asset('einstein.pts')
+    assert(lmarks.n_landmarks == 68)
 
 
 def test_path():
@@ -261,3 +276,58 @@ def test_importing_GIF_non_pallete_exception(is_file, mock_image):
     is_file.return_value = True
 
     mio.import_image('fake_image_being_mocked.gif', normalise=False)
+
+
+@patch('menpo.io.input.landmark.json.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
+    v1_ljson = { "groups": [
+        { "connectivity": [ [ 0, 1 ], [ 1, 2 ], [ 2, 3 ] ],
+          "label": "chin", "landmarks": [
+            { "point": [ 987.9, 1294.1 ] }, { "point": [ 96.78, 1246.8 ] },
+            { "point": [ None, 0.1 ] }, { "point": [303.22, 167.2 ] } ] },
+        { "connectivity": [ [ 0, 1 ] ],
+          "label": "leye", "landmarks": [
+            { "point": [ None, None ] },
+            { "point": [ None, None ] }] }
+        ], "version": 1 }
+    mock_dict.return_value = v1_ljson
+    is_file.return_value = True
+
+    with warnings.catch_warnings(record=True) as w:
+        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+    nan_points = np.isnan(lmark.lms.points)
+
+    # Should raise deprecation warning
+    assert len(w) == 1
+    assert nan_points[2, 0]  # y-coord None point is nan
+    assert not nan_points[2, 1]  # x-coord point is not nan
+    assert np.all(nan_points[4:, :]) # all of leye label is nan
+
+
+@patch('menpo.io.input.landmark.json.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
+    v2_ljson = { "labels": [
+                    { "label": "left_eye", "mask": [0, 1, 2] },
+                    { "label": "right_eye", "mask": [3, 4, 5] }
+                 ],
+                 "landmarks": {
+                     "connectivity": [ [0, 1], [1, 2], [2, 0], [3, 4],
+                                       [4, 5],  [5, 3] ],
+                     "points": [ [None, 200.5], [None, None],
+                                 [316.8, 199.15], [339.48, 205.0],
+                                 [358.54, 217.82], [375.0, 233.4]]
+                 },
+                 "version": 2 }
+
+    mock_dict.return_value = v2_ljson
+    is_file.return_value = True
+
+    lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+    nan_points = np.isnan(lmark.lms.points)
+    assert nan_points[0, 0]  # y-coord None point is nan
+    assert not nan_points[0, 1]  # x-coord point is not nan
+    assert np.all(nan_points[1, :]) # all of leye label is nan

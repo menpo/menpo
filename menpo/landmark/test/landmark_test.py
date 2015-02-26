@@ -352,3 +352,21 @@ def test_LandmarkGroup_get_None():
 
     assert lgroup[None] is not pcloud
     assert_allclose(lgroup[None].points, pcloud.points)
+
+
+def test_LandmarkGroup_create_with_all_label():
+    points = np.ones((10, 3))
+    pcloud = PointCloud(points, copy=False)
+
+    lgroup = LandmarkGroup.init_with_all_label(pcloud, copy=False)
+
+    assert lgroup.n_labels == 1
+    assert 'all' in lgroup
+
+
+def test_LandmarkGroup_has_nan_values():
+    points = np.ones((10, 3))
+    points[0, 0] = np.nan
+    pcloud = PointCloud(points, copy=False)
+    lgroup = LandmarkGroup.init_with_all_label(pcloud, copy=False)
+    assert lgroup.has_nan_values()

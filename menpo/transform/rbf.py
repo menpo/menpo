@@ -6,21 +6,26 @@ from .base import Transform
 class RadialBasisFunction(Transform):
     r"""
     Radial Basis Functions are a class of transform that is used by
-    TPS. They have to be able to take their own radial derivative for TPS to
-    be able to take it's own total derivative.
+    :map:`ThinPlateSplines`. They have to be able to take their own radial
+    derivative for :map:`ThinPlateSplines` to be able to take its own total
+    derivative.
 
     Parameters
     ----------
-    c : (n_centres, n_dims) ndarray
+    c : ``(n_centres, n_dims)`` `ndarray`
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
-
     def __init__(self, c):
         self.c = c
 
     @property
     def n_centres(self):
+        r"""
+        The number of centres.
+
+        :type: `int`
+        """
         return self.c.shape[0]
 
     @property
@@ -28,13 +33,17 @@ class RadialBasisFunction(Transform):
         r"""
         The RBF can only be applied on points with the same dimensionality as
         the centres.
+
+        :type: `int`
         """
         return self.c.shape[1]
 
     @property
     def n_dims_output(self):
         r"""
-        The result of the transform has a dimension (weight) for every centre
+        The result of the transform has a dimension (weight) for every centre.
+
+        :type: `int`
         """
         return self.n_centres
 
@@ -51,11 +60,10 @@ class R2LogR2RBF(RadialBasisFunction):
 
     Parameters
     ----------
-    c : (n_centres, n_dims) ndarray
+    c : ``(n_centres, n_dims)`` `ndarray`
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
-
     def __init__(self, c):
         super(R2LogR2RBF, self).__init__(c)
 
@@ -69,12 +77,12 @@ class R2LogR2RBF(RadialBasisFunction):
 
         Parameters
         ----------
-        x : (n_points, n_dims) ndarray
+        x : ``(n_points, n_dims)`` `ndarray`
             Set of points to apply the basis to.
 
         Returns
         -------
-        u : (n_points, n_centres) ndarray
+        u : ``(n_points, n_centres)`` `ndarray`
             The basis function applied to each distance,
             :math:`\lVert x - c \rVert`.
         """
@@ -100,11 +108,10 @@ class R2LogRRBF(RadialBasisFunction):
 
     Parameters
     ----------
-    c : (n_centres, n_dims) ndarray
+    c : ``(n_centres, n_dims)`` `ndarray`
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
-
     def __init__(self, c):
         super(R2LogRRBF, self).__init__(c)
 
@@ -114,12 +121,12 @@ class R2LogRRBF(RadialBasisFunction):
 
         Parameters
         ----------
-        points : (n_points, n_dims) ndarray
+        points : ``(n_points, n_dims)`` `ndarray`
             Set of points to apply the basis to.
 
         Returns
         -------
-        u : (n_points, n_centres) ndarray
+        u : ``(n_points, n_centres)`` `ndarray`
             The basis function applied to each distance,
             :math:`\lVert points - c \rVert`.
         """

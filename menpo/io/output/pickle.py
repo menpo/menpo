@@ -1,4 +1,7 @@
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 
 def pickle_export(obj, file_handle):
