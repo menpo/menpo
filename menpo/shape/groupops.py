@@ -1,5 +1,5 @@
+from __future__ import division
 from .pointcloud import PointCloud
-import numpy as np
 
 
 def mean_pointcloud(pointclouds):
@@ -16,4 +16,4 @@ def mean_pointcloud(pointclouds):
     mean_pointcloud : :map:`PointCloud`
         The mean point cloud.
     """
-    return PointCloud(np.mean([pc.points for pc in pointclouds], axis=0))
+    return PointCloud(sum(pc.points for pc in pointclouds) / len(pointclouds))
