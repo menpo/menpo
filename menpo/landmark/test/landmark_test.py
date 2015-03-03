@@ -42,6 +42,15 @@ def test_LandmarkManager_set_LandmarkGroup():
     assert (man['test_set']._labels_to_masks is not lgroup._labels_to_masks)
 
 
+@raises(ValueError)
+def test_LandmarkManager_set_None_key():
+    pcloud = PointCloud(np.ones((10, 3)), copy=False)
+    lgroup = LandmarkGroup.init_with_all_label(pcloud)
+
+    man = LandmarkManager()
+    man[None] = lgroup
+
+
 def test_LandmarkManager_set_pointcloud():
     points = np.ones((10, 3))
     pcloud = PointCloud(points, copy=False)

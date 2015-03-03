@@ -160,6 +160,10 @@ class LandmarkManager(MutableMapping, Transformable):
         DimensionalityError
             If the landmarks and the shape are not of the same dimensionality.
         """
+        if group is None:
+            raise ValueError('Cannot set using the key `None`. `None` has a '
+                             'reserved meaning for landmark groups.')
+
         from menpo.shape import PointCloud
         # firstly, make sure the dim is correct
         n_dims = self.n_dims
