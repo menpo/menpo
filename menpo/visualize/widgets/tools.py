@@ -58,7 +58,7 @@ def format_logo(logo_wid, container_border='1px solid black',
         Defines whether to draw the border line around the widget.
     """
     if border_visible:
-        logo_wid.set_css('border', container_border)
+        logo_wid.border = container_border
 
 
 def index_selection_slider(index_selection_default, plot_function=None,
@@ -253,11 +253,11 @@ def format_index_selection(index_wid, text_width='0.5cm'):
         index_wid.add_class('align-center')
 
         # set text width
-        index_wid.children[2].set_css('width', text_width)
+        index_wid.children[2].width = text_width
         index_wid.children[2].add_class('center')
 
         # set margins
-        index_wid.children[0].set_css('margin-right', '6px')
+        index_wid.children[0].margin_right = '6px'
 
 
 def update_index_selection(index_wid, index_selection_default,
@@ -521,9 +521,9 @@ def format_colour_selection(colour_selection_wid):
     colour_selection_wid.children[2].add_class('align-start')
 
     # set width of r, g, b
-    colour_selection_wid.children[2].children[0].set_css('width', '0.5cm')
-    colour_selection_wid.children[2].children[1].set_css('width', '0.5cm')
-    colour_selection_wid.children[2].children[2].set_css('width', '0.5cm')
+    colour_selection_wid.children[2].children[0].width = '0.5cm'
+    colour_selection_wid.children[2].children[1].width = '0.5cm'
+    colour_selection_wid.children[2].children[2].width = '0.5cm'
 
     # align label selection and apply to all button
     colour_selection_wid.children[0].add_class('align-end')
@@ -731,17 +731,16 @@ def format_image_options(image_options_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # fix alpha slider width
-    image_options_wid.children[1].children[1].set_css('width', '3cm')
+    image_options_wid.children[1].children[1].width = '3cm'
 
     # set toggle button font bold
-    image_options_wid.children[0].set_css('font-weight',
-                                          toggle_button_font_weight)
+    image_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    image_options_wid.set_css('padding', container_padding)
-    image_options_wid.set_css('margin', container_margin)
+    image_options_wid.padding = container_padding
+    image_options_wid.margin = container_margin
     if border_visible:
-        image_options_wid.set_css('border', container_border)
+        image_options_wid.border = container_border
 
 
 def update_image_options(image_options_wid, image_options_dict):
@@ -943,25 +942,23 @@ def format_line_options(line_options_wid, container_padding='6px',
     line_options_wid.children[1].add_class('align-end')
 
     # set linewidth text box width
-    line_options_wid.children[1].children[1].children[1].set_css('width', '1cm')
+    line_options_wid.children[1].children[1].children[1].width = '1cm'
 
     # format colour options
     format_colour_selection(line_options_wid.children[1].children[1].children[2])
 
     # border around options
     if suboptions_border_visible:
-        line_options_wid.children[1].children[1].set_css('border',
-                                                         container_border)
+        line_options_wid.children[1].children[1].border = container_border
 
     # set toggle button font bold
-    line_options_wid.children[0].set_css('font-weight',
-                                         toggle_button_font_weight)
+    line_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    line_options_wid.set_css('padding', container_padding)
-    line_options_wid.set_css('margin', container_margin)
+    line_options_wid.padding = container_padding
+    line_options_wid.margin = container_margin
     if border_visible:
-        line_options_wid.set_css('border', container_border)
+        line_options_wid.border = container_border
 
 
 def update_line_options(line_options_wid, line_options_dict, labels=None):
@@ -1226,15 +1223,12 @@ def format_marker_options(marker_options_wid, container_padding='6px',
     marker_options_wid.children[1].add_class('align-end')
 
     # set text boxes width
-    marker_options_wid.children[1].children[1].children[1].set_css('width',
-                                                                   '1cm')
-    marker_options_wid.children[1].children[1].children[2].set_css('width',
-                                                                   '1cm')
+    marker_options_wid.children[1].children[1].children[1].width = '1cm'
+    marker_options_wid.children[1].children[1].children[2].width = '1cm'
 
     # border around options
     if suboptions_border_visible:
-        marker_options_wid.children[1].children[1].set_css('border',
-                                                           container_border)
+        marker_options_wid.children[1].children[1].border = container_border
 
     # format colour options
     format_colour_selection(
@@ -1243,14 +1237,13 @@ def format_marker_options(marker_options_wid, container_padding='6px',
         marker_options_wid.children[1].children[1].children[4])
 
     # set toggle button font bold
-    marker_options_wid.children[0].set_css('font-weight',
-                                           toggle_button_font_weight)
+    marker_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    marker_options_wid.set_css('padding', container_padding)
-    marker_options_wid.set_css('margin', container_margin)
+    marker_options_wid.padding = container_padding
+    marker_options_wid.margin = container_margin
     if border_visible:
-        marker_options_wid.set_css('border', container_border)
+        marker_options_wid.border = container_border
 
 
 def update_marker_options(marker_options_wid, marker_options_dict):
@@ -1570,8 +1563,7 @@ def format_numbering_options(numbering_options_wid, container_padding='6px',
     numbering_options_wid.children[1].add_class('align-end')
 
     # set fontsize text box width
-    numbering_options_wid.children[1].children[1].children[1].set_css('width',
-                                                                      '1cm')
+    numbering_options_wid.children[1].children[1].children[1].width = '1cm'
 
     # format colour options
     format_colour_selection(
@@ -1579,18 +1571,16 @@ def format_numbering_options(numbering_options_wid, container_padding='6px',
 
     # border around options
     if suboptions_border_visible:
-        numbering_options_wid.children[1].children[1].set_css('border',
-                                                              container_border)
+        numbering_options_wid.children[1].children[1].border = container_border
 
     # set toggle button font bold
-    numbering_options_wid.children[0].set_css('font-weight',
-                                              toggle_button_font_weight)
+    numbering_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    numbering_options_wid.set_css('padding', container_padding)
-    numbering_options_wid.set_css('margin', container_margin)
+    numbering_options_wid.padding = container_padding
+    numbering_options_wid.margin = container_margin
     if border_visible:
-        numbering_options_wid.set_css('border', container_border)
+        numbering_options_wid.border = container_border
 
 
 def update_numbering_options(numbering_options_wid, numbering_options_dict):
@@ -1976,32 +1966,31 @@ def format_figure_options(figure_options_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # fix figure scale slider width
-    figure_options_wid.children[1].set_css('width', '3cm')
+    figure_options_wid.children[1].width = '3cm'
 
     # fix font size width
-    figure_options_wid.children[4].set_css('width', '1cm')
+    figure_options_wid.children[4].width = '1cm'
 
     # align and set width of axes_x_limits
     figure_options_wid.children[7].remove_class('vbox')
     figure_options_wid.children[7].add_class('hbox')
-    figure_options_wid.children[7].children[1].set_css('width', '1cm')
-    figure_options_wid.children[7].children[2].set_css('width', '1cm')
+    figure_options_wid.children[7].children[1].width = '1cm'
+    figure_options_wid.children[7].children[2].width = '1cm'
 
     # align and set width of axes_y_limits
     figure_options_wid.children[8].remove_class('vbox')
     figure_options_wid.children[8].add_class('hbox')
-    figure_options_wid.children[8].children[1].set_css('width', '1cm')
-    figure_options_wid.children[8].children[2].set_css('width', '1cm')
+    figure_options_wid.children[8].children[1].width = '1cm'
+    figure_options_wid.children[8].children[2].width = '1cm'
 
     # set toggle button font bold
-    figure_options_wid.children[0].set_css('font-weight',
-                                           toggle_button_font_weight)
+    figure_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    figure_options_wid.set_css('padding', container_padding)
-    figure_options_wid.set_css('margin', container_margin)
+    figure_options_wid.padding = container_padding
+    figure_options_wid.margin = container_margin
     if border_visible:
-        figure_options_wid.set_css('border', container_border)
+        figure_options_wid.border = container_border
 
 
 def update_figure_options(figure_options_wid, figure_options_dict):
@@ -2429,33 +2418,32 @@ def format_figure_options_two_scales(figure_options_wid,
     figure_options_wid.children[1].add_class('align-end')
 
     # fix figure scale sliders width
-    figure_options_wid.children[1].children[0].set_css('width', '3cm')
-    figure_options_wid.children[1].children[1].set_css('width', '3cm')
+    figure_options_wid.children[1].children[0].width = '3cm'
+    figure_options_wid.children[1].children[1].width = '3cm'
 
     # fix font size width
-    figure_options_wid.children[4].set_css('width', '1cm')
+    figure_options_wid.children[4].width = '1cm'
 
     # align and set width of axes_x_limits
     figure_options_wid.children[7].remove_class('vbox')
     figure_options_wid.children[7].add_class('hbox')
-    figure_options_wid.children[7].children[1].set_css('width', '1cm')
-    figure_options_wid.children[7].children[2].set_css('width', '1cm')
+    figure_options_wid.children[7].children[1].width = '1cm'
+    figure_options_wid.children[7].children[2].width = '1cm'
 
     # align and set width of axes_y_limits
     figure_options_wid.children[8].remove_class('vbox')
     figure_options_wid.children[8].add_class('hbox')
-    figure_options_wid.children[8].children[1].set_css('width', '1cm')
-    figure_options_wid.children[8].children[2].set_css('width', '1cm')
+    figure_options_wid.children[8].children[1].width = '1cm'
+    figure_options_wid.children[8].children[2].width = '1cm'
 
     # set toggle button font bold
-    figure_options_wid.children[0].set_css('font-weight',
-                                           toggle_button_font_weight)
+    figure_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    figure_options_wid.set_css('padding', container_padding)
-    figure_options_wid.set_css('margin', container_margin)
+    figure_options_wid.padding = container_padding
+    figure_options_wid.margin = container_margin
     if border_visible:
-        figure_options_wid.set_css('border', container_border)
+        figure_options_wid.border = container_border
 
 
 def update_figure_options_two_scales(figure_options_wid, figure_options_dict):
@@ -2968,17 +2956,11 @@ def format_legend_options(legend_options_wid, container_padding='6px',
     for (k, tl) in enumerate(tab_titles):
         legend_options_wid.children[1].children[1].set_title(k, tl)
 
-    # align font-related options
-    # legend_options_wid.children[1].children[1].children[1].children[1].\
-    #    remove_class('vbox')
-    # legend_options_wid.children[1].children[1].children[1].children[1].\
-    #    add_class('hbox')
-
     # set fontsize and title text box width
     legend_options_wid.children[1].children[1].children[1].children[1].children[
-        0].children[1].set_css('width', '1cm')
+        0].children[1].width = '1cm'
     legend_options_wid.children[1].children[1].children[1].children[0]. \
-        set_css('width', '4cm')
+        width = '4cm'
 
     # align and set width of bbox_to_anchor
     legend_options_wid.children[1].children[1].children[0].children[1]. \
@@ -2987,14 +2969,14 @@ def format_legend_options(legend_options_wid, container_padding='6px',
         add_class('hbox')
     legend_options_wid.children[1].children[1].children[0].children[1].children[
         1]. \
-        set_css('width', '1cm')
+        width = '1cm'
     legend_options_wid.children[1].children[1].children[0].children[1].children[
         2]. \
-        set_css('width', '1cm')
+        width = '1cm'
 
     # set distance to axes (borderaxespad) text box width
     legend_options_wid.children[1].children[1].children[0].children[2]. \
-        set_css('width', '1cm')
+        width = '1cm'
 
     # align and set width of border options
     legend_options_wid.children[1].children[1].children[2].children[1]. \
@@ -3003,10 +2985,10 @@ def format_legend_options(legend_options_wid, container_padding='6px',
         add_class('hbox')
     legend_options_wid.children[1].children[1].children[2].children[1].children[
         0]. \
-        set_css('width', '1cm')
+        width = '1cm'
     legend_options_wid.children[1].children[1].children[2].children[1].children[
         1]. \
-        set_css('width', '1cm')
+        width = '1cm'
 
     # align shadow and fancy checkboxes
     legend_options_wid.children[1].children[1].children[2].children[2]. \
@@ -3019,18 +3001,18 @@ def format_legend_options(legend_options_wid, container_padding='6px',
         1]. \
         add_class('align-end')
     legend_options_wid.children[1].children[1].children[2].children[0].children[
-        1].children[0].set_css('width', '1cm')
+        1].children[0].width = '1cm'
     legend_options_wid.children[1].children[1].children[2].children[0].children[
-        1].children[1].set_css('width', '1cm')
+        1].children[1].width = '1cm'
 
     # set width of n_columns and markerspace
     legend_options_wid.children[1].children[1].children[2].children[0].children[
         0]. \
         add_class('align-end')
     legend_options_wid.children[1].children[1].children[2].children[0].children[
-        0].children[0].set_css('width', '1cm')
+        0].children[0].width = '1cm'
     legend_options_wid.children[1].children[1].children[2].children[0].children[
-        0].children[1].set_css('width', '1cm')
+        0].children[1].width = '1cm'
 
     # align n_columns with spacing
     legend_options_wid.children[1].children[1].children[2].children[0]. \
@@ -3040,18 +3022,16 @@ def format_legend_options(legend_options_wid, container_padding='6px',
 
     # border around options
     if suboptions_border_visible:
-        legend_options_wid.children[1].children[1].set_css('border',
-                                                           container_border)
+        legend_options_wid.children[1].children[1].border = container_border
 
     # set toggle button font bold
-    legend_options_wid.children[0].set_css('font-weight',
-                                           toggle_button_font_weight)
+    legend_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    legend_options_wid.set_css('padding', container_padding)
-    legend_options_wid.set_css('margin', container_margin)
+    legend_options_wid.padding = container_padding
+    legend_options_wid.margin = container_margin
     if border_visible:
-        legend_options_wid.set_css('border', container_border)
+        legend_options_wid.border = container_border
 
 
 def update_legend_options(legend_options_wid, legend_options_dict):
@@ -3382,22 +3362,20 @@ def format_grid_options(grid_options_wid, container_padding='6px',
     grid_options_wid.children[1].add_class('align-end')
 
     # set gridlinewidth text box width
-    grid_options_wid.children[1].children[1].children[1].set_css('width', '1cm')
+    grid_options_wid.children[1].children[1].children[1].width = '1cm'
 
     # border around options
     if suboptions_border_visible:
-        grid_options_wid.children[1].children[1].set_css('border',
-                                                         container_border)
+        grid_options_wid.children[1].children[1].border = container_border
 
     # set toggle button font bold
-    grid_options_wid.children[0].set_css('font-weight',
-                                         toggle_button_font_weight)
+    grid_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    grid_options_wid.set_css('padding', container_padding)
-    grid_options_wid.set_css('margin', container_margin)
+    grid_options_wid.padding = container_padding
+    grid_options_wid.margin = container_margin
     if border_visible:
-        grid_options_wid.set_css('border', container_border)
+        grid_options_wid.border = container_border
 
 
 def update_grid_options(grid_options_wid, grid_options_dict):
@@ -3677,23 +3655,23 @@ def format_hog_options(hog_options_wid, container_padding='6px',
 
     # set width of height, width, step x , step y textboxes
     hog_options_wid.children[1].children[0].children[1].children[0].children[0]. \
-        set_css('width', '40px')
+        width = '40px'
     hog_options_wid.children[1].children[0].children[1].children[0].children[1]. \
-        set_css('width', '40px')
+        width = '40px'
     hog_options_wid.children[1].children[0].children[1].children[1].children[0]. \
-        set_css('width', '40px')
+        width = '40px'
     hog_options_wid.children[1].children[0].children[1].children[1].children[1]. \
-        set_css('width', '40px')
+        width = '40px'
 
     # set margin and border around the window size and step options
-    hog_options_wid.children[1].children[0].children[1].children[0].set_css(
-        'margin', container_margin)
-    hog_options_wid.children[1].children[0].children[1].children[1].set_css(
-        'margin', container_margin)
-    hog_options_wid.children[1].children[0].children[1].children[0].set_css(
-        'border', '1px solid gray')
-    hog_options_wid.children[1].children[0].children[1].children[1].set_css(
-        'border', '1px solid gray')
+    hog_options_wid.children[1].children[0].children[1].children[0]. \
+        margin = container_margin
+    hog_options_wid.children[1].children[0].children[1].children[1]. \
+        margin = container_margin
+    hog_options_wid.children[1].children[0].children[1].children[0]. \
+        border = '1px solid gray'
+    hog_options_wid.children[1].children[0].children[1].children[1]. \
+        border = '1px solid gray'
 
     # align mode and padding
     hog_options_wid.children[1].children[0].children[0].remove_class('vbox')
@@ -3701,25 +3679,25 @@ def format_hog_options(hog_options_wid, container_padding='6px',
 
     # set width of algorithm textboxes
     hog_options_wid.children[1].children[1].children[1].children[0].children[0]. \
-        set_css('width', '40px')
+        width = '40px'
     hog_options_wid.children[1].children[1].children[1].children[0].children[1]. \
-        set_css('width', '40px')
+        width = '40px'
     hog_options_wid.children[1].children[1].children[1].children[0].children[2]. \
-        set_css('width', '40px')
+        width = '40px'
     hog_options_wid.children[1].children[1].children[1].children[1].children[1]. \
-        set_css('width', '40px')
+        width = '40px'
 
     # align algorithm options
     hog_options_wid.children[1].children[1].children[1].remove_class('vbox')
     hog_options_wid.children[1].children[1].children[1].add_class('hbox')
 
     # set margin and border around the algorithm options
-    hog_options_wid.children[1].children[1].children[1].set_css(
-        'margin', container_margin)
-    hog_options_wid.children[1].children[1].children[1].set_css(
-        'border', '1px solid gray')
+    hog_options_wid.children[1].children[1].children[1]. \
+        margin = container_margin
+    hog_options_wid.children[1].children[1].children[1]. \
+        border = '1px solid gray'
 
-    hog_options_wid.children[1].set_css('margin-top', '6px')
+    hog_options_wid.children[1].margin_top = '6px'
     hog_options_wid.children[1].children[0].add_class('align-center')
     hog_options_wid.children[1].children[1].add_class('align-center')
 
@@ -3729,14 +3707,13 @@ def format_hog_options(hog_options_wid, container_padding='6px',
         hog_options_wid.children[1].set_title(k, tl)
 
     # set toggle button font bold
-    hog_options_wid.children[0].set_css('font-weight',
-                                        toggle_button_font_weight)
+    hog_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    hog_options_wid.set_css('padding', container_padding)
-    hog_options_wid.set_css('margin', container_margin)
+    hog_options_wid.padding = container_padding
+    hog_options_wid.margin = container_margin
     if border_visible:
-        hog_options_wid.set_css('border', container_border)
+        hog_options_wid.border = container_border
 
 
 def daisy_options(toggle_show_default=True, toggle_show_visible=True):
@@ -3889,34 +3866,26 @@ def format_daisy_options(daisy_options_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # align window options
-    daisy_options_wid.children[1].remove_class('vbox')
-    daisy_options_wid.children[1].add_class('hbox')
+    daisy_options_wid.children[1]._dom_classes.remove('vbox')
+    daisy_options_wid.children[1]._dom_classes.append('hbox')
 
     # set textboxes length
-    daisy_options_wid.children[1].children[0].children[0].set_css('width',
-                                                                  '40px')
-    daisy_options_wid.children[1].children[0].children[1].set_css('width',
-                                                                  '40px')
-    daisy_options_wid.children[1].children[0].children[2].set_css('width',
-                                                                  '40px')
-    daisy_options_wid.children[1].children[0].children[3].set_css('width',
-                                                                  '40px')
-    daisy_options_wid.children[1].children[1].children[0].set_css('width',
-                                                                  '40px')
-    daisy_options_wid.children[1].children[1].children[2].set_css('width',
-                                                                  '80px')
-    daisy_options_wid.children[1].children[1].children[3].set_css('width',
-                                                                  '80px')
+    daisy_options_wid.children[1].children[0].children[0].width = '40px'
+    daisy_options_wid.children[1].children[0].children[1].width = '40px'
+    daisy_options_wid.children[1].children[0].children[2].width = '40px'
+    daisy_options_wid.children[1].children[0].children[3].width = '40px'
+    daisy_options_wid.children[1].children[1].children[0].width = '40px'
+    daisy_options_wid.children[1].children[1].children[2].width = '80px'
+    daisy_options_wid.children[1].children[1].children[3].width = '80px'
 
     # set toggle button font bold
-    daisy_options_wid.children[0].set_css('font-weight',
-                                          toggle_button_font_weight)
+    daisy_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    daisy_options_wid.set_css('padding', container_padding)
-    daisy_options_wid.set_css('margin', container_margin)
+    daisy_options_wid.padding = container_padding
+    daisy_options_wid.margin = container_margin
     if border_visible:
-        daisy_options_wid.set_css('border', container_border)
+        daisy_options_wid.border = container_border
 
 
 def lbp_options(toggle_show_default=True, toggle_show_visible=True):
@@ -4060,24 +4029,19 @@ def format_lbp_options(lbp_options_wid, container_padding='6px',
     lbp_options_wid.children[1].add_class('hbox')
 
     # set textboxes length
-    lbp_options_wid.children[1].children[0].children[0].set_css('width',
-                                                                '40px')
-    lbp_options_wid.children[1].children[0].children[1].set_css('width',
-                                                                '40px')
-    lbp_options_wid.children[1].children[1].children[0].set_css('width',
-                                                                '80px')
-    lbp_options_wid.children[1].children[1].children[1].set_css('width',
-                                                                '80px')
+    lbp_options_wid.children[1].children[0].children[0].width = '40px'
+    lbp_options_wid.children[1].children[0].children[1].width = '40px'
+    lbp_options_wid.children[1].children[1].children[0].width = '80px'
+    lbp_options_wid.children[1].children[1].children[1].width = '80px'
 
     # set toggle button font bold
-    lbp_options_wid.children[0].set_css('font-weight',
-                                        toggle_button_font_weight)
+    lbp_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    lbp_options_wid.set_css('padding', container_padding)
-    lbp_options_wid.set_css('margin', container_margin)
+    lbp_options_wid.padding = container_padding
+    lbp_options_wid.margin = container_margin
     if border_visible:
-        lbp_options_wid.set_css('border', container_border)
+        lbp_options_wid.border = container_border
 
 
 def igo_options(toggle_show_default=True, toggle_show_visible=True):
@@ -4156,14 +4120,13 @@ def format_igo_options(igo_options_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # set toggle button font bold
-    igo_options_wid.children[0].set_css('font-weight',
-                                        toggle_button_font_weight)
+    igo_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    igo_options_wid.set_css('padding', container_padding)
-    igo_options_wid.set_css('margin', container_margin)
+    igo_options_wid.padding = container_padding
+    igo_options_wid.margin = container_margin
     if border_visible:
-        igo_options_wid.set_css('border', container_border)
+        igo_options_wid.border = container_border
 
 
 def function_definition(default_function='def my_function():\n    pass',
@@ -4263,25 +4226,22 @@ def format_function_definition(function_definition_wid, container_padding='6px',
     function_definition_wid.children[1].children[1].add_class('hbox')
 
     # set margin between message and button
-    function_definition_wid.children[1].children[1].children[0].set_css(
-        'margin-right', '0.5cm')
+    function_definition_wid.children[1].children[1].children[0].margin_right = '0.5cm'
 
     # align code textarea and button to the right
     function_definition_wid.children[1].add_class('align-end')
 
     # set error message background to red
-    function_definition_wid.children[1].children[1].children[0].set_css(
-        'background', 'red')
+    function_definition_wid.children[1].children[1].children[0].background = 'red'
 
     # set toggle button font bold
-    function_definition_wid.children[0].set_css('font-weight',
-                                                toggle_button_font_weight)
+    function_definition_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    function_definition_wid.set_css('padding', container_padding)
-    function_definition_wid.set_css('margin', container_margin)
+    function_definition_wid.padding = container_padding
+    function_definition_wid.margin = container_margin
     if border_visible:
-        function_definition_wid.set_css('border', container_border)
+        function_definition_wid.border = container_border
 
 
 class IntListText():

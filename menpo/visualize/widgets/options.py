@@ -379,7 +379,7 @@ def format_channel_options(channel_options_wid, container_padding='6px',
     channel_options_wid.children[1].children[1].children[1].children[
         1].children[1].add_class('hbox')
     channel_options_wid.children[1].children[1].children[1].children[
-        1].children[1].children[0].set_css('width', '0.8cm')
+        1].children[1].children[0].width = '0.8cm'
 
     # align sum and glyph checkboxes
     channel_options_wid.children[1].children[1].children[1].remove_class('vbox')
@@ -391,14 +391,13 @@ def format_channel_options(channel_options_wid, container_padding='6px',
     channel_options_wid.children[1].add_class('align-start')
 
     # set toggle button font bold
-    channel_options_wid.children[0].set_css('font-weight',
-                                            toggle_button_font_weight)
+    channel_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    channel_options_wid.set_css('padding', container_padding)
-    channel_options_wid.set_css('margin', container_margin)
+    channel_options_wid.padding = container_padding
+    channel_options_wid.margin = container_margin
     if border_visible:
-        channel_options_wid.set_css('border', container_border)
+        channel_options_wid.border = container_border
 
 
 def update_channel_options(channel_options_wid, n_channels, image_is_masked,
@@ -724,25 +723,23 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
     landmark_options_wid.children[2].children[1].children[1].add_class('hbox')
 
     # align labels buttons with text
-    landmark_options_wid.children[2].children[1].children[0].set_css(
-        'margin-right', '5px')
+    landmark_options_wid.children[2].children[1].children[0].margin_right = '5px'
     landmark_options_wid.children[2].children[1].remove_class('vbox')
     landmark_options_wid.children[2].children[1].add_class('hbox')
     landmark_options_wid.children[2].children[1].add_class('align-center')
 
     # align group drop down menu with labels toggle buttons
-    landmark_options_wid.children[2].children[1].set_css('margin-top', '10px')
+    landmark_options_wid.children[2].children[1].margin_top = '10px'
     landmark_options_wid.children[2].add_class('align-start')
 
     # set toggle button font bold
-    landmark_options_wid.children[0].set_css('font-weight',
-                                             toggle_button_font_weight)
+    landmark_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    landmark_options_wid.set_css('padding', container_padding)
-    landmark_options_wid.set_css('margin', container_margin)
+    landmark_options_wid.padding = container_padding
+    landmark_options_wid.margin = container_margin
     if border_visible:
-        landmark_options_wid.set_css('border', container_border)
+        landmark_options_wid.border = container_border
 
 
 def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
@@ -989,22 +986,22 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # text widget formatting
-    info_wid.children[1].set_css({'border': container_border,
-                                  'padding': '4px',
-                                  'margin-top': '1px'})
+    info_wid.children[1].border = container_border
+    info_wid.children[1].padding = '4px'
+    info_wid.children[1].margin_top = '1px'
 
     # set font size
     for w in info_wid.children[1].children:
-        w.set_css({'font-size': font_size_in_pt})
+        w.font_size = font_size_in_pt
 
     # set toggle button font bold
-    info_wid.children[0].set_css('font-weight', toggle_button_font_weight)
+    info_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    info_wid.set_css('padding', container_padding)
-    info_wid.set_css('margin', container_margin)
+    info_wid.padding = container_padding
+    info_wid.margin = container_margin
     if border_visible:
-        info_wid.set_css('border', container_border)
+        info_wid.border = container_border
 
 
 def animation_options(index_selection_default, plot_function=None,
@@ -1284,8 +1281,8 @@ def format_animation_options(animation_options_wid, index_text_width='0.5cm',
     animation_options_wid.children[1].children[1].add_class('align-end')
 
     # add margin on the right of the play button
-    animation_options_wid.children[1].children[1].children[0].children[1]. \
-        set_css('margin-right', container_margin)
+    animation_options_wid.children[1].children[1]. \
+        children[0].children[1].margin_right = container_margin
 
     if animation_options_wid.index_style == 'slider':
         # align animation on the right of slider
@@ -1295,22 +1292,20 @@ def format_animation_options(animation_options_wid, index_text_width='0.5cm',
         animation_options_wid.children[1].remove_class('vbox')
         animation_options_wid.children[1].add_class('hbox')
         animation_options_wid.children[1].add_class('align-center')
-        animation_options_wid.children[1].children[0].set_css('margin-right',
-                                                              '1cm')
+        animation_options_wid.children[1].children[0].margin_right = '1cm'
 
     # set interval width
     animation_options_wid.children[1].children[1].children[1].children[0]. \
-        set_css('width', '20px')
+        width = '20px'
 
     # set toggle button font bold
-    animation_options_wid.children[0].set_css('font-weight',
-                                              toggle_button_font_weight)
+    animation_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    animation_options_wid.set_css('padding', container_padding)
-    animation_options_wid.set_css('margin', container_margin)
+    animation_options_wid.padding = container_padding
+    animation_options_wid.margin = container_margin
     if border_visible:
-        animation_options_wid.set_css('border', container_border)
+        animation_options_wid.border = container_border
 
 
 def update_animation_options(animation_options_wid, index_selection_default,
@@ -1707,14 +1702,13 @@ def format_viewer_options(viewer_options_wid, container_padding='6px',
         viewer_options_wid.children[1].children[1].set_title(k, tl)
 
     # set toggle button font bold
-    viewer_options_wid.children[0].set_css('font-weight',
-                                           toggle_button_font_weight)
+    viewer_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    viewer_options_wid.set_css('padding', container_padding)
-    viewer_options_wid.set_css('margin', container_margin)
+    viewer_options_wid.padding = container_padding
+    viewer_options_wid.margin = container_margin
     if border_visible:
-        viewer_options_wid.set_css('border', container_border)
+        viewer_options_wid.border = container_border
 
 
 def update_viewer_options(viewer_options_wid, viewer_options_default,
@@ -1991,7 +1985,7 @@ def format_save_figure_options(save_figure_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # add margin on top of tabs widget
-    save_figure_wid.children[1].set_css('margin-top', tab_top_margin)
+    save_figure_wid.children[1].margin_top = tab_top_margin
 
     # align path options to the right
     save_figure_wid.children[1].children[0].add_class('align-end')
@@ -1999,8 +1993,8 @@ def format_save_figure_options(save_figure_wid, container_padding='6px',
     # align save button and error message horizontally
     save_figure_wid.children[2].remove_class('vbox')
     save_figure_wid.children[2].add_class('hbox')
-    save_figure_wid.children[2].children[1].set_css({'margin-left': '0.5cm',
-                                                     'background-color': 'red'})
+    save_figure_wid.children[2].children[1].margin_left = '0.5cm'
+    save_figure_wid.children[2].children[1].background_color = 'red'
 
     # set final tab titles
     tab_titles = ['Path', 'Page setup', 'Image colour']
@@ -2009,18 +2003,17 @@ def format_save_figure_options(save_figure_wid, container_padding='6px',
 
     format_colour_selection(save_figure_wid.children[1].children[2].children[0])
     format_colour_selection(save_figure_wid.children[1].children[2].children[1])
-    save_figure_wid.children[1].children[0].children[0].set_css('width', '6cm')
-    save_figure_wid.children[1].children[0].children[1].set_css('width', '6cm')
+    save_figure_wid.children[1].children[0].children[0].width = '6cm'
+    save_figure_wid.children[1].children[0].children[1].width = '6cm'
 
     # set toggle button font bold
-    save_figure_wid.children[0].set_css('font-weight',
-                                        toggle_button_font_weight)
+    save_figure_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    save_figure_wid.set_css('padding', container_padding)
-    save_figure_wid.set_css('margin', container_margin)
+    save_figure_wid.padding = container_padding
+    save_figure_wid.margin = container_margin
     if border_visible:
-        save_figure_wid.set_css('border', container_border)
+        save_figure_wid.border = container_border
 
 
 def features_options(toggle_show_default=True, toggle_show_visible=True):
@@ -2279,17 +2272,16 @@ def format_features_options(features_options_wid, container_padding='6px',
         features_options_wid.children[1].set_title(k, tl)
 
     # set margin above tab widget
-    features_options_wid.children[1].set_css('margin', '10px')
+    features_options_wid.children[1].margin = '10px'
 
     # set toggle button font bold
-    features_options_wid.children[0].set_css('font-weight',
-                                             toggle_button_font_weight)
+    features_options_wid.children[0].font_weight = toggle_button_font_weight
 
     # margin and border around container widget
-    features_options_wid.set_css('padding', container_padding)
-    features_options_wid.set_css('margin', container_margin)
+    features_options_wid.padding = container_padding
+    features_options_wid.margin = container_margin
     if border_visible:
-        features_options_wid.set_css('border', container_border)
+        features_options_wid.border = container_border
 
 
 def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
