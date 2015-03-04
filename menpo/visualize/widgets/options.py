@@ -118,7 +118,7 @@ def channel_options(channels_options_default, plot_function=None,
                                   value=toggle_show_default,
                                   visible=toggle_show_visible)
     mode = ipywidgets.RadioButtons(
-        values=["Single", "Multiple"], value=mode_default,
+        options=["Single", "Multiple"], value=mode_default,
         description='Mode:',
         visible=toggle_show_default,
         disabled=channels_options_default['n_channels'] == 1)
@@ -584,7 +584,7 @@ def landmark_options(landmark_options_default, plot_function=None,
     landmarks = ipywidgets.Checkbox(description='Render landmarks',
                                     value=landmark_options_default['render_landmarks'])
     group = ipywidgets.Dropdown(
-        values=landmark_options_default['group_keys'],
+        options=landmark_options_default['group_keys'],
         description='Group')
     labels_toggles = [[ipywidgets.ToggleButton(description=k, value=True)
                        for k in s_keys]
@@ -786,7 +786,7 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
             landmark_options_wid.selected_values['group_keys'],
             landmark_options_wid.selected_values['labels_keys']):
         # Create all necessary widgets
-        group = ipywidgets.Dropdown(values=group_keys,
+        group = ipywidgets.Dropdown(options=group_keys,
                                     description='Group')
         labels_toggles = [
             [ipywidgets.ToggleButton(description=k, value=True)
@@ -1483,7 +1483,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     else:
         for k, g in enumerate(objects_names):
             objects_dict[g] = k
-    selection = ipywidgets.Dropdown(values=objects_dict, value=0,
+    selection = ipywidgets.Dropdown(options=objects_dict, value=0,
                                     description='Select',
                                     visible=(selection_visible and
                                              toggle_show_default))
@@ -1817,7 +1817,7 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     format_dict['eps'] = 'eps'
     format_dict['postscript'] = 'ps'
     format_dict['svg'] = 'svg'
-    format_wid = ipywidgets.Select(values=format_dict,
+    format_wid = ipywidgets.Select(options=format_dict,
                                    value=format_default,
                                    description='Format')
 
@@ -1837,7 +1837,7 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     orientation_dict = OrderedDict()
     orientation_dict['portrait'] = 'portrait'
     orientation_dict['landscape'] = 'landscape'
-    orientation_wid = ipywidgets.Dropdown(values=orientation_dict,
+    orientation_wid = ipywidgets.Dropdown(options=orientation_dict,
                                           value=orientation_default,
                                           description='Orientation')
     papertype_dict = OrderedDict()
@@ -1868,7 +1868,7 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     papertype_dict['b9'] = 'b9'
     papertype_dict['b10'] = 'b10'
     is_ps_type = not format_default == 'ps'
-    papertype_wid = ipywidgets.Dropdown(values=papertype_dict,
+    papertype_wid = ipywidgets.Dropdown(options=papertype_dict,
                                         value=papertype_default,
                                         description='Paper type',
                                         disabled=is_ps_type)
@@ -2062,7 +2062,7 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
     tmp['LBP'] = lbp
     tmp['Gradient'] = gradient
     tmp['None'] = no_op
-    feature = ipywidgets.RadioButtons(value=no_op, values=tmp,
+    feature = ipywidgets.RadioButtons(value=no_op, options=tmp,
                                       description='Feature type:')
 
     # feature-related options
