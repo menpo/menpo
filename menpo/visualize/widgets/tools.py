@@ -35,8 +35,8 @@ def logo(scale=0.3):
         image = mio.import_builtin_asset.menpo_thumbnail_jpg()
         MENPO_LOGO = image.rescale(scale)
         MENPO_LOGO_SCALE = scale
-    logo_wid = ipywidgets.ImageWidget(value=_convert_image_to_bytes(MENPO_LOGO))
-    return ipywidgets.ContainerWidget(children=[logo_wid])
+    logo_wid = ipywidgets.Image(value=_convert_image_to_bytes(MENPO_LOGO))
+    return ipywidgets.Box(children=[logo_wid])
 
 
 def format_logo(logo_wid, container_border='1px solid black',
@@ -95,7 +95,7 @@ def index_selection_slider(index_selection_default, plot_function=None,
     """
     import IPython.html.widgets as ipywidgets
     # Create widget
-    index_wid = ipywidgets.IntSliderWidget(min=index_selection_default['min'],
+    index_wid = ipywidgets.IntSlider(min=index_selection_default['min'],
                                            max=index_selection_default['max'],
                                            value=index_selection_default[
                                                'index'],
@@ -169,12 +169,12 @@ def index_selection_buttons(index_selection_default, plot_function=None,
     """
     import IPython.html.widgets as ipywidgets
     # Create widgets
-    tlt = ipywidgets.LatexWidget(value=description)
-    but_minus = ipywidgets.ButtonWidget(description=minus_description)
-    but_plus = ipywidgets.ButtonWidget(description=plus_description)
-    val = ipywidgets.IntTextWidget(value=index_selection_default['index'],
+    tlt = ipywidgets.Latex(value=description)
+    but_minus = ipywidgets.Button(description=minus_description)
+    but_plus = ipywidgets.Button(description=plus_description)
+    val = ipywidgets.IntText(value=index_selection_default['index'],
                                    disabled=not text_editable)
-    index_wid = ipywidgets.ContainerWidget(children=[tlt, but_minus, val,
+    index_wid = ipywidgets.Box(children=[tlt, but_minus, val,
                                                      but_plus])
 
     # Assign output
@@ -246,7 +246,7 @@ def format_index_selection(index_wid, text_width='0.5cm'):
     """
     import IPython.html.widgets as ipywidgets
 
-    if not isinstance(index_wid, ipywidgets.IntSliderWidget):
+    if not isinstance(index_wid, ipywidgets.IntSlider):
         # align all widgets
         index_wid.remove_class('vbox')
         index_wid.add_class('hbox')
@@ -305,7 +305,7 @@ def update_index_selection(index_wid, index_selection_default,
             index_selection_default['max'] == index_wid_selected['max'] and
             index_selection_default['step'] == index_wid_selected['step'] and
             index_selection_default['index'] == index_wid_selected['index']):
-        if isinstance(index_wid, ipywidgets.IntSliderWidget):
+        if isinstance(index_wid, ipywidgets.IntSlider):
             # created by `index_selection_slider()` function
             index_wid.min = index_selection_default['min']
             index_wid.max = index_selection_default['max']
@@ -406,23 +406,23 @@ def colour_selection(default_colour_list, plot_function=None, title='Colour',
     else:
         for k, l in enumerate(labels):
             labels_dict[l] = k
-    selection = ipywidgets.DropdownWidget(values=labels_dict, value=0)
-    apply_to_all = ipywidgets.ButtonWidget(description='apply to all labels')
-    labels_wid = ipywidgets.ContainerWidget(children=[selection, apply_to_all],
+    selection = ipywidgets.Dropdown(values=labels_dict, value=0)
+    apply_to_all = ipywidgets.Button(description='apply to all labels')
+    labels_wid = ipywidgets.Box(children=[selection, apply_to_all],
                                             visible=multiple)
 
     # find default values
     default_colour, r_val, g_val, b_val = _decode_colour(default_colour_list[0])
 
     # create widgets
-    r_wid = ipywidgets.BoundedFloatTextWidget(value=r_val, description='RGB',
+    r_wid = ipywidgets.BoundedFloatText(value=r_val, description='RGB',
                                               min=0.0,
                                               max=1.0)
-    g_wid = ipywidgets.BoundedFloatTextWidget(value=g_val, min=0.0, max=1.0)
-    b_wid = ipywidgets.BoundedFloatTextWidget(value=b_val, min=0.0, max=1.0)
-    menu = ipywidgets.DropdownWidget(values=colour_dict, value=default_colour,
+    g_wid = ipywidgets.BoundedFloatText(value=g_val, min=0.0, max=1.0)
+    b_wid = ipywidgets.BoundedFloatText(value=b_val, min=0.0, max=1.0)
+    menu = ipywidgets.Dropdown(values=colour_dict, value=default_colour,
                                      description='')
-    rgb = ipywidgets.ContainerWidget(children=[r_wid, g_wid, b_wid])
+    rgb = ipywidgets.Box(children=[r_wid, g_wid, b_wid])
 
     if multiple:
         selection.description = title
@@ -430,7 +430,7 @@ def colour_selection(default_colour_list, plot_function=None, title='Colour',
         menu.description = title
 
     # Final widget
-    colour_selection_wid = ipywidgets.ContainerWidget(
+    colour_selection_wid = ipywidgets.Box(
         children=[labels_wid, menu, rgb])
 
     # Assign output
@@ -659,21 +659,21 @@ def image_options(image_options_default, plot_function=None,
     import IPython.html.widgets as ipywidgets
     # Create widgets
     # toggle button
-    but = ipywidgets.ToggleButtonWidget(description=toggle_title,
+    but = ipywidgets.ToggleButton(description=toggle_title,
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # alpha, interpolation
-    interpolation = ipywidgets.CheckboxWidget(
+    interpolation = ipywidgets.Checkbox(
         description='Pixelated',
         value=image_options_default['interpolation'] == 'none')
-    alpha = ipywidgets.FloatSliderWidget(description='Alpha',
+    alpha = ipywidgets.FloatSlider(description='Alpha',
                                          value=image_options_default['alpha'],
                                          min=0.0, max=1.0, step=0.05)
-    options_wid = ipywidgets.ContainerWidget(children=[interpolation, alpha])
+    options_wid = ipywidgets.Box(children=[interpolation, alpha])
 
     # Final widget
-    image_options_wid = ipywidgets.ContainerWidget(children=[but, options_wid])
+    image_options_wid = ipywidgets.Box(children=[but, options_wid])
 
     # Assign output
     image_options_wid.selected_values = image_options_default
@@ -828,15 +828,15 @@ def line_options(line_options_default, plot_function=None,
     import IPython.html.widgets as ipywidgets
     # Create widgets
     # toggle button
-    but = ipywidgets.ToggleButtonWidget(description=toggle_title,
+    but = ipywidgets.ToggleButton(description=toggle_title,
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # line_style, line_width, line_colour
-    render_lines = ipywidgets.CheckboxWidget(description=show_checkbox_title,
+    render_lines = ipywidgets.Checkbox(description=show_checkbox_title,
                                              value=line_options_default[
                                                  'render_lines'])
-    line_width = ipywidgets.BoundedFloatTextWidget(description='Width',
+    line_width = ipywidgets.BoundedFloatText(description='Width',
                                                    value=line_options_default[
                                                        'line_width'],
                                                    min=0.)
@@ -845,7 +845,7 @@ def line_options(line_options_default, plot_function=None,
     line_style_dict['dashed'] = '--'
     line_style_dict['dash-dot'] = '-.'
     line_style_dict['dotted'] = ':'
-    line_style = ipywidgets.DropdownWidget(values=line_style_dict,
+    line_style = ipywidgets.Dropdown(values=line_style_dict,
                                            value=line_options_default[
                                                'line_style'],
                                            description='Style')
@@ -854,14 +854,14 @@ def line_options(line_options_default, plot_function=None,
                                    plot_function=plot_function)
 
     # Options widget
-    all_line_options = ipywidgets.ContainerWidget(
+    all_line_options = ipywidgets.Box(
         children=[line_style, line_width,
                   line_colour])
-    options_wid = ipywidgets.ContainerWidget(
+    options_wid = ipywidgets.Box(
         children=[render_lines, all_line_options])
 
     # Final widget
-    line_options_wid = ipywidgets.ContainerWidget(children=[but, options_wid])
+    line_options_wid = ipywidgets.Box(children=[but, options_wid])
 
     # Assign output
     line_options_wid.selected_values = line_options_default
@@ -1073,18 +1073,18 @@ def marker_options(marker_options_default, plot_function=None,
     import IPython.html.widgets as ipywidgets
     # Create widgets
     # toggle button
-    but = ipywidgets.ToggleButtonWidget(description=toggle_title,
+    but = ipywidgets.ToggleButton(description=toggle_title,
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # marker_size, marker_edge_width, marker_style, marker_face_colour,
     # marker_edge_colour
-    render_markers = ipywidgets.CheckboxWidget(
+    render_markers = ipywidgets.Checkbox(
         description=show_checkbox_title,
         value=marker_options_default['render_markers'])
-    marker_size = ipywidgets.BoundedIntTextWidget(
+    marker_size = ipywidgets.BoundedIntText(
         description='Size', value=marker_options_default['marker_size'], min=0)
-    marker_edge_width = ipywidgets.BoundedFloatTextWidget(
+    marker_edge_width = ipywidgets.BoundedFloatText(
         description='Edge width',
         value=marker_options_default['marker_edge_width'], min=0.)
     marker_style_dict = OrderedDict()
@@ -1109,7 +1109,7 @@ def marker_options(marker_options_default, plot_function=None,
     marker_style_dict['x'] = 'x'
     marker_style_dict['diamond'] = 'D'
     marker_style_dict['thin diamond'] = 'd'
-    marker_style = ipywidgets.DropdownWidget(values=marker_style_dict,
+    marker_style = ipywidgets.Dropdown(values=marker_style_dict,
                                              value=marker_options_default[
                                                  'marker_style'],
                                              description='Style')
@@ -1121,16 +1121,16 @@ def marker_options(marker_options_default, plot_function=None,
         plot_function=plot_function)
 
     # Options widget
-    all_marker_options = ipywidgets.ContainerWidget(
+    all_marker_options = ipywidgets.Box(
         children=[marker_style, marker_size,
                   marker_edge_width,
                   marker_face_colour,
                   marker_edge_colour])
-    options_wid = ipywidgets.ContainerWidget(
+    options_wid = ipywidgets.Box(
         children=[render_markers, all_marker_options])
 
     # Final widget
-    marker_options_wid = ipywidgets.ContainerWidget(children=[but, options_wid])
+    marker_options_wid = ipywidgets.Box(children=[but, options_wid])
 
     # Assign output
     marker_options_wid.selected_values = marker_options_default
@@ -1381,13 +1381,13 @@ def numbering_options(numbers_options_default, plot_function=None,
     import IPython.html.widgets as ipywidgets
     # Create widgets
     # toggle button
-    but = ipywidgets.ToggleButtonWidget(description=toggle_title,
+    but = ipywidgets.ToggleButton(description=toggle_title,
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # numbers_font_name, numbers_font_size, numbers_font_style,
     # numbers_font_weight, numbers_font_colour
-    render_numbering = ipywidgets.CheckboxWidget(
+    render_numbering = ipywidgets.Checkbox(
         description=show_checkbox_title,
         value=numbers_options_default['render_numbering'])
     numbers_font_name_dict = OrderedDict()
@@ -1396,17 +1396,17 @@ def numbering_options(numbers_options_default, plot_function=None,
     numbers_font_name_dict['cursive'] = 'cursive'
     numbers_font_name_dict['fantasy'] = 'fantasy'
     numbers_font_name_dict['monospace'] = 'monospace'
-    numbers_font_name = ipywidgets.DropdownWidget(
+    numbers_font_name = ipywidgets.Dropdown(
         values=numbers_font_name_dict,
         value=numbers_options_default['numbers_font_name'], description='Font')
-    numbers_font_size = ipywidgets.BoundedIntTextWidget(
+    numbers_font_size = ipywidgets.BoundedIntText(
         description='Size', value=numbers_options_default['numbers_font_size'],
         min=2)
     numbers_font_style_dict = OrderedDict()
     numbers_font_style_dict['normal'] = 'normal'
     numbers_font_style_dict['italic'] = 'italic'
     numbers_font_style_dict['oblique'] = 'oblique'
-    numbers_font_style = ipywidgets.DropdownWidget(
+    numbers_font_style = ipywidgets.Dropdown(
         values=numbers_font_style_dict,
         value=numbers_options_default['numbers_font_style'],
         description='Style')
@@ -1425,7 +1425,7 @@ def numbering_options(numbers_options_default, plot_function=None,
     numbers_font_weight_dict['heavy'] = 'heavy'
     numbers_font_weight_dict['extra bold'] = 'extra bold'
     numbers_font_weight_dict['black'] = 'black'
-    numbers_font_weight = ipywidgets.DropdownWidget(
+    numbers_font_weight = ipywidgets.Dropdown(
         values=numbers_font_weight_dict,
         value=numbers_options_default['numbers_font_weight'],
         description='Weight')
@@ -1436,7 +1436,7 @@ def numbering_options(numbers_options_default, plot_function=None,
     numbers_horizontal_align_dict['center'] = 'center'
     numbers_horizontal_align_dict['right'] = 'right'
     numbers_horizontal_align_dict['left'] = 'left'
-    numbers_horizontal_align = ipywidgets.DropdownWidget(
+    numbers_horizontal_align = ipywidgets.Dropdown(
         values=numbers_horizontal_align_dict,
         value=numbers_options_default['numbers_horizontal_align'],
         description='Align hor.')
@@ -1445,21 +1445,21 @@ def numbering_options(numbers_options_default, plot_function=None,
     numbers_vertical_align_dict['top'] = 'top'
     numbers_vertical_align_dict['bottom'] = 'bottom'
     numbers_vertical_align_dict['baseline'] = 'baseline'
-    numbers_vertical_align = ipywidgets.DropdownWidget(
+    numbers_vertical_align = ipywidgets.Dropdown(
         values=numbers_vertical_align_dict,
         value=numbers_options_default['numbers_vertical_align'],
         description='Align ver.')
 
     # Options widget
-    all_font_options = ipywidgets.ContainerWidget(
+    all_font_options = ipywidgets.Box(
         children=[numbers_font_name, numbers_font_size, numbers_font_style,
                   numbers_font_weight, numbers_font_colour,
                   numbers_horizontal_align, numbers_vertical_align])
-    options_wid = ipywidgets.ContainerWidget(
+    options_wid = ipywidgets.Box(
         children=[render_numbering, all_font_options])
 
     # Final widget
-    numbering_options_wid = ipywidgets.ContainerWidget(
+    numbering_options_wid = ipywidgets.Box(
         children=[but, options_wid])
 
     # Assign output
@@ -1737,19 +1737,19 @@ def figure_options(figure_options_default, plot_function=None,
     import IPython.html.widgets as ipywidgets
     # Create widgets
     # toggle button
-    but = ipywidgets.ToggleButtonWidget(description='Figure Options',
+    but = ipywidgets.ToggleButton(description='Figure Options',
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # figure_scale, render_axes
-    figure_scale = ipywidgets.FloatSliderWidget(description='Figure scale:',
+    figure_scale = ipywidgets.FloatSlider(description='Figure scale:',
                                                 value=figure_options_default[
                                                     'x_scale'],
                                                 min=figure_scale_bounds[0],
                                                 max=figure_scale_bounds[1],
                                                 step=figure_scale_step,
                                                 visible=figure_scale_visible)
-    render_axes = ipywidgets.CheckboxWidget(description='Render axes',
+    render_axes = ipywidgets.Checkbox(description='Render axes',
                                             value=figure_options_default[
                                                 'render_axes'],
                                             visible=axes_visible)
@@ -1759,18 +1759,18 @@ def figure_options(figure_options_default, plot_function=None,
     axes_font_name_dict['cursive'] = 'cursive'
     axes_font_name_dict['fantasy'] = 'fantasy'
     axes_font_name_dict['monospace'] = 'monospace'
-    axes_font_name = ipywidgets.DropdownWidget(
+    axes_font_name = ipywidgets.Dropdown(
         values=axes_font_name_dict,
         value=figure_options_default['axes_font_name'], description='Font',
         visible=axes_visible)
-    axes_font_size = ipywidgets.BoundedIntTextWidget(
+    axes_font_size = ipywidgets.BoundedIntText(
         description='Size', value=figure_options_default['axes_font_size'],
         min=0, visible=axes_visible)
     axes_font_style_dict = OrderedDict()
     axes_font_style_dict['normal'] = 'normal'
     axes_font_style_dict['italic'] = 'italic'
     axes_font_style_dict['oblique'] = 'oblique'
-    axes_font_style = ipywidgets.DropdownWidget(
+    axes_font_style = ipywidgets.Dropdown(
         values=axes_font_style_dict,
         value=figure_options_default['axes_font_style'],
         description='Style', visible=axes_visible)
@@ -1789,7 +1789,7 @@ def figure_options(figure_options_default, plot_function=None,
     axes_font_weight_dict['heavy'] = 'heavy'
     axes_font_weight_dict['extra bold'] = 'extra bold'
     axes_font_weight_dict['black'] = 'black'
-    axes_font_weight = ipywidgets.DropdownWidget(
+    axes_font_weight = ipywidgets.Dropdown(
         values=axes_font_weight_dict,
         value=figure_options_default['axes_font_weight'],
         description='Weight', visible=axes_visible)
@@ -1801,11 +1801,11 @@ def figure_options(figure_options_default, plot_function=None,
         tmp1 = True
         tmp2 = figure_options_default['axes_x_limits'][0]
         tmp3 = figure_options_default['axes_x_limits'][1]
-    axes_x_limits_enable = ipywidgets.CheckboxWidget(value=tmp1,
+    axes_x_limits_enable = ipywidgets.Checkbox(value=tmp1,
                                                      description='X limits')
-    axes_x_limits_from = ipywidgets.FloatTextWidget(value=tmp2, description='')
-    axes_x_limits_to = ipywidgets.FloatTextWidget(value=tmp3, description='')
-    axes_x_limits = ipywidgets.ContainerWidget(children=[axes_x_limits_enable,
+    axes_x_limits_from = ipywidgets.FloatText(value=tmp2, description='')
+    axes_x_limits_to = ipywidgets.FloatText(value=tmp3, description='')
+    axes_x_limits = ipywidgets.Box(children=[axes_x_limits_enable,
                                                          axes_x_limits_from,
                                                          axes_x_limits_to])
     if figure_options_default['axes_y_limits'] is None:
@@ -1816,16 +1816,16 @@ def figure_options(figure_options_default, plot_function=None,
         tmp1 = True
         tmp2 = figure_options_default['axes_y_limits'][0]
         tmp3 = figure_options_default['axes_y_limits'][1]
-    axes_y_limits_enable = ipywidgets.CheckboxWidget(value=tmp1,
+    axes_y_limits_enable = ipywidgets.Checkbox(value=tmp1,
                                                      description='Y limits')
-    axes_y_limits_from = ipywidgets.FloatTextWidget(value=tmp2, description='')
-    axes_y_limits_to = ipywidgets.FloatTextWidget(value=tmp3, description='')
-    axes_y_limits = ipywidgets.ContainerWidget(children=[axes_y_limits_enable,
+    axes_y_limits_from = ipywidgets.FloatText(value=tmp2, description='')
+    axes_y_limits_to = ipywidgets.FloatText(value=tmp3, description='')
+    axes_y_limits = ipywidgets.Box(children=[axes_y_limits_enable,
                                                          axes_y_limits_from,
                                                          axes_y_limits_to])
 
     # Final widget
-    figure_options_wid = ipywidgets.ContainerWidget(children=[but, figure_scale,
+    figure_options_wid = ipywidgets.Box(children=[but, figure_scale,
                                                               render_axes,
                                                               axes_font_name,
                                                               axes_font_size,
@@ -2170,30 +2170,30 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
     import IPython.html.widgets as ipywidgets
     # Create widgets
     # toggle button
-    but = ipywidgets.ToggleButtonWidget(description='Figure Options',
+    but = ipywidgets.ToggleButton(description='Figure Options',
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # figure_scale, render_axes
-    x_scale = ipywidgets.FloatSliderWidget(description='Figure size: X scale',
+    x_scale = ipywidgets.FloatSlider(description='Figure size: X scale',
                                            value=figure_options_default[
                                                'x_scale'],
                                            min=figure_scales_bounds[0],
                                            max=figure_scales_bounds[1],
                                            step=figure_scales_step)
-    y_scale = ipywidgets.FloatSliderWidget(description='Y scale',
+    y_scale = ipywidgets.FloatSlider(description='Y scale',
                                            value=figure_options_default[
                                                'y_scale'],
                                            min=figure_scales_bounds[0],
                                            max=figure_scales_bounds[1],
                                            step=figure_scales_step,
                                            disabled=coupled_default)
-    coupled = ipywidgets.CheckboxWidget(description='Coupled',
+    coupled = ipywidgets.Checkbox(description='Coupled',
                                         value=coupled_default)
-    figure_scale = ipywidgets.ContainerWidget(
+    figure_scale = ipywidgets.Box(
         children=[x_scale, y_scale, coupled],
         visible=figure_scales_visible)
-    render_axes = ipywidgets.CheckboxWidget(description='Render axes',
+    render_axes = ipywidgets.Checkbox(description='Render axes',
                                             value=figure_options_default[
                                                 'render_axes'],
                                             visible=axes_visible)
@@ -2203,18 +2203,18 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
     axes_font_name_dict['cursive'] = 'cursive'
     axes_font_name_dict['fantasy'] = 'fantasy'
     axes_font_name_dict['monospace'] = 'monospace'
-    axes_font_name = ipywidgets.DropdownWidget(
+    axes_font_name = ipywidgets.Dropdown(
         values=axes_font_name_dict,
         value=figure_options_default['axes_font_name'], description='Font',
         visible=axes_visible)
-    axes_font_size = ipywidgets.BoundedIntTextWidget(
+    axes_font_size = ipywidgets.BoundedIntText(
         description='Size', value=figure_options_default['axes_font_size'],
         min=0, visible=axes_visible)
     axes_font_style_dict = OrderedDict()
     axes_font_style_dict['normal'] = 'normal'
     axes_font_style_dict['italic'] = 'italic'
     axes_font_style_dict['oblique'] = 'oblique'
-    axes_font_style = ipywidgets.DropdownWidget(
+    axes_font_style = ipywidgets.Dropdown(
         values=axes_font_style_dict,
         value=figure_options_default['axes_font_style'],
         description='Style', visible=axes_visible)
@@ -2233,7 +2233,7 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
     axes_font_weight_dict['heavy'] = 'heavy'
     axes_font_weight_dict['extra bold'] = 'extra bold'
     axes_font_weight_dict['black'] = 'black'
-    axes_font_weight = ipywidgets.DropdownWidget(
+    axes_font_weight = ipywidgets.Dropdown(
         values=axes_font_weight_dict,
         value=figure_options_default['axes_font_weight'],
         description='Weight', visible=axes_visible)
@@ -2245,11 +2245,11 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
         tmp1 = True
         tmp2 = figure_options_default['axes_x_limits'][0]
         tmp3 = figure_options_default['axes_x_limits'][1]
-    axes_x_limits_enable = ipywidgets.CheckboxWidget(value=tmp1,
+    axes_x_limits_enable = ipywidgets.Checkbox(value=tmp1,
                                                      description='X limits')
-    axes_x_limits_from = ipywidgets.FloatTextWidget(value=tmp2, description='')
-    axes_x_limits_to = ipywidgets.FloatTextWidget(value=tmp3, description='')
-    axes_x_limits = ipywidgets.ContainerWidget(children=[axes_x_limits_enable,
+    axes_x_limits_from = ipywidgets.FloatText(value=tmp2, description='')
+    axes_x_limits_to = ipywidgets.FloatText(value=tmp3, description='')
+    axes_x_limits = ipywidgets.Box(children=[axes_x_limits_enable,
                                                          axes_x_limits_from,
                                                          axes_x_limits_to])
     if figure_options_default['axes_y_limits'] is None:
@@ -2260,16 +2260,16 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
         tmp1 = True
         tmp2 = figure_options_default['axes_y_limits'][0]
         tmp3 = figure_options_default['axes_y_limits'][1]
-    axes_y_limits_enable = ipywidgets.CheckboxWidget(value=tmp1,
+    axes_y_limits_enable = ipywidgets.Checkbox(value=tmp1,
                                                      description='Y limits')
-    axes_y_limits_from = ipywidgets.FloatTextWidget(value=tmp2, description='')
-    axes_y_limits_to = ipywidgets.FloatTextWidget(value=tmp3, description='')
-    axes_y_limits = ipywidgets.ContainerWidget(children=[axes_y_limits_enable,
+    axes_y_limits_from = ipywidgets.FloatText(value=tmp2, description='')
+    axes_y_limits_to = ipywidgets.FloatText(value=tmp3, description='')
+    axes_y_limits = ipywidgets.Box(children=[axes_y_limits_enable,
                                                          axes_y_limits_from,
                                                          axes_y_limits_to])
 
     # Final widget
-    figure_options_wid = ipywidgets.ContainerWidget(children=[but, figure_scale,
+    figure_options_wid = ipywidgets.Box(children=[but, figure_scale,
                                                               render_axes,
                                                               axes_font_name,
                                                               axes_font_size,
@@ -2638,12 +2638,12 @@ def legend_options(legend_options_default, plot_function=None,
     import IPython.html.widgets as ipywidgets
     # Create widgets
     # toggle button
-    but = ipywidgets.ToggleButtonWidget(description=toggle_title,
+    but = ipywidgets.ToggleButton(description=toggle_title,
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # render legend
-    render_legend = ipywidgets.CheckboxWidget(
+    render_legend = ipywidgets.Checkbox(
         description=show_checkbox_title,
         value=legend_options_default['render_legend'])
 
@@ -2654,17 +2654,17 @@ def legend_options(legend_options_default, plot_function=None,
     legend_font_name_dict['cursive'] = 'cursive'
     legend_font_name_dict['fantasy'] = 'fantasy'
     legend_font_name_dict['monospace'] = 'monospace'
-    legend_font_name = ipywidgets.DropdownWidget(
+    legend_font_name = ipywidgets.Dropdown(
         values=legend_font_name_dict,
         value=legend_options_default['legend_font_name'], description='Font')
-    legend_font_size = ipywidgets.BoundedIntTextWidget(
+    legend_font_size = ipywidgets.BoundedIntText(
         description='Size', value=legend_options_default['legend_font_size'],
         min=0)
     legend_font_style_dict = OrderedDict()
     legend_font_style_dict['normal'] = 'normal'
     legend_font_style_dict['italic'] = 'italic'
     legend_font_style_dict['oblique'] = 'oblique'
-    legend_font_style = ipywidgets.DropdownWidget(
+    legend_font_style = ipywidgets.Dropdown(
         values=legend_font_style_dict,
         value=legend_options_default['legend_font_style'], description='Style')
     legend_font_weight_dict = OrderedDict()
@@ -2682,19 +2682,19 @@ def legend_options(legend_options_default, plot_function=None,
     legend_font_weight_dict['heavy'] = 'heavy'
     legend_font_weight_dict['extra bold'] = 'extra bold'
     legend_font_weight_dict['black'] = 'black'
-    legend_font_weight = ipywidgets.DropdownWidget(
+    legend_font_weight = ipywidgets.Dropdown(
         values=legend_font_weight_dict,
         value=legend_options_default['legend_font_weight'],
         description='Weight')
-    legend_title = ipywidgets.TextWidget(description='Title',
+    legend_title = ipywidgets.Text(description='Title',
                                          value=legend_options_default[
                                              'legend_title'])
-    font_cont_tmp = ipywidgets.ContainerWidget(
-        children=[ipywidgets.ContainerWidget(children=[legend_font_name,
+    font_cont_tmp = ipywidgets.Box(
+        children=[ipywidgets.Box(children=[legend_font_name,
                                                        legend_font_size]),
-                  ipywidgets.ContainerWidget(children=[legend_font_style,
+                  ipywidgets.Box(children=[legend_font_style,
                                                        legend_font_weight])])
-    font_cont = ipywidgets.ContainerWidget(
+    font_cont = ipywidgets.Box(
         children=[legend_title, font_cont_tmp])
 
     # legend_location-related
@@ -2710,7 +2710,7 @@ def legend_options(legend_options_default, plot_function=None,
     legend_location_dict['lower center'] = 8
     legend_location_dict['upper center'] = 9
     legend_location_dict['center'] = 10
-    legend_location = ipywidgets.DropdownWidget(
+    legend_location = ipywidgets.Dropdown(
         values=legend_location_dict,
         value=legend_options_default['legend_location'],
         description='Predefined location')
@@ -2722,67 +2722,67 @@ def legend_options(legend_options_default, plot_function=None,
         tmp1 = True
         tmp2 = legend_options_default['legend_bbox_to_anchor'][0]
         tmp3 = legend_options_default['legend_bbox_to_anchor'][1]
-    bbox_to_anchor_enable = ipywidgets.CheckboxWidget(
+    bbox_to_anchor_enable = ipywidgets.Checkbox(
         value=tmp1, description='Arbitrary location')
-    bbox_to_anchor_x = ipywidgets.FloatTextWidget(value=tmp2, description='')
-    bbox_to_anchor_y = ipywidgets.FloatTextWidget(value=tmp3, description='')
-    legend_bbox_to_anchor = ipywidgets.ContainerWidget(
+    bbox_to_anchor_x = ipywidgets.FloatText(value=tmp2, description='')
+    bbox_to_anchor_y = ipywidgets.FloatText(value=tmp3, description='')
+    legend_bbox_to_anchor = ipywidgets.Box(
         children=[bbox_to_anchor_enable,
                   bbox_to_anchor_x,
                   bbox_to_anchor_y])
-    legend_border_axes_pad = ipywidgets.BoundedFloatTextWidget(
+    legend_border_axes_pad = ipywidgets.BoundedFloatText(
         value=legend_options_default['legend_border_axes_pad'],
         description='Distance to axes', min=0.)
-    location_cont = ipywidgets.ContainerWidget(
+    location_cont = ipywidgets.Box(
         children=[legend_location, legend_bbox_to_anchor,
                   legend_border_axes_pad])
 
     # formatting-related
-    legend_n_columns = ipywidgets.BoundedIntTextWidget(
+    legend_n_columns = ipywidgets.BoundedIntText(
         value=legend_options_default['legend_n_columns'], description='Columns',
         min=0)
-    legend_marker_scale = ipywidgets.BoundedFloatTextWidget(
+    legend_marker_scale = ipywidgets.BoundedFloatText(
         description='Marker scale',
         value=legend_options_default['legend_marker_scale'], min=0.)
-    legend_horizontal_spacing = ipywidgets.BoundedFloatTextWidget(
+    legend_horizontal_spacing = ipywidgets.BoundedFloatText(
         value=legend_options_default['legend_horizontal_spacing'],
         description='Horizontal space', min=0.)
-    legend_vertical_spacing = ipywidgets.BoundedFloatTextWidget(
+    legend_vertical_spacing = ipywidgets.BoundedFloatText(
         value=legend_options_default['legend_vertical_spacing'],
         description='Vertical space', min=0.)
-    spacing = ipywidgets.ContainerWidget(
-        children=[ipywidgets.ContainerWidget(children=[legend_n_columns,
+    spacing = ipywidgets.Box(
+        children=[ipywidgets.Box(children=[legend_n_columns,
                                                        legend_marker_scale]),
-                  ipywidgets.ContainerWidget(
+                  ipywidgets.Box(
                       children=[legend_horizontal_spacing,
                                 legend_vertical_spacing])])
-    legend_border = ipywidgets.CheckboxWidget(
+    legend_border = ipywidgets.Checkbox(
         description='Border',
         value=legend_options_default['legend_border'])
-    legend_border_padding = ipywidgets.BoundedFloatTextWidget(
+    legend_border_padding = ipywidgets.BoundedFloatText(
         value=legend_options_default['legend_border_padding'],
         description='Border pad', min=0.)
-    border = ipywidgets.ContainerWidget(
+    border = ipywidgets.Box(
         children=[legend_border, legend_border_padding])
-    legend_shadow = ipywidgets.CheckboxWidget(
+    legend_shadow = ipywidgets.Checkbox(
         description='Shadow', value=legend_options_default['legend_shadow'])
-    legend_rounded_corners = ipywidgets.CheckboxWidget(
+    legend_rounded_corners = ipywidgets.Checkbox(
         description='Rounded corners',
         value=legend_options_default['legend_rounded_corners'])
-    shadow_fancy = ipywidgets.ContainerWidget(children=[legend_shadow,
+    shadow_fancy = ipywidgets.Box(children=[legend_shadow,
                                                         legend_rounded_corners])
 
-    formatting_cont = ipywidgets.ContainerWidget(
+    formatting_cont = ipywidgets.Box(
         children=[spacing, border, shadow_fancy])
 
     # Options widget
-    tab_options = ipywidgets.TabWidget(children=[location_cont, font_cont,
+    tab_options = ipywidgets.Tab(children=[location_cont, font_cont,
                                                  formatting_cont])
-    options_wid = ipywidgets.ContainerWidget(
+    options_wid = ipywidgets.Box(
         children=[render_legend, tab_options])
 
     # Final widget
-    legend_options_wid = ipywidgets.ContainerWidget(children=[but, options_wid])
+    legend_options_wid = ipywidgets.Box(children=[but, options_wid])
 
     # Assign output
     legend_options_wid.selected_values = legend_options_default
@@ -3276,15 +3276,15 @@ def grid_options(grid_options_default, plot_function=None,
     import IPython.html.widgets as ipywidgets
     # Create widgets
     # toggle button
-    but = ipywidgets.ToggleButtonWidget(description=toggle_title,
+    but = ipywidgets.ToggleButton(description=toggle_title,
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # grid_line_style, grid_line_width
-    render_grid = ipywidgets.CheckboxWidget(
+    render_grid = ipywidgets.Checkbox(
         description=show_checkbox_title,
         value=grid_options_default['render_grid'])
-    grid_line_width = ipywidgets.BoundedFloatTextWidget(
+    grid_line_width = ipywidgets.BoundedFloatText(
         description='Width', value=grid_options_default['grid_line_width'],
         min=0.)
     grid_line_style_dict = OrderedDict()
@@ -3292,18 +3292,18 @@ def grid_options(grid_options_default, plot_function=None,
     grid_line_style_dict['dashed'] = '--'
     grid_line_style_dict['dash-dot'] = '-.'
     grid_line_style_dict['dotted'] = ':'
-    grid_line_style = ipywidgets.DropdownWidget(
+    grid_line_style = ipywidgets.Dropdown(
         values=grid_line_style_dict,
         value=grid_options_default['grid_line_style'], description='Style')
 
     # Options widget
-    all_grid_options = ipywidgets.ContainerWidget(
+    all_grid_options = ipywidgets.Box(
         children=[grid_line_style, grid_line_width])
-    options_wid = ipywidgets.ContainerWidget(
+    options_wid = ipywidgets.Box(
         children=[render_grid, all_grid_options])
 
     # Final widget
-    grid_options_wid = ipywidgets.ContainerWidget(children=[but, options_wid])
+    grid_options_wid = ipywidgets.Box(children=[but, options_wid])
 
     # Assign output
     grid_options_wid.selected_values = grid_options_default
@@ -3470,7 +3470,7 @@ def hog_options(toggle_show_default=True, toggle_show_visible=True):
     """
     import IPython.html.widgets as ipywidgets
     # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButtonWidget(description='HOG Options',
+    but = ipywidgets.ToggleButton(description='HOG Options',
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
@@ -3478,70 +3478,70 @@ def hog_options(toggle_show_default=True, toggle_show_visible=True):
     tmp = OrderedDict()
     tmp['Dense'] = 'dense'
     tmp['Sparse'] = 'sparse'
-    mode = ipywidgets.RadioButtonsWidget(values=tmp, description='Mode')
-    padding = ipywidgets.CheckboxWidget(value=True, description='Padding')
-    mode_wid = ipywidgets.ContainerWidget(children=[mode, padding])
-    window_height = ipywidgets.BoundedIntTextWidget(value='1',
+    mode = ipywidgets.RadioButtons(values=tmp, description='Mode')
+    padding = ipywidgets.Checkbox(value=True, description='Padding')
+    mode_wid = ipywidgets.Box(children=[mode, padding])
+    window_height = ipywidgets.BoundedIntText(value='1',
                                                     description='Height', min=1)
-    window_width = ipywidgets.BoundedIntTextWidget(value='1',
+    window_width = ipywidgets.BoundedIntText(value='1',
                                                    description='Width', min=1)
     tmp = OrderedDict()
     tmp['Blocks'] = 'blocks'
     tmp['Pixels'] = 'pixels'
-    window_size_unit = ipywidgets.RadioButtonsWidget(values=tmp,
+    window_size_unit = ipywidgets.RadioButtons(values=tmp,
                                                      description=' Size unit')
-    window_size_wid = ipywidgets.ContainerWidget(
+    window_size_wid = ipywidgets.Box(
         children=[window_height, window_width,
                   window_size_unit])
-    window_vertical = ipywidgets.BoundedIntTextWidget(value='1',
+    window_vertical = ipywidgets.BoundedIntText(value='1',
                                                       description='Step Y',
                                                       min=1)
-    window_horizontal = ipywidgets.BoundedIntTextWidget(value='1',
+    window_horizontal = ipywidgets.BoundedIntText(value='1',
                                                         description='Step X',
                                                         min=1)
     tmp = OrderedDict()
     tmp['Pixels'] = 'pixels'
     tmp['Cells'] = 'cells'
-    window_step_unit = ipywidgets.RadioButtonsWidget(values=tmp,
+    window_step_unit = ipywidgets.RadioButtons(values=tmp,
                                                      description='Step unit')
-    window_step_wid = ipywidgets.ContainerWidget(children=[window_vertical,
+    window_step_wid = ipywidgets.Box(children=[window_vertical,
                                                            window_horizontal,
                                                            window_step_unit])
-    window_wid = ipywidgets.ContainerWidget(
+    window_wid = ipywidgets.Box(
         children=[window_size_wid, window_step_wid])
-    window_wid = ipywidgets.ContainerWidget(children=[mode_wid, window_wid])
+    window_wid = ipywidgets.Box(children=[mode_wid, window_wid])
 
     # algorithm related options
     tmp = OrderedDict()
     tmp['Dalal & Triggs'] = 'dalaltriggs'
     tmp['Zhu & Ramanan'] = 'zhuramanan'
-    algorithm = ipywidgets.RadioButtonsWidget(values=tmp, value='dalaltriggs',
+    algorithm = ipywidgets.RadioButtons(values=tmp, value='dalaltriggs',
                                               description='Algorithm')
-    cell_size = ipywidgets.BoundedIntTextWidget(
+    cell_size = ipywidgets.BoundedIntText(
         value='8', description='Cell size (in pixels)', min=1)
-    block_size = ipywidgets.BoundedIntTextWidget(
+    block_size = ipywidgets.BoundedIntText(
         value='2', description='Block size (in cells)', min=1)
-    num_bins = ipywidgets.BoundedIntTextWidget(
+    num_bins = ipywidgets.BoundedIntText(
         value='9', description='Orientation bins', min=1)
-    algorithm_sizes = ipywidgets.ContainerWidget(
+    algorithm_sizes = ipywidgets.Box(
         children=[cell_size, block_size,
                   num_bins])
-    signed_gradient = ipywidgets.CheckboxWidget(value=True,
+    signed_gradient = ipywidgets.Checkbox(value=True,
                                                 description='Signed gradients')
-    l2_norm_clipping = ipywidgets.BoundedFloatTextWidget(
+    l2_norm_clipping = ipywidgets.BoundedFloatText(
         value='0.2', description='L2 norm clipping', min=0.)
-    algorithm_other = ipywidgets.ContainerWidget(children=[signed_gradient,
+    algorithm_other = ipywidgets.Box(children=[signed_gradient,
                                                            l2_norm_clipping])
-    algorithm_options = ipywidgets.ContainerWidget(children=[algorithm_sizes,
+    algorithm_options = ipywidgets.Box(children=[algorithm_sizes,
                                                              algorithm_other])
-    algorithm_wid = ipywidgets.ContainerWidget(
+    algorithm_wid = ipywidgets.Box(
         children=[algorithm, algorithm_options])
 
     # options tab widget
-    all_options = ipywidgets.TabWidget(children=[window_wid, algorithm_wid])
+    all_options = ipywidgets.Tab(children=[window_wid, algorithm_wid])
 
     # Widget container
-    hog_options_wid = ipywidgets.ContainerWidget(children=[but, all_options])
+    hog_options_wid = ipywidgets.Box(children=[but, all_options])
 
     # Initialize output dictionary
     hog_options_wid.options = {'mode': 'dense', 'algorithm': 'dalaltriggs',
@@ -3757,20 +3757,20 @@ def daisy_options(toggle_show_default=True, toggle_show_visible=True):
     """
     import IPython.html.widgets as ipywidgets
     # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButtonWidget(description='Daisy Options',
+    but = ipywidgets.ToggleButton(description='Daisy Options',
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # options widgets
-    step = ipywidgets.BoundedIntTextWidget(value='1', description='Step', min=1)
-    radius = ipywidgets.BoundedIntTextWidget(value='15', description='Radius',
+    step = ipywidgets.BoundedIntText(value='1', description='Step', min=1)
+    radius = ipywidgets.BoundedIntText(value='15', description='Radius',
                                              min=1)
-    rings = ipywidgets.BoundedIntTextWidget(value='2', description='Rings',
+    rings = ipywidgets.BoundedIntText(value='2', description='Rings',
                                             min=1)
-    histograms = ipywidgets.BoundedIntTextWidget(value='2',
+    histograms = ipywidgets.BoundedIntText(value='2',
                                                  description='Histograms',
                                                  min=1)
-    orientations = ipywidgets.BoundedIntTextWidget(value='8',
+    orientations = ipywidgets.BoundedIntText(value='8',
                                                    description='Orientations',
                                                    min=1)
     tmp = OrderedDict()
@@ -3778,21 +3778,21 @@ def daisy_options(toggle_show_default=True, toggle_show_visible=True):
     tmp['L2'] = 'l2'
     tmp['Daisy'] = 'daisy'
     tmp['None'] = None
-    normalization = ipywidgets.DropdownWidget(value='l1', values=tmp,
+    normalization = ipywidgets.Dropdown(value='l1', values=tmp,
                                               description='Normalization')
-    sigmas = ipywidgets.TextWidget(description='Sigmas')
-    ring_radii = ipywidgets.TextWidget(description='Ring radii')
+    sigmas = ipywidgets.Text(description='Sigmas')
+    ring_radii = ipywidgets.Text(description='Ring radii')
 
     # group widgets
-    cont1 = ipywidgets.ContainerWidget(
+    cont1 = ipywidgets.Box(
         children=[step, radius, rings, histograms])
-    cont2 = ipywidgets.ContainerWidget(
+    cont2 = ipywidgets.Box(
         children=[orientations, normalization, sigmas,
                   ring_radii])
-    options = ipywidgets.ContainerWidget(children=[cont1, cont2])
+    options = ipywidgets.Box(children=[cont1, cont2])
 
     # Widget container
-    daisy_options_wid = ipywidgets.ContainerWidget(children=[but, options])
+    daisy_options_wid = ipywidgets.Box(children=[but, options])
 
     # Initialize output dictionary
     daisy_options_wid.options = {'step': 1, 'radius': 15,
@@ -3937,7 +3937,7 @@ def lbp_options(toggle_show_default=True, toggle_show_visible=True):
     """
     import IPython.html.widgets as ipywidgets
     # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButtonWidget(description='LBP Options',
+    but = ipywidgets.ToggleButton(description='LBP Options',
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
@@ -3947,37 +3947,37 @@ def lbp_options(toggle_show_default=True, toggle_show_visible=True):
     tmp['Rotation-Invariant'] = 'ri'
     tmp['Both'] = 'riu2'
     tmp['None'] = 'none'
-    mapping_type = ipywidgets.DropdownWidget(value='u2', values=tmp,
+    mapping_type = ipywidgets.Dropdown(value='u2', values=tmp,
                                              description='Mapping')
-    radius = ipywidgets.TextWidget(value='1, 2, 3, 4', description='Radius')
-    samples = ipywidgets.TextWidget(value='8, 8, 8, 8', description='Samples')
-    algorithm_wid = ipywidgets.ContainerWidget(children=[radius,
+    radius = ipywidgets.Text(value='1, 2, 3, 4', description='Radius')
+    samples = ipywidgets.Text(value='8, 8, 8, 8', description='Samples')
+    algorithm_wid = ipywidgets.Box(children=[radius,
                                                          samples,
                                                          mapping_type])
 
     # window related options
-    window_vertical = ipywidgets.BoundedIntTextWidget(value='1',
+    window_vertical = ipywidgets.BoundedIntText(value='1',
                                                       description='Step Y',
                                                       min=1)
-    window_horizontal = ipywidgets.BoundedIntTextWidget(value='1',
+    window_horizontal = ipywidgets.BoundedIntText(value='1',
                                                         description='Step X',
                                                         min=1)
     tmp = OrderedDict()
     tmp['Pixels'] = 'pixels'
     tmp['Windows'] = 'cells'
-    window_step_unit = ipywidgets.RadioButtonsWidget(values=tmp,
+    window_step_unit = ipywidgets.RadioButtons(values=tmp,
                                                      description='Step unit')
-    padding = ipywidgets.CheckboxWidget(value=True, description='Padding')
-    window_wid = ipywidgets.ContainerWidget(children=[window_vertical,
+    padding = ipywidgets.Checkbox(value=True, description='Padding')
+    window_wid = ipywidgets.Box(children=[window_vertical,
                                                       window_horizontal,
                                                       window_step_unit,
                                                       padding])
 
     # options widget
-    options = ipywidgets.ContainerWidget(children=[window_wid, algorithm_wid])
+    options = ipywidgets.Box(children=[window_wid, algorithm_wid])
 
     # Widget container
-    lbp_options_wid = ipywidgets.ContainerWidget(children=[but, options])
+    lbp_options_wid = ipywidgets.Box(children=[but, options])
 
     # Initialize output dictionary
     lbp_options_wid.options = {'radius': range(1, 5), 'samples': [8] * 4,
@@ -4098,16 +4098,16 @@ def igo_options(toggle_show_default=True, toggle_show_visible=True):
     """
     import IPython.html.widgets as ipywidgets
     # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButtonWidget(description='IGO Options',
+    but = ipywidgets.ToggleButton(description='IGO Options',
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # options widget
-    double_angles = ipywidgets.CheckboxWidget(value=False,
+    double_angles = ipywidgets.Checkbox(value=False,
                                               description='Double angles')
 
     # Widget container
-    igo_options_wid = ipywidgets.ContainerWidget(children=[but, double_angles])
+    igo_options_wid = ipywidgets.Box(children=[but, double_angles])
 
     # Initialize output dictionary
     igo_options_wid.options = {'double_angles': False}
@@ -4187,21 +4187,21 @@ def function_definition(default_function='def my_function():\n    pass',
     """
     import IPython.html.widgets as ipywidgets
     # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButtonWidget(description='Features Options',
+    but = ipywidgets.ToggleButton(description='Features Options',
                                         value=toggle_show_default,
                                         visible=toggle_show_visible)
 
     # code widget
-    code = ipywidgets.TextareaWidget(value=default_function)
-    define_but = ipywidgets.ButtonWidget(description='Define')
-    msg_wid = ipywidgets.LatexWidget(value='')
-    define_wid = ipywidgets.ContainerWidget(children=[msg_wid, define_but])
+    code = ipywidgets.Textarea(value=default_function)
+    define_but = ipywidgets.Button(description='Define')
+    msg_wid = ipywidgets.Latex(value='')
+    define_wid = ipywidgets.Box(children=[msg_wid, define_but])
 
     # options widget
-    all_options = ipywidgets.ContainerWidget(children=[code, define_wid])
+    all_options = ipywidgets.Box(children=[code, define_wid])
 
     # Widget container
-    function_definition_wid = ipywidgets.ContainerWidget(
+    function_definition_wid = ipywidgets.Box(
         children=[but, all_options])
 
     # Initialize output dictionary
@@ -4283,10 +4283,10 @@ def format_function_definition(function_definition_wid, container_padding='6px',
         function_definition_wid.set_css('border', container_border)
 
 
-class IntListTextWidget():
+class IntListText():
     r"""
     Basic widget that returns a `list` of `int` numbers. It uses
-    `IPython.html.widgets.TextWidget()` and converts its value to a `list` of
+    `IPython.html.widgets.Text()` and converts its value to a `list` of
     `int`.
 
     Parameters
@@ -4311,7 +4311,7 @@ class IntListTextWidget():
             val = value
         else:
             raise ValueError("value must be str or list")
-        self.text_wid = ipywidgets.TextWidget(value=val,
+        self.text_wid = ipywidgets.Text(value=val,
                                               description=description)
 
     @property
@@ -4336,10 +4336,10 @@ class IntListTextWidget():
         return self.text_wid.model_id
 
 
-class FloatListTextWidget(IntListTextWidget):
+class FloatListText(IntListText):
     r"""
     Basic widget that returns a `list` of `float` numbers. It uses
-    `IPython.html.widgets.TextWidget()` and converts its value to a `list` of
+    `IPython.html.widgets.Text()` and converts its value to a `list` of
     `float`.
 
     Parameters
@@ -4412,7 +4412,7 @@ def _get_function_handle_from_string(s):
 def _convert_image_to_bytes(image):
     r"""
     Function that given a menpo.Image object, it converts it to the correct
-    bytes format that can be used by IPython.html.widgets.ImageWidget().
+    bytes format that can be used by IPython.html.widgets.Image().
     """
     fp = StringIO()
     image.as_PILImage().save(fp, format='png')
