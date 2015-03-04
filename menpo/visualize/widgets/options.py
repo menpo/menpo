@@ -23,6 +23,7 @@ from .tools import (colour_selection, format_colour_selection,
                     legend_options, format_legend_options,
                     update_legend_options, image_options, format_image_options,
                     update_image_options)
+from .compatibility import add_class, remove_class
 
 
 def channel_options(channels_options_default, plot_function=None,
@@ -374,21 +375,21 @@ def format_channel_options(channel_options_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # align glyph options
-    channel_options_wid.children[1].children[1].children[1].children[
-        1].children[1].remove_class('vbox')
-    channel_options_wid.children[1].children[1].children[1].children[
-        1].children[1].add_class('hbox')
+    remove_class(channel_options_wid.children[1].
+                 children[1].children[1].children[1].children[1], 'vbox')
+    add_class(channel_options_wid.children[1].
+              children[1].children[1].children[1].children[1], 'hbox')
     channel_options_wid.children[1].children[1].children[1].children[
         1].children[1].children[0].width = '0.8cm'
 
     # align sum and glyph checkboxes
-    channel_options_wid.children[1].children[1].children[1].remove_class('vbox')
-    channel_options_wid.children[1].children[1].children[1].add_class('hbox')
+    remove_class(channel_options_wid.children[1].children[1].children[1], 'vbox')
+    add_class(channel_options_wid.children[1].children[1].children[1], 'hbox')
 
     # align radio buttons with the rest
-    channel_options_wid.children[1].remove_class('vbox')
-    channel_options_wid.children[1].add_class('hbox')
-    channel_options_wid.children[1].add_class('align-start')
+    remove_class(channel_options_wid.children[1], 'vbox')
+    add_class(channel_options_wid.children[1], 'hbox')
+    add_class(channel_options_wid.children[1], 'align-start')
 
     # set toggle button font bold
     channel_options_wid.children[0].font_weight = toggle_button_font_weight
@@ -719,18 +720,18 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # align labels toggle buttons
-    landmark_options_wid.children[2].children[1].children[1].remove_class('vbox')
-    landmark_options_wid.children[2].children[1].children[1].add_class('hbox')
+    remove_class(landmark_options_wid.children[2].children[1].children[1], 'vbox')
+    add_class(landmark_options_wid.children[2].children[1].children[1], 'hbox')
 
     # align labels buttons with text
     landmark_options_wid.children[2].children[1].children[0].margin_right = '5px'
-    landmark_options_wid.children[2].children[1].remove_class('vbox')
-    landmark_options_wid.children[2].children[1].add_class('hbox')
-    landmark_options_wid.children[2].children[1].add_class('align-center')
+    remove_class(landmark_options_wid.children[2].children[1], 'vbox')
+    add_class(landmark_options_wid.children[2].children[1], 'hbox')
+    add_class(landmark_options_wid.children[2].children[1], 'align-center')
 
     # align group drop down menu with labels toggle buttons
     landmark_options_wid.children[2].children[1].margin_top = '10px'
-    landmark_options_wid.children[2].add_class('align-start')
+    add_class(landmark_options_wid.children[2], 'align-start')
 
     # set toggle button font bold
     landmark_options_wid.children[0].font_weight = toggle_button_font_weight
@@ -1275,10 +1276,9 @@ def format_animation_options(animation_options_wid, index_text_width='0.5cm',
                            text_width=index_text_width)
 
     # align play/stop button with animation options button
-    animation_options_wid.children[1].children[1].children[0].remove_class(
-        'vbox')
-    animation_options_wid.children[1].children[1].children[0].add_class('hbox')
-    animation_options_wid.children[1].children[1].add_class('align-end')
+    remove_class(animation_options_wid.children[1].children[1].children[0], 'vbox')
+    add_class(animation_options_wid.children[1].children[1].children[0], 'hbox')
+    add_class(animation_options_wid.children[1].children[1], 'align-end')
 
     # add margin on the right of the play button
     animation_options_wid.children[1].children[1]. \
@@ -1286,12 +1286,12 @@ def format_animation_options(animation_options_wid, index_text_width='0.5cm',
 
     if animation_options_wid.index_style == 'slider':
         # align animation on the right of slider
-        animation_options_wid.children[1].add_class('align-end')
+        add_class(animation_options_wid.children[1], 'align-end')
     else:
         # align animation and index buttons
-        animation_options_wid.children[1].remove_class('vbox')
-        animation_options_wid.children[1].add_class('hbox')
-        animation_options_wid.children[1].add_class('align-center')
+        remove_class(animation_options_wid.children[1], 'vbox')
+        add_class(animation_options_wid.children[1], 'hbox')
+        add_class(animation_options_wid.children[1], 'align-center')
         animation_options_wid.children[1].children[0].margin_right = '1cm'
 
     # set interval width
@@ -1472,8 +1472,8 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     # Create widgets
     # toggle button
     but = ipywidgets.ToggleButton(description='Viewer Options',
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
+                                  value=toggle_show_default,
+                                  visible=toggle_show_visible)
 
     # select object drop down menu
     objects_dict = OrderedDict()
@@ -1988,11 +1988,11 @@ def format_save_figure_options(save_figure_wid, container_padding='6px',
     save_figure_wid.children[1].margin_top = tab_top_margin
 
     # align path options to the right
-    save_figure_wid.children[1].children[0].add_class('align-end')
+    add_class(save_figure_wid.children[1].children[0], 'align-end')
 
     # align save button and error message horizontally
-    save_figure_wid.children[2].remove_class('vbox')
-    save_figure_wid.children[2].add_class('hbox')
+    remove_class(save_figure_wid.children[2], 'vbox')
+    add_class(save_figure_wid.children[2], 'hbox')
     save_figure_wid.children[2].children[1].margin_left = '0.5cm'
     save_figure_wid.children[2].children[1].background_color = 'red'
 

@@ -13,6 +13,8 @@ from .options import (channel_options, format_channel_options,
                       features_options, format_features_options, viewer_options,
                       format_viewer_options)
 from .tools import logo, format_logo
+from .compatibility import add_class, remove_class
+
 
 # This glyph import is called frequently during visualisation, so we ensure
 # that we only import it once
@@ -200,12 +202,12 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8),
 
     # align-start the pointcloud number widget and the rest
     if n_pointclouds > 1:
-        wid.add_class('align-start')
+        add_class(wid, 'align-start')
 
     # format options' widgets
     if n_pointclouds > 1:
-        wid.children[0].remove_class('vbox')
-        wid.children[0].add_class('hbox')
+        remove_class(wid.children[0], 'vbox')
+        add_class(wid.children[0], 'hbox')
         format_animation_options(pointcloud_number_wid,
                                  index_text_width='1.0cm',
                                  container_padding='6px',
@@ -541,12 +543,12 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
 
     # align-start the image number widget and the rest
     if n_landmarkgroups > 1:
-        wid.add_class('align-start')
+        add_class(wid, 'align-start')
 
     # format options' widgets
     if n_landmarkgroups > 1:
-        wid.children[0].remove_class('vbox')
-        wid.children[0].add_class('hbox')
+        remove_class(wid.children[0], 'vbox')
+        add_class(wid.children[0], 'hbox')
         format_animation_options(landmark_number_wid, index_text_width='1.0cm',
                                  container_padding='6px',
                                  container_margin='6px',
@@ -907,7 +909,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8),
 
     # align-start the image number widget and the rest
     if n_landmarks > 1:
-        wid.add_class('align-start')
+        add_class(wid, 'align-start')
 
     # update viewer options
     def update_viewer_options(name, value):
@@ -919,8 +921,8 @@ def visualize_landmarks(landmarks, figure_size=(10, 8),
 
     # format options' widgets
     if n_landmarks > 1:
-        wid.children[0].remove_class('vbox')
-        wid.children[0].add_class('hbox')
+        remove_class(wid.children[0], 'vbox')
+        add_class(wid.children[0], 'hbox')
         format_animation_options(landmark_number_wid, index_text_width='1.0cm',
                                  container_padding='6px',
                                  container_margin='6px',
@@ -1312,12 +1314,12 @@ def visualize_images(images, figure_size=(10, 8),
 
     # align-start the image number widget and the rest
     if n_images > 1:
-        wid.add_class('align-start')
+        add_class(wid, 'align-start')
 
     # format options' widgets
     if n_images > 1:
-        wid.children[0].remove_class('vbox')
-        wid.children[0].add_class('hbox')
+        remove_class(wid.children[0], 'vbox')
+        add_class(wid.children[0], 'hbox')
         format_animation_options(image_number_wid, index_text_width='1.0cm',
                                  container_padding='6px',
                                  container_margin='6px',
@@ -1431,9 +1433,9 @@ def features_selection():
     format_features_options(features_options_wid, border_visible=True)
     format_logo(logo_wid, border_visible=False)
     # align logo at the end
-    features_wid.add_class('align-end')
+    add_class(features_wid, 'align-end')
     # align select button at the centre
-    wid.add_class('align-center')
+    add_class(wid, 'align-center')
 
     # Initialize output with empty list. It needs to be a list so that
     # it's mutable and synchronizes with frontend.
