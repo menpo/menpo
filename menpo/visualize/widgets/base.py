@@ -146,7 +146,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8),
     # viewer options widget
     axes_mode_wid = ipywidgets.RadioButtons(
         values={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
-        value=2)
+        default_value=2)
     axes_mode_wid.on_trait_change(plot_function, 'value')
     viewer_options_wid = viewer_options(viewer_options_default,
                                         ['lines', 'markers', 'figure_one'],
@@ -458,7 +458,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
     # viewer options widget
     axes_mode_wid = ipywidgets.RadioButtons(
         values={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
-        value=2)
+        default_value=2)
     axes_mode_wid.on_trait_change(plot_function, 'value')
     viewer_options_wid = viewer_options(viewer_options_default,
                                         ['lines', 'markers', 'numbering',
@@ -472,7 +472,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
     # landmarks selection
     viewer_options_wid.children[1].children[0].visible = False
     viewer_options_all = ipywidgets.Box(children=[axes_mode_wid,
-                                                    viewer_options_wid])
+                                                  viewer_options_wid])
     info_wid = info_print(n_bullets=5,
                           toggle_show_default=True, toggle_show_visible=False)
 
@@ -826,7 +826,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8),
     # viewer options widget
     axes_mode_wid = ipywidgets.RadioButtons(
         values={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
-        value=2)
+        default_value=2)
     axes_mode_wid.on_trait_change(plot_function, 'value')
     viewer_options_wid = viewer_options(viewer_options_default,
                                         ['lines', 'markers', 'numbering',
@@ -840,7 +840,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8),
     # landmarks selection
     viewer_options_wid.children[1].children[0].visible = False
     viewer_options_all = ipywidgets.Box(children=[axes_mode_wid,
-                                                    viewer_options_wid])
+                                                  viewer_options_wid])
     info_wid = info_print(n_bullets=5,
                           toggle_show_default=True, toggle_show_visible=False)
 
