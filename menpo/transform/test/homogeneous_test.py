@@ -5,6 +5,7 @@ from menpo.transform import (Affine, Similarity, Rotation, Scale,
                              Homogeneous)
 from nose.tools import raises
 
+
 @raises(ValueError)
 def test_1d_translation():
     t_vec = np.array([1])
@@ -167,7 +168,7 @@ def test_similarity_2d_from_vector():
                      [params[1], params[0] + 1, params[3]],
                      [0, 0, 1]])
 
-    sim = Similarity.identity(2).from_vector(params)
+    sim = Similarity.init_identity(2).from_vector(params)
 
     assert_equal(sim.h_matrix, homo)
 
@@ -189,7 +190,7 @@ def test_translation_2d_from_vector():
                      [0, 1, params[1]],
                      [0, 0, 1]])
 
-    tr = Translation.identity(2).from_vector(params)
+    tr = Translation.init_identity(2).from_vector(params)
 
     assert_equal(tr.h_matrix, homo)
 
@@ -207,7 +208,7 @@ def test_translation_3d_from_vector():
                      [0, 0, 1, params[2]],
                      [0, 0, 0, 1]])
 
-    tr = Translation.identity(3).from_vector(params)
+    tr = Translation.init_identity(3).from_vector(params)
 
     assert_equal(tr.h_matrix, homo)
 
@@ -242,7 +243,7 @@ def test_nonuniformscale2d_from_vector():
                      [0, scale[1], 0],
                      [0, 0, 1]])
 
-    tr = NonUniformScale.identity(2).from_vector(scale)
+    tr = NonUniformScale.init_identity(2).from_vector(scale)
 
     assert_equal(tr.h_matrix, homo)
 
@@ -348,12 +349,12 @@ def test_scale_zero_scale_raise_valuerror():
 
 @raises(NotImplementedError)
 def test_rotation3d_from_vector_raises_notimplementederror():
-    Rotation.identity(3).from_vector(0)
+    Rotation.init_identity(3).from_vector(0)
 
 
 @raises(NotImplementedError)
 def test_rotation3d_as_vector_raises_notimplementederror():
-    Rotation.identity(3).as_vector()
+    Rotation.init_identity(3).as_vector()
 
 
 def test_affine_2d_n_parameters():
@@ -424,6 +425,7 @@ def test_rotation2d_n_parameters_raises_notimplementederror():
     t = Rotation(rot_matrix)
     t.n_parameters
 
+
 @raises(NotImplementedError)
 def test_rotation3d_n_parameters_raises_notimplementederror():
     rot_matrix = np.eye(3)
@@ -453,6 +455,7 @@ def test_similarity_set_h_matrix_raises_notimplementederror():
     s = Similarity(np.eye(3))
     s.set_h_matrix(s.h_matrix)
 
+
 @raises(NotImplementedError)
 def test_translation_set_h_matrix_raises_notimplementederror():
     t = Translation([3, 4])
@@ -464,10 +467,12 @@ def test_rotation_set_h_matrix_raises_notimplementederror():
     r = Rotation(np.array([[1, 0], [0, 1]]))
     r.set_h_matrix(r.h_matrix)
 
+
 @raises(NotImplementedError)
 def test_uniformscale_set_h_matrix_raises_notimplementederror():
     s = UniformScale(2, 3)
     s.set_h_matrix(s.h_matrix)
+
 
 @raises(NotImplementedError)
 def test_nonuniformscale_set_h_matrix_raises_notimplementederror():
@@ -484,13 +489,13 @@ def test_homogeneous_print():
 
 def test_homogeneous_eye():
     e = np.eye(3)
-    h = Homogeneous.identity(2)
+    h = Homogeneous.init_identity(2)
     assert_allclose(e, h.h_matrix)
 
 
 def test_homogeneous_has_true_inverse():
-    h = Homogeneous.identity(2)
-    assert(h.has_true_inverse)
+    h = Homogeneous.init_identity(2)
+    assert h.has_true_inverse
 
 
 def test_homogeneous_inverse():
@@ -500,17 +505,6 @@ def test_homogeneous_inverse():
     e_inv[2, 2] = 1
     h = Homogeneous(e)
     assert_allclose(h.pseudoinverse().h_matrix, e_inv)
-
-
-def test_homogeneous_apply():
-    e = np.eye(3) * 2
-    p = np.random.rand(10, 2)
-    e[2, 2] = 1
-    e[:2, -1] = [2, 3]
-    h = Homogeneous(e)
-    p_applied = h.apply(p)
-    p_manual = p * 2 + np.array([2, 3])
-    assert_allclose(p_applied, p_manual)
 
 
 def test_homogeneous_apply():

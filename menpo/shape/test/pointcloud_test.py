@@ -10,6 +10,17 @@ def test_pointcloud_creation():
     PointCloud(points)
 
 
+def test_pointcloud_has_nan_values():
+    pcloud = PointCloud(np.random.rand(3, 2), copy=False)
+    pcloud.points[0, 0] = np.nan
+    assert pcloud.has_nan_values()
+
+
+def test_pointcloud_no_nan_values():
+    pcloud = PointCloud(np.random.rand(3, 2), copy=False)
+    assert not pcloud.has_nan_values()
+
+
 def test_pointcloud_copy_method():
     points = np.array([[1, 2, 3],
                        [1, 1, 1]])

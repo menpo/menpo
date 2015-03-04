@@ -1,4 +1,3 @@
-import abc
 from menpo.base import Copyable
 
 
@@ -14,22 +13,22 @@ class Transform(Copyable):
     There are two useful forms of composition. Firstly, the mathematical
     composition symbol `o` has the following definition::
 
-        let a(x) and b(x) be two transforms on x.
+        Let a(x) and b(x) be two transforms on x.
         (a o b)(x) == a(b(x))
 
     This functionality is provided by the :meth:`compose_after` family of
-    methods::
+    methods: ::
 
         (a.compose_after(b)).apply(x) == a.apply(b.apply(x))
 
     Equally useful is an inversion the order of composition - so that over
-    time a large chain of transforms can be built to do a useful job,
-    and composing on this chain adds another transform to the end (after all
-    other preceding transforms have been performed).
+    time a large chain of transforms can be built to do a useful job, and
+    composing on this chain adds another transform to the end (after all other
+    preceding transforms have been performed).
 
-    For instance, let's say we want to rescale a :map:`PointCloud` ``p``
-    around it's mean, and then translate it some place else. It would be nice
-    to be able to do something like::
+    For instance, let's say we want to rescale a :map:`PointCloud` ``p`` around
+    its mean, and then translate it some place else. It would be nice to be able
+    to do something like::
 
         t = Translation(-p.centre)  # translate to centre
         s = Scale(2.0)  # rescale
@@ -43,19 +42,20 @@ class Transform(Copyable):
 
     For native composition, see the :map:`ComposableTransform` subclass and
     the :map:`VComposable` mix-in.
+
     For inversion, see the :map:`Invertible` and :map:`VInvertible` mix-ins.
+
     For alignment, see the :map:`Alignment` mix-in.
     """
-    __metaclass__ = abc.ABCMeta
 
     @property
     def n_dims(self):
         r"""
         The dimensionality of the data the transform operates on.
 
-        None if the transform is not dimension specific.
+        ``None`` if the transform is not dimension specific.
 
-        :type: int or None
+        :type: `int` or ``None``
         """
         return None
 
@@ -64,14 +64,13 @@ class Transform(Copyable):
         r"""
         The output of the data from the transform.
 
-        None if the output of the transform is not dimension specific.
+        ``None`` if the output of the transform is not dimension specific.
 
-        :type: int or None
+        :type: `int` or ``None``
         """
         # most Transforms don't change the dimensionality of their input.
         return self.n_dims
 
-    @abc.abstractmethod
     def _apply(self, x, **kwargs):
         r"""
         Applies the transform to the array ``x``, returning the result.
@@ -92,6 +91,7 @@ class Transform(Copyable):
         transformed : ``(n_points, n_dims_output)`` `ndarray`
             The transformed array
         """
+        raise NotImplementedError()
 
     def apply_inplace(self, x, **kwargs):
         r"""
@@ -134,8 +134,8 @@ class Transform(Copyable):
         object to transform itself non-destructively (a transformed copy of the
         object will be returned).
 
-        If not, ``x`` is assumed to be an `ndarray`. The transformation
-        will be non-destructive, returning the transformed version.
+        If not, ``x`` is assumed to be an `ndarray`. The transformation will be
+        non-destructive, returning the transformed version.
 
         Any ``kwargs`` will be passed to the specific transform :meth:`_apply`
         method.
@@ -181,7 +181,7 @@ class Transform(Copyable):
             Transform to be applied **after** self
 
         Returns
-        --------
+        -------
         transform : :map:`TransformChain`
             The resulting transform chain.
         """
@@ -206,7 +206,7 @@ class Transform(Copyable):
             Transform to be applied **before** self
 
         Returns
-        --------
+        -------
         transform : :map:`TransformChain`
             The resulting transform chain.
         """
@@ -215,18 +215,16 @@ class Transform(Copyable):
 
 class Transformable(Copyable):
     r"""
-    Interface for objects that know how be transformed by the
+    Interface for objects that know how to be transformed by the
     :map:`Transform` interface.
 
-    When `Transform.apply_inplace` is called on an object, the
+    When ``Transform.apply_inplace`` is called on an object, the
     :meth:`_transform_inplace` method is called, passing in the transforms'
-    :map:`_apply` function.
+    :meth:`_apply` function.
 
     This allows for the object to define how it should transform itself.
     """
-    __metaclass__ = abc.ABCMeta
 
-    @abc.abstractmethod
     def _transform_inplace(self, transform):
         r"""
         Apply the given transform function to ``self`` inplace.
@@ -241,6 +239,7 @@ class Transformable(Copyable):
         transformed : ``type(self)``
             The transformed object, having been transformed in place.
         """
+        raise NotImplementedError()
 
     def _transform(self, transform):
         r"""

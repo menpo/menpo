@@ -2,6 +2,7 @@ import gzip
 from functools import partial
 from pathlib import Path
 
+from menpo.compatibility import basestring, str
 from .extensions import landmark_types, image_types, pickle_types
 from ..utils import _norm_path
 
@@ -158,6 +159,12 @@ def _validate_filepath(fp, extension, overwrite):
     if extension is not None:
         # use .suffixes[0] to handle compression suffixes correctly (see below)
         filepath_suffix = path_filepath.suffixes[0]
+        # we couldn't find an exporter for all the suffixes (e.g .foo.bar)
+        # maybe the file stem has '.' in it? -> try again but this time just use the
+        # final suffix (.bar). (Note we first try '.foo.bar' as we want to catch
+        # cases like 'pkl.gz')
+        if _normalise_extension(extension) != filepath_suffix and len(path_filepath.suffixes) > 1:
+            filepath_suffix = path_filepath.suffix
         if _normalise_extension(extension) != filepath_suffix:
             raise ValueError('The file path extension must match the '
                              'requested file extension.')

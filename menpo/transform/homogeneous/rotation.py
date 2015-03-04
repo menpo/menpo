@@ -1,4 +1,3 @@
-import abc
 import numpy as np
 
 from .base import HomogFamilyAlignment
@@ -8,23 +7,20 @@ from .similarity import Similarity
 
 def optimal_rotation_matrix(source, target):
     r"""
-    Performs an SVD on the corrolation matrix to find an optimal rotation
-    between source and target
+    Performs an SVD on the correlation matrix to find an optimal rotation
+    between `source` and `target`.
 
     Parameters
     ----------
-
-    source: :class:`menpo.shape.PointCloud`
+    source: :map:`PointCloud`
         The source points to be aligned
-
-    target: :class:`menpo.shape.PointCloud`
+    target: :map:`PointCloud`
         The target points to be aligned
 
     Returns
     -------
-
-    ndarray
-        The optimal square rotation matrix
+    rotation : `ndarray`
+        The optimal square rotation matrix.
     """
     correlation = np.dot(target.points.T, source.points)
     U, D, Vt = np.linalg.svd(correlation)
@@ -41,10 +37,11 @@ class Rotation(DiscreteAffine, Similarity):
 
     Parameters
     ----------
-    rotation_matrix : (D, D) ndarray
+    rotation_matrix : ``(n_dims, n_dims)`` `ndarray`
         A valid, square rotation matrix
+    skip_checks : `bool`, optional
+        If ``True`` avoid sanity checks on ``rotation_matrix`` for performance.
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, rotation_matrix, skip_checks=False):
         h_matrix = np.eye(rotation_matrix.shape[0] + 1)
@@ -52,16 +49,33 @@ class Rotation(DiscreteAffine, Similarity):
         self.set_rotation_matrix(rotation_matrix, skip_checks=skip_checks)
 
     @classmethod
-    def from_2d_ccw_angle(cls, theta, degrees=True):
+    def init_identity(cls, n_dims):
         r"""
-        Convenience constructor for 2D CCW rotations about the origin
+        Creates an identity transform.
 
         Parameters
         ----------
-        theta : float
+        n_dims : `int`
+            The number of dimensions.
+
+        Returns
+        -------
+        identity : :class:`Rotation`
+            The identity matrix transform.
+        """
+        return Rotation(np.eye(n_dims))
+
+    @classmethod
+    def init_from_2d_ccw_angle(cls, theta, degrees=True):
+        r"""
+        Convenience constructor for 2D CCW rotations about the origin.
+
+        Parameters
+        ----------
+        theta : `float`
             The angle of rotation about the origin
-        degrees : bool, optional
-            If true theta is interpreted as a degree. If False, theta is
+        degrees : `bool`, optional
+            If ``True`` theta is interpreted as a degree. If ``False``, theta is
             interpreted as radians.
 
         Returns
@@ -75,20 +89,26 @@ class Rotation(DiscreteAffine, Similarity):
         return Rotation(np.array([[np.cos(theta), -np.sin(theta)],
                                   [np.sin(theta),  np.cos(theta)]]))
 
-    @classmethod
-    def identity(cls, n_dims):
-        return Rotation(np.eye(n_dims))
-
     @property
     def rotation_matrix(self):
         r"""
         The rotation matrix.
 
-        :type: (D, D) ndarray
+        :type: ``(n_dims, n_dims)`` `ndarray`
         """
         return self.linear_component
 
     def set_rotation_matrix(self, value, skip_checks=False):
+        r"""
+        Sets the rotation matrix.
+
+        Parameters
+        ----------
+        value : ``(n_dims, n_dims)`` `ndarray`
+            The new rotation matrix.
+        skip_checks : `bool`, optional
+            If ``True`` avoid sanity checks on ``value`` for performance.
+        """
         if not skip_checks:
             shape = value.shape
             if len(shape) != 2 and shape[0] != shape[1]:
@@ -98,7 +118,7 @@ class Rotation(DiscreteAffine, Similarity):
                 raise ValueError("Trying to update the rotation "
                                  "matrix to a different dimension")
             # TODO actually check I am a valid rotation
-            # TODO slightly dodgey here accessing _h_matrix
+            # TODO slightly dodgy here accessing _h_matrix
         self._h_matrix[:-1, :-1] = value
 
     def _transform_str(self):
@@ -116,9 +136,9 @@ class Rotation(DiscreteAffine, Similarity):
 
         Returns
         -------
-        axis : (D,) ndarray
+        axis : ``(n_dims,)`` `ndarray`
             The unit vector representing the axis of rotation
-        angle_of_rotation : double
+        angle_of_rotation : `float`
             The angle in radians of the rotation about the axis. The angle is
             signed in a right handed sense.
         """
@@ -131,13 +151,13 @@ class Rotation(DiscreteAffine, Similarity):
         r"""
         Decomposes this Rotation's rotation matrix into a angular rotation
         The rotation is considered in a right handed sense. The axis is, by
-        definition, [0, 0, 1].
+        definition, `[0, 0, 1]`.
 
         Returns
         -------
-        axis : (2,) ndarray
+        axis : ``(2,)`` `ndarray`
             The vector representing the axis of rotation
-        angle_of_rotation : double
+        angle_of_rotation : `float`
             The angle in radians of the rotation about the axis. The angle is
             signed in a right handed sense.
         """
@@ -155,9 +175,9 @@ class Rotation(DiscreteAffine, Similarity):
 
         Returns
         -------
-        axis : (3,) ndarray
+        axis : ``(3,)`` `ndarray`
             A unit vector, the axis about which the rotation takes place
-        angle_of_rotation : double
+        angle_of_rotation : `float`
             The angle in radians of the rotation about the `axis`.
             The angle is signed in a right handed sense.
 
@@ -218,7 +238,7 @@ class Rotation(DiscreteAffine, Similarity):
 
         Returns
         -------
-        theta : double
+        theta : `float`
             Angle of rotation around axis. Right-handed.
         """
         # TODO vectorizable rotations
@@ -237,36 +257,61 @@ class Rotation(DiscreteAffine, Similarity):
 
         Parameters
         ----------
-        p : (1,) ndarray
+        p : ``(1,)`` `ndarray`
             The array of parameters.
 
         Returns
         -------
-        transform : :class:`Rotation2D`
+        transform : :class:`Rotation`
             The transform initialised to the given parameters.
         """
         raise NotImplementedError("Rotations are not yet vectorizable")
 
     @property
     def composes_inplace_with(self):
+        r"""
+        :class:`Rotation` can swallow composition with any other
+        :class:`Rotation`.
+        """
         return Rotation
 
     def pseudoinverse(self):
         r"""
         The inverse rotation matrix.
 
-        :type: (D, D) ndarray
+        :type: :class:`Rotation`
         """
         return Rotation(np.linalg.inv(self.rotation_matrix), skip_checks=True)
 
 
 class AlignmentRotation(HomogFamilyAlignment, Rotation):
+    r"""
+    Constructs an :class:`Rotation` by finding the optimal rotation transform to
+    align `source` to `target`.
+
+    Parameters
+    ----------
+    source : :map:`PointCloud`
+        The source pointcloud instance used in the alignment
+    target : :map:`PointCloud`
+        The target pointcloud instance used in the alignment
+    """
 
     def __init__(self, source, target):
         HomogFamilyAlignment.__init__(self, source, target)
         Rotation.__init__(self, optimal_rotation_matrix(source, target))
 
     def set_rotation_matrix(self, value, skip_checks=False):
+        r"""
+        Sets the rotation matrix.
+
+        Parameters
+        ----------
+        value : ``(n_dims, n_dims)`` `ndarray`
+            The new rotation matrix.
+        skip_checks : `bool`, optional
+            If ``True`` avoid sanity checks on ``value`` for performance.
+        """
         Rotation.set_rotation_matrix(self, value, skip_checks=skip_checks)
         self._sync_target_from_state()
 
@@ -275,7 +320,8 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         Rotation.set_rotation_matrix(self, r, skip_checks=True)
 
     def as_non_alignment(self):
-        r"""Returns a copy of this rotation without it's alignment nature.
+        r"""
+        Returns a copy of this rotation without its alignment nature.
 
         Returns
         -------

@@ -1,4 +1,3 @@
-import abc
 import os.path
 
 # To debug the Copyable interface, simply uncomment lines 11-23 below and the
@@ -13,11 +12,11 @@ import os.path
 #
 # def print_copyable_log():
 #     print('Has .copy() but not Copyable:')
-#     for k, v in alien_copies.iteritems():
+#     for k, v in alien_copies.items():
 #         print('  {:15}|  {}'.format(k, ', '.join(v)))
 #
 #     print('\nNo .copy() (shallow copied):')
-#     for k, v in non_copies.iteritems():
+#     for k, v in non_copies.items():
 #         print('  {:15}|  {}'.format(k, ', '.join(v)))
 
 
@@ -49,7 +48,7 @@ class Copyable(object):
         """
         # print('copy called on {}'.format(type(self).__name__))
         new = self.__class__.__new__(self.__class__)
-        for k, v in self.__dict__.iteritems():
+        for k, v in self.__dict__.items():
             try:
                 new.__dict__[k] = v.copy()
                 # if not isinstance(v, Copyable):
@@ -69,8 +68,6 @@ class Vectorizable(Copyable):
     statistical analysis of objects, which commonly requires the data
     to be provided as a single vector.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     @property
     def n_parameters(self):
@@ -96,7 +93,6 @@ class Vectorizable(Copyable):
         v.flags.writeable = False
         return v
 
-    @abc.abstractmethod
     def _as_vector(self, **kwargs):
         """
         Returns a flattened representation of the object as a single
@@ -108,19 +104,22 @@ class Vectorizable(Copyable):
             The core representation of the object, flattened into a
             single vector.
         """
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def from_vector_inplace(self, vector):
-        """Update the state of this object from a vector form.
+        """
+        Update the state of this object from a vector form.
 
         Parameters
         ----------
         vector : ``(n_parameters,)`` `ndarray`
             Flattened representation of this object
         """
+        raise NotImplementedError()
 
     def from_vector(self, vector):
-        """Build a new instance of the object from it's vectorized state.
+        """
+        Build a new instance of the object from it's vectorized state.
 
         ``self`` is used to fill out the missing state required to
         rebuild a full object from it's standardized flattened state. This
@@ -142,10 +141,23 @@ class Vectorizable(Copyable):
         new.from_vector_inplace(vector)
         return new
 
+    def has_nan_values(self):
+        """
+        Tests if the vectorized form of the object contains ``nan`` values or
+        not. This is particularly useful for objects with unknown values that
+        have been mapped to ``nan`` values.
+
+        Returns
+        -------
+        has_nan_values : `bool`
+            If the vectorized object contains ``nan`` values.
+        """
+        import numpy as np
+        return np.any(np.isnan(self.as_vector()))
+
 
 class Targetable(Copyable):
-    """Interface for objects that can produce a :attr:`target` :map:`PointCloud`.
-
+    """Interface for objects that can produce a target :map:`PointCloud`.
 
     This could for instance be the result of an alignment or a generation of a
     :map:`PointCloud` instance from a shape model.
@@ -154,15 +166,16 @@ class Targetable(Copyable):
 
      - what a target is: see :attr:`target`
      - how to set a target: see :meth:`set_target`
-     - how to update the object after a target is set: see :meth:`_sync_state_from_target`
-     - how to produce a new target after the changes: see :meth:`_new_target_from_state`
+     - how to update the object after a target is set:
+       see :meth:`_sync_state_from_target`
+     - how to produce a new target after the changes:
+       see :meth:`_new_target_from_state`
 
     Note that :meth:`_sync_target_from_state` needs to be triggered as
     appropriate by subclasses e.g. when :map:`from_vector_inplace` is
     called. This will in turn trigger :meth:`_new_target_from_state`, which each
     subclass must implement.
     """
-    __metaclass__ = abc.ABCMeta
 
     @property
     def n_dims(self):
@@ -180,16 +193,17 @@ class Targetable(Copyable):
         """
         return self.target.n_points
 
-    @abc.abstractproperty
+    @property
     def target(self):
         r"""The current :map:`PointCloud` that this object produces.
 
         :type: :map:`PointCloud`
         """
+        raise NotImplementedError()
 
     def set_target(self, new_target):
-        r"""Update this object so that it attempts to recreate the
-        ``new_target``.
+        r"""
+        Update this object so that it attempts to recreate the ``new_target``.
 
         Parameters
         ----------
@@ -246,7 +260,6 @@ class Targetable(Copyable):
                 "- new target has to have the same number of points as the"
                 " old".format(self.target.n_points, new_target.n_points))
 
-    @abc.abstractmethod
     def _target_setter(self, new_target):
         r"""Sets the target to the new value.
 
@@ -259,12 +272,12 @@ class Targetable(Copyable):
         new_target : :map:`PointCloud`
             The new target that will be set.
         """
+        raise NotImplementedError()
 
     def _sync_target_from_state(self):
         new_target = self._new_target_from_state()
         self._target_setter_with_verification(new_target)
 
-    @abc.abstractmethod
     def _new_target_from_state(self):
         r"""Generate a new target that is correct after changes to the object.
 
@@ -272,9 +285,8 @@ class Targetable(Copyable):
         -------
         object : ``type(self)``
         """
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def _sync_state_from_target(self):
         r"""Synchronizes the object state to be correct after changes to the
         target.
@@ -282,7 +294,7 @@ class Targetable(Copyable):
         Called automatically from the target setter. This is called after the
         target is updated - only handle synchronization here.
         """
-        pass
+        raise NotImplementedError()
 
 
 def menpo_src_dir_path():
@@ -297,3 +309,11 @@ def menpo_src_dir_path():
     """
     from pathlib import Path  # to avoid cluttering the menpo.base namespace
     return Path(os.path.abspath(__file__)).parent
+
+
+class MenpoDeprecationWarning(Warning):
+    r"""
+    A warning that functionality in Menpo will be deprecated in a future major
+    release.
+    """
+    pass

@@ -1,9 +1,8 @@
 import numpy as np
 from nose.tools import raises
-from numpy.testing import assert_allclose, assert_equal
+from numpy.testing import assert_allclose, assert_equal, assert_almost_equal
 from menpo.shape import PointCloud
-from menpo.model import LinearModel, MeanLinearModel, PCAModel
-from menpo.model import InstanceLinearModel, MeanInstanceLinearModel
+from menpo.model import LinearModel, PCAModel
 
 
 def test_linear_model_creation():
@@ -198,3 +197,30 @@ def test_pca_orthogonalize_against_with_less_active_components():
     # number of active components must remain the same
     assert_equal(pca_model.n_active_components, 5)
 
+
+def test_pca_increment_centred():
+    pca_samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
+    ipca_model = PCAModel(pca_samples[:3])
+    ipca_model.increment(pca_samples[3:6])
+    ipca_model.increment(pca_samples[6:])
+
+    bpca_model = PCAModel(pca_samples)
+
+    assert_almost_equal(np.abs(ipca_model.components),
+                        np.abs(bpca_model.components))
+    assert_almost_equal(ipca_model.eigenvalues, bpca_model.eigenvalues)
+    assert_almost_equal(ipca_model.mean_vector, bpca_model.mean_vector)
+
+
+def test_pca_increment_noncentred():
+    pca_samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
+    ipca_model = PCAModel(pca_samples[:3], centre=False)
+    ipca_model.increment(pca_samples[3:6])
+    ipca_model.increment(pca_samples[6:])
+
+    bpca_model = PCAModel(pca_samples, centre=False)
+
+    assert_almost_equal(np.abs(ipca_model.components),
+                        np.abs(bpca_model.components))
+    assert_almost_equal(ipca_model.eigenvalues, bpca_model.eigenvalues)
+    assert_almost_equal(ipca_model.mean_vector, bpca_model.mean_vector)

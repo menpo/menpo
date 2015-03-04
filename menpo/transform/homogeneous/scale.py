@@ -12,20 +12,20 @@ def Scale(scale_factor, n_dims=None):
 
     A :class:`UniformScale` will be produced if:
 
-        - A float `scale_factor` and a `n_dims` kwarg are provided
-        - A ndarray scale_factor with shape (`n_dims`, ) is provided with all
-          elements being the same
+        - A `float` ``scale_factor`` and a ``n_dims`` `kwarg` are provided
+        - A `ndarray` ``scale_factor`` with shape ``(n_dims,)`` is provided
+          with all elements being the same
 
     A :class:`NonUniformScale` will be provided if:
 
-        - A ndarray `scale_factor` with shape (`n_dims`, ) is provided with
+        - A `ndarray` ``scale_factor`` with shape ``(n_dims,)`` is provided with
           at least two differing scale factors.
 
     Parameters
     ----------
-    scale_factor: double or (D,) ndarray
+    scale_factor : `float` or ``(n_dims,)`` `ndarray`
         Scale for each axis.
-    n_dims: int
+    n_dims : `int`, optional
         The dimensionality of the output transform.
 
     Returns
@@ -34,7 +34,7 @@ def Scale(scale_factor, n_dims=None):
         The correct type of scale
 
     Raises
-    -------
+    ------
     ValueError
         If any of the scale factors is zero
     """
@@ -58,12 +58,14 @@ def Scale(scale_factor, n_dims=None):
 
 class NonUniformScale(DiscreteAffine, Affine):
     r"""
-    An `n_dims` scale transform, with a scale component for each dimension.
+    An ``n_dims`` scale transform, with a scale component for each dimension.
 
     Parameters
     ----------
     scale : ``(n_dims,)`` `ndarray`
         A scale for each axis.
+    skip_checks : `bool`, optional
+        If ``True`` avoid sanity checks on ``h_matrix`` for performance.
     """
 
     def __init__(self, scale, skip_checks=False):
@@ -78,11 +80,29 @@ class NonUniformScale(DiscreteAffine, Affine):
         Affine.__init__(self, h_matrix, skip_checks=True, copy=False)
 
     @classmethod
-    def identity(cls, n_dims):
+    def init_identity(cls, n_dims):
+        r"""
+        Creates an identity transform.
+
+        Parameters
+        ----------
+        n_dims : `int`
+            The number of dimensions.
+
+        Returns
+        -------
+        identity : :class:`NonUniformScale`
+            The identity matrix transform.
+        """
         return NonUniformScale(np.ones(n_dims))
 
     @property
     def h_matrix_is_mutable(self):
+        r"""
+        ``h_matrix`` is not mutable.
+
+        :type: ``False``
+        """
         return False
 
     @property
@@ -90,7 +110,7 @@ class NonUniformScale(DiscreteAffine, Affine):
         r"""
         The scale vector.
 
-        :type: (D,) ndarray
+        :type: ``(n_dims,)`` `ndarray`
         """
         # Copy the vector as Numpy 1.10 will return a writeable view
         return self.h_matrix.diagonal()[:-1].copy()
@@ -102,12 +122,10 @@ class NonUniformScale(DiscreteAffine, Affine):
     @property
     def n_parameters(self):
         """
-        The number of parameters: `n_dims`.
+        The number of parameters: ``n_dims``. They have the form
+        ``[scale_x, scale_y, ....]`` representing the scale across each axis.
 
-        :type: int
-
-        `n_dims` parameters - `[scale_x, scale_y, ....]` - The scalar values
-        representing the scale across each axis.
+        :type: `list` of `int`
         """
         return self.scale.size
 
@@ -115,7 +133,7 @@ class NonUniformScale(DiscreteAffine, Affine):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
-        are output in the order [s0, s1, ...].
+        are output in the order ``[s0, s1, ...]``.
 
         +----------+--------------------------------------------+
         |parameter | definition                                 |
@@ -131,31 +149,34 @@ class NonUniformScale(DiscreteAffine, Affine):
 
         Returns
         -------
-        s : (D,) ndarray
+        s : ``(n_dims,)`` `ndarray`
             The scale across each axis.
         """
         return self.scale
 
     def from_vector_inplace(self, vector):
         r"""
-        Updates the NonUniformScale inplace.
+        Updates the :class:`NonUniformScale` inplace.
 
         Parameters
         ----------
-        vector : (D,) ndarray
+        vector : ``(n_dims,)`` `ndarray`
             The array of parameters.
-
         """
         np.fill_diagonal(self.h_matrix, vector)
         self.h_matrix[-1, -1] = 1
 
     @property
     def composes_inplace_with(self):
-        return (NonUniformScale, UniformScale)
+        r"""
+        :class:`NonUniformScale` can swallow composition with any other
+        :class:`NonUniformScale` and :class:`UniformScale`.
+        """
+        return NonUniformScale, UniformScale
 
     def pseudoinverse(self):
         """
-        The inverse scale.
+        The inverse scale matrix.
 
         :type: :class:`NonUniformScale`
         """
@@ -167,6 +188,15 @@ class UniformScale(DiscreteAffine, Similarity):
     An abstract similarity scale transform, with a single scale component
     applied to all dimensions. This is abstracted out to remove unnecessary
     code duplication.
+
+    Parameters
+    ----------
+    scale : ``(n_dims,)`` `ndarray`
+        A scale for each axis.
+    n_dims : `int`
+        The number of dimensions
+    skip_checks : `bool`, optional
+        If ``True`` avoid sanity checks on ``h_matrix`` for performance.
     """
 
     def __init__(self, scale, n_dims, skip_checks=False):
@@ -181,7 +211,20 @@ class UniformScale(DiscreteAffine, Similarity):
                             skip_checks=True)
 
     @classmethod
-    def identity(cls, n_dims):
+    def init_identity(cls, n_dims):
+        r"""
+        Creates an identity transform.
+
+        Parameters
+        ----------
+        n_dims : `int`
+            The number of dimensions.
+
+        Returns
+        -------
+        identity : :class:`UniformScale`
+            The identity matrix transform.
+        """
         return UniformScale(1, n_dims)
 
     @property
@@ -189,7 +232,7 @@ class UniformScale(DiscreteAffine, Similarity):
         r"""
         The single scale value.
 
-        :type: double
+        :type: `float`
         """
         return self.h_matrix[0, 0]
 
@@ -202,7 +245,7 @@ class UniformScale(DiscreteAffine, Similarity):
         r"""
         The number of parameters: 1
 
-        :type: int
+        :type: `int`
         """
         return 1
 
@@ -210,7 +253,7 @@ class UniformScale(DiscreteAffine, Similarity):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
-        are output in the order [s].
+        are output in the order ``[s]``.
 
         +----------+--------------------------------+
         |parameter | definition                     |
@@ -220,29 +263,53 @@ class UniformScale(DiscreteAffine, Similarity):
 
         Returns
         -------
-        s : double
+        s : `float`
             The scale across each axis.
         """
         return np.asarray(self.scale)
 
     def from_vector_inplace(self, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        Parameters
+        ----------
+        p : `float`
+            The parameter
+        """
         np.fill_diagonal(self.h_matrix, p)
         self.h_matrix[-1, -1] = 1
 
     @property
     def composes_inplace_with(self):
+        r"""
+        :class:`UniformScale` can swallow composition with any other
+        :class:`UniformScale`.
+        """
         return UniformScale
 
     def pseudoinverse(self):
         r"""
         The inverse scale.
 
-        :type: type(self)
+        :type: :class:`UniformScale`
         """
         return UniformScale(1.0 / self.scale, self.n_dims, skip_checks=True)
 
 
 class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
+    r"""
+    Constructs a :class:`UniformScale` by finding the optimal scale transform to
+    align `source` to `target`.
+
+    Parameters
+    ----------
+    source : :map:`PointCloud`
+        The source pointcloud instance used in the alignment
+    target : :map:`PointCloud`
+        The target pointcloud instance used in the alignment
+    """
 
     def __init__(self, source, target):
         HomogFamilyAlignment.__init__(self, source, target)
@@ -250,6 +317,15 @@ class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
                               source.n_dims)
 
     def from_vector_inplace(self, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        Parameters
+        ----------
+        p : `float`
+            The parameter
+        """
         UniformScale.from_vector_inplace(self, p)
         self._sync_target_from_state()
 

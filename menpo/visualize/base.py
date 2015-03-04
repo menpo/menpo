@@ -1,5 +1,3 @@
-# This has to go above the default importers to prevent cyclical importing
-import abc
 from collections import Iterable
 
 import numpy as np
@@ -18,18 +16,19 @@ class Renderer(object):
 
     It is assumed that the renderers follow some form of stateful pattern for
     rendering to Figures. Therefore, the major interface for rendering involves
-    providing a `figure_id` or a boolean about whether a new figure should
-    be used. If neither are provided then the default state of the rendering
-    engine is assumed to maintained.
+    providing a `figure_id` or a `bool` about whether a new figure should be
+    used. If neither are provided then the default state of the rendering engine
+    is assumed to be maintained.
 
-    Providing a `figure_id` and `new_figure == True` is not a valid state.
+    Providing both a ``figure_id`` and ``new_figure == True`` is not a valid
+    state.
 
     Parameters
     ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
+    figure_id : `object`
+        A figure id. Could be any valid object that identifies a figure in a
+        given framework (`str`, `int`, `float`, etc.).
+    new_figure : `bool`
         Whether the rendering engine should create a new figure.
 
     Raises
@@ -38,8 +37,6 @@ class Renderer(object):
         It is not valid to provide a figure id AND request a new figure to
         be rendered on.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, figure_id, new_figure):
         if figure_id is not None and new_figure:
@@ -52,39 +49,21 @@ class Renderer(object):
 
     def render(self, **kwargs):
         r"""
-        Render the object on the figure given at instantiation.
+        Abstract method to be overridden by the renderer. This will implement
+        the actual rendering code for a given object class.
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to specific rendering engine.
 
         Returns
         -------
-        viewer : :class:`Renderer`
-            Pointer to `self`.
-        """
-        return self._render(**kwargs)
-
-    @abc.abstractmethod
-    def _render(self, **kwargs):
-        r"""
-        Abstract method to be overridden the renderer. This will implement the
-        actual rendering code for a given object class.
-
-        Parameters
-        ----------
-        kwargs : dict
-            Options to be set when rendering.
-
-        Returns
-        -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             Pointer to `self`.
         """
         pass
 
-    @abc.abstractmethod
     def get_figure(self):
         r"""
         Abstract method for getting the correct figure to render on. Should
@@ -92,82 +71,110 @@ class Renderer(object):
 
         Returns
         -------
-        figure : object
+        figure : `object`
             The figure object that the renderer will render on.
         """
         pass
 
+    def save_figure(self, **kwargs):
+        r"""
+        Abstract method for saving the figure of the current `figure_id` to
+        file. It will implement the actual saving code for a given object class.
+
+        Parameters
+        ----------
+        kwargs : `dict`
+            Options to be set when saving the figure to file.
+        """
+        pass
+
+
+class viewwrapper(object):
+    r"""
+    This class abuses the Python descriptor protocol in order to dynamically
+    change the view method at runtime. Although this is more obviously achieved
+    through inheritance, the view methods practically amount to syntactic sugar
+    and so we want to maintain a single view method per class. We do not want
+    to add the mental overhead of implementing different 2D and 3D PointCloud
+    classes for example, since, outside of viewing, their implementations would
+    be identical.
+
+    Also note that we could have separated out viewing entirely and made the
+    check there, but the view method is an important paradigm in menpo that
+    we want to maintain.
+
+    Therefore, this function cleverly (and obscurely) returns the correct
+    view method for the dimensionality of the given object.
+    """
+
+    def __init__(self, wrapped_func):
+        fname = wrapped_func.__name__
+        self._2d_fname = '_{}_2d'.format(fname)
+        self._3d_fname = '_{}_3d'.format(fname)
+
+    def __get__(self, instance, instancetype):
+        if instance.n_dims == 2:
+            return getattr(instance, self._2d_fname)
+        elif instance.n_dims == 3:
+            return getattr(instance, self._3d_fname)
+        else:
+            def raise_not_supported(self):
+                r"""
+                Viewing of objects with greater than 3 dimensions is not
+                currently possible.
+                """
+                raise ValueError('Viewing of objects with greater than 3 '
+                                 'dimensions is not currently possible.')
+            return raise_not_supported
+
 
 class Viewable(object):
     r"""
-    Abstract interface for objects that can visualize themselves.
+    Abstract interface for objects that can visualize themselves. This assumes
+    that the class has dimensionality as the view method checks the ``n_dims``
+    property to wire up the correct view method.
     """
 
-    __metaclass__ = abc.ABCMeta
-
-    def view_on(self, figure_id, **kwargs):
+    @viewwrapper
+    def view(self):
         r"""
-        View the object on a a specific figure specified by the given id.
-
-        Parameters
-        ----------
-        figure_id : object
-            A unique identifier for a figure.
-        kwargs : dict
-            Passed through to specific rendering engine.
-
-        Returns
-        -------
-        viewer : :class:`Renderer`
-            The renderer instantiated.
+        Abstract method for viewing. See the :map:`viewwrapper` documentation
+        for an explanation of how the `view` method works.
         """
-        return self.view(figure_id=figure_id, **kwargs)
+        pass
 
-    def view_new(self, **kwargs):
-        r"""
-        View the object on a new figure.
+    def _view_2d(self, **kwargs):
+        raise NotImplementedError('2D Viewing is not supported.')
 
-        Parameters
-        ----------
-        kwargs : dict
-            Passed through to specific rendering engine.
+    def _view_3d(self, **kwargs):
+        raise NotImplementedError('3D Viewing is not supported.')
 
-        Returns
-        -------
-        viewer : :class:`Renderer`
-            The renderer instantiated.
-        """
-        return self.view(new_figure=True, **kwargs)
 
-    @abc.abstractmethod
-    def view(self, **kwargs):
-        r"""
-        View the object using the default rendering engine figure handling.
-        For example, the default behaviour for Matplotlib is that all draw
-        commands are applied to the same `figure` object.
+class LandmarkableViewable(object):
+    r"""
+    Mixin for :map:`Landmarkable` and :map:`Viewable` objects. Provides a
+    single helper method for viewing Landmarks and `self` on the same figure.
+    """
 
-        Parameters
-        ----------
-        kwargs : dict
-            Passed through to specific rendering engine.
+    @viewwrapper
+    def view_landmarks(self, **kwargs):
+        pass
 
-        Returns
-        -------
-        viewer : :class:`Renderer`
-            The renderer instantiated.
-        """
+    def _view_landmarks_2d(self, **kwargs):
+        raise NotImplementedError('2D Landmark Viewing is not supported.')
+
+    def _view_landmarks_3d(self, **kwargs):
+        raise NotImplementedError('3D Landmark Viewing is not supported.')
 
 
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
-    MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d,
-    MatplotlibAlignmentViewer2d, MatplotlibGraphPlotter,
-    MatplotlibMultiImageViewer2d, MatplotlibMultiImageSubplotsViewer2d,
-    MatplotlibPointGraphViewer2d)
+    MatplotlibLandmarkViewer2d, MatplotlibAlignmentViewer2d,
+    MatplotlibGraphPlotter, MatplotlibMultiImageViewer2d,
+    MatplotlibMultiImageSubplotsViewer2d, MatplotlibPointGraphViewer2d)
 
 # Default importer types
 PointGraphViewer2d = MatplotlibPointGraphViewer2d
-PointCloudViewer2d = MatplotlibPointCloudViewer2d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
 ImageViewer2d = MatplotlibImageViewer2d
 ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
@@ -178,210 +185,31 @@ MultiImageViewer2d = MatplotlibMultiImageViewer2d
 MultiImageSubplotsViewer2d = MatplotlibMultiImageSubplotsViewer2d
 
 
-class LandmarkViewer(object):
-    r"""
-    Base Landmark viewer that abstracts away dimensionality
-
-    Parameters
-    ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-
-    new_figure : `bool`
-        Whether the rendering engine should create a new figure.
-
-    group : `str`
-        The main label of the landmark set.
-
-    pointcloud : :map:`PointCloud`
-        The pointcloud representing the landmarks.
-
-    labels_to_masks : `dict(string, ndarray)`
-        A dictionary of labels to masks into the pointcloud that represent
-        which points belong to the given label.
-
-    targettype : `type` of :map:`Landmarkable`
-        The parent object that we are drawing the landmarks for.
-
-    """
-    def __init__(self, figure_id, new_figure, group, pointcloud,
-                 labels_to_masks):
-        self.pointcloud = pointcloud
-        self.group = group
-        self.labels_to_masks = labels_to_masks
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-
-    def render(self, **kwargs):
-        r"""
-        Select the correct type of landmark viewer for the given parent object.
-
-        Parameters
-        ----------
-        kwargs : dict
-            Passed through to landmark viewer.
-
-        Returns
-        -------
-        viewer : :class:`Renderer`
-            The rendering object.
-
-        Raises
-        ------
-        DimensionalityError
-            Only 2D and 3D viewers are supported.
-        """
-        if self.pointcloud.n_dims == 2:
-            return LandmarkViewer2d(self.figure_id, self.new_figure,
-                                    self.group, self.pointcloud,
-                                    self.labels_to_masks).render(**kwargs)
-        elif self.pointcloud.n_dims == 3:
-            try:
-                from menpo3d.visualize import LandmarkViewer3d
-                return LandmarkViewer3d(self.figure_id, self.new_figure,
-                                        self.group, self.pointcloud,
-                                        self.labels_to_masks).render(**kwargs)
-            except ImportError:
-                raise ImportError(Menpo3dErrorMessage)
-        else:
-            raise ValueError("Only 2D and 3D landmarks are "
-                             "currently supported")
-
-
-class PointCloudViewer(object):
-    r"""
-    Base PointCloud viewer that abstracts away dimensionality.
-
-    Parameters
-    ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
-        Whether the rendering engine should create a new figure.
-    points : (N, D) ndarray
-        The points to render.
-    """
-
-    def __init__(self, figure_id, new_figure, points):
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-        self.points = points
-
-    def render(self, **kwargs):
-        r"""
-        Select the correct type of pointcloud viewer for the given
-        pointcloud dimensionality.
-
-        Parameters
-        ----------
-        kwargs : dict
-            Passed through to pointcloud viewer.
-
-        Returns
-        -------
-        viewer : :class:`Renderer`
-            The rendering object.
-
-        Raises
-        ------
-        DimensionalityError
-            Only 2D and 3D viewers are supported.
-        """
-        if self.points.shape[1] == 2:
-            return PointCloudViewer2d(self.figure_id, self.new_figure,
-                                      self.points).render(**kwargs)
-        elif self.points.shape[1] == 3:
-            try:
-                from menpo3d.visualize import PointCloudViewer3d
-                return PointCloudViewer3d(self.figure_id, self.new_figure,
-                                          self.points).render(**kwargs)
-            except ImportError:
-                raise ImportError(Menpo3dErrorMessage)
-        else:
-            raise ValueError("Only 2D and 3D pointclouds are "
-                             "currently supported")
-
-
-class PointGraphViewer(object):
-    r"""
-    Base PointGraph viewer that abstracts away dimensionality.
-
-    Parameters
-    ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
-        Whether the rendering engine should create a new figure.
-    points : (N, D) ndarray
-        The points to render.
-    adjacency_array : (N, 2) ndarray
-        The list of edges to create lines from.
-    """
-
-    def __init__(self, figure_id, new_figure, points, adjacency_list):
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-        self.points = points
-        self.adjacency_list = adjacency_list
-
-    def render(self, **kwargs):
-        r"""
-        Select the correct type of pointgraph viewer for the given
-        pointgraph dimensionality.
-
-        Parameters
-        ----------
-        kwargs : dict
-            Passed through to pointgraph viewer.
-
-        Returns
-        -------
-        viewer : :class:`Renderer`
-            The rendering object.
-
-        Raises
-        ------
-        DimensionalityError
-            Only 2D viewers are supported.
-        """
-        if self.points.shape[1] == 2:
-            return PointGraphViewer2d(self.figure_id, self.new_figure,
-                                      self.points,
-                                      self.adjacency_list).render(**kwargs)
-        else:
-            raise ValueError("Only 2D pointgraphs are "
-                             "currently supported")
-
-
 class ImageViewer(object):
     r"""
-    Base Image viewer that abstracts away dimensionality. It can visualize
-    multiple channels of an image in subplots.
+    Base :map:`Image` viewer that abstracts away dimensionality. It can
+    visualize multiple channels of an image in subplots.
 
     Parameters
     ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
+    figure_id : `object`
+        A figure id. Could be any valid object that identifies a figure in a
+        given framework (`str`, `int`, `float`, etc.).
+    new_figure : `bool`
         Whether the rendering engine should create a new figure.
-    dimensions : {2, 3} int
-        The number of dimensions in the image
-    pixels : (N, D) ndarray
+    dimensions : {``2``, ``3``} `int`
+        The number of dimensions in the image.
+    pixels : ``(N, D)`` `ndarray`
         The pixels to render.
-    channels: int or list or 'all' or None
+    channels: `int` or `list` or ``'all'`` or `None`
         A specific selection of channels to render. The user can choose either
-        a single or multiple channels. If all, render all channels in subplot
-        mode. If None and channels are less than 36, render them all. If None
-        and channels are more than 36, render the first 36.
-
-        Default: None
-    mask: (N, D) ndarray
-        A boolean mask to be applied to the image. All points outside the
-        mask are set to 0.
+        a single or multiple channels. If ``'all'``, render all channels in
+        subplot mode. If `None` and image is not greyscale or RGB, render all
+        channels in subplots. If `None` and image is greyscale or RGB, then do
+        not plot channels in different subplots.
+    mask: ``(N, D)`` `ndarray`
+        A `bool` mask to be applied to the image. All points outside the
+        mask are set to ``0``.
     """
 
     def __init__(self, figure_id, new_figure, dimensions, pixels,
@@ -394,79 +222,101 @@ class ImageViewer(object):
             self._parse_channels(channels, pixels)
         self.pixels = self._masked_pixels(pixels, mask)
 
+        self._flip_image_channels()
+
+    def _flip_image_channels(self):
+        if self.pixels.ndim == 3:
+            from menpo.image.base import channels_to_back
+            self.pixels = channels_to_back(self.pixels)
+
     def _parse_channels(self, channels, pixels):
         r"""
-        Parse channels parameter. If channels is int or list, keep it as is. If
-        channels is all, return a list of all the image's channels. If channels
-        is None, return the minimum between an upper_limit and the image's
-        number of channels. If image is grayscale or RGB and channels is None,
-        then do not plot channels in different subplots.
+        Parse `channels` parameter. If `channels` is `int` or `list`, keep it as
+        is. If `channels` is ``'all'``, return a `list` of all the image's
+        channels. If `channels` is `None`, return the minimum between an
+        `upper_limit` and the image's number of channels. If image is greyscale
+        or RGB and `channels` is `None`, then do not plot channels in different
+        subplots.
 
         Parameters
         ----------
-        channels: int or list or 'all' or None
+        channels : `int` or `list` or ``'all'`` or `None`
             A specific selection of channels to render.
-        pixels : (N, D) ndarray
+        pixels : ``(N, D)`` `ndarray`
             The image's pixels to render.
-        upper_limit: int
-            The upper limit of subplots for the channels=None case.
+
+        Returns
+        -------
+        pixels : ``(N, D)`` `ndarray`
+            The pixels to be visualized.
+        use_subplots : `bool`
+            Whether to visualize using subplots.
         """
         # Flag to trigger ImageSubplotsViewer2d or ImageViewer2d
         use_subplots = True
-        n_channels = pixels.shape[2]
+        n_channels = pixels.shape[0]
         if channels is None:
             if n_channels == 1:
-                pixels = pixels[..., 0]
+                pixels = pixels[0, ...]
                 use_subplots = False
             elif n_channels == 3:
                 use_subplots = False
         elif channels != 'all':
             if isinstance(channels, Iterable):
-                pixels = pixels[..., channels]
+                if len(channels) == 1:
+                    pixels = pixels[channels[0], ...]
+                    use_subplots = False
+                else:
+                    pixels = pixels[channels, ...]
             else:
-                pixels = pixels[..., channels]
+                pixels = pixels[channels, ...]
                 use_subplots = False
 
         return pixels, use_subplots
 
     def _masked_pixels(self, pixels, mask):
         r"""
-        Return the masked pixels using a given boolean mask. In order to make
+        Return the masked pixels using a given `bool` mask. In order to make
         sure that the non-masked pixels are visualized in white, their value
         is set to the maximum of pixels.
 
         Parameters
         ----------
-        pixels : (N, D) ndarray
+        pixels : ``(N, D)`` `ndarray`
             The image's pixels to render.
-        mask: (N, D) ndarray
-            A boolean mask to be applied to the image. All points outside the
-            mask are set to the image max.
-            If mask is None, then the initial pixels are returned.
+        mask: ``(N, D)`` `ndarray`
+            A `bool` mask to be applied to the image. All points outside the
+            mask are set to the image max. If mask is `None`, then the initial
+            pixels are returned.
+
+        Returns
+        -------
+        masked_pixels : ``(N, D)`` `ndarray`
+            The masked pixels.
         """
         if mask is not None:
             nanmax = np.nanmax(pixels)
-            pixels[~mask] = nanmax + (0.01 * nanmax)
+            pixels[..., ~mask] = nanmax + (0.01 * nanmax)
         return pixels
 
     def render(self, **kwargs):
         r"""
-        Select the correct type of image viewer for the given
-        image dimensionality.
+        Select the correct type of image viewer for the given image
+        dimensionality.
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to image viewer.
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             The rendering object.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             Only 2D images are supported.
         """
         if self.dimensions == 2:
@@ -480,64 +330,109 @@ class ImageViewer(object):
             raise ValueError("Only 2D images are currently supported")
 
 
-class TriMeshViewer(object):
+def view_image_landmarks(image, channels, masked, group,
+                         with_labels, without_labels, figure_id, new_figure,
+                         interpolation, alpha, render_lines, line_colour,
+                         line_style, line_width, render_markers, marker_style,
+                         marker_size, marker_face_colour, marker_edge_colour,
+                         marker_edge_width, render_numbering,
+                         numbers_horizontal_align, numbers_vertical_align,
+                         numbers_font_name, numbers_font_size,
+                         numbers_font_style, numbers_font_weight,
+                         numbers_font_colour, render_legend, legend_title,
+                         legend_font_name, legend_font_style, legend_font_size,
+                         legend_font_weight, legend_marker_scale,
+                         legend_location, legend_bbox_to_anchor,
+                         legend_border_axes_pad, legend_n_columns,
+                         legend_horizontal_spacing, legend_vertical_spacing,
+                         legend_border, legend_border_padding, legend_shadow,
+                         legend_rounded_corners, render_axes, axes_font_name,
+                         axes_font_size, axes_font_style, axes_font_weight,
+                         axes_x_limits, axes_y_limits, figure_size):
     r"""
-    Base TriMesh viewer that abstracts away dimensionality.
+    This is a helper method that abstracts away the fact that viewing
+    images and masked images is identical apart from the mask. Therefore,
+    we do the class check in this method and then proceed identically whether
+    the image is masked or not.
 
-    Parameters
-    ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
-        Whether the rendering engine should create a new figure.
-    points : (N, D) ndarray
-        The points to render.
-    trilist : (M, 3) ndarray
-        The triangulation for the points.
+    See the documentation for _view_2d on Image or _view_2d on MaskedImage
+    for information about the parameters.
     """
+    import matplotlib.pyplot as plt
 
-    def __init__(self, figure_id, new_figure, points, trilist):
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-        self.points = points
-        self.trilist = trilist
+    if not image.has_landmarks:
+        raise ValueError('Image does not have landmarks attached, unable '
+                         'to view landmarks.')
 
-    def render(self, **kwargs):
-        r"""
-        Select the correct type of trimesh viewer for the given
-        trimesh dimensionality.
+    # Render self
+    from menpo.image import MaskedImage
+    if isinstance(image, MaskedImage):
+        self_view = image.view(figure_id=figure_id, new_figure=new_figure,
+                               channels=channels, masked=masked,
+                               interpolation=interpolation, alpha=alpha)
+    else:
+        self_view = image.view(figure_id=figure_id, new_figure=new_figure,
+                               channels=channels,
+                               interpolation=interpolation, alpha=alpha)
 
-        Parameters
-        ----------
-        kwargs : dict
-            Passed through to trimesh viewer.
+    # Make sure axes are constrained to the image size
+    if axes_x_limits is None:
+        axes_x_limits = [0, image.width - 1]
+    if axes_y_limits is None:
+        axes_y_limits = [0, image.height - 1]
 
-        Returns
-        -------
-        viewer : :class:`Renderer`
-            The rendering object.
+    # Render landmarks
+    landmark_view = None  # initialize viewer object
+    # useful in order to visualize the legend only for the last axis object
+    render_legend_tmp = False
+    for i, ax in enumerate(self_view.axes_list):
+        # set current axis
+        plt.sca(ax)
+        # show legend only for the last axis object
+        if i == len(self_view.axes_list) - 1:
+            render_legend_tmp = render_legend
 
-        Raises
-        ------
-        DimensionalityError
-            Only 2D and 3D viewers are supported.
-        """
-        if self.points.shape[1] == 2:
-            from menpo.shape.mesh.base import trilist_to_adjacency_array
-            return PointGraphViewer2d(
-                self.figure_id, self.new_figure, self.points,
-                trilist_to_adjacency_array(self.trilist)).render(**kwargs)
-        elif self.points.shape[1] == 3:
-            try:
-                from menpo3d.visualize import TriMeshViewer3d
-                return TriMeshViewer3d(self.figure_id, self.new_figure,
-                                       self.points, self.trilist).render(**kwargs)
-            except ImportError:
-                raise ImportError(Menpo3dErrorMessage)
-        else:
-            raise ValueError("Only 2D and 3D TriMeshes "
-                             "are currently supported")
+        # viewer
+        landmark_view = image.landmarks[group].view(
+            with_labels=with_labels, without_labels=without_labels,
+            figure_id=self_view.figure_id, new_figure=False,
+            image_view=True, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_legend=render_legend_tmp, legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=figure_size)
+
+    return landmark_view
 
 
 class MultipleImageViewer(ImageViewer):

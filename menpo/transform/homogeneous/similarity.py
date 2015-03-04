@@ -7,18 +7,38 @@ from functools import reduce
 
 class Similarity(Affine):
     r"""
-    Specialist version of an :map:`Affine` that is guaranteed to be
-    a Similarity transform.
+    Specialist version of an :map:`Affine` that is guaranteed to be a
+    Similarity transform.
 
     Parameters
     ----------
-    h_matrix : (D + 1, D + 1) ndarray
-        The homogeneous matrix of the similarity transform.
-
+    h_matrix : ``(n_dims + 1, n_dims + 1)`` `ndarray`
+        The homogeneous matrix of the affine transformation.
+    copy : `bool`, optional
+        If ``False`` avoid copying ``h_matrix`` for performance.
+    skip_checks : `bool`, optional
+        If ``True`` avoid sanity checks on ``h_matrix`` for performance.
     """
 
     def __init__(self, h_matrix, copy=True, skip_checks=False):
         Affine.__init__(self, h_matrix, copy=copy, skip_checks=skip_checks)
+
+    @classmethod
+    def init_identity(cls, n_dims):
+        r"""
+        Creates an identity transform.
+
+        Parameters
+        ----------
+        n_dims : `int`
+            The number of dimensions.
+
+        Returns
+        -------
+        identity : :class:`Similarity`
+            The identity matrix transform.
+        """
+        return cls(np.eye(n_dims + 1), copy=False, skip_checks=True)
 
     def _transform_str(self):
         r"""
@@ -26,9 +46,8 @@ class Similarity(Affine):
 
         Returns
         -------
-        str : string
+        str : `str`
             String representation of transform.
-
         """
         header = 'Similarity decomposing into:'
         list_str = [t._transform_str() for t in self.decompose()]
@@ -36,11 +55,12 @@ class Similarity(Affine):
 
     @property
     def h_matrix_is_mutable(self):
-        return False
+        r"""
+        ``h_matrix`` is not mutable.
 
-    @classmethod
-    def identity(cls, n_dims):
-        return cls(np.eye(n_dims + 1), copy=False, skip_checks=True)
+        :type: ``False``
+        """
+        return False
 
     @property
     def n_parameters(self):
@@ -54,13 +74,13 @@ class Similarity(Affine):
 
         Returns
         -------
-        int
+        n_parameters : `int`
+            The transform parameters
 
         Raises
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
-
         """
         if self.n_dims == 2:
             return 4
@@ -75,8 +95,8 @@ class Similarity(Affine):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
-        are output in the order `[a, b, tx, ty]`, given that
-        `a = k cos(theta) - 1` and `b = k sin(theta)` where `k` is a
+        are output in the order ``[a, b, tx, ty]``, given that
+        ``a = k cos(theta) - 1`` and ``b = k sin(theta)`` where ``k`` is a
         uniform scale and `theta` is a clockwise rotation in radians.
 
         **2D**
@@ -96,14 +116,13 @@ class Similarity(Affine):
 
         Returns
         -------
-        params : (P,) ndarray
+        params : ``(P,)`` `ndarray`
             The values that parameterise the transform.
 
         Raises
         ------
         DimensionalityError, NotImplementedError
             If the transform is not 2D
-
         """
         n_dims = self.n_dims
         if n_dims == 2:
@@ -132,14 +151,13 @@ class Similarity(Affine):
 
         Parameters
         ----------
-        p : (P,) ndarray
+        p : ``(P,)`` `ndarray`
             The array of parameters.
 
         Raises
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
-
         """
         if p.shape[0] == 4:
             homog = np.eye(3)
@@ -161,23 +179,17 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     """
     Infers the similarity transform relating two vectors with the same
     dimensionality. This is simply the procrustes alignment of the
-    source to the target.
+    `source` to the `target`.
 
     Parameters
     ----------
-
     source : :map:`PointCloud`
         The source pointcloud instance used in the alignment
-
     target : :map:`PointCloud`
         The target pointcloud instance used in the alignment
-
-    rotation: boolean, optional
-        If False, the rotation component of the similarity transform is not
+    rotation: `bool`, optional
+        If ``False``, the rotation component of the similarity transform is not
         inferred.
-
-        Default: True
-
     """
     def __init__(self, source, target, rotation=True):
         HomogFamilyAlignment.__init__(self, source, target)
@@ -189,7 +201,8 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         self._set_h_matrix(similarity.h_matrix, copy=False, skip_checks=True)
 
     def as_non_alignment(self):
-        r"""Returns a copy of this similarity without it's alignment nature.
+        r"""
+        Returns a copy of this similarity without it's alignment nature.
 
         Returns
         -------
@@ -212,14 +225,13 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
 
         Parameters
         ----------
-        p : (P,) ndarray
+        p : ``(P,)`` `ndarray`
             The array of parameters.
 
         Raises
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
-
         """
         Similarity.from_vector_inplace(self, p)
         self._sync_target_from_state()
@@ -227,29 +239,23 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
 
 def procrustes_alignment(source, target, rotation=True):
     r"""
-    Returns the similarity transform that aligns the source to the target.
+    Returns the similarity transform that aligns the `source` to the `target`.
 
     Parameters
     ----------
-
-
     source : :map:`PointCloud`
         The source pointcloud
-
     target : :map:`PointCloud`
         The target pointcloud
-
     rotation : `bool`, optional
-        If `True`, rotation is allowed in the Procrustes calculation. If
-        False, only scale and translation effects are used.
+        If ``True``, rotation is allowed in the Procrustes calculation. If
+        ``False``, only scale and translation effects are used.
 
     Returns
     -------
-
-    :map:`Similarity`
-        A :map:`Similarity Transform that optimally aligns the ``source`` to
-        ``target``.
-
+    transform : :map:`Similarity`
+        A :map:`Similarity Transform that optimally aligns the `source` to
+        `target`.
     """
     from .rotation import Rotation, optimal_rotation_matrix
     from .translation import Translation
@@ -263,7 +269,7 @@ def procrustes_alignment(source, target, rotation=True):
 
     # start building the Procrustes Alignment - src translation followed by
     # scale
-    p = Similarity.identity(source.n_dims)
+    p = Similarity.init_identity(source.n_dims)
     p.compose_before_inplace(src_t)
     p.compose_before_inplace(src_s)
 

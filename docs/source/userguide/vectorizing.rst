@@ -3,11 +3,10 @@
 Vectorizing Objects
 ===================
 
-
 .. figure:: vectorizing.jpg
 
    **Figure 1:** `Vectorizing allows Menpo to have rich data types whilst
-   simulatneously providing efficient linear algebra routines. Here an image is
+   simultaneously providing efficient linear algebra routines. Here an image is
    vectorized, and an arbitrary process` ``f()`` `is performed on it's vector
    representation. Afterwards the vector is converted the back into an image.
    The vector operation is completely general, and could have equally been
@@ -43,7 +42,7 @@ distinction means that much of Menpo's image algorithms work equally well with
 masked or unmasked data - it's the :map:`Vectorizable` interface that abstracts
 away the difference between the two.
 
-2. **Lots of things are vectorizable, not just images.** Pointclouds are and
+2. **Lots of things are vectorizable, not just images.** Pointclouds and
 lots of transforms are too.
 
 3. **The length of the resulting vector of a type can be found by querying the
@@ -52,4 +51,4 @@ lots of transforms are too.
 4. **The vectorized form of an object does not have to be 'complete'.**
 :map:`from_vector` and :map:`from_vector_inplace` can use the object they are
 called on to rebuild a complete state. Think of vectorization more as a
-`parmeterization` of the object, not a complete serialization.
+``parametrization`` of the object, not a complete serialization.

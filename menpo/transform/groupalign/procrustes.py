@@ -12,25 +12,21 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     r"""
     Class for aligning multiple source shapes between them.
 
-    After construction, the :map:`AlignmentSimilarity` transforms used to map each
-    source optimally to the target can be found at `transforms`.
+    After construction, the :map:`AlignmentSimilarity` transforms used to map
+    each `source` optimally to the `target` can be found at `transforms`.
 
     Parameters
     ----------
-    sources : list of :map:`PointCloud`
+    sources : `list` of :map:`PointCloud`
         List of pointclouds to be aligned.
-
-    target : :map:`PointCloud`
+    target : :map:`PointCloud`, optional
         The target :map:`PointCloud` to align each source to.
-        If None, then the mean of the sources is used.
-
-        Default: None
+        If ``None``, then the mean of the sources is used.
 
     Raises
-    -------
+    ------
     ValueError
         Need at least two sources to align
-
     """
     def __init__(self, sources, target=None):
         super(GeneralizedProcrustesAnalysis, self).__init__(sources,
@@ -60,7 +56,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
                                    for t in self.transforms])
         # rescale the new_target to be the same size as the original about
         # it's centre
-        rescale = Similarity.identity(new_tgt.n_dims)
+        rescale = Similarity.init_identity(new_tgt.n_dims)
 
         s = UniformScale(self.initial_target_scale / new_tgt.norm(),
                          self.n_dims, skip_checks=True)
@@ -84,7 +80,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         r"""
         Returns the mean of the aligned shapes.
 
-        :type: PointCloud
+        :type: :map:`PointCloud`
         """
         from menpo.shape import PointCloud
         return PointCloud(np.mean([t.target.points for t in self.transforms],
@@ -94,7 +90,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         r"""
         Returns the average error of the recursive procrustes alignment.
 
-        :type: float
+        :type: `float`
         """
         return sum([t.alignment_error() for t in
                     self.transforms])/self.n_sources

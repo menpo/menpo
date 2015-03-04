@@ -1,4 +1,3 @@
-import abc
 import numpy as np
 from copy import deepcopy
 from menpo.base import Copyable
@@ -12,9 +11,9 @@ class TriangleContainmentError(Exception):
     Exception that is thrown when an attempt is made to map a point with a
     PWATransform that does not lie in a source triangle.
 
-    points_outside_source_domain : (d,) ndarray
-        A boolean value for the d points that were attempted to be applied.
-        If True, the point was outside of the domain.
+    points_outside_source_domain : ``(d,)`` `ndarray`
+        A `bool` value for the ``d`` points that were attempted to be applied.
+        If ``True```, the point was outside of the domain.
     """
     def __init__(self, points_outside_source_domain):
         super(TriangleContainmentError, self).__init__()
@@ -23,30 +22,29 @@ class TriangleContainmentError(Exception):
 
 def containment_from_alpha_beta(alpha, beta):
     r"""
-    Check `alpha` and `beta` are within a triangle (`alpha >= 0`,
-    `beta >= 0`, `alpha + beta <= 1`). Returns the indices of the
-    triangles that are `alpha` and `beta` are in. If any of the
-    points are not contained in a triangle,
-    raises a TriangleContainmentError.
+    Check `alpha` and `beta` are within a triangle (``alpha >= 0``,
+    ``beta >= 0``, ``alpha + beta <= 1``). Returns the indices of the triangles
+    that are `alpha` and `beta` are in. If any of the points are not contained
+    in a triangle, raises a `TriangleContainmentError`.
 
     Parameters
     ----------
-    alpha: (K, `n_tris`) ndarray
+    alpha : ``(K, n_tris)`` `ndarray`
         Alpha for each point and triangle being tested.
-    beta: (K, `n_tris`) ndarray
+    beta : ``(K, n_tris)`` `ndarray`
         Beta for each point and triangle being tested.
 
     Returns
     -------
-    tri_index : (L,) ndarray
-        triangle index for each `points`, assigning each
+    tri_index : ``(L,)`` `ndarray`
+        Triangle index for each `points`, assigning each
         point in a triangle to the triangle index.
 
     Raises
     ------
     TriangleContainmentError
-    All `points` must be contained in a source triangle. Check
-    `error.points_outside_source_domain` to handle this case.
+        All `points` must be contained in a source triangle. Check
+        `error.points_outside_source_domain` to handle this case.
     """
     # (K, n_tris), boolean for whether a given triangle contains a given
     #  point
@@ -66,36 +64,33 @@ def containment_from_alpha_beta(alpha, beta):
 
 def alpha_beta(i, ij, ik, points):
     r"""
-    Calculates the alpha and beta values (barycentric coordinates) for each
+    Calculates the `alpha` and `beta` values (barycentric coordinates) for each
     triangle for all points provided. Note that this does not raise a
-    TriangleContainmentError.
+    `TriangleContainmentError`.
 
     Parameters
     ----------
-    i : (`n_tris`, 2) ndarray
+    i : ``(n_tris, 2)`` `ndarray`
         The coordinate of the i'th point of each triangle
-
-    ij (`n_tris`, 2) ndarray
+    ij : ``(n_tris, 2)`` `ndarray`
         The vector between the i'th point and the j'th point of each
         triangle
-
-    ik (`n_tris`, 2) ndarray
+    ik : ``(n_tris, 2)`` `ndarray`
         The vector between the i'th point and the k'th point of each
         triangle
-
-    points : (`n_points`, 2) ndarray
+    points : ``(n_points, 2)`` `ndarray`
         Points to calculate the barycentric coordinates for.
 
     Returns
-    --------
-    alpha : (`n_points`, `n_tris`)
-        The alpha for each point and triangle. Alpha can be interpreted
-        as the contribution of the ij vector to the position of the
-        point in question.
-    beta : (`n_points`, `n_tris`)
+    -------
+    alpha : ``(n_points, n_tris)`` `ndarray`
+        The `alpha` for each point and triangle. Alpha can be interpreted
+        as the contribution of the `ij` vector to the position of the point in
+        question.
+    beta : ``(n_points, n_tris)`` `ndarray`
         The beta for each point and triangle. Beta can be interpreted as
-         the contribution of the ik vector to the position of the point
-         in question.
+        the contribution of the ik vector to the position of the point in
+        question.
     """
     ip = points[..., None] - i
     dot_jj = np.einsum('dt, dt -> t', ij, ij)
@@ -112,48 +107,47 @@ def alpha_beta(i, ij, ik, points):
 
 def index_alpha_beta(i, ij, ik, points):
     """
-    Finds for each input point the index of it's bounding triangle
-    and the alpha and beta value for that point in the triangle. Note
-    this means that the following statements will always be true:
+    Finds for each input point the index of it's bounding triangle and the
+    `alpha` and `beta` value for that point in the triangle. Note this means
+    that the following statements will always be true::
+
         alpha + beta <= 1
         alpha >= 0
         beta >= 0
+
     for each triangle result.
-    Trying to map a point that does not exist in a
-    triangle throws a TriangleContainmentError.
+
+    Trying to map a point that does not exist in a triangle throws a
+    `TriangleContainmentError`.
 
     Parameters
-    -----------
-    i : (`n_tris`, 2) ndarray
+    ----------
+    i : ``(n_tris, 2)`` `ndarray`
         The coordinate of the i'th point of each triangle
-
-    ij (`n_tris`, 2) ndarray
+    ij : ``(n_tris, 2)`` `ndarray`
         The vector between the i'th point and the j'th point of each
         triangle
-
-    ik (`n_tris`, 2) ndarray
+    ik : ``(n_tris, 2)`` `ndarray`
         The vector between the i'th point and the k'th point of each
         triangle
-
-    points : (`n_points`, 2) ndarray
+    points : ``(n_points, 2)`` `ndarray`
         Points to calculate the barycentric coordinates for.
-
 
     Returns
     -------
-    tri_index : (`n_tris`,) ndarray
-        triangle index for each of the `points`, assigning each
-        point to it's containing triangle.
-    alpha : (`n_tris`,) ndarray
+    tri_index : ``(n_tris,)`` `ndarray`
+        Triangle index for each of the `points`, assigning each point to its
+        containing triangle.
+    alpha : ``(n_tris,)`` `ndarray`
         Alpha for containing triangle of each point.
-    beta : (`n_tris`,) ndarray
+    beta : ``(n_tris,)`` `ndarray`
         Beta for containing triangle of each point.
 
     Raises
     ------
     TriangleContainmentError
-    All `points` must be contained in a source triangle. Check
-    `error.points_outside_source_domain` to handle this case.
+        All `points` must be contained in a source triangle. Check
+        `error.points_outside_source_domain` to handle this case.
     """
     alpha, beta = alpha_beta(i, ij, ik, points)
     each_point = np.arange(points.shape[0])
@@ -163,28 +157,24 @@ def index_alpha_beta(i, ij, ik, points):
 
 def barycentric_vectors(points, trilist):
     r"""
-    Compute the affine transformation between each triangle in the source
-    and target. This is calculated analytically.
+    Compute the affine transformation between each triangle in the `source`
+    and `target`. This is calculated analytically.
 
     Parameters
     ----------
-
-    points : (`n_points`, 2) ndarray
+    points : ``(n_points, 2)`` `ndarray`
         Points to calculate the barycentric coordinates for.
-
-    trilist: (`n_tris`, 3) ndarray
+    trilist: ``(n_tris, 3)`` `ndarray`
         The 0-based index triangulation joining the points.
 
     Returns
     -------
-    i : (`n_tris`, 2) ndarray
+    i : ``(n_tris, 2)`` `ndarray`
         The coordinate of the i'th point of each triangle
-
-    ij (`n_tris`, 2) ndarray
+    ij : ``(n_tris, 2)`` `ndarray`
         The vector between the i'th point and the j'th point of each
         triangle
-
-    ik (`n_tris`, 2) ndarray
+    ik : ``(n_tris, 2)`` `ndarray`
         The vector between the i'th point and the k'th point of each
         triangle
     """
@@ -197,30 +187,29 @@ def barycentric_vectors(points, trilist):
 # Note we inherit from Alignment first to get it's n_dims behavior
 class AbstractPWA(Alignment, Transform, Invertible):
     r"""
-    A piecewise affine transformation. This is composed of a number of
-    triangles defined be a set of source and target vertices. These vertices
-    are related by a common triangle list. No limitations on the nature of
-    the triangle list are imposed. Points can then be mapped via
-    barycentric coordinates from the source to the target space.
-    Trying to map points that are not contained by any source triangle
-    throws a TriangleContainmentError, which contains diagnostic information.
+    A piecewise affine transformation.
+
+    This is composed of a number of triangles defined be a set of `source` and
+    `target` vertices. These vertices are related by a common triangle `list`.
+    No limitations on the nature of the triangle `list` are imposed. Points can
+    then be mapped via barycentric coordinates from the `source` to the `target`
+    space. Trying to map points that are not contained by any source triangle
+    throws a `TriangleContainmentError`, which contains diagnostic information.
 
     Parameters
     ----------
-    source : :class:`menpo.shape.PointCloud` or :class:`menpo.shape.TriMesh`
+    source : :map:`PointCloud` or :map:`TriMesh`
         The source points. If a TriMesh is provided, the triangulation on
-        the TriMesh is used. If a :class:`menpo.shape.PointCloud`
-        is provided, a Delaunay triangulation of the source is performed
-        automatically.
-    target : :class:`PointCloud`
-        The target points. Note that the trilist is entirely decided by
-        the source.
+        the TriMesh is used. If a PointCloud is provided, a Delaunay
+        triangulation of the source is performed automatically.
+    target : :map:`PointCloud`
+        The target points. Note that the trilist is entirely decided by the
+        source.
 
     Raises
     ------
     ValueError
         Source and target must both be 2D.
-
     TriangleContainmentError
         All points to apply must be contained in a source triangle. Check
         `error.points_outside_source_domain` to handle this case.
@@ -241,7 +230,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
         r"""
         The number of triangles in the triangle list.
 
-        :type: int
+        :type: `int`
         """
         return self.source.n_tris
 
@@ -250,7 +239,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
         r"""
         The triangle list.
 
-        :type: (`n_tris`, 3) ndarray
+        :type: ``(n_tris, 3)`` `ndarray`
         """
         return self.source.trilist
 
@@ -278,12 +267,12 @@ class AbstractPWA(Alignment, Transform, Invertible):
 
         Parameters
         ----------
-        x : (K, 2) ndarray
+        x : ``(K, 2)`` `ndarray`
             Points to apply this transform to.
 
         Returns
         -------
-        transformed : (K, 2) ndarray
+        transformed : ``(K, 2)`` `ndarray`
             The transformed array.
         """
         tri_index, alpha, beta = self.index_alpha_beta(x)
@@ -291,48 +280,62 @@ class AbstractPWA(Alignment, Transform, Invertible):
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
 
-
-    @abc.abstractmethod
     def index_alpha_beta(self, points):
         """
-        Finds for each input point the index of it's bounding triangle
-        and the alpha and beta value for that point in the triangle. Note
-        this means that the following statements will always be true:
+        Finds for each input point the index of its bounding triangle and the
+        `alpha` and `beta` value for that point in the triangle. Note this
+        means that the following statements will always be true::
+
             alpha + beta <= 1
             alpha >= 0
             beta >= 0
+
         for each triangle result.
-        Trying to map a point that does not exist in a
-        triangle throws a TriangleContainmentError.
+
+        Trying to map a point that does not exist in a triangle throws a
+        `TriangleContainmentError`.
 
         Parameters
-        -----------
-        points : (K, 2) ndarray
+        ----------
+        points : ``(K, 2)`` `ndarray`
             Points to test.
 
         Returns
         -------
-        tri_index : (L,) ndarray
-            triangle index for each of the `points`, assigning each
+        tri_index : ``(L,)`` `ndarray`
+            Triangle index for each of the `points`, assigning each
             point to it's containing triangle.
-        alpha : (L,) ndarray
+        alpha : ``(L,)`` `ndarray`
             Alpha for containing triangle of each point.
-        beta : (L,) ndarray
+        beta : ``(L,)`` `ndarray`
             Beta for containing triangle of each point.
 
         Raises
         ------
         TriangleContainmentError
-        All `points` must be contained in a source triangle. Check
-        `error.points_outside_source_domain` to handle this case.
+            All `points` must be contained in a source triangle. Check
+            `error.points_outside_source_domain` to handle this case.
         """
-        pass
+        raise NotImplementedError()
 
     @property
     def has_true_inverse(self):
+        """
+        The inverse is true.
+
+        :type: ``True``
+        """
         return True
 
     def pseudoinverse(self):
+        r"""
+        The pseudoinverse of the transform - that is, the transform that
+        results from swapping `source` and `target`, or more formally, negating
+        the transforms parameters. If the transform has a true inverse this
+        is returned instead.
+
+        :type: ``type(self)``
+        """
         from menpo.shape import PointCloud, TriMesh  # to avoid circular import
         new_source = TriMesh(self.target.points, self.source.trilist)
         new_target = PointCloud(self.source.points)
@@ -370,7 +373,7 @@ class CythonPWA(AbstractPWA):
 
     The apply method in this case involves dotting the triangle vectors with
     the values of alpha and beta found. The calculation of alpha and beta is
-     done in C, and a hash map is used to cache lookup values.
+    done in C, and a hash map is used to cache lookup values.
 
     Parameters
     ----------
