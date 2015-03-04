@@ -115,10 +115,10 @@ def channel_options(channels_options_default, plot_function=None,
     # Create all necessary widgets
     # If single channel, disable all options apart from masked
     but = ipywidgets.ToggleButton(description='Channels Options',
-                                  default_value=toggle_show_default,
+                                  value=toggle_show_default,
                                   visible=toggle_show_visible)
     mode = ipywidgets.RadioButtons(
-        values=["Single", "Multiple"], default_value=mode_default,
+        values=["Single", "Multiple"], value=mode_default,
         description='Mode:',
         visible=toggle_show_default,
         disabled=channels_options_default['n_channels'] == 1)
@@ -1483,7 +1483,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     else:
         for k, g in enumerate(objects_names):
             objects_dict[g] = k
-    selection = ipywidgets.Dropdown(values=objects_dict, default_value=0,
+    selection = ipywidgets.Dropdown(values=objects_dict, value=0,
                                     description='Select',
                                     visible=(selection_visible and
                                              toggle_show_default))
@@ -1818,7 +1818,7 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     format_dict['postscript'] = 'ps'
     format_dict['svg'] = 'svg'
     format_wid = ipywidgets.Select(values=format_dict,
-                                   default_value=format_default,
+                                   value=format_default,
                                    description='Format')
 
     def papertype_visibility(name, value):
@@ -1838,7 +1838,7 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     orientation_dict['portrait'] = 'portrait'
     orientation_dict['landscape'] = 'landscape'
     orientation_wid = ipywidgets.Dropdown(values=orientation_dict,
-                                          default_value=orientation_default,
+                                          value=orientation_default,
                                           description='Orientation')
     papertype_dict = OrderedDict()
     papertype_dict['letter'] = 'letter'
@@ -1869,7 +1869,7 @@ def save_figure_options(renderer, format_default='png', dpi_default=None,
     papertype_dict['b10'] = 'b10'
     is_ps_type = not format_default == 'ps'
     papertype_wid = ipywidgets.Dropdown(values=papertype_dict,
-                                        default_value=papertype_default,
+                                        value=papertype_default,
                                         description='Paper type',
                                         disabled=is_ps_type)
     transparent_wid = ipywidgets.Checkbox(description='Transparent',
@@ -2062,7 +2062,7 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
     tmp['LBP'] = lbp
     tmp['Gradient'] = gradient
     tmp['None'] = no_op
-    feature = ipywidgets.RadioButtons(default_value=no_op, values=tmp,
+    feature = ipywidgets.RadioButtons(value=no_op, values=tmp,
                                       description='Feature type:')
 
     # feature-related options
