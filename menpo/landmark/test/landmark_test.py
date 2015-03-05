@@ -44,8 +44,10 @@ def test_LandmarkManager_set_LandmarkGroup():
 
 @raises(ValueError)
 def test_LandmarkManager_set_None_key():
-    pcloud = PointCloud(np.ones((10, 3)), copy=False)
-    lgroup = LandmarkGroup.init_with_all_label(pcloud)
+    points = np.ones((10, 3))
+    mask_dict = OrderedDict([('all', np.ones(10, dtype=np.bool))])
+    pcloud = PointCloud(points, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     man = LandmarkManager()
     man[None] = lgroup
