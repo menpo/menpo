@@ -132,7 +132,7 @@ def channel_options(channels_options_default, plot_function=None,
         visible=toggle_show_default,
         disabled=channels_options_default['n_channels'] == 1)
     second_slider_wid = ipywidgets.IntSlider(
-        min=1, max=channels_options_default['n_channels'] - 1, step=1,
+        min=1, max=max(channels_options_default['n_channels'] - 1, 1), step=1,
         value=second_slider_default, description='To',
         visible=mode_default == "Multiple")
     rgb_wid = ipywidgets.Checkbox(
