@@ -830,17 +830,17 @@ def line_options(line_options_default, plot_function=None,
     # Create widgets
     # toggle button
     but = ipywidgets.ToggleButton(description=toggle_title,
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
+                                  value=toggle_show_default,
+                                  visible=toggle_show_visible)
 
     # line_style, line_width, line_colour
     render_lines = ipywidgets.Checkbox(description=show_checkbox_title,
-                                             value=line_options_default[
+                                       value=line_options_default[
                                                  'render_lines'])
     line_width = ipywidgets.BoundedFloatText(description='Width',
-                                                   value=line_options_default[
-                                                       'line_width'],
-                                                   min=0.)
+                                             value=line_options_default[
+                                               'line_width'],
+                                             min=0.)
     line_style_dict = OrderedDict()
     line_style_dict['solid'] = '-'
     line_style_dict['dashed'] = '--'
