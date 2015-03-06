@@ -119,18 +119,13 @@ class MatplotlibRenderer(Renderer):
         _export(save_fig_args, filename, self._extensions_map, format,
                 overwrite=overwrite)
 
-    def save_figure_widget(self, popup=True):
+    def save_figure_widget(self):
         r"""
         Method for saving the figure of the current ``figure_id`` to file using
         :func:`menpo.visualize.widgets.base.save_matplotlib_figure` widget.
-
-        Parameters
-        ----------
-        popup : `bool`, optional
-            If ``True``, the widget will appear as a popup window.
         """
         from menpo.visualize.widgets import save_matplotlib_figure
-        save_matplotlib_figure(self, popup=popup)
+        save_matplotlib_figure(self)
 
 
 class MatplotlibSubplots(object):
