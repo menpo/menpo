@@ -1,7 +1,7 @@
-import abc
 from collections import OrderedDict
 import json
 import warnings
+import itertools
 
 import numpy as np
 
@@ -20,8 +20,6 @@ class LandmarkImporter(Importer):
     filepath : string
         Absolute filepath of the landmarks.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, filepath):
         super(LandmarkImporter, self).__init__(filepath)
@@ -51,7 +49,6 @@ class LandmarkImporter(Importer):
         return LandmarkGroup(self.pointcloud,
                              self.labels_to_masks)
 
-    @abc.abstractmethod
     def _parse_format(self, asset=None):
         r"""
         Read the landmarks file from disk, parse it in to semantic labels and
@@ -59,7 +56,7 @@ class LandmarkImporter(Importer):
 
         Set the `self.label` and `self.pointcloud` attributes.
         """
-        pass
+        raise NotImplementedError()
 
 
 class ASFImporter(LandmarkImporter):
@@ -94,13 +91,12 @@ class ASFImporter(LandmarkImporter):
     def __init__(self, filepath):
         super(ASFImporter, self).__init__(filepath)
 
-    @abc.abstractmethod
     def _build_points(self, xs, ys):
         r"""
         Determines the ordering of points within the landmarks. For meshes
         `x` is the first axis, where as for images `y` is the first axis.
         """
-        pass
+        raise NotImplementedError()
 
     def _parse_format(self, asset=None):
         with open(self.filepath, 'r') as f:
@@ -118,7 +114,7 @@ class ASFImporter(LandmarkImporter):
         xs = np.empty([count, 1])
         ys = np.empty([count, 1])
         connectivity = np.empty([count, 2], dtype=np.int)
-        for i in xrange(count):
+        for i in range(count):
             # Though unpacked, they are still all strings
             # Only unpack the first 7
             (path_num, path_type, xpos, ypos,
@@ -172,13 +168,12 @@ class PTSImporter(LandmarkImporter):
     def __init__(self, filepath):
         super(PTSImporter, self).__init__(filepath)
 
-    @abc.abstractmethod
     def _build_points(self, xs, ys):
         r"""
         Determines the ordering of points within the landmarks. For meshes
         `x` is the first axis, where as for images `y` is the first axis.
         """
-        pass
+        raise NotImplementedError()
 
     def _parse_format(self, asset=None):
         f = open(self.filepath, 'r')
@@ -260,7 +255,7 @@ class LM2Importer(LandmarkImporter):
             raise ImportError("LM2 landmarks are incorrectly formatted. "
                               "Expected a list of labels beginning with "
                               "'Labels:' but found '{0}'".format(labels_str))
-        for i in xrange(num_points):
+        for i in range(num_points):
             # Lowercase, remove spaces and replace with underscores
             l = landmark_text.pop(0)
             l = '_'.join(l.lower().split())
@@ -275,7 +270,7 @@ class LM2Importer(LandmarkImporter):
                               "but found '{0}'".format(coords_str))
         xs = []
         ys = []
-        for i in xrange(num_points):
+        for i in range(num_points):
             p = landmark_text.pop(0).split()
             xs.append(float(p[0]))
             ys.append(float(p[1]))
@@ -291,6 +286,12 @@ class LM2Importer(LandmarkImporter):
         masks = np.vsplit(masks, num_points)
         masks = [np.squeeze(m) for m in masks]
         self.labels_to_masks = OrderedDict(zip(labels, masks))
+
+
+def _ljson_parse_null_values(points_list):
+    filtered_points = [np.nan if x is None else x
+                       for x in itertools.chain(*points_list)]
+    return np.array(filtered_points).reshape([-1, len(points_list[0])])
 
 
 def _parse_ljson_v1(lms_dict):
@@ -319,7 +320,7 @@ def _parse_ljson_v1(lms_dict):
         offset += len(lms)
 
     # Don't create a PointUndirectedGraph with no connectivity
-    points = np.array(all_points)
+    points = _ljson_parse_null_values(all_points)
     if len(connectivity) == 0:
         pcloud = PointCloud(points)
     else:
@@ -336,11 +337,11 @@ def _parse_ljson_v1(lms_dict):
 def _parse_ljson_v2(lms_dict):
     labels_to_mask = OrderedDict()  # masks into the full pointcloud per label
 
-    points = np.array(lms_dict['landmarks']['points'])
+    points = _ljson_parse_null_values(lms_dict['landmarks']['points'])
     connectivity = lms_dict['landmarks'].get('connectivity')
 
     # Don't create a PointUndirectedGraph with no connectivity
-    if connectivity is None:
+    if connectivity is None or len(connectivity) == 0:
         pcloud = PointCloud(points)
     else:
         pcloud = PointUndirectedGraph(points, np.vstack(connectivity))
@@ -371,7 +372,7 @@ class LJSONImporter(LandmarkImporter):
 
     """
     def _parse_format(self, asset=None):
-        with open(self.filepath, 'rb') as f:
+        with open(self.filepath, 'r') as f:
             # lms_dict is now a dict rep of the JSON
             lms_dict = json.load(f, object_pairs_hook=OrderedDict)
         v = lms_dict.get('version')

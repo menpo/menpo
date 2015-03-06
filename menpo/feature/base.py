@@ -50,14 +50,14 @@ def sample_mask_for_centres(mask, centres):
 
 
 def rebuild_feature_image(image, f_pixels):
-    shape_changed = f_pixels.shape[:-1] != image.shape
+    shape_changed = f_pixels.shape[1:] != image.shape
     if hasattr(image, 'mask'):
         # original image had a mask. Did the feature generate an image of the
         # same size?
         if shape_changed:
             # feature is of a different size - best we can do is rescale the
             # mask
-            mask = image.mask.resize(f_pixels.shape[:-1])
+            mask = image.mask.resize(f_pixels.shape[1:])
         else:
             # feature is same size as input
             mask = image.mask.copy()
@@ -67,7 +67,7 @@ def rebuild_feature_image(image, f_pixels):
     if image.has_landmarks:
         if shape_changed:
             # need to adjust the landmarks
-            sf = np.array(f_pixels.shape[:-1]) / np.array(image.shape)
+            sf = np.array(f_pixels.shape[1:]) / np.array(image.shape)
             new_image.landmarks = NonUniformScale(sf).apply(image.landmarks)
         else:
             new_image.landmarks = image.landmarks

@@ -17,7 +17,8 @@ def _connectivity_from_array(array, close_loop=False):
     If ``close_loop`` is true, add an extra connection from the last point to
     the first.
     """
-    conn = zip(array, array[1:])
+    # zip is a generator - need a list in this case
+    conn = list(zip(array, array[1:]))
     if close_loop:
         conn.append((array[-1], array[0]))
     return np.asarray(conn)
@@ -174,7 +175,6 @@ def ibug_face_68(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_68'
-    n_points = 68
     _validate_input(landmark_group, 68, group)
 
     jaw_indices = np.arange(0, 17)
@@ -205,9 +205,8 @@ def ibug_face_68(landmark_group):
         mouth_connectivity
     ])
 
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['jaw'] = jaw_indices
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -266,7 +265,6 @@ def ibug_face_66(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_66'
-    n_points = 66
     _validate_input(landmark_group, 68, group)
 
     jaw_indices = np.arange(0, 17)
@@ -299,10 +297,8 @@ def ibug_face_66(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(60), np.arange(61, 64), np.arange(65, 68)))
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind],
-                             total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['jaw'] = jaw_indices
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -360,7 +356,6 @@ def ibug_face_51(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_51'
-    n_points = 51
     _validate_input(landmark_group, 68, group)
 
     lbrow_indices = np.arange(0, 5)
@@ -389,10 +384,8 @@ def ibug_face_51(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.arange(17, 68)
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind],
-                             total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
     new_landmark_group['right_eyebrow'] = rbrow_indices
@@ -450,7 +443,6 @@ def ibug_face_49(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_49'
-    n_points = 49
     _validate_input(landmark_group, 68, group)
 
     lbrow_indices = np.arange(0, 5)
@@ -480,10 +472,8 @@ def ibug_face_49(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(17, 60), np.arange(61, 64), np.arange(65, 68)))
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind],
-                             total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
     new_landmark_group['right_eyebrow'] = rbrow_indices
@@ -858,7 +848,6 @@ def ibug_face_65_closed_mouth(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_face_65_closed_mouth'
-    n_points = 65
     _validate_input(landmark_group, 68, group)
 
     jaw_indices = np.arange(0, 17)
@@ -890,10 +879,8 @@ def ibug_face_65_closed_mouth(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.arange(65)
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind],
-                             total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['jaw'] = jaw_indices
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -1002,7 +989,6 @@ def lfpw_face(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'lfpw_face'
-    n_points = 29
     _validate_input(landmark_group, 29, group)
 
     chin_indices = np.array([28])
@@ -1038,10 +1024,8 @@ def lfpw_face(landmark_group):
 
     # Ignore the two inner mouth points
     ind = np.arange(29)
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind],
-                             total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['chin'] = chin_indices
     new_landmark_group['left_eye'] = np.hstack((outer_leye_indices,
@@ -1107,7 +1091,6 @@ def ibug_open_eye(landmark_group):
 
     group = 'ibug_open_eye'
     n_expected_points = 38
-    n_points = landmark_group.lms.n_points
 
     _validate_input(landmark_group, n_expected_points, group)
 
@@ -1140,9 +1123,8 @@ def ibug_open_eye(landmark_group):
                             iris_connectivity.tolist() +
                             pupil_connectivity.tolist() +
                             sclera_connectivity)
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['upper_eyelid'] = upper_el_indices
     new_landmark_group['lower_eyelid'] = lower_el_indices
@@ -1187,7 +1169,6 @@ def ibug_close_eye_points(landmark_group):
 
     group = 'ibug_close_eye'
     n_expected_points = 17
-    n_points = landmark_group.lms.n_points
     _validate_input(landmark_group, n_expected_points, group)
 
     upper_indices, upper_connectivity = _build_upper_eyelid()
@@ -1201,9 +1182,8 @@ def ibug_close_eye_points(landmark_group):
     lower_connectivity += [(11, 0)]
 
     total_conn = np.asarray(upper_connectivity + lower_connectivity)
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['upper_eyelid'] = upper_indices
     new_landmark_group['lower_eyelid'] = lower_indices
@@ -1401,7 +1381,6 @@ def ibug_hand(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'ibug_hand'
-    n_points = landmark_group.lms.n_points
     _validate_input(landmark_group, 39, group)
 
     thumb_indices = np.arange(0, 5)
@@ -1429,9 +1408,8 @@ def ibug_hand(landmark_group):
                             middle_connectivity, ring_connectivity,
                             pinky_connectivity, palm_connectivity))
 
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['thumb'] = thumb_indices
     new_landmark_group['index'] = index_indices
@@ -1533,7 +1511,6 @@ def lsp_pose(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'lsp_pose'
-    n_points = landmark_group.lms.n_points
     _validate_input(landmark_group, 14, group)
 
     left_leg_indices = np.arange(0, 3)
@@ -1554,9 +1531,8 @@ def lsp_pose(landmark_group):
                             right_arm_connectivity,
                             head_connectivity])
 
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points, total_conn))
 
     new_landmark_group['left_leg'] = left_leg_indices
     new_landmark_group['right_leg'] = right_leg_indices
@@ -1652,7 +1628,6 @@ def streetscene_car_view_0(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_0'
-    n_points = 8
     _validate_input(landmark_group, 20, group)
 
     front_indices = np.array([0, 1, 3, 2])
@@ -1670,9 +1645,8 @@ def streetscene_car_view_0(landmark_group):
                             windshield_connectivity))
 
     ind = np.arange(8)
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['front'] = front_indices
     new_landmark_group['bonnet'] = bonnet_indices
@@ -1720,7 +1694,6 @@ def streetscene_car_view_1(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_1'
-    n_points = 14
     _validate_input(landmark_group, 20, group)
 
     front_indices = np.array([0, 1, 3, 2])
@@ -1741,9 +1714,8 @@ def streetscene_car_view_1(landmark_group):
                             windshield_connectivity, left_side_connectivity))
 
     ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['front'] = front_indices
     new_landmark_group['bonnet'] = bonnet_indices
@@ -1789,7 +1761,6 @@ def streetscene_car_view_2(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_2'
-    n_points = 10
     _validate_input(landmark_group, 20, group)
 
     left_side_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 9, 8])
@@ -1800,9 +1771,8 @@ def streetscene_car_view_2(landmark_group):
     total_conn = left_side_connectivity
 
     ind = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['left_side'] = left_side_indices
     del new_landmark_group['all']  # Remove pointless all group
@@ -1848,7 +1818,6 @@ def streetscene_car_view_3(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_3'
-    n_points = 14
     _validate_input(landmark_group, 20, group)
 
     left_side_indices = np.array([0, 1, 2, 3, 4, 6, 8, 10, 13, 12])
@@ -1869,9 +1838,8 @@ def streetscene_car_view_3(landmark_group):
                             trunk_connectivity, rear_connectivity))
 
     ind = np.array([0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18])
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['left_side'] = left_side_indices
     new_landmark_group['rear_windshield'] = rear_windshield_indices
@@ -1920,7 +1888,6 @@ def streetscene_car_view_4(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_4'
-    n_points = 14
     _validate_input(landmark_group, 20, group)
 
     front_indices = np.array([0, 1, 3, 2])
@@ -1942,9 +1909,8 @@ def streetscene_car_view_4(landmark_group):
                             right_side_connectivity))
 
     ind = np.hstack((np.arange(8), np.array([9, 11, 13, 15, 17, 19])))
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['front'] = front_indices
     new_landmark_group['bonnet'] = bonnet_indices
@@ -1990,7 +1956,6 @@ def streetscene_car_view_5(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_5'
-    n_points = 10
     _validate_input(landmark_group, 20, group)
 
     right_side_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 9, 8])
@@ -2001,9 +1966,8 @@ def streetscene_car_view_5(landmark_group):
     total_conn = right_side_connectivity
 
     ind = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19])
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['right_side'] = right_side_indices
     del new_landmark_group['all']  # Remove pointless all group
@@ -2049,7 +2013,6 @@ def streetscene_car_view_6(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_6'
-    n_points = 14
     _validate_input(landmark_group, 20, group)
 
     right_side_indices = np.array([0, 1, 2, 3, 5, 7, 9, 11, 13, 12])
@@ -2070,9 +2033,8 @@ def streetscene_car_view_6(landmark_group):
                             trunk_connectivity, rear_connectivity))
 
     ind = np.array([1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19])
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
 
     new_landmark_group['right_side'] = right_side_indices
     new_landmark_group['rear_windshield'] = rear_windshield_indices
@@ -2120,7 +2082,6 @@ def streetscene_car_view_7(landmark_group):
     from menpo.shape import PointUndirectedGraph
 
     group = 'streetscene_car_view_7'
-    n_points = 8
     _validate_input(landmark_group, 20, group)
 
     rear_windshield_indices = np.array([0, 1, 3, 2])
@@ -2137,9 +2098,9 @@ def streetscene_car_view_7(landmark_group):
                             trunk_connectivity, rear_connectivity))
 
     ind = np.arange(8, 16)
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph(landmark_group.lms.points[ind],
+                             total_conn))
 
     new_landmark_group['rear_windshield'] = rear_windshield_indices
     new_landmark_group['trunk'] = trunk_indices

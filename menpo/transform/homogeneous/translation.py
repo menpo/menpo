@@ -7,12 +7,14 @@ from .similarity import Similarity
 
 class Translation(DiscreteAffine, Similarity):
     r"""
-    An N-dimensional translation transform.
+    An ``n_dims``-dimensional translation transform.
 
     Parameters
     ----------
-    translation : (D,) ndarray
+    translation : ``(n_dims,)`` `ndarray`
         The translation in each axis.
+    skip_checks : `bool`, optional
+        If ``True`` avoid sanity checks on ``h_matrix`` for performance.
     """
 
     def __init__(self, translation, skip_checks=False):
@@ -23,7 +25,20 @@ class Translation(DiscreteAffine, Similarity):
                             skip_checks=skip_checks)
 
     @classmethod
-    def identity(cls, n_dims):
+    def init_identity(cls, n_dims):
+        r"""
+        Creates an identity transform.
+
+        Parameters
+        ----------
+        n_dims : `int`
+            The number of dimensions.
+
+        Returns
+        -------
+        identity : :class:`Translation`
+            The identity matrix transform.
+        """
         return Translation(np.zeros(n_dims))
 
     def _transform_str(self):
@@ -33,9 +48,9 @@ class Translation(DiscreteAffine, Similarity):
     @property
     def n_parameters(self):
         r"""
-        The number of parameters: `n_dims`
+        The number of parameters: ``n_dims``
 
-        :type: int
+        :type: `int`
         """
         return self.n_dims
 
@@ -43,7 +58,7 @@ class Translation(DiscreteAffine, Similarity):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
-        are output in the order [t0, t1, ...].
+        are output in the order ``[t0, t1, ...]``.
 
         +-----------+--------------------------------------------+
         |parameter | definition                                  |
@@ -56,30 +71,57 @@ class Translation(DiscreteAffine, Similarity):
 
         Returns
         -------
-        ts : (D,) ndarray
+        ts : ``(n_dims,)`` `ndarray`
             The translation in each axis.
         """
         return self.h_matrix[:-1, -1]
 
     def from_vector_inplace(self, p):
+        r"""
+        Updates the :class:`Translation` inplace.
+
+        Parameters
+        ----------
+        vector : ``(n_dims,)`` `ndarray`
+            The array of parameters.
+        """
         self.h_matrix[:-1, -1] = p
 
     def pseudoinverse(self):
         r"""
         The inverse translation (negated).
 
-        :return: :class:`Translation`
+        :type: :class:`Translation`
         """
         return Translation(-self.translation_component, skip_checks=True)
 
 
 class AlignmentTranslation(HomogFamilyAlignment, Translation):
+    r"""
+    Constructs a :class:`Translation` by finding the optimal translation
+    transform to align `source` to `target`.
+
+    Parameters
+    ----------
+    source : :map:`PointCloud`
+        The source pointcloud instance used in the alignment
+    target : :map:`PointCloud`
+        The target pointcloud instance used in the alignment
+    """
 
     def __init__(self, source, target):
         HomogFamilyAlignment.__init__(self, source, target)
         Translation.__init__(self, target.centre() - source.centre())
 
     def from_vector_inplace(self, p):
+        r"""
+        Updates the :class:`Translation` inplace.
+
+        Parameters
+        ----------
+        vector : ``(n_dims,)`` `ndarray`
+            The array of parameters.
+        """
         Translation.from_vector_inplace(self, p)
         self._sync_target_from_state()
 
@@ -88,7 +130,8 @@ class AlignmentTranslation(HomogFamilyAlignment, Translation):
         self.h_matrix[:-1, -1] = translation
 
     def as_non_alignment(self):
-        r"""Returns a copy of this translation without it's alignment nature.
+        r"""
+        Returns a copy of this translation without its alignment nature.
 
         Returns
         -------

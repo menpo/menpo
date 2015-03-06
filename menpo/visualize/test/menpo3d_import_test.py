@@ -11,7 +11,7 @@ fake_triangle = np.array([[0.0, 0.0, 0.0],
                           [1.0, 0.0, 0.0],
                           [0.0, 1.0, 0.0]])
 fake_trilist = np.array([[0, 1, 2]], dtype=np.uint32)
-fake_texture = Image.blank([10, 10])
+fake_texture = Image.init_blank([10, 10])
 fake_tcoords = np.array([[0, 0], [0.5, 0.5], [1.0, 1.0]])
 
 

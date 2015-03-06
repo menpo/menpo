@@ -1,44 +1,75 @@
+from __future__ import division
 import itertools
 import numpy as np
 scipy_gaussian_filter = None  # expensive
 
 from .base import ndfeature, winitfeature
-from .windowiterator import WindowIterator
+from .gradient import gradient_cython
+from .windowiterator import WindowIterator, WindowIteratorResult
+
+
+def _np_gradient(pixels):
+    """
+    This method is used in the case of multi-channel images (not 2D images).
+    The output ordering is identical to the gradient() method, returning
+    a 2 * n_channels image with gradients in order of the first axis derivative
+    over all the channels, then the second etc. For example, in the case of
+    a 3D image with 2 channels, the ordering would be:
+        I[:, 0, 0, 0] = [A_0, B_0, A_1, B_1, A_2, B_2]
+    where A and B are the 'channel' labels (synonymous with RGB for a colour
+    image) and 0,1,2 are the axis labels (synonymous with y,x for a 2D image).
+    """
+    n_dims = pixels.ndim - 1
+    grad_per_dim_per_channel = [np.gradient(g, edge_order=1)
+                                for g in pixels]
+    # Flatten out the separate dims
+    grad_per_channel = list(itertools.chain.from_iterable(
+        grad_per_dim_per_channel))
+    # Add a channel axis for broadcasting
+    grad_per_channel = [g[None, ...] for g in grad_per_channel]
+
+    # Permute the list so it is first axis, second axis, etc
+    grad_per_channel = [grad_per_channel[i::n_dims]
+                        for i in range(n_dims)]
+    grad_per_channel = list(itertools.chain.from_iterable(grad_per_channel))
+
+    # Concatenate gradient list into an array (the new_image)
+    return np.concatenate(grad_per_channel, axis=0)
 
 
 @ndfeature
 def gradient(pixels):
     r"""
     Calculates the gradient of an input image. The image is assumed to have
-    channel information on the last axis. In the case of multiple channels,
-    it returns the gradient over each axis over each channel as the last axis.
+    channel information on the first axis. In the case of multiple channels,
+    it returns the gradient over each axis over each channel as the first axis.
+
+    The gradient is computed using second order accurate central differences in
+    the interior and first order accurate one-side (forward or backwards)
+    differences at the boundaries.
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
-        dimension is interpreted as channels. This means an N-dimensional image
-        is represented by an N+1 dimensional array.
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ...)`` `ndarray`
+        Either the image object itself or an array where the first dimension
+        is interpreted as channels. This means an N-dimensional image is
+        represented by an N+1 dimensional array.
 
     Returns
     -------
-    gradient : ndarray, shape (X, Y, ..., Z, C * length([X, Y, ..., Z]))
+    gradient : `ndarray`
         The gradient over each axis over each channel. Therefore, the
-        last axis of the gradient of a 2D, single channel image, will have
-        length `2`. The last axis of the gradient of a 2D, 3-channel image,
-        will have length `6`, he ordering being [Rd_x, Rd_y, Gd_x, Gd_y,
-        Bd_x, Bd_y].
-
+        first axis of the gradient of a 2D, single channel image, will have
+        length `2`. The first axis of the gradient of a 2D, 3-channel image,
+        will have length `6`, the ordering being
+        ``I[:, 0, 0] = [R0_y, G0_y, B0_y, R0_x, G0_x, B0_x]``. To be clear,
+        all the ``y``-gradients are returned over each channel, then all
+        the ``x``-gradients.
     """
-    grad_per_dim_per_channel = [np.gradient(g, edge_order=1) for g in
-                                np.rollaxis(pixels, -1)]
-    # Flatten out the separate dims
-    grad_per_channel = list(itertools.chain.from_iterable(
-        grad_per_dim_per_channel))
-    # Add a channel axis for broadcasting
-    grad_per_channel = [g[..., None] for g in grad_per_channel]
-    # Concatenate gradient list into an array (the new_image)
-    return np.concatenate(grad_per_channel, axis=-1)
+    if (pixels.ndim - 1) == 2:  # 2D Image
+        return gradient_cython(pixels)
+    else:
+        return _np_gradient(pixels)
 
 
 @ndfeature
@@ -67,11 +98,12 @@ def gaussian_filter(pixels, sigma):
     if scipy_gaussian_filter is None:
         from scipy.ndimage import gaussian_filter as scipy_gaussian_filter
     output = np.empty(pixels.shape)
-    for dim in range(pixels.shape[2]):
-        scipy_gaussian_filter(pixels[..., dim], sigma, output=output[..., dim])
+    for dim in range(pixels.shape[0]):
+        scipy_gaussian_filter(pixels[dim], sigma, output=output[dim])
     return output
 
 
+# TODO: Needs fixing ...
 @winitfeature
 def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,
@@ -193,6 +225,10 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         localization in the wild", Proceedings of the IEEE Conference on
         Computer Vision and Pattern Recognition (CVPR), 2012.
     """
+    # TODO: This is a temporary fix
+    # flip axis
+    pixels = np.rollaxis(pixels, 0, len(pixels.shape))
+
     # Parse options
     if mode not in ['dense', 'sparse']:
         raise ValueError("HOG features mode must be either dense or sparse")
@@ -278,8 +314,14 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
     if verbose:
         print(iterator)
     # Compute HOG
-    return iterator.HOG(algorithm, num_bins, cell_size, block_size,
-                        signed_gradient, l2_norm_clip, verbose)
+    hog_descriptor = iterator.HOG(algorithm, num_bins, cell_size, block_size,
+                                  signed_gradient, l2_norm_clip, verbose)
+    # TODO: This is a temporal fix
+    # flip axis
+    hog_descriptor = WindowIteratorResult(
+        np.ascontiguousarray(np.rollaxis(hog_descriptor.pixels, -1)),
+        hog_descriptor.centres)
+    return hog_descriptor
 
 
 @ndfeature
@@ -292,8 +334,8 @@ def igo(pixels, double_angles=False, verbose=False):
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
         dimension is interpreted as channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
     double_angles : `bool`, optional
@@ -329,37 +371,43 @@ def igo(pixels, double_angles=False, verbose=False):
     # check number of dimensions
     if len(pixels.shape) != 3:
         raise ValueError('IGOs only work on 2D images. Expects image data '
-                         'to be 3D, shape + channels.')
+                         'to be 3D, channels + shape.')
+    n_img_chnls = pixels.shape[0]
     # feature channels per image channel
-    feat_channels = 2
+    feat_chnls = 2
     if double_angles:
-        feat_channels = 4
+        feat_chnls = 4
+
     # compute gradients
     grad = gradient(pixels)
     # compute angles
-    grad_orient = np.angle(grad[..., ::2] + 1j * grad[..., 1::2])
+    grad_orient = np.angle(grad[:n_img_chnls] + 1j * grad[n_img_chnls:])
     # compute igo image
-    igo_pixels = np.empty((pixels.shape[0], pixels.shape[1],
-                           pixels.shape[-1] * feat_channels))
-    igo_pixels[..., ::feat_channels] = np.cos(grad_orient)
-    igo_pixels[..., 1::feat_channels] = np.sin(grad_orient)
+    igo_pixels = np.empty((n_img_chnls * feat_chnls,
+                           pixels.shape[1], pixels.shape[2]))
+
     if double_angles:
-        igo_pixels[..., 2::feat_channels] = np.cos(2 * grad_orient)
-        igo_pixels[..., 3::feat_channels] = np.sin(2 * grad_orient)
+        dbl_grad_orient = 2 * grad_orient
+        # y angles
+        igo_pixels[:n_img_chnls] = np.sin(grad_orient)
+        igo_pixels[n_img_chnls:n_img_chnls*2] = np.sin(dbl_grad_orient)
+
+        # x angles
+        igo_pixels[n_img_chnls*2:n_img_chnls*3] = np.cos(grad_orient)
+        igo_pixels[n_img_chnls*3:] = np.cos(dbl_grad_orient)
+    else:
+        igo_pixels[:n_img_chnls] = np.sin(grad_orient)  # y
+        igo_pixels[n_img_chnls:] = np.cos(grad_orient)  # x
 
     # print information
     if verbose:
         info_str = "IGO Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[1], pixels.shape[0],
-            pixels.shape[2])
-        if double_angles:
-            info_str = "{}  - Double angles are enabled.\n".format(info_str)
-        else:
-            info_str = "{}  - Double angles are disabled.\n".format(info_str)
-        info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, igo_pixels.shape[1], igo_pixels.shape[0],
-            igo_pixels.shape[2])
+            info_str, pixels.shape[2], pixels.shape[1], n_img_chnls)
+        info_str = "{}  - Double angles are {}.\n".format(
+            info_str, 'enabled' if double_angles else 'disabled')
+        info_str = "{}Output image size {}W x {}H with {} channels.".format(
+            info_str, igo_pixels.shape[2], igo_pixels.shape[1], n_img_chnls)
         print(info_str)
     return igo_pixels
 
@@ -373,9 +421,9 @@ def es(pixels, verbose=False):
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
-        dimension is interpreted as channels. This means an N-dimensional image
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ...)`` `ndarray`
+        Either an image object itself or an array where the first axis
+        represents the number of channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
     verbose : `bool`, optional
         Flag to print ES related information.
@@ -400,28 +448,29 @@ def es(pixels, verbose=False):
     # check number of dimensions
     if len(pixels.shape) != 3:
         raise ValueError('ES features only work on 2D images. Expects '
-                         'image data to be 3D, shape + channels.')
+                         'image data to be 3D, channels + shape.')
+    n_img_chnls = pixels.shape[0]
     # feature channels per image channel
     feat_channels = 2
     # compute gradients
     grad = gradient(pixels)
     # compute magnitude
-    grad_abs = np.abs(grad[..., ::2] + 1j * grad[..., 1::2])
+    grad_abs = np.abs(grad[:n_img_chnls] + 1j * grad[n_img_chnls:])
     # compute es image
     grad_abs = grad_abs + np.median(grad_abs)
-    es_pixels = np.empty((pixels.shape[0], pixels.shape[1],
-                          pixels.shape[-1] * feat_channels))
-    es_pixels[..., ::feat_channels] = grad[..., ::2] / grad_abs
-    es_pixels[..., 1::feat_channels] = grad[..., 1::2] / grad_abs
+    es_pixels = np.empty((pixels.shape[0] * feat_channels,
+                          pixels.shape[1], pixels.shape[2]))
+
+    es_pixels[:n_img_chnls] = grad[:n_img_chnls] / grad_abs
+    es_pixels[n_img_chnls:] = grad[n_img_chnls:] / grad_abs
+
     # print information
     if verbose:
         info_str = "ES Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[1], pixels.shape[0],
-            pixels.shape[2])
-        info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, es_pixels.shape[1], es_pixels.shape[0],
-            es_pixels.shape[2])
+            info_str, pixels.shape[2], pixels.shape[1], n_img_chnls)
+        info_str = "{}Output image size {}W x {}H with {} channels.".format(
+            info_str, es_pixels.shape[2], es_pixels.shape[1], n_img_chnls)
         print(info_str)
     return es_pixels
 
@@ -527,7 +576,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     if verbose:
         info_str = "Daisy Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[1], pixels.shape[0], pixels.shape[2])
+            info_str, pixels.shape[2], pixels.shape[1], pixels.shape[0])
         info_str = "{}  - Sampling step is {}.\n".format(info_str, step)
         info_str = "{}  - Radius of {} pixels, {} rings and {} histograms " \
                    "with {} orientations.\n".format(
@@ -538,13 +587,14 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
         else:
             info_str = "{}  - No normalization emplyed.\n".format(info_str)
         info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, daisy_descriptor.shape[1], daisy_descriptor.shape[0],
-            daisy_descriptor.shape[2])
+            info_str, daisy_descriptor.shape[2], daisy_descriptor.shape[1],
+            daisy_descriptor.shape[0])
         print(info_str)
 
     return daisy_descriptor
 
 
+# TODO: Needs fixing ...
 @winitfeature
 def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         window_step_vertical=1, window_step_horizontal=1,
@@ -636,6 +686,10 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     if samples is None:
         samples = [8]*4
 
+    # TODO: This is a temporal fix
+    # flip axis
+    pixels = np.rollaxis(pixels, 0, len(pixels.shape))
+
     if not skip_checks:
         # Check parameters
         if ((isinstance(radius, int) and isinstance(samples, list)) or
@@ -702,7 +756,14 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         print(iterator)
 
     # Compute LBP
-    return iterator.LBP(radius, samples, mapping_type, verbose)
+    lbp_descriptor = iterator.LBP(radius, samples, mapping_type, verbose)
+
+    # TODO: This is a temporary fix
+    # flip axis
+    lbp_descriptor = WindowIteratorResult(
+        np.ascontiguousarray(np.rollaxis(lbp_descriptor.pixels, -1)),
+        lbp_descriptor.centres)
+    return lbp_descriptor
 
 
 @ndfeature

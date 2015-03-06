@@ -1,29 +1,23 @@
-import abc
 
 
 class MultipleAlignment(object):
     r"""
-    Abstract base class for aligning multiple source shapes to a target shape.
+    Abstract base class for aligning multiple `source` shapes to a `target`
+    shape.
 
     Parameters
     ----------
-    sources : list of :map:`PointCloud`
+    sources : `list` of :map:`PointCloud`
         List of pointclouds to be aligned.
-
-    target : :map:`PointCloud`
+    target : :map:`PointCloud`, optional
         The target :map:`PointCloud` to align each source to.
-        If None, then the mean of the sources is used.
-
-        Default: None
+        If ``None``, then the mean of the sources is used.
 
     Raises
-    -------
+    ------
     ValueError
         Need at least two sources to align
-
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, sources, target=None):
         from menpo.shape import PointCloud
