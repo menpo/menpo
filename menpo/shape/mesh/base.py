@@ -325,16 +325,13 @@ class TriMesh(PointCloud):
             from menpo.visualize import Menpo3dErrorMessage
             raise ImportError(Menpo3dErrorMessage)
 
-    def view_widget(self, popup=False, browser_style='buttons',
-                    figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8)):
         r"""
         Visualization of the TriMesh using the :map:`visualize_pointclouds`
         widget.
 
         Parameters
         ----------
-        popup : `bool`, optional
-            If ``True``, the widget will be rendered in a popup window.
         browser_style : ``{buttons, slider}``, optional
             It defines whether the selector of the TriMesh objects will have
             the form of plus/minus buttons or a slider.
@@ -342,5 +339,5 @@ class TriMesh(PointCloud):
             The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_pointclouds
-        visualize_pointclouds(self, popup=popup, figure_size=figure_size,
+        visualize_pointclouds(self, figure_size=figure_size,
                               browser_style=browser_style)
