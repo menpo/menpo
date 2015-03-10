@@ -367,10 +367,11 @@ class Graph(object):
             self._check_vertex(vertex_2)
         return self.adjacency_matrix[vertex_1, vertex_2] != 0
 
-    def find_path(self, start, end, path=None):
+    def find_path(self, start, end, method='bfs', skip_checks=False):
         r"""
         Returns a `list` with the first path (without cycles) found from the
-        ``start`` vertex to the ``end`` vertex.
+        ``start`` vertex to the ``end`` vertex. It can employ either depth-first
+        search or breadth-first search.
 
         Parameters
         ----------
@@ -378,28 +379,50 @@ class Graph(object):
             The vertex from which the path starts.
         end : `int`
             The vertex to which the path ends.
-        path : `list` or ``None``, optional
-            An existing path to append to. If ``None``, the initial path is
-            empty.
+        method : {``bfs``, ``dfs``}, optional
+            The method to be used.
+        skip_checks : `bool`, optional
+            If ``True``, then input arguments won't pass through checks. Useful
+            for efficiency.
 
         Returns
         -------
         path : `list`
             The path's vertices.
+
+        Raises
+        ------
+        ValueError
+            Method must be either bfs or dfs.
         """
-        if path is None:
+        # checks
+        if not skip_checks:
+            self._check_vertex(start)
+            self._check_vertex(end)
+
+        # search
+        if method == 'bfs':
+            nodes, predecessors = csgraph.breadth_first_order(
+                self.adjacency_matrix, start, directed=self._directed,
+                return_predecessors=True)
+        elif method == 'dfs':
+            nodes, predecessors = csgraph.depth_first_order(
+                self.adjacency_matrix, start, directed=self._directed,
+                return_predecessors=True)
+        else:
+            raise ValueError('Method must be either bfs or dfs.')
+
+        # get path
+        if predecessors[end] == -9999:
             path = []
-        path = path + [start]
-        if start == end:
-            return path
-        if start > self.n_vertices - 1 or start < 0:
-            return None
-        for v in list(self.adjacency_matrix[start, :].nonzero()[1]):
-            if v not in path:
-                newpath = self.find_path(v, end, path)
-                if newpath:
-                    return newpath
-        return None
+        else:
+            path = [end]
+            i = None
+            while i != start:
+                i = predecessors[path[-1]]
+                path.append(i)
+            path.reverse()
+        return path
 
     def find_all_paths(self, start, end, path=[]):
         r"""
@@ -553,7 +576,7 @@ class Graph(object):
             path = [end]
             distance = 0
             i = None
-            while (i != start):
+            while i != start:
                 i = predecessors[start, path[-1]]
                 path.append(i)
                 distance += distances[start, path[-1]]

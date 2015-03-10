@@ -178,7 +178,8 @@ def test_n_paths():
 def test_find_all_paths():
     assert (g_directed.find_all_paths(1, 4) == [[1, 2, 4], [1, 3, 4]])
     assert (g_undirected.find_all_paths(0, 5) ==
-            [[0, 1, 2, 4, 3, 5], [0, 1, 3, 5], [0, 2, 1, 3, 5], [0, 2, 4, 3, 5]])
+            [[0, 1, 2, 4, 3, 5], [0, 1, 3, 5], [0, 2, 1, 3, 5],
+             [0, 2, 4, 3, 5]])
     assert (g_tree.find_all_paths(2, 6) == [])
     assert (g_isolated.find_all_paths(1, 5) == [])
     assert (g_single.find_all_paths(0, 10) == [])
@@ -186,10 +187,11 @@ def test_find_all_paths():
 
 def test_find_path():
     assert (g_directed.find_all_paths(1, 4)[0] == g_directed.find_path(1, 4))
-    assert (g_undirected.find_all_paths(0, 5)[0] == g_undirected.find_path(0, 5))
-    assert (g_tree.find_path(2, 6) is None)
-    assert (g_isolated.find_path(4, 1) is None)
-    assert (g_single.find_path(0, 0) == [0])
+    assert (g_undirected.find_all_paths(0, 5)[1] ==
+            g_undirected.find_path(0, 5))
+    assert (g_tree.find_path(2, 6) == [])
+    assert (g_isolated.find_path(4, 1) == [])
+    assert (g_single.find_path(0, 0) == [])
 
 
 def test_find_shortest_path():
