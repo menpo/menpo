@@ -103,22 +103,20 @@ def gaussian_filter(pixels, sigma):
     return output
 
 
-# TODO: Needs fixing ...
 @winitfeature
-def sift(pixels, window_step_horizontal=1, window_step_vertical=1,
-         num_bins_horizontal=2, num_bins_vertical=2, num_or_bins=9,
-         cell_size_horizontal=6, cell_size_vertical=6, window_size=2,
-         fast=True, verbose=False):
+def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
+          num_bins_horizontal=2, num_bins_vertical=2, num_or_bins=9,
+          cell_size_horizontal=6, cell_size_vertical=6, fast=True,
+          verbose=False):
     r"""
     Computes a 2-dimensional dense SIFT features image with k number of
     channels, of size `(M, N, C)` and data type `np.float`.
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
-        dimension is interpreted as channels. The image should be greyscale
-        and this have 1 channel.
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels.
     window_step_horizontal : `int`, optional
         Defines the horizontal step by which the window is moved, thus it
         controls the features density. The metric unit is pixels.
@@ -137,12 +135,10 @@ def sift(pixels, window_step_horizontal=1, window_step_vertical=1,
     cell_size_vertical : `int`, optional
         Defines cell height in pixels. The cell is the region that is covered by
         a spatial bin.
-    window_size : `int`, optional
-        Defines the size of the windows
     fast : `bool`, optional
-        If True, then the windowing function is a piecewise-flat, rather than
-        Gaussian. While this breaks exact SIFT equivalence, in practice it is
-        much faster to compute.
+        If ``True``, then the windowing function is a piecewise-flat, rather
+        than Gaussian. While this breaks exact SIFT equivalence, in practice it
+        is much faster to compute.
     verbose : `bool`, optional
         Flag to print SIFT related information.
 
@@ -165,41 +161,40 @@ def sift(pixels, window_step_horizontal=1, window_step_vertical=1,
     # If norm is set to True, then the centers array will have a third column
     # with descriptor norm, or energy, before contrast normalization.
     # This information can be used to suppress low contrast descriptors.
-    f, d = cyvlfeat_dsift(pixels[..., -1],
-                          step=[window_step_vertical, window_step_horizontal],
-                          size=[cell_size_vertical, cell_size_horizontal],
-                          bounds=None, window_size=window_size, norm=False,
-                          fast=fast, float_descriptors=True,
-                          geometry=(num_bins_horizontal, num_bins_vertical,
-                                    num_or_bins), verbose=False)
+    centers, output = cyvlfeat_dsift(
+        np.rot90(pixels[0, ..., ::-1]),
+        step=[window_step_vertical, window_step_horizontal],
+        size=[cell_size_vertical, cell_size_horizontal],
+        bounds=None, norm=False,
+        fast=fast, float_descriptors=True,
+        geometry=(num_bins_horizontal, num_bins_vertical, num_or_bins),
+        verbose=False)
 
-    # Convert descriptors to desired output
-    d_height = np.unique(f[0, ]).shape[0]
-    d_width = np.unique(f[1, ]).shape[0]
-    n_channels = d.shape[0]
-    descriptors = np.reshape(d.T, (d_height, d_width, n_channels), order='F')
-    windows_centers = np.reshape(f.T, (d_height, d_width, 2), order='F')
+    # get output image shape
+    shape = pixels.shape[1:] - 2 * centers[:2, 0]
 
     # print information
     if verbose:
         info_str = "SIFT features:\n" \
                    "  - Input image is {}W x {}H with {} channels.\n" \
-                   "  - Sampling step of ({}W,{}H) and window of size {}.\n" \
+                   "  - Sampling step of ({}W,{}H).\n" \
                    "  - {}W x {}H spatial bins and {} orientation bins.\n" \
                    "  - Cell size of {}W x {}H pixels.\n".format(
-                   pixels.shape[1], pixels.shape[0], pixels.shape[2],
-                   window_step_horizontal, window_step_vertical, window_size,
+                   pixels.shape[2], pixels.shape[1], pixels.shape[0],
+                   window_step_horizontal, window_step_vertical,
                    num_bins_horizontal, num_bins_vertical, num_or_bins,
                    cell_size_horizontal, cell_size_vertical)
         if fast:
             info_str += "  - Fast mode is enabled.\n"
         info_str += "Output image size {}W x {}H x {}.".format(
-            descriptors.shape[1], descriptors.shape[0], descriptors.shape[2])
+            int(shape[1]), int(shape[0]), output.shape[0])
         print(info_str)
 
     # return SIFT and centers in the correct form
-    return (np.require(descriptors, requirements='C', dtype=np.float64),
-            np.require(windows_centers, requirements='C', dtype=np.int))
+    return (np.require(output.reshape((-1, shape[0], shape[1])),
+                       dtype=np.double),
+            np.require(centers[:2, ...].T[..., ::-1].reshape(
+                (shape[0], shape[1], 2)), dtype=np.int))
 
 
 @winitfeature
