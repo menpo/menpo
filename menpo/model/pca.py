@@ -406,14 +406,17 @@ class PCAModel(MeanInstanceLinearModel):
         self.n_active_components = n_components
 
         if self.n_active_components < self.n_components:
-            # set self.n_components to n_components
-            self._components = self._components[:self.n_active_components]
+            # Just stored so that we can fit < 80 chars
+            nac = self.n_active_components
+            # set self.n_components to n_components. We have to copy to ensure
+            # that the data is actually removed, otherwise a view is returned
+            self._components = self._components[:nac].copy()
             # store the eigenvalues associated to the discarded components
             self._trimmed_eigenvalues = np.hstack((
                 self._trimmed_eigenvalues,
                 self._eigenvalues[self.n_active_components:]))
             # make sure that the eigenvalues are trimmed too
-            self._eigenvalues = self._eigenvalues[:self.n_active_components]
+            self._eigenvalues = self._eigenvalues[:nac].copy()
 
     def project_whitened(self, instance):
         """

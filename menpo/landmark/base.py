@@ -157,6 +157,10 @@ class LandmarkManager(MutableMapping, Transformable):
         DimensionalityError
             If the landmarks and the shape are not of the same dimensionality.
         """
+        if group is None:
+            raise ValueError('Cannot set using the key `None`. `None` has a '
+                             'reserved meaning for landmark groups.')
+
         from menpo.shape import PointCloud
         # firstly, make sure the dim is correct
         n_dims = self.n_dims
@@ -284,7 +288,7 @@ class LandmarkManager(MutableMapping, Transformable):
             group.lms._transform_inplace(transform)
         return self
 
-    def view_widget(self, popup=False, browser_style='buttons',
+    def view_widget(self, browser_style='buttons',
                     figure_size=(10, 8)):
         r"""
         Visualizes the landmark manager object using the
@@ -292,8 +296,6 @@ class LandmarkManager(MutableMapping, Transformable):
 
         Parameters
         ----------
-        popup : `bool`, optional
-            If ``True``, the widget will appear as a popup window.
         browser_style : {``buttons``, ``slider``}, optional
             It defines whether the selector of the landmark managers will have
             the form of plus/minus buttons or a slider.
@@ -301,7 +303,7 @@ class LandmarkManager(MutableMapping, Transformable):
             The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_landmarks
-        visualize_landmarks(self, figure_size=figure_size, popup=popup,
+        visualize_landmarks(self, figure_size=figure_size,
                             browser_style=browser_style)
 
     def __str__(self):
@@ -883,16 +885,13 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             from menpo.visualize import Menpo3dErrorMessage
             raise ImportError(Menpo3dErrorMessage)
 
-    def view_widget(self, popup=False, browser_style='buttons',
-                    figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8)):
         r"""
         Visualizes the landmark group object using the
         :map:`visualize_landmarkgroups` widget.
 
         Parameters
         ----------
-        popup : `bool`, optional
-            If ``True``, the widget will appear as a popup window.
         browser_style : {``buttons``, ``slider``}, optional
             It defines whether the selector of the landmark managers will have
             the form of plus/minus buttons or a slider.
@@ -900,7 +899,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_landmarkgroups
-        visualize_landmarkgroups(self, figure_size=figure_size, popup=popup,
+        visualize_landmarkgroups(self, figure_size=figure_size,
                                  browser_style=browser_style)
 
     def __str__(self):
