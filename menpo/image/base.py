@@ -1174,7 +1174,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     as_single_array=as_single_array)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0.):
+                     order=1, mode='constant', cval=0.0, batch_size=None):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -1213,6 +1213,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -1224,16 +1231,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 "Trying to warp a {}D image with a {}D transform "
                 "(they must match)".format(self.n_dims, transform.n_dims))
         template_points = template_mask.true_indices()
-        points_to_sample = transform.apply(template_points)
-        # we want to sample each channel in turn, returning a vector of
-        # sampled pixels. Store those in a (n_channels, n_pixels) array.
-        sampled_pixel_values = scipy_interpolation(
-            self.pixels, points_to_sample, order=order, mode=mode, cval=cval)
+        sampled = self._sample_points(template_points, transform,
+                                      batch_size, order=order, mode=mode,
+                                      cval=cval)
         # set any nan values to 0
-        sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
+        sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_image = self._build_warped_to_mask(template_mask,
-                                                  sampled_pixel_values)
+        warped_image = self._build_warped_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
@@ -1262,8 +1266,48 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image.from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
+    def _sample_points(self, points_to_sample, transform, batch_size,
+                       order=1, mode='constant', cval=0.0):
+        r"""
+        Parameters
+        ----------
+        points_to_sample : `ndarray`
+            Array of points to sample from the image.
+        transform : :map:`Transform`
+            Transform **from the template_shape space back to this image**.
+            Defines, for each index on template_shape, which pixel location
+            should be sampled from on this image.
+        batch_size : `int` or ``None``
+            This size indicates how many points in the image should be warped at
+            a time, which keeps memory usage low. If ``None``, no batching is
+            used and all points are warped at once.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range [0,5].
+            See warp_to_shape for more information.
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside
+            the image boundaries.
+        """
+        if batch_size is not None:
+            sampled = np.zeros([self.n_channels, points_to_sample.shape[0]])
+            for lo_ind in range(0, points_to_sample.shape[0], batch_size):
+                hi_ind = lo_ind + batch_size
+                batch_points = transform.apply(points_to_sample[lo_ind:hi_ind])
+                sampled[:, lo_ind:hi_ind] = scipy_interpolation(
+                    self.pixels, batch_points, order=order,  mode=mode,
+                    cval=cval)
+            return sampled
+        else:
+            batch_points = transform.apply(points_to_sample)
+            return scipy_interpolation(
+                self.pixels, batch_points, order=order,  mode=mode,
+                cval=cval)
+
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0.):
+                      order=1, mode='constant', cval=0.0, batch_size=None):
         """
         Return a copy of this image warped into a different reference space.
 
@@ -1299,6 +1343,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -1314,11 +1365,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                            mode=mode, cval=cval)
         else:
             template_points = indices_for_image_of_shape(template_shape)
-            points_to_sample = transform.apply(template_points)
-            # we want to sample each channel in turn, returning a vector of
-            # sampled pixels. Store those in a (n_pixels, n_channels) array.
-            sampled = scipy_interpolation(self.pixels, points_to_sample,
-                                          order=order, mode=mode, cval=cval)
+            sampled = self._sample_points(template_points, transform,
+                                          batch_size, order=order, mode=mode,
+                                          cval=cval)
+
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image

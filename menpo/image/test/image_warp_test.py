@@ -32,6 +32,17 @@ def test_warp_gray():
     assert_allclose(warped_im.pixels, gray_template.pixels)
 
 
+def test_warp_gray_batch():
+    rgb_image = mio.import_builtin_asset('takeo.ppm')
+    gray_image = rgb_image.as_greyscale()
+    target_transform = Affine.init_identity(2).from_vector(initial_params)
+    warped_im = gray_image.warp_to_mask(template_mask, target_transform,
+                                        batch_size=100)
+
+    assert(warped_im.shape == gray_template.shape)
+    assert_allclose(warped_im.pixels, gray_template.pixels)
+
+
 def test_warp_multi():
     rgb_image = mio.import_builtin_asset('takeo.ppm')
     target_transform = Affine.init_identity(2).from_vector(initial_params)
@@ -93,6 +104,13 @@ def test_warp_to_shape_equal_warp_to_mask():
     m_shape = b.warp_to_shape((540, 960), r)
     m_mask = b.warp_to_mask(menpo.image.BooleanImage.init_blank((540, 960)), r)
     assert_allclose(m_shape.pixels, m_mask.pixels)
+
+
+def test_warp_to_shape_batch():
+    r = menpo.transform.Affine.init_identity(2)
+    b = mio.import_builtin_asset('takeo.ppm')
+    m_shape = b.warp_to_shape(b.shape, r, batch_size=100)
+    assert_allclose(m_shape.pixels, b.pixels)
 
 
 def test_rescale_boolean():
