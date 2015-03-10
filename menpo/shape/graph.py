@@ -30,7 +30,7 @@ class Graph(object):
         adjacency_matrix must be either a numpy.ndarray or a
         scipy.sparse.csr_matrix.
     ValueError
-        Graph must have at least two vertices.
+        Graph must have at least one vertex.
     ValueError
         adjacency_matrix must be square (n_vertices, n_vertices, ),
         ({adjacency_matrix.shape[0]}, {adjacency_matrix.shape[1]}) given
@@ -137,7 +137,7 @@ class Graph(object):
     def __init__(self, adjacency_matrix, copy=True, skip_checks=False):
         # check if adjacency_matrix is numpy.ndarray or scipy.sparse.csr_matrix
         if isinstance(adjacency_matrix, np.ndarray):
-            # it is numpy.ndarray, convert it to scipy.sparse.csr_matrix
+            # it is numpy.ndarray, thus convert it to scipy.sparse.csr_matrix
             adjacency_matrix = csr_matrix(adjacency_matrix)
         elif not (isinstance(adjacency_matrix, np.ndarray) or
                   isinstance(adjacency_matrix, csr_matrix)):
@@ -146,8 +146,8 @@ class Graph(object):
 
         if not skip_checks:
             # check that adjacency_matrix has expected shape
-            if adjacency_matrix.shape[0] == 1:
-                raise ValueError('Graph must have at least two vertices.')
+            if adjacency_matrix.shape[0] == 0:
+                raise ValueError('Graph must have at least one vertex.')
             elif adjacency_matrix.shape[0] != adjacency_matrix.shape[1]:
                 raise ValueError('adjacency_matrix must be square '
                                  '(n_vertices, n_vertices, ), ({}, {}) given '
@@ -2569,8 +2569,13 @@ def _convert_edges_to_adjacency_matrix(edges, n_vertices):
     """
     if isinstance(edges, list):
         edges = np.array(edges)
-    return csr_matrix(([1] * edges.shape[0], (edges[:, 0], edges[:, 1])),
-                      shape=(n_vertices, n_vertices))
+    if edges.shape[0] == 0:
+        # create adjacency with a single vertex and no edges
+        return np.array([[0]])
+    else:
+        # create sparse adjacency
+        return csr_matrix(([1] * edges.shape[0], (edges[:, 0], edges[:, 1])),
+                          shape=(n_vertices, n_vertices))
 
 
 def _convert_edges_to_symmetric_adjacency_matrix(edges, n_vertices):

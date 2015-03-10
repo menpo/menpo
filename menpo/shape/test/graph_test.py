@@ -10,8 +10,9 @@ from menpo.shape import (UndirectedGraph, DirectedGraph, Tree,
 points = np.array([[10, 30], [0, 20], [20, 20], [0, 10], [20, 10], [0, 0]])
 points2 = np.array([[30, 30], [10, 20], [50, 20], [0, 10], [20, 10],
                     [50, 10], [0, 0], [20, 0], [50, 0]])
+point = np.array([[10, 10]])
 
-# Define adjacency arrays
+# Define undirected graph and pointgraph
 adj_undirected = np.array([[0, 1, 1, 0, 0, 0],
                            [1, 0, 1, 1, 0, 0],
                            [1, 1, 0, 0, 1, 0],
@@ -20,10 +21,14 @@ adj_undirected = np.array([[0, 1, 1, 0, 0, 0],
                            [0, 0, 0, 1, 0, 0]])
 g_undirected = UndirectedGraph(adj_undirected)
 pg_undirected = PointUndirectedGraph(points, adj_undirected)
+
+# Define directed graph and pointgraph
 adj_directed = csr_matrix(([1] * 8, ([1, 2, 1, 2, 1, 2, 3, 3],
                                      [0, 0, 2, 1, 3, 4, 4, 5])), shape=(6, 6))
 g_directed = DirectedGraph(adj_directed)
 pg_directed = PointDirectedGraph(points, adj_directed)
+
+# Define tree and pointtree
 adj_tree = np.array([[0, 1, 1, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 1, 1, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -35,10 +40,18 @@ adj_tree = np.array([[0, 1, 1, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0, 0]])
 g_tree = Tree(adj_tree, 0)
 pg_tree = PointTree(points2, adj_tree, 0)
+
+# Define undirected graph and pointgraph with isolated vertices
 adj_isolated = csr_matrix(([1] * 6, ([0, 2, 2, 4, 3, 4], [2, 0, 4, 2, 4, 3])),
                           shape=(6, 6))
 g_isolated = UndirectedGraph(adj_isolated)
 pg_isolated = PointUndirectedGraph(points, adj_isolated)
+
+# Define undirected graph and pointgraph with a single vertex
+adj_single = np.array([[0]])
+g_single = DirectedGraph(adj_single)
+pg_single = PointDirectedGraph(point, adj_single)
+
 
 
 @raises(ValueError)
@@ -88,6 +101,8 @@ def test_init_from_edges():
     g = PointUndirectedGraph.init_from_edges(
         points, np.array([[0, 2], [2, 4], [3, 4]]))
     assert (pg_isolated.adjacency_matrix - g.adjacency_matrix).nnz == 0
+    g = PointDirectedGraph.init_from_edges(point, np.array([]))
+    assert (pg_single.adjacency_matrix - g.adjacency_matrix).nnz == 0
 
 
 def test_n_edges():
@@ -95,6 +110,7 @@ def test_n_edges():
     assert_allclose(g_undirected.n_edges, 7)
     assert_allclose(g_tree.n_edges, 8)
     assert_allclose(g_isolated.n_edges, 3)
+    assert_allclose(g_single.n_edges, 0)
 
 
 def test_edges():
@@ -107,6 +123,7 @@ def test_edges():
     assert_allclose(g_tree.edges, np.array([[0, 1], [0, 2], [1, 3], [1, 4],
                                             [2, 5], [3, 6], [4, 7], [5, 8]]))
     assert_allclose(g_isolated.edges, np.array([[0, 2], [2, 4], [3, 4]]))
+    assert_allclose(g_single.edges, np.empty((0, 2)))
 
 
 def test_n_vertices():
@@ -114,6 +131,7 @@ def test_n_vertices():
     assert_allclose(g_undirected.n_vertices, 6)
     assert_allclose(g_tree.n_vertices, 9)
     assert_allclose(g_isolated.n_vertices, 6)
+    assert_allclose(g_single.n_vertices, 1)
 
 
 def test_vertices():
@@ -121,6 +139,7 @@ def test_vertices():
     assert (list(g_undirected.vertices) == [0, 1, 2, 3, 4, 5])
     assert (list(g_tree.vertices) == [0, 1, 2, 3, 4, 5, 6, 7, 8])
     assert (list(g_isolated.vertices) == [0, 1, 2, 3, 4, 5])
+    assert (list(g_single.vertices) == [0])
 
 
 def test_isolated_vertices():
@@ -132,6 +151,8 @@ def test_isolated_vertices():
     assert not g_tree.has_isolated_vertices()
     assert (g_isolated.isolated_vertices() == [1, 5])
     assert g_isolated.has_isolated_vertices()
+    assert (g_single.isolated_vertices() == [0])
+    assert g_single.has_isolated_vertices()
 
 
 def test_adjacency_list():
@@ -143,6 +164,7 @@ def test_adjacency_list():
             [[1, 2], [3, 4], [5], [6], [7], [8], [], [], []])
     assert (g_isolated.get_adjacency_list() ==
             [[2], [], [0, 4], [4], [2, 3], []])
+    assert (g_single.get_adjacency_list() == [[]])
 
 
 def test_n_paths():
@@ -150,6 +172,7 @@ def test_n_paths():
     assert_allclose(g_undirected.n_paths(0, 5), 4)
     assert_allclose(g_tree.n_paths(2, 6), 0)
     assert_allclose(g_isolated.n_paths(3, 2), 1)
+    assert_allclose(g_single.n_paths(0, 0), 1)
 
 
 def test_find_all_paths():
@@ -158,6 +181,7 @@ def test_find_all_paths():
             [[0, 1, 2, 4, 3, 5], [0, 1, 3, 5], [0, 2, 1, 3, 5], [0, 2, 4, 3, 5]])
     assert (g_tree.find_all_paths(2, 6) == [])
     assert (g_isolated.find_all_paths(1, 5) == [])
+    assert (g_single.find_all_paths(0, 10) == [])
 
 
 def test_find_path():
@@ -165,6 +189,7 @@ def test_find_path():
     assert (g_undirected.find_all_paths(0, 5)[0] == g_undirected.find_path(0, 5))
     assert (g_tree.find_path(2, 6) is None)
     assert (g_isolated.find_path(4, 1) is None)
+    assert (g_single.find_path(0, 0) == [0])
 
 
 def test_find_shortest_path():
@@ -172,6 +197,7 @@ def test_find_shortest_path():
     assert (g_undirected.find_shortest_path(5, 0) == ([5, 3, 1, 0], 3.0))
     assert (g_tree.find_shortest_path(1, 7) == ([1, 4, 7], 1.0))
     assert (g_isolated.find_shortest_path(3, 0) == ([3, 4, 2, 0], 3.0))
+    assert (g_single.find_shortest_path(0, 0) == ([], np.inf))
 
 
 def test_neighbours_children_parent():
@@ -189,6 +215,11 @@ def test_neighbours_children_parent():
 
     assert (g_isolated.neighbours(1) == [])
     assert (g_isolated.n_neighbours(4) == 2)
+
+    assert (g_single.children(0) == [])
+    assert (g_single.n_children(0) == 0)
+    assert (g_single.parents(0) == [])
+    assert (g_single.n_parents(0) == 0)
 
 
 def test_tree():
@@ -234,12 +265,15 @@ def test_is_edge():
     assert g_isolated.is_edge(4, 2)
     assert not g_isolated.is_edge(1, 5)
 
+    assert not g_single.is_edge(0, 0)
+
 
 def test_is_tree():
     assert not g_undirected.is_tree()
     assert not g_directed.is_tree()
     assert g_tree.is_tree()
     assert not g_isolated.is_tree()
+    assert g_single.is_tree()
 
 
 def test_from_mask():
@@ -258,6 +292,7 @@ def test_from_mask():
         np.array([True, True, False,
                   True, True, False])).get_adjacency_list() ==
             [[], [], [3], [2]])
+    assert (pg_single.from_mask(np.array([True])).get_adjacency_list() == [[]])
 
 
 @raises(ValueError)
@@ -267,6 +302,7 @@ def test_from_mask_errors():
     pg_tree.from_mask(np.array([False, True, True, True, True, True, True,
                                 True, True]))
     pg_isolated.from_mask(np.array([True, True, False, True, False, True]))
+    pg_single.from_mask(np.array([False]))
 
 
 def test_relative_locations():
