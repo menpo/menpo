@@ -13,6 +13,80 @@ MENPO_LOGO = None
 MENPO_LOGO_SCALE = None
 
 
+def _format_box(box, box_style, border_visible, border_color, border_style,
+                border_width, padding, margin):
+    r"""
+    Function that defines the style of an IPython box.
+
+    Parameters
+    ----------
+    box : `IPython.html.widgets.Box`, `IPython.html.widgets.FlexBox` or subclass
+        The ipython box object.
+    box_style : `str` or ``None`` (see below)
+        Style options ::
+
+            {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+            or
+            ``None``
+
+    border_visible : `bool`
+        Defines whether to draw the border line around the widget.
+    border_color : `str`
+        The color of the border around the widget.
+    border_style : `str`
+        The line style of the border around the widget.
+    border_width : `float`
+        The line width of the border around the widget.
+    padding : `float`
+        The padding around the widget.
+    margin : `float`
+        The margin around the widget.
+    """
+    box.box_style = box_style
+    box.padding = padding
+    box.margin = margin
+    if border_visible:
+        box.border_color = border_color
+        box.border_style = border_style
+        box.border_width = border_width
+    else:
+        box.border_width = 0
+
+
+def _format_font(obj, font_family, font_size, font_style, font_weight):
+    r"""
+    Function that defines the font of a given IPython object.
+
+    Parameters
+    ----------
+    obj : `IPython.html.widgets`
+        The ipython widget object.
+    font_family : See Below, optional
+        The font of the axes.
+        Example options ::
+
+            {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
+             ``monospace``}
+
+    font_size : `int`, optional
+        The font size of the axes.
+    font_style : {``normal``, ``italic``, ``oblique``}, optional
+        The font style of the axes.
+    font_weight : See Below, optional
+        The font weight of the axes.
+        Example options ::
+
+            {``ultralight``, ``light``, ``normal``, ``regular``,
+             ``book``, ``medium``, ``roman``, ``semibold``,
+             ``demibold``, ``demi``, ``bold``, ``heavy``,
+             ``extra bold``, ``black``}
+    """
+    obj.font_family = font_family
+    obj.font_size = font_size
+    obj.font_style = font_style
+    obj.font_weight = font_weight
+
+
 class LogoWidget(ipywidgets.Box):
     r"""
     Creates a widget with Menpo's logo image. The widget consists of:
@@ -125,8 +199,8 @@ class IndexSliderWidget(ipywidgets.Box):
 
     def style(self, box_style=None, border_visible=True, border_color='black',
               border_style='solid', border_width=1, padding=0, margin=0,
-              font_family='sans-serif', font_size=10, font_style='normal',
-              font_weight='normal', slider_color=''):
+              font_family='', font_size=None, font_style='', font_weight='',
+              slider_color=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -152,24 +226,24 @@ class IndexSliderWidget(ipywidgets.Box):
         margin : `float`, optional
             The margin around the widget.
         font_family : See Below, optional
-            The font of the axes.
+            The font family to be used.
             Example options ::
 
-                {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                 ``monospace``}
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
 
         font_size : `int`, optional
-            The font size of the axes.
-        font_style : {``normal``, ``italic``, ``oblique``}, optional
-            The font style of the axes.
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
         font_weight : See Below, optional
-            The font weight of the axes.
+            The font weight.
             Example options ::
 
-                {``ultralight``, ``light``, ``normal``, ``regular``,
-                 ``book``, ``medium``, ``roman``, ``semibold``,
-                 ``demibold``, ``demi``, ``bold``, ``heavy``,
-                 ``extra bold``, ``black``}
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
 
         slider_color : `str`, optional
             The color of the slider's handler.
@@ -189,9 +263,6 @@ class IndexSliderWidget(ipywidgets.Box):
         ----------
         plot_function : `function` or ``None``, optional
             The plot function that is executed when the index value changes.
-            If ``None``, then nothing is assigned.
-        update_function : `function` or ``None``, optional
-            The update function that is executed when the index value changes.
             If ``None``, then nothing is assigned.
         """
         # remove old function
@@ -351,9 +422,9 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
 
     def style(self, box_style=None, border_visible=True, border_color='black',
               border_style='solid', border_width=1, padding=0, margin=0,
-              font_family='sans-serif', font_size=10, font_style='normal',
-              font_weight='normal', buttons_style=None, buttons_width='1cm',
-              text_width='4cm', title_padding=6):
+              font_family='', font_size=None, font_style='', font_weight='',
+              buttons_style=None, buttons_width='1cm', text_width='4cm',
+              title_padding=6):
         r"""
         Function that defines the styling of the widget.
 
@@ -379,24 +450,24 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         margin : `float`, optional
             The margin around the widget.
         font_family : See Below, optional
-            The font of the axes.
+            The font family to be used.
             Example options ::
 
-                {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                 ``monospace``}
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
 
         font_size : `int`, optional
-            The font size of the axes.
-        font_style : {``normal``, ``italic``, ``oblique``}, optional
-            The font style of the axes.
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
         font_weight : See Below, optional
-            The font weight of the axes.
+            The font weight.
             Example options ::
 
-                {``ultralight``, ``light``, ``normal``, ``regular``,
-                 ``book``, ``medium``, ``roman``, ``semibold``,
-                 ``demibold``, ``demi``, ``bold``, ``heavy``,
-                 ``extra bold``, ``black``}
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
 
         buttons_style : `str` or ``None`` (see below), optional
             Style options ::
@@ -440,9 +511,6 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         ----------
         plot_function : `function` or ``None``, optional
             The plot function that is executed when the index value changes.
-            If ``None``, then nothing is assigned.
-        update_function : `function` or ``None``, optional
-            The update function that is executed when the index value changes.
             If ``None``, then nothing is assigned.
         """
         # remove old function
@@ -498,6 +566,26 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
 
 
 def _decode_colour(colour):
+    r"""
+    Function that decodes a given colour to its RGB values.
+
+    Parameters
+    ----------
+    obj : `str` or `list`
+        Either an `str` colour or a `list` of length ``3`` with the RGB values.
+
+    Returns
+    -------
+    colour : `str`
+        Returns either the original `colour` of ``'custom'`` if the original
+        `colour` was a `list`.
+    r_val : `float`
+        The R channel. ``0.`` if `colour` is an `str`.
+    g_val : `float`
+        The G channel. ``0.`` if `colour` is an `str`.
+    b_val : `float`
+        The B channel. ``0.`` if `colour` is an `str`.
+    """
     r_val = g_val = b_val = 0.
     if not isinstance(colour, str):
         r_val = colour[0]
@@ -507,282 +595,413 @@ def _decode_colour(colour):
     return colour, r_val, g_val, b_val
 
 
-def colour_selection(default_colour_list, plot_function=None, title='Colour',
-                     labels=None):
+def _lists_are_the_same(a, b):
     r"""
-    Creates a widget with Colour Selection Options. Specifically, it has:
-        1) A label selection if more than one colours are provided.
-        2) An 'apply to all labels' button.
-        3) A drop down menu with predefined colours and a 'custom' entry.
-        4) If 'custom is selected, then three float text boxes appear to enter
-           the desired RGB values.
+    Function that checks if two `lists` have the same elements in the same
+    order.
 
-    The structure of the widgets is the following:
-        colour_selection_wid.children = [labels, drop_down_menu, rgb]
-        labels.children = [selection_dropdown, apply_to_all_button]
-        rgb.children = [r_value, g_value, b_value]
+    Returns
+    -------
+    _lists_are_the_same : `bool`
+        ``True`` if the lists are the same.
+    """
+    if len(a) == len(b):
+        for i, j in zip(a, b):
+            if i != j:
+                return False
+        return True
+    else:
+        return False
 
-    The returned widget saves the selected values in the following list:
-        colour_selection_wid.selected_values
 
-    To fix the alignment within this widget please refer to
-    `format_colour_selection()` function.
+class ColourSelectionWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for colour selection of various items. The widget consists
+    of:
 
-    To update the state of this widget, please refer to
-    `update_colour_selection()` function.
+        1) Dropdown [`self.label_dropdown`]: the menu with the available labels
+        2) Button [`self.apply_to_all_button`]: button that sets the same colour
+           to all available labels
+        3) VBox [`self.labels_box`]: the box containing (1) and (2)
+        4) Dropdown [`self.colour_dropdown`]: the menu with the predefined
+           colours and custom option
+        5) BoundedFloatText [`self.r_text`]: text area for the R value
+        6) BoundedFloatText [`self.g_text`]: text area for the G value
+        7) BoundedFloatText [`self.b_text`]: text area for the B value
+        8) Box [`self.rgb_box`]: box with (5), (6) and (7)
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_state()` and
+    `set_plot_function()` methods.
 
     Parameters
     ----------
-    default_colour_list : `list` of `str` or [`float`, `float`, `float`]
-        If `str`, it must be one of {'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'}.
+    colours_list : `list` of `str` or [`float`, `float`, `float`]
+        If `str`, it must be one of ::
+
+            {``'b'``, ``'g'``, ``'r'``, ``'c'``,
+             ``'m'``, ``'y'``, ``'k'``, ``'w'``}
+
         If [`float`, `float`, `float`], it defines an RGB value and must have
         length 3.
-    plot_function : `function` or None, optional
+    plot_function : `function` or ``None``, optional
         The plot function that is executed when a widgets' value changes.
-        If None, then nothing is assigned.
-    title : `str`, optional
-        The description of the drop down menu.
-    labels : `list`, optional
-        A list with the labels' names.
+        If ``None``, then nothing is assigned.
+    description : `str`, optional
+        The description of the widget.
+    labels : `list` or ``None``, optional
+        A `list` with the labels' names. If ``None``, then a `list` of the form
+        ``label {}`` is automatically defined.
     """
-    import IPython.html.widgets as ipywidgets
-    # check if multiple mode should be enabled
-    n_labels = len(default_colour_list)
-    multiple = n_labels > 1
+    def __init__(self, colours_list, plot_function=None, description='Colour',
+                 labels=None):
+        # Check if multiple mode should be enabled
+        n_labels = len(colours_list)
+        multiple = n_labels > 1
 
-    # colours dictionary
-    colour_dict = OrderedDict()
-    colour_dict['blue'] = 'b'
-    colour_dict['green'] = 'g'
-    colour_dict['red'] = 'r'
-    colour_dict['cyan'] = 'c'
-    colour_dict['magenta'] = 'm'
-    colour_dict['yellow'] = 'y'
-    colour_dict['black'] = 'k'
-    colour_dict['white'] = 'w'
-    colour_dict['custom'] = 'custom'
+        # Colours dictionary
+        colour_dict = OrderedDict()
+        colour_dict['blue'] = 'b'
+        colour_dict['green'] = 'g'
+        colour_dict['red'] = 'r'
+        colour_dict['cyan'] = 'c'
+        colour_dict['magenta'] = 'm'
+        colour_dict['yellow'] = 'y'
+        colour_dict['black'] = 'k'
+        colour_dict['white'] = 'w'
+        colour_dict['custom'] = 'custom'
 
-    # Labels dropdown menu
-    labels_dict = OrderedDict()
-    if labels is None:
-        labels = []
-        for k in range(n_labels):
-            labels_dict["label {}".format(k)] = k
-            labels.append("label {}".format(k))
-    else:
-        for k, l in enumerate(labels):
-            labels_dict[l] = k
-    selection = ipywidgets.Dropdown(options=labels_dict, value=0)
-    apply_to_all = ipywidgets.Button(description='apply to all labels')
-    labels_wid = ipywidgets.Box(children=[selection, apply_to_all],
-                                visible=multiple)
-
-    # find default values
-    default_colour, r_val, g_val, b_val = _decode_colour(default_colour_list[0])
-
-    # create widgets
-    r_wid = ipywidgets.BoundedFloatText(value=r_val, description='RGB',
-                                        min=0.0,
-                                        max=1.0)
-    g_wid = ipywidgets.BoundedFloatText(value=g_val, min=0.0, max=1.0)
-    b_wid = ipywidgets.BoundedFloatText(value=b_val, min=0.0, max=1.0)
-    menu = ipywidgets.Dropdown(options=colour_dict, value=default_colour,
-                               description='')
-    rgb = ipywidgets.Box(children=[r_wid, g_wid, b_wid])
-
-    if multiple:
-        selection.description = title
-    else:
-        menu.description = title
-
-    # Final widget
-    colour_selection_wid = ipywidgets.Box(
-        children=[labels_wid, menu, rgb])
-
-    # Assign output
-    colour_selection_wid.selected_values = {'colour': default_colour_list,
-                                            'labels': labels}
-
-    # control visibility
-    def show_rgb(name, value):
-        if value == 'custom':
-            rgb.visible = True
-        else:
-            rgb.visible = False
-    show_rgb('', default_colour)
-    menu.on_trait_change(show_rgb, 'value')
-
-    # functions in case of multiple
-    def apply_to_all_function(name):
-        if menu.value == 'custom':
-            tmp = [r_wid.value, g_wid.value, b_wid.value]
-        else:
-            tmp = menu.value
-        for idx in range(len(colour_selection_wid.selected_values['colour'])):
-            colour_selection_wid.selected_values['colour'][idx] = tmp
-        if selection.value == 0:
-            selection.value = 1
-        else:
-            selection.value = 0
-
-    apply_to_all.on_click(apply_to_all_function)
-
-    def selection_function(name, value):
-        colour, r_val, g_val, b_val = _decode_colour(
-            colour_selection_wid.selected_values['colour'][value])
-        menu.value = colour
-        r_wid.value = r_val
-        g_wid.value = g_val
-        b_wid.value = b_val
-
-    selection.on_trait_change(selection_function, 'value')
-
-    # save colour
-    def get_colour(name, value):
-        idx = selection.value
-        if menu.value == 'custom':
-            colour_selection_wid.selected_values['colour'][idx] = [r_wid.value,
-                                                                   g_wid.value,
-                                                                   b_wid.value]
-        else:
-            colour_selection_wid.selected_values['colour'][idx] = menu.value
-    menu.on_trait_change(get_colour, 'value')
-    r_wid.on_trait_change(get_colour, 'value')
-    g_wid.on_trait_change(get_colour, 'value')
-    b_wid.on_trait_change(get_colour, 'value')
-
-    # assign plot function
-    if plot_function is not None:
-        menu.on_trait_change(plot_function, 'value')
-        r_wid.on_trait_change(plot_function, 'value')
-        g_wid.on_trait_change(plot_function, 'value')
-        b_wid.on_trait_change(plot_function, 'value')
-
-        def tmp_plot_function(name):
-            plot_function('', True)
-        apply_to_all.on_click(tmp_plot_function)
-
-    return colour_selection_wid
-
-
-def format_colour_selection(colour_selection_wid):
-    r"""
-    Function that corrects the align (style format) of a given colour_selection
-    widget. Usage example:
-        colour_selection_wid = colour_selection(['r'])
-        display(colour_selection_wid)
-        format_colour_selection(colour_selection_wid)
-
-    Parameters
-    ----------
-    colour_selection_wid :
-        The widget object generated by the `colour_selection()` function.
-    """
-    # align selection container and colour
-    add_class(colour_selection_wid, 'align-end')
-
-    # align r, g, b values
-    remove_class(colour_selection_wid.children[2], 'vbox')
-    add_class(colour_selection_wid.children[2], 'hbox')
-    add_class(colour_selection_wid.children[2], 'align-start')
-
-    # set width of r, g, b
-    colour_selection_wid.children[2].children[0].width = '0.5cm'
-    colour_selection_wid.children[2].children[1].width = '0.5cm'
-    colour_selection_wid.children[2].children[2].width = '0.5cm'
-
-    # align label selection and apply to all button
-    add_class(colour_selection_wid.children[0], 'align-end')
-
-
-def update_colour_selection(colour_selection_wid, default_colour_list,
-                            labels=None):
-    r"""
-    Function that updates the state of a given colour_selection widget. Usage
-    example:
-        colour_selection_wid = colour_selection(default_colour_list=['r', 'b'],
-                                                labels=['jaw', 'mouth'])
-        display(colour_selection_wid)
-        format_colour_selection(colour_selection_wid)
-        update_colour_selection(colour_selection_wid,
-                                default_colour_list=[[0.5, 0.7, 1.0]],
-                                labels=['all'])
-
-    Parameters
-    ----------
-    colour_selection_wid :
-        The widget object generated by the `colour_selection()` function.
-    default_colour_list : `list` of `str` or [`float`, `float`, `float`]
-        If `str`, it must be one of {'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'}.
-        If [`float`, `float`, `float`], it defines an RGB value and must have
-        length 3.
-    labels : `list`, optional
-        A list with the labels' names.
-    """
-    if labels is None:
-        labels = colour_selection_wid.selected_values['labels']
-
-    sel_colours = colour_selection_wid.selected_values['colour']
-    sel_labels = colour_selection_wid.selected_values['labels']
-    if (_lists_are_the_same(sel_colours, default_colour_list) and not
-        _lists_are_the_same(sel_labels, labels)):
-        # the provided colours are the same, but the labels changed, so update
-        # the labels
-        colour_selection_wid.selected_values['labels'] = labels
+        # Labels dropdown menu (it must be invisible if multiple == False)
         labels_dict = OrderedDict()
-        for k, l in enumerate(labels):
-            labels_dict[l] = k
-        colour_selection_wid.children[0].children[0].values = labels_dict
-        colour_selection_wid.children[0].children[0].value = 0
-    elif (not _lists_are_the_same(sel_colours, default_colour_list) and
-          _lists_are_the_same(sel_labels, labels)):
-        # the provided labels are the same, but the colours are different
-        # assign colour
-        colour_selection_wid.selected_values['colour'] = default_colour_list
-        k = colour_selection_wid.children[0].children[0].value
-        default_colour = default_colour_list[k]
-        if not isinstance(default_colour, str):
-            r_val = default_colour[0]
-            g_val = default_colour[1]
-            b_val = default_colour[2]
-            default_colour = 'custom'
-            colour_selection_wid.children[2].children[0].value = r_val
-            colour_selection_wid.children[2].children[1].value = g_val
-            colour_selection_wid.children[2].children[2].value = b_val
-        colour_selection_wid.children[1].value = default_colour
-        colour_selection_wid.children[0].children[0].value = 0
-    elif (not _lists_are_the_same(sel_colours, default_colour_list) and not
-          _lists_are_the_same(sel_labels, labels)):
-        # both the colours and the labels are different
-        # assign colour
-        if len(sel_labels) > 1 and len(labels) == 1:
-            colour_selection_wid.children[1].description = \
-                colour_selection_wid.children[0].children[0].description
-            colour_selection_wid.children[0].children[0].description = ''
-        elif len(sel_labels) == 1 and len(labels) > 1:
-            colour_selection_wid.children[0].children[0].description = \
-                colour_selection_wid.children[1].description
-            colour_selection_wid.children[1].description = ''
-        colour_selection_wid.children[0].visible = len(labels) > 1
-        colour_selection_wid.selected_values['colour'] = default_colour_list
-        colour_selection_wid.selected_values['labels'] = labels
-        labels_dict = OrderedDict()
-        for k, l in enumerate(labels):
-            labels_dict[l] = k
-        colour_selection_wid.children[0].children[0].values = labels_dict
-        colour_selection_wid.children[0].children[0].value = 0
-        k = 0
-        default_colour = default_colour_list[k]
-        if not isinstance(default_colour, str):
-            r_val = default_colour[0]
-            g_val = default_colour[1]
-            b_val = default_colour[2]
-            default_colour = 'custom'
-            colour_selection_wid.children[2].children[0].value = r_val
-            colour_selection_wid.children[2].children[1].value = g_val
-            colour_selection_wid.children[2].children[2].value = b_val
-        colour_selection_wid.children[1].value = default_colour
-        colour_selection_wid.children[0].children[0].value = 0
+        if labels is None:
+            labels = []
+            for k in range(n_labels):
+                labels_dict["label {}".format(k)] = k
+                labels.append("label {}".format(k))
+        else:
+            for k, l in enumerate(labels):
+                labels_dict[l] = k
+        self.label_dropdown = ipywidgets.Dropdown(options=labels_dict, value=0)
+        self.apply_to_all_button = ipywidgets.Button(
+            description='apply to all labels')
+        self.labels_box = ipywidgets.VBox(children=[self.label_dropdown,
+                                                    self.apply_to_all_button],
+                                          visible=multiple, align='end')
+
+        # Decode colour values of the first label
+        default_colour, r_val, g_val, b_val = _decode_colour(colours_list[0])
+
+        # Create colour widgets
+        self.r_text = ipywidgets.BoundedFloatText(value=r_val, min=0.0, max=1.0,
+                                                  description='R')
+        self.g_text = ipywidgets.BoundedFloatText(value=g_val, min=0.0, max=1.0,
+                                                  description='G')
+        self.b_text = ipywidgets.BoundedFloatText(value=b_val, min=0.0, max=1.0,
+                                                  description='B')
+        self.colour_dropdown = ipywidgets.Dropdown(options=colour_dict,
+                                                   value=default_colour,
+                                                   description='')
+        self.rgb_box = ipywidgets.Box(children=[self.r_text, self.g_text,
+                                                self.b_text],
+                                      visible=default_colour == 'custom')
+
+        # Set widget description
+        if multiple:
+            self.label_dropdown.description = description
+        else:
+            self.colour_dropdown.description = description
+
+        # Final widget
+        super(ColourSelectionWidget, self).__init__(
+            children=[self.labels_box, self.colour_dropdown, self.rgb_box])
+        self.align = 'end'
+
+        # Assign output
+        self.selected_values = {'colour': colours_list, 'labels': labels}
+
+        # Set functionality
+        def show_rgb_box(name, value):
+            self.rgb_box.visible = value == 'custom'
+        self.colour_dropdown.on_trait_change(show_rgb_box, 'value')
+
+        def apply_to_all_function(name):
+            if self.colour_dropdown.value == 'custom':
+                tmp = [self.r_text.value, self.g_text.value, self.b_text.value]
+            else:
+                tmp = self.colour_dropdown.value
+            for idx in range(len(self.selected_values['colour'])):
+                self.selected_values['colour'][idx] = tmp
+            self.label_dropdown.value = 0
+        self.apply_to_all_button.on_click(apply_to_all_function)
+
+        def update_colour_wrt_label(name, value):
+            # temporarily remove plot_function from r, g, b traits
+            self.colour_dropdown._remove_notifiers(self._plot_function, 'value')
+            self.r_text._remove_notifiers(self._plot_function, 'value')
+            self.g_text._remove_notifiers(self._plot_function, 'value')
+            self.b_text._remove_notifiers(self._plot_function, 'value')
+            # update colour widgets
+            (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
+             self.b_text.value) = _decode_colour(
+                self.selected_values['colour'][value])
+            # re-assign plot_function
+            self.colour_dropdown._add_notifiers(self._plot_function, 'value')
+            self.r_text._add_notifiers(self._plot_function, 'value')
+            self.g_text._add_notifiers(self._plot_function, 'value')
+            self.b_text._add_notifiers(self._plot_function, 'value')
+        self.label_dropdown.on_trait_change(update_colour_wrt_label, 'value')
+
+        def save_colour(name, value):
+            idx = self.label_dropdown.value
+            if self.colour_dropdown.value == 'custom':
+                self.selected_values['colour'][idx] = [self.r_text.value,
+                                                       self.g_text.value,
+                                                       self.b_text.value]
+            else:
+                self.selected_values['colour'][idx] = self.colour_dropdown.value
+        self.colour_dropdown.on_trait_change(save_colour, 'value')
+        self.r_text.on_trait_change(save_colour, 'value')
+        self.g_text.on_trait_change(save_colour, 'value')
+        self.b_text.on_trait_change(save_colour, 'value')
+
+        # Set plot function and keep them for future reference
+        self._plot_function = plot_function
+        if self._plot_function is not None:
+            self.colour_dropdown.on_trait_change(self._plot_function, 'value')
+            self.r_text.on_trait_change(self._plot_function, 'value')
+            self.g_text.on_trait_change(self._plot_function, 'value')
+            self.b_text.on_trait_change(self._plot_function, 'value')
+
+            def tmp_plot_function(name):
+                self._plot_function('', True)
+            self.apply_to_all_button.on_click(tmp_plot_function)
+
+    def style(self, box_style=None, border_visible=True, border_color='black',
+              border_style='solid', border_width=1, padding=0, margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight='', colour_dropdown_style=None,
+              label_dropdown_style=None, apply_to_all_dropdown_style=None,
+              rgb_width='0.5cm'):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        colour_dropdown_style : `str` or ``None`` (see below), optional
+            Style of the colours dropdown menu. Options ::
+
+                {``'primary'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'````, ``''``}
+                or
+                ``None``
+
+        label_dropdown_style : `str` or ``None`` (see below), optional
+            Style of the labels dropdown menu. Options ::
+
+                {``'primary'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'````, ``''``}
+                or
+                ``None``
+
+        apply_to_all_dropdown_style : `str` or ``None`` (see below), optional
+            Style of the apply to all button. Options ::
+
+                {``'primary'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'````, ``''``}
+                or
+                ``None``
+
+        rgb_width : `str`, optional
+            The width of the RGB texts.
+        """
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, padding, margin)
+        # TODO: How to change the width of a *Text widget?
+        #self.r_text.width = rgb_width
+        #self.g_text.width = rgb_width
+        #self.b_text.width = rgb_width
+        self.colour_dropdown.button_style = colour_dropdown_style
+        self.label_dropdown.button_style = label_dropdown_style
+        self.apply_to_all_button.button_style = apply_to_all_dropdown_style
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.label_dropdown, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.apply_to_all_button, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.r_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.g_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.b_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.colour_dropdown, font_family, font_size, font_style,
+                     font_weight)
+
+    def set_plot_function(self, plot_function):
+        r"""
+        Method that updates the `plot_function()` of the widget. Specifically it
+        removes the old one and appends the new one, if they are not the same.
+
+        Parameters
+        ----------
+        plot_function : `function` or ``None``, optional
+            The plot function that is executed when the index value changes.
+            If ``None``, then nothing is assigned.
+        """
+        # remove old function
+        self.colour_dropdown._remove_notifiers(self._plot_function, 'value')
+        self.r_text._remove_notifiers(self._plot_function, 'value')
+        self.g_text._remove_notifiers(self._plot_function, 'value')
+        self.b_text._remove_notifiers(self._plot_function, 'value')
+        self.apply_to_all_button._remove_notifiers(
+            self.apply_to_all_button._trait_notifiers[-1], 'value')
+        # add new function
+        self._plot_function = plot_function
+        if self._plot_function is not None:
+            self.colour_dropdown._add_notifiers(self._plot_function, 'value')
+            self.r_text._add_notifiers(self._plot_function, 'value')
+            self.g_text._add_notifiers(self._plot_function, 'value')
+            self.b_text._add_notifiers(self._plot_function, 'value')
+
+            def tmp_plot_function(name):
+                self._plot_function('', True)
+            self.apply_to_all_button.on_click(tmp_plot_function)
+
+    def set_widget_state(self, colours_list, labels=None):
+        r"""
+        Method that updates the state of the widget, if the provided
+        `colours_list` and `labels` values are different than
+        `self.selected_values()`.
+
+        Parameter
+        ---------
+        colours_list : `list` of `str` or [`float`, `float`, `float`]
+            If `str`, it must be one of ::
+
+                {``'b'``, ``'g'``, ``'r'``, ``'c'``,
+                 ``'m'``, ``'y'``, ``'k'``, ``'w'``}
+
+            If [`float`, `float`, `float`], it defines an RGB value and must
+            have length 3.
+        labels : `list` or ``None``, optional
+            A `list` with the labels' names. If ``None``, then a `list` of the
+            form ``label {}`` is automatically defined.
+        """
+        if labels is None:
+            labels = self.selected_values['labels']
+
+        sel_colours = self.selected_values['colour']
+        sel_labels = self.selected_values['labels']
+        if (_lists_are_the_same(sel_colours, colours_list) and
+                not _lists_are_the_same(sel_labels, labels)):
+            # the provided colours are the same, but the labels changed, so
+            # update the labels
+            self.selected_values['labels'] = labels
+            labels_dict = OrderedDict()
+            for k, l in enumerate(labels):
+                labels_dict[l] = k
+            self.label_dropdown.options = labels_dict
+            if len(labels) > 1:
+                if self.label_dropdown.value > 0:
+                    self.label_dropdown.value = 0
+                else:
+                    self.label_dropdown.value = 1
+                    self.label_dropdown.value = 0
+        elif (not _lists_are_the_same(sel_colours, colours_list) and
+              _lists_are_the_same(sel_labels, labels)):
+            # the provided labels are the same, but the colours are different
+            # assign colour
+            self.selected_values['colour'] = colours_list
+            # temporarily remove plot_function from r, g, b traits
+            self.colour_dropdown._remove_notifiers(self._plot_function, 'value')
+            self.r_text._remove_notifiers(self._plot_function, 'value')
+            self.g_text._remove_notifiers(self._plot_function, 'value')
+            self.b_text._remove_notifiers(self._plot_function, 'value')
+            # update colour widgets
+            k = self.label_dropdown.value
+            (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
+             self.b_text.value) = _decode_colour(colours_list[k])
+            # re-assign plot_function
+            self.colour_dropdown._add_notifiers(self._plot_function, 'value')
+            self.r_text._add_notifiers(self._plot_function, 'value')
+            self.g_text._add_notifiers(self._plot_function, 'value')
+            self.b_text._add_notifiers(self._plot_function, 'value')
+            # trigger plot function
+            #self._plot_function('', True)
+        elif (not _lists_are_the_same(sel_colours, colours_list) and
+                  not _lists_are_the_same(sel_labels, labels)):
+            # both the colours and the labels are different
+            if len(sel_labels) > 1 and len(labels) == 1:
+                self.colour_dropdown.description = \
+                    self.label_dropdown.description
+                self.label_dropdown.description = ''
+            elif len(sel_labels) == 1 and len(labels) > 1:
+                self.label_dropdown.description = \
+                    self.colour_dropdown.description
+                self.colour_dropdown.description = ''
+            self.labels_box.visible = len(labels) > 1
+            self.selected_values['colour'] = colours_list
+            self.selected_values['labels'] = labels
+            labels_dict = OrderedDict()
+            for k, l in enumerate(labels):
+                labels_dict[l] = k
+            self.label_dropdown.options = labels_dict
+            self.label_dropdown.value = 0
+            # temporarily remove plot_function from r, g, b traits
+            self.colour_dropdown._remove_notifiers(self._plot_function, 'value')
+            self.r_text._remove_notifiers(self._plot_function, 'value')
+            self.g_text._remove_notifiers(self._plot_function, 'value')
+            self.b_text._remove_notifiers(self._plot_function, 'value')
+            # update colour widgets
+            (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
+             self.b_text.value) = _decode_colour(colours_list[0])
+            # re-assign plot_function
+            self.colour_dropdown._add_notifiers(self._plot_function, 'value')
+            self.r_text._add_notifiers(self._plot_function, 'value')
+            self.g_text._add_notifiers(self._plot_function, 'value')
+            self.b_text._add_notifiers(self._plot_function, 'value')
+            # trigger plot function
+            #self._plot_function('', True)
 
 
 def image_options(image_options_default, plot_function=None,
@@ -4541,52 +4760,3 @@ def _lists_are_the_same(a, b):
     else:
         return False
 
-
-def _format_box(box, box_style, border_visible, border_color, border_style,
-                border_width, padding, margin):
-    r"""
-    Function that defines the layout of the logo widget. Usage example:
-        logo_wid = logo()
-        display(logo_wid)
-        format_logo(logo_wid)
-
-    Parameters
-    ----------
-    box : `IPython.html.widgets.Box`, `IPython.html.widgets.FlexBox` or subclass
-        The ipython box object.
-    box_style : `str` or ``None`` (see below)
-        Style options ::
-
-            {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-            or
-            ``None``
-
-    border_visible : `bool`
-        Defines whether to draw the border line around the widget.
-    border_color : `str`
-        The color of the border around the widget.
-    border_style : `str`
-        The line style of the border around the widget.
-    border_width : `float`
-        The line width of the border around the widget.
-    padding : `float`
-        The padding around the widget.
-    margin : `float`
-        The margin around the widget.
-    """
-    box.box_style = box_style
-    box.padding = padding
-    box.margin = margin
-    if border_visible:
-        box.border_color = border_color
-        box.border_style = border_style
-        box.border_width = border_width
-    else:
-        box.border_width = 0
-
-
-def _format_font(obj, font_family, font_size, font_style, font_weight):
-    obj.font_family = font_family
-    obj.font_size = font_size
-    obj.font_style = font_style
-    obj.font_weight = font_weight
