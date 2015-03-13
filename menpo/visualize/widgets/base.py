@@ -12,7 +12,6 @@ from .options import (channel_options, format_channel_options,
                       save_figure_options, format_save_figure_options,
                       features_options, format_features_options, viewer_options,
                       format_viewer_options)
-from .tools import logo, format_logo
 from .compatibility import add_class, remove_class
 
 
