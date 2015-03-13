@@ -1138,7 +1138,7 @@ class ImageOptionsWidget(ipywidgets.Box):
     """
     def __init__(self, image_options_default, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Image Object'):
+                 toggle_title='Image Options'):
         self.toggle_visible = ipywidgets.ToggleButton(
             description=toggle_title, value=toggle_show_default,
             visible=toggle_show_visible)
@@ -1371,7 +1371,7 @@ class LineOptionsWidget(ipywidgets.Box):
     """
     def __init__(self, line_options_default, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Line Object',
+                 toggle_title='Line Options',
                  render_checkbox_title='Render lines', labels=None):
         self.toggle_visible = ipywidgets.ToggleButton(
             description=toggle_title, value=toggle_show_default,
@@ -1694,7 +1694,7 @@ class MarkerOptionsWidget(ipywidgets.Box):
     """
     def __init__(self, marker_options_default, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Marker Object',
+                 toggle_title='Marker Options',
                  render_checkbox_title='Render markers', labels=None):
         self.toggle_visible = ipywidgets.ToggleButton(
             description=toggle_title, value=toggle_show_default,
@@ -2027,40 +2027,39 @@ class MarkerOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-def numbering_options(numbers_options_default, plot_function=None,
-                      toggle_show_visible=True, toggle_show_default=True,
-                      toggle_title='Numbering Options',
-                      show_checkbox_title='Render numbering'):
+class NumberingOptionsWidget(ipywidgets.Box):
     r"""
-    Creates a widget with Numbering Options. Specifically, it has:
-        1) A checkbox that controls text's visibility.
-        2) A dropdown menu for font name.
-        3) A bounded int text box for font size.
-        4) A dropdown menu for font style.
-        5) A dropdown menu for font weight.
-        6) A colour_selection widget for font colour.
-        7) A dropdown menu for horizontal alignment.
-        8) A dropdown menu for vertical alignment.
-        9) A toggle button that controls the visibility of all the above, i.e.
-           the numbering options.
+    Creates a widget for selecting line rendering options. Specifically, it
+    consists of:
 
-    The structure of the widgets is the following:
-        numbering_options_wid.children = [toggle_button, options]
-        options.children = [show_font_checkbox, other_options]
-        other_options.children = [font_name, font_size, font_style, font_weight,
-                                  font_colour, horizontal_align, vertical_align]
+        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
+        2) Checkbox [`self.render_numbering_checkbox`]: whether to render
+           numbers
+        3) Dropdown [`self.numbers_font_name_dropdown`]: the font family
+        4) BoundedIntText [`self.numbers_font_size_text`]: the font size
+        5) Dropdown [`self.numbers_font_style_dropdown`]: the font style
+        6) Dropdown [`self.numbers_font_weight_dropdown`]: the font weight
+        7) ColourSelectionWidget [`self.numbers_font_colour_widget`]: sets the
+           font colour
+        8) Dropdown [`self.numbers_horizontal_align_dropdown`]: the horizontal
+           alignment
+        9) Dropdown [`self.numbers_vertical_align_dropdown`]: the vertical
+            alignment
+        10) Box [`self.numbers_options_box`]: box that contains (3), (4), (5),
+            (6), (7), (8) and (9)
+        11) Box [`self.options_box`]: box that contains (2) and (10)
 
-    The returned widget saves the selected values in the following dictionary:
-        numbering_options_wid.selected_values
-
-    To fix the alignment within this widget please refer to
-    `format_numbering_options()` function.
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
 
     Parameters
     ----------
     numbers_options_default : `dict`
-        The initial selected font options.
-        Example:
+        The initial numbering options. Example ::
+
             numbers_options_default = {'render_numbering': True,
                                        'numbers_font_name': 'serif',
                                        'numbers_font_size': 10,
@@ -2069,315 +2068,415 @@ def numbering_options(numbers_options_default, plot_function=None,
                                        'numbers_font_colour': ['k'],
                                        'numbers_horizontal_align': 'center',
                                        'numbers_vertical_align': 'bottom'}
-    plot_function : `function` or None, optional
-        The plot function that is executed when a widgets' value changes.
-        If None, then nothing is assigned.
-    toggle_show_default : `boolean`, optional
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     toggle_title : `str`, optional
         The title of the toggle button.
-    show_checkbox_title : `str`, optional
-        The description of the show text checkbox.
+    render_checkbox_title : `str`, optional
+        The description of the show line checkbox.
+    labels : `list` or ``None``, optional
+        A `list` with the labels' names that get passed in to the
+        `ColourSelectionWidget`. If ``None``, then a `list` of the form
+        ``label {}`` is automatically defined. Note that the labels are defined
+        only for the colour option and not the rest of the options.
     """
-    import IPython.html.widgets as ipywidgets
-    # Create widgets
-    # toggle button
-    but = ipywidgets.ToggleButton(description=toggle_title,
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
+    def __init__(self, numbers_options_default, render_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='Numbering Options',
+                 render_checkbox_title='Render numbering'):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.render_numbering_checkbox = ipywidgets.Checkbox(
+            description=render_checkbox_title,
+            value=numbers_options_default['render_numbering'])
+        numbers_font_name_dict = OrderedDict()
+        numbers_font_name_dict['serif'] = 'serif'
+        numbers_font_name_dict['sans-serif'] = 'sans-serif'
+        numbers_font_name_dict['cursive'] = 'cursive'
+        numbers_font_name_dict['fantasy'] = 'fantasy'
+        numbers_font_name_dict['monospace'] = 'monospace'
+        self.numbers_font_name_dropdown = ipywidgets.Dropdown(
+            options=numbers_font_name_dict,
+            value=numbers_options_default['numbers_font_name'],
+            description='Font')
+        self.numbers_font_size_text = ipywidgets.BoundedIntText(
+            description='Size', min=2, max=10**6,
+            value=numbers_options_default['numbers_font_size'])
+        numbers_font_style_dict = OrderedDict()
+        numbers_font_style_dict['normal'] = 'normal'
+        numbers_font_style_dict['italic'] = 'italic'
+        numbers_font_style_dict['oblique'] = 'oblique'
+        self.numbers_font_style_dropdown = ipywidgets.Dropdown(
+            options=numbers_font_style_dict,
+            value=numbers_options_default['numbers_font_style'],
+            description='Style')
+        numbers_font_weight_dict = OrderedDict()
+        numbers_font_weight_dict['normal'] = 'normal'
+        numbers_font_weight_dict['ultralight'] = 'ultralight'
+        numbers_font_weight_dict['light'] = 'light'
+        numbers_font_weight_dict['regular'] = 'regular'
+        numbers_font_weight_dict['book'] = 'book'
+        numbers_font_weight_dict['medium'] = 'medium'
+        numbers_font_weight_dict['roman'] = 'roman'
+        numbers_font_weight_dict['semibold'] = 'semibold'
+        numbers_font_weight_dict['demibold'] = 'demibold'
+        numbers_font_weight_dict['demi'] = 'demi'
+        numbers_font_weight_dict['bold'] = 'bold'
+        numbers_font_weight_dict['heavy'] = 'heavy'
+        numbers_font_weight_dict['extra bold'] = 'extra bold'
+        numbers_font_weight_dict['black'] = 'black'
+        self.numbers_font_weight_dropdown = ipywidgets.Dropdown(
+            options=numbers_font_weight_dict,
+            value=numbers_options_default['numbers_font_weight'],
+            description='Weight')
+        self.numbers_font_colour_widget = ColourSelectionWidget(
+            numbers_options_default['numbers_font_colour'],
+            description='Colour', render_function=render_function)
+        numbers_horizontal_align_dict = OrderedDict()
+        numbers_horizontal_align_dict['center'] = 'center'
+        numbers_horizontal_align_dict['right'] = 'right'
+        numbers_horizontal_align_dict['left'] = 'left'
+        self.numbers_horizontal_align_dropdown = ipywidgets.Dropdown(
+            options=numbers_horizontal_align_dict,
+            value=numbers_options_default['numbers_horizontal_align'],
+            description='Align hor.')
+        numbers_vertical_align_dict = OrderedDict()
+        numbers_vertical_align_dict['center'] = 'center'
+        numbers_vertical_align_dict['top'] = 'top'
+        numbers_vertical_align_dict['bottom'] = 'bottom'
+        numbers_vertical_align_dict['baseline'] = 'baseline'
+        self.numbers_vertical_align_dropdown = ipywidgets.Dropdown(
+            options=numbers_vertical_align_dict,
+            value=numbers_options_default['numbers_vertical_align'],
+            description='Align ver.')
+        self.numbers_options_box = ipywidgets.Box(
+            children=[self.numbers_font_name_dropdown,
+                      self.numbers_font_size_text,
+                      self.numbers_font_style_dropdown,
+                      self.numbers_font_weight_dropdown,
+                      self.numbers_font_colour_widget,
+                      self.numbers_horizontal_align_dropdown,
+                      self.numbers_vertical_align_dropdown])
+        self.options_box = ipywidgets.VBox(
+            children=[self.render_numbering_checkbox, self.numbers_options_box],
+            visible=toggle_show_default, align='end')
+        super(NumberingOptionsWidget, self).__init__(
+            children=[self.toggle_visible, self.options_box])
 
-    # numbers_font_name, numbers_font_size, numbers_font_style,
-    # numbers_font_weight, numbers_font_colour
-    render_numbering = ipywidgets.Checkbox(
-        description=show_checkbox_title,
-        value=numbers_options_default['render_numbering'])
-    numbers_font_name_dict = OrderedDict()
-    numbers_font_name_dict['serif'] = 'serif'
-    numbers_font_name_dict['sans-serif'] = 'sans-serif'
-    numbers_font_name_dict['cursive'] = 'cursive'
-    numbers_font_name_dict['fantasy'] = 'fantasy'
-    numbers_font_name_dict['monospace'] = 'monospace'
-    numbers_font_name = ipywidgets.Dropdown(
-        options=numbers_font_name_dict,
-        value=numbers_options_default['numbers_font_name'],
-        description='Font')
-    numbers_font_size = ipywidgets.BoundedIntText(
-        description='Size', value=numbers_options_default['numbers_font_size'],
-        min=2)
-    numbers_font_style_dict = OrderedDict()
-    numbers_font_style_dict['normal'] = 'normal'
-    numbers_font_style_dict['italic'] = 'italic'
-    numbers_font_style_dict['oblique'] = 'oblique'
-    numbers_font_style = ipywidgets.Dropdown(
-        options=numbers_font_style_dict,
-        value=numbers_options_default['numbers_font_style'],
-        description='Style')
-    numbers_font_weight_dict = OrderedDict()
-    numbers_font_weight_dict['normal'] = 'normal'
-    numbers_font_weight_dict['ultralight'] = 'ultralight'
-    numbers_font_weight_dict['light'] = 'light'
-    numbers_font_weight_dict['regular'] = 'regular'
-    numbers_font_weight_dict['book'] = 'book'
-    numbers_font_weight_dict['medium'] = 'medium'
-    numbers_font_weight_dict['roman'] = 'roman'
-    numbers_font_weight_dict['semibold'] = 'semibold'
-    numbers_font_weight_dict['demibold'] = 'demibold'
-    numbers_font_weight_dict['demi'] = 'demi'
-    numbers_font_weight_dict['bold'] = 'bold'
-    numbers_font_weight_dict['heavy'] = 'heavy'
-    numbers_font_weight_dict['extra bold'] = 'extra bold'
-    numbers_font_weight_dict['black'] = 'black'
-    numbers_font_weight = ipywidgets.Dropdown(
-        options=numbers_font_weight_dict,
-        value=numbers_options_default['numbers_font_weight'],
-        description='Weight')
-    numbers_font_colour = colour_selection(
-        numbers_options_default['numbers_font_colour'], title='Colour',
-        plot_function=plot_function)
-    numbers_horizontal_align_dict = OrderedDict()
-    numbers_horizontal_align_dict['center'] = 'center'
-    numbers_horizontal_align_dict['right'] = 'right'
-    numbers_horizontal_align_dict['left'] = 'left'
-    numbers_horizontal_align = ipywidgets.Dropdown(
-        options=numbers_horizontal_align_dict,
-        value=numbers_options_default['numbers_horizontal_align'],
-        description='Align hor.')
-    numbers_vertical_align_dict = OrderedDict()
-    numbers_vertical_align_dict['center'] = 'center'
-    numbers_vertical_align_dict['top'] = 'top'
-    numbers_vertical_align_dict['bottom'] = 'bottom'
-    numbers_vertical_align_dict['baseline'] = 'baseline'
-    numbers_vertical_align = ipywidgets.Dropdown(
-        options=numbers_vertical_align_dict,
-        value=numbers_options_default['numbers_vertical_align'],
-        description='Align ver.')
+        # Assign output
+        self.selected_values = numbers_options_default
 
-    # Options widget
-    all_font_options = ipywidgets.Box(
-        children=[numbers_font_name, numbers_font_size, numbers_font_style,
-                  numbers_font_weight, numbers_font_colour,
-                  numbers_horizontal_align, numbers_vertical_align])
-    options_wid = ipywidgets.Box(
-        children=[render_numbering, all_font_options])
+        # Set functionality
+        def numbering_options_visible(name, value):
+            self.numbers_font_name_dropdown.disabled = not value
+            self.numbers_font_size_text.disabled = not value
+            self.numbers_font_style_dropdown.disabled = not value
+            self.numbers_font_weight_dropdown.disabled = not value
+            self.numbers_horizontal_align_dropdown.disabled = not value
+            self.numbers_vertical_align_dropdown.disabled = not value
+            self.numbers_font_colour_widget.disabled(not value)
+        numbering_options_visible('',
+                                  numbers_options_default['render_numbering'])
+        self.render_numbering_checkbox.on_trait_change(
+            numbering_options_visible, 'value')
 
-    # Final widget
-    numbering_options_wid = ipywidgets.Box(
-        children=[but, options_wid])
+        def save_render_numbering(name, value):
+            self.selected_values['render_numbering'] = value
+        self.render_numbering_checkbox.on_trait_change(save_render_numbering,
+                                                       'value')
 
-    # Assign output
-    numbering_options_wid.selected_values = numbers_options_default
+        def save_numbers_font_name(name, value):
+            self.selected_values['numbers_font_name'] = value
+        self.numbers_font_name_dropdown.on_trait_change(save_numbers_font_name,
+                                                        'value')
 
-    # font options visibility
-    def options_visible(name, value):
-        numbers_font_name.disabled = not value
-        numbers_font_size.disabled = not value
-        numbers_font_style.disabled = not value
-        numbers_font_weight.disabled = not value
-        numbers_font_colour.children[0].children[0].disabled = not value
-        numbers_font_colour.children[0].children[1].disabled = not value
-        numbers_font_colour.children[1].disabled = not value
-        numbers_font_colour.children[2].children[0].disabled = not value
-        numbers_font_colour.children[2].children[1].disabled = not value
-        numbers_font_colour.children[2].children[2].disabled = not value
-        numbers_horizontal_align.disabled = not value
-        numbers_vertical_align.disabled = not value
-    options_visible('', numbers_options_default['render_numbering'])
-    render_numbering.on_trait_change(options_visible, 'value')
+        def save_numbers_font_size(name, value):
+            self.selected_values['numbers_font_size'] = int(value)
+        self.numbers_font_size_text.on_trait_change(save_numbers_font_size,
+                                                    'value')
 
-    # get options functions
-    def save_render_numbering(name, value):
-        numbering_options_wid.selected_values['render_numbering'] = value
-    render_numbering.on_trait_change(save_render_numbering, 'value')
+        def save_numbers_font_style(name, value):
+            self.selected_values['numbers_font_style'] = value
+        self.numbers_font_style_dropdown.on_trait_change(
+            save_numbers_font_style, 'value')
 
-    def save_numbers_font_name(name, value):
-        numbering_options_wid.selected_values['numbers_font_name'] = value
-    numbers_font_name.on_trait_change(save_numbers_font_name, 'value')
+        def save_numbers_font_weight(name, value):
+            self.selected_values['numbers_font_weight'] = value
+        self.numbers_font_weight_dropdown.on_trait_change(
+            save_numbers_font_weight, 'value')
 
-    def save_numbers_font_size(name, value):
-        numbering_options_wid.selected_values['numbers_font_size'] = int(value)
-    numbers_font_size.on_trait_change(save_numbers_font_size, 'value')
+        def save_numbers_horizontal_align(name, value):
+            self.selected_values['numbers_horizontal_align'] = value
+        self.numbers_horizontal_align_dropdown.on_trait_change(
+            save_numbers_horizontal_align, 'value')
 
-    def save_numbers_font_style(name, value):
-        numbering_options_wid.selected_values['numbers_font_style'] = value
-    numbers_font_style.on_trait_change(save_numbers_font_style, 'value')
+        def save_numbers_vertical_align(name, value):
+            self.selected_values['numbers_vertical_align'] = value
+        self.numbers_vertical_align_dropdown.on_trait_change(
+            save_numbers_vertical_align, 'value')
 
-    def save_numbers_font_weight(name, value):
-        numbering_options_wid.selected_values['numbers_font_weight'] = value
-    numbers_font_weight.on_trait_change(save_numbers_font_weight, 'value')
+        self.selected_values['numbers_font_colour'] = \
+            self.numbers_font_colour_widget.selected_values['colour']
 
-    def save_numbers_horizontal_align(name, value):
-        numbering_options_wid.selected_values['numbers_horizontal_align'] = \
-            value
-    numbers_horizontal_align.on_trait_change(save_numbers_horizontal_align,
-                                             'value')
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
 
-    def save_numbers_vertical_align(name, value):
-        numbering_options_wid.selected_values['numbers_vertical_align'] = value
-    numbers_vertical_align.on_trait_change(save_numbers_vertical_align, 'value')
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
 
-    numbering_options_wid.selected_values['numbers_font_colour'] = \
-        numbers_font_colour.selected_values['colour']
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=True,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
 
-    # Toggle button function
-    def toggle_fun(name, value):
-        options_wid.visible = value
-    toggle_fun('', toggle_show_default)
-    but.on_trait_change(toggle_fun, 'value')
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
 
-    # assign plot_function
-    if plot_function is not None:
-        render_numbering.on_trait_change(plot_function, 'value')
-        numbers_font_name.on_trait_change(plot_function, 'value')
-        numbers_font_style.on_trait_change(plot_function, 'value')
-        numbers_font_size.on_trait_change(plot_function, 'value')
-        numbers_font_weight.on_trait_change(plot_function, 'value')
-        numbers_horizontal_align.on_trait_change(plot_function, 'value')
-        numbers_vertical_align.on_trait_change(plot_function, 'value')
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
 
-    return numbering_options_wid
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
 
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
 
-def format_numbering_options(numbering_options_wid, container_padding='6px',
-                             container_margin='6px',
-                             container_border='1px solid black',
-                             toggle_button_font_weight='bold',
-                             border_visible=True,
-                             suboptions_border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given numbering_options
-    widget. Usage example:
-        numbering_options_wid = numbering_options()
-        display(numbering_options_wid)
-        format_numbering_options(numbering_options_wid)
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
 
-    Parameters
-    ----------
-    numbering_options_wid :
-        The widget object generated by the `numbering_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    suboptions_border_visible : `boolean`, optional
-        Defines whether to draw the border line around the font options, under
-        the show font checkbox.
-    """
-    # align font options with checkbox
-    add_class(numbering_options_wid.children[1], 'align-end')
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
 
-    # set fontsize text box width
-    numbering_options_wid.children[1].children[1].children[1].width = '1cm'
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
 
-    # format colour options
-    format_colour_selection(
-        numbering_options_wid.children[1].children[1].children[4])
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
 
-    # border around options
-    if suboptions_border_visible:
-        numbering_options_wid.children[1].children[1].border = container_border
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.render_numbering_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.numbers_font_name_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.numbers_font_size_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.numbers_font_style_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.numbers_font_weight_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.numbers_horizontal_align_dropdown, font_family,
+                     font_size, font_style, font_weight)
+        _format_font(self.numbers_vertical_align_dropdown, font_family,
+                     font_size, font_style, font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+        self.numbers_font_colour_widget.style(
+            box_style=None, border_visible=False, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style,
+            rgb_width='1.0cm')
 
-    # set toggle button font bold
-    numbering_options_wid.children[0].font_weight = toggle_button_font_weight
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
 
-    # margin and border around container widget
-    numbering_options_wid.padding = container_padding
-    numbering_options_wid.margin = container_margin
-    if border_visible:
-        numbering_options_wid.border = container_border
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.render_numbering_checkbox.on_trait_change(
+                self._render_function, 'value')
+            self.numbers_font_name_dropdown.on_trait_change(
+                self._render_function, 'value')
+            self.numbers_font_style_dropdown.on_trait_change(
+                self._render_function, 'value')
+            self.numbers_font_size_text.on_trait_change(self._render_function,
+                                                        'value')
+            self.numbers_font_weight_dropdown.on_trait_change(
+                self._render_function, 'value')
+            self.numbers_horizontal_align_dropdown.on_trait_change(
+                self._render_function, 'value')
+            self.numbers_vertical_align_dropdown.on_trait_change(
+                self._render_function, 'value')
+        self.numbers_font_colour_widget.add_render_function(render_function)
 
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.render_numbering_checkbox.on_trait_change(self._render_function,
+                                                       'value', remove=True)
+        self.numbers_font_name_dropdown.on_trait_change(self._render_function,
+                                                        'value', remove=True)
+        self.numbers_font_style_dropdown.on_trait_change(self._render_function,
+                                                         'value', remove=True)
+        self.numbers_font_size_text.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self.numbers_font_weight_dropdown.on_trait_change(self._render_function,
+                                                          'value', remove=True)
+        self.numbers_horizontal_align_dropdown.on_trait_change(
+            self._render_function, 'value', remove=True)
+        self.numbers_vertical_align_dropdown.on_trait_change(
+            self._render_function, 'value', remove=True)
+        self.numbers_font_colour_widget.remove_render_function()
+        self._render_function = None
 
-def update_numbering_options(numbering_options_wid, numbering_options_dict):
-    r"""
-    Function that updates the state of a given numbering_options widget. Usage
-    example:
-        numbering_options_default = {'render_numbering': True,
-                                      'numbers_font_name': 'serif',
-                                      'numbers_font_size': 10,
-                                      'numbers_font_style': 'normal',
-                                      'numbers_font_weight': 'normal',
-                                      'numbers_font_colour': ['k'],
-                                      'numbers_horizontal_align': 'center',
-                                      'numbers_vertical_align': 'bottom'}
-        numbering_options_wid = numbering_options(numbering_options_default)
-        display(numbering_options_wid)
-        format_numbering_options(numbering_options_wid)
-        numbering_options_default = {'render_numbering': False,
-                                      'numbers_font_name': 'serif',
-                                      'numbers_font_size': 10,
-                                      'numbers_font_style': 'normal',
-                                      'numbers_font_weight': 'normal',
-                                      'numbers_font_colour': ['k'],
-                                      'numbers_horizontal_align': 'center',
-                                      'numbers_vertical_align': 'bottom'}
-        update_numbering_options(numbering_options_wid,
-                                 numbering_options_default)
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
 
-    Parameters
-    ----------
-    numbering_options_wid :
-        The widget object generated by the `numbering_options()` function.
-    numbering_options_dict : `dict`
-        The new set of options. For example:
-            numbering_options_dict = {'render_numbering': True,
-                                      'numbers_font_name': 'serif',
-                                      'numbers_font_size': 10,
-                                      'numbers_font_style': 'normal',
-                                      'numbers_font_weight': 'normal',
-                                      'numbers_font_colour': ['k'],
-                                      'numbers_horizontal_align': 'center',
-                                      'numbers_vertical_align': 'bottom'}
-    """
-    # Assign new options dict to selected_values
-    numbering_options_wid.selected_values = numbering_options_dict
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
 
-    # update render numbering checkbox
-    if 'render_numbering' in numbering_options_dict.keys():
-        numbering_options_wid.children[1].children[0].value = \
-            numbering_options_dict['render_numbering']
+        # add new function
+        self.add_render_function(render_function)
 
-    # update numbers_font_name dropdown menu
-    if 'numbers_font_name' in numbering_options_dict.keys():
-        numbering_options_wid.children[1].children[1].children[0].value = \
-            numbering_options_dict['numbers_font_name']
+    def set_widget_state(self, numbering_options_dict, allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided
+        `line_options_dict` is different than `self.selected_values()`.
 
-    # update numbers_font_size text box
-    if 'numbers_font_size' in numbering_options_dict.keys():
-        numbering_options_wid.children[1].children[1].children[1].value = \
-            int(numbering_options_dict['numbers_font_size'])
+        Parameter
+        ---------
+        numbering_options_dict : `dict`
+            The new set of options. For example ::
 
-    # update numbers_font_style dropdown menu
-    if 'numbers_font_style' in numbering_options_dict.keys():
-        numbering_options_wid.children[1].children[1].children[2].value = \
-            numbering_options_dict['numbers_font_style']
+                numbering_options_dict = {'render_numbering': True,
+                                          'numbers_font_name': 'serif',
+                                          'numbers_font_size': 10,
+                                          'numbers_font_style': 'normal',
+                                          'numbers_font_weight': 'normal',
+                                          'numbers_font_colour': ['k'],
+                                          'numbers_horizontal_align': 'center',
+                                          'numbers_vertical_align': 'bottom'}
 
-    # update numbers_font_weight dropdown menu
-    if 'numbers_font_weight' in numbering_options_dict.keys():
-        numbering_options_wid.children[1].children[1].children[3].value = \
-            numbering_options_dict['numbers_font_weight']
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Assign new options dict to selected_values
+        self.selected_values = numbering_options_dict
 
-    # update numbers_font_colour
-    if 'numbers_font_colour' in numbering_options_dict.keys():
-        update_colour_selection(
-            numbering_options_wid.children[1].children[1].children[4],
-            numbering_options_dict['numbers_font_colour'])
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
 
-    # update numbers_horizontal_align dropdown menu
-    if 'numbers_horizontal_align' in numbering_options_dict.keys():
-        numbering_options_wid.children[1].children[1].children[5].value = \
-            numbering_options_dict['numbers_horizontal_align']
+        # update render numbering checkbox
+        if 'render_numbering' in numbering_options_dict.keys():
+            self.render_numbering_checkbox.value = \
+                numbering_options_dict['render_numbering']
 
-    # update numbers_vertical_align dropdown menu
-    if 'numbers_vertical_align' in numbering_options_dict.keys():
-        numbering_options_wid.children[1].children[1].children[6].value = \
-            numbering_options_dict['numbers_vertical_align']
+        # update numbers_font_name dropdown menu
+        if 'numbers_font_name' in numbering_options_dict.keys():
+            self.numbers_font_name_dropdown.value = \
+                numbering_options_dict['numbers_font_name']
+
+        # update numbers_font_size text box
+        if 'numbers_font_size' in numbering_options_dict.keys():
+            self.numbers_font_size_text.value = \
+                int(numbering_options_dict['numbers_font_size'])
+
+        # update numbers_font_style dropdown menu
+        if 'numbers_font_style' in numbering_options_dict.keys():
+            self.numbers_font_style_dropdown.value = \
+                numbering_options_dict['numbers_font_style']
+
+        # update numbers_font_weight dropdown menu
+        if 'numbers_font_weight' in numbering_options_dict.keys():
+            self.numbers_font_weight_dropdown.value = \
+                numbering_options_dict['numbers_font_weight']
+
+        # update numbers_horizontal_align dropdown menu
+        if 'numbers_horizontal_align' in numbering_options_dict.keys():
+            self.numbers_horizontal_align_dropdown.value = \
+                numbering_options_dict['numbers_horizontal_align']
+
+        # update numbers_vertical_align dropdown menu
+        if 'numbers_vertical_align' in numbering_options_dict.keys():
+            self.numbers_vertical_align_dropdown.value = \
+                numbering_options_dict['numbers_vertical_align']
+
+        # re-assign render callback
+        self.add_render_function(render_function)
+
+        # update numbers_font_colour
+        if 'numbers_font_colour' in numbering_options_dict.keys():
+            self.numbers_font_colour_widget.set_widget_state(
+                numbering_options_dict['numbers_font_colour'],
+                allow_callback=False)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
 
 
 def figure_options(figure_options_default, plot_function=None,
