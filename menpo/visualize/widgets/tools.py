@@ -1296,6 +1296,7 @@ class ImageOptionsWidget(ipywidgets.Box):
 
                 image_options_default = {'alpha': 1.,
                                          'interpolation': 'bilinear'}
+
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -2479,36 +2480,40 @@ class NumberingOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-def figure_options(figure_options_default, plot_function=None,
-                   figure_scale_bounds=(0.1, 4), figure_scale_step=0.1,
-                   figure_scale_visible=True, axes_visible=True,
-                   toggle_show_default=True, toggle_show_visible=True):
+class FigureOptionsOneScaleWidget(ipywidgets.Box):
     r"""
-    Creates a widget with Figure Options. Specifically, it has:
-        1) A slider that controls the scaling of the figure.
-        2) A checkbox that controls the visibility of the figure's axes.
-        3) Font options for the axes.
-        4) A toggle button that controls the visibility of all the above, i.e.
-           the figure options.
+    Creates a widget for selecting image rendering options. Specifically, it
+    consists of:
 
-    The structure of the widgets is the following:
-        figure_options_wid.children = [toggle_button, figure_scale_slider,
-                                       show_axes_checkbox, axes_font_name,
-                                       axes_font_size, axes_font_style,
-                                       axes_font_weight, axes_x_limits,
-                                       axes_y_limits]
+        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
+        2) FloatSlider [`self.figure_scale_slider`]: scale slider
+        3) Checkbox [`self.render_axes_checkbox`]: render axes checkbox
+        4) Dropdown [`self.axes_font_name_dropdown`]: sets font family
+        5) BoundedFloatText [`self.axes_font_size_text`]: sets font size
+        6) Dropdown [`self.axes_font_style_dropdown`]: sets font style
+        7) Dropdown [`self.axes_font_weight_dropdown`]: sets font weight
+        8) FloatText [`self.axes_x_limits_from_text`]: sets x limit from
+        9) FloatText [`self.axes_x_limits_to_text`]: sets x limit to
+        10) Checkbox [`self.axes_x_limits_enable_checkbox`]: enables x limit
+        11) Box [`self.axes_x_limits_box`]: box that contains (8), (9) and (10)
+        12) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
+        13) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
+        14) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
+        15) Box [`self.axes_y_limits_box`]: box that contains (12), (13), (14)
+        16) Box [`self.options_box`]: box that contains (2), (3), (4), (5), (6),
+            (7), (11) and (15)
 
-    The returned widget saves the selected values in the following dictionary:
-        figure_options_wid.selected_values
-
-    To fix the alignment within this widget please refer to
-    `format_figure_options()` function.
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
 
     Parameters
     ----------
     figure_options_default : `dict`
-        The initial selected figure options.
-        Example:
+        The initial figure options. Example ::
+
             figure_options_default = {'x_scale': 1.,
                                       'y_scale': 1.,
                                       'render_axes': True,
@@ -2516,397 +2521,1129 @@ def figure_options(figure_options_default, plot_function=None,
                                       'axes_font_size': 10,
                                       'axes_font_style': 'normal',
                                       'axes_font_weight': 'normal',
-                                      'axes_x_limits': None,
+                                      'axes_x_limits': [0, 100],
                                       'axes_y_limits': None}
-    plot_function : `function` or None, optional
-        The plot function that is executed when a widgets' value changes.
-        If None, then nothing is assigned.
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
+        Defines whether the options will be visible upon construction.
+    toggle_show_visible : `bool`, optional
+        The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
     figure_scale_bounds : (`float`, `float`), optional
         The range of scales that can be optionally applied to the figure.
     figure_scale_step : `float`, optional
         The step of the scale sliders.
-    figure_scale_visible : `boolean`, optional
+    figure_scale_visible : `bool`, optional
         The visibility of the figure scales sliders.
-    show_axes_visible : `boolean`, optional
+    show_axes_visible : `bool`, optional
         The visibility of the axes checkbox.
-    toggle_show_default : `boolean`, optional
+    """
+    def __init__(self, figure_options_default, render_function=None,
+                 toggle_show_default=True, toggle_show_visible=True,
+                 toggle_title='Figure Options', figure_scale_bounds=(0.1, 4),
+                 figure_scale_step=0.1, figure_scale_visible=True,
+                 axes_visible=True):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.figure_scale_slider = ipywidgets.FloatSlider(
+            description='Figure scale:',
+            value=figure_options_default['x_scale'], min=figure_scale_bounds[0],
+            max=figure_scale_bounds[1], step=figure_scale_step,
+            visible=figure_scale_visible, width='3cm')
+        self.render_axes_checkbox = ipywidgets.Checkbox(
+            description='Render axes',
+            value=figure_options_default['render_axes'], visible=axes_visible)
+        axes_font_name_dict = OrderedDict()
+        axes_font_name_dict['serif'] = 'serif'
+        axes_font_name_dict['sans-serif'] = 'sans-serif'
+        axes_font_name_dict['cursive'] = 'cursive'
+        axes_font_name_dict['fantasy'] = 'fantasy'
+        axes_font_name_dict['monospace'] = 'monospace'
+        self.axes_font_name_dropdown = ipywidgets.Dropdown(
+            options=axes_font_name_dict,
+            value=figure_options_default['axes_font_name'], description='Font',
+            visible=axes_visible)
+        self.axes_font_size_text = ipywidgets.BoundedIntText(
+            description='Size', value=figure_options_default['axes_font_size'],
+            min=0, max=10**6, visible=axes_visible)
+        axes_font_style_dict = OrderedDict()
+        axes_font_style_dict['normal'] = 'normal'
+        axes_font_style_dict['italic'] = 'italic'
+        axes_font_style_dict['oblique'] = 'oblique'
+        self.axes_font_style_dropdown = ipywidgets.Dropdown(
+            options=axes_font_style_dict, description='Style',
+            value=figure_options_default['axes_font_style'],
+            visible=axes_visible)
+        axes_font_weight_dict = OrderedDict()
+        axes_font_weight_dict['normal'] = 'normal'
+        axes_font_weight_dict['ultralight'] = 'ultralight'
+        axes_font_weight_dict['light'] = 'light'
+        axes_font_weight_dict['regular'] = 'regular'
+        axes_font_weight_dict['book'] = 'book'
+        axes_font_weight_dict['medium'] = 'medium'
+        axes_font_weight_dict['roman'] = 'roman'
+        axes_font_weight_dict['semibold'] = 'semibold'
+        axes_font_weight_dict['demibold'] = 'demibold'
+        axes_font_weight_dict['demi'] = 'demi'
+        axes_font_weight_dict['bold'] = 'bold'
+        axes_font_weight_dict['heavy'] = 'heavy'
+        axes_font_weight_dict['extra bold'] = 'extra bold'
+        axes_font_weight_dict['black'] = 'black'
+        self.axes_font_weight_dropdown = ipywidgets.Dropdown(
+            options=axes_font_weight_dict,
+            value=figure_options_default['axes_font_weight'],
+            description='Weight', visible=axes_visible)
+        if figure_options_default['axes_x_limits'] is None:
+            tmp1 = False
+            tmp2 = 0.
+            tmp3 = 100.
+        else:
+            tmp1 = True
+            tmp2 = figure_options_default['axes_x_limits'][0]
+            tmp3 = figure_options_default['axes_x_limits'][1]
+        self.axes_x_limits_enable_checkbox = ipywidgets.Checkbox(
+            value=tmp1, description='X limits')
+        self.axes_x_limits_from_text = ipywidgets.FloatText(
+            value=tmp2, description='')
+        self.axes_x_limits_to_text = ipywidgets.FloatText(
+            value=tmp3, description='')
+        self.axes_x_limits_box = ipywidgets.Box(
+            children=[self.axes_x_limits_enable_checkbox,
+                      self.axes_x_limits_from_text, self.axes_x_limits_to_text])
+        if figure_options_default['axes_y_limits'] is None:
+            tmp1 = False
+            tmp2 = 0.
+            tmp3 = 100.
+        else:
+            tmp1 = True
+            tmp2 = figure_options_default['axes_y_limits'][0]
+            tmp3 = figure_options_default['axes_y_limits'][1]
+        self.axes_y_limits_enable_checkbox = ipywidgets.Checkbox(
+            value=tmp1, description='Y limits')
+        self.axes_y_limits_from_text = ipywidgets.FloatText(value=tmp2,
+                                                            description='')
+        self.axes_y_limits_to_text = ipywidgets.FloatText(value=tmp3,
+                                                          description='')
+        self.axes_y_limits_box = ipywidgets.Box(
+            children=[self.axes_y_limits_enable_checkbox,
+                      self.axes_y_limits_from_text, self.axes_y_limits_to_text])
+        self.options_box = ipywidgets.Box(
+            children=[self.figure_scale_slider, self.render_axes_checkbox,
+                      self.axes_font_name_dropdown, self.axes_font_size_text,
+                      self.axes_font_style_dropdown,
+                      self.axes_font_weight_dropdown, self.axes_x_limits_box,
+                      self.axes_y_limits_box],
+            visible=toggle_show_default)
+        super(FigureOptionsOneScaleWidget, self).__init__(
+            children=[self.toggle_visible, self.options_box])
+
+        # Assign output
+        self.selected_values = figure_options_default
+
+        # Set functionality
+        def figure_options_visible(name, value):
+            self.axes_font_name_dropdown.disabled = not value
+            self.axes_font_size_text.disabled = not value
+            self.axes_font_style_dropdown.disabled = not value
+            self.axes_font_weight_dropdown.disabled = not value
+            self.axes_x_limits_enable_checkbox.disabled = not value
+            self.axes_y_limits_enable_checkbox.disabled = not value
+            if value:
+                self.axes_x_limits_from_text.disabled = \
+                    not self.axes_x_limits_enable_checkbox.value
+                self.axes_x_limits_to_text.disabled = \
+                    not self.axes_x_limits_enable_checkbox.value
+                self.axes_y_limits_from_text.disabled = \
+                    not self.axes_y_limits_enable_checkbox.value
+                self.axes_y_limits_to_text.disabled = \
+                    not self.axes_y_limits_enable_checkbox.value
+            else:
+                self.axes_x_limits_from_text.disabled = True
+                self.axes_x_limits_to_text.disabled = True
+                self.axes_y_limits_from_text.disabled = True
+                self.axes_y_limits_to_text.disabled = True
+        figure_options_visible('', figure_options_default['render_axes'])
+        self.render_axes_checkbox.on_trait_change(figure_options_visible,
+                                                  'value')
+
+        def save_render_axes(name, value):
+            self.selected_values['render_axes'] = value
+        self.render_axes_checkbox.on_trait_change(save_render_axes, 'value')
+
+        def save_axes_font_name(name, value):
+            self.selected_values['axes_font_name'] = value
+        self.axes_font_name_dropdown.on_trait_change(save_axes_font_name,
+                                                     'value')
+
+        def save_axes_font_size(name, value):
+            self.selected_values['axes_font_size'] = int(value)
+        self.axes_font_size_text.on_trait_change(save_axes_font_size, 'value')
+
+        def save_axes_font_style(name, value):
+            self.selected_values['axes_font_style'] = value
+        self.axes_font_style_dropdown.on_trait_change(save_axes_font_style,
+                                                      'value')
+
+        def save_axes_font_weight(name, value):
+            self.selected_values['axes_font_weight'] = value
+        self.axes_font_weight_dropdown.on_trait_change(save_axes_font_weight,
+                                                       'value')
+
+        def axes_x_limits_disable(name, value):
+            self.axes_x_limits_from_text.disabled = not value
+            self.axes_x_limits_to_text.disabled = not value
+        axes_x_limits_disable('', self.axes_x_limits_enable_checkbox.value)
+        self.axes_x_limits_enable_checkbox.on_trait_change(
+            axes_x_limits_disable, 'value')
+
+        def axes_y_limits_disable(name, value):
+            self.axes_y_limits_from_text.disabled = not value
+            self.axes_y_limits_to_text.disabled = not value
+        axes_y_limits_disable('', self.axes_y_limits_enable_checkbox.value)
+        self.axes_y_limits_enable_checkbox.on_trait_change(
+            axes_y_limits_disable, 'value')
+
+        def save_axes_x_limits(name, value):
+            if self.axes_x_limits_enable_checkbox.value:
+                self.selected_values['axes_x_limits'] = \
+                    (self.axes_x_limits_from_text.value,
+                     self.axes_x_limits_to_text.value)
+            else:
+                self.selected_values['axes_x_limits'] = None
+        self.axes_x_limits_enable_checkbox.on_trait_change(save_axes_x_limits,
+                                                           'value')
+        self.axes_x_limits_from_text.on_trait_change(save_axes_x_limits,
+                                                     'value')
+        self.axes_x_limits_to_text.on_trait_change(save_axes_x_limits, 'value')
+
+        def save_axes_y_limits(name, value):
+            if self.axes_y_limits_enable_checkbox.value:
+                self.selected_values['axes_y_limits'] = \
+                    (self.axes_y_limits_from_text.value,
+                     self.axes_y_limits_to_text.value)
+            else:
+                self.selected_values['axes_y_limits'] = None
+        self.axes_y_limits_enable_checkbox.on_trait_change(save_axes_y_limits,
+                                                           'value')
+        self.axes_y_limits_from_text.on_trait_change(save_axes_y_limits,
+                                                     'value')
+        self.axes_y_limits_to_text.on_trait_change(save_axes_y_limits, 'value')
+
+        def save_scale(name, value):
+            self.selected_values['x_scale'] = value
+            self.selected_values['y_scale'] = value
+        self.figure_scale_slider.on_trait_change(save_scale, 'value')
+
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=True,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight='', slider_width='3cm'):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        slider_width : `str`, optional
+            The width of the slider.
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        self.figure_scale_slider.width = slider_width
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.figure_scale_slider, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.render_axes_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.render_axes_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_font_name_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_font_size_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_font_style_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_font_weight_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_x_limits_from_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_x_limits_to_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_x_limits_enable_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_y_limits_from_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_y_limits_to_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_y_limits_enable_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.figure_scale_slider.on_trait_change(self._render_function,
+                                                     'value')
+            self.render_axes_checkbox.on_trait_change(self._render_function,
+                                                      'value')
+            self.axes_font_name_dropdown.on_trait_change(self._render_function,
+                                                         'value')
+            self.axes_font_size_text.on_trait_change(self._render_function,
+                                                     'value')
+            self.axes_font_style_dropdown.on_trait_change(self._render_function,
+                                                          'value')
+            self.axes_font_weight_dropdown.on_trait_change(self._render_function,
+                                                           'value')
+            self.axes_x_limits_from_text.on_trait_change(self._render_function,
+                                                         'value')
+            self.axes_x_limits_to_text.on_trait_change(self._render_function,
+                                                       'value')
+            self.axes_x_limits_enable_checkbox.on_trait_change(
+                self._render_function, 'value')
+            self.axes_y_limits_from_text.on_trait_change(self._render_function,
+                                                         'value')
+            self.axes_y_limits_to_text.on_trait_change(self._render_function,
+                                                       'value')
+            self.axes_y_limits_enable_checkbox.on_trait_change(
+                self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.figure_scale_slider.on_trait_change(self._render_function, 'value',
+                                                 remove=True)
+        self.render_axes_checkbox.on_trait_change(self._render_function,
+                                                  'value', remove=True)
+        self.axes_font_name_dropdown.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+        self.axes_font_size_text.on_trait_change(self._render_function, 'value',
+                                                 remove=True)
+        self.axes_font_style_dropdown.on_trait_change(self._render_function,
+                                                      'value', remove=True)
+        self.axes_font_weight_dropdown.on_trait_change(self._render_function,
+                                                       'value', remove=True)
+        self.axes_x_limits_from_text.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+        self.axes_x_limits_to_text.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self.axes_x_limits_enable_checkbox.on_trait_change(
+            self._render_function, 'value', remove=True)
+        self.axes_y_limits_from_text.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+        self.axes_y_limits_to_text.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self.axes_y_limits_enable_checkbox.on_trait_change(
+            self._render_function, 'value', remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def set_widget_state(self, figure_options_dict, allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided
+        `image_options_dict` is different than `self.selected_values()`.
+
+        Parameter
+        ---------
+        figure_options_dict : `dict`
+            The new set of options. For example ::
+
+                figure_options_dict = {'x_scale': 1.,
+                                       'y_scale': 1.,
+                                       'render_axes': True,
+                                       'axes_font_name': 'serif',
+                                       'axes_font_size': 10,
+                                       'axes_font_style': 'normal',
+                                       'axes_font_weight': 'normal',
+                                       'axes_x_limits': None,
+                                       'axes_y_limits': None}
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Assign new options dict to selected_values
+        self.selected_values = figure_options_dict
+
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # update scale slider
+        if 'x_scale' in figure_options_dict.keys():
+            self.figure_scale_slider.value = figure_options_dict['x_scale']
+        elif 'y_scale' in figure_options_dict.keys():
+            self.figure_scale_slider.value = figure_options_dict['y_scale']
+
+        # update render axes checkbox
+        if 'render_axes' in figure_options_dict.keys():
+            self.render_axes_checkbox.value = figure_options_dict['render_axes']
+
+        # update axes_font_name dropdown menu
+        if 'axes_font_name' in figure_options_dict.keys():
+            self.axes_font_name_dropdown.value = \
+                figure_options_dict['axes_font_name']
+
+        # update axes_font_size text box
+        if 'axes_font_size' in figure_options_dict.keys():
+            self.axes_font_size_text.value = \
+                int(figure_options_dict['axes_font_size'])
+
+        # update axes_font_style dropdown menu
+        if 'axes_font_style' in figure_options_dict.keys():
+            self.axes_font_style_dropdown.value = \
+                figure_options_dict['axes_font_style']
+
+        # update axes_font_weight dropdown menu
+        if 'axes_font_weight' in figure_options_dict.keys():
+            self.axes_font_weight_dropdown.value = \
+                figure_options_dict['axes_font_weight']
+
+        # update axes_x_limits
+        if 'axes_x_limits' in figure_options_dict.keys():
+            if figure_options_dict['axes_x_limits'] is None:
+                tmp1 = False
+                tmp2 = 0.
+                tmp3 = 100.
+            else:
+                tmp1 = True
+                tmp2 = figure_options_dict['axes_x_limits'][0]
+                tmp3 = figure_options_dict['axes_x_limits'][1]
+            self.axes_x_limits_enable_checkbox.value = tmp1
+            self.axes_x_limits_from_text.value = tmp2
+            self.axes_x_limits_to_text.value = tmp3
+
+        # update axes_y_limits
+        if 'axes_y_limits' in figure_options_dict.keys():
+            if figure_options_dict['axes_y_limits'] is None:
+                tmp1 = False
+                tmp2 = 0.
+                tmp3 = 100.
+            else:
+                tmp1 = True
+                tmp2 = figure_options_dict['axes_y_limits'][0]
+                tmp3 = figure_options_dict['axes_y_limits'][1]
+            self.axes_y_limits_enable_checkbox.value = tmp1
+            self.axes_y_limits_from_text.value = tmp2
+            self.axes_y_limits_to_text.value = tmp3
+
+        # re-assign render callback
+        self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
+
+
+class FigureOptionsTwoScalesWidget(ipywidgets.Box):
+    r"""
+    Creates a widget for selecting image rendering options. Specifically, it
+    consists of:
+
+        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
+        2) FloatSlider [`self.x_scale_slider`]: scale slider
+        3) FloatSlider [`self.y_scale_slider`]: scale slider
+        4) Checkbox [`self.coupled_checkbox`]: couples x and y sliders
+        5) Box [`self.figure_scale_box`]: box that contains (2), (3), (4)
+        6) Checkbox [`self.render_axes_checkbox`]: render axes checkbox
+        7) Dropdown [`self.axes_font_name_dropdown`]: sets font family
+        8) BoundedFloatText [`self.axes_font_size_text`]: sets font size
+        9) Dropdown [`self.axes_font_style_dropdown`]: sets font style
+        10) Dropdown [`self.axes_font_weight_dropdown`]: sets font weight
+        11) FloatText [`self.axes_x_limits_from_text`]: sets x limit from
+        12) FloatText [`self.axes_x_limits_to_text`]: sets x limit to
+        13) Checkbox [`self.axes_x_limits_enable_checkbox`]: enables x limit
+        14) Box [`self.axes_x_limits_box`]: box that contains (11), (12), (13)
+        15) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
+        16) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
+        17) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
+        18) Box [`self.axes_y_limits_box`]: box that contains (15), (16), (17)
+        19) Box [`self.options_box`]: box that contains (5), (6), (7), (8), (9),
+            (10), (14) and (18)
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
+
+    Parameters
+    ----------
+    figure_options_default : `dict`
+        The initial figure options. Example ::
+
+            figure_options_default = {'x_scale': 1.,
+                                      'y_scale': 1.,
+                                      'render_axes': True,
+                                      'axes_font_name': 'serif',
+                                      'axes_font_size': 10,
+                                      'axes_font_style': 'normal',
+                                      'axes_font_weight': 'normal',
+                                      'axes_x_limits': [0, 100],
+                                      'axes_y_limits': None}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
+    figure_scale_bounds : (`float`, `float`), optional
+        The range of scales that can be optionally applied to the figure.
+    figure_scale_step : `float`, optional
+        The step of the scale sliders.
+    figure_scale_visible : `bool`, optional
+        The visibility of the figure scales sliders.
+    show_axes_visible : `bool`, optional
+        The visibility of the axes checkbox.
+    coupled_default : `bool`, optional
+        If ``True``, x and y scale sliders are coupled.
     """
-    import IPython.html.widgets as ipywidgets
-    # Create widgets
-    # toggle button
-    but = ipywidgets.ToggleButton(description='Figure Options',
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
-
-    # figure_scale, render_axes
-    figure_scale = ipywidgets.FloatSlider(description='Figure scale:',
-                                                value=figure_options_default[
-                                                    'x_scale'],
-                                                min=figure_scale_bounds[0],
-                                                max=figure_scale_bounds[1],
-                                                step=figure_scale_step,
-                                                visible=figure_scale_visible)
-    render_axes = ipywidgets.Checkbox(description='Render axes',
-                                            value=figure_options_default[
-                                                'render_axes'],
-                                            visible=axes_visible)
-    axes_font_name_dict = OrderedDict()
-    axes_font_name_dict['serif'] = 'serif'
-    axes_font_name_dict['sans-serif'] = 'sans-serif'
-    axes_font_name_dict['cursive'] = 'cursive'
-    axes_font_name_dict['fantasy'] = 'fantasy'
-    axes_font_name_dict['monospace'] = 'monospace'
-    axes_font_name = ipywidgets.Dropdown(
-        options=axes_font_name_dict,
-        value=figure_options_default['axes_font_name'],
-        description='Font',
-        visible=axes_visible)
-    axes_font_size = ipywidgets.BoundedIntText(
-        description='Size', value=figure_options_default['axes_font_size'],
-        min=0, visible=axes_visible)
-    axes_font_style_dict = OrderedDict()
-    axes_font_style_dict['normal'] = 'normal'
-    axes_font_style_dict['italic'] = 'italic'
-    axes_font_style_dict['oblique'] = 'oblique'
-    axes_font_style = ipywidgets.Dropdown(
-        options=axes_font_style_dict,
-        value=figure_options_default['axes_font_style'],
-        description='Style', visible=axes_visible)
-    axes_font_weight_dict = OrderedDict()
-    axes_font_weight_dict['normal'] = 'normal'
-    axes_font_weight_dict['ultralight'] = 'ultralight'
-    axes_font_weight_dict['light'] = 'light'
-    axes_font_weight_dict['regular'] = 'regular'
-    axes_font_weight_dict['book'] = 'book'
-    axes_font_weight_dict['medium'] = 'medium'
-    axes_font_weight_dict['roman'] = 'roman'
-    axes_font_weight_dict['semibold'] = 'semibold'
-    axes_font_weight_dict['demibold'] = 'demibold'
-    axes_font_weight_dict['demi'] = 'demi'
-    axes_font_weight_dict['bold'] = 'bold'
-    axes_font_weight_dict['heavy'] = 'heavy'
-    axes_font_weight_dict['extra bold'] = 'extra bold'
-    axes_font_weight_dict['black'] = 'black'
-    axes_font_weight = ipywidgets.Dropdown(
-        options=axes_font_weight_dict,
-        value=figure_options_default['axes_font_weight'],
-        description='Weight', visible=axes_visible)
-    if figure_options_default['axes_x_limits'] is None:
-        tmp1 = False
-        tmp2 = 0.
-        tmp3 = 100.
-    else:
-        tmp1 = True
-        tmp2 = figure_options_default['axes_x_limits'][0]
-        tmp3 = figure_options_default['axes_x_limits'][1]
-    axes_x_limits_enable = ipywidgets.Checkbox(value=tmp1,
-                                                     description='X limits')
-    axes_x_limits_from = ipywidgets.FloatText(value=tmp2, description='')
-    axes_x_limits_to = ipywidgets.FloatText(value=tmp3, description='')
-    axes_x_limits = ipywidgets.Box(children=[axes_x_limits_enable,
-                                                         axes_x_limits_from,
-                                                         axes_x_limits_to])
-    if figure_options_default['axes_y_limits'] is None:
-        tmp1 = False
-        tmp2 = 0.
-        tmp3 = 100.
-    else:
-        tmp1 = True
-        tmp2 = figure_options_default['axes_y_limits'][0]
-        tmp3 = figure_options_default['axes_y_limits'][1]
-    axes_y_limits_enable = ipywidgets.Checkbox(value=tmp1,
-                                                     description='Y limits')
-    axes_y_limits_from = ipywidgets.FloatText(value=tmp2, description='')
-    axes_y_limits_to = ipywidgets.FloatText(value=tmp3, description='')
-    axes_y_limits = ipywidgets.Box(children=[axes_y_limits_enable,
-                                                         axes_y_limits_from,
-                                                         axes_y_limits_to])
-
-    # Final widget
-    figure_options_wid = ipywidgets.Box(children=[but, figure_scale,
-                                                              render_axes,
-                                                              axes_font_name,
-                                                              axes_font_size,
-                                                              axes_font_style,
-                                                              axes_font_weight,
-                                                              axes_x_limits,
-                                                              axes_y_limits])
-
-    # Assign output
-    figure_options_wid.selected_values = figure_options_default
-
-    # font options visibility
-    def options_visible(name, value):
-        axes_font_name.disabled = not value
-        axes_font_size.disabled = not value
-        axes_font_style.disabled = not value
-        axes_font_weight.disabled = not value
-        axes_x_limits_enable.disabled = not value
-        axes_y_limits_enable.disabled = not value
-        if value:
-            axes_x_limits_from.disabled = not axes_x_limits_enable.value
-            axes_x_limits_to.disabled = not axes_x_limits_enable.value
-            axes_y_limits_from.disabled = not axes_y_limits_enable.value
-            axes_y_limits_to.disabled = not axes_y_limits_enable.value
-        else:
-            axes_x_limits_from.disabled = True
-            axes_x_limits_to.disabled = True
-            axes_y_limits_from.disabled = True
-            axes_y_limits_to.disabled = True
-    options_visible('', figure_options_default['render_axes'])
-    render_axes.on_trait_change(options_visible, 'value')
-
-    # get options functions
-    def save_render_axes(name, value):
-        figure_options_wid.selected_values['render_axes'] = value
-    render_axes.on_trait_change(save_render_axes, 'value')
-
-    def save_axes_font_name(name, value):
-        figure_options_wid.selected_values['axes_font_name'] = value
-    axes_font_name.on_trait_change(save_axes_font_name, 'value')
-
-    def save_axes_font_size(name, value):
-        figure_options_wid.selected_values['axes_font_size'] = int(value)
-    axes_font_size.on_trait_change(save_axes_font_size, 'value')
-
-    def save_axes_font_style(name, value):
-        figure_options_wid.selected_values['axes_font_style'] = value
-    axes_font_style.on_trait_change(save_axes_font_style, 'value')
-
-    def save_axes_font_weight(name, value):
-        figure_options_wid.selected_values['axes_font_weight'] = value
-    axes_font_weight.on_trait_change(save_axes_font_weight, 'value')
-
-    def axes_x_limits_disable(name, value):
-        axes_x_limits_from.disabled = not value
-        axes_x_limits_to.disabled = not value
-    axes_x_limits_disable('', axes_x_limits_enable.value)
-    axes_x_limits_enable.on_trait_change(axes_x_limits_disable, 'value')
-
-    def axes_y_limits_disable(name, value):
-        axes_y_limits_from.disabled = not value
-        axes_y_limits_to.disabled = not value
-    axes_y_limits_disable('', axes_y_limits_enable.value)
-    axes_y_limits_enable.on_trait_change(axes_y_limits_disable, 'value')
-
-    def save_axes_x_limits(name, value):
-        if axes_x_limits_enable.value:
-            figure_options_wid.selected_values['axes_x_limits'] = \
-                (axes_x_limits_from.value, axes_x_limits_to.value)
-        else:
-            figure_options_wid.selected_values['axes_x_limits'] = None
-    axes_x_limits_enable.on_trait_change(save_axes_x_limits, 'value')
-    axes_x_limits_from.on_trait_change(save_axes_x_limits, 'value')
-    axes_x_limits_to.on_trait_change(save_axes_x_limits, 'value')
-
-    def save_axes_y_limits(name, value):
-        if axes_y_limits_enable.value:
-            figure_options_wid.selected_values['axes_y_limits'] = \
-                (axes_y_limits_from.value, axes_y_limits_to.value)
-        else:
-            figure_options_wid.selected_values['axes_y_limits'] = None
-    axes_y_limits_enable.on_trait_change(save_axes_y_limits, 'value')
-    axes_y_limits_from.on_trait_change(save_axes_y_limits, 'value')
-    axes_y_limits_to.on_trait_change(save_axes_y_limits, 'value')
-
-    def save_scale(name, value):
-        figure_options_wid.selected_values['x_scale'] = value
-        figure_options_wid.selected_values['y_scale'] = value
-    figure_scale.on_trait_change(save_scale, 'value')
-
-    # Toggle button function
-    def toggle_fun(name, value):
-        figure_scale.visible = value
-        render_axes.visible = value
-        axes_font_name.visible = value
-        axes_font_size.visible = value
-        axes_font_style.visible = value
-        axes_font_weight.visible = value
-        axes_x_limits.visible = value
-        axes_y_limits.visible = value
-    toggle_fun('', toggle_show_default)
-    but.on_trait_change(toggle_fun, 'value')
-
-    # assign plot_function
-    if plot_function is not None:
-        figure_scale.on_trait_change(plot_function, 'value')
-        render_axes.on_trait_change(plot_function, 'value')
-        axes_font_name.on_trait_change(plot_function, 'value')
-        axes_font_size.on_trait_change(plot_function, 'value')
-        axes_font_style.on_trait_change(plot_function, 'value')
-        axes_font_weight.on_trait_change(plot_function, 'value')
-        axes_x_limits_from.on_trait_change(plot_function, 'value')
-        axes_x_limits_to.on_trait_change(plot_function, 'value')
-        axes_x_limits_enable.on_trait_change(plot_function, 'value')
-        axes_y_limits_from.on_trait_change(plot_function, 'value')
-        axes_y_limits_to.on_trait_change(plot_function, 'value')
-        axes_y_limits_enable.on_trait_change(plot_function, 'value')
-
-    return figure_options_wid
-
-
-def format_figure_options(figure_options_wid, container_padding='6px',
-                          container_margin='6px',
-                          container_border='1px solid black',
-                          toggle_button_font_weight='bold',
-                          border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given figure_options
-    widget. Usage example:
-        figure_options_wid = figure_options()
-        display(figure_options_wid)
-        format_figure_options(figure_options_wid)
-
-    Parameters
-    ----------
-    figure_options_wid :
-        The widget object generated by the `figure_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    """
-    # fix figure scale slider width
-    figure_options_wid.children[1].width = '3cm'
-
-    # fix font size width
-    figure_options_wid.children[4].width = '1cm'
-
-    # align and set width of axes_x_limits
-    remove_class(figure_options_wid.children[7], 'vbox')
-    add_class(figure_options_wid.children[7], 'hbox')
-    figure_options_wid.children[7].children[1].width = '1cm'
-    figure_options_wid.children[7].children[2].width = '1cm'
-
-    # align and set width of axes_y_limits
-    remove_class(figure_options_wid.children[8], 'vbox')
-    add_class(figure_options_wid.children[8], 'hbox')
-    figure_options_wid.children[8].children[1].width = '1cm'
-    figure_options_wid.children[8].children[2].width = '1cm'
-
-    # set toggle button font bold
-    figure_options_wid.children[0].font_weight = toggle_button_font_weight
-
-    # margin and border around container widget
-    figure_options_wid.padding = container_padding
-    figure_options_wid.margin = container_margin
-    if border_visible:
-        figure_options_wid.border = container_border
-
-
-def update_figure_options(figure_options_wid, figure_options_dict):
-    r"""
-    Function that updates the state of a given figure_options widget. Usage
-    example:
-        figure_options_default = {'x_scale': 1.,
-                                  'y_scale': 1.,
-                                  'render_axes': True,
-                                  'axes_font_name': 'serif',
-                                  'axes_font_size': 10,
-                                  'axes_font_style': 'normal',
-                                  'axes_font_weight': 'normal',
-                                  'axes_x_limits': None,
-                                  'axes_y_limits': None}
-        figure_options_wid = figure_options(figure_options_default)
-        display(figure_options_wid)
-        format_figure_options(figure_options_wid)
-        figure_options_default = {'x_scale': 1.,
-                                  'y_scale': 1.,
-                                  'render_axes': True,
-                                  'axes_font_name': 'serif',
-                                  'axes_font_size': 10,
-                                  'axes_font_style': 'normal',
-                                  'axes_font_weight': 'normal',
-                                  'axes_x_limits': None,
-                                  'axes_y_limits': None}
-        update_figure_options(figure_options_wid, figure_options_default)
-
-    Parameters
-    ----------
-    figure_options_wid :
-        The widget object generated by the `figure_options()` function.
-    figure_options_dict : `dict`
-        The new set of options. For example:
-            figure_options_dict = {'x_scale': 1.,
-                                   'y_scale': 1.,
-                                   'render_axes': True,
-                                   'axes_font_name': 'serif',
-                                   'axes_font_size': 10,
-                                   'axes_font_style': 'normal',
-                                   'axes_font_weight': 'normal',
-                                   'axes_x_limits': None,
-                                   'axes_y_limits': None}
-    """
-    # Assign new options dict to selected_values
-    figure_options_wid.selected_values = figure_options_dict
-
-    # update scale slider
-    if 'x_scale' in figure_options_dict.keys():
-        figure_options_wid.children[1].value = figure_options_dict['x_scale']
-    elif 'y_scale' in figure_options_dict.keys():
-        figure_options_wid.children[1].value = figure_options_dict['y_scale']
-
-    # update render axes checkbox
-    if 'render_axes' in figure_options_dict.keys():
-        figure_options_wid.children[2].value = \
-            figure_options_dict['render_axes']
-
-    # update axes_font_name dropdown menu
-    if 'axes_font_name' in figure_options_dict.keys():
-        figure_options_wid.children[3].value = \
-            figure_options_dict['axes_font_name']
-
-    # update axes_font_size text box
-    if 'axes_font_size' in figure_options_dict.keys():
-        figure_options_wid.children[4].value = \
-            int(figure_options_dict['axes_font_size'])
-
-    # update axes_font_style dropdown menu
-    if 'axes_font_style' in figure_options_dict.keys():
-        figure_options_wid.children[5].value = \
-            figure_options_dict['axes_font_style']
-
-    # update axes_font_weight dropdown menu
-    if 'axes_font_weight' in figure_options_dict.keys():
-        figure_options_wid.children[6].value = \
-            figure_options_dict['axes_font_weight']
-
-    # update axes_x_limits
-    if 'axes_x_limits' in figure_options_dict.keys():
-        if figure_options_dict['axes_x_limits'] is None:
+    def __init__(self, figure_options_default, render_function=None,
+                 toggle_show_default=True, toggle_show_visible=True,
+                 toggle_title='Figure Options', figure_scale_bounds=(0.1, 4),
+                 figure_scale_step=0.1, figure_scale_visible=True,
+                 axes_visible=True, coupled_default=False):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.x_scale_slider = ipywidgets.FloatSlider(
+            description='Figure size: X scale',
+            value=figure_options_default['x_scale'],
+            min=figure_scale_bounds[0], max=figure_scale_bounds[1],
+            step=figure_scale_step, width='3cm')
+        self.y_scale_slider = ipywidgets.FloatSlider(
+            description='Y scale', value=figure_options_default['y_scale'],
+            min=figure_scale_bounds[0], max=figure_scale_bounds[1],
+            step=figure_scale_step, disabled=coupled_default, width='3cm')
+        self.coupled_checkbox = ipywidgets.Checkbox(description='Coupled',
+                                                    value=coupled_default)
+        self.figure_scale_box = ipywidgets.VBox(
+            children=[self.x_scale_slider, self.y_scale_slider,
+                      self.coupled_checkbox], visible=figure_scale_visible,
+            align='end')
+        self.render_axes_checkbox = ipywidgets.Checkbox(
+            description='Render axes',
+            value=figure_options_default['render_axes'], visible=axes_visible)
+        axes_font_name_dict = OrderedDict()
+        axes_font_name_dict['serif'] = 'serif'
+        axes_font_name_dict['sans-serif'] = 'sans-serif'
+        axes_font_name_dict['cursive'] = 'cursive'
+        axes_font_name_dict['fantasy'] = 'fantasy'
+        axes_font_name_dict['monospace'] = 'monospace'
+        self.axes_font_name_dropdown = ipywidgets.Dropdown(
+            options=axes_font_name_dict,
+            value=figure_options_default['axes_font_name'], description='Font',
+            visible=axes_visible)
+        self.axes_font_size_text = ipywidgets.BoundedIntText(
+            description='Size', value=figure_options_default['axes_font_size'],
+            min=0, max=10**6, visible=axes_visible)
+        axes_font_style_dict = OrderedDict()
+        axes_font_style_dict['normal'] = 'normal'
+        axes_font_style_dict['italic'] = 'italic'
+        axes_font_style_dict['oblique'] = 'oblique'
+        self.axes_font_style_dropdown = ipywidgets.Dropdown(
+            options=axes_font_style_dict, description='Style',
+            value=figure_options_default['axes_font_style'],
+            visible=axes_visible)
+        axes_font_weight_dict = OrderedDict()
+        axes_font_weight_dict['normal'] = 'normal'
+        axes_font_weight_dict['ultralight'] = 'ultralight'
+        axes_font_weight_dict['light'] = 'light'
+        axes_font_weight_dict['regular'] = 'regular'
+        axes_font_weight_dict['book'] = 'book'
+        axes_font_weight_dict['medium'] = 'medium'
+        axes_font_weight_dict['roman'] = 'roman'
+        axes_font_weight_dict['semibold'] = 'semibold'
+        axes_font_weight_dict['demibold'] = 'demibold'
+        axes_font_weight_dict['demi'] = 'demi'
+        axes_font_weight_dict['bold'] = 'bold'
+        axes_font_weight_dict['heavy'] = 'heavy'
+        axes_font_weight_dict['extra bold'] = 'extra bold'
+        axes_font_weight_dict['black'] = 'black'
+        self.axes_font_weight_dropdown = ipywidgets.Dropdown(
+            options=axes_font_weight_dict,
+            value=figure_options_default['axes_font_weight'],
+            description='Weight', visible=axes_visible)
+        if figure_options_default['axes_x_limits'] is None:
             tmp1 = False
             tmp2 = 0.
             tmp3 = 100.
         else:
             tmp1 = True
-            tmp2 = figure_options_dict['axes_x_limits'][0]
-            tmp3 = figure_options_dict['axes_x_limits'][1]
-        figure_options_wid.children[7].children[0].value = tmp1
-        figure_options_wid.children[7].children[1].value = tmp2
-        figure_options_wid.children[7].children[2].value = tmp3
-
-    # update axes_y_limits
-    if 'axes_y_limits' in figure_options_dict.keys():
-        if figure_options_dict['axes_y_limits'] is None:
+            tmp2 = figure_options_default['axes_x_limits'][0]
+            tmp3 = figure_options_default['axes_x_limits'][1]
+        self.axes_x_limits_enable_checkbox = ipywidgets.Checkbox(
+            value=tmp1, description='X limits')
+        self.axes_x_limits_from_text = ipywidgets.FloatText(
+            value=tmp2, description='')
+        self.axes_x_limits_to_text = ipywidgets.FloatText(
+            value=tmp3, description='')
+        self.axes_x_limits_box = ipywidgets.Box(
+            children=[self.axes_x_limits_enable_checkbox,
+                      self.axes_x_limits_from_text, self.axes_x_limits_to_text])
+        if figure_options_default['axes_y_limits'] is None:
             tmp1 = False
             tmp2 = 0.
             tmp3 = 100.
         else:
             tmp1 = True
-            tmp2 = figure_options_dict['axes_y_limits'][0]
-            tmp3 = figure_options_dict['axes_y_limits'][1]
-        figure_options_wid.children[8].children[0].value = tmp1
-        figure_options_wid.children[8].children[1].value = tmp2
-        figure_options_wid.children[8].children[2].value = tmp3
+            tmp2 = figure_options_default['axes_y_limits'][0]
+            tmp3 = figure_options_default['axes_y_limits'][1]
+        self.axes_y_limits_enable_checkbox = ipywidgets.Checkbox(
+            value=tmp1, description='Y limits')
+        self.axes_y_limits_from_text = ipywidgets.FloatText(value=tmp2,
+                                                            description='')
+        self.axes_y_limits_to_text = ipywidgets.FloatText(value=tmp3,
+                                                          description='')
+        self.axes_y_limits_box = ipywidgets.Box(
+            children=[self.axes_y_limits_enable_checkbox,
+                      self.axes_y_limits_from_text, self.axes_y_limits_to_text])
+        self.options_box = ipywidgets.Box(
+            children=[self.figure_scale_box, self.render_axes_checkbox,
+                      self.axes_font_name_dropdown, self.axes_font_size_text,
+                      self.axes_font_style_dropdown,
+                      self.axes_font_weight_dropdown, self.axes_x_limits_box,
+                      self.axes_y_limits_box],
+            visible=toggle_show_default)
+        super(FigureOptionsTwoScalesWidget, self).__init__(
+            children=[self.toggle_visible, self.options_box])
+
+        # Assign output
+        self.selected_values = figure_options_default
+
+        # Set functionality
+        def figure_options_visible(name, value):
+            self.axes_font_name_dropdown.disabled = not value
+            self.axes_font_size_text.disabled = not value
+            self.axes_font_style_dropdown.disabled = not value
+            self.axes_font_weight_dropdown.disabled = not value
+            self.axes_x_limits_enable_checkbox.disabled = not value
+            self.axes_y_limits_enable_checkbox.disabled = not value
+            if value:
+                self.axes_x_limits_from_text.disabled = \
+                    not self.axes_x_limits_enable_checkbox.value
+                self.axes_x_limits_to_text.disabled = \
+                    not self.axes_x_limits_enable_checkbox.value
+                self.axes_y_limits_from_text.disabled = \
+                    not self.axes_y_limits_enable_checkbox.value
+                self.axes_y_limits_to_text.disabled = \
+                    not self.axes_y_limits_enable_checkbox.value
+            else:
+                self.axes_x_limits_from_text.disabled = True
+                self.axes_x_limits_to_text.disabled = True
+                self.axes_y_limits_from_text.disabled = True
+                self.axes_y_limits_to_text.disabled = True
+        figure_options_visible('', figure_options_default['render_axes'])
+        self.render_axes_checkbox.on_trait_change(figure_options_visible,
+                                                  'value')
+
+        # Coupled sliders function
+        def coupled_sliders(name, value):
+            self.y_scale_slider.disabled = value
+        self.coupled_checkbox.on_trait_change(coupled_sliders, 'value')
+
+        def save_render_axes(name, value):
+            self.selected_values['render_axes'] = value
+        self.render_axes_checkbox.on_trait_change(save_render_axes, 'value')
+
+        def save_axes_font_name(name, value):
+            self.selected_values['axes_font_name'] = value
+        self.axes_font_name_dropdown.on_trait_change(save_axes_font_name,
+                                                     'value')
+
+        def save_axes_font_size(name, value):
+            self.selected_values['axes_font_size'] = int(value)
+        self.axes_font_size_text.on_trait_change(save_axes_font_size, 'value')
+
+        def save_axes_font_style(name, value):
+            self.selected_values['axes_font_style'] = value
+        self.axes_font_style_dropdown.on_trait_change(save_axes_font_style,
+                                                      'value')
+
+        def save_axes_font_weight(name, value):
+            self.selected_values['axes_font_weight'] = value
+        self.axes_font_weight_dropdown.on_trait_change(save_axes_font_weight,
+                                                       'value')
+
+        def axes_x_limits_disable(name, value):
+            self.axes_x_limits_from_text.disabled = not value
+            self.axes_x_limits_to_text.disabled = not value
+        axes_x_limits_disable('', self.axes_x_limits_enable_checkbox.value)
+        self.axes_x_limits_enable_checkbox.on_trait_change(
+            axes_x_limits_disable, 'value')
+
+        def axes_y_limits_disable(name, value):
+            self.axes_y_limits_from_text.disabled = not value
+            self.axes_y_limits_to_text.disabled = not value
+        axes_y_limits_disable('', self.axes_y_limits_enable_checkbox.value)
+        self.axes_y_limits_enable_checkbox.on_trait_change(
+            axes_y_limits_disable, 'value')
+
+        def save_axes_x_limits(name, value):
+            if self.axes_x_limits_enable_checkbox.value:
+                self.selected_values['axes_x_limits'] = \
+                    (self.axes_x_limits_from_text.value,
+                     self.axes_x_limits_to_text.value)
+            else:
+                self.selected_values['axes_x_limits'] = None
+        self.axes_x_limits_enable_checkbox.on_trait_change(save_axes_x_limits,
+                                                           'value')
+        self.axes_x_limits_from_text.on_trait_change(save_axes_x_limits,
+                                                     'value')
+        self.axes_x_limits_to_text.on_trait_change(save_axes_x_limits, 'value')
+
+        def save_axes_y_limits(name, value):
+            if self.axes_y_limits_enable_checkbox.value:
+                self.selected_values['axes_y_limits'] = \
+                    (self.axes_y_limits_from_text.value,
+                     self.axes_y_limits_to_text.value)
+            else:
+                self.selected_values['axes_y_limits'] = None
+        self.axes_y_limits_enable_checkbox.on_trait_change(save_axes_y_limits,
+                                                           'value')
+        self.axes_y_limits_from_text.on_trait_change(save_axes_y_limits,
+                                                     'value')
+        self.axes_y_limits_to_text.on_trait_change(save_axes_y_limits, 'value')
+
+        def save_x_scale(name, old_value, value):
+            self.selected_values['x_scale'] = value
+            if self.coupled_checkbox.value:
+                self.y_scale_slider.value += value - old_value
+        self.x_scale_slider.on_trait_change(save_x_scale, 'value')
+
+        def save_y_scale(name, value):
+            self.selected_values['y_scale'] = value
+        self.y_scale_slider.on_trait_change(save_y_scale, 'value')
+
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=True,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight='', slider_width='3cm'):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        slider_width : `str`, optional
+            The width of the slider.
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        self.x_scale_slider.width = slider_width
+        self.y_scale_slider.width = slider_width
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.x_scale_slider, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.y_scale_slider, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.coupled_checkbox, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.render_axes_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.render_axes_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_font_name_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_font_size_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_font_style_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_font_weight_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_x_limits_from_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_x_limits_to_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_x_limits_enable_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_y_limits_from_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_y_limits_to_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.axes_y_limits_enable_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.x_scale_slider.on_trait_change(self._render_function, 'value')
+            self.y_scale_slider.on_trait_change(self._render_function, 'value')
+            self.coupled_checkbox.on_trait_change(self._render_function,
+                                                  'value')
+            self.render_axes_checkbox.on_trait_change(self._render_function,
+                                                      'value')
+            self.axes_font_name_dropdown.on_trait_change(self._render_function,
+                                                         'value')
+            self.axes_font_size_text.on_trait_change(self._render_function,
+                                                     'value')
+            self.axes_font_style_dropdown.on_trait_change(self._render_function,
+                                                          'value')
+            self.axes_font_weight_dropdown.on_trait_change(self._render_function,
+                                                           'value')
+            self.axes_x_limits_from_text.on_trait_change(self._render_function,
+                                                         'value')
+            self.axes_x_limits_to_text.on_trait_change(self._render_function,
+                                                       'value')
+            self.axes_x_limits_enable_checkbox.on_trait_change(
+                self._render_function, 'value')
+            self.axes_y_limits_from_text.on_trait_change(self._render_function,
+                                                         'value')
+            self.axes_y_limits_to_text.on_trait_change(self._render_function,
+                                                       'value')
+            self.axes_y_limits_enable_checkbox.on_trait_change(
+                self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.x_scale_slider.on_trait_change(self._render_function, 'value',
+                                            remove=True)
+        self.y_scale_slider.on_trait_change(self._render_function, 'value',
+                                            remove=True)
+        self.coupled_checkbox.on_trait_change(self._render_function, 'value',
+                                              remove=True)
+        self.render_axes_checkbox.on_trait_change(self._render_function,
+                                                  'value', remove=True)
+        self.axes_font_name_dropdown.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+        self.axes_font_size_text.on_trait_change(self._render_function, 'value',
+                                                 remove=True)
+        self.axes_font_style_dropdown.on_trait_change(self._render_function,
+                                                      'value', remove=True)
+        self.axes_font_weight_dropdown.on_trait_change(self._render_function,
+                                                       'value', remove=True)
+        self.axes_x_limits_from_text.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+        self.axes_x_limits_to_text.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self.axes_x_limits_enable_checkbox.on_trait_change(
+            self._render_function, 'value', remove=True)
+        self.axes_y_limits_from_text.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+        self.axes_y_limits_to_text.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self.axes_y_limits_enable_checkbox.on_trait_change(
+            self._render_function, 'value', remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def set_widget_state(self, figure_options_dict, allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided
+        `image_options_dict` is different than `self.selected_values()`.
+
+        Parameter
+        ---------
+        figure_options_dict : `dict`
+            The new set of options. For example ::
+
+                figure_options_dict = {'x_scale': 1.,
+                                       'y_scale': 1.,
+                                       'render_axes': True,
+                                       'axes_font_name': 'serif',
+                                       'axes_font_size': 10,
+                                       'axes_font_style': 'normal',
+                                       'axes_font_weight': 'normal',
+                                       'axes_x_limits': None,
+                                       'axes_y_limits': None}
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Assign new options dict to selected_values
+        self.selected_values = figure_options_dict
+
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # update scale slider
+        if ('x_scale' in figure_options_dict.keys() and
+                'y_scale' not in figure_options_dict.keys()):
+            self.x_scale_slider.value = figure_options_dict['x_scale']
+            self.coupled_checkbox.value = False
+        elif ('x_scale' not in figure_options_dict.keys() and
+                'y_scale' in figure_options_dict.keys()):
+            self.y_scale_slider.value = figure_options_dict['y_scale']
+            self.coupled_checkbox.value = False
+        elif ('x_scale' in figure_options_dict.keys() and
+                'y_scale' in figure_options_dict.keys()):
+            self.x_scale_slider.value = figure_options_dict['x_scale']
+            self.y_scale_slider.value = figure_options_dict['y_scale']
+            self.coupled_checkbox.value = \
+                figure_options_dict['x_scale'] == figure_options_dict['y_scale']
+
+        # update render axes checkbox
+        if 'render_axes' in figure_options_dict.keys():
+            self.render_axes_checkbox.value = figure_options_dict['render_axes']
+
+        # update axes_font_name dropdown menu
+        if 'axes_font_name' in figure_options_dict.keys():
+            self.axes_font_name_dropdown.value = \
+                figure_options_dict['axes_font_name']
+
+        # update axes_font_size text box
+        if 'axes_font_size' in figure_options_dict.keys():
+            self.axes_font_size_text.value = \
+                int(figure_options_dict['axes_font_size'])
+
+        # update axes_font_style dropdown menu
+        if 'axes_font_style' in figure_options_dict.keys():
+            self.axes_font_style_dropdown.value = \
+                figure_options_dict['axes_font_style']
+
+        # update axes_font_weight dropdown menu
+        if 'axes_font_weight' in figure_options_dict.keys():
+            self.axes_font_weight_dropdown.value = \
+                figure_options_dict['axes_font_weight']
+
+        # update axes_x_limits
+        if 'axes_x_limits' in figure_options_dict.keys():
+            if figure_options_dict['axes_x_limits'] is None:
+                tmp1 = False
+                tmp2 = 0.
+                tmp3 = 100.
+            else:
+                tmp1 = True
+                tmp2 = figure_options_dict['axes_x_limits'][0]
+                tmp3 = figure_options_dict['axes_x_limits'][1]
+            self.axes_x_limits_enable_checkbox.value = tmp1
+            self.axes_x_limits_from_text.value = tmp2
+            self.axes_x_limits_to_text.value = tmp3
+
+        # update axes_y_limits
+        if 'axes_y_limits' in figure_options_dict.keys():
+            if figure_options_dict['axes_y_limits'] is None:
+                tmp1 = False
+                tmp2 = 0.
+                tmp3 = 100.
+            else:
+                tmp1 = True
+                tmp2 = figure_options_dict['axes_y_limits'][0]
+                tmp3 = figure_options_dict['axes_y_limits'][1]
+            self.axes_y_limits_enable_checkbox.value = tmp1
+            self.axes_y_limits_from_text.value = tmp2
+            self.axes_y_limits_to_text.value = tmp3
+
+        # re-assign render callback
+        self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
 
 
 def figure_options_two_scales(figure_options_default, plot_function=None,
