@@ -153,8 +153,8 @@ class IndexSliderWidget(ipywidgets.Box):
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
-    state and functions of the widget, please refer to the `set_state()`,
-    `set_update_function()` and `set_plot_function()` methods.
+    state and functions of the widget, please refer to the `set_widget_state()`,
+    `set_update_function()` and `set_render_function()` methods.
 
     Parameters
     ----------
@@ -163,8 +163,8 @@ class IndexSliderWidget(ipywidgets.Box):
 
             index_default = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
 
-    plot_function : `function` or ``None``, optional
-        The plot function that is executed when the index value changes.
+    render_function : `function` or ``None``, optional
+        The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     update_function : `function` or ``None``, optional
         The update function that is executed when the index value changes.
@@ -172,8 +172,8 @@ class IndexSliderWidget(ipywidgets.Box):
     description : `str`, optional
         The title of the widget.
     """
-    def __init__(self, index_default, plot_function=None, update_function=None,
-                 description='Index: '):
+    def __init__(self, index_default, render_function=None,
+                 update_function=None, description='Index: '):
         self.slider = ipywidgets.IntSlider(min=index_default['min'],
                                            max=index_default['max'],
                                            value=index_default['index'],
@@ -189,18 +189,15 @@ class IndexSliderWidget(ipywidgets.Box):
             self.selected_values['index'] = value
         self.slider.on_trait_change(save_index, 'value')
 
-        # Set plot and update functions and keep them for future reference
-        self._update_function = update_function
-        self._plot_function = plot_function
-        if self._update_function is not None:
-            self.slider.on_trait_change(self._update_function, 'value')
-        if self._plot_function is not None:
-            self.slider.on_trait_change(self._plot_function, 'value')
+        # Set render and update functions
+        self._update_function = None
+        self.add_update_function(update_function)
+        self._render_function = None
+        self.add_render_function(render_function)
 
     def style(self, box_style=None, border_visible=True, border_color='black',
               border_style='solid', border_width=1, padding=0, margin=0,
-              font_family='', font_size=None, font_style='', font_weight='',
-              slider_color=''):
+              font_family='', font_size=None, font_style='', font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -244,54 +241,93 @@ class IndexSliderWidget(ipywidgets.Box):
                  ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
-
-        slider_color : `str`, optional
-            The color of the slider's handler.
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, padding, margin)
-        self.slider.slider_color = slider_color
         _format_font(self, font_family, font_size, font_style,
                      font_weight)
 
-    def set_plot_function(self, plot_function):
+    def add_render_function(self, render_function):
         r"""
-        Method that updates the `plot_function()` of the widget. Specifically it
-        removes the old one and appends the new one, if they are not the same.
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
 
         Parameters
         ----------
-        plot_function : `function` or ``None``, optional
-            The plot function that is executed when the index value changes.
-            If ``None``, then nothing is assigned.
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.slider.on_trait_change(self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.slider.on_trait_change(self._render_function, 'value', remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
         """
         # remove old function
-        self.slider._remove_notifiers(self._plot_function, 'value')
-        # add new function
-        self._plot_function = plot_function
-        if self._plot_function is not None:
-            self.slider._add_notifiers(self._plot_function, 'value')
+        self.remove_render_function()
 
-    def set_update_function(self, update_function):
+        # add new function
+        self.add_render_function(render_function)
+
+    def add_update_function(self, update_function):
         r"""
-        Method that updates the `update_function()` of the widget. Specifically
-        it removes the old one and appends the new one, if they are not the
-        same.
+        Method that adds a `update_function()` to the widget. The signature of
+        the given function is also stored in `self._update_function`.
 
         Parameters
         ----------
         update_function : `function` or ``None``, optional
-            The update function that is executed when the index value changes.
-            If ``None``, then nothing is assigned.
+            The update function that behaves as a callback. If ``None``, then
+            nothing is added.
         """
-        # remove old function
-        self.slider._remove_notifiers(self._update_function, 'value')
-        # add new function
         self._update_function = update_function
         if self._update_function is not None:
-            self.slider._add_notifiers(self._update_function, 'value')
+            self.slider.on_trait_change(self._update_function, 'value')
 
-    def set_widget_state(self, index_default):
+    def remove_update_function(self):
+        r"""
+        Method that removes the current `self._update_function()` from the
+        widget and sets ``self._update_function = None``.
+        """
+        self.slider.on_trait_change(self._update_function, 'value', remove=True)
+        self._update_function = None
+
+    def replace_update_function(self, update_function):
+        r"""
+        Method that replaces the current `self._update_function()` of the widget
+        with the given `update_function()`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_update_function()
+
+        # add new function
+        self.add_update_function(update_function)
+
+    def set_widget_state(self, index_default, allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided
         `index_default` values are different than `self.selected_values()`.
@@ -302,17 +338,31 @@ class IndexSliderWidget(ipywidgets.Box):
             The dictionary with the selected options. For example ::
 
                 index_default = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
         """
         # Check if update is required
         if not (index_default['min'] == self.selected_values['min'] and
                 index_default['max'] == self.selected_values['max'] and
                 index_default['step'] == self.selected_values['step'] and
                 index_default['index'] == self.selected_values['index']):
+            if not allow_callback:
+                # temporarily remove render and update functions
+                render_function = self._render_function
+                update_function = self._update_function
+                self.remove_render_function()
+                self.remove_update_function()
+
             # set values to slider
             self.slider.min = index_default['min']
             self.slider.max = index_default['max']
             self.slider.step = index_default['step']
             self.slider.value = index_default['index']
+
+            if not allow_callback:
+                # re-assign render and update callbacks
+                self.add_update_function(update_function)
+                self.add_render_function(render_function)
 
         # Assign output
         self.selected_values = index_default
@@ -331,8 +381,8 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
-    state and functions of the widget, please refer to the `set_state()`,
-    `set_update_function()` and `set_plot_function()` methods.
+    state and functions of the widget, please refer to the `set_widget_state()`,
+    `set_update_function()` and `set_render_function()` methods.
 
     Parameters
     ----------
@@ -341,8 +391,8 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
 
             index_default = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
 
-    plot_function : `function` or ``None``, optional
-        The plot function that is executed when the index value changes.
+    render_function : `function` or ``None``, optional
+        The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     update_function : `function` or ``None``, optional
         The update function that is executed when the index value changes.
@@ -361,9 +411,10 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
     text_editable : `bool`, optional
         Flag that determines whether the index text will be editable.
     """
-    def __init__(self, index_default, plot_function=None, update_function=None,
-                 description='Index: ', minus_description='-',
-                 plus_description='+', loop_enabled=True, text_editable=True):
+    def __init__(self, index_default, render_function=None,
+                 update_function=None, description='Index: ',
+                 minus_description='-', plus_description='+', loop_enabled=True,
+                 text_editable=True):
         self.title = ipywidgets.Latex(value=description)
         self.button_minus = ipywidgets.Button(description=minus_description)
         self.button_plus = ipywidgets.Button(description=plus_description)
@@ -412,19 +463,16 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
             self.selected_values['index'] = int(value)
         self.index_text.on_trait_change(save_index, 'value')
 
-        # Set plot and update functions and keep them for future reference
-        self._update_function = update_function
-        self._plot_function = plot_function
-        if self._update_function is not None:
-            self.index_text.on_trait_change(self._update_function, 'value')
-        if self._plot_function is not None:
-            self.index_text.on_trait_change(self._plot_function, 'value')
+        # Set render and update functions
+        self._update_function = None
+        self.add_update_function(update_function)
+        self._render_function = None
+        self.add_render_function(render_function)
 
     def style(self, box_style=None, border_visible=True, border_color='black',
               border_style='solid', border_width=1, padding=0, margin=0,
               font_family='', font_size=None, font_style='', font_weight='',
-              buttons_style=None, buttons_width='1cm', text_width='4cm',
-              title_padding=6):
+              buttons_width='1cm', text_width='4cm', title_padding=6):
         r"""
         Function that defines the styling of the widget.
 
@@ -469,14 +517,6 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        buttons_style : `str` or ``None`` (see below), optional
-            Style options ::
-
-                {``'primary'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'````, ``''``}
-                or
-                ``None``
-
         buttons_width : `str`, optional
             The width of the buttons.
         text_width : `str`, optional
@@ -490,8 +530,6 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         #self.index_text.width = text_width
         self.button_minus.width = buttons_width
         self.button_plus.width = buttons_width
-        self.button_minus.button_style = buttons_style
-        self.button_plus.button_style = buttons_style
         self.title.padding = title_padding
         _format_font(self.title, font_family, font_size, font_style,
                      font_weight)
@@ -502,44 +540,90 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         _format_font(self.index_text, font_family, font_size, font_style,
                      font_weight)
 
-    def set_plot_function(self, plot_function):
+    def add_render_function(self, render_function):
         r"""
-        Method that updates the `plot_function()` of the widget. Specifically it
-        removes the old one and appends the new one, if they are not the same.
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
 
         Parameters
         ----------
-        plot_function : `function` or ``None``, optional
-            The plot function that is executed when the index value changes.
-            If ``None``, then nothing is assigned.
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.index_text.on_trait_change(self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.index_text.on_trait_change(self._render_function, 'value',
+                                        remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
         """
         # remove old function
-        self.index_text._remove_notifiers(self._plot_function, 'value')
-        # add new function
-        self._plot_function = plot_function
-        if self._plot_function is not None:
-            self.index_text._add_notifiers(self._plot_function, 'value')
+        self.remove_render_function()
 
-    def set_update_function(self, update_function):
+        # add new function
+        self.add_render_function(render_function)
+
+    def add_update_function(self, update_function):
         r"""
-        Method that updates the `update_function()` of the widget. Specifically
-        it removes the old one and appends the new one, if they are not the
-        same.
+        Method that adds a `update_function()` to the widget. The signature of
+        the given function is also stored in `self._update_function`.
 
         Parameters
         ----------
         update_function : `function` or ``None``, optional
-            The update function that is executed when the index value changes.
-            If ``None``, then nothing is assigned.
+            The update function that behaves as a callback. If ``None``, then
+            nothing is added.
         """
-        # remove old function
-        self.index_text._remove_notifiers(self._update_function, 'value')
-        # add new function
         self._update_function = update_function
         if self._update_function is not None:
-            self.index_text._add_notifiers(self._update_function, 'value')
+            self.index_text.on_trait_change(self._update_function, 'value')
 
-    def set_widget_state(self, index_default, loop_enabled, text_editable):
+    def remove_update_function(self):
+        r"""
+        Method that removes the current `self._update_function()` from the
+        widget and sets ``self._update_function = None``.
+        """
+        self.index_text.on_trait_change(self._update_function, 'value',
+                                        remove=True)
+        self._update_function = None
+
+    def replace_update_function(self, update_function):
+        r"""
+        Method that replaces the current `self._update_function()` of the widget
+        with the given `update_function()`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_update_function()
+
+        # add new function
+        self.add_update_function(update_function)
+
+    def set_widget_state(self, index_default, loop_enabled, text_editable,
+                         allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided
         `index_default` values are different than `self.selected_values()`.
@@ -550,6 +634,8 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
             The dictionary with the selected options. For example ::
 
                 index_default = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
         """
         # Update loop_enabled and text_editable
         self.loop_enabled = loop_enabled
@@ -558,8 +644,20 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
 
         # Check if update is required
         if not index_default['index'] == self.selected_values['index']:
+            if not allow_callback:
+                # temporarily remove render and update functions
+                render_function = self._render_function
+                update_function = self._update_function
+                self.remove_render_function()
+                self.remove_update_function()
+
             # set value to index text
             self.index_text.value = str(index_default['index'])
+
+            if not allow_callback:
+                # re-assign render and update callbacks
+                self.add_update_function(update_function)
+                self.add_render_function(render_function)
 
         # Assign output
         self.selected_values = index_default
@@ -632,8 +730,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_state()` and
-    `set_plot_function()` methods.
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
 
     Parameters
     ----------
@@ -645,8 +743,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
         If [`float`, `float`, `float`], it defines an RGB value and must have
         length 3.
-    plot_function : `function` or ``None``, optional
-        The plot function that is executed when a widgets' value changes.
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     description : `str`, optional
         The description of the widget.
@@ -654,7 +752,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         A `list` with the labels' names. If ``None``, then a `list` of the form
         ``label {}`` is automatically defined.
     """
-    def __init__(self, colours_list, plot_function=None, description='Colour',
+    def __init__(self, colours_list, render_function=None, description='Colour',
                  labels=None):
         # Check if multiple mode should be enabled
         n_labels = len(colours_list)
@@ -736,20 +834,20 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         self.apply_to_all_button.on_click(apply_to_all_function)
 
         def update_colour_wrt_label(name, value):
-            # temporarily remove plot_function from r, g, b traits
-            self.colour_dropdown._remove_notifiers(self._plot_function, 'value')
-            self.r_text._remove_notifiers(self._plot_function, 'value')
-            self.g_text._remove_notifiers(self._plot_function, 'value')
-            self.b_text._remove_notifiers(self._plot_function, 'value')
+            # temporarily remove render_function from r, g, b traits
+            self.colour_dropdown._remove_notifiers(self._render_function, 'value')
+            self.r_text._remove_notifiers(self._render_function, 'value')
+            self.g_text._remove_notifiers(self._render_function, 'value')
+            self.b_text._remove_notifiers(self._render_function, 'value')
             # update colour widgets
             (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
              self.b_text.value) = _decode_colour(
                 self.selected_values['colour'][value])
-            # re-assign plot_function
-            self.colour_dropdown._add_notifiers(self._plot_function, 'value')
-            self.r_text._add_notifiers(self._plot_function, 'value')
-            self.g_text._add_notifiers(self._plot_function, 'value')
-            self.b_text._add_notifiers(self._plot_function, 'value')
+            # re-assign render_function
+            self.colour_dropdown._add_notifiers(self._render_function, 'value')
+            self.r_text._add_notifiers(self._render_function, 'value')
+            self.g_text._add_notifiers(self._render_function, 'value')
+            self.b_text._add_notifiers(self._render_function, 'value')
         self.label_dropdown.on_trait_change(update_colour_wrt_label, 'value')
 
         def save_colour(name, value):
@@ -765,24 +863,15 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         self.g_text.on_trait_change(save_colour, 'value')
         self.b_text.on_trait_change(save_colour, 'value')
 
-        # Set plot function and keep them for future reference
-        self._plot_function = plot_function
-        if self._plot_function is not None:
-            self.colour_dropdown.on_trait_change(self._plot_function, 'value')
-            self.r_text.on_trait_change(self._plot_function, 'value')
-            self.g_text.on_trait_change(self._plot_function, 'value')
-            self.b_text.on_trait_change(self._plot_function, 'value')
-
-            def tmp_plot_function(name):
-                self._plot_function('', True)
-            self.apply_to_all_button.on_click(tmp_plot_function)
+        # Set render function
+        self._render_function = None
+        self._apply_to_all_render_function = None
+        self.add_render_function(render_function)
 
     def style(self, box_style=None, border_visible=True, border_color='black',
               border_style='solid', border_width=1, padding=0, margin=0,
               font_family='', font_size=None, font_style='',
-              font_weight='', colour_dropdown_style=None,
-              label_dropdown_style=None, apply_to_all_dropdown_style=None,
-              rgb_width='0.5cm'):
+              font_weight='', rgb_width='0.5cm'):
         r"""
         Function that defines the styling of the widget.
 
@@ -827,30 +916,6 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        colour_dropdown_style : `str` or ``None`` (see below), optional
-            Style of the colours dropdown menu. Options ::
-
-                {``'primary'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'````, ``''``}
-                or
-                ``None``
-
-        label_dropdown_style : `str` or ``None`` (see below), optional
-            Style of the labels dropdown menu. Options ::
-
-                {``'primary'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'````, ``''``}
-                or
-                ``None``
-
-        apply_to_all_dropdown_style : `str` or ``None`` (see below), optional
-            Style of the apply to all button. Options ::
-
-                {``'primary'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'````, ``''``}
-                or
-                ``None``
-
         rgb_width : `str`, optional
             The width of the RGB texts.
         """
@@ -860,9 +925,6 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         #self.r_text.width = rgb_width
         #self.g_text.width = rgb_width
         #self.b_text.width = rgb_width
-        self.colour_dropdown.button_style = colour_dropdown_style
-        self.label_dropdown.button_style = label_dropdown_style
-        self.apply_to_all_button.button_style = apply_to_all_dropdown_style
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.label_dropdown, font_family, font_size, font_style,
                      font_weight)
@@ -877,37 +939,64 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         _format_font(self.colour_dropdown, font_family, font_size, font_style,
                      font_weight)
 
-    def set_plot_function(self, plot_function):
+    def add_render_function(self, render_function):
         r"""
-        Method that updates the `plot_function()` of the widget. Specifically it
-        removes the old one and appends the new one, if they are not the same.
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
 
         Parameters
         ----------
-        plot_function : `function` or ``None``, optional
-            The plot function that is executed when the index value changes.
-            If ``None``, then nothing is assigned.
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        self._apply_to_all_render_function = None
+        if self._render_function is not None:
+            self.colour_dropdown.on_trait_change(self._render_function, 'value')
+            self.r_text.on_trait_change(self._render_function, 'value')
+            self.g_text.on_trait_change(self._render_function, 'value')
+            self.b_text.on_trait_change(self._render_function, 'value')
+
+            def apply_to_all_render_function(name):
+                self._render_function('', True)
+            self._apply_to_all_render_function = apply_to_all_render_function
+            self.apply_to_all_button.on_click(
+                self._apply_to_all_render_function)
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.colour_dropdown.on_trait_change(self._render_function, 'value',
+                                             remove=True)
+        self.r_text.on_trait_change(self._render_function, 'value', remove=True)
+        self.g_text.on_trait_change(self._render_function, 'value', remove=True)
+        self.b_text.on_trait_change(self._render_function, 'value', remove=True)
+        self.apply_to_all_button.on_click(self._apply_to_all_render_function,
+                                          remove=True)
+        self._render_function = None
+        self._apply_to_all_render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
         """
         # remove old function
-        self.colour_dropdown._remove_notifiers(self._plot_function, 'value')
-        self.r_text._remove_notifiers(self._plot_function, 'value')
-        self.g_text._remove_notifiers(self._plot_function, 'value')
-        self.b_text._remove_notifiers(self._plot_function, 'value')
-        self.apply_to_all_button._remove_notifiers(
-            self.apply_to_all_button._trait_notifiers[-1], 'value')
+        self.remove_render_function()
+
         # add new function
-        self._plot_function = plot_function
-        if self._plot_function is not None:
-            self.colour_dropdown._add_notifiers(self._plot_function, 'value')
-            self.r_text._add_notifiers(self._plot_function, 'value')
-            self.g_text._add_notifiers(self._plot_function, 'value')
-            self.b_text._add_notifiers(self._plot_function, 'value')
+        self.add_render_function(render_function)
 
-            def tmp_plot_function(name):
-                self._plot_function('', True)
-            self.apply_to_all_button.on_click(tmp_plot_function)
-
-    def set_widget_state(self, colours_list, labels=None):
+    def set_widget_state(self, colours_list, labels=None, allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided
         `colours_list` and `labels` values are different than
@@ -926,6 +1015,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         labels : `list` or ``None``, optional
             A `list` with the labels' names. If ``None``, then a `list` of the
             form ``label {}`` is automatically defined.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
         """
         if labels is None:
             labels = self.selected_values['labels']
@@ -952,24 +1043,20 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             # the provided labels are the same, but the colours are different
             # assign colour
             self.selected_values['colour'] = colours_list
-            # temporarily remove plot_function from r, g, b traits
-            self.colour_dropdown._remove_notifiers(self._plot_function, 'value')
-            self.r_text._remove_notifiers(self._plot_function, 'value')
-            self.g_text._remove_notifiers(self._plot_function, 'value')
-            self.b_text._remove_notifiers(self._plot_function, 'value')
+            # temporarily remove render_function from r, g, b traits
+            render_function = self._render_function
+            self.remove_render_function()
             # update colour widgets
             k = self.label_dropdown.value
             (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
              self.b_text.value) = _decode_colour(colours_list[k])
-            # re-assign plot_function
-            self.colour_dropdown._add_notifiers(self._plot_function, 'value')
-            self.r_text._add_notifiers(self._plot_function, 'value')
-            self.g_text._add_notifiers(self._plot_function, 'value')
-            self.b_text._add_notifiers(self._plot_function, 'value')
-            # trigger plot function
-            #self._plot_function('', True)
+            # re-assign render_function
+            self.add_render_function(render_function)
+            # trigger render function if allowed
+            if allow_callback:
+                self._render_function('', True)
         elif (not _lists_are_the_same(sel_colours, colours_list) and
-                  not _lists_are_the_same(sel_labels, labels)):
+              not _lists_are_the_same(sel_labels, labels)):
             # both the colours and the labels are different
             if len(sel_labels) > 1 and len(labels) == 1:
                 self.colour_dropdown.description = \
@@ -987,718 +1074,957 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                 labels_dict[l] = k
             self.label_dropdown.options = labels_dict
             self.label_dropdown.value = 0
-            # temporarily remove plot_function from r, g, b traits
-            self.colour_dropdown._remove_notifiers(self._plot_function, 'value')
-            self.r_text._remove_notifiers(self._plot_function, 'value')
-            self.g_text._remove_notifiers(self._plot_function, 'value')
-            self.b_text._remove_notifiers(self._plot_function, 'value')
+            # temporarily remove render_function from r, g, b traits
+            render_function = self._render_function
+            self.remove_render_function()
             # update colour widgets
             (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
              self.b_text.value) = _decode_colour(colours_list[0])
-            # re-assign plot_function
-            self.colour_dropdown._add_notifiers(self._plot_function, 'value')
-            self.r_text._add_notifiers(self._plot_function, 'value')
-            self.g_text._add_notifiers(self._plot_function, 'value')
-            self.b_text._add_notifiers(self._plot_function, 'value')
-            # trigger plot function
-            #self._plot_function('', True)
+            # re-assign render_function
+            self.add_render_function(render_function)
+            # trigger render function if allowed
+            if allow_callback:
+                self._render_function('', True)
+
+    def disabled(self, disabled):
+        r"""
+        Method that disables the widget, if the ``disabled == True``.
+
+        Parameter
+        ---------
+        disabled : `bool`
+            If ``True``, the widget is disabled.
+        """
+        self.label_dropdown.disabled = disabled
+        self.apply_to_all_button.disabled = disabled
+        self.colour_dropdown.disabled = disabled
+        self.r_text.disabled = disabled
+        self.b_text.disabled = disabled
+        self.g_text.disabled = disabled
 
 
-def image_options(image_options_default, plot_function=None,
-                  toggle_show_visible=True, toggle_show_default=True,
-                  toggle_title='Image Object'):
+class ImageOptionsWidget(ipywidgets.Box):
     r"""
-    Creates a widget with Image Options. Specifically, it has:
-        1) A slider that controls the image's alpha (transparency).
-        2) A checkbox for interpolation.
-        3) A toggle button that controls the visibility of all the above, i.e.
-           the image options.
+    Creates a widget for selecting image rendering options. Specifically, it
+    consists of:
 
-    The structure of the widgets is the following:
-        image_options_wid.children = [toggle_button, options]
-        options.children = [alpha_slider, pixelated_checkbox]
+        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
+        2) Checkbox [`self.interpolation_checkbox`]: interpolation checkbox
+        3) FloatSlider [`self.alpha_slider`]: sets the alpha value
+        4) Box [`self.options_box`]: box that contains (2) and (3)
 
-    The returned widget saves the selected values in the following dictionary:
-        image_options_wid.selected_values
-
-    To fix the alignment within this widget please refer to
-    `format_image_options()` function.
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
 
     Parameters
     ----------
     image_options_default : `dict`
-        The initial selected image options.
-        Example:
-            image_options={'alpha': 1.,
-                           'interpolation': 'bilinear'}
-    plot_function : `function` or None, optional
-        The plot function that is executed when a widgets' value changes.
-        If None, then nothing is assigned.
-    toggle_show_default : `boolean`, optional
+        The initial image options. Example ::
+
+            image_options_default = {'alpha': 1., 'interpolation': 'bilinear'}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     toggle_title : `str`, optional
         The title of the toggle button.
     """
-    import IPython.html.widgets as ipywidgets
-    # Create widgets
-    # toggle button
-    but = ipywidgets.ToggleButton(description=toggle_title,
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
-
-    # alpha, interpolation
-    interpolation = ipywidgets.Checkbox(
-        description='Pixelated',
-        value=image_options_default['interpolation'] == 'none')
-    alpha = ipywidgets.FloatSlider(description='Alpha',
-                                         value=image_options_default['alpha'],
-                                         min=0.0, max=1.0, step=0.05)
-    options_wid = ipywidgets.Box(children=[interpolation, alpha])
-
-    # Final widget
-    image_options_wid = ipywidgets.Box(children=[but, options_wid])
-
-    # Assign output
-    image_options_wid.selected_values = image_options_default
-
-    # get options functions
-    def save_interpolation(name, value):
-        if value:
-            image_options_wid.selected_values['interpolation'] = 'none'
-        else:
-            image_options_wid.selected_values['interpolation'] = 'bilinear'
-    interpolation.on_trait_change(save_interpolation, 'value')
-
-    def save_alpha(name, value):
-        image_options_wid.selected_values['alpha'] = value
-    alpha.on_trait_change(save_alpha, 'value')
-
-    # Toggle button function
-    def toggle_fun(name, value):
-        options_wid.visible = value
-    toggle_fun('', toggle_show_default)
-    but.on_trait_change(toggle_fun, 'value')
-
-    # assign plot_function
-    if plot_function is not None:
-        interpolation.on_trait_change(plot_function, 'value')
-        alpha.on_trait_change(plot_function, 'value')
-
-    return image_options_wid
-
-
-def format_image_options(image_options_wid, container_padding='6px',
-                         container_margin='6px',
-                         container_border='1px solid black',
-                         toggle_button_font_weight='bold', border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given image_options
-    widget. Usage example:
-        image_options_wid = image_options()
-        display(image_options_wid)
-        format_image_options(image_options_wid)
-
-    Parameters
-    ----------
-    image_options_wid :
-        The widget object generated by the `image_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    """
-    # fix alpha slider width
-    image_options_wid.children[1].children[1].width = '3cm'
-
-    # set toggle button font bold
-    image_options_wid.children[0].font_weight = toggle_button_font_weight
-
-    # margin and border around container widget
-    image_options_wid.padding = container_padding
-    image_options_wid.margin = container_margin
-    if border_visible:
-        image_options_wid.border = container_border
-
-
-def update_image_options(image_options_wid, image_options_dict):
-    r"""
-    Function that updates the state of a given image_options widget. Usage
-    example:
-        default_image_options={'interpolation': 'bilinear',
-                               'alpha': 0.2}
-        image_options_wid = image_options(default_image_options)
-        display(image_options_wid)
-        format_image_options(image_options_wid)
-        default_image_options={'interpolation': 'none',
-                              'alpha': 0.4}
-        update_image_options(image_options_wid, default_image_options)
-
-    Parameters
-    ----------
-    image_options_wid :
-        The widget object generated by the `image_options()` function.
-    image_options_dict : `dict`
-        The new set of options. For example:
-            image_options_dict = {'interpolation': 'bilinear',
-                                  'alpha': 1.0}
-    """
-    # Assign new options dict to selected_values
-    image_options_wid.selected_values = image_options_dict
-
-    # update alpha slider
-    if 'alpha' in image_options_dict.keys():
-        image_options_wid.children[1].children[1].value = \
-            image_options_dict['alpha']
-
-    # update interpolation checkbox
-    if 'interpolation' in image_options_dict.keys():
-        image_options_wid.children[1].children[0].value = \
-            image_options_dict['interpolation'] == 'none'
-
-
-def line_options(line_options_default, plot_function=None,
+    def __init__(self, image_options_default, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Line Object', show_checkbox_title='Render lines',
-                 labels=None):
+                 toggle_title='Image Object'):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.interpolation_checkbox = ipywidgets.Checkbox(
+            description='Pixelated',
+            value=image_options_default['interpolation'] == 'none')
+        self.alpha_slider = ipywidgets.FloatSlider(
+            description='Alpha', value=image_options_default['alpha'],
+            min=0.0, max=1.0, step=0.05)
+        self.options_box = ipywidgets.Box(children=[self.interpolation_checkbox,
+                                                    self.alpha_slider],
+                                          visible=toggle_show_default)
+        super(ImageOptionsWidget, self).__init__(children=[self.toggle_visible,
+                                                           self.options_box])
+
+        # Assign output
+        self.selected_values = image_options_default
+
+        # Set functionality
+        def save_interpolation(name, value):
+            if value:
+                self.selected_values['interpolation'] = 'none'
+            else:
+                self.selected_values['interpolation'] = 'bilinear'
+        self.interpolation_checkbox.on_trait_change(save_interpolation, 'value')
+
+        def save_alpha(name, value):
+            self.selected_values['alpha'] = value
+        self.alpha_slider.on_trait_change(save_alpha, 'value')
+
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, padding=0, margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight='', slider_width=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        slider_width : `str`, optional
+            The width of the slider.
+        """
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, padding, margin)
+        self.alpha_slider.width = slider_width
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.alpha_slider, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.interpolation_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.interpolation_checkbox.on_trait_change(self._render_function,
+                                                        'value')
+            self.alpha_slider.on_trait_change(self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.interpolation_checkbox.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self.alpha_slider.on_trait_change(self._render_function, 'value',
+                                          remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def set_widget_state(self, image_options_dict, allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided
+        `image_options_dict` is different than `self.selected_values()`.
+
+        Parameter
+        ---------
+        image_options_dict : `dict`
+            The image options. Example ::
+
+                image_options_default = {'alpha': 1.,
+                                         'interpolation': 'bilinear'}
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Assign new options dict to selected_values
+        self.selected_values = image_options_dict
+
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # update alpha slider
+        if 'alpha' in image_options_dict.keys():
+            self.alpha_slider.value = image_options_dict['alpha']
+
+        # update interpolation checkbox
+        if 'interpolation' in image_options_dict.keys():
+            self.interpolation_checkbox.value = \
+                image_options_dict['interpolation'] == 'none'
+
+        # re-assign render callback
+        self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
+
+
+class LineOptionsWidget(ipywidgets.Box):
     r"""
-    Creates a widget with Line Options. Specifically, it has:
-        1) A checkbox that controls line's visibility.
-        2) A dropdown menu for line style.
-        3) A bounded float text box for line width.
-        4) A colour_selection widget for line colour.
-        7) A toggle button that controls the visibility of all the above, i.e.
-           the line options.
+    Creates a widget for selecting line rendering options. Specifically, it
+    consists of:
 
-    The structure of the widgets is the following:
-        line_options_wid.children = [toggle_button, options]
-        options.children = [render_lines_checkbox, other_options]
-        other_options.children = [line_style, line_width, line_colour]
+        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
+        2) Checkbox [`self.render_lines_checkbox`]: whether to render lines
+        3) BoundedFloatText [`self.line_width_text`]: sets the line width
+        4) Dropdown [`self.line_style_dropdown`]: sets the line style
+        5) ColourSelectionWidget [`self.line_colour_widget`]: sets line colour
+        6) Box [`self.line_options_box`]: box that contains (3), (4) and (5)
+        7) Box [`self.options_box`]: box that contains (2) and (6)
 
-    The returned widget saves the selected values in the following dictionary:
-        line_options_wid.selected_values
-
-    To fix the alignment within this widget please refer to
-    `format_line_options()` function.
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
 
     Parameters
     ----------
     line_options_default : `dict`
-        The initial selected line options.
-        Example:
-            line_options={'render_lines': True,
-                          'line_width': 1,
-                          'line_colour': ['b'],
-                          'line_style': '-'}
-    plot_function : `function` or None, optional
-        The plot function that is executed when a widgets' value changes.
-        If None, then nothing is assigned.
-    toggle_show_default : `boolean`, optional
+        The initial line options. Example ::
+
+            line_options_default = {'render_lines': True,
+                                    'line_width': 1,
+                                    'line_colour': ['b'],
+                                    'line_style': '-'}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     toggle_title : `str`, optional
         The title of the toggle button.
-    show_checkbox_title : `str`, optional
+    render_checkbox_title : `str`, optional
         The description of the show line checkbox.
+    labels : `list` or ``None``, optional
+        A `list` with the labels' names that get passed in to the
+        `ColourSelectionWidget`. If ``None``, then a `list` of the form
+        ``label {}`` is automatically defined. Note that the labels are defined
+        only for the colour option and not the rest of the options.
     """
-    import IPython.html.widgets as ipywidgets
-    # Create widgets
-    # toggle button
-    but = ipywidgets.ToggleButton(description=toggle_title,
-                                  value=toggle_show_default,
-                                  visible=toggle_show_visible)
+    def __init__(self, line_options_default, render_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='Line Object',
+                 render_checkbox_title='Render lines', labels=None):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.render_lines_checkbox = ipywidgets.Checkbox(
+            description=render_checkbox_title,
+            value=line_options_default['render_lines'])
+        self.line_width_text = ipywidgets.BoundedFloatText(
+            description='Width', value=line_options_default['line_width'],
+            min=0., max=10 ** 6)
+        line_style_dict = OrderedDict()
+        line_style_dict['solid'] = '-'
+        line_style_dict['dashed'] = '--'
+        line_style_dict['dash-dot'] = '-.'
+        line_style_dict['dotted'] = ':'
+        self.line_style_dropdown = ipywidgets.Dropdown(
+            options=line_style_dict, value=line_options_default['line_style'],
+            description='Style')
+        self.line_colour_widget = ColourSelectionWidget(
+            line_options_default['line_colour'], description='Colour',
+            labels=labels, render_function=render_function)
+        self.line_options_box = ipywidgets.Box(
+            children=[self.line_style_dropdown, self.line_width_text,
+                      self.line_colour_widget])
+        self.options_box = ipywidgets.VBox(children=[self.render_lines_checkbox,
+                                                     self.line_options_box],
+                                           visible=toggle_show_default,
+                                           align='end')
+        super(LineOptionsWidget, self).__init__(children=[self.toggle_visible,
+                                                          self.options_box])
 
-    # line_style, line_width, line_colour
-    render_lines = ipywidgets.Checkbox(description=show_checkbox_title,
-                                       value=line_options_default[
-                                                 'render_lines'])
-    line_width = ipywidgets.BoundedFloatText(description='Width',
-                                             value=line_options_default[
-                                               'line_width'],
-                                             min=0.)
-    line_style_dict = OrderedDict()
-    line_style_dict['solid'] = '-'
-    line_style_dict['dashed'] = '--'
-    line_style_dict['dash-dot'] = '-.'
-    line_style_dict['dotted'] = ':'
-    line_style = ipywidgets.Dropdown(options=line_style_dict,
-                                     value=line_options_default['line_style'],
-                                     description='Style')
-    line_colour = colour_selection(line_options_default['line_colour'],
-                                   title='Colour', labels=labels,
-                                   plot_function=plot_function)
+        # Assign output
+        self.selected_values = line_options_default
 
-    # Options widget
-    all_line_options = ipywidgets.Box(
-        children=[line_style, line_width,
-                  line_colour])
-    options_wid = ipywidgets.Box(
-        children=[render_lines, all_line_options])
+        # Set functionality
+        def line_options_visible(name, value):
+            self.line_style_dropdown.disabled = not value
+            self.line_width_text.disabled = not value
+            self.line_colour_widget.disabled(not value)
+        line_options_visible('', line_options_default['render_lines'])
+        self.render_lines_checkbox.on_trait_change(line_options_visible,
+                                                   'value')
 
-    # Final widget
-    line_options_wid = ipywidgets.Box(children=[but, options_wid])
+        def save_render_lines(name, value):
+            self.selected_values['render_lines'] = value
+        self.render_lines_checkbox.on_trait_change(save_render_lines, 'value')
 
-    # Assign output
-    line_options_wid.selected_values = line_options_default
+        def save_line_width(name, value):
+            self.selected_values['line_width'] = float(value)
+        self.line_width_text.on_trait_change(save_line_width, 'value')
 
-    # line options visibility
-    def options_visible(name, value):
-        line_style.disabled = not value
-        line_width.disabled = not value
-        line_colour.children[0].children[0].disabled = not value
-        line_colour.children[0].children[1].disabled = not value
-        line_colour.children[1].disabled = not value
-        line_colour.children[2].children[0].disabled = not value
-        line_colour.children[2].children[1].disabled = not value
-        line_colour.children[2].children[2].disabled = not value
-    options_visible('', line_options_default['render_lines'])
-    render_lines.on_trait_change(options_visible, 'value')
+        def save_line_style(name, value):
+            self.selected_values['line_style'] = value
+        self.line_style_dropdown.on_trait_change(save_line_style, 'value')
 
-    # get options functions
-    def save_render_lines(name, value):
-        line_options_wid.selected_values['render_lines'] = value
-    render_lines.on_trait_change(save_render_lines, 'value')
+        self.selected_values['line_colour'] = \
+            self.line_colour_widget.selected_values['colour']
 
-    def save_line_width(name, value):
-        line_options_wid.selected_values['line_width'] = float(value)
-    line_width.on_trait_change(save_line_width, 'value')
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
 
-    def save_line_style(name, value):
-        line_options_wid.selected_values['line_style'] = value
-    line_style.on_trait_change(save_line_style, 'value')
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
 
-    line_options_wid.selected_values['line_colour'] = \
-        line_colour.selected_values['colour']
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=True,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
 
-    # Toggle button function
-    def toggle_fun(name, value):
-        options_wid.visible = value
-    toggle_fun('', toggle_show_default)
-    but.on_trait_change(toggle_fun, 'value')
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
 
-    # assign plot_function
-    if plot_function is not None:
-        render_lines.on_trait_change(plot_function, 'value')
-        line_style.on_trait_change(plot_function, 'value')
-        line_width.on_trait_change(plot_function, 'value')
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
 
-    return line_options_wid
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        slider_width : `str`, optional
+            The width of the slider.
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.render_lines_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.line_style_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.line_width_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+        self.line_colour_widget.style(box_style=None, border_visible=False,
+                                      font_family=font_family,
+                                      font_size=font_size,
+                                      font_weight=font_weight,
+                                      font_style=font_style, rgb_width='1.0cm')
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.render_lines_checkbox.on_trait_change(self._render_function,
+                                                       'value')
+            self.line_style_dropdown.on_trait_change(self._render_function,
+                                                     'value')
+            self.line_width_text.on_trait_change(self._render_function, 'value')
+        self.line_colour_widget.add_render_function(render_function)
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.render_lines_checkbox.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self.line_style_dropdown.on_trait_change(self._render_function, 'value',
+                                                 remove=True)
+        self.line_width_text.on_trait_change(self._render_function, 'value',
+                                             remove=True)
+        self.line_colour_widget.remove_render_function()
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def set_widget_state(self, line_options_dict, labels=None,
+                         allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided
+        `line_options_dict` is different than `self.selected_values()`.
+
+        Parameter
+        ---------
+        line_options_dict : `dict`
+            The new set of options. For example ::
+
+                line_options_dict = {'render_lines': True, 'line_width': 2,
+                                     'line_colour': ['r'], 'line_style': '-'}
+
+        labels : `list` or ``None``, optional
+            A `list` with the labels' names that get passed in to the
+            `ColourSelectionWidget`. If ``None``, then a `list` of the form
+            ``label {}`` is automatically defined.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Assign new options dict to selected_values
+        self.selected_values = line_options_dict
+
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # update render lines checkbox
+        if 'render_lines' in line_options_dict.keys():
+            self.render_lines_checkbox.value = line_options_dict['render_lines']
+
+        # update line_style dropdown menu
+        if 'line_style' in line_options_dict.keys():
+            self.line_style_dropdown.value = line_options_dict['line_style']
+
+        # update line_width text box
+        if 'line_width' in line_options_dict.keys():
+            self.line_width_text.value = float(line_options_dict['line_width'])
+
+        # re-assign render callback
+        self.add_render_function(render_function)
+
+        # update line_colour
+        if 'line_colour' in line_options_dict.keys():
+            self.line_colour_widget.set_widget_state(
+                line_options_dict['line_colour'], labels=labels,
+                allow_callback=False)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
 
 
-def format_line_options(line_options_wid, container_padding='6px',
-                        container_margin='6px',
-                        container_border='1px solid black',
-                        toggle_button_font_weight='bold', border_visible=True,
-                        suboptions_border_visible=True):
+class MarkerOptionsWidget(ipywidgets.Box):
     r"""
-    Function that corrects the align (style format) of a given line_options
-    widget. Usage example:
-        line_options_wid = line_options()
-        display(line_options_wid)
-        format_line_options(line_options_wid)
+    Creates a widget for selecting line rendering options. Specifically, it
+    consists of:
 
-    Parameters
-    ----------
-    line_options_wid :
-        The widget object generated by the `line_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    suboptions_border_visible : `boolean`, optional
-        Defines whether to draw the border line around the line options, under
-        the show line checkbox.
-    """
-    # align line options with checkbox
-    add_class(line_options_wid.children[1], 'align-end')
+        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
+        2) Checkbox [`self.render_markers_checkbox`]: whether to render markers
+        3) BoundedIntText [`self.marker_size_text`]: sets the marker size
+        4) BoundedFloatText [`self.marker_edge_width_text`]: sets the marker
+           edge width
+        5) Dropdown [`self.marker_style_dropdown`]: sets the marker style
+        6) ColourSelectionWidget [`self.marker_edge_colour_widget`]: sets the
+           marker edge colour
+        7) ColourSelectionWidget [`self.marker_face_colour_widget`]: sets the
+           marker face colour
+        8) Box [`self.marker_options_box`]: box that contains (3), (4), (5),
+           (6) and (7)
+        9) Box [`self.options_box`]: box that contains (2) and (8)
 
-    # set linewidth text box width
-    line_options_wid.children[1].children[1].children[1].width = '1cm'
-
-    # format colour options
-    format_colour_selection(line_options_wid.children[1].children[1].children[2])
-
-    # border around options
-    if suboptions_border_visible:
-        line_options_wid.children[1].children[1].border = container_border
-
-    # set toggle button font bold
-    line_options_wid.children[0].font_weight = toggle_button_font_weight
-
-    # margin and border around container widget
-    line_options_wid.padding = container_padding
-    line_options_wid.margin = container_margin
-    if border_visible:
-        line_options_wid.border = container_border
-
-
-def update_line_options(line_options_wid, line_options_dict, labels=None):
-    r"""
-    Function that updates the state of a given line_options widget. Usage
-    example:
-        default_line_options={'render_lines':True,
-                              'line_width':2,
-                              'line_colour':['r'],
-                              'line_style':'-'}
-        line_options_wid = line_options(default_line_options)
-        display(line_options_wid)
-        format_line_options(line_options_wid)
-        default_line_options={'render_lines':False,
-                              'line_width':4,
-                              'line_colour':[[0.1, 0.2, 0.3]],
-                              'line_style':'-'}
-        update_line_options(line_options_wid, default_line_options)
-
-    Parameters
-    ----------
-    line_options_wid :
-        The widget object generated by the `line_options()` function.
-
-    line_options_dict : `dict`
-        The new set of options. For example:
-            line_options_dict={'render_lines':True,
-                               'line_width':2,
-                               'line_colour':['r'],
-                               'line_style':'-'}
-    """
-    # Assign new options dict to selected_values
-    line_options_wid.selected_values = line_options_dict
-
-    # update render lines checkbox
-    if 'render_lines' in line_options_dict.keys():
-        line_options_wid.children[1].children[0].value = \
-            line_options_dict['render_lines']
-
-    # update line_style dropdown menu
-    if 'line_style' in line_options_dict.keys():
-        line_options_wid.children[1].children[1].children[0].value = \
-            line_options_dict['line_style']
-
-    # update line_width text box
-    if 'line_width' in line_options_dict.keys():
-        line_options_wid.children[1].children[1].children[1].value = \
-            float(line_options_dict['line_width'])
-
-    # update line_colour
-    if 'line_colour' in line_options_dict.keys():
-        update_colour_selection(
-            line_options_wid.children[1].children[1].children[2],
-            line_options_dict['line_colour'], labels=labels)
-
-
-def marker_options(marker_options_default, plot_function=None,
-                   toggle_show_visible=True, toggle_show_default=True,
-                   toggle_title='Marker Object',
-                   show_checkbox_title='Show markers'):
-    r"""
-    Creates a widget with Marker Options. Specifically, it has:
-        1) A checkbox that controls marker's visibility.
-        2) A dropdown menu for marker style.
-        3) A bounded int text box for marker size.
-        4) A bounded float text box for marker edge width.
-        5) A colour_selection widget for face colour.
-        6) A colour_selection widget for edge colour.
-        7) A toggle button that controls the visibility of all the above, i.e.
-           the marker options.
-
-    The structure of the widgets is the following:
-        marker_options_wid.children = [toggle_button, options]
-        options.children = [render_markers_checkbox, other_options]
-        other_options.children = [marker_style, marker_size, marker_edge_width,
-                                  marker_face_colour, marker_edge_colour]
-
-    The returned widget saves the selected values in the following dictionary:
-        marker_options_wid.selected_values
-
-    To fix the alignment within this widget please refer to
-    `format_marker_options()` function.
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
 
     Parameters
     ----------
     marker_options_default : `dict`
-        The initial selected marker options.
-        Example:
-            marker_options_default={'render_markers':True,
-                                    'marker_size':20,
-                                    'marker_face_colour':['r'],
-                                    'marker_edge_colour':['k'],
-                                    'marker_style':'o',
-                                    'marker_edge_width':1}
+        The initial marker options. Example ::
 
-    plot_function : `function` or None, optional
-        The plot function that is executed when a widgets' value changes.
-        If None, then nothing is assigned.
-    toggle_show_default : `boolean`, optional
+            marker_options_default = {'render_markers': True,
+                                      'marker_size': 20,
+                                      'marker_face_colour': ['r'],
+                                      'marker_edge_colour': ['k'],
+                                      'marker_style': 'o',
+                                      'marker_edge_width': 1}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     toggle_title : `str`, optional
         The title of the toggle button.
-    show_checkbox_title : `str`, optional
+    render_checkbox_title : `str`, optional
         The description of the show marker checkbox.
+    labels : `list` or ``None``, optional
+        A `list` with the labels' names that get passed in to the
+        `ColourSelectionWidget`. If ``None``, then a `list` of the form
+        ``label {}`` is automatically defined. Note that the labels are defined
+        only for the colour option and not the rest of the options.
     """
-    import IPython.html.widgets as ipywidgets
-    # Create widgets
-    # toggle button
-    but = ipywidgets.ToggleButton(description=toggle_title,
-                                  value=toggle_show_default,
-                                  visible=toggle_show_visible)
+    def __init__(self, marker_options_default, render_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='Marker Object',
+                 render_checkbox_title='Render markers', labels=None):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.render_markers_checkbox = ipywidgets.Checkbox(
+            description=render_checkbox_title,
+            value=marker_options_default['render_markers'])
+        self.marker_size_text = ipywidgets.BoundedIntText(
+            description='Size', value=marker_options_default['marker_size'],
+            min=0, max=10**6)
+        self.marker_edge_width_text = ipywidgets.BoundedFloatText(
+            description='Edge width', min=0., max=10**6,
+            value=marker_options_default['marker_edge_width'])
+        marker_style_dict = OrderedDict()
+        marker_style_dict['point'] = '.'
+        marker_style_dict['pixel'] = ','
+        marker_style_dict['circle'] = 'o'
+        marker_style_dict['triangle down'] = 'v'
+        marker_style_dict['triangle up'] = '^'
+        marker_style_dict['triangle left'] = '<'
+        marker_style_dict['triangle right'] = '>'
+        marker_style_dict['tri down'] = '1'
+        marker_style_dict['tri up'] = '2'
+        marker_style_dict['tri left'] = '3'
+        marker_style_dict['tri right'] = '4'
+        marker_style_dict['octagon'] = '8'
+        marker_style_dict['square'] = 's'
+        marker_style_dict['pentagon'] = 'p'
+        marker_style_dict['star'] = '*'
+        marker_style_dict['hexagon 1'] = 'h'
+        marker_style_dict['hexagon 2'] = 'H'
+        marker_style_dict['plus'] = '+'
+        marker_style_dict['x'] = 'x'
+        marker_style_dict['diamond'] = 'D'
+        marker_style_dict['thin diamond'] = 'd'
+        self.marker_style_dropdown = ipywidgets.Dropdown(
+            options=marker_style_dict,
+            value=marker_options_default['marker_style'], description='Style')
+        self.marker_face_colour_widget = ColourSelectionWidget(
+            marker_options_default['marker_face_colour'],
+            description='Face Colour', labels=labels,
+            render_function=render_function)
+        self.marker_edge_colour_widget = ColourSelectionWidget(
+            marker_options_default['marker_edge_colour'],
+            description='Edge Colour', labels=labels,
+            render_function=render_function)
+        self.marker_options_box = ipywidgets.Box(
+            children=[self.marker_style_dropdown, self.marker_size_text,
+                      self.marker_edge_width_text,
+                      self.marker_face_colour_widget,
+                      self.marker_edge_colour_widget])
+        self.options_box = ipywidgets.VBox(
+            children=[self.render_markers_checkbox, self.marker_options_box],
+            visible=toggle_show_default, align='end')
+        super(MarkerOptionsWidget, self).__init__(children=[self.toggle_visible,
+                                                            self.options_box])
 
-    # marker_size, marker_edge_width, marker_style, marker_face_colour,
-    # marker_edge_colour
-    render_markers = ipywidgets.Checkbox(
-        description=show_checkbox_title,
-        value=marker_options_default['render_markers'])
-    marker_size = ipywidgets.BoundedIntText(
-        description='Size', value=marker_options_default['marker_size'], min=0)
-    marker_edge_width = ipywidgets.BoundedFloatText(
-        description='Edge width',
-        value=marker_options_default['marker_edge_width'], min=0.)
-    marker_style_dict = OrderedDict()
-    marker_style_dict['point'] = '.'
-    marker_style_dict['pixel'] = ','
-    marker_style_dict['circle'] = 'o'
-    marker_style_dict['triangle down'] = 'v'
-    marker_style_dict['triangle up'] = '^'
-    marker_style_dict['triangle left'] = '<'
-    marker_style_dict['triangle right'] = '>'
-    marker_style_dict['tri down'] = '1'
-    marker_style_dict['tri up'] = '2'
-    marker_style_dict['tri left'] = '3'
-    marker_style_dict['tri right'] = '4'
-    marker_style_dict['octagon'] = '8'
-    marker_style_dict['square'] = 's'
-    marker_style_dict['pentagon'] = 'p'
-    marker_style_dict['star'] = '*'
-    marker_style_dict['hexagon 1'] = 'h'
-    marker_style_dict['hexagon 2'] = 'H'
-    marker_style_dict['plus'] = '+'
-    marker_style_dict['x'] = 'x'
-    marker_style_dict['diamond'] = 'D'
-    marker_style_dict['thin diamond'] = 'd'
-    marker_style = ipywidgets.Dropdown(options=marker_style_dict,
-                                       value=marker_options_default[
-                                                 'marker_style'],
-                                       description='Style')
-    marker_face_colour = colour_selection(
-        marker_options_default['marker_face_colour'], title='Face Colour',
-        plot_function=plot_function)
-    marker_edge_colour = colour_selection(
-        marker_options_default['marker_edge_colour'], title='Edge Colour',
-        plot_function=plot_function)
+        # Assign output
+        self.selected_values = marker_options_default
 
-    # Options widget
-    all_marker_options = ipywidgets.Box(
-        children=[marker_style, marker_size,
-                  marker_edge_width,
-                  marker_face_colour,
-                  marker_edge_colour])
-    options_wid = ipywidgets.Box(
-        children=[render_markers, all_marker_options])
+        # Set functionality
+        def marker_options_visible(name, value):
+            self.marker_style_dropdown.disabled = not value
+            self.marker_size_text.disabled = not value
+            self.marker_edge_width_text.disabled = not value
+            self.marker_face_colour_widget.disabled(not value)
+            self.marker_edge_colour_widget.disabled(not value)
+        marker_options_visible('', marker_options_default['render_markers'])
+        self.render_markers_checkbox.on_trait_change(marker_options_visible,
+                                                     'value')
 
-    # Final widget
-    marker_options_wid = ipywidgets.Box(children=[but, options_wid])
+        def save_render_markers(name, value):
+            self.selected_values['render_markers'] = value
+        self.render_markers_checkbox.on_trait_change(save_render_markers,
+                                                     'value')
 
-    # Assign output
-    marker_options_wid.selected_values = marker_options_default
+        def save_marker_size(name, value):
+            self.selected_values['marker_size'] = int(value)
+        self.marker_size_text.on_trait_change(save_marker_size, 'value')
 
-    # marker options visibility
-    def options_visible(name, value):
-        marker_style.disabled = not value
-        marker_size.disabled = not value
-        marker_edge_width.disabled = not value
-        marker_face_colour.children[0].children[0].disabled = not value
-        marker_face_colour.children[0].children[1].disabled = not value
-        marker_face_colour.children[1].disabled = not value
-        marker_face_colour.children[2].children[0].disabled = not value
-        marker_face_colour.children[2].children[1].disabled = not value
-        marker_face_colour.children[2].children[2].disabled = not value
-        marker_edge_colour.children[0].children[0].disabled = not value
-        marker_edge_colour.children[0].children[1].disabled = not value
-        marker_edge_colour.children[1].disabled = not value
-        marker_edge_colour.children[2].children[0].disabled = not value
-        marker_edge_colour.children[2].children[1].disabled = not value
-        marker_edge_colour.children[2].children[2].disabled = not value
-    options_visible('', marker_options_default['render_markers'])
-    render_markers.on_trait_change(options_visible, 'value')
+        def save_marker_edge_width(name, value):
+            self.selected_values['marker_edge_width'] = float(value)
+        self.marker_edge_width_text.on_trait_change(save_marker_edge_width,
+                                                    'value')
 
-    # get options functions
-    def save_render_markers(name, value):
-        marker_options_wid.selected_values['render_markers'] = value
-    render_markers.on_trait_change(save_render_markers, 'value')
+        def save_marker_style(name, value):
+            self.selected_values['marker_style'] = value
+        self.marker_style_dropdown.on_trait_change(save_marker_style, 'value')
 
-    def save_markersize(name, value):
-        marker_options_wid.selected_values['marker_size'] = int(value)
-    marker_size.on_trait_change(save_markersize, 'value')
+        self.selected_values['marker_edge_colour'] = \
+            self.marker_edge_colour_widget.selected_values['colour']
+        self.selected_values['marker_face_colour'] = \
+            self.marker_face_colour_widget.selected_values['colour']
 
-    def save_markeredgewidth(name, value):
-        marker_options_wid.selected_values['marker_edge_width'] = float(value)
-    marker_edge_width.on_trait_change(save_markeredgewidth, 'value')
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
 
-    def save_markerstyle(name, value):
-        marker_options_wid.selected_values['marker_style'] = value
-    marker_style.on_trait_change(save_markerstyle, 'value')
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
 
-    marker_options_wid.selected_values['marker_edge_colour'] = \
-        marker_edge_colour.selected_values['colour']
-    marker_options_wid.selected_values['marker_face_colour'] = \
-        marker_face_colour.selected_values['colour']
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=True,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
 
-    # Toggle button function
-    def toggle_fun(name, value):
-        options_wid.visible = value
-    toggle_fun('', toggle_show_default)
-    but.on_trait_change(toggle_fun, 'value')
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
 
-    # assign plot_function
-    if plot_function is not None:
-        render_markers.on_trait_change(plot_function, 'value')
-        marker_style.on_trait_change(plot_function, 'value')
-        marker_edge_width.on_trait_change(plot_function, 'value')
-        marker_size.on_trait_change(plot_function, 'value')
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
 
-    return marker_options_wid
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
 
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
 
-def format_marker_options(marker_options_wid, container_padding='6px',
-                          container_margin='6px',
-                          container_border='1px solid black',
-                          toggle_button_font_weight='bold', border_visible=True,
-                          suboptions_border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given marker_options
-    widget. Usage example:
-        marker_options_wid = marker_options()
-        display(marker_options_wid)
-        format_marker_options(marker_options_wid)
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
 
-    Parameters
-    ----------
-    marker_options_wid :
-        The widget object generated by the `marker_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    suboptions_border_visible : `boolean`, optional
-        Defines whether to draw the border line around the marker options, under
-        the show marker checkbox.
-    """
-    # align marker options with checkbox
-    add_class(marker_options_wid.children[1], 'align-end')
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
 
-    # set text boxes width
-    marker_options_wid.children[1].children[1].children[1].width = '1cm'
-    marker_options_wid.children[1].children[1].children[2].width = '1cm'
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
 
-    # border around options
-    if suboptions_border_visible:
-        marker_options_wid.children[1].children[1].border = container_border
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
 
-    # format colour options
-    format_colour_selection(
-        marker_options_wid.children[1].children[1].children[3])
-    format_colour_selection(
-        marker_options_wid.children[1].children[1].children[4])
+        slider_width : `str`, optional
+            The width of the slider.
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.render_markers_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.marker_style_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.marker_size_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.marker_edge_width_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+        self.marker_edge_colour_widget.style(
+            box_style=None, border_visible=False, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style,
+            rgb_width='1.0cm')
+        self.marker_face_colour_widget.style(
+            box_style=None, border_visible=False, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style,
+            rgb_width='1.0cm')
 
-    # set toggle button font bold
-    marker_options_wid.children[0].font_weight = toggle_button_font_weight
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
 
-    # margin and border around container widget
-    marker_options_wid.padding = container_padding
-    marker_options_wid.margin = container_margin
-    if border_visible:
-        marker_options_wid.border = container_border
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.render_markers_checkbox.on_trait_change(self._render_function,
+                                                         'value')
+            self.marker_style_dropdown.on_trait_change(self._render_function,
+                                                       'value')
+            self.marker_edge_width_text.on_trait_change(self._render_function,
+                                                        'value')
+            self.marker_size_text.on_trait_change(self._render_function,
+                                                  'value')
+        self.marker_edge_colour_widget.add_render_function(render_function)
+        self.marker_face_colour_widget.add_render_function(render_function)
 
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.render_markers_checkbox.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+        self.marker_style_dropdown.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self.marker_edge_width_text.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self.marker_size_text.on_trait_change(self._render_function, 'value',
+                                              remove=True)
+        self.marker_edge_colour_widget.remove_render_function()
+        self.marker_face_colour_widget.remove_render_function()
+        self._render_function = None
 
-def update_marker_options(marker_options_wid, marker_options_dict):
-    r"""
-    Function that updates the state of a given marker_options widget. Usage
-    example:
-        default_marker_options={'render_markers':True,
-                                'marker_size':20,
-                                'marker_face_colour':['r'],
-                                'marker_edge_colour':['k'],
-                                'marker_style':'o',
-                                'marker_edge_width':1}
-        marker_options_wid = marker_options(default_marker_options)
-        display(marker_options_wid)
-        format_marker_options(marker_options_wid)
-        default_marker_options={'render_markers':True,
-                                'marker_size':40,
-                                'marker_face_colour':[[0.1, 0.2, 0.3]],
-                                'marker_edge_colour':['r'],
-                                'marker_style':'d',
-                                'marker_edge_width':1}
-        update_marker_options(marker_options_wid, default_marker_options)
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
 
-    Parameters
-    ----------
-    marker_options_wid :
-        The widget object generated by the `marker_options()` function.
-    marker_options_dict : `dict`
-        The new set of options. For example:
-            marker_options_dict={'render_markers':True,
-                                 'marker_size':20,
-                                 'marker_face_colour':['r'],
-                                 'marker_edge_colour':['k'],
-                                 'marker_style':'o',
-                                 'marker_edge_width':1}
-    """
-    # Assign new options dict to selected_values
-    marker_options_wid.selected_values = marker_options_dict
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
 
-    # update render marker checkbox
-    if 'render_markers' in marker_options_dict.keys():
-        marker_options_wid.children[1].children[0].value = \
-            marker_options_dict['render_markers']
+        # add new function
+        self.add_render_function(render_function)
 
-    # update marker_style dropdown menu
-    if 'marker_style' in marker_options_dict.keys():
-        marker_options_wid.children[1].children[1].children[0].value = \
-            marker_options_dict['marker_style']
+    def set_widget_state(self, marker_options_dict, labels=None,
+                         allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided
+        `marker_options_dict` is different than `self.selected_values()`.
 
-    # update marker_size text box
-    if 'marker_size' in marker_options_dict.keys():
-        marker_options_wid.children[1].children[1].children[1].value = \
-            int(marker_options_dict['marker_size'])
+        Parameter
+        ---------
+        marker_options_dict : `dict`
+            The new set of options. For example ::
 
-    # update marker_edge_width text box
-    if 'marker_edge_width' in marker_options_dict.keys():
-        marker_options_wid.children[1].children[1].children[2].value = \
-            float(marker_options_dict['marker_edge_width'])
+                marker_options_dict = {'render_markers': True,
+                                       'marker_size': 20,
+                                       'marker_face_colour': ['r'],
+                                       'marker_edge_colour': ['k'],
+                                       'marker_style': 'o',
+                                       'marker_edge_width': 1}
 
-    # update marker_face_colour
-    if 'marker_face_colour' in marker_options_dict.keys():
-        update_colour_selection(
-            marker_options_wid.children[1].children[1].children[3],
-            marker_options_dict['marker_face_colour'])
+        labels : `list` or ``None``, optional
+            A `list` with the labels' names that get passed in to the
+            `ColourSelectionWidget`. If ``None``, then a `list` of the form
+            ``label {}`` is automatically defined.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Assign new options dict to selected_values
+        self.selected_values = marker_options_dict
 
-    # update marker_edge_colour
-    if 'marker_edge_colour' in marker_options_dict.keys():
-        update_colour_selection(
-            marker_options_wid.children[1].children[1].children[4],
-            marker_options_dict['marker_edge_colour'])
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # update render markers checkbox
+        if 'render_markers' in marker_options_dict.keys():
+            self.render_markers_checkbox.value = \
+                marker_options_dict['render_markers']
+
+        # update marker_style dropdown menu
+        if 'marker_style' in marker_options_dict.keys():
+            self.marker_style_dropdown.value = \
+                marker_options_dict['marker_style']
+
+        # update marker_size text box
+        if 'marker_size' in marker_options_dict.keys():
+            self.marker_size_text.value = \
+                int(marker_options_dict['marker_size'])
+
+        # update marker_edge_width text box
+        if 'marker_edge_width' in marker_options_dict.keys():
+            self.marker_edge_width_text.value = \
+                float(marker_options_dict['marker_edge_width'])
+
+        # re-assign render callback
+        self.add_render_function(render_function)
+
+        # update marker_face_colour
+        if 'marker_face_colour' in marker_options_dict.keys():
+            self.marker_face_colour_widget.set_widget_state(
+                marker_options_dict['marker_face_colour'], labels=labels,
+                allow_callback=False)
+
+        # update marker_edge_colour
+        if 'marker_edge_colour' in marker_options_dict.keys():
+            self.marker_edge_colour_widget.set_widget_state(
+                marker_options_dict['marker_edge_colour'], labels=labels,
+                allow_callback=False)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
 
 
 def numbering_options(numbers_options_default, plot_function=None,
