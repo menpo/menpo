@@ -2544,7 +2544,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
     """
     def __init__(self, figure_options_default, render_function=None,
                  toggle_show_default=True, toggle_show_visible=True,
-                 toggle_title='Figure Options', figure_scale_bounds=(0.1, 4),
+                 toggle_title='Figure Options', figure_scale_bounds=(0.1, 4.),
                  figure_scale_step=0.1, figure_scale_visible=True,
                  axes_visible=True):
         self.toggle_visible = ipywidgets.ToggleButton(
@@ -3109,9 +3109,11 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
     """
     def __init__(self, figure_options_default, render_function=None,
                  toggle_show_default=True, toggle_show_visible=True,
-                 toggle_title='Figure Options', figure_scale_bounds=(0.1, 4),
+                 toggle_title='Figure Options', figure_scale_bounds=(0.1, 4.),
                  figure_scale_step=0.1, figure_scale_visible=True,
                  axes_visible=True, coupled_default=False):
+        from IPython.utils.traitlets import link
+
         self.toggle_visible = ipywidgets.ToggleButton(
             description=toggle_title, value=toggle_show_default,
             visible=toggle_show_visible)
@@ -3123,9 +3125,16 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         self.y_scale_slider = ipywidgets.FloatSlider(
             description='Y scale', value=figure_options_default['y_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
-            step=figure_scale_step, disabled=coupled_default, width='3cm')
+            step=figure_scale_step, width='3cm')
+        coupled_default = (coupled_default and
+                           (figure_options_default['x_scale'] ==
+                            figure_options_default['y_scale']))
         self.coupled_checkbox = ipywidgets.Checkbox(description='Coupled',
                                                     value=coupled_default)
+        self.xy_link = None
+        if coupled_default:
+            self.xy_link = link((self.x_scale_slider, 'value'),
+                                (self.y_scale_slider, 'value'))
         self.figure_scale_box = ipywidgets.VBox(
             children=[self.x_scale_slider, self.y_scale_slider,
                       self.coupled_checkbox], visible=figure_scale_visible,
@@ -3246,9 +3255,28 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         self.render_axes_checkbox.on_trait_change(figure_options_visible,
                                                   'value')
 
+        def save_x_scale(name, value):
+            self.selected_values['x_scale'] = self.x_scale_slider.value
+        self.x_scale_slider.on_trait_change(save_x_scale, 'value')
+
+        def save_y_scale(name, value):
+            self.selected_values['y_scale'] = self.y_scale_slider.value
+        self.y_scale_slider.on_trait_change(save_y_scale, 'value')
+
         # Coupled sliders function
         def coupled_sliders(name, value):
-            self.y_scale_slider.disabled = value
+            # If coupled is True, remove self._render_function from y_scale
+            # If coupled is False, add self._render_function to y_scale
+            if value:
+                self.xy_link = link((self.x_scale_slider, 'value'),
+                                    (self.y_scale_slider, 'value'))
+                self.y_scale_slider.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+            else:
+                self.xy_link.unlink()
+                if self._render_function is not None:
+                    self.y_scale_slider.on_trait_change(self._render_function,
+                                                        'value')
         self.coupled_checkbox.on_trait_change(coupled_sliders, 'value')
 
         def save_render_axes(name, value):
@@ -3313,16 +3341,6 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         self.axes_y_limits_from_text.on_trait_change(save_axes_y_limits,
                                                      'value')
         self.axes_y_limits_to_text.on_trait_change(save_axes_y_limits, 'value')
-
-        def save_x_scale(name, old_value, value):
-            self.selected_values['x_scale'] = value
-            if self.coupled_checkbox.value:
-                self.y_scale_slider.value += value - old_value
-        self.x_scale_slider.on_trait_change(save_x_scale, 'value')
-
-        def save_y_scale(name, value):
-            self.selected_values['y_scale'] = value
-        self.y_scale_slider.on_trait_change(save_y_scale, 'value')
 
         def toggle_function(name, value):
             self.options_box.visible = value
@@ -3462,9 +3480,9 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         self._render_function = render_function
         if self._render_function is not None:
             self.x_scale_slider.on_trait_change(self._render_function, 'value')
-            self.y_scale_slider.on_trait_change(self._render_function, 'value')
-            self.coupled_checkbox.on_trait_change(self._render_function,
-                                                  'value')
+            if not self.coupled_checkbox.value:
+                self.y_scale_slider.on_trait_change(self._render_function,
+                                                    'value')
             self.render_axes_checkbox.on_trait_change(self._render_function,
                                                       'value')
             self.axes_font_name_dropdown.on_trait_change(self._render_function,
@@ -3497,8 +3515,6 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
                                             remove=True)
         self.y_scale_slider.on_trait_change(self._render_function, 'value',
                                             remove=True)
-        self.coupled_checkbox.on_trait_change(self._render_function, 'value',
-                                              remove=True)
         self.render_axes_checkbox.on_trait_change(self._render_function,
                                                   'value', remove=True)
         self.axes_font_name_dropdown.on_trait_change(self._render_function,
@@ -3581,10 +3597,11 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
             self.coupled_checkbox.value = False
         elif ('x_scale' in figure_options_dict.keys() and
                 'y_scale' in figure_options_dict.keys()):
+            self.coupled_checkbox.value = (self.coupled_checkbox.value and
+                                           (figure_options_dict['x_scale'] ==
+                                            figure_options_dict['y_scale']))
             self.x_scale_slider.value = figure_options_dict['x_scale']
             self.y_scale_slider.value = figure_options_dict['y_scale']
-            self.coupled_checkbox.value = \
-                figure_options_dict['x_scale'] == figure_options_dict['y_scale']
 
         # update render axes checkbox
         if 'render_axes' in figure_options_dict.keys():
