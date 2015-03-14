@@ -87,6 +87,17 @@ def _format_font(obj, font_family, font_size, font_style, font_weight):
     obj.font_weight = font_weight
 
 
+def _convert_image_to_bytes(image):
+    r"""
+    Function that given a :map:`Image` object, it converts it to the correct
+    bytes format that can be used by IPython.html.widgets.Image().
+    """
+    fp = StringIO()
+    image.as_PILImage().save(fp, format='png')
+    fp.seek(0)
+    return fp.read()
+
+
 class LogoWidget(ipywidgets.Box):
     r"""
     Creates a widget with Menpo's logo image. The widget consists of:
@@ -3662,6 +3673,8 @@ class LegendOptionsWidget(ipywidgets.Box):
     Creates a widget for selecting legend rendering options. Specifically, it
     consists of:
 
+        0) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
         1) Checkbox [`self.render_legend_checkbox`]: render legend checkbox
         2) Dropdown [`self.legend_font_name_dropdown`]: legend font family
         3) BoundedIntText [`self.legend_font_size_text`]: legend font size
@@ -4159,6 +4172,8 @@ class LegendOptionsWidget(ipywidgets.Box):
                      font_style, font_weight)
         _format_font(self.legend_rounded_corners_checkbox, font_family,
                      font_size, font_style, font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
 
     def add_render_function(self, render_function):
         r"""
@@ -4412,211 +4427,291 @@ class LegendOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-def grid_options(grid_options_default, plot_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Grid Object', show_checkbox_title='Render grid'):
+class GridOptionsWidget(ipywidgets.Box):
     r"""
-    Creates a widget with Grid Options. Specifically, it has:
-        1) A checkbox that controls grid's visibility.
-        2) A dropdown menu for grid style.
-        3) A bounded float text box for line width.
-        7) A toggle button that controls the visibility of all the above, i.e.
-           the grid options.
+    Creates a widget for selecting grid rendering options. Specifically, it
+    consists of:
 
-    The structure of the widgets is the following:
-        grid_options_wid.children = [toggle_button, options]
-        options.children = [render_grid_checkbox, other_options]
-        other_options.children = [grid_style, grid_width]
+        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
+        2) Checkbox [`self.render_grid_checkbox`]: whether to render the grid
+        3) BoundedFloatText [`self.grid_line_width_text`]: sets the line width
+        4) Dropdown [`self.grid_line_style_dropdown`]: sets the line style
+        5) Box [`self.grid_options_box`]: box that contains (3) and (4)
+        6) Box [`self.options_box`]: box that contains (2) and (5)
 
-    The returned widget saves the selected values in the following dictionary:
-        grid_options_wid.selected_values
-
-    To fix the alignment within this widget please refer to
-    `format_grid_options()` function.
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
 
     Parameters
     ----------
     grid_options_default : `dict`
-        The initial selected grid options.
-        Example:
-            line_options={'render_grid': True,
-                          'grid_line_width': 1,
-                          'grid_line_style': '-'}
-    plot_function : `function` or None, optional
-        The plot function that is executed when a widgets' value changes.
-        If None, then nothing is assigned.
-    toggle_show_default : `boolean`, optional
+        The initial grid options. Example ::
+
+            grid_options_default = {'render_grid': True,
+                                    'grid_line_width': 1,
+                                    'grid_line_style': '-'}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     toggle_title : `str`, optional
         The title of the toggle button.
-    show_checkbox_title : `str`, optional
+    render_checkbox_title : `str`, optional
         The description of the show line checkbox.
     """
-    import IPython.html.widgets as ipywidgets
-    # Create widgets
-    # toggle button
-    but = ipywidgets.ToggleButton(description=toggle_title,
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
+    def __init__(self, grid_options_default, render_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='Grid Options',
+                 render_checkbox_title='Render grid'):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.render_grid_checkbox = ipywidgets.Checkbox(
+            description=render_checkbox_title,
+            value=grid_options_default['render_grid'])
+        self.grid_line_width_text = ipywidgets.BoundedFloatText(
+            description='Width', value=grid_options_default['grid_line_width'],
+            min=0., max=10**6)
+        grid_line_style_dict = OrderedDict()
+        grid_line_style_dict['solid'] = '-'
+        grid_line_style_dict['dashed'] = '--'
+        grid_line_style_dict['dash-dot'] = '-.'
+        grid_line_style_dict['dotted'] = ':'
+        self.grid_line_style_dropdown = ipywidgets.Dropdown(
+            value=grid_options_default['grid_line_style'], description='Style',
+            options=grid_line_style_dict,)
 
-    # grid_line_style, grid_line_width
-    render_grid = ipywidgets.Checkbox(
-        description=show_checkbox_title,
-        value=grid_options_default['render_grid'])
-    grid_line_width = ipywidgets.BoundedFloatText(
-        description='Width', value=grid_options_default['grid_line_width'],
-        min=0.)
-    grid_line_style_dict = OrderedDict()
-    grid_line_style_dict['solid'] = '-'
-    grid_line_style_dict['dashed'] = '--'
-    grid_line_style_dict['dash-dot'] = '-.'
-    grid_line_style_dict['dotted'] = ':'
-    grid_line_style = ipywidgets.Dropdown(
-        options=grid_line_style_dict,
-        value=grid_options_default['grid_line_style'],
-        description='Style')
+        # Options widget
+        self.grid_options_box = ipywidgets.Box(
+            children=[self.grid_line_style_dropdown, self.grid_line_width_text])
+        self.options_box = ipywidgets.VBox(children=[self.render_grid_checkbox,
+                                                     self.grid_options_box],
+                                           visible=toggle_show_default,
+                                           align='end')
+        super(GridOptionsWidget, self).__init__(children=[self.toggle_visible,
+                                                          self.options_box])
 
-    # Options widget
-    all_grid_options = ipywidgets.Box(
-        children=[grid_line_style, grid_line_width])
-    options_wid = ipywidgets.Box(
-        children=[render_grid, all_grid_options])
+        # Assign output
+        self.selected_values = grid_options_default
 
-    # Final widget
-    grid_options_wid = ipywidgets.Box(children=[but, options_wid])
+        # Set functionality
+        def grid_options_visible(name, value):
+            self.grid_line_style_dropdown.disabled = not value
+            self.grid_line_width_text.disabled = not value
+        grid_options_visible('', grid_options_default['render_grid'])
+        self.render_grid_checkbox.on_trait_change(grid_options_visible, 'value')
 
-    # Assign output
-    grid_options_wid.selected_values = grid_options_default
+        def save_render_grid(name, value):
+            self.selected_values['render_grid'] = value
+        self.render_grid_checkbox.on_trait_change(save_render_grid, 'value')
 
-    # line options visibility
-    def options_visible(name, value):
-        grid_line_style.disabled = not value
-        grid_line_width.disabled = not value
-    options_visible('', grid_options_default['render_grid'])
-    render_grid.on_trait_change(options_visible, 'value')
+        def save_grid_line_width(name, value):
+            self.selected_values['grid_line_width'] = float(value)
+        self.grid_line_width_text.on_trait_change(save_grid_line_width, 'value')
 
-    # get options functions
-    def save_render_grid(name, value):
-        grid_options_wid.selected_values['render_grid'] = value
-    render_grid.on_trait_change(save_render_grid, 'value')
+        def save_grid_line_style(name, value):
+            self.selected_values['grid_line_style'] = value
+        self.grid_line_style_dropdown.on_trait_change(save_grid_line_style,
+                                                      'value')
 
-    def save_grid_line_width(name, value):
-        grid_options_wid.selected_values['grid_line_width'] = float(value)
-    grid_line_width.on_trait_change(save_grid_line_width, 'value')
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
 
-    def save_grid_line_style(name, value):
-        grid_options_wid.selected_values['grid_line_style'] = value
-    grid_line_style.on_trait_change(save_grid_line_style, 'value')
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
 
-    # Toggle button function
-    def toggle_fun(name, value):
-        options_wid.visible = value
-    toggle_fun('', toggle_show_default)
-    but.on_trait_change(toggle_fun, 'value')
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=True,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
 
-    # assign plot_function
-    if plot_function is not None:
-        render_grid.on_trait_change(plot_function, 'value')
-        grid_line_style.on_trait_change(plot_function, 'value')
-        grid_line_width.on_trait_change(plot_function, 'value')
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
 
-    return grid_options_wid
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
 
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
 
-def format_grid_options(grid_options_wid, container_padding='6px',
-                        container_margin='6px',
-                        container_border='1px solid black',
-                        toggle_button_font_weight='bold', border_visible=True,
-                        suboptions_border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given grid_options
-    widget. Usage example:
-        grid_options_wid = grid_options()
-        display(grid_options_wid)
-        format_grid_options(grid_options_wid)
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
 
-    Parameters
-    ----------
-    grid_options_wid :
-        The widget object generated by the `grid_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    suboptions_border_visible : `boolean`, optional
-        Defines whether to draw the border line around the line options, under
-        the show line checkbox.
-    """
-    # align grid options with checkbox
-    add_class(grid_options_wid.children[1], 'align-end')
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
 
-    # set gridlinewidth text box width
-    grid_options_wid.children[1].children[1].children[1].width = '1cm'
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
 
-    # border around options
-    if suboptions_border_visible:
-        grid_options_wid.children[1].children[1].border = container_border
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
 
-    # set toggle button font bold
-    grid_options_wid.children[0].font_weight = toggle_button_font_weight
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
 
-    # margin and border around container widget
-    grid_options_wid.padding = container_padding
-    grid_options_wid.margin = container_margin
-    if border_visible:
-        grid_options_wid.border = container_border
+        slider_width : `str`, optional
+            The width of the slider.
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.render_grid_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.grid_line_style_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.grid_line_width_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
 
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
 
-def update_grid_options(grid_options_wid, grid_options_dict):
-    r"""
-    Function that updates the state of a given grid_options widget. Usage
-    example:
-        default_grid_options={'render_grid':True,
-                              'grid_line_width':2,
-                              'grid_line_style':'-'}
-        grid_options_wid = grid_options(default_grid_options)
-        display(grid_options_wid)
-        format_grid_options(grid_options_wid)
-        default_grid_options={'render_grid':False,
-                              'grid_line_width':4,
-                              'grid_line_style':'-'}
-        update_grid_options(grid_options_wid, default_grid_options)
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.render_grid_checkbox.on_trait_change(self._render_function,
+                                                      'value')
+            self.grid_line_style_dropdown.on_trait_change(self._render_function,
+                                                          'value')
+            self.grid_line_width_text.on_trait_change(self._render_function,
+                                                      'value')
 
-    Parameters
-    ----------
-    grid_options_wid :
-        The widget object generated by the `grid_options()` function.
-    grid_options_dict : `dict`
-        The new set of options. For example:
-            grid_options_dict={'render_grid':True,
-                               'grid_line_width':2,
-                               'grid_line_style':'-'}
-    """
-    # Assign new options dict to selected_values
-    grid_options_wid.selected_values = grid_options_dict
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.render_grid_checkbox.on_trait_change(self._render_function,
+                                                  'value', remove=True)
+        self.grid_line_style_dropdown.on_trait_change(self._render_function,
+                                                      'value', remove=True)
+        self.grid_line_width_text.on_trait_change(self._render_function,
+                                                  'value', remove=True)
+        self._render_function = None
 
-    # update render grid checkbox
-    if 'render_grid' in grid_options_dict.keys():
-        grid_options_wid.children[1].children[0].value = \
-            grid_options_dict['render_grid']
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
 
-    # update grid_line_style dropdown menu
-    if 'grid_line_style' in grid_options_dict.keys():
-        grid_options_wid.children[1].children[1].children[0].value = \
-            grid_options_dict['grid_line_style']
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
 
-    # update grid_line_width text box
-    if 'grid_line_width' in grid_options_dict.keys():
-        grid_options_wid.children[1].children[1].children[1].value = \
-            float(grid_options_dict['grid_line_width'])
+        # add new function
+        self.add_render_function(render_function)
+
+    def set_widget_state(self, grid_options_dict, allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+
+        Parameter
+        ---------
+        grid_options_dict : `dict`
+            The new set of options. For example ::
+
+                grid_options_dict = {'render_grid': True,
+                                     'grid_line_width': 2,
+                                     'grid_line_style': '-'}
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Assign new options dict to selected_values
+        self.selected_values = grid_options_dict
+
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # update render grid checkbox
+        if 'render_grid' in grid_options_dict.keys():
+            self.render_grid_checkbox.value = grid_options_dict['render_grid']
+
+        # update grid_line_style dropdown menu
+        if 'grid_line_style' in grid_options_dict.keys():
+            self.grid_line_style_dropdown.value = \
+                grid_options_dict['grid_line_style']
+
+        # update grid_line_width text box
+        if 'grid_line_width' in grid_options_dict.keys():
+            self.grid_line_width_text.value = \
+                float(grid_options_dict['grid_line_width'])
+
+        # re-assign render callback
+        self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
 
 
 def hog_options(toggle_show_default=True, toggle_show_visible=True):
@@ -5326,121 +5421,6 @@ def format_igo_options(igo_options_wid, container_padding='6px',
         igo_options_wid.border = container_border
 
 
-def function_definition(default_function='def my_function():\n    pass',
-                        toggle_show_default=True, toggle_show_visible=True):
-    r"""
-    Creates a widget for Function Definition.
-
-    The structure of the widgets is the following:
-        function_definition_wid.children = [toggle_button, options]
-        options.children = [code_textarea, define]
-        define.children = [message_text, define_button]
-
-    To fix the alignment within this widget please refer to
-    `format_function_definition()` function.
-
-    Parameters
-    ----------
-    toggle_show_default : `boolean`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
-        The visibility of the toggle button.
-    """
-    import IPython.html.widgets as ipywidgets
-    # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButton(description='Features Options',
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
-
-    # code widget
-    code = ipywidgets.Textarea(value=default_function)
-    define_but = ipywidgets.Button(description='Define')
-    msg_wid = ipywidgets.Latex(value='')
-    define_wid = ipywidgets.Box(children=[msg_wid, define_but])
-
-    # options widget
-    all_options = ipywidgets.Box(children=[code, define_wid])
-
-    # Widget container
-    function_definition_wid = ipywidgets.Box(
-        children=[but, all_options])
-
-    # Initialize output dictionary
-    f, msg = _get_function_handle_from_string(default_function)
-    function_definition_wid.function = f
-
-    # get code
-    def get_code(name):
-        function_handle, msg = _get_function_handle_from_string(code.value)
-        if function_handle is not None:
-            function_definition_wid.function = function_handle
-            msg_wid.value = ''
-        else:
-            f, _ = _get_function_handle_from_string(default_function)
-            function_definition_wid.function = f
-            msg_wid.value = msg
-    define_but.on_click(get_code)
-
-    # Toggle button function
-    def toggle_options(name, value):
-        all_options.visible = value
-    but.on_trait_change(toggle_options, 'value')
-
-    return function_definition_wid
-
-
-def format_function_definition(function_definition_wid, container_padding='6px',
-                               container_margin='6px',
-                               container_border='1px solid black',
-                               toggle_button_font_weight='bold',
-                               border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given features_options
-    widget. Usage example:
-        function_definition_wid = function_definition()
-        display(function_definition_wid)
-        format_function_definition(function_definition_wid)
-
-    Parameters
-    ----------
-    function_definition_wid :
-        The widget object generated by the `function_definition()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    tab_top_margin : `str`, optional
-        The margin around the tab options' widget, e.g. '0.3cm'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    """
-    # align message text and button horizontally
-    remove_class(function_definition_wid.children[1].children[1], 'vbox')
-    add_class(function_definition_wid.children[1].children[1], 'hbox')
-
-    # set margin between message and button
-    function_definition_wid.children[1].children[1].children[0].margin_right = '0.5cm'
-
-    # align code textarea and button to the right
-    add_class(function_definition_wid.children[1], 'align-end')
-
-    # set error message background to red
-    function_definition_wid.children[1].children[1].children[0].background = 'red'
-
-    # set toggle button font bold
-    function_definition_wid.children[0].font_weight = toggle_button_font_weight
-
-    # margin and border around container widget
-    function_definition_wid.padding = container_padding
-    function_definition_wid.margin = container_margin
-    if border_visible:
-        function_definition_wid.border = container_border
-
-
 class IntListText():
     r"""
     Basic widget that returns a `list` of `int` numbers. It uses
@@ -5565,25 +5545,3 @@ def _get_function_handle_from_string(s):
         return eval(function_name), None
     except:
         return None, 'Invalid syntax!'
-
-
-def _convert_image_to_bytes(image):
-    r"""
-    Function that given a menpo.Image object, it converts it to the correct
-    bytes format that can be used by IPython.html.widgets.Image().
-    """
-    fp = StringIO()
-    image.as_PILImage().save(fp, format='png')
-    fp.seek(0)
-    return fp.read()
-
-
-def _lists_are_the_same(a, b):
-    if len(a) == len(b):
-        for i, j in zip(a, b):
-            if i != j:
-                return False
-        return True
-    else:
-        return False
-
