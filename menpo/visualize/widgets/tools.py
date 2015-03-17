@@ -5,9 +5,6 @@ except ImportError:
     from io import StringIO
 import IPython.html.widgets as ipywidgets
 
-from .compatibility import add_class, remove_class
-
-
 # Global variables to try and reduce overhead of loading the logo
 MENPO_LOGO = None
 MENPO_LOGO_SCALE = None
