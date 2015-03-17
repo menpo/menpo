@@ -198,7 +198,13 @@ class TriMesh(PointCloud):
         """
         t = self.points[self.trilist]
         ij, ik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
-        return np.linalg.norm(np.cross(ij, ik), axis=1) / 2
+        if self.n_dims == 2:
+            return np.cross(ij, ik) * 0.5
+        elif self.n_dims == 3:
+            return np.linalg.norm(np.cross(ij, ik), axis=1) * 0.5
+        else:
+            raise ValueError('face_areas can only be calculated on a 2D or '
+                             '3D mesh')
 
     def mean_face_area(self):
         r"""The mean area of each face in this :map:`TriMesh`.
