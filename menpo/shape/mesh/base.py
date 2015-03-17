@@ -226,12 +226,12 @@ class TriMesh(PointCloud):
         """
         return np.mean(self.face_areas())
 
-    def edges(self):
+    def edge_vectors(self):
         r"""A vector of edges of each triangle face.
 
         Note that there will be two edges
         present in cases where two triangles 'share' an edge. Consider
-        :meth:`unique_edges` for a single vector for each physical edge on the
+        :meth:`unique_edge_vectors` for a single vector for each physical edge on the
         :map:`TriMesh`.
 
         Returns
@@ -296,7 +296,7 @@ class TriMesh(PointCloud):
         # And use that to filter our original list down
         return edge_pairs[unique_edge_index]
 
-    def unique_edges(self):
+    def unique_edge_vectors(self):
         r"""An unordered vector of unique edges for the whole :map:`TriMesh`.
 
         Note that each physical edge will only be counted once in this method
@@ -305,7 +305,7 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        unique_edges : ``(n_unique_edges, n_dims)`` `ndarray`
+        unique_edge_vectors : ``(n_unique_edges, n_dims)`` `ndarray`
             Vectors for each unique edge in this :map:`TriMesh`.
         """
         x = self.points[self.unique_edge_indicies()]
@@ -324,7 +324,7 @@ class TriMesh(PointCloud):
         edge_lengths : ``(n_tris * 3, )`` `ndarray`
             Scalar euclidean lengths for each edge in this :map:`TriMesh`.
         """
-        return np.linalg.norm(self.edges(), axis=1)
+        return np.linalg.norm(self.edge_vectors(), axis=1)
 
     def unique_edge_lengths(self):
         r"""The length of each edge in this :map:`TriMesh`.
@@ -338,7 +338,7 @@ class TriMesh(PointCloud):
         edge_lengths : ``(n_tris * 3, )`` `ndarray`
             Scalar euclidean lengths for each edge in this :map:`TriMesh`.
         """
-        return np.linalg.norm(self.unique_edges(), axis=1)
+        return np.linalg.norm(self.unique_edge_vectors(), axis=1)
 
     def mean_edge_length(self, unique=True):
         r"""The mean length of each edge in this :map:`TriMesh`.

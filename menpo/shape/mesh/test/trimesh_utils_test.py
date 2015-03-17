@@ -18,12 +18,18 @@ gt_edge_indices = np.array([[0, 1],
                             [2, 0],
                             [3, 0]])
 
-gt_edges = np.array([[ 1,  0],
+gt_edge_vectors = np.array([[ 1,  0],
                      [ 1,  1],
                      [ 0,  1],
                      [-1,  0],
                      [ 1,  1],
                      [ 0,  1]])
+
+gt_unique_edge_vectors = np.array([[ 1,  0],
+ [ 1,  1],
+ [ 0,  1],
+ [ 0,  1],
+ [-1,  0]])
 
 gt_edge_lengths = np.array([ 1.     ,  1.41421356,  1.        ,  1.        ,  1.41421356,  1.        ])
 
@@ -36,8 +42,13 @@ def test_edge_indices():
     assert np.all(utils_mesh().edge_indices() == gt_edge_indices)
 
 
-def test_edges():
-    assert np.all(utils_mesh().edges() == gt_edges)
+def test_edge_vectors():
+    assert np.all(utils_mesh().edge_vectors() == gt_edge_vectors)
+
+
+def test_unique_edge_vectors():
+    print(utils_mesh().unique_edge_vectors())
+    assert np.all(utils_mesh().unique_edge_vectors() == gt_unique_edge_vectors)
 
 
 def test_edge_lengths():
