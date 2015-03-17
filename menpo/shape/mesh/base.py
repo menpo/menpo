@@ -188,6 +188,153 @@ class TriMesh(PointCloud):
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
 
+    def face_areas(self):
+        r"""The area of each triangle face.
+
+        Returns
+        -------
+        areas : ``(n_tris,)`` `ndarray`
+            Area of each face.
+        """
+        t = self.points[self.trilist]
+        ij, ik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
+        return np.linalg.norm(np.cross(ij, ik), axis=1) / 2
+
+    def mean_face_area(self):
+        r"""The mean area of each face in this :map:`TriMesh`.
+
+        Returns
+        -------
+        mean_face_area : ``float``
+            The mean area of each face in this :map:`TriMesh`
+        """
+        return np.mean(self.face_areas())
+
+    def edges(self):
+        r"""A vector of edges of each triangle face.
+
+        Note that there will be two edges
+        present in cases where two triangles 'share' an edge. Consider
+        :meth:`unique_edges` for a single vector for each physical edge on the
+        :map:`TriMesh`.
+
+        Returns
+        -------
+        edges : ``(n_tris * 3, n_dims)`` `ndarray`
+            For each triangle (ABC), returns the edge vectors AB, BC, CA. All
+            edges are concatenated for a total of ``n_tris * 3`` edges.
+        """
+        t = self.points[self.trilist]
+        return np.vstack((t[:, 1] - t[:, 0],
+                          t[:, 2] - t[:, 1],
+                          t[:, 2] - t[:, 0]))
+
+    def edge_indices(self):
+        r"""An unordered index into points that rebuilds the edges of this :map:`TriMesh`.
+
+        Note that there will be two edges present in cases where two triangles
+        'share' an edge. Consider :meth:`unique_edge_indices` for a single index
+         for each physical edge on the :map:`TriMesh`.
+
+        Returns
+        -------
+        edge_indices : ``(n_tris * 3, 2)`` `ndarray`
+            For each triangle (ABC), returns the pair of point indices that
+            rebuild AB, AC, BC. All edge indices are concatenated for a total
+            of ``n_tris * 3`` edge_indices.
+        """
+        tl = self.trilist
+        return np.vstack((tl[:, [0, 1]],
+                          tl[:, [1, 2]],
+                          tl[:, [2, 0]]))
+
+    def unique_edge_indicies(self):
+        r"""An unordered index into points that rebuilds the unique edges of this
+        :map:`TriMesh`.
+
+        Note that each physical edge will only be counted once in this method
+        (i.e. edges shared between neighbouring triangles are only counted once
+        not twice).
+
+        Returns
+        -------
+        unique_edge_indicies : ``(n_unique_edges, 2)`` `ndarray`
+            Return a point index that rebuilds all edges present in this
+            :map:`TriMesh` only once.
+        """
+        # Get a sorted list of edge pairs. sort ensures that each edge is
+        # ordered from lowest index to highest.
+        edge_pairs = np.sort(self.edge_indices())
+
+        # We want to remove duplicates - this is a little hairy: basically we
+        # get a view on the array where each pair is considered by numpy to be
+        # one item
+        edge_pair_view = np.ascontiguousarray(edge_pairs).view(
+            np.dtype((np.void, edge_pairs.dtype.itemsize * edge_pairs.shape[1])))
+        # Now we can use this view to ask for only unique edges...
+        unique_edge_index = np.unique(edge_pair_view, return_index=True)[1]
+        # And use that to filter our original list down
+        return edge_pairs[unique_edge_index]
+
+    def unique_edges(self):
+        r"""An unordered vector of unique edges for the whole :map:`TriMesh`.
+
+        Note that each physical edge will only be counted once in this method
+        (i.e. edges shared between neighbouring triangles are only counted once
+        not twice).
+
+        Returns
+        -------
+        unique_edges : ``(n_unique_edges, n_dims)`` `ndarray`
+            Vectors for each unique edge in this :map:`TriMesh`.
+        """
+        x = self.points[self.unique_edge_indicies()]
+        return x[:, 1] - x[:, 0]
+
+    def edge_lengths(self):
+        r"""The length of each edge in this :map:`TriMesh`.
+
+        Note that there will be two edges present in cases where two triangles
+        'share' an edge. Consider :meth:`unique_edge_indices` for a single index
+         for each physical edge on the :map:`TriMesh`.
+
+        Returns
+        -------
+        edge_lengths : ``(n_tris * 3, )`` `ndarray`
+            Scalar euclidean lengths for each edge in this :map:`TriMesh`.
+        """
+        return np.linalg.norm(self.edges(), axis=1)
+
+    def unique_edge_lengths(self):
+        r"""The length of each edge in this :map:`TriMesh`.
+
+        Note that each physical edge will only be counted once in this method
+        (i.e. edges shared between neighbouring triangles are only counted once
+        not twice).
+
+        Returns
+        -------
+        edge_lengths : ``(n_tris * 3, )`` `ndarray`
+            Scalar euclidean lengths for each edge in this :map:`TriMesh`.
+        """
+        return np.linalg.norm(self.unique_edges(), axis=1)
+
+    def mean_edge_length(self, unique=True):
+        r"""The mean length of each edge in this :map:`TriMesh`.
+
+        Parameters
+        ----------
+        unique : `bool`, optional
+            If ``True``, each shared edge will only be counted once towards
+            the average. If false, shared edges will be counted twice.
+
+        Returns
+        -------
+        mean_edge_length : ``float``
+            The mean length of each edge in this :map:`TriMesh`
+        """
+        return np.mean(self.unique_edge_lengths() if unique else self.edge_lengths())
+
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r', line_style='-',
                  line_width=1., render_markers=True, marker_style='o',
