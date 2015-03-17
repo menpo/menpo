@@ -194,7 +194,12 @@ class TriMesh(PointCloud):
         Returns
         -------
         areas : ``(n_tris,)`` `ndarray`
-            Area of each face.
+            Area of each face, ordered as the trilist is
+
+        Raises
+        ------
+        ValueError
+            If mesh is not 2D or 3D
         """
         t = self.points[self.trilist]
         ij, ik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
@@ -213,6 +218,11 @@ class TriMesh(PointCloud):
         -------
         mean_face_area : ``float``
             The mean area of each face in this :map:`TriMesh`
+
+        Raises
+        ------
+        ValueError
+            If mesh is not 3D
         """
         return np.mean(self.face_areas())
 
@@ -228,7 +238,9 @@ class TriMesh(PointCloud):
         -------
         edges : ``(n_tris * 3, n_dims)`` `ndarray`
             For each triangle (ABC), returns the edge vectors AB, BC, CA. All
-            edges are concatenated for a total of ``n_tris * 3`` edges.
+            edges are concatenated for a total of ``n_tris * 3`` edges. The
+            ordering is done so that all AB vectors are first in the returned
+            list, followed by BC, then CA.
         """
         t = self.points[self.trilist]
         return np.vstack((t[:, 1] - t[:, 0],
@@ -247,7 +259,9 @@ class TriMesh(PointCloud):
         edge_indices : ``(n_tris * 3, 2)`` `ndarray`
             For each triangle (ABC), returns the pair of point indices that
             rebuild AB, AC, BC. All edge indices are concatenated for a total
-            of ``n_tris * 3`` edge_indices.
+            of ``n_tris * 3`` edge_indices. The
+            ordering is done so that all AB vectors are first in the returned
+            list, followed by BC, then CA.
         """
         tl = self.trilist
         return np.vstack((tl[:, [0, 1]],
@@ -260,7 +274,7 @@ class TriMesh(PointCloud):
 
         Note that each physical edge will only be counted once in this method
         (i.e. edges shared between neighbouring triangles are only counted once
-        not twice).
+        not twice). The ordering should be considered random.
 
         Returns
         -------
@@ -287,7 +301,7 @@ class TriMesh(PointCloud):
 
         Note that each physical edge will only be counted once in this method
         (i.e. edges shared between neighbouring triangles are only counted once
-        not twice).
+        not twice). The ordering should be considered random.
 
         Returns
         -------
@@ -302,7 +316,8 @@ class TriMesh(PointCloud):
 
         Note that there will be two edges present in cases where two triangles
         'share' an edge. Consider :meth:`unique_edge_indices` for a single index
-         for each physical edge on the :map:`TriMesh`.
+         for each physical edge on the :map:`TriMesh`. The ordering matches the
+         case for edges and edge_indices.
 
         Returns
         -------
@@ -316,7 +331,7 @@ class TriMesh(PointCloud):
 
         Note that each physical edge will only be counted once in this method
         (i.e. edges shared between neighbouring triangles are only counted once
-        not twice).
+        not twice). The ordering should be considered random.
 
         Returns
         -------
