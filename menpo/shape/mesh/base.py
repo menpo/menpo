@@ -1,4 +1,5 @@
 # coding=utf-8
+from collections import Counter
 import numpy as np
 from warnings import warn
 
@@ -225,6 +226,31 @@ class TriMesh(PointCloud):
             If mesh is not 3D
         """
         return np.mean(self.face_areas())
+
+    def boundary_face_index(self):
+        r"""Boolean index into triangles that are at the edge of the TriMesh
+
+        Returns
+        -------
+        boundary_face_index : ``(n_tris,)`` `ndarray`
+            For each triangle (ABC), returns whether any of it's edges is not
+            also an edge of another triangle (and so this triangle exists on
+            the boundary of the TriMesh)
+        """
+        trilist = self.trilist
+        # Get a sorted list of edge pairs
+        edge_pairs = np.sort(np.vstack((trilist[:, [0, 1]],
+                                        trilist[:, [0, 2]],
+                                        trilist[:, [1, 2]])))
+
+        # convert to a tuple per edge pair
+        edges = [tuple(x) for x in edge_pairs]
+        # count the occurrences of the ordered edge pairs - edge pairs that
+        # occur once are at the edge of the whole mesh
+        mesh_edges = (e for e, i in Counter(edges).items() if i == 1)
+        # index back into the edges to find which triangles contain these edges
+        return np.array(list(set(edges.index(e) % trilist.shape[0]
+                                 for e in mesh_edges)))
 
     def edge_vectors(self):
         r"""A vector of edges of each triangle face.
