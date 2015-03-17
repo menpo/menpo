@@ -1,4 +1,5 @@
 from menpo.shape import TriMesh
+import numpy as np
 
 def utils_mesh():
     trilist = np.array([[0, 1, 2],
