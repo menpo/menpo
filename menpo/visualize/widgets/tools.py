@@ -208,7 +208,8 @@ class IndexSliderWidget(ipywidgets.Box):
 
     def style(self, box_style=None, border_visible=True, border_color='black',
               border_style='solid', border_width=1, padding=0, margin=0,
-              font_family='', font_size=None, font_style='', font_weight=''):
+              font_family='', font_size=None, font_style='', font_weight='',
+              slider_width=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -257,6 +258,7 @@ class IndexSliderWidget(ipywidgets.Box):
                     border_width, padding, margin)
         _format_font(self, font_family, font_size, font_style,
                      font_weight)
+        self.slider.width = slider_width
 
     def add_render_function(self, render_function):
         r"""
@@ -882,7 +884,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=True, border_color='black',
               border_style='solid', border_width=1, padding=0, margin=0,
               font_family='', font_size=None, font_style='',
-              font_weight='', rgb_width='0.5cm'):
+              font_weight='', rgb_width='2cm'):
         r"""
         Function that defines the styling of the widget.
 
@@ -933,9 +935,9 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, padding, margin)
         # TODO: How to change the width of a *Text widget?
-        #self.r_text.width = rgb_width
-        #self.g_text.width = rgb_width
-        #self.b_text.width = rgb_width
+        self.r_text.width = rgb_width
+        self.g_text.width = rgb_width
+        self.b_text.width = rgb_width
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.label_dropdown, font_family, font_size, font_style,
                      font_weight)
@@ -2503,13 +2505,15 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
         8) FloatText [`self.axes_x_limits_from_text`]: sets x limit from
         9) FloatText [`self.axes_x_limits_to_text`]: sets x limit to
         10) Checkbox [`self.axes_x_limits_enable_checkbox`]: enables x limit
-        11) Box [`self.axes_x_limits_box`]: box that contains (8), (9) and (10)
-        12) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
-        13) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
-        14) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
-        15) Box [`self.axes_y_limits_box`]: box that contains (12), (13), (14)
-        16) Box [`self.options_box`]: box that contains (2), (3), (4), (5), (6),
-            (7), (11) and (15)
+        11) Box [`self.axes_x_limits_from_to_box`]: box that contains (8), (9)
+        12) HBox [`self.axes_x_limits_box`]: box that contains (10), (11)
+        13) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
+        14) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
+        15) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
+        16) Box [`self.axes_x_limits_from_to_box`]: box that contains (13), (14)
+        17) HBox [`self.axes_x_limits_box`]: box that contains (15), (16)
+        18) Box [`self.options_box`]: box that contains (2), (3), (4), (5), (6),
+            (7), (12) and (17)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -2561,7 +2565,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
             description='Figure scale:',
             value=figure_options_default['x_scale'], min=figure_scale_bounds[0],
             max=figure_scale_bounds[1], step=figure_scale_step,
-            visible=figure_scale_visible, width='3cm')
+            visible=figure_scale_visible, width='3.5cm')
         self.render_axes_checkbox = ipywidgets.Checkbox(
             description='Render axes',
             value=figure_options_default['render_axes'], visible=axes_visible)
@@ -2616,12 +2620,15 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
         self.axes_x_limits_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='X limits')
         self.axes_x_limits_from_text = ipywidgets.FloatText(
-            value=tmp2, description='')
+            value=tmp2, description='', width='3cm')
         self.axes_x_limits_to_text = ipywidgets.FloatText(
-            value=tmp3, description='')
-        self.axes_x_limits_box = ipywidgets.Box(
+            value=tmp3, description='', width='3cm')
+        self.axes_x_limits_from_to_box = ipywidgets.Box(
+            children=[self.axes_x_limits_from_text,
+                      self.axes_x_limits_to_text])
+        self.axes_x_limits_box = ipywidgets.HBox(
             children=[self.axes_x_limits_enable_checkbox,
-                      self.axes_x_limits_from_text, self.axes_x_limits_to_text])
+                      self.axes_x_limits_from_to_box])
         if figure_options_default['axes_y_limits'] is None:
             tmp1 = False
             tmp2 = 0.
@@ -2632,13 +2639,16 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
             tmp3 = figure_options_default['axes_y_limits'][1]
         self.axes_y_limits_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='Y limits')
-        self.axes_y_limits_from_text = ipywidgets.FloatText(value=tmp2,
-                                                            description='')
-        self.axes_y_limits_to_text = ipywidgets.FloatText(value=tmp3,
-                                                          description='')
-        self.axes_y_limits_box = ipywidgets.Box(
+        self.axes_y_limits_from_text = ipywidgets.FloatText(
+            value=tmp2, description='', width='3cm')
+        self.axes_y_limits_to_text = ipywidgets.FloatText(
+            value=tmp3, description='', width='3cm')
+        self.axes_y_limits_from_to_box = ipywidgets.Box(
+            children=[self.axes_y_limits_from_text,
+                      self.axes_y_limits_to_text])
+        self.axes_y_limits_box = ipywidgets.HBox(
             children=[self.axes_y_limits_enable_checkbox,
-                      self.axes_y_limits_from_text, self.axes_y_limits_to_text])
+                      self.axes_y_limits_from_to_box])
         self.options_box = ipywidgets.Box(
             children=[self.figure_scale_slider, self.render_axes_checkbox,
                       self.axes_font_name_dropdown, self.axes_font_size_text,
@@ -2761,7 +2771,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
               inner_border_color='black', inner_border_style='solid',
               inner_border_width=1, inner_padding=0, inner_margin=0,
               font_family='', font_size=None, font_style='',
-              font_weight='', slider_width='3cm'):
+              font_weight='', slider_width='3.5cm'):
         r"""
         Function that defines the styling of the widget.
 
@@ -3065,13 +3075,15 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         11) FloatText [`self.axes_x_limits_from_text`]: sets x limit from
         12) FloatText [`self.axes_x_limits_to_text`]: sets x limit to
         13) Checkbox [`self.axes_x_limits_enable_checkbox`]: enables x limit
-        14) Box [`self.axes_x_limits_box`]: box that contains (11), (12), (13)
-        15) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
-        16) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
-        17) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
-        18) Box [`self.axes_y_limits_box`]: box that contains (15), (16), (17)
-        19) Box [`self.options_box`]: box that contains (5), (6), (7), (8), (9),
-            (10), (14) and (18)
+        14) Box [`self.axes_x_limits_from_to_box`]: box that contains (11), (12)
+        15) HBox [`self.axes_x_limits_box`]: box that contains (13), (14)
+        16) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
+        17) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
+        18) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
+        19) Box [`self.axes_y_limits_from_to_box`]: box that contains (15), (16)
+        20) HBox [`self.axes_y_limits_box`]: box that contains (17), (18)
+        21) Box [`self.options_box`]: box that contains (5), (6), (7), (8), (9),
+            (10), (15) and (20)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -3124,12 +3136,12 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
             description=toggle_title, value=toggle_show_default,
             visible=toggle_show_visible)
         self.x_scale_slider = ipywidgets.FloatSlider(
-            description='Figure size: X scale',
+            description='Figure scale: X',
             value=figure_options_default['x_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
             step=figure_scale_step, width='3cm')
         self.y_scale_slider = ipywidgets.FloatSlider(
-            description='Y scale', value=figure_options_default['y_scale'],
+            description='Y', value=figure_options_default['y_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
             step=figure_scale_step, width='3cm')
         coupled_default = (coupled_default and
@@ -3199,12 +3211,15 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         self.axes_x_limits_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='X limits')
         self.axes_x_limits_from_text = ipywidgets.FloatText(
-            value=tmp2, description='')
+            value=tmp2, description='', width='3cm')
         self.axes_x_limits_to_text = ipywidgets.FloatText(
-            value=tmp3, description='')
-        self.axes_x_limits_box = ipywidgets.Box(
+            value=tmp3, description='', width='3cm')
+        self.axes_x_limits_from_to_box = ipywidgets.Box(
+            children=[self.axes_x_limits_from_text,
+                      self.axes_x_limits_to_text])
+        self.axes_x_limits_box = ipywidgets.HBox(
             children=[self.axes_x_limits_enable_checkbox,
-                      self.axes_x_limits_from_text, self.axes_x_limits_to_text])
+                      self.axes_x_limits_from_to_box])
         if figure_options_default['axes_y_limits'] is None:
             tmp1 = False
             tmp2 = 0.
@@ -3215,13 +3230,16 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
             tmp3 = figure_options_default['axes_y_limits'][1]
         self.axes_y_limits_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='Y limits')
-        self.axes_y_limits_from_text = ipywidgets.FloatText(value=tmp2,
-                                                            description='')
-        self.axes_y_limits_to_text = ipywidgets.FloatText(value=tmp3,
-                                                          description='')
-        self.axes_y_limits_box = ipywidgets.Box(
+        self.axes_y_limits_from_text = ipywidgets.FloatText(
+            value=tmp2, description='', width='3cm')
+        self.axes_y_limits_to_text = ipywidgets.FloatText(
+            value=tmp3, description='', width='3cm')
+        self.axes_y_limits_from_to_box = ipywidgets.Box(
+            children=[self.axes_y_limits_from_text,
+                      self.axes_y_limits_to_text])
+        self.axes_y_limits_box = ipywidgets.HBox(
             children=[self.axes_y_limits_enable_checkbox,
-                      self.axes_y_limits_from_text, self.axes_y_limits_to_text])
+                      self.axes_y_limits_from_to_box])
         self.options_box = ipywidgets.Box(
             children=[self.figure_scale_box, self.render_axes_checkbox,
                       self.axes_font_name_dropdown, self.axes_font_size_text,
@@ -3816,7 +3834,8 @@ class LegendOptionsWidget(ipywidgets.Box):
             value=legend_options_default['legend_font_weight'],
             description='Weight')
         self.legend_title_text = ipywidgets.Text(
-            description='Title', value=legend_options_default['legend_title'])
+            description='Title', value=legend_options_default['legend_title'],
+            width='9cm')
         self.legend_font_name_and_size_box = ipywidgets.HBox(
             children=[self.legend_font_name_dropdown,
                       self.legend_font_size_text])
@@ -3856,17 +3875,19 @@ class LegendOptionsWidget(ipywidgets.Box):
             tmp3 = legend_options_default['legend_bbox_to_anchor'][1]
         self.bbox_to_anchor_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='Arbitrary location')
-        self.bbox_to_anchor_x_text = ipywidgets.FloatText(value=tmp2,
-                                                          description='')
-        self.bbox_to_anchor_y_text = ipywidgets.FloatText(value=tmp3,
-                                                          description='')
-        self.legend_bbox_to_anchor_box = ipywidgets.Box(
+        self.bbox_to_anchor_x_text = ipywidgets.FloatText(
+            value=tmp2, description='', width='3cm')
+        self.bbox_to_anchor_y_text = ipywidgets.FloatText(
+            value=tmp3, description='', width='3cm')
+        self.legend_bbox_to_anchor_x_y_box = ipywidgets.Box(
+            children=[self.bbox_to_anchor_x_text, self.bbox_to_anchor_y_text])
+        self.legend_bbox_to_anchor_box = ipywidgets.HBox(
             children=[self.bbox_to_anchor_enable_checkbox,
-                      self.bbox_to_anchor_x_text, self.bbox_to_anchor_y_text])
+                      self.legend_bbox_to_anchor_x_y_box])
         self.legend_border_axes_pad_text = ipywidgets.BoundedFloatText(
             value=legend_options_default['legend_border_axes_pad'],
             description='Distance to axes', min=0.)
-        self.location_related_box = ipywidgets.Box(
+        self.location_related_box = ipywidgets.VBox(
             children=[self.legend_location_dropdown,
                       self.legend_bbox_to_anchor_box,
                       self.legend_border_axes_pad_text])
@@ -4714,808 +4735,474 @@ class GridOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-def hog_options(toggle_show_default=True, toggle_show_visible=True):
+class HOGOptionsWidget(ipywidgets.Box):
     r"""
-    Creates a widget with HOG Features Options.
+    Creates a widget for selecting HOG options. Specifically, it consists of:
 
-    The structure of the widgets is the following:
-        hog_options_wid.children = [toggle_button, options]
-        options.children = [window_wid, algorithm_wid]
-        window_wid.children = [mode_wid, window_opts_wid]
-        mode_wid.children = [mode_radiobuttons, padding_checkbox]
-        window_opts_wid.children = [window_size_wid, window_step_wid]
-        window_size_wid.children = [window_height, window_width,
-                                    window_size_unit]
-        window_step_wid.children = [window_vertical, window_horizontal,
-                                    window_step_unit]
-        algorithm_wid.children = [algorithm_radiobuttons, algorithm_options]
-        algorithm_options.children = [algorithm_sizes, algorithm_other]
-        algorithm_sizes.children = [cell_size, block_size, num_bins]
-        algorithm_other.children = [signed_gradient, l2_norm_clipping]
+        1) ToggleButton [`self.toggle_visible`]: controls visibility
+        2) Radiobuttons [`self.mode_radiobuttons`]: 'dense' or 'sparse' mode
+        3) Checkbox [`self.padding_checkbox`]: controls padding of output image
+        4) HBox [`self.mode_padding_box`]: box that contains (2) and (3)
+        5) BoundedIntText [`self.window_height_text`]: sets window height
+        6) BoundedIntText [`self.window_width_text`]: sets window width
+        7) RadioButtons [`self.window_size_unit_radiobuttons`]: window size unit
+        8) VBox [`self.window_size_box`]: box that contains (5), (6) and (7)
+        9) BoundedIntText [`self.window_vertical_text`]: window step Y
+        10) BoundedIntText [`self.window_horizontal_text`]: window step X
+        11) RadioButtons [`self.window_step_unit_radiobuttons`]: window step
+            unit
+        12) VBox [`self.window_step_box`]: box that contains (9), (10) and (11)
+        13) HBox [`self.window_size_step_box`]: box that contains (8) and (12)
+        14) Box [`self.window_box`]: box that contains (4) and (13)
+        15) RadioButtons [`self.algorithm_radiobuttons`]: `zhuramanan` or
+            `dalaltriggs`
+        16) BoundedIntText [`self.cell_size_text`]: cell size in pixels
+        17) BoundedIntText [`self.block_size_text`]: block size in pixels
+        18) BoundedIntText [`self.num_bins_text`]: number of orientation bins
+        19) VBox [`self.algorithm_sizes_box`]: box that contains (16), (17) and
+            (18)
+        20) Checkbox (`self.signed_gradient_checkbox`]: signed or unsigned
+            gradients
+        21) BoundedFloatText [`self.l2_norm_clipping_text`]: l2 norm clipping
+        22) Box [`self.algorithm_other_box`]: box that contains (20) and (21)
+        23) HBox [`self.algorithm_options_box`]: box containing (19) and (22)
+        24) Box [`self.algorithm_box`]: box that contains (15) and (23)
+        25) Tab [`self.options_box`]: box that contains (14) and (24)
 
-    To fix the alignment within this widget please refer to
-    `format_hog_options()` function.
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
 
     Parameters
     ----------
-    toggle_show_default : `boolean`, optional
+    hog_options_default : `dict`
+        The initial options. Example ::
+
+            hog_options_default = {'mode': 'dense',
+                                   'algorithm': 'dalaltriggs',
+                                   'num_bins': 9,
+                                   'cell_size': 8,
+                                   'block_size': 2,
+                                   'signed_gradient': True,
+                                   'l2_norm_clip': 0.2,
+                                   'window_height': 1,
+                                   'window_width': 1,
+                                   'window_unit': 'blocks',
+                                   'window_step_vertical': 1,
+                                   'window_step_horizontal': 1,
+                                   'window_step_unit': 'pixels',
+                                   'padding': True}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
     """
-    import IPython.html.widgets as ipywidgets
-    # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButton(description='HOG Options',
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
-
-    # window related options
-    tmp = OrderedDict()
-    tmp['Dense'] = 'dense'
-    tmp['Sparse'] = 'sparse'
-    mode = ipywidgets.RadioButtons(options=tmp, description='Mode')
-    padding = ipywidgets.Checkbox(value=True, description='Padding')
-    mode_wid = ipywidgets.Box(children=[mode, padding])
-    window_height = ipywidgets.BoundedIntText(value='1',
-                                              description='Height', min=1)
-    window_width = ipywidgets.BoundedIntText(value='1',
-                                             description='Width', min=1)
-    tmp = OrderedDict()
-    tmp['Blocks'] = 'blocks'
-    tmp['Pixels'] = 'pixels'
-    window_size_unit = ipywidgets.RadioButtons(options=tmp,
-                                               description=' Size unit')
-    window_size_wid = ipywidgets.Box(
-        children=[window_height, window_width,
-                  window_size_unit])
-    window_vertical = ipywidgets.BoundedIntText(value='1',
-                                                description='Step Y',
-                                                min=1)
-    window_horizontal = ipywidgets.BoundedIntText(value='1',
-                                                  description='Step X',
-                                                  min=1)
-    tmp = OrderedDict()
-    tmp['Pixels'] = 'pixels'
-    tmp['Cells'] = 'cells'
-    window_step_unit = ipywidgets.RadioButtons(options=tmp,
-                                               description='Step unit')
-    window_step_wid = ipywidgets.Box(children=[window_vertical,
-                                               window_horizontal,
-                                               window_step_unit])
-    window_wid = ipywidgets.Box(
-        children=[window_size_wid, window_step_wid])
-    window_wid = ipywidgets.Box(children=[mode_wid, window_wid])
-
-    # algorithm related options
-    tmp = OrderedDict()
-    tmp['Dalal & Triggs'] = 'dalaltriggs'
-    tmp['Zhu & Ramanan'] = 'zhuramanan'
-    algorithm = ipywidgets.RadioButtons(options=tmp, value='dalaltriggs',
-                                        description='Algorithm')
-    cell_size = ipywidgets.BoundedIntText(
-        value='8', description='Cell size (in pixels)', min=1)
-    block_size = ipywidgets.BoundedIntText(
-        value='2', description='Block size (in cells)', min=1)
-    num_bins = ipywidgets.BoundedIntText(
-        value='9', description='Orientation bins', min=1)
-    algorithm_sizes = ipywidgets.Box(
-        children=[cell_size, block_size,
-                  num_bins])
-    signed_gradient = ipywidgets.Checkbox(value=True,
-                                          description='Signed gradients')
-    l2_norm_clipping = ipywidgets.BoundedFloatText(
-        value='0.2', description='L2 norm clipping', min=0.)
-    algorithm_other = ipywidgets.Box(children=[signed_gradient,
-                                               l2_norm_clipping])
-    algorithm_options = ipywidgets.Box(children=[algorithm_sizes,
-                                                 algorithm_other])
-    algorithm_wid = ipywidgets.Box(
-        children=[algorithm, algorithm_options])
-
-    # options tab widget
-    all_options = ipywidgets.Tab(children=[window_wid, algorithm_wid])
-
-    # Widget container
-    hog_options_wid = ipywidgets.Box(children=[but, all_options])
-
-    # Initialize output dictionary
-    hog_options_wid.options = {'mode': 'dense', 'algorithm': 'dalaltriggs',
-                               'num_bins': 9, 'cell_size': 8, 'block_size': 2,
-                               'signed_gradient': True, 'l2_norm_clip': 0.2,
-                               'window_height': 1, 'window_width': 1,
-                               'window_unit': 'blocks',
-                               'window_step_vertical': 1,
-                               'window_step_horizontal': 1,
-                               'window_step_unit': 'pixels', 'padding': True,
-                               'verbose': False}
-
-    # mode function
-    def window_mode(name, value):
-        window_horizontal.disabled = value == 'sparse'
-        window_vertical.disabled = value == 'sparse'
-        window_step_unit.disabled = value == 'sparse'
-        window_height.disabled = value == 'sparse'
-        window_width.disabled = value == 'sparse'
-        window_size_unit.disabled = value == 'sparse'
-    mode.on_trait_change(window_mode, 'value')
-
-    # algorithm function
-    def algorithm_mode(name, value):
-        l2_norm_clipping.disabled = value == 'zhuramanan'
-        signed_gradient.disabled = value == 'zhuramanan'
-        block_size.disabled = value == 'zhuramanan'
-        num_bins.disabled = value == 'zhuramanan'
-    algorithm.on_trait_change(algorithm_mode, 'value')
-
-    # get options
-    def get_mode(name, value):
-        hog_options_wid.options['mode'] = value
-    mode.on_trait_change(get_mode, 'value')
-
-    def get_padding(name, value):
-        hog_options_wid.options['padding'] = value
-    padding.on_trait_change(get_padding, 'value')
-
-    def get_window_height(name, value):
-        hog_options_wid.options['window_height'] = value
-    window_height.on_trait_change(get_window_height, 'value')
-
-    def get_window_width(name, value):
-        hog_options_wid.options['window_width'] = value
-    window_width.on_trait_change(get_window_width, 'value')
-
-    def get_window_size_unit(name, value):
-        hog_options_wid.options['window_unit'] = value
-    window_size_unit.on_trait_change(get_window_size_unit, 'value')
-
-    def get_window_step_vertical(name, value):
-        hog_options_wid.options['window_step_vertical'] = value
-    window_vertical.on_trait_change(get_window_step_vertical, 'value')
-
-    def get_window_step_horizontal(name, value):
-        hog_options_wid.options['window_step_horizontal'] = value
-    window_horizontal.on_trait_change(get_window_step_horizontal, 'value')
-
-    def get_window_step_unit(name, value):
-        hog_options_wid.options['window_step_unit'] = value
-    window_step_unit.on_trait_change(get_window_step_unit, 'value')
-
-    def get_algorithm(name, value):
-        hog_options_wid.options['algorithm'] = value
-    algorithm.on_trait_change(get_algorithm, 'value')
-
-    def get_num_bins(name, value):
-        hog_options_wid.options['num_bins'] = value
-    num_bins.on_trait_change(get_num_bins, 'value')
-
-    def get_cell_size(name, value):
-        hog_options_wid.options['cell_size'] = value
-    cell_size.on_trait_change(get_cell_size, 'value')
-
-    def get_block_size(name, value):
-        hog_options_wid.options['block_size'] = value
-    block_size.on_trait_change(get_block_size, 'value')
-
-    def get_signed_gradient(name, value):
-        hog_options_wid.options['signed_gradient'] = value
-    signed_gradient.on_trait_change(get_signed_gradient, 'value')
-
-    def get_l2_norm_clip(name, value):
-        hog_options_wid.options['l2_norm_clip'] = value
-    l2_norm_clipping.on_trait_change(get_l2_norm_clip, 'value')
-
-    # Toggle button function
-    def toggle_options(name, value):
-        all_options.visible = value
-    but.on_trait_change(toggle_options, 'value')
-
-    return hog_options_wid
-
-
-def format_hog_options(hog_options_wid, container_padding='6px',
-                       container_margin='6px',
-                       container_border='1px solid black',
-                       toggle_button_font_weight='bold',
-                       border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given hog_options
-    widget. Usage example:
-        hog_options_wid = hog_options()
-        display(hog_options_wid)
-        format_hog_options(hog_options_wid)
-
-    Parameters
-    ----------
-    hog_options_wid :
-        The widget object generated by the `hog_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    tab_top_margin : `str`, optional
-        The margin around the tab options' widget, e.g. '0.3cm'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    """
-    # align window options
-    remove_class(hog_options_wid.children[1].children[0].children[1], 'vbox')
-    add_class(hog_options_wid.children[1].children[0].children[1], 'hbox')
-
-    # set width of height, width, step x , step y textboxes
-    hog_options_wid.children[1].children[0].children[1].children[0].children[0]. \
-        width = '40px'
-    hog_options_wid.children[1].children[0].children[1].children[0].children[1]. \
-        width = '40px'
-    hog_options_wid.children[1].children[0].children[1].children[1].children[0]. \
-        width = '40px'
-    hog_options_wid.children[1].children[0].children[1].children[1].children[1]. \
-        width = '40px'
-
-    # set margin and border around the window size and step options
-    hog_options_wid.children[1].children[0].children[1].children[0]. \
-        margin = container_margin
-    hog_options_wid.children[1].children[0].children[1].children[1]. \
-        margin = container_margin
-    hog_options_wid.children[1].children[0].children[1].children[0]. \
-        border = '1px solid gray'
-    hog_options_wid.children[1].children[0].children[1].children[1]. \
-        border = '1px solid gray'
-
-    # align mode and padding
-    remove_class(hog_options_wid.children[1].children[0].children[0], 'vbox')
-    add_class(hog_options_wid.children[1].children[0].children[0], 'hbox')
-
-    # set width of algorithm textboxes
-    hog_options_wid.children[1].children[1].children[1].children[0].children[0]. \
-        width = '40px'
-    hog_options_wid.children[1].children[1].children[1].children[0].children[1]. \
-        width = '40px'
-    hog_options_wid.children[1].children[1].children[1].children[0].children[2]. \
-        width = '40px'
-    hog_options_wid.children[1].children[1].children[1].children[1].children[1]. \
-        width = '40px'
-
-    # align algorithm options
-    remove_class(hog_options_wid.children[1].children[1].children[1], 'vbox')
-    add_class(hog_options_wid.children[1].children[1].children[1], 'hbox')
-
-    # set margin and border around the algorithm options
-    hog_options_wid.children[1].children[1].children[1]. \
-        margin = container_margin
-    hog_options_wid.children[1].children[1].children[1]. \
-        border = '1px solid gray'
-
-    hog_options_wid.children[1].margin_top = '6px'
-    add_class(hog_options_wid.children[1].children[0], 'align-center')
-    add_class(hog_options_wid.children[1].children[1], 'align-center')
-
-    # set final tab titles
-    tab_titles = ['Window', 'Algorithm']
-    for (k, tl) in enumerate(tab_titles):
-        hog_options_wid.children[1].set_title(k, tl)
-
-    # set toggle button font bold
-    hog_options_wid.children[0].font_weight = toggle_button_font_weight
-
-    # margin and border around container widget
-    hog_options_wid.padding = container_padding
-    hog_options_wid.margin = container_margin
-    if border_visible:
-        hog_options_wid.border = container_border
-
-
-def daisy_options(toggle_show_default=True, toggle_show_visible=True):
-    r"""
-    Creates a widget with Daisy Features Options.
-
-    The structure of the widgets is the following:
-        daisy_options_wid.children = [toggle_button, options]
-        options.children = [options1, options2]
-        options1.children = [step_int, radius_int, rings_int, histograms_int]
-        options2.children = [orientations_int, normalization_dropdown,
-                             sigmas_list, ring_radii_list]
-
-    To fix the alignment within this widget please refer to
-    `format_daisy_options()` function.
-
-    Parameters
-    ----------
-    toggle_show_default : `boolean`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
-        The visibility of the toggle button.
-    """
-    import IPython.html.widgets as ipywidgets
-    # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButton(description='Daisy Options',
-                                  value=toggle_show_default,
-                                  visible=toggle_show_visible)
-
-    # options widgets
-    step = ipywidgets.BoundedIntText(value='1', description='Step', min=1)
-    radius = ipywidgets.BoundedIntText(value='15', description='Radius',
-                                       min=1)
-    rings = ipywidgets.BoundedIntText(value='2', description='Rings',
-                                      min=1)
-    histograms = ipywidgets.BoundedIntText(value='2',
-                                           description='Histograms',
-                                           min=1)
-    orientations = ipywidgets.BoundedIntText(value='8',
-                                             description='Orientations',
-                                             min=1)
-    tmp = OrderedDict()
-    tmp['L1'] = 'l1'
-    tmp['L2'] = 'l2'
-    tmp['Daisy'] = 'daisy'
-    tmp['None'] = None
-    normalization = ipywidgets.Dropdown(value='l1', options=tmp,
-                                        description='Normalization')
-    sigmas = ipywidgets.Text(description='Sigmas')
-    ring_radii = ipywidgets.Text(description='Ring radii')
-
-    # group widgets
-    cont1 = ipywidgets.Box(
-        children=[step, radius, rings, histograms])
-    cont2 = ipywidgets.Box(
-        children=[orientations, normalization, sigmas,
-                  ring_radii])
-    options = ipywidgets.Box(children=[cont1, cont2])
-
-    # Widget container
-    daisy_options_wid = ipywidgets.Box(children=[but, options])
-
-    # Initialize output dictionary
-    daisy_options_wid.options = {'step': 1, 'radius': 15,
-                                 'rings': 2, 'histograms': 2,
-                                 'orientations': 8,
-                                 'normalization': 'l1',
-                                 'sigmas': None,
-                                 'ring_radii': None}
-
-    # get options
-    def get_step(name, value):
-        daisy_options_wid.options['step'] = value
-
-    step.on_trait_change(get_step, 'value')
-
-    def get_radius(name, value):
-        daisy_options_wid.options['radius'] = value
-
-    radius.on_trait_change(get_radius, 'value')
-
-    def get_rings(name, value):
-        daisy_options_wid.options['rings'] = value
-
-    rings.on_trait_change(get_rings, 'value')
-
-    def get_histograms(name, value):
-        daisy_options_wid.options['histograms'] = value
-
-    histograms.on_trait_change(get_histograms, 'value')
-
-    def get_orientations(name, value):
-        daisy_options_wid.options['orientations'] = value
-
-    orientations.on_trait_change(get_orientations, 'value')
-
-    def get_normalization(name, value):
-        daisy_options_wid.options['normalization'] = value
-
-    normalization.on_trait_change(get_normalization, 'value')
-
-    def get_sigmas(name, value):
-        daisy_options_wid.options['sigmas'] = _convert_str_to_list_int(
-            str(value))
-
-    sigmas.on_trait_change(get_sigmas, 'value')
-
-    def get_ring_radii(name, value):
-        daisy_options_wid.options['ring_radii'] = _convert_str_to_list_float(
-            str(value))
-
-    ring_radii.on_trait_change(get_ring_radii, 'value')
-
-    # Toggle button function
-    def toggle_options(name, value):
-        options.visible = value
-
-    but.on_trait_change(toggle_options, 'value')
-
-    return daisy_options_wid
-
-
-def format_daisy_options(daisy_options_wid, container_padding='6px',
-                         container_margin='6px',
-                         container_border='1px solid black',
-                         toggle_button_font_weight='bold',
-                         border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given daisy_options
-    widget. Usage example:
-        daisy_options_wid = daisy_options()
-        display(daisy_options_wid)
-        format_daisy_options(daisy_options_wid)
-
-    Parameters
-    ----------
-    daisy_options_wid :
-        The widget object generated by the `daisy_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    tab_top_margin : `str`, optional
-        The margin around the tab options' widget, e.g. '0.3cm'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    """
-    # align window options
-    daisy_options_wid.children[1]._dom_classes.remove('vbox')
-    daisy_options_wid.children[1]._dom_classes.append('hbox')
-
-    # set textboxes length
-    daisy_options_wid.children[1].children[0].children[0].width = '40px'
-    daisy_options_wid.children[1].children[0].children[1].width = '40px'
-    daisy_options_wid.children[1].children[0].children[2].width = '40px'
-    daisy_options_wid.children[1].children[0].children[3].width = '40px'
-    daisy_options_wid.children[1].children[1].children[0].width = '40px'
-    daisy_options_wid.children[1].children[1].children[2].width = '80px'
-    daisy_options_wid.children[1].children[1].children[3].width = '80px'
-
-    # set toggle button font bold
-    daisy_options_wid.children[0].font_weight = toggle_button_font_weight
-
-    # margin and border around container widget
-    daisy_options_wid.padding = container_padding
-    daisy_options_wid.margin = container_margin
-    if border_visible:
-        daisy_options_wid.border = container_border
-
-
-def lbp_options(toggle_show_default=True, toggle_show_visible=True):
-    r"""
-    Creates a widget with LBP Features Options.
-
-    The structure of the widgets is the following:
-        lbp_options_wid.children = [toggle_button, options]
-        options.children = [window_wid, algorithm_wid]
-        window_wid.children = [window_vertical, window_horizontal,
-                               window_step_unit, padding]
-        algorithm_wid.children = [mapping_type, radius, samples]
-
-    To fix the alignment within this widget please refer to
-    `format_lbp_options()` function.
-
-    Parameters
-    ----------
-    toggle_show_default : `boolean`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
-        The visibility of the toggle button.
-    """
-    import IPython.html.widgets as ipywidgets
-    # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButton(description='LBP Options',
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
-
-    # method related options
-    tmp = OrderedDict()
-    tmp['Uniform-2'] = 'u2'
-    tmp['Rotation-Invariant'] = 'ri'
-    tmp['Both'] = 'riu2'
-    tmp['None'] = 'none'
-    mapping_type = ipywidgets.Dropdown(value='u2', options=tmp,
-                                       description='Mapping')
-    radius = ipywidgets.Text(value='1, 2, 3, 4', description='Radius')
-    samples = ipywidgets.Text(value='8, 8, 8, 8', description='Samples')
-    algorithm_wid = ipywidgets.Box(children=[radius, samples, mapping_type])
-
-    # window related options
-    window_vertical = ipywidgets.BoundedIntText(value='1',
-                                                      description='Step Y',
-                                                      min=1)
-    window_horizontal = ipywidgets.BoundedIntText(value='1',
-                                                        description='Step X',
-                                                        min=1)
-    tmp = OrderedDict()
-    tmp['Pixels'] = 'pixels'
-    tmp['Windows'] = 'cells'
-    window_step_unit = ipywidgets.RadioButtons(options=tmp,
-                                               description='Step unit')
-    padding = ipywidgets.Checkbox(value=True, description='Padding')
-    window_wid = ipywidgets.Box(children=[window_vertical, window_horizontal,
-                                          window_step_unit, padding])
-
-    # options widget
-    options = ipywidgets.Box(children=[window_wid, algorithm_wid])
-
-    # Widget container
-    lbp_options_wid = ipywidgets.Box(children=[but, options])
-
-    # Initialize output dictionary
-    lbp_options_wid.options = {'radius': range(1, 5), 'samples': [8] * 4,
-                               'mapping_type': 'u2',
-                               'window_step_vertical': 1,
-                               'window_step_horizontal': 1,
-                               'window_step_unit': 'pixels', 'padding': True,
-                               'verbose': False, 'skip_checks': False}
-
-    # get options
-    def get_mapping_type(name, value):
-        lbp_options_wid.options['mapping_type'] = value
-    mapping_type.on_trait_change(get_mapping_type, 'value')
-
-    def get_window_vertical(name, value):
-        lbp_options_wid.options['window_step_vertical'] = value
-    window_vertical.on_trait_change(get_window_vertical, 'value')
-
-    def get_window_horizontal(name, value):
-        lbp_options_wid.options['window_step_horizontal'] = value
-    window_horizontal.on_trait_change(get_window_horizontal, 'value')
-
-    def get_window_step_unit(name, value):
-        lbp_options_wid.options['window_step_unit'] = value
-    window_step_unit.on_trait_change(get_window_step_unit, 'value')
-
-    def get_padding(name, value):
-        lbp_options_wid.options['padding'] = value
-    padding.on_trait_change(get_padding, 'value')
-
-    def get_radius(name, value):
-        lbp_options_wid.options['radius'] = _convert_str_to_list_int(str(value))
-    radius.on_trait_change(get_radius, 'value')
-
-    def get_samples(name, value):
-        str_val = _convert_str_to_list_int(str(value))
-        lbp_options_wid.options['samples'] = str_val
-    samples.on_trait_change(get_samples, 'value')
-
-    # Toggle button function
-    def toggle_options(name, value):
-        options.visible = value
-    but.on_trait_change(toggle_options, 'value')
-
-    return lbp_options_wid
-
-
-def format_lbp_options(lbp_options_wid, container_padding='6px',
-                       container_margin='6px',
-                       container_border='1px solid black',
-                       toggle_button_font_weight='bold',
-                       border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given lbp_options
-    widget. Usage example:
-        lbp_options_wid = lbp_options()
-        display(lbp_options_wid)
-        format_lbp_options(lbp_options_wid)
-
-    Parameters
-    ----------
-    lbp_options_wid :
-        The widget object generated by the `lbp_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    tab_top_margin : `str`, optional
-        The margin around the tab options' widget, e.g. '0.3cm'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    """
-    # align window options
-    remove_class(lbp_options_wid.children[1], 'vbox')
-    add_class(lbp_options_wid.children[1], 'hbox')
-
-    # set textboxes length
-    lbp_options_wid.children[1].children[0].children[0].width = '40px'
-    lbp_options_wid.children[1].children[0].children[1].width = '40px'
-    lbp_options_wid.children[1].children[1].children[0].width = '80px'
-    lbp_options_wid.children[1].children[1].children[1].width = '80px'
-
-    # set toggle button font bold
-    lbp_options_wid.children[0].font_weight = toggle_button_font_weight
-
-    # margin and border around container widget
-    lbp_options_wid.padding = container_padding
-    lbp_options_wid.margin = container_margin
-    if border_visible:
-        lbp_options_wid.border = container_border
-
-
-def igo_options(toggle_show_default=True, toggle_show_visible=True):
-    r"""
-    Creates a widget with IGO Features Options.
-
-    The structure of the widgets is the following:
-        igo_options_wid.children = [toggle_button, double_angles_checkbox]
-
-    To fix the alignment within this widget please refer to
-    `format_igo_options()` function.
-
-    Parameters
-    ----------
-    toggle_show_default : `boolean`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `boolean`, optional
-        The visibility of the toggle button.
-    """
-    import IPython.html.widgets as ipywidgets
-    # Toggle button that controls options' visibility
-    but = ipywidgets.ToggleButton(description='IGO Options',
-                                        value=toggle_show_default,
-                                        visible=toggle_show_visible)
-
-    # options widget
-    double_angles = ipywidgets.Checkbox(value=False,
-                                              description='Double angles')
-
-    # Widget container
-    igo_options_wid = ipywidgets.Box(children=[but, double_angles])
-
-    # Initialize output dictionary
-    igo_options_wid.options = {'double_angles': False}
-
-    # get double_angles
-    def get_double_angles(name, value):
-        igo_options_wid.options['double_angles'] = value
-    double_angles.on_trait_change(get_double_angles, 'value')
-
-    # Toggle button function
-    def toggle_options(name, value):
-        double_angles.visible = value
-    but.on_trait_change(toggle_options, 'value')
-
-    return igo_options_wid
-
-
-def format_igo_options(igo_options_wid, container_padding='6px',
-                       container_margin='6px',
-                       container_border='1px solid black',
-                       toggle_button_font_weight='bold',
-                       border_visible=True):
-    r"""
-    Function that corrects the align (style format) of a given igo_options
-    widget. Usage example:
-        igo_options_wid = igo_options()
-        display(igo_options_wid)
-        format_igo_options(igo_options_wid)
-
-    Parameters
-    ----------
-    igo_options_wid :
-        The widget object generated by the `igo_options()` function.
-    container_padding : `str`, optional
-        The padding around the widget, e.g. '6px'
-    container_margin : `str`, optional
-        The margin around the widget, e.g. '6px'
-    tab_top_margin : `str`, optional
-        The margin around the tab options' widget, e.g. '0.3cm'
-    container_border : `str`, optional
-        The border around the widget, e.g. '1px solid black'
-    toggle_button_font_weight : `str`
-        The font weight of the toggle button, e.g. 'bold'
-    border_visible : `boolean`, optional
-        Defines whether to draw the border line around the widget.
-    """
-    # set toggle button font bold
-    igo_options_wid.children[0].font_weight = toggle_button_font_weight
-
-    # margin and border around container widget
-    igo_options_wid.padding = container_padding
-    igo_options_wid.margin = container_margin
-    if border_visible:
-        igo_options_wid.border = container_border
-
-
-class IntListText():
-    r"""
-    Basic widget that returns a `list` of `int` numbers. It uses
-    `IPython.html.widgets.Text()` and converts its value to a `list` of
-    `int`.
-
-    Parameters
-    ----------
-    value : `str` or `list` of `int`, Optional
-        The initial value of the widget.
-    description : `str`, Optional
-        The description of the widget.
-
-    Raises
-    ------
-    ValueError
-        value must be str or list
-    """
-
-    def __init__(self, value='', description=''):
-        import IPython.html.widgets as ipywidgets
-
-        if isinstance(value, list):
-            val = _convert_list_to_str(value)
-        elif isinstance(value, str):
-            val = value
-        else:
-            raise ValueError("value must be str or list")
-        self.text_wid = ipywidgets.Text(value=val,
-                                              description=description)
-
-    @property
-    def value(self):
+    def __init__(self, hog_options_default, render_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='HOG Options'):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        # Window related options
+        tmp = OrderedDict()
+        tmp['Dense'] = 'dense'
+        tmp['Sparse'] = 'sparse'
+        self.mode_radiobuttons = ipywidgets.RadioButtons(
+            options=tmp, description='Mode', value=hog_options_default['mode'])
+        self.padding_checkbox = ipywidgets.Checkbox(
+            description='Padding', value=hog_options_default['padding'])
+        self.mode_padding_box = ipywidgets.HBox(
+            children=[self.mode_radiobuttons, self.padding_checkbox])
+        self.window_height_text = ipywidgets.BoundedIntText(
+            value=hog_options_default['window_height'], description='Height',
+            min=1, width='2cm')
+        self.window_width_text = ipywidgets.BoundedIntText(
+            value=hog_options_default['window_width'], description='Width',
+            min=1, width='2cm')
+        tmp = OrderedDict()
+        tmp['Blocks'] = 'blocks'
+        tmp['Pixels'] = 'pixels'
+        self.window_size_unit_radiobuttons = ipywidgets.RadioButtons(
+            options=tmp, description=' Size unit',
+            value=hog_options_default['window_unit'])
+        self.window_size_box = ipywidgets.VBox(
+            children=[self.window_height_text, self.window_width_text,
+                      self.window_size_unit_radiobuttons])
+        self.window_vertical_text = ipywidgets.BoundedIntText(
+            value=hog_options_default['window_step_vertical'],
+            description='Step Y', min=1, width='2cm')
+        self.window_horizontal_text = ipywidgets.BoundedIntText(
+            value=hog_options_default['window_step_horizontal'],
+            description='Step X', min=1, width='2cm')
+        tmp = OrderedDict()
+        tmp['Pixels'] = 'pixels'
+        tmp['Cells'] = 'cells'
+        self.window_step_unit_radiobuttons = ipywidgets.RadioButtons(
+            options=tmp, description='Step unit',
+            value=hog_options_default['window_step_unit'])
+        self.window_step_box = ipywidgets.VBox(
+            children=[self.window_vertical_text, self.window_horizontal_text,
+                      self.window_step_unit_radiobuttons])
+        self.window_size_step_box = ipywidgets.HBox(
+            children=[self.window_size_box, self.window_step_box])
+        self.window_box = ipywidgets.Box(children=[self.mode_padding_box,
+                                                   self.window_size_step_box])
+
+        # Algorithm related options
+        tmp = OrderedDict()
+        tmp['Dalal & Triggs'] = 'dalaltriggs'
+        tmp['Zhu & Ramanan'] = 'zhuramanan'
+        self.algorithm_radiobuttons = ipywidgets.RadioButtons(
+            options=tmp, value=hog_options_default['algorithm'],
+            description='Algorithm')
+        self.cell_size_text = ipywidgets.BoundedIntText(
+            value=hog_options_default['cell_size'],
+            description='Cell size (in pixels)', min=1, width='2cm')
+        self.block_size_text = ipywidgets.BoundedIntText(
+            value=hog_options_default['block_size'],
+            description='Block size (in cells)', min=1, width='2cm')
+        self.num_bins_text = ipywidgets.BoundedIntText(
+            value=hog_options_default['num_bins'],
+            description='Orientation bins', min=1, width='2cm')
+        self.algorithm_sizes_box = ipywidgets.VBox(
+            children=[self.cell_size_text, self.block_size_text,
+                      self.num_bins_text])
+        self.signed_gradient_checkbox = ipywidgets.Checkbox(
+            value=hog_options_default['signed_gradient'],
+            description='Signed gradients')
+        self.l2_norm_clipping_text = ipywidgets.BoundedFloatText(
+            value=hog_options_default['l2_norm_clip'],
+            description='L2 norm clipping', min=0., width='2cm')
+        self.algorithm_other_box = ipywidgets.Box(
+            children=[self.signed_gradient_checkbox,
+                      self.l2_norm_clipping_text])
+        self.algorithm_options_box = ipywidgets.HBox(
+            children=[self.algorithm_sizes_box, self.algorithm_other_box])
+        self.algorithm_box = ipywidgets.Box(
+            children=[self.algorithm_radiobuttons, self.algorithm_options_box])
+
+        # Final widget
+        self.options_box = ipywidgets.Tab(children=[self.window_box,
+                                                    self.algorithm_box])
+        super(HOGOptionsWidget, self).__init__(children=[self.toggle_visible,
+                                                         self.options_box])
+
+        # set tab titles
+        tab_titles = ['Window', 'Algorithm']
+        for (k, tl) in enumerate(tab_titles):
+            self.options_box.set_title(k, tl)
+
+        # Assign output
+        self.selected_values = hog_options_default
+
+        # Set functionality
+        def window_mode(name, value):
+            self.window_horizontal_text.disabled = value == 'sparse'
+            self.window_vertical_text.disabled = value == 'sparse'
+            self.window_step_unit_radiobuttons.disabled = value == 'sparse'
+            self.window_height_text.disabled = value == 'sparse'
+            self.window_width_text.disabled = value == 'sparse'
+            self.window_size_unit_radiobuttons.disabled = value == 'sparse'
+        self.mode_radiobuttons.on_trait_change(window_mode, 'value')
+
+        # algorithm function
+        def algorithm_mode(name, value):
+            self.l2_norm_clipping_text.disabled = value == 'zhuramanan'
+            self.signed_gradient_checkbox.disabled = value == 'zhuramanan'
+            self.block_size_text.disabled = value == 'zhuramanan'
+            self.num_bins_text.disabled = value == 'zhuramanan'
+        self.algorithm_radiobuttons.on_trait_change(algorithm_mode, 'value')
+
+        # get options
+        def get_mode(name, value):
+            self.selected_values['mode'] = value
+        self.mode_radiobuttons.on_trait_change(get_mode, 'value')
+
+        def get_padding(name, value):
+            self.selected_values['padding'] = value
+        self.padding_checkbox.on_trait_change(get_padding, 'value')
+
+        def get_window_height(name, value):
+            self.selected_values['window_height'] = value
+        self.window_height_text.on_trait_change(get_window_height, 'value')
+
+        def get_window_width(name, value):
+            self.selected_values['window_width'] = value
+        self.window_width_text.on_trait_change(get_window_width, 'value')
+
+        def get_window_size_unit(name, value):
+            self.selected_values['window_unit'] = value
+        self.window_size_unit_radiobuttons.on_trait_change(get_window_size_unit,
+                                                           'value')
+
+        def get_window_step_vertical(name, value):
+            self.selected_values['window_step_vertical'] = value
+        self.window_vertical_text.on_trait_change(get_window_step_vertical,
+                                                  'value')
+
+        def get_window_step_horizontal(name, value):
+            self.selected_values['window_step_horizontal'] = value
+        self.window_horizontal_text.on_trait_change(get_window_step_horizontal,
+                                                    'value')
+
+        def get_window_step_unit(name, value):
+            self.selected_values['window_step_unit'] = value
+        self.window_step_unit_radiobuttons.on_trait_change(get_window_step_unit,
+                                                           'value')
+
+        def get_algorithm(name, value):
+            self.selected_values['algorithm'] = value
+        self.algorithm_radiobuttons.on_trait_change(get_algorithm, 'value')
+
+        def get_num_bins(name, value):
+            self.selected_values['num_bins'] = value
+        self.num_bins_text.on_trait_change(get_num_bins, 'value')
+
+        def get_cell_size(name, value):
+            self.selected_values['cell_size'] = value
+        self.cell_size_text.on_trait_change(get_cell_size, 'value')
+
+        def get_block_size(name, value):
+            self.selected_values['block_size'] = value
+        self.block_size_text.on_trait_change(get_block_size, 'value')
+
+        def get_signed_gradient(name, value):
+            self.selected_values['signed_gradient'] = value
+        self.signed_gradient_checkbox.on_trait_change(get_signed_gradient,
+                                                      'value')
+
+        def get_l2_norm_clip(name, value):
+            self.selected_values['l2_norm_clip'] = value
+        self.l2_norm_clipping_text.on_trait_change(get_l2_norm_clip, 'value')
+
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=False,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
         r"""
-        The value fo the widget.
-        """
-        return _convert_str_to_list_int(str(self.text_wid.value))
+        Function that defines the styling of the widget.
 
-    @property
-    def description(self):
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.options_box, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.mode_radiobuttons, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.padding_checkbox, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.window_height_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.window_width_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.window_size_unit_radiobuttons, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.window_vertical_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.window_horizontal_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.window_step_unit_radiobuttons, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.algorithm_radiobuttons, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.cell_size_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.block_size_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.num_bins_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.signed_gradient_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.l2_norm_clipping_text, font_family, font_size,
+                     font_style, font_weight)
+
+    def add_render_function(self, render_function):
         r"""
-        The description of the widget.
-        """
-        return self.text_wid.description
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
 
-    @property
-    def model_id(self):
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.mode_radiobuttons.on_trait_change(self._render_function,
+                                                   'value')
+            self.padding_checkbox.on_trait_change(self._render_function,
+                                                  'value')
+            self.window_height_text.on_trait_change(self._render_function,
+                                                    'value')
+            self.window_width_text.on_trait_change(self._render_function,
+                                                   'value')
+            self.window_size_unit_radiobuttons.on_trait_change(
+                self._render_function, 'value')
+            self.window_vertical_text.on_trait_change(self._render_function,
+                                                      'value')
+            self.window_horizontal_text.on_trait_change(self._render_function,
+                                                        'value')
+            self.window_step_unit_radiobuttons.on_trait_change(
+                self._render_function, 'value')
+            self.algorithm_radiobuttons.on_trait_change(self._render_function,
+                                                        'value')
+            self.cell_size_text.on_trait_change(self._render_function, 'value')
+            self.block_size_text.on_trait_change(self._render_function, 'value')
+            self.num_bins_text.on_trait_change(self._render_function, 'value')
+            self.signed_gradient_checkbox.on_trait_change(self._render_function,
+                                                          'value')
+            self.l2_norm_clipping_text.on_trait_change(self._render_function,
+                                                       'value')
+
+    def remove_render_function(self):
         r"""
-        The id of the widget.
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
         """
-        return self.text_wid.model_id
+        self.mode_radiobuttons.on_trait_change(self._render_function, 'value',
+                                               remove=True)
+        self.padding_checkbox.on_trait_change(self._render_function, 'value',
+                                              remove=True)
+        self.window_height_text.on_trait_change(self._render_function, 'value',
+                                                remove=True)
+        self.window_width_text.on_trait_change(self._render_function, 'value',
+                                               remove=True)
+        self.window_size_unit_radiobuttons.on_trait_change(
+            self._render_function, 'value', remove=True)
+        self.window_vertical_text.on_trait_change(self._render_function,
+                                                  'value', remove=True)
+        self.window_horizontal_text.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self.window_step_unit_radiobuttons.on_trait_change(self._render_function,
+                                                           'value', remove=True)
+        self.algorithm_radiobuttons.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self.cell_size_text.on_trait_change(self._render_function, 'value',
+                                            remove=True)
+        self.block_size_text.on_trait_change(self._render_function, 'value',
+                                             remove=True)
+        self.num_bins_text.on_trait_change(self._render_function, 'value',
+                                           remove=True)
+        self.signed_gradient_checkbox.on_trait_change(self._render_function,
+                                                      'value', remove=True)
+        self.l2_norm_clipping_text.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self._render_function = None
 
-
-class FloatListText(IntListText):
-    r"""
-    Basic widget that returns a `list` of `float` numbers. It uses
-    `IPython.html.widgets.Text()` and converts its value to a `list` of
-    `float`.
-
-    Parameters
-    ----------
-    value : `str` or `list` of `int`, Optional
-        The initial value of the widget.
-    description : `str`, Optional
-        The description of the widget.
-
-    Raises
-    ------
-    ValueError
-        value must be str or list
-    """
-
-    @property
-    def value(self):
+    def replace_render_function(self, render_function):
         r"""
-        The value fo the widget.
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
         """
-        return _convert_str_to_list_float(str(self.text_wid.value))
+        # remove old function
+        self.remove_render_function()
 
-
-def _convert_list_to_str(l):
-    r"""
-    Function that converts a given list of numbers to a string. For example:
-        convert_list_to_str([1, 2, 3]) returns '1, 2, 3'
-    """
-    if isinstance(l, list):
-        return str(l)[1:-1]
-    else:
-        return ''
+        # add new function
+        self.add_render_function(render_function)
 
 
 def _convert_str_to_list_int(s):
     r"""
-    Function that converts a given string to a list of int numbers. For example:
-        _convert_str_to_list_int('1, 2, 3') returns [1, 2, 3]
+    Function that converts a given `str` to a `list` of `int` numbers. For
+    example ::
+
+        _convert_str_to_list_int('1, 2, 3')
+
+    returns ::
+
+        [1, 2, 3]
+
     """
     if isinstance(s, str):
         return [int(i[:-1]) if i[-1] == ',' else int(i) for i in s.split()]
@@ -5525,9 +5212,15 @@ def _convert_str_to_list_int(s):
 
 def _convert_str_to_list_float(s):
     r"""
-    Function that converts a given string to a list of float numbers.
-    For example:
-        _convert_str_to_list_float('1, 2, 3') returns [1.0, 2.0, 3.0]
+    Function that converts a given `str` to a `list` of `float` numbers. For
+    example ::
+
+        _convert_str_to_list_float('1, 2, 3')
+
+    returns ::
+
+        [1.0, 2.0, 3.0]
+
     """
     if isinstance(s, str):
         return [float(i[:-1]) if i[-1] == ',' else float(i) for i in s.split()]
@@ -5535,13 +5228,807 @@ def _convert_str_to_list_float(s):
         return []
 
 
-def _get_function_handle_from_string(s):
+def _convert_int_list_to_str(l):
     r"""
-    Function that returns a function handle given the function code as a string.
+    Function that converts a given `list` of `int` numbers to `str`. For
+    example ::
+
+        _convert_int_list_to_str([1, 2, 3])
+
+    returns ::
+
+        '1, 2, 3'
+
     """
-    try:
-        exec(s)
-        function_name = s[4:s.find('(')]
-        return eval(function_name), None
-    except:
-        return None, 'Invalid syntax!'
+    if isinstance(l, list):
+        return str(l)[1:-1]
+    else:
+        return ''
+
+
+class DaisyOptionsWidget(ipywidgets.Box):
+    r"""
+    Creates a widget for selecting Daisy options. Specifically, it consists of:
+
+        1) ToggleButton [`self.toggle_visible`]: controls visibility
+        2) BoundedIntText [`self.step_text`]: sampling step
+        3) BoundedIntText [`self.radius_text`]: radius value
+        4) BoundedIntText [`self.rings_text`]: number of rings
+        5) BoundedIntText [`self.histograms_text`]: histograms
+        6) BoundedIntText [`self.orientations_text`]: orientations
+        7) Dropdown [`self.normalization_dropdown`]: normalization type
+        8) Text [`self.sigmas_text`]: sigmas list
+        9) Text [`self.ring_radii_text`]: ring radii list
+        10) Box [`self.step_radius_rings_histograms_box`]: box that contains
+            (2), (3), (4) and (5)
+        11) Box [`self.orientations_normalization_sigmas_radii_box`]: box that
+            contains (6), (7), (8) and (9)
+        12) HBox [`self.options_box`]: box that contains (10) and (11)
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
+
+    Parameters
+    ----------
+    daisy_options_default : `dict`
+        The initial options. Example ::
+
+            daisy_options_default = {'step': 1,
+                                     'radius': 15,
+                                     'rings': 2,
+                                     'histograms': 2,
+                                     'orientations': 8,
+                                     'normalization': 'l1',
+                                     'sigmas': None,
+                                     'ring_radii': None}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
+        Defines whether the options will be visible upon construction.
+    toggle_show_visible : `bool`, optional
+        The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
+    """
+    def __init__(self, daisy_options_default, render_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='Daisy Options'):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.step_text = ipywidgets.BoundedIntText(
+            value=daisy_options_default['step'], description='Step', min=1,
+            max=10**6)
+        self.radius_text = ipywidgets.BoundedIntText(
+            value=daisy_options_default['radius'], description='Radius', min=1,
+            max=10**6)
+        self.rings_text = ipywidgets.BoundedIntText(
+            value=daisy_options_default['rings'], description='Rings', min=1,
+            max=10**6)
+        self.histograms_text = ipywidgets.BoundedIntText(
+            value=daisy_options_default['histograms'], description='Histograms',
+            min=1, max=10**6)
+        self.orientations_text = ipywidgets.BoundedIntText(
+            value=daisy_options_default['orientations'],
+            description='Orientations', min=1, max=10**6)
+        tmp = OrderedDict()
+        tmp['L1'] = 'l1'
+        tmp['L2'] = 'l2'
+        tmp['Daisy'] = 'daisy'
+        tmp['None'] = None
+        self.normalization_dropdown = ipywidgets.Dropdown(
+            value=daisy_options_default['normalization'], options=tmp,
+            description='Normalization')
+        self.sigmas_text = ipywidgets.Text(
+            value=_convert_int_list_to_str(daisy_options_default['sigmas']),
+            description='Sigmas', width='3cm')
+        self.ring_radii_text = ipywidgets.Text(
+            value=_convert_int_list_to_str(daisy_options_default['ring_radii']),
+            description='Ring radii', width='3cm')
+        self.step_radius_rings_histograms_box = ipywidgets.VBox(
+            children=[self.step_text, self.radius_text, self.rings_text,
+                      self.histograms_text])
+        self.orientations_normalization_sigmas_radii_box = ipywidgets.VBox(
+            children=[self.orientations_text, self.normalization_dropdown,
+                      self.sigmas_text, self.ring_radii_text])
+        self.options_box = ipywidgets.HBox(
+            children=[self.step_radius_rings_histograms_box,
+                      self.orientations_normalization_sigmas_radii_box])
+        super(DaisyOptionsWidget, self).__init__(children=[self.toggle_visible,
+                                                           self.options_box])
+
+        # Assign output
+        self.selected_values = daisy_options_default
+
+        # Set functionality
+        def get_step(name, value):
+            self.selected_values['step'] = value
+        self.step_text.on_trait_change(get_step, 'value')
+
+        def get_radius(name, value):
+            self.selected_values['radius'] = value
+        self.radius_text.on_trait_change(get_radius, 'value')
+
+        def get_rings(name, value):
+            self.selected_values['rings'] = value
+        self.rings_text.on_trait_change(get_rings, 'value')
+
+        def get_histograms(name, value):
+            self.selected_values['histograms'] = value
+        self.histograms_text.on_trait_change(get_histograms, 'value')
+
+        def get_orientations(name, value):
+            self.selected_values['orientations'] = value
+        self.orientations_text.on_trait_change(get_orientations, 'value')
+
+        def get_normalization(name, value):
+            self.selected_values['normalization'] = value
+        self.normalization_dropdown.on_trait_change(get_normalization, 'value')
+
+        def get_sigmas(name, value):
+            self.selected_values['sigmas'] = \
+                _convert_str_to_list_int(str(value))
+        self.sigmas_text.on_trait_change(get_sigmas, 'value')
+
+        def get_ring_radii(name, value):
+            self.selected_values['ring_radii'] = \
+                _convert_str_to_list_float(str(value))
+        self.ring_radii_text.on_trait_change(get_ring_radii, 'value')
+
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=False,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.options_box, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.step_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.radius_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.rings_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.histograms_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.orientations_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.normalization_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.sigmas_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.ring_radii_text, font_family, font_size, font_style,
+                     font_weight)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.step_text.on_trait_change(self._render_function, 'value')
+            self.radius_text.on_trait_change(self._render_function, 'value')
+            self.rings_text.on_trait_change(self._render_function, 'value')
+            self.histograms_text.on_trait_change(self._render_function, 'value')
+            self.orientations_text.on_trait_change(self._render_function,
+                                                   'value')
+            self.normalization_dropdown.on_trait_change(self._render_function,
+                                                        'value')
+            self.sigmas_text.on_trait_change(self._render_function, 'value')
+            self.ring_radii_text.on_trait_change(self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.step_text.on_trait_change(self._render_function, 'value',
+                                       remove=True)
+        self.radius_text.on_trait_change(self._render_function, 'value',
+                                         remove=True)
+        self.rings_text.on_trait_change(self._render_function, 'value',
+                                        remove=True)
+        self.histograms_text.on_trait_change(self._render_function, 'value',
+                                             remove=True)
+        self.orientations_text.on_trait_change(self._render_function, 'value',
+                                               remove=True)
+        self.normalization_dropdown.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self.sigmas_text.on_trait_change(self._render_function, 'value',
+                                         remove=True)
+        self.ring_radii_text.on_trait_change(self._render_function, 'value',
+                                             remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+
+class LBPOptionsWidget(ipywidgets.Box):
+    r"""
+    Creates a widget for selecting LBP options. Specifically, it consists of:
+
+        1) ToggleButton [`self.toggle_visible`]: controls visibility
+        2) Dropdown [`self.mapping_type_dropdown`]: select mapping type
+        3) Text [`self.radius_text`]: radius list
+        4) Text [`self.samples_text`]: samples list
+        5) Box [`self.radius_samples_mapping_type_box`]: box that contains (2),
+           (3) and (4)
+        6) BoundedIntText [`self.window_vertical_text`]: window vertical step
+        7) BoundedIntText [`self.window_horizontal_text`]: window horizontal
+           step
+        8) RadioButtons [`self.window_step_unit_radiobuttons`]: window step unit
+        9) Checkbox [`self.padding_checkbox`]: padding
+        10) Box [`self.window_box`]: box that contains (6), (7), (8) and (9)
+        11) HBox [`self.options_box`]: box that contains (5) and (10)
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
+
+    Parameters
+    ----------
+    lbp_options_default : `dict`
+        The initial options. Example ::
+
+        lbp_options_default = {'radius': range(1, 5),
+                               'samples': [8] * 4,
+                               'mapping_type': 'u2',
+                               'window_step_vertical': 1,
+                               'window_step_horizontal': 1,
+                               'window_step_unit': 'pixels',
+                               'padding': True}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
+        Defines whether the options will be visible upon construction.
+    toggle_show_visible : `bool`, optional
+        The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
+    """
+    def __init__(self, lbp_options_default, render_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='LBP Options'):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        tmp = OrderedDict()
+        tmp['Uniform-2'] = 'u2'
+        tmp['Rotation-Invariant'] = 'ri'
+        tmp['Both'] = 'riu2'
+        tmp['None'] = 'none'
+        self.mapping_type_dropdown = ipywidgets.Dropdown(
+            value=lbp_options_default['mapping_type'], options=tmp,
+            description='Mapping')
+        self.radius_text = ipywidgets.Text(
+            value=_convert_int_list_to_str(lbp_options_default['radius']),
+            description='Radius')
+        self.samples_text = ipywidgets.Text(
+            value=_convert_int_list_to_str(lbp_options_default['samples']),
+            description='Samples')
+        self.radius_samples_mapping_type_box = ipywidgets.Box(
+            children=[self.radius_text, self.samples_text,
+                      self.mapping_type_dropdown])
+        self.window_vertical_text = ipywidgets.BoundedIntText(
+            value=lbp_options_default['window_step_vertical'],
+            description='Step Y', min=1, max=10**6)
+        self.window_horizontal_text = ipywidgets.BoundedIntText(
+            value=lbp_options_default['window_step_horizontal'],
+            description='Step X', min=1, max=10**6)
+        tmp = OrderedDict()
+        tmp['Pixels'] = 'pixels'
+        tmp['Windows'] = 'cells'
+        self.window_step_unit_radiobuttons = ipywidgets.RadioButtons(
+            options=tmp, description='Step unit',
+            value=lbp_options_default['window_step_unit'])
+        self.padding_checkbox = ipywidgets.Checkbox(
+            value=lbp_options_default['padding'], description='Padding')
+        self.window_box = ipywidgets.Box(
+            children=[self.window_vertical_text, self.window_horizontal_text,
+                      self.window_step_unit_radiobuttons,
+                      self.padding_checkbox])
+        self.options_box = ipywidgets.HBox(
+            children=[self.window_box, self.radius_samples_mapping_type_box])
+        super(LBPOptionsWidget, self).__init__(children=[self.toggle_visible,
+                                                         self.options_box])
+
+        # Assign output
+        self.selected_values = lbp_options_default
+
+        # Set functionality
+        def get_mapping_type(name, value):
+            self.selected_values['mapping_type'] = value
+        self.mapping_type_dropdown.on_trait_change(get_mapping_type, 'value')
+
+        def get_window_vertical(name, value):
+            self.selected_values['window_step_vertical'] = value
+        self.window_vertical_text.on_trait_change(get_window_vertical, 'value')
+
+        def get_window_horizontal(name, value):
+            self.selected_values['window_step_horizontal'] = value
+        self.window_horizontal_text.on_trait_change(get_window_horizontal,
+                                                    'value')
+
+        def get_window_step_unit(name, value):
+            self.selected_values['window_step_unit'] = value
+        self.window_step_unit_radiobuttons.on_trait_change(get_window_step_unit,
+                                                           'value')
+
+        def get_padding(name, value):
+            self.selected_values['padding'] = value
+        self.padding_checkbox.on_trait_change(get_padding, 'value')
+
+        def get_radius(name, value):
+            self.selected_values['radius'] = \
+                _convert_str_to_list_int(str(value))
+        self.radius_text.on_trait_change(get_radius, 'value')
+
+        def get_samples(name, value):
+            self.selected_values['samples'] = \
+                _convert_str_to_list_int(str(value))
+        self.samples_text.on_trait_change(get_samples, 'value')
+
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=False,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.options_box, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.mapping_type_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.radius_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.samples_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.window_vertical_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.window_horizontal_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.window_step_unit_radiobuttons, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.padding_checkbox, font_family, font_size, font_style,
+                     font_weight)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.mapping_type_dropdown.on_trait_change(self._render_function,
+                                                       'value')
+            self.radius_text.on_trait_change(self._render_function, 'value')
+            self.samples_text.on_trait_change(self._render_function, 'value')
+            self.window_vertical_text.on_trait_change(self._render_function,
+                                                      'value')
+            self.window_horizontal_text.on_trait_change(self._render_function,
+                                                        'value')
+            self.window_step_unit_radiobuttons.on_trait_change(
+                self._render_function, 'value')
+            self.padding_checkbox.on_trait_change(self._render_function,
+                                                  'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.mapping_type_dropdown.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self.radius_text.on_trait_change(self._render_function, 'value',
+                                         remove=True)
+        self.samples_text.on_trait_change(self._render_function, 'value',
+                                          remove=True)
+        self.window_vertical_text.on_trait_change(self._render_function,
+                                                  'value', remove=True)
+        self.window_horizontal_text.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self.window_step_unit_radiobuttons.on_trait_change(
+            self._render_function, 'value', remove=True)
+        self.padding_checkbox.on_trait_change(self._render_function, 'value',
+                                              remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+
+class IGOOptionsWidget(ipywidgets.Box):
+    r"""
+    Creates a widget for selecting IGO options. Specifically, it consists of:
+
+        1) ToggleButton [`self.toggle_visible`]: controls visibility
+        2) Checkbox [`self.double_angles_checkbox`]: enable double angles
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
+
+    Parameters
+    ----------
+    igo_options_default : `dict`
+        The initial options. Example ::
+
+        igo_options_default = {'double_angles': True}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
+        Defines whether the options will be visible upon construction.
+    toggle_show_visible : `bool`, optional
+        The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
+    """
+    def __init__(self, igo_options_default, render_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='IGO Options'):
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.double_angles_checkbox = ipywidgets.Checkbox(
+            value=igo_options_default['double_angles'],
+            description='Double angles')
+        super(IGOOptionsWidget, self).__init__(
+            children=[self.toggle_visible, self.double_angles_checkbox])
+
+        # Assign output
+        self.selected_values = igo_options_default
+
+        # Set functionality
+        def get_double_angles(name, value):
+            self.selected_values['double_angles'] = value
+        self.double_angles_checkbox.on_trait_change(get_double_angles, 'value')
+
+        def toggle_function(name, value):
+            self.double_angles_checkbox.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=False,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.double_angles_checkbox, inner_box_style,
+                    inner_border_visible, inner_border_color,
+                    inner_border_style, inner_border_width, inner_padding,
+                    inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.double_angles_checkbox, font_family, font_size,
+                     font_style, font_weight)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.double_angles_checkbox.on_trait_change(self._render_function,
+                                                        'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.double_angles_checkbox.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
