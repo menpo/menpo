@@ -845,7 +845,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         def update_colour_wrt_label(name, value):
             # temporarily remove render_function from r, g, b traits
             self.colour_dropdown.on_trait_change(self._render_function, 'value',
-                                                 remote=True)
+                                                 remove=True)
             self.r_text.on_trait_change(self._render_function, 'value',
                                         remove=True)
             self.g_text.on_trait_change(self._render_function, 'value',

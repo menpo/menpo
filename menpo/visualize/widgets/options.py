@@ -1,5 +1,7 @@
 from collections import OrderedDict
 from functools import partial
+import numpy as np
+
 import IPython.html.widgets as ipywidgets
 from IPython.utils.traitlets import link
 
@@ -13,7 +15,6 @@ class ChannelOptionsWidget(ipywidgets.Box):
 
         1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
            the options' visibility
-
         2) RadioButtons [`self.mode_radiobuttons`]: 'Single' or 'Multiple'
         3) Checkbox [`self.masked_checkbox`]: enable masked mode
         4) IntSlider [`self.single_slider`]: channel selection
@@ -60,8 +61,6 @@ class ChannelOptionsWidget(ipywidgets.Box):
         The visibility of the toggle button.
     toggle_title : `str`, optional
         The title of the toggle button.
-    render_checkbox_title : `str`, optional
-        The description of the show line checkbox.
     """
     def __init__(self, channel_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
@@ -601,385 +600,525 @@ class ChannelOptionsWidget(ipywidgets.Box):
         # trigger render function if allowed
         if allow_callback:
             self._render_function('', True)
-#
-#
-# def landmark_options(landmark_options_default, plot_function=None,
-#                      toggle_show_default=True, toggle_show_visible=True):
-#     r"""
-#     Creates a widget with Landmark Options. Specifically, it has:
-#         1) A checkbox that controls the landmarks' visibility.
-#         2) A drop down menu with the available landmark groups.
-#         3) Several toggle buttons with the group's available labels.
-#         4) A toggle button that controls the visibility of all the above, i.e.
-#            the landmark options.
-#
-#     The structure of the widgets is the following:
-#         landmark_options_wid.children = [toggle_button, landmarks_checkbox,
-#                                          groups]
-#         groups.children = [group_drop_down_menu, labels]
-#         labels.children = [labels_text, labels_toggle_buttons]
-#
-#     The returned widget saves the selected values in the following dictionary:
-#         landmark_options_wid.selected_values
-#
-#     To fix the alignment within this widget, please refer to
-#     `format_landmark_options()` function.
-#
-#     To update the state of this widget, please refer to
-#     `update_landmark_options()` function.
-#
-#     Parameters
-#     ----------
-#     landmark_options_default : `dict`
-#         The default options. For example ::
-#
-#             landmark_options_default = {'render_landmarks': True,
-#                                         'group_keys': ['PTS', 'ibug_face_68'],
-#                                         'labels_keys': [['all'], ['jaw', 'eye'],
-#                                         'group': 'PTS',
-#                                         'with_labels': ['all']}
-#
-#     plot_function : `function` or None, optional
-#         The plot function that is executed when a widgets' value changes.
-#         If None, then nothing is assigned.
-#     toggle_show_default : `bool`, optional
-#         Defines whether the options will be visible upon construction.
-#     toggle_show_visible : `bool`, optional
-#         The visibility of the toggle button.
-#     """
-#     import IPython.html.widgets as ipywidgets
-#     # Create all necessary widgets
-#     but = ipywidgets.ToggleButton(description='Landmarks Options',
-#                                   value=toggle_show_default,
-#                                   visible=toggle_show_visible)
-#     landmarks = ipywidgets.Checkbox(description='Render landmarks',
-#                                     value=landmark_options_default['render_landmarks'])
-#     group = ipywidgets.Dropdown(
-#         options=landmark_options_default['group_keys'],
-#         description='Group')
-#     labels_toggles = [[ipywidgets.ToggleButton(description=k, value=True)
-#                        for k in s_keys]
-#                       for s_keys in landmark_options_default['labels_keys']]
-#     labels_text = ipywidgets.Latex(value='Labels')
-#     labels = ipywidgets.Box(children=labels_toggles[0])
-#
-#     # Group widgets
-#     labels_and_text = ipywidgets.Box(children=[labels_text, labels])
-#     group_wid = ipywidgets.Box(children=[group, labels_and_text])
-#
-#     # Widget container
-#     landmark_options_wid = ipywidgets.Box(
-#         children=[but, landmarks, group_wid])
-#
-#     # Initialize output variables
-#     landmark_options_wid.selected_values = landmark_options_default
-#     landmark_options_wid.selected_values['labels_toggles'] = labels_toggles
-#     landmark_options_wid.selected_values['group'] = \
-#         landmark_options_wid.selected_values['group_keys'][0]
-#     landmark_options_wid.selected_values['with_labels'] = \
-#         landmark_options_wid.selected_values['labels_keys'][0]
-#
-#     # Disability control
-#     def landmarks_fun(name, value):
-#         # get landmarks_enabled value
-#         landmark_options_wid.selected_values['render_landmarks'] = value
-#         # disable group drop down menu
-#         group.disabled = not value
-#         # disable all labels toggles
-#         for s_keys in landmark_options_wid.selected_values['labels_toggles']:
-#             for k in s_keys:
-#                 k.disabled = not value
-#         # if all currently selected labels toggles are False, set them all
-#         # to True
-#         all_values = [ww.value for ww in labels.children]
-#         if all(item is False for item in all_values):
-#             for ww in labels.children:
-#                 ww.value = True
-#
-#     landmarks_fun('', landmark_options_wid.selected_values['render_landmarks'])
-#     landmarks.on_trait_change(landmarks_fun, 'value')
-#
-#     # Group drop down method
-#     def group_fun(name, value):
-#         # get group value
-#         landmark_options_wid.selected_values['group'] = value
-#         # assign the correct children to the labels toggles
-#         labels_toggles = landmark_options_wid.selected_values['labels_toggles']
-#         group_keys = landmark_options_wid.selected_values['group_keys']
-#         labels.children = labels_toggles[group_keys.index(value)]
-#         # get with_labels value
-#         landmark_options_wid.selected_values['with_labels'] = []
-#         for ww in labels.children:
-#             if ww.value:
-#                 landmark_options_wid.selected_values['with_labels'].append(
-#                     str(ww.description))
-#         # assign plot_function to all enabled labels
-#         if plot_function is not None:
-#             for w in labels.children:
-#                 w.on_trait_change(plot_function, 'value')
-#
-#     group.on_trait_change(group_fun, 'value')
-#
-#     # Labels function
-#     def labels_fun(name, value):
-#         # if all labels toggles are False, set landmarks checkbox to False
-#         all_values = [ww.value for ww in labels.children]
-#         if all(item is False for item in all_values):
-#             landmarks.value = False
-#         # get with_labels value
-#         landmark_options_wid.selected_values['with_labels'] = []
-#         for ww in labels.children:
-#             if ww.value:
-#                 landmark_options_wid.selected_values['with_labels'].append(
-#                     str(ww.description))
-#
-#     # assign labels_fun to all labels toggles (even hidden ones)
-#     for s_group in landmark_options_wid.selected_values['labels_toggles']:
-#         for w in s_group:
-#             w.on_trait_change(labels_fun, 'value')
-#
-#     # Toggle button function
-#     def show_options(name, value):
-#         group_wid.visible = value
-#         landmarks.visible = value
-#
-#     show_options('', toggle_show_default)
-#     but.on_trait_change(show_options, 'value')
-#
-#     # assign plot_function
-#     if plot_function is not None:
-#         # assign plot_function to landmarks checkbox and group drop down menu
-#         landmarks.on_trait_change(plot_function, 'value')
-#         group.on_trait_change(plot_function, 'value')
-#         # assign plot_function to all currently active labels toggles
-#         for w in labels.children:
-#             w.on_trait_change(plot_function, 'value')
-#
-#     return landmark_options_wid
-#
-#
-# def format_landmark_options(landmark_options_wid, container_padding='6px',
-#                             container_margin='6px',
-#                             container_border='1px solid black',
-#                             toggle_button_font_weight='bold',
-#                             border_visible=True):
-#     r"""
-#     Function that corrects the align (style format) of a given landmark_options
-#     widget. Usage example:
-#         landmark_options_wid = landmark_options()
-#         display(landmark_options_wid)
-#         format_landmark_options(landmark_options_wid)
-#
-#     Parameters
-#     ----------
-#     landmark_options_wid :
-#         The widget object generated by the `landmark_options()` function.
-#
-#     container_padding : `str`, optional
-#         The padding around the widget, e.g. '6px'
-#
-#     container_margin : `str`, optional
-#         The margin around the widget, e.g. '6px'
-#
-#     container_border : `str`, optional
-#         The border around the widget, e.g. '1px solid black'
-#
-#     toggle_button_font_weight : `str`
-#         The font weight of the toggle button, e.g. 'bold'
-#
-#     border_visible : `boolean`, optional
-#         Defines whether to draw the border line around the widget.
-#     """
-#     # align labels toggle buttons
-#     remove_class(landmark_options_wid.children[2].children[1].children[1], 'vbox')
-#     add_class(landmark_options_wid.children[2].children[1].children[1], 'hbox')
-#
-#     # align labels buttons with text
-#     landmark_options_wid.children[2].children[1].children[0].margin_right = '5px'
-#     remove_class(landmark_options_wid.children[2].children[1], 'vbox')
-#     add_class(landmark_options_wid.children[2].children[1], 'hbox')
-#     add_class(landmark_options_wid.children[2].children[1], 'align-center')
-#
-#     # align group drop down menu with labels toggle buttons
-#     landmark_options_wid.children[2].children[1].margin_top = '10px'
-#     add_class(landmark_options_wid.children[2], 'align-start')
-#
-#     # set toggle button font bold
-#     landmark_options_wid.children[0].font_weight = toggle_button_font_weight
-#
-#     # margin and border around container widget
-#     landmark_options_wid.padding = container_padding
-#     landmark_options_wid.margin = container_margin
-#     if border_visible:
-#         landmark_options_wid.border = container_border
-#
-#
-# def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
-#                             plot_function):
-#     r"""
-#     Function that updates the state of a given landmark_options widget if the
-#     group or label keys of an image has changed. Usage example:
-#         landmark_options_default = {'render_landmarks': True,
-#                                     'group_keys': ['PTS', 'ibug_face_68'],
-#                                     'labels_keys': [['all'], ['jaw', 'nose'],
-#                                     'group': 'PTS',
-#                                     'with_labels': ['all']}
-#         landmark_options_wid = landmark_options(landmark_options_default)
-#         display(landmark_options_wid)
-#         format_landmark_options(landmark_options_wid)
-#         update_landmark_options(landmark_options_wid,
-#                                 group_keys=['group3'],
-#                                 labels_keys=['label31', 'label32', 'label33'])
-#         format_landmark_options(landmark_options_wid)
-#
-#     Note that the `format_landmark_options()` function needs to be called again
-#     after the `update_landmark_options()` function.
-#
-#     Parameters
-#     ----------
-#     landmark_options_wid :
-#         The widget object generated by the `landmark_options()` function.
-#
-#     group_keys : `list` of `str`
-#         A list of the available landmark groups.
-#
-#     labels_keys : `list` of `list` of `str`
-#         A list of lists of each landmark group's labels.
-#
-#     plot_function : `function` or None
-#         The plot function that is executed when a widgets' value changes.
-#         If None, then nothing is assigned.
-#     """
-#     import IPython.html.widgets as ipywidgets
-#     # check if the new group_keys and labels_keys are the same as the old ones
-#     if not _compare_groups_and_labels(
-#             group_keys, labels_keys,
-#             landmark_options_wid.selected_values['group_keys'],
-#             landmark_options_wid.selected_values['labels_keys']):
-#         # Create all necessary widgets
-#         group = ipywidgets.Dropdown(options=group_keys,
-#                                     description='Group')
-#         labels_toggles = [
-#             [ipywidgets.ToggleButton(description=k, value=True)
-#              for k in s_keys] for s_keys in labels_keys]
-#
-#         # Group widgets
-#         landmark_options_wid.children[2].children[1].children[1]. \
-#             children = labels_toggles[0]
-#         labels = landmark_options_wid.children[2].children[1]
-#         cont = ipywidgets.Box(children=[group, labels])
-#         landmark_options_wid.children = [landmark_options_wid.children[0],
-#                                          landmark_options_wid.children[1],
-#                                          cont]
-#
-#         # Initialize output variables
-#         landmark_options_wid.selected_values['group_keys'] = group_keys
-#         landmark_options_wid.selected_values['labels_keys'] = labels_keys
-#         landmark_options_wid.selected_values['labels_toggles'] = labels_toggles
-#         landmark_options_wid.selected_values['group'] = group_keys[0]
-#         landmark_options_wid.selected_values['with_labels'] = labels_keys[0]
-#
-#         # Disability control
-#         def landmarks_fun(name, value):
-#             # get landmarks_enabled value
-#             landmark_options_wid.selected_values['render_landmarks'] = value
-#             # disable group drop down menu
-#             group.disabled = not value
-#             # disable all labels toggles
-#             for s_key in landmark_options_wid.selected_values['labels_toggles']:
-#                 for k in s_key:
-#                     k.disabled = not value
-#             # if all currently selected labels toggles are False, set them all
-#             # to True
-#             children = (landmark_options_wid.children[2].children[1]
-#                                             .children[1].children)
-#             all_values = [ww.value for ww in children]
-#             if all(item is False for item in all_values):
-#                 children = (landmark_options_wid.children[2].children[1]
-#                                                 .children[1].children)
-#                 for ww in children:
-#                     ww.value = True
-#
-#         landmark_options_wid.children[1].on_trait_change(landmarks_fun, 'value')
-#         landmarks_fun('',
-#                       landmark_options_wid.selected_values['render_landmarks'])
-#
-#         # Group drop down method
-#         def group_fun(name, value):
-#             # get group value
-#             landmark_options_wid.selected_values['group'] = value
-#             # assign the correct children to the labels toggles
-#             landmark_options_wid.children[2].children[1].children[1]. \
-#                 children = \
-#             landmark_options_wid.selected_values['labels_toggles'][
-#                 landmark_options_wid.selected_values['group_keys'].index(value)]
-#             # get with_labels value
-#             landmark_options_wid.selected_values['with_labels'] = []
-#             for ww in landmark_options_wid.children[2].children[1].children[
-#                 1].children:
-#                 if ww.value:
-#                     landmark_options_wid.selected_values['with_labels'].append(
-#                         str(ww.description))
-#             # assign plot_function to all enabled labels
-#             if plot_function is not None:
-#                 children = (landmark_options_wid.children[2].children[1]
-#                                                 .children[1].children)
-#                 for w in children:
-#                     w.on_trait_change(plot_function, 'value')
-#
-#         group.on_trait_change(group_fun, 'value')
-#
-#         # Labels function
-#         def labels_fun(name, value):
-#             # if all labels toggles are False, set landmarks checkbox to False
-#             all_values = [ww.value
-#                           for ww in
-#                           landmark_options_wid.children[2].children[1].children[
-#                               1].children]
-#             if all(item is False for item in all_values):
-#                 landmark_options_wid.children[1].value = False
-#             # get with_labels value
-#             landmark_options_wid.selected_values['with_labels'] = []
-#             for ww in landmark_options_wid.children[2].children[1].children[1]. \
-#                     children:
-#                 if ww.value:
-#                     landmark_options_wid.selected_values['with_labels'].append(
-#                         str(ww.description))
-#
-#         # assign labels_fun to all labels toggles (even hidden ones)
-#         for s_group in labels_toggles:
-#             for w in s_group:
-#                 w.on_trait_change(labels_fun, 'value')
-#
-#         # assign plot_function
-#         if plot_function is not None:
-#             # assign plot_function to landmarks checkbox, legend
-#             # checkbox and group drop down menu
-#             group.on_trait_change(plot_function, 'value')
-#             # assign plot_function to all currently active labels toggles
-#             for w in labels_toggles[0]:
-#                 w.on_trait_change(plot_function, 'value')
-#
-#         # Toggle button function
-#         def show_options(name, value):
-#             landmark_options_wid.children[1].visible = value
-#             landmark_options_wid.children[2].visible = value
-#
-#         show_options('', landmark_options_wid.children[0].value)
-#         landmark_options_wid.children[0].on_trait_change(show_options, 'value')
-#
-#         # If there is only one group with value ' ', this means that the image
-#         # didn't have any landmarks. So disable the show_landmarks checkbox.
-#         if len(group_keys) == 1 and group_keys[0] == ' ':
-#             # No landmarks are provided. So disable the show landmarks checkbox
-#             landmark_options_wid.children[1].value = False
-#             landmark_options_wid.children[1].disabled = True
-#         else:
-#             if landmark_options_wid.children[1].disabled:
-#                 landmark_options_wid.children[1].disabled = False
-#                 landmark_options_wid.children[1].value = True
-#
-#
+
+
+class LandmarkOptionsWidget(ipywidgets.Box):
+    r"""
+    Creates a widget for selecting landmark options when rendering an image.
+    Specifically, it consists of:
+
+        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
+        2) Latex [`self.no_landmarks_msg`]: Message in case there are no
+           landmarks available.
+        3) Checkbox [`self.render_landmarks_checkbox`]: render landmarks
+        4) Box [`self.landmarks_checkbox_and_msg_box`]: box that contains (3)
+           and (2)
+        5) Dropdown [`self.group_dropdown`]: group selector
+        6) ToggleButtons [`self.labels_toggles`]: `list` of `list`s with the
+           labels per group
+        7) Latex [`self.labels_text`]: labels title text
+        8) HBox [`self.labels_box`]: box that contains all (6)
+        9) HBox [`self.labels_and_text_box`]: box contains (7) and (8)
+        10) VBox [`self.group_and_labels_and_text_box`]: box that contains (5)
+            and (9)
+        11) VBox [`self.options_box`]: box that contains (4) and (10)
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `set_render_function()` methods.
+
+    Parameters
+    ----------
+    landmark_options : `dict`
+        The initial options. For example ::
+
+            landmark_options = {'has_landmarks': True,
+                                'render_landmarks': True,
+                                'group_keys': ['PTS', 'ibug_face_68'],
+                                'labels_keys': [['all'], ['jaw', 'eye']],
+                                'group': 'PTS',
+                                'with_labels': ['all']}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
+        Defines whether the options will be visible upon construction.
+    toggle_show_visible : `bool`, optional
+        The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
+    """
+    def __init__(self, landmark_options, render_function=None,
+                 toggle_show_visible=True, toggle_show_default=True,
+                 toggle_title='Landmarks Options'):
+        # Check given options
+        landmark_options = self._parse_landmark_options_dict(landmark_options)
+
+        # Create widgets
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        self.no_landmarks_msg = ipywidgets.Latex(
+            value='No landmarks available.',
+            visible=self._no_landmarks_msg_visible(
+                toggle_show_default, landmark_options['has_landmarks']))
+        # temporarily store visible and disabled values
+        tmp_visible = self._options_visible(toggle_show_default,
+                                            landmark_options['has_landmarks'])
+        tmp_disabled = not landmark_options['render_landmarks']
+        self.render_landmarks_checkbox = ipywidgets.Checkbox(
+            description='Render landmarks',
+            value=landmark_options['render_landmarks'], visible=tmp_visible)
+        self.landmarks_checkbox_and_msg_box = ipywidgets.Box(
+            children=[self.render_landmarks_checkbox, self.no_landmarks_msg])
+        self.group_dropdown = ipywidgets.Dropdown(
+            options=landmark_options['group_keys'], description='Group',
+            visible=tmp_visible, value=landmark_options['group'],
+            disabled=tmp_disabled)
+        self.labels_toggles = [
+            [ipywidgets.ToggleButton(description=k, value=True,
+                                     visible=tmp_visible, disabled=tmp_disabled)
+             for k in s_keys]
+            for s_keys in landmark_options['labels_keys']]
+        self.labels_text = ipywidgets.Latex(value='Labels', visible=tmp_visible)
+        group_idx = landmark_options['group_keys'].index(
+            landmark_options['group'])
+        self.labels_box = ipywidgets.HBox(
+            children=self.labels_toggles[group_idx])
+        self.labels_and_text_box = ipywidgets.HBox(children=[self.labels_text,
+                                                             self.labels_box],
+                                                   align='center')
+        self._set_labels_toggles_values(landmark_options['with_labels'])
+        self.group_and_labels_and_text_box = ipywidgets.VBox(
+            children=[self.group_dropdown, self.labels_and_text_box])
+        self.options_box = ipywidgets.VBox(
+            children=[self.landmarks_checkbox_and_msg_box,
+                      self.group_and_labels_and_text_box],
+            visible=toggle_show_default)
+        super(LandmarkOptionsWidget, self).__init__(
+            children=[self.toggle_visible, self.options_box])
+
+        # Assign output
+        self.selected_values = landmark_options
+
+        # Set functionality
+        def render_landmarks_fun(name, value):
+            # save render_landmarks value
+            self.selected_values['render_landmarks'] = value
+            # disable group drop down menu
+            self.group_dropdown.disabled = not value
+            # set disability of all labels toggles
+            for s_keys in self.labels_toggles:
+                for k in s_keys:
+                    k.disabled = not value
+            # if all currently selected labels toggles are False, set them all
+            # to True
+            self._all_labels_false_1()
+        self.render_landmarks_checkbox.on_trait_change(render_landmarks_fun,
+                                                       'value')
+
+        def group_fun(name, value):
+            # save group value
+            self.selected_values['group'] = value
+            # assign the correct children to the labels toggles
+            group_idx = self.selected_values['group_keys'].index(
+                self.selected_values['group'])
+            self.labels_box.children = self.labels_toggles[group_idx]
+            # save with_labels value
+            self._save_with_labels()
+        self.group_dropdown.on_trait_change(group_fun, 'value')
+
+        def labels_fun(name, value):
+            # if all labels toggles are False, set render landmarks checkbox to
+            # False
+            self._all_labels_false_2()
+            # save with_labels value
+            self._save_with_labels()
+        # assign labels_fun to all labels toggles (even hidden ones)
+        self._add_function_to_labels_toggles(labels_fun)
+
+        def toggle_function(name, value):
+            self.options_box.visible = value
+            self.no_landmarks_msg.visible = self._no_landmarks_msg_visible(
+                value, self.selected_values['has_landmarks'])
+            tmp_visible = self._options_visible(
+                value, self.selected_values['has_landmarks'])
+            self.render_landmarks_checkbox.visible = tmp_visible
+            self.group_dropdown.visible = tmp_visible
+            for i1 in self.labels_toggles:
+                for lt in i1:
+                    lt.visible = tmp_visible
+            self.labels_text.visible = tmp_visible
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+        # Store functions
+        self._render_landmarks_fun = render_landmarks_fun
+        self._group_fun = group_fun
+        self._labels_fun = labels_fun
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def _parse_landmark_options_dict(self, landmark_options):
+        if (len(landmark_options['group_keys']) == 1 and
+                landmark_options['group_keys'][0] == ' '):
+            landmark_options['has_landmarks'] = False
+        if not landmark_options['has_landmarks']:
+            landmark_options['render_landmarks'] = False
+            landmark_options['group_keys'] = [' ']
+            landmark_options['group'] = ' '
+            landmark_options['labels_keys'] = [[' ']]
+            landmark_options['with_labels'] = [' ']
+        else:
+            if len(landmark_options['with_labels']) == 0:
+                group_idx = landmark_options['group_keys'].index(
+                    landmark_options['group'])
+                landmark_options['with_labels'] = \
+                    landmark_options['labels_keys'][group_idx]
+        return landmark_options
+
+    def _no_landmarks_msg_visible(self, toggle, has_landmarks):
+        return toggle and not has_landmarks
+
+    def _options_visible(self, toggle, has_landmarks):
+        return toggle and has_landmarks
+
+    def _all_labels_false_1(self):
+        r"""
+        If all currently selected labels toggles are ``False``, set them all to
+        ``True``.
+        """
+        # get all values of current labels toggles
+        all_values = [ww.value for ww in self.labels_box.children]
+        # if all of them are False
+        if all(item is False for item in all_values):
+            for ww in self.labels_box.children:
+                # temporarily remove render function
+                ww.on_trait_change(self._render_function, 'value', remove=True)
+                # set value
+                ww.value = True
+                # re-add render function
+                ww.on_trait_change(self._render_function, 'value')
+
+    def _all_labels_false_2(self):
+        r"""
+        If all currently selected labels toggles are ``False``, set
+        `render_landmarks_checkbox` to ``False``.
+        """
+        # get all values of current labels toggles
+        all_values = [ww.value for ww in self.labels_box.children]
+        # if all of them are False
+        if all(item is False for item in all_values):
+            # temporarily remove render function
+            self.render_landmarks_checkbox.on_trait_change(
+                self._render_function, 'value', remove=True)
+            # set value
+            self.render_landmarks_checkbox.value = False
+            # re-add render function
+            self.render_landmarks_checkbox.on_trait_change(
+                self._render_function, 'value')
+
+    def _save_with_labels(self):
+        r"""
+        Saves `with_labels` value to the `selected_values` dictionary.
+        """
+        self.selected_values['with_labels'] = []
+        for ww in self.labels_box.children:
+            if ww.value:
+                self.selected_values['with_labels'].append(
+                    str(ww.description))
+
+    def _set_labels_toggles_values(self, with_labels):
+        for w in self.labels_box.children:
+            if w.description not in with_labels:
+                w.value = False
+
+    def _add_function_to_labels_toggles(self, fun):
+        r"""
+        Adds a function callback to all labels toggles.
+        """
+        for s_group in self.labels_toggles:
+            for w in s_group:
+                w.on_trait_change(fun, 'value')
+
+    def _remove_function_from_labels_toggles(self, fun):
+        r"""
+        Removes a function callback from all labels toggles.
+        """
+        for s_group in self.labels_toggles:
+            for w in s_group:
+                w.on_trait_change(fun, 'value', remove=True)
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=True,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.render_landmarks_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.group_dropdown, font_family, font_size, font_style,
+                     font_weight)
+        for s_group in self.labels_toggles:
+            for w in s_group:
+                _format_font(w, font_family, font_size, font_style, font_weight)
+        _format_font(self.labels_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.render_landmarks_checkbox.on_trait_change(
+                self._render_function, 'value')
+            self.group_dropdown.on_trait_change(self._render_function, 'value')
+            self._add_function_to_labels_toggles(self._render_function)
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.render_landmarks_checkbox.on_trait_change(self._render_function,
+                                                       'value', remove=True)
+        self.group_dropdown.on_trait_change(self._render_function, 'value',
+                                            remove=True)
+        self._remove_function_from_labels_toggles(self._render_function)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def _compare_groups_and_labels(self, groups, labels):
+        r"""
+        Function that compares the provided landmarks groups and labels with
+        `self.selected_values['group_keys']` and
+        `self.selected_values['labels_keys']`.
+
+        Parameters
+        ----------
+        groups : `list` of `str`
+            The new `list` of landmark groups.
+        labels : `list` of `list` of `str`
+            The new `list` of `list`s of each landmark group's labels.
+
+        Returns
+        -------
+        _compare_groups_and_labels : `bool`
+            ``True`` if the groups and labels are identical with the ones stored
+            in `self.selected_values['group_keys']` and
+            `self.selected_values['labels_keys']`.
+        """
+        # function that compares two lists without taking into account the order
+        def comp_lists(l1, l2):
+            len_match = len(l1) == len(l2)
+            return len_match and np.all([g1 == g2 for g1, g2 in zip(l1, l2)])
+
+        # comparison of the given groups
+        groups_same = comp_lists(groups, self.selected_values['group_keys'])
+
+        # if groups are the same, then compare the labels
+        if groups_same:
+            len_match = len(labels) == len(self.selected_values['labels_keys'])
+            tmp = [comp_lists(g1, g2)
+                   for g1, g2 in zip(labels,
+                                     self.selected_values['labels_keys'])]
+            return len_match and np.all(tmp)
+        else:
+            return False
+
+    def set_widget_state(self, landmark_options, allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+
+        Parameter
+        ---------
+        landmark_options : `dict`
+            The initial options. For example ::
+
+                landmark_options = {'has_landmarks': True,
+                                    'render_landmarks': True,
+                                    'group_keys': ['PTS', 'ibug_face_68'],
+                                    'labels_keys': [['all'], ['jaw', 'eye']],
+                                    'group': 'PTS',
+                                    'with_labels': ['all']}
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # temporarily remove the rest of the callbacks
+        self.render_landmarks_checkbox.on_trait_change(
+            self._render_landmarks_fun, 'value', remove=True)
+        self.group_dropdown.on_trait_change(self._group_fun, 'value',
+                                            remove=True)
+        self._remove_function_from_labels_toggles(self._labels_fun)
+
+        # Check given options
+        landmark_options = self._parse_landmark_options_dict(landmark_options)
+
+        # Update widgets
+        self.no_landmarks_msg.visible = self._no_landmarks_msg_visible(
+            self.toggle_visible.value, landmark_options['has_landmarks'])
+        # temporarily store visible and disabled values
+        tmp_visible = self._options_visible(self.toggle_visible.value,
+                                            landmark_options['has_landmarks'])
+        tmp_disabled = not landmark_options['render_landmarks']
+        self.render_landmarks_checkbox.value = \
+            landmark_options['render_landmarks']
+        self.render_landmarks_checkbox.visible = tmp_visible
+        self.labels_text.visible = tmp_visible
+
+        # Check if group_keys and labels_keys are the same with the existing
+        # ones
+        if not self._compare_groups_and_labels(landmark_options['group_keys'],
+                                               landmark_options['labels_keys']):
+            self.group_dropdown.options = landmark_options['group_keys']
+            self.group_dropdown.visible = tmp_visible
+            self.group_dropdown.disabled = tmp_disabled
+            self.group_dropdown.value = landmark_options['group']
+
+            self.labels_toggles = [
+                [ipywidgets.ToggleButton(description=k, disabled=tmp_disabled,
+                                         visible=tmp_visible, value=True)
+                 for k in s_keys]
+                for s_keys in landmark_options['labels_keys']]
+            group_idx = landmark_options['group_keys'].index(
+                landmark_options['group'])
+            self.labels_box.children = self.labels_toggles[group_idx]
+            self._set_labels_toggles_values(landmark_options['with_labels'])
+        else:
+            self.group_dropdown.visible = tmp_visible
+            self.group_dropdown.disabled = tmp_disabled
+            self.group_dropdown.value = landmark_options['group']
+
+            self._set_labels_toggles_values(landmark_options['with_labels'])
+            for w in self.labels_toggles:
+                w.disabled = tmp_disabled
+                w.visible = tmp_visible
+
+        # Re-assign the rest of the callbacks
+        self.render_landmarks_checkbox.on_trait_change(
+            self._render_landmarks_fun, 'value')
+        self.group_dropdown.on_trait_change(self._group_fun, 'value')
+        self._add_function_to_labels_toggles(self._labels_fun)
+
+        # Re-assign render callback
+        self.add_render_function(render_function)
+
+        # Assign new options dict to selected_values
+        self.selected_values = landmark_options
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
+
+
 # def info_print(n_bullets, toggle_show_default=True, toggle_show_visible=True):
 #     r"""
 #     Creates a widget that can print information. Specifically, it has:
@@ -2353,39 +2492,4 @@ class ChannelOptionsWidget(ipywidgets.Box):
 #     features_options_wid.margin = container_margin
 #     if border_visible:
 #         features_options_wid.border = container_border
-#
-#
-# def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
-#     r"""
-#     Function that compares two sets of landmarks groups and labels and returns
-#     Trues if they are identical else False.
-#
-#     Parameters
-#     ----------
-#     group1 : `list` of `str`
-#         The first list of landmark groups.
-#
-#     labels1 : `list` of `list` of `str`
-#         The first list of lists of each landmark group's labels.
-#
-#     group2 : `list` of `str`
-#         The second list of landmark groups.
-#
-#     labels2 : `list` of `list` of `str`
-#         The second list of lists of each landmark group's labels.
-#     """
-#     # function that compares two lists without taking into account the order
-#     def comp_lists(l1, l2):
-#         len_match = len(l1) == len(l2)
-#         return len_match and np.all([g1 == g2 for g1, g2 in zip(l1, l2)])
-#
-#     # comparison of the given groups
-#     groups_same = comp_lists(groups1, groups2)
-#
-#     # if groups are the same, compare the labels
-#     if groups_same:
-#         len_match = len(labels1) == len(labels2)
-#         return len_match and np.all([comp_lists(g1, g2)
-#                                      for g1, g2 in zip(labels1, labels2)])
-#     else:
-#         return False
+
