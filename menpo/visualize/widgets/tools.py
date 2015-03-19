@@ -166,10 +166,10 @@ class IndexSliderWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    index_default : `dict`
+    index : `dict`
         The dictionary with the default options. For example ::
 
-            index_default = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+            index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when the index value changes.
@@ -180,17 +180,16 @@ class IndexSliderWidget(ipywidgets.Box):
     description : `str`, optional
         The title of the widget.
     """
-    def __init__(self, index_default, render_function=None,
+    def __init__(self, index, render_function=None,
                  update_function=None, description='Index: '):
-        self.slider = ipywidgets.IntSlider(min=index_default['min'],
-                                           max=index_default['max'],
-                                           value=index_default['index'],
-                                           step=index_default['step'],
+        self.slider = ipywidgets.IntSlider(min=index['min'], max=index['max'],
+                                           value=index['index'],
+                                           step=index['step'],
                                            description=description)
         super(IndexSliderWidget, self).__init__(children=[self.slider])
 
         # Assign output
-        self.selected_values = index_default
+        self.selected_values = index
 
         # Set functionality
         def save_index(name, value):
@@ -337,25 +336,26 @@ class IndexSliderWidget(ipywidgets.Box):
         # add new function
         self.add_update_function(update_function)
 
-    def set_widget_state(self, index_default, allow_callback=True):
+    def set_widget_state(self, index, allow_callback=True):
         r"""
-        Method that updates the state of the widget, if the provided
-        `index_default` values are different than `self.selected_values()`.
+        Method that updates the state of the widget, if the provided `index`
+        values are different than `self.selected_values()`.
 
         Parameter
         ---------
-        index_default : `dict`
+        index : `dict`
             The dictionary with the selected options. For example ::
 
-                index_default = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+                index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # Check if update is required
-        if not (index_default['min'] == self.selected_values['min'] and
-                index_default['max'] == self.selected_values['max'] and
-                index_default['step'] == self.selected_values['step'] and
-                index_default['index'] == self.selected_values['index']):
+        if not (index['min'] == self.selected_values['min'] and
+                index['max'] == self.selected_values['max'] and
+                index['step'] == self.selected_values['step'] and
+                index['index'] == self.selected_values['index']):
             if not allow_callback:
                 # temporarily remove render and update functions
                 render_function = self._render_function
@@ -364,10 +364,10 @@ class IndexSliderWidget(ipywidgets.Box):
                 self.remove_update_function()
 
             # set values to slider
-            self.slider.min = index_default['min']
-            self.slider.max = index_default['max']
-            self.slider.step = index_default['step']
-            self.slider.value = index_default['index']
+            self.slider.min = index['min']
+            self.slider.max = index['max']
+            self.slider.step = index['step']
+            self.slider.value = index['index']
 
             if not allow_callback:
                 # re-assign render and update callbacks
@@ -375,7 +375,7 @@ class IndexSliderWidget(ipywidgets.Box):
                 self.add_render_function(render_function)
 
         # Assign output
-        self.selected_values = index_default
+        self.selected_values = index
 
 
 class IndexButtonsWidget(ipywidgets.FlexBox):
@@ -396,10 +396,10 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
 
     Parameters
     ----------
-    index_default : `dict`
+    index : `dict`
         The dictionary with the default options. For example ::
 
-            index_default = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+            index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when the index value changes.
@@ -421,17 +421,15 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
     text_editable : `bool`, optional
         Flag that determines whether the index text will be editable.
     """
-    def __init__(self, index_default, render_function=None,
-                 update_function=None, description='Index: ',
-                 minus_description='-', plus_description='+', loop_enabled=True,
-                 text_editable=True):
+    def __init__(self, index, render_function=None, update_function=None,
+                 description='Index: ', minus_description='-',
+                 plus_description='+', loop_enabled=True, text_editable=True):
         self.title = ipywidgets.Latex(value=description)
         self.button_minus = ipywidgets.Button(description=minus_description)
         self.button_plus = ipywidgets.Button(description=plus_description)
-        self.index_text = ipywidgets.IntText(value=index_default['index'],
-                                             min=index_default['min'],
-                                             max=index_default['max'],
-                                             disabled=not text_editable)
+        self.index_text = ipywidgets.IntText(
+            value=index['index'], min=index['min'], max=index['max'],
+            disabled=not text_editable)
         super(IndexButtonsWidget, self).__init__(children=[self.title,
                                                            self.button_minus,
                                                            self.index_text,
@@ -444,7 +442,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         self.align = 'center'
 
         # Assign output
-        self.selected_values = index_default
+        self.selected_values = index
 
         # Set functionality
         def value_plus(name):
@@ -632,18 +630,19 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         # add new function
         self.add_update_function(update_function)
 
-    def set_widget_state(self, index_default, loop_enabled, text_editable,
+    def set_widget_state(self, index, loop_enabled, text_editable,
                          allow_callback=True):
         r"""
-        Method that updates the state of the widget, if the provided
-        `index_default` values are different than `self.selected_values()`.
+        Method that updates the state of the widget, if the provided `index`
+        values are different than `self.selected_values()`.
 
         Parameter
         ---------
-        index_default : `dict`
+        index : `dict`
             The dictionary with the selected options. For example ::
 
-                index_default = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+                index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -653,7 +652,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         self.index_text.disabled = not text_editable
 
         # Check if update is required
-        if not index_default['index'] == self.selected_values['index']:
+        if not index['index'] == self.selected_values['index']:
             if not allow_callback:
                 # temporarily remove render and update functions
                 render_function = self._render_function
@@ -662,7 +661,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
                 self.remove_update_function()
 
             # set value to index text
-            self.index_text.value = str(index_default['index'])
+            self.index_text.value = str(index['index'])
 
             if not allow_callback:
                 # re-assign render and update callbacks
@@ -670,7 +669,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
                 self.add_render_function(render_function)
 
         # Assign output
-        self.selected_values = index_default
+        self.selected_values = index
 
 
 def _decode_colour(colour):
@@ -845,19 +844,23 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
         def update_colour_wrt_label(name, value):
             # temporarily remove render_function from r, g, b traits
-            self.colour_dropdown._remove_notifiers(self._render_function, 'value')
-            self.r_text._remove_notifiers(self._render_function, 'value')
-            self.g_text._remove_notifiers(self._render_function, 'value')
-            self.b_text._remove_notifiers(self._render_function, 'value')
+            self.colour_dropdown.on_trait_change(self._render_function, 'value',
+                                                 remote=True)
+            self.r_text.on_trait_change(self._render_function, 'value',
+                                        remove=True)
+            self.g_text.on_trait_change(self._render_function, 'value',
+                                        remove=True)
+            self.b_text.on_trait_change(self._render_function, 'value',
+                                        remove=True)
             # update colour widgets
             (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
              self.b_text.value) = _decode_colour(
                 self.selected_values['colour'][value])
             # re-assign render_function
-            self.colour_dropdown._add_notifiers(self._render_function, 'value')
-            self.r_text._add_notifiers(self._render_function, 'value')
-            self.g_text._add_notifiers(self._render_function, 'value')
-            self.b_text._add_notifiers(self._render_function, 'value')
+            self.colour_dropdown.on_trait_change(self._render_function, 'value')
+            self.r_text.on_trait_change(self._render_function, 'value')
+            self.g_text.on_trait_change(self._render_function, 'value')
+            self.b_text.on_trait_change(self._render_function, 'value')
         self.label_dropdown.on_trait_change(update_colour_wrt_label, 'value')
 
         def save_colour(name, value):
@@ -1131,10 +1134,10 @@ class ImageOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    image_options_default : `dict`
+    image_options : `dict`
         The initial image options. Example ::
 
-            image_options_default = {'alpha': 1., 'interpolation': 'bilinear'}
+            image_options = {'alpha': 1., 'interpolation': 'bilinear'}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -1146,7 +1149,7 @@ class ImageOptionsWidget(ipywidgets.Box):
     toggle_title : `str`, optional
         The title of the toggle button.
     """
-    def __init__(self, image_options_default, render_function=None,
+    def __init__(self, image_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='Image Options'):
         self.toggle_visible = ipywidgets.ToggleButton(
@@ -1154,9 +1157,9 @@ class ImageOptionsWidget(ipywidgets.Box):
             visible=toggle_show_visible)
         self.interpolation_checkbox = ipywidgets.Checkbox(
             description='Pixelated',
-            value=image_options_default['interpolation'] == 'none')
+            value=image_options['interpolation'] == 'none')
         self.alpha_slider = ipywidgets.FloatSlider(
-            description='Alpha', value=image_options_default['alpha'],
+            description='Alpha', value=image_options['alpha'],
             min=0.0, max=1.0, step=0.05)
         self.options_box = ipywidgets.Box(children=[self.interpolation_checkbox,
                                                     self.alpha_slider],
@@ -1165,7 +1168,7 @@ class ImageOptionsWidget(ipywidgets.Box):
                                                            self.options_box])
 
         # Assign output
-        self.selected_values = image_options_default
+        self.selected_values = image_options
 
         # Set functionality
         def save_interpolation(name, value):
@@ -1294,36 +1297,35 @@ class ImageOptionsWidget(ipywidgets.Box):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, image_options_dict, allow_callback=True):
+    def set_widget_state(self, image_options, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameter
         ---------
-        image_options_dict : `dict`
+        image_options : `dict`
             The image options. Example ::
 
-                image_options_default = {'alpha': 1.,
-                                         'interpolation': 'bilinear'}
+                image_options = {'alpha': 1., 'interpolation': 'bilinear'}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        self.selected_values = image_options_dict
+        self.selected_values = image_options
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
         # update alpha slider
-        if 'alpha' in image_options_dict.keys():
-            self.alpha_slider.value = image_options_dict['alpha']
+        if 'alpha' in image_options.keys():
+            self.alpha_slider.value = image_options['alpha']
 
         # update interpolation checkbox
-        if 'interpolation' in image_options_dict.keys():
+        if 'interpolation' in image_options.keys():
             self.interpolation_checkbox.value = \
-                image_options_dict['interpolation'] == 'none'
+                image_options['interpolation'] == 'none'
 
         # re-assign render callback
         self.add_render_function(render_function)
@@ -1354,13 +1356,11 @@ class LineOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    line_options_default : `dict`
+    line_options : `dict`
         The initial line options. Example ::
 
-            line_options_default = {'render_lines': True,
-                                    'line_width': 1,
-                                    'line_colour': ['b'],
-                                    'line_style': '-'}
+            line_options = {'render_lines': True, 'line_width': 1,
+                            'line_colour': ['b'], 'line_style': '-'}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -1379,7 +1379,7 @@ class LineOptionsWidget(ipywidgets.Box):
         ``label {}`` is automatically defined. Note that the labels are defined
         only for the colour option and not the rest of the options.
     """
-    def __init__(self, line_options_default, render_function=None,
+    def __init__(self, line_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='Line Options',
                  render_checkbox_title='Render lines', labels=None):
@@ -1388,21 +1388,21 @@ class LineOptionsWidget(ipywidgets.Box):
             visible=toggle_show_visible)
         self.render_lines_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
-            value=line_options_default['render_lines'])
+            value=line_options['render_lines'])
         self.line_width_text = ipywidgets.BoundedFloatText(
-            description='Width', value=line_options_default['line_width'],
-            min=0., max=10 ** 6)
+            description='Width', value=line_options['line_width'], min=0.,
+            max=10**6)
         line_style_dict = OrderedDict()
         line_style_dict['solid'] = '-'
         line_style_dict['dashed'] = '--'
         line_style_dict['dash-dot'] = '-.'
         line_style_dict['dotted'] = ':'
         self.line_style_dropdown = ipywidgets.Dropdown(
-            options=line_style_dict, value=line_options_default['line_style'],
+            options=line_style_dict, value=line_options['line_style'],
             description='Style')
         self.line_colour_widget = ColourSelectionWidget(
-            line_options_default['line_colour'], description='Colour',
-            labels=labels, render_function=render_function)
+            line_options['line_colour'], description='Colour', labels=labels,
+            render_function=render_function)
         self.line_options_box = ipywidgets.Box(
             children=[self.line_style_dropdown, self.line_width_text,
                       self.line_colour_widget])
@@ -1414,14 +1414,14 @@ class LineOptionsWidget(ipywidgets.Box):
                                                           self.options_box])
 
         # Assign output
-        self.selected_values = line_options_default
+        self.selected_values = line_options
 
         # Set functionality
         def line_options_visible(name, value):
             self.line_style_dropdown.disabled = not value
             self.line_width_text.disabled = not value
             self.line_colour_widget.disabled(not value)
-        line_options_visible('', line_options_default['render_lines'])
+        line_options_visible('', line_options['render_lines'])
         self.render_lines_checkbox.on_trait_change(line_options_visible,
                                                    'value')
 
@@ -1594,18 +1594,20 @@ class LineOptionsWidget(ipywidgets.Box):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, line_options_dict, labels=None,
+    def set_widget_state(self, line_options, labels=None,
                          allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameter
         ---------
-        line_options_dict : `dict`
+        line_options : `dict`
             The new set of options. For example ::
 
-                line_options_dict = {'render_lines': True, 'line_width': 2,
-                                     'line_colour': ['r'], 'line_style': '-'}
+                line_options = {'render_lines': True,
+                                'line_width': 2,
+                                'line_colour': ['r'],
+                                'line_style': '-'}
 
         labels : `list` or ``None``, optional
             A `list` with the labels' names that get passed in to the
@@ -1615,31 +1617,31 @@ class LineOptionsWidget(ipywidgets.Box):
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        self.selected_values = line_options_dict
+        self.selected_values = line_options
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
         # update render lines checkbox
-        if 'render_lines' in line_options_dict.keys():
-            self.render_lines_checkbox.value = line_options_dict['render_lines']
+        if 'render_lines' in line_options.keys():
+            self.render_lines_checkbox.value = line_options['render_lines']
 
         # update line_style dropdown menu
-        if 'line_style' in line_options_dict.keys():
-            self.line_style_dropdown.value = line_options_dict['line_style']
+        if 'line_style' in line_options.keys():
+            self.line_style_dropdown.value = line_options['line_style']
 
         # update line_width text box
-        if 'line_width' in line_options_dict.keys():
-            self.line_width_text.value = float(line_options_dict['line_width'])
+        if 'line_width' in line_options.keys():
+            self.line_width_text.value = float(line_options['line_width'])
 
         # re-assign render callback
         self.add_render_function(render_function)
 
         # update line_colour
-        if 'line_colour' in line_options_dict.keys():
+        if 'line_colour' in line_options.keys():
             self.line_colour_widget.set_widget_state(
-                line_options_dict['line_colour'], labels=labels,
+                line_options['line_colour'], labels=labels,
                 allow_callback=False)
 
         # trigger render function if allowed
@@ -1674,15 +1676,15 @@ class MarkerOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    marker_options_default : `dict`
+    marker_options : `dict`
         The initial marker options. Example ::
 
-            marker_options_default = {'render_markers': True,
-                                      'marker_size': 20,
-                                      'marker_face_colour': ['r'],
-                                      'marker_edge_colour': ['k'],
-                                      'marker_style': 'o',
-                                      'marker_edge_width': 1}
+            marker_options = {'render_markers': True,
+                              'marker_size': 20,
+                              'marker_face_colour': ['r'],
+                              'marker_edge_colour': ['k'],
+                              'marker_style': 'o',
+                              'marker_edge_width': 1}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -1701,7 +1703,7 @@ class MarkerOptionsWidget(ipywidgets.Box):
         ``label {}`` is automatically defined. Note that the labels are defined
         only for the colour option and not the rest of the options.
     """
-    def __init__(self, marker_options_default, render_function=None,
+    def __init__(self, marker_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='Marker Options',
                  render_checkbox_title='Render markers', labels=None):
@@ -1710,13 +1712,13 @@ class MarkerOptionsWidget(ipywidgets.Box):
             visible=toggle_show_visible)
         self.render_markers_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
-            value=marker_options_default['render_markers'])
+            value=marker_options['render_markers'])
         self.marker_size_text = ipywidgets.BoundedIntText(
-            description='Size', value=marker_options_default['marker_size'],
+            description='Size', value=marker_options['marker_size'],
             min=0, max=10**6)
         self.marker_edge_width_text = ipywidgets.BoundedFloatText(
             description='Edge width', min=0., max=10**6,
-            value=marker_options_default['marker_edge_width'])
+            value=marker_options['marker_edge_width'])
         marker_style_dict = OrderedDict()
         marker_style_dict['point'] = '.'
         marker_style_dict['pixel'] = ','
@@ -1740,16 +1742,14 @@ class MarkerOptionsWidget(ipywidgets.Box):
         marker_style_dict['diamond'] = 'D'
         marker_style_dict['thin diamond'] = 'd'
         self.marker_style_dropdown = ipywidgets.Dropdown(
-            options=marker_style_dict,
-            value=marker_options_default['marker_style'], description='Style')
+            options=marker_style_dict, value=marker_options['marker_style'],
+            description='Style')
         self.marker_face_colour_widget = ColourSelectionWidget(
-            marker_options_default['marker_face_colour'],
-            description='Face Colour', labels=labels,
-            render_function=render_function)
+            marker_options['marker_face_colour'], description='Face Colour',
+            labels=labels, render_function=render_function)
         self.marker_edge_colour_widget = ColourSelectionWidget(
-            marker_options_default['marker_edge_colour'],
-            description='Edge Colour', labels=labels,
-            render_function=render_function)
+            marker_options['marker_edge_colour'], description='Edge Colour',
+            labels=labels, render_function=render_function)
         self.marker_options_box = ipywidgets.Box(
             children=[self.marker_style_dropdown, self.marker_size_text,
                       self.marker_edge_width_text,
@@ -1762,7 +1762,7 @@ class MarkerOptionsWidget(ipywidgets.Box):
                                                             self.options_box])
 
         # Assign output
-        self.selected_values = marker_options_default
+        self.selected_values = marker_options
 
         # Set functionality
         def marker_options_visible(name, value):
@@ -1771,7 +1771,7 @@ class MarkerOptionsWidget(ipywidgets.Box):
             self.marker_edge_width_text.disabled = not value
             self.marker_face_colour_widget.disabled(not value)
             self.marker_edge_colour_widget.disabled(not value)
-        marker_options_visible('', marker_options_default['render_markers'])
+        marker_options_visible('', marker_options['render_markers'])
         self.render_markers_checkbox.on_trait_change(marker_options_visible,
                                                      'value')
 
@@ -1964,22 +1964,22 @@ class MarkerOptionsWidget(ipywidgets.Box):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, marker_options_dict, labels=None,
+    def set_widget_state(self, marker_options, labels=None,
                          allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameter
         ---------
-        marker_options_dict : `dict`
+        marker_options : `dict`
             The new set of options. For example ::
 
-                marker_options_dict = {'render_markers': True,
-                                       'marker_size': 20,
-                                       'marker_face_colour': ['r'],
-                                       'marker_edge_colour': ['k'],
-                                       'marker_style': 'o',
-                                       'marker_edge_width': 1}
+                marker_options = {'render_markers': True,
+                                  'marker_size': 20,
+                                  'marker_face_colour': ['r'],
+                                  'marker_edge_colour': ['k'],
+                                  'marker_style': 'o',
+                                  'marker_edge_width': 1}
 
         labels : `list` or ``None``, optional
             A `list` with the labels' names that get passed in to the
@@ -1989,45 +1989,43 @@ class MarkerOptionsWidget(ipywidgets.Box):
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        self.selected_values = marker_options_dict
+        self.selected_values = marker_options
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
         # update render markers checkbox
-        if 'render_markers' in marker_options_dict.keys():
+        if 'render_markers' in marker_options.keys():
             self.render_markers_checkbox.value = \
-                marker_options_dict['render_markers']
+                marker_options['render_markers']
 
         # update marker_style dropdown menu
-        if 'marker_style' in marker_options_dict.keys():
-            self.marker_style_dropdown.value = \
-                marker_options_dict['marker_style']
+        if 'marker_style' in marker_options.keys():
+            self.marker_style_dropdown.value = marker_options['marker_style']
 
         # update marker_size text box
-        if 'marker_size' in marker_options_dict.keys():
-            self.marker_size_text.value = \
-                int(marker_options_dict['marker_size'])
+        if 'marker_size' in marker_options.keys():
+            self.marker_size_text.value = int(marker_options['marker_size'])
 
         # update marker_edge_width text box
-        if 'marker_edge_width' in marker_options_dict.keys():
+        if 'marker_edge_width' in marker_options.keys():
             self.marker_edge_width_text.value = \
-                float(marker_options_dict['marker_edge_width'])
+                float(marker_options['marker_edge_width'])
 
         # re-assign render callback
         self.add_render_function(render_function)
 
         # update marker_face_colour
-        if 'marker_face_colour' in marker_options_dict.keys():
+        if 'marker_face_colour' in marker_options.keys():
             self.marker_face_colour_widget.set_widget_state(
-                marker_options_dict['marker_face_colour'], labels=labels,
+                marker_options['marker_face_colour'], labels=labels,
                 allow_callback=False)
 
         # update marker_edge_colour
-        if 'marker_edge_colour' in marker_options_dict.keys():
+        if 'marker_edge_colour' in marker_options.keys():
             self.marker_edge_colour_widget.set_widget_state(
-                marker_options_dict['marker_edge_colour'], labels=labels,
+                marker_options['marker_edge_colour'], labels=labels,
                 allow_callback=False)
 
         # trigger render function if allowed
@@ -2065,17 +2063,17 @@ class NumberingOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    numbers_options_default : `dict`
+    numbers_options : `dict`
         The initial numbering options. Example ::
 
-            numbers_options_default = {'render_numbering': True,
-                                       'numbers_font_name': 'serif',
-                                       'numbers_font_size': 10,
-                                       'numbers_font_style': 'normal',
-                                       'numbers_font_weight': 'normal',
-                                       'numbers_font_colour': ['k'],
-                                       'numbers_horizontal_align': 'center',
-                                       'numbers_vertical_align': 'bottom'}
+            numbers_options = {'render_numbering': True,
+                               'numbers_font_name': 'serif',
+                               'numbers_font_size': 10,
+                               'numbers_font_style': 'normal',
+                               'numbers_font_weight': 'normal',
+                               'numbers_font_colour': ['k'],
+                               'numbers_horizontal_align': 'center',
+                               'numbers_vertical_align': 'bottom'}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -2094,7 +2092,7 @@ class NumberingOptionsWidget(ipywidgets.Box):
         ``label {}`` is automatically defined. Note that the labels are defined
         only for the colour option and not the rest of the options.
     """
-    def __init__(self, numbers_options_default, render_function=None,
+    def __init__(self, numbers_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='Numbering Options',
                  render_checkbox_title='Render numbering'):
@@ -2103,7 +2101,7 @@ class NumberingOptionsWidget(ipywidgets.Box):
             visible=toggle_show_visible)
         self.render_numbering_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
-            value=numbers_options_default['render_numbering'])
+            value=numbers_options['render_numbering'])
         numbers_font_name_dict = OrderedDict()
         numbers_font_name_dict['serif'] = 'serif'
         numbers_font_name_dict['sans-serif'] = 'sans-serif'
@@ -2112,19 +2110,17 @@ class NumberingOptionsWidget(ipywidgets.Box):
         numbers_font_name_dict['monospace'] = 'monospace'
         self.numbers_font_name_dropdown = ipywidgets.Dropdown(
             options=numbers_font_name_dict,
-            value=numbers_options_default['numbers_font_name'],
-            description='Font')
+            value=numbers_options['numbers_font_name'], description='Font')
         self.numbers_font_size_text = ipywidgets.BoundedIntText(
             description='Size', min=2, max=10**6,
-            value=numbers_options_default['numbers_font_size'])
+            value=numbers_options['numbers_font_size'])
         numbers_font_style_dict = OrderedDict()
         numbers_font_style_dict['normal'] = 'normal'
         numbers_font_style_dict['italic'] = 'italic'
         numbers_font_style_dict['oblique'] = 'oblique'
         self.numbers_font_style_dropdown = ipywidgets.Dropdown(
             options=numbers_font_style_dict,
-            value=numbers_options_default['numbers_font_style'],
-            description='Style')
+            value=numbers_options['numbers_font_style'], description='Style')
         numbers_font_weight_dict = OrderedDict()
         numbers_font_weight_dict['normal'] = 'normal'
         numbers_font_weight_dict['ultralight'] = 'ultralight'
@@ -2142,18 +2138,17 @@ class NumberingOptionsWidget(ipywidgets.Box):
         numbers_font_weight_dict['black'] = 'black'
         self.numbers_font_weight_dropdown = ipywidgets.Dropdown(
             options=numbers_font_weight_dict,
-            value=numbers_options_default['numbers_font_weight'],
-            description='Weight')
+            value=numbers_options['numbers_font_weight'], description='Weight')
         self.numbers_font_colour_widget = ColourSelectionWidget(
-            numbers_options_default['numbers_font_colour'],
-            description='Colour', render_function=render_function)
+            numbers_options['numbers_font_colour'], description='Colour',
+            render_function=render_function)
         numbers_horizontal_align_dict = OrderedDict()
         numbers_horizontal_align_dict['center'] = 'center'
         numbers_horizontal_align_dict['right'] = 'right'
         numbers_horizontal_align_dict['left'] = 'left'
         self.numbers_horizontal_align_dropdown = ipywidgets.Dropdown(
             options=numbers_horizontal_align_dict,
-            value=numbers_options_default['numbers_horizontal_align'],
+            value=numbers_options['numbers_horizontal_align'],
             description='Align hor.')
         numbers_vertical_align_dict = OrderedDict()
         numbers_vertical_align_dict['center'] = 'center'
@@ -2162,7 +2157,7 @@ class NumberingOptionsWidget(ipywidgets.Box):
         numbers_vertical_align_dict['baseline'] = 'baseline'
         self.numbers_vertical_align_dropdown = ipywidgets.Dropdown(
             options=numbers_vertical_align_dict,
-            value=numbers_options_default['numbers_vertical_align'],
+            value=numbers_options['numbers_vertical_align'],
             description='Align ver.')
         self.numbers_options_box = ipywidgets.Box(
             children=[self.numbers_font_name_dropdown,
@@ -2179,7 +2174,7 @@ class NumberingOptionsWidget(ipywidgets.Box):
             children=[self.toggle_visible, self.options_box])
 
         # Assign output
-        self.selected_values = numbers_options_default
+        self.selected_values = numbers_options
 
         # Set functionality
         def numbering_options_visible(name, value):
@@ -2190,8 +2185,7 @@ class NumberingOptionsWidget(ipywidgets.Box):
             self.numbers_horizontal_align_dropdown.disabled = not value
             self.numbers_vertical_align_dropdown.disabled = not value
             self.numbers_font_colour_widget.disabled(not value)
-        numbering_options_visible('',
-                                  numbers_options_default['render_numbering'])
+        numbering_options_visible('', numbers_options['render_numbering'])
         self.render_numbering_checkbox.on_trait_change(
             numbering_options_visible, 'value')
 
@@ -2409,76 +2403,76 @@ class NumberingOptionsWidget(ipywidgets.Box):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, numbering_options_dict, allow_callback=True):
+    def set_widget_state(self, numbering_options, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameter
         ---------
-        numbering_options_dict : `dict`
+        numbering_options : `dict`
             The new set of options. For example ::
 
-                numbering_options_dict = {'render_numbering': True,
-                                          'numbers_font_name': 'serif',
-                                          'numbers_font_size': 10,
-                                          'numbers_font_style': 'normal',
-                                          'numbers_font_weight': 'normal',
-                                          'numbers_font_colour': ['k'],
-                                          'numbers_horizontal_align': 'center',
-                                          'numbers_vertical_align': 'bottom'}
+                numbering_options = {'render_numbering': True,
+                                     'numbers_font_name': 'serif',
+                                     'numbers_font_size': 10,
+                                     'numbers_font_style': 'normal',
+                                     'numbers_font_weight': 'normal',
+                                     'numbers_font_colour': ['k'],
+                                     'numbers_horizontal_align': 'center',
+                                     'numbers_vertical_align': 'bottom'}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        self.selected_values = numbering_options_dict
+        self.selected_values = numbering_options
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
         # update render numbering checkbox
-        if 'render_numbering' in numbering_options_dict.keys():
+        if 'render_numbering' in numbering_options.keys():
             self.render_numbering_checkbox.value = \
-                numbering_options_dict['render_numbering']
+                numbering_options['render_numbering']
 
         # update numbers_font_name dropdown menu
-        if 'numbers_font_name' in numbering_options_dict.keys():
+        if 'numbers_font_name' in numbering_options.keys():
             self.numbers_font_name_dropdown.value = \
-                numbering_options_dict['numbers_font_name']
+                numbering_options['numbers_font_name']
 
         # update numbers_font_size text box
-        if 'numbers_font_size' in numbering_options_dict.keys():
+        if 'numbers_font_size' in numbering_options.keys():
             self.numbers_font_size_text.value = \
-                int(numbering_options_dict['numbers_font_size'])
+                int(numbering_options['numbers_font_size'])
 
         # update numbers_font_style dropdown menu
-        if 'numbers_font_style' in numbering_options_dict.keys():
+        if 'numbers_font_style' in numbering_options.keys():
             self.numbers_font_style_dropdown.value = \
-                numbering_options_dict['numbers_font_style']
+                numbering_options['numbers_font_style']
 
         # update numbers_font_weight dropdown menu
-        if 'numbers_font_weight' in numbering_options_dict.keys():
+        if 'numbers_font_weight' in numbering_options.keys():
             self.numbers_font_weight_dropdown.value = \
-                numbering_options_dict['numbers_font_weight']
+                numbering_options['numbers_font_weight']
 
         # update numbers_horizontal_align dropdown menu
-        if 'numbers_horizontal_align' in numbering_options_dict.keys():
+        if 'numbers_horizontal_align' in numbering_options.keys():
             self.numbers_horizontal_align_dropdown.value = \
-                numbering_options_dict['numbers_horizontal_align']
+                numbering_options['numbers_horizontal_align']
 
         # update numbers_vertical_align dropdown menu
-        if 'numbers_vertical_align' in numbering_options_dict.keys():
+        if 'numbers_vertical_align' in numbering_options.keys():
             self.numbers_vertical_align_dropdown.value = \
-                numbering_options_dict['numbers_vertical_align']
+                numbering_options['numbers_vertical_align']
 
         # re-assign render callback
         self.add_render_function(render_function)
 
         # update numbers_font_colour
-        if 'numbers_font_colour' in numbering_options_dict.keys():
+        if 'numbers_font_colour' in numbering_options.keys():
             self.numbers_font_colour_widget.set_widget_state(
-                numbering_options_dict['numbers_font_colour'],
+                numbering_options['numbers_font_colour'],
                 allow_callback=False)
 
         # trigger render function if allowed
@@ -2519,18 +2513,18 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    figure_options_default : `dict`
+    figure_options : `dict`
         The initial figure options. Example ::
 
-            figure_options_default = {'x_scale': 1.,
-                                      'y_scale': 1.,
-                                      'render_axes': True,
-                                      'axes_font_name': 'serif',
-                                      'axes_font_size': 10,
-                                      'axes_font_style': 'normal',
-                                      'axes_font_weight': 'normal',
-                                      'axes_x_limits': [0, 100],
-                                      'axes_y_limits': None}
+            figure_options = {'x_scale': 1.,
+                              'y_scale': 1.,
+                              'render_axes': True,
+                              'axes_font_name': 'serif',
+                              'axes_font_size': 10,
+                              'axes_font_style': 'normal',
+                              'axes_font_weight': 'normal',
+                              'axes_x_limits': [0, 100],
+                              'axes_y_limits': None}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -2550,7 +2544,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
     show_axes_visible : `bool`, optional
         The visibility of the axes checkbox.
     """
-    def __init__(self, figure_options_default, render_function=None,
+    def __init__(self, figure_options, render_function=None,
                  toggle_show_default=True, toggle_show_visible=True,
                  toggle_title='Figure Options', figure_scale_bounds=(0.1, 4.),
                  figure_scale_step=0.1, figure_scale_visible=True,
@@ -2559,13 +2553,12 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
             description=toggle_title, value=toggle_show_default,
             visible=toggle_show_visible)
         self.figure_scale_slider = ipywidgets.FloatSlider(
-            description='Figure scale:',
-            value=figure_options_default['x_scale'], min=figure_scale_bounds[0],
-            max=figure_scale_bounds[1], step=figure_scale_step,
-            visible=figure_scale_visible, width='3.5cm')
+            description='Figure scale:', value=figure_options['x_scale'],
+            min=figure_scale_bounds[0], max=figure_scale_bounds[1],
+            step=figure_scale_step, visible=figure_scale_visible, width='3.5cm')
         self.render_axes_checkbox = ipywidgets.Checkbox(
-            description='Render axes',
-            value=figure_options_default['render_axes'], visible=axes_visible)
+            description='Render axes', value=figure_options['render_axes'],
+            visible=axes_visible)
         axes_font_name_dict = OrderedDict()
         axes_font_name_dict['serif'] = 'serif'
         axes_font_name_dict['sans-serif'] = 'sans-serif'
@@ -2573,11 +2566,10 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
         axes_font_name_dict['fantasy'] = 'fantasy'
         axes_font_name_dict['monospace'] = 'monospace'
         self.axes_font_name_dropdown = ipywidgets.Dropdown(
-            options=axes_font_name_dict,
-            value=figure_options_default['axes_font_name'], description='Font',
-            visible=axes_visible)
+            options=axes_font_name_dict, value=figure_options['axes_font_name'],
+            description='Font', visible=axes_visible)
         self.axes_font_size_text = ipywidgets.BoundedIntText(
-            description='Size', value=figure_options_default['axes_font_size'],
+            description='Size', value=figure_options['axes_font_size'],
             min=0, max=10**6, visible=axes_visible)
         axes_font_style_dict = OrderedDict()
         axes_font_style_dict['normal'] = 'normal'
@@ -2585,8 +2577,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
         axes_font_style_dict['oblique'] = 'oblique'
         self.axes_font_style_dropdown = ipywidgets.Dropdown(
             options=axes_font_style_dict, description='Style',
-            value=figure_options_default['axes_font_style'],
-            visible=axes_visible)
+            value=figure_options['axes_font_style'], visible=axes_visible)
         axes_font_weight_dict = OrderedDict()
         axes_font_weight_dict['normal'] = 'normal'
         axes_font_weight_dict['ultralight'] = 'ultralight'
@@ -2604,16 +2595,16 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
         axes_font_weight_dict['black'] = 'black'
         self.axes_font_weight_dropdown = ipywidgets.Dropdown(
             options=axes_font_weight_dict,
-            value=figure_options_default['axes_font_weight'],
-            description='Weight', visible=axes_visible)
-        if figure_options_default['axes_x_limits'] is None:
+            value=figure_options['axes_font_weight'], description='Weight',
+            visible=axes_visible)
+        if figure_options['axes_x_limits'] is None:
             tmp1 = False
             tmp2 = 0.
             tmp3 = 100.
         else:
             tmp1 = True
-            tmp2 = figure_options_default['axes_x_limits'][0]
-            tmp3 = figure_options_default['axes_x_limits'][1]
+            tmp2 = figure_options['axes_x_limits'][0]
+            tmp3 = figure_options['axes_x_limits'][1]
         self.axes_x_limits_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='X limits')
         self.axes_x_limits_from_text = ipywidgets.FloatText(
@@ -2626,14 +2617,14 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
         self.axes_x_limits_box = ipywidgets.HBox(
             children=[self.axes_x_limits_enable_checkbox,
                       self.axes_x_limits_from_to_box])
-        if figure_options_default['axes_y_limits'] is None:
+        if figure_options['axes_y_limits'] is None:
             tmp1 = False
             tmp2 = 0.
             tmp3 = 100.
         else:
             tmp1 = True
-            tmp2 = figure_options_default['axes_y_limits'][0]
-            tmp3 = figure_options_default['axes_y_limits'][1]
+            tmp2 = figure_options['axes_y_limits'][0]
+            tmp3 = figure_options['axes_y_limits'][1]
         self.axes_y_limits_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='Y limits')
         self.axes_y_limits_from_text = ipywidgets.FloatText(
@@ -2657,7 +2648,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
             children=[self.toggle_visible, self.options_box])
 
         # Assign output
-        self.selected_values = figure_options_default
+        self.selected_values = figure_options
 
         # Set functionality
         def figure_options_visible(name, value):
@@ -2681,7 +2672,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
                 self.axes_x_limits_to_text.disabled = True
                 self.axes_y_limits_from_text.disabled = True
                 self.axes_y_limits_to_text.disabled = True
-        figure_options_visible('', figure_options_default['render_axes'])
+        figure_options_visible('', figure_options['render_axes'])
         self.render_axes_checkbox.on_trait_change(figure_options_visible,
                                                   'value')
 
@@ -2958,89 +2949,89 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, figure_options_dict, allow_callback=True):
+    def set_widget_state(self, figure_options, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameter
         ---------
-        figure_options_dict : `dict`
+        figure_options : `dict`
             The new set of options. For example ::
 
-                figure_options_dict = {'x_scale': 1.,
-                                       'y_scale': 1.,
-                                       'render_axes': True,
-                                       'axes_font_name': 'serif',
-                                       'axes_font_size': 10,
-                                       'axes_font_style': 'normal',
-                                       'axes_font_weight': 'normal',
-                                       'axes_x_limits': None,
-                                       'axes_y_limits': None}
+                figure_options = {'x_scale': 1.,
+                                  'y_scale': 1.,
+                                  'render_axes': True,
+                                  'axes_font_name': 'serif',
+                                  'axes_font_size': 10,
+                                  'axes_font_style': 'normal',
+                                  'axes_font_weight': 'normal',
+                                  'axes_x_limits': None,
+                                  'axes_y_limits': None}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        self.selected_values = figure_options_dict
+        self.selected_values = figure_options
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
         # update scale slider
-        if 'x_scale' in figure_options_dict.keys():
-            self.figure_scale_slider.value = figure_options_dict['x_scale']
-        elif 'y_scale' in figure_options_dict.keys():
-            self.figure_scale_slider.value = figure_options_dict['y_scale']
+        if 'x_scale' in figure_options.keys():
+            self.figure_scale_slider.value = figure_options['x_scale']
+        elif 'y_scale' in figure_options.keys():
+            self.figure_scale_slider.value = figure_options['y_scale']
 
         # update render axes checkbox
-        if 'render_axes' in figure_options_dict.keys():
-            self.render_axes_checkbox.value = figure_options_dict['render_axes']
+        if 'render_axes' in figure_options.keys():
+            self.render_axes_checkbox.value = figure_options['render_axes']
 
         # update axes_font_name dropdown menu
-        if 'axes_font_name' in figure_options_dict.keys():
+        if 'axes_font_name' in figure_options.keys():
             self.axes_font_name_dropdown.value = \
-                figure_options_dict['axes_font_name']
+                figure_options['axes_font_name']
 
         # update axes_font_size text box
-        if 'axes_font_size' in figure_options_dict.keys():
+        if 'axes_font_size' in figure_options.keys():
             self.axes_font_size_text.value = \
-                int(figure_options_dict['axes_font_size'])
+                int(figure_options['axes_font_size'])
 
         # update axes_font_style dropdown menu
-        if 'axes_font_style' in figure_options_dict.keys():
+        if 'axes_font_style' in figure_options.keys():
             self.axes_font_style_dropdown.value = \
-                figure_options_dict['axes_font_style']
+                figure_options['axes_font_style']
 
         # update axes_font_weight dropdown menu
-        if 'axes_font_weight' in figure_options_dict.keys():
+        if 'axes_font_weight' in figure_options.keys():
             self.axes_font_weight_dropdown.value = \
-                figure_options_dict['axes_font_weight']
+                figure_options['axes_font_weight']
 
         # update axes_x_limits
-        if 'axes_x_limits' in figure_options_dict.keys():
-            if figure_options_dict['axes_x_limits'] is None:
+        if 'axes_x_limits' in figure_options.keys():
+            if figure_options['axes_x_limits'] is None:
                 tmp1 = False
                 tmp2 = 0.
                 tmp3 = 100.
             else:
                 tmp1 = True
-                tmp2 = figure_options_dict['axes_x_limits'][0]
-                tmp3 = figure_options_dict['axes_x_limits'][1]
+                tmp2 = figure_options['axes_x_limits'][0]
+                tmp3 = figure_options['axes_x_limits'][1]
             self.axes_x_limits_enable_checkbox.value = tmp1
             self.axes_x_limits_from_text.value = tmp2
             self.axes_x_limits_to_text.value = tmp3
 
         # update axes_y_limits
-        if 'axes_y_limits' in figure_options_dict.keys():
-            if figure_options_dict['axes_y_limits'] is None:
+        if 'axes_y_limits' in figure_options.keys():
+            if figure_options['axes_y_limits'] is None:
                 tmp1 = False
                 tmp2 = 0.
                 tmp3 = 100.
             else:
                 tmp1 = True
-                tmp2 = figure_options_dict['axes_y_limits'][0]
-                tmp3 = figure_options_dict['axes_y_limits'][1]
+                tmp2 = figure_options['axes_y_limits'][0]
+                tmp3 = figure_options['axes_y_limits'][1]
             self.axes_y_limits_enable_checkbox.value = tmp1
             self.axes_y_limits_from_text.value = tmp2
             self.axes_y_limits_to_text.value = tmp3
@@ -3089,18 +3080,18 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    figure_options_default : `dict`
+    figure_options : `dict`
         The initial figure options. Example ::
 
-            figure_options_default = {'x_scale': 1.,
-                                      'y_scale': 1.,
-                                      'render_axes': True,
-                                      'axes_font_name': 'serif',
-                                      'axes_font_size': 10,
-                                      'axes_font_style': 'normal',
-                                      'axes_font_weight': 'normal',
-                                      'axes_x_limits': [0, 100],
-                                      'axes_y_limits': None}
+            figure_options = {'x_scale': 1.,
+                              'y_scale': 1.,
+                              'render_axes': True,
+                              'axes_font_name': 'serif',
+                              'axes_font_size': 10,
+                              'axes_font_style': 'normal',
+                              'axes_font_weight': 'normal',
+                              'axes_x_limits': [0, 100],
+                              'axes_y_limits': None}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -3122,7 +3113,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
     coupled_default : `bool`, optional
         If ``True``, x and y scale sliders are coupled.
     """
-    def __init__(self, figure_options_default, render_function=None,
+    def __init__(self, figure_options, render_function=None,
                  toggle_show_default=True, toggle_show_visible=True,
                  toggle_title='Figure Options', figure_scale_bounds=(0.1, 4.),
                  figure_scale_step=0.1, figure_scale_visible=True,
@@ -3133,17 +3124,16 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
             description=toggle_title, value=toggle_show_default,
             visible=toggle_show_visible)
         self.x_scale_slider = ipywidgets.FloatSlider(
-            description='Figure scale: X',
-            value=figure_options_default['x_scale'],
+            description='Figure scale: X', value=figure_options['x_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
             step=figure_scale_step, width='3cm')
         self.y_scale_slider = ipywidgets.FloatSlider(
-            description='Y', value=figure_options_default['y_scale'],
+            description='Y', value=figure_options['y_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
             step=figure_scale_step, width='3cm')
         coupled_default = (coupled_default and
-                           (figure_options_default['x_scale'] ==
-                            figure_options_default['y_scale']))
+                           (figure_options['x_scale'] ==
+                            figure_options['y_scale']))
         self.coupled_checkbox = ipywidgets.Checkbox(description='Coupled',
                                                     value=coupled_default)
         self.xy_link = None
@@ -3155,8 +3145,8 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
                       self.coupled_checkbox], visible=figure_scale_visible,
             align='end')
         self.render_axes_checkbox = ipywidgets.Checkbox(
-            description='Render axes',
-            value=figure_options_default['render_axes'], visible=axes_visible)
+            description='Render axes', value=figure_options['render_axes'],
+            visible=axes_visible)
         axes_font_name_dict = OrderedDict()
         axes_font_name_dict['serif'] = 'serif'
         axes_font_name_dict['sans-serif'] = 'sans-serif'
@@ -3165,10 +3155,10 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         axes_font_name_dict['monospace'] = 'monospace'
         self.axes_font_name_dropdown = ipywidgets.Dropdown(
             options=axes_font_name_dict,
-            value=figure_options_default['axes_font_name'], description='Font',
+            value=figure_options['axes_font_name'], description='Font',
             visible=axes_visible)
         self.axes_font_size_text = ipywidgets.BoundedIntText(
-            description='Size', value=figure_options_default['axes_font_size'],
+            description='Size', value=figure_options['axes_font_size'],
             min=0, max=10**6, visible=axes_visible)
         axes_font_style_dict = OrderedDict()
         axes_font_style_dict['normal'] = 'normal'
@@ -3176,8 +3166,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         axes_font_style_dict['oblique'] = 'oblique'
         self.axes_font_style_dropdown = ipywidgets.Dropdown(
             options=axes_font_style_dict, description='Style',
-            value=figure_options_default['axes_font_style'],
-            visible=axes_visible)
+            value=figure_options['axes_font_style'], visible=axes_visible)
         axes_font_weight_dict = OrderedDict()
         axes_font_weight_dict['normal'] = 'normal'
         axes_font_weight_dict['ultralight'] = 'ultralight'
@@ -3195,16 +3184,16 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         axes_font_weight_dict['black'] = 'black'
         self.axes_font_weight_dropdown = ipywidgets.Dropdown(
             options=axes_font_weight_dict,
-            value=figure_options_default['axes_font_weight'],
-            description='Weight', visible=axes_visible)
-        if figure_options_default['axes_x_limits'] is None:
+            value=figure_options['axes_font_weight'], description='Weight',
+            visible=axes_visible)
+        if figure_options['axes_x_limits'] is None:
             tmp1 = False
             tmp2 = 0.
             tmp3 = 100.
         else:
             tmp1 = True
-            tmp2 = figure_options_default['axes_x_limits'][0]
-            tmp3 = figure_options_default['axes_x_limits'][1]
+            tmp2 = figure_options['axes_x_limits'][0]
+            tmp3 = figure_options['axes_x_limits'][1]
         self.axes_x_limits_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='X limits')
         self.axes_x_limits_from_text = ipywidgets.FloatText(
@@ -3217,14 +3206,14 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         self.axes_x_limits_box = ipywidgets.HBox(
             children=[self.axes_x_limits_enable_checkbox,
                       self.axes_x_limits_from_to_box])
-        if figure_options_default['axes_y_limits'] is None:
+        if figure_options['axes_y_limits'] is None:
             tmp1 = False
             tmp2 = 0.
             tmp3 = 100.
         else:
             tmp1 = True
-            tmp2 = figure_options_default['axes_y_limits'][0]
-            tmp3 = figure_options_default['axes_y_limits'][1]
+            tmp2 = figure_options['axes_y_limits'][0]
+            tmp3 = figure_options['axes_y_limits'][1]
         self.axes_y_limits_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='Y limits')
         self.axes_y_limits_from_text = ipywidgets.FloatText(
@@ -3248,7 +3237,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
             children=[self.toggle_visible, self.options_box])
 
         # Assign output
-        self.selected_values = figure_options_default
+        self.selected_values = figure_options
 
         # Set functionality
         def figure_options_visible(name, value):
@@ -3272,7 +3261,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
                 self.axes_x_limits_to_text.disabled = True
                 self.axes_y_limits_from_text.disabled = True
                 self.axes_y_limits_to_text.disabled = True
-        figure_options_visible('', figure_options_default['render_axes'])
+        figure_options_visible('', figure_options['render_axes'])
         self.render_axes_checkbox.on_trait_change(figure_options_visible,
                                                   'value')
 
@@ -3577,100 +3566,100 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, figure_options_dict, allow_callback=True):
+    def set_widget_state(self, figure_options, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameter
         ---------
-        figure_options_dict : `dict`
+        figure_options : `dict`
             The new set of options. For example ::
 
-                figure_options_dict = {'x_scale': 1.,
-                                       'y_scale': 1.,
-                                       'render_axes': True,
-                                       'axes_font_name': 'serif',
-                                       'axes_font_size': 10,
-                                       'axes_font_style': 'normal',
-                                       'axes_font_weight': 'normal',
-                                       'axes_x_limits': None,
-                                       'axes_y_limits': None}
+                figure_options = {'x_scale': 1.,
+                                  'y_scale': 1.,
+                                  'render_axes': True,
+                                  'axes_font_name': 'serif',
+                                  'axes_font_size': 10,
+                                  'axes_font_style': 'normal',
+                                  'axes_font_weight': 'normal',
+                                  'axes_x_limits': None,
+                                  'axes_y_limits': None}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        self.selected_values = figure_options_dict
+        self.selected_values = figure_options
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
         # update scale slider
-        if ('x_scale' in figure_options_dict.keys() and
-                'y_scale' not in figure_options_dict.keys()):
-            self.x_scale_slider.value = figure_options_dict['x_scale']
+        if ('x_scale' in figure_options.keys() and
+                'y_scale' not in figure_options.keys()):
+            self.x_scale_slider.value = figure_options['x_scale']
             self.coupled_checkbox.value = False
-        elif ('x_scale' not in figure_options_dict.keys() and
-                'y_scale' in figure_options_dict.keys()):
-            self.y_scale_slider.value = figure_options_dict['y_scale']
+        elif ('x_scale' not in figure_options.keys() and
+                'y_scale' in figure_options.keys()):
+            self.y_scale_slider.value = figure_options['y_scale']
             self.coupled_checkbox.value = False
-        elif ('x_scale' in figure_options_dict.keys() and
-                'y_scale' in figure_options_dict.keys()):
+        elif ('x_scale' in figure_options.keys() and
+                'y_scale' in figure_options.keys()):
             self.coupled_checkbox.value = (self.coupled_checkbox.value and
-                                           (figure_options_dict['x_scale'] ==
-                                            figure_options_dict['y_scale']))
-            self.x_scale_slider.value = figure_options_dict['x_scale']
-            self.y_scale_slider.value = figure_options_dict['y_scale']
+                                           (figure_options['x_scale'] ==
+                                            figure_options['y_scale']))
+            self.x_scale_slider.value = figure_options['x_scale']
+            self.y_scale_slider.value = figure_options['y_scale']
 
         # update render axes checkbox
-        if 'render_axes' in figure_options_dict.keys():
-            self.render_axes_checkbox.value = figure_options_dict['render_axes']
+        if 'render_axes' in figure_options.keys():
+            self.render_axes_checkbox.value = figure_options['render_axes']
 
         # update axes_font_name dropdown menu
-        if 'axes_font_name' in figure_options_dict.keys():
+        if 'axes_font_name' in figure_options.keys():
             self.axes_font_name_dropdown.value = \
-                figure_options_dict['axes_font_name']
+                figure_options['axes_font_name']
 
         # update axes_font_size text box
-        if 'axes_font_size' in figure_options_dict.keys():
+        if 'axes_font_size' in figure_options.keys():
             self.axes_font_size_text.value = \
-                int(figure_options_dict['axes_font_size'])
+                int(figure_options['axes_font_size'])
 
         # update axes_font_style dropdown menu
-        if 'axes_font_style' in figure_options_dict.keys():
+        if 'axes_font_style' in figure_options.keys():
             self.axes_font_style_dropdown.value = \
-                figure_options_dict['axes_font_style']
+                figure_options['axes_font_style']
 
         # update axes_font_weight dropdown menu
-        if 'axes_font_weight' in figure_options_dict.keys():
+        if 'axes_font_weight' in figure_options.keys():
             self.axes_font_weight_dropdown.value = \
-                figure_options_dict['axes_font_weight']
+                figure_options['axes_font_weight']
 
         # update axes_x_limits
-        if 'axes_x_limits' in figure_options_dict.keys():
-            if figure_options_dict['axes_x_limits'] is None:
+        if 'axes_x_limits' in figure_options.keys():
+            if figure_options['axes_x_limits'] is None:
                 tmp1 = False
                 tmp2 = 0.
                 tmp3 = 100.
             else:
                 tmp1 = True
-                tmp2 = figure_options_dict['axes_x_limits'][0]
-                tmp3 = figure_options_dict['axes_x_limits'][1]
+                tmp2 = figure_options['axes_x_limits'][0]
+                tmp3 = figure_options['axes_x_limits'][1]
             self.axes_x_limits_enable_checkbox.value = tmp1
             self.axes_x_limits_from_text.value = tmp2
             self.axes_x_limits_to_text.value = tmp3
 
         # update axes_y_limits
-        if 'axes_y_limits' in figure_options_dict.keys():
-            if figure_options_dict['axes_y_limits'] is None:
+        if 'axes_y_limits' in figure_options.keys():
+            if figure_options['axes_y_limits'] is None:
                 tmp1 = False
                 tmp2 = 0.
                 tmp3 = 100.
             else:
                 tmp1 = True
-                tmp2 = figure_options_dict['axes_y_limits'][0]
-                tmp3 = figure_options_dict['axes_y_limits'][1]
+                tmp2 = figure_options['axes_y_limits'][0]
+                tmp3 = figure_options['axes_y_limits'][1]
             self.axes_y_limits_enable_checkbox.value = tmp1
             self.axes_y_limits_from_text.value = tmp2
             self.axes_y_limits_to_text.value = tmp3
@@ -3743,26 +3732,26 @@ class LegendOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    legend_options_default : `dict`
+    legend_options : `dict`
         The initial legend options. Example ::
 
-            legend_options_default = {'render_legend': True,
-                                      'legend_title': '',
-                                      'legend_font_name': 'serif',
-                                      'legend_font_style': 'normal',
-                                      'legend_font_size': 10,
-                                      'legend_font_weight': 'normal',
-                                      'legend_marker_scale': 1.,
-                                      'legend_location': 2,
-                                      'legend_bbox_to_anchor': (1.05, 1.),
-                                      'legend_border_axes_pad': 1.,
-                                      'legend_n_columns': 1,
-                                      'legend_horizontal_spacing': 1.,
-                                      'legend_vertical_spacing': 1.,
-                                      'legend_border': True,
-                                      'legend_border_padding': 0.5,
-                                      'legend_shadow': False,
-                                      'legend_rounded_corners': True}
+            legend_options = {'render_legend': True,
+                              'legend_title': '',
+                              'legend_font_name': 'serif',
+                              'legend_font_style': 'normal',
+                              'legend_font_size': 10,
+                              'legend_font_weight': 'normal',
+                              'legend_marker_scale': 1.,
+                              'legend_location': 2,
+                              'legend_bbox_to_anchor': (1.05, 1.),
+                              'legend_border_axes_pad': 1.,
+                              'legend_n_columns': 1,
+                              'legend_horizontal_spacing': 1.,
+                              'legend_vertical_spacing': 1.,
+                              'legend_border': True,
+                              'legend_border_padding': 0.5,
+                              'legend_shadow': False,
+                              'legend_rounded_corners': True}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -3776,7 +3765,7 @@ class LegendOptionsWidget(ipywidgets.Box):
     render_checkbox_title : `str`, optional
         The description of the render legend checkbox.
     """
-    def __init__(self, legend_options_default, render_function=None,
+    def __init__(self, legend_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='Legend Options',
                  render_checkbox_title='Render legend'):
@@ -3787,7 +3776,7 @@ class LegendOptionsWidget(ipywidgets.Box):
         # render checkbox
         self.render_legend_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
-            value=legend_options_default['render_legend'])
+            value=legend_options['render_legend'])
 
         # font-related options and title
         legend_font_name_dict = OrderedDict()
@@ -3798,19 +3787,17 @@ class LegendOptionsWidget(ipywidgets.Box):
         legend_font_name_dict['monospace'] = 'monospace'
         self.legend_font_name_dropdown = ipywidgets.Dropdown(
             options=legend_font_name_dict,
-            value=legend_options_default['legend_font_name'],
-            description='Font')
+            value=legend_options['legend_font_name'], description='Font')
         self.legend_font_size_text = ipywidgets.BoundedIntText(
             description='Size', min=0, max=10**6,
-            value=legend_options_default['legend_font_size'])
+            value=legend_options['legend_font_size'])
         legend_font_style_dict = OrderedDict()
         legend_font_style_dict['normal'] = 'normal'
         legend_font_style_dict['italic'] = 'italic'
         legend_font_style_dict['oblique'] = 'oblique'
         self.legend_font_style_dropdown = ipywidgets.Dropdown(
             options=legend_font_style_dict,
-            value=legend_options_default['legend_font_style'],
-            description='Style')
+            value=legend_options['legend_font_style'], description='Style')
         legend_font_weight_dict = OrderedDict()
         legend_font_weight_dict['normal'] = 'normal'
         legend_font_weight_dict['ultralight'] = 'ultralight'
@@ -3828,10 +3815,9 @@ class LegendOptionsWidget(ipywidgets.Box):
         legend_font_weight_dict['black'] = 'black'
         self.legend_font_weight_dropdown = ipywidgets.Dropdown(
             options=legend_font_weight_dict,
-            value=legend_options_default['legend_font_weight'],
-            description='Weight')
+            value=legend_options['legend_font_weight'], description='Weight')
         self.legend_title_text = ipywidgets.Text(
-            description='Title', value=legend_options_default['legend_title'],
+            description='Title', value=legend_options['legend_title'],
             width='9cm')
         self.legend_font_name_and_size_box = ipywidgets.HBox(
             children=[self.legend_font_name_dropdown,
@@ -3860,16 +3846,16 @@ class LegendOptionsWidget(ipywidgets.Box):
         legend_location_dict['center'] = 10
         self.legend_location_dropdown = ipywidgets.Dropdown(
             options=legend_location_dict,
-            value=legend_options_default['legend_location'],
+            value=legend_options['legend_location'],
             description='Predefined location')
-        if legend_options_default['legend_bbox_to_anchor'] is None:
+        if legend_options['legend_bbox_to_anchor'] is None:
             tmp1 = False
             tmp2 = 0.
             tmp3 = 0.
         else:
             tmp1 = True
-            tmp2 = legend_options_default['legend_bbox_to_anchor'][0]
-            tmp3 = legend_options_default['legend_bbox_to_anchor'][1]
+            tmp2 = legend_options['legend_bbox_to_anchor'][0]
+            tmp3 = legend_options['legend_bbox_to_anchor'][1]
         self.bbox_to_anchor_enable_checkbox = ipywidgets.Checkbox(
             value=tmp1, description='Arbitrary location')
         self.bbox_to_anchor_x_text = ipywidgets.FloatText(
@@ -3882,7 +3868,7 @@ class LegendOptionsWidget(ipywidgets.Box):
             children=[self.bbox_to_anchor_enable_checkbox,
                       self.legend_bbox_to_anchor_x_y_box])
         self.legend_border_axes_pad_text = ipywidgets.BoundedFloatText(
-            value=legend_options_default['legend_border_axes_pad'],
+            value=legend_options['legend_border_axes_pad'],
             description='Distance to axes', min=0.)
         self.location_related_box = ipywidgets.VBox(
             children=[self.legend_location_dropdown,
@@ -3891,16 +3877,16 @@ class LegendOptionsWidget(ipywidgets.Box):
 
         # formatting related
         self.legend_n_columns_text = ipywidgets.BoundedIntText(
-            value=legend_options_default['legend_n_columns'],
-            description='Columns', min=0)
+            value=legend_options['legend_n_columns'], description='Columns',
+            min=0)
         self.legend_marker_scale_text = ipywidgets.BoundedFloatText(
             description='Marker scale',
-            value=legend_options_default['legend_marker_scale'], min=0.)
+            value=legend_options['legend_marker_scale'], min=0.)
         self.legend_horizontal_spacing_text = ipywidgets.BoundedFloatText(
-            value=legend_options_default['legend_horizontal_spacing'],
+            value=legend_options['legend_horizontal_spacing'],
             description='Horizontal space', min=0.)
         self.legend_vertical_spacing_text = ipywidgets.BoundedFloatText(
-            value=legend_options_default['legend_vertical_spacing'],
+            value=legend_options['legend_vertical_spacing'],
             description='Vertical space', min=0.)
         self.legend_n_columns_and_marker_scale_box = ipywidgets.HBox(
             children=[self.legend_n_columns_text,
@@ -3912,18 +3898,18 @@ class LegendOptionsWidget(ipywidgets.Box):
             children=[self.legend_n_columns_and_marker_scale_box,
                       self.legend_horizontal_and_vertical_spacing_box])
         self.legend_border_checkbox = ipywidgets.Checkbox(
-            description='Border', value=legend_options_default['legend_border'])
+            description='Border', value=legend_options['legend_border'])
         self.legend_border_padding_text = ipywidgets.BoundedFloatText(
-            value=legend_options_default['legend_border_padding'],
+            value=legend_options['legend_border_padding'],
             description='Border pad', min=0.)
         self.border_box = ipywidgets.HBox(
             children=[self.legend_border_checkbox,
                       self.legend_border_padding_text])
         self.legend_shadow_checkbox = ipywidgets.Checkbox(
-            description='Shadow', value=legend_options_default['legend_shadow'])
+            description='Shadow', value=legend_options['legend_shadow'])
         self.legend_rounded_corners_checkbox = ipywidgets.Checkbox(
             description='Rounded corners',
-            value=legend_options_default['legend_rounded_corners'])
+            value=legend_options['legend_rounded_corners'])
         self.shadow_fancy_box = ipywidgets.Box(
             children=[self.legend_shadow_checkbox,
                       self.legend_rounded_corners_checkbox])
@@ -3947,7 +3933,7 @@ class LegendOptionsWidget(ipywidgets.Box):
             self.tab_box.set_title(k, tl)
 
         # Assign output
-        self.selected_values = legend_options_default
+        self.selected_values = legend_options
 
         # Set functionality
         def legend_options_visible(name, value):
@@ -3969,7 +3955,7 @@ class LegendOptionsWidget(ipywidgets.Box):
             self.legend_border_padding_text.disabled = not value or not self.legend_border_checkbox.value
             self.legend_shadow_checkbox.disabled = not value
             self.legend_rounded_corners_checkbox.disabled = not value
-        legend_options_visible('', legend_options_default['render_legend'])
+        legend_options_visible('', legend_options['render_legend'])
         self.render_legend_checkbox.on_trait_change(legend_options_visible,
                                                     'value')
 
@@ -4307,135 +4293,133 @@ class LegendOptionsWidget(ipywidgets.Box):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, legend_options_dict, allow_callback=True):
+    def set_widget_state(self, legend_options, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameter
         ---------
-        legend_options_dict : `dict`
+        legend_options : `dict`
             The new set of options. For example ::
 
-                legend_options_dict = {'render_legend': True,
-                                       'legend_title': '',
-                                       'legend_font_name': 'serif',
-                                       'legend_font_style': 'normal',
-                                       'legend_font_size': 10,
-                                       'legend_font_weight': 'normal',
-                                       'legend_marker_scale': 1.,
-                                       'legend_location': 2,
-                                       'legend_bbox_to_anchor': (1.05, 1.),
-                                       'legend_border_axes_pad': 1.,
-                                       'legend_n_columns': 1,
-                                       'legend_horizontal_spacing': 1.,
-                                       'legend_vertical_spacing': 1.,
-                                       'legend_border': True,
-                                       'legend_border_padding': 0.5,
-                                       'legend_shadow': False,
-                                       'legend_rounded_corners': True}
+                legend_options = {'render_legend': True,
+                                  'legend_title': '',
+                                  'legend_font_name': 'serif',
+                                  'legend_font_style': 'normal',
+                                  'legend_font_size': 10,
+                                  'legend_font_weight': 'normal',
+                                  'legend_marker_scale': 1.,
+                                  'legend_location': 2,
+                                  'legend_bbox_to_anchor': (1.05, 1.),
+                                  'legend_border_axes_pad': 1.,
+                                  'legend_n_columns': 1,
+                                  'legend_horizontal_spacing': 1.,
+                                  'legend_vertical_spacing': 1.,
+                                  'legend_border': True,
+                                  'legend_border_padding': 0.5,
+                                  'legend_shadow': False,
+                                  'legend_rounded_corners': True}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        self.selected_values = legend_options_dict
+        self.selected_values = legend_options
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
         # update render legend checkbox
-        if 'render_legend' in legend_options_dict.keys():
-            self.render_legend_checkbox.value = \
-                legend_options_dict['render_legend']
+        if 'render_legend' in legend_options.keys():
+            self.render_legend_checkbox.value = legend_options['render_legend']
 
         # update legend_title
-        if 'legend_title' in legend_options_dict.keys():
-            self.legend_title_text.value = legend_options_dict['legend_title']
+        if 'legend_title' in legend_options.keys():
+            self.legend_title_text.value = legend_options['legend_title']
 
         # update legend_font_name dropdown menu
-        if 'legend_font_name' in legend_options_dict.keys():
+        if 'legend_font_name' in legend_options.keys():
             self.legend_font_name_dropdown.value = \
-                legend_options_dict['legend_font_name']
+                legend_options['legend_font_name']
 
         # update legend_font_size text box
-        if 'legend_font_size' in legend_options_dict.keys():
+        if 'legend_font_size' in legend_options.keys():
             self.legend_font_size_text.value = \
-                int(legend_options_dict['legend_font_size'])
+                int(legend_options['legend_font_size'])
 
         # update legend_font_style dropdown menu
-        if 'legend_font_style' in legend_options_dict.keys():
+        if 'legend_font_style' in legend_options.keys():
             self.legend_font_style_dropdown.value = \
-                legend_options_dict['legend_font_style']
+                legend_options['legend_font_style']
 
         # update legend_font_weight dropdown menu
-        if 'legend_font_weight' in legend_options_dict.keys():
+        if 'legend_font_weight' in legend_options.keys():
             self.legend_font_weight_dropdown.value = \
-                legend_options_dict['legend_font_weight']
+                legend_options['legend_font_weight']
 
         # update legend_location dropdown menu
-        if 'legend_location' in legend_options_dict.keys():
+        if 'legend_location' in legend_options.keys():
             self.legend_location_dropdown.value = \
-                legend_options_dict['legend_location']
+                legend_options['legend_location']
 
         # update legend_bbox_to_anchor
-        if 'legend_bbox_to_anchor' in legend_options_dict.keys():
-            if legend_options_dict['legend_bbox_to_anchor'] is None:
+        if 'legend_bbox_to_anchor' in legend_options.keys():
+            if legend_options['legend_bbox_to_anchor'] is None:
                 tmp1 = False
                 tmp2 = 0.
                 tmp3 = 0.
             else:
                 tmp1 = True
-                tmp2 = legend_options_dict['legend_bbox_to_anchor'][0]
-                tmp3 = legend_options_dict['legend_bbox_to_anchor'][1]
+                tmp2 = legend_options['legend_bbox_to_anchor'][0]
+                tmp3 = legend_options['legend_bbox_to_anchor'][1]
             self.bbox_to_anchor_enable_checkbox.value = tmp1
             self.bbox_to_anchor_x_text.value = tmp2
             self.bbox_to_anchor_y_text.value = tmp3
 
         # update legend_border_axes_pad
-        if 'legend_border_axes_pad' in legend_options_dict.keys():
+        if 'legend_border_axes_pad' in legend_options.keys():
             self.legend_border_axes_pad_text.value = \
-                legend_options_dict['legend_border_axes_pad']
+                legend_options['legend_border_axes_pad']
 
         # update legend_n_columns text box
-        if 'legend_n_columns' in legend_options_dict.keys():
+        if 'legend_n_columns' in legend_options.keys():
             self.legend_n_columns_text.value = \
-                int(legend_options_dict['legend_n_columns'])
+                int(legend_options['legend_n_columns'])
 
         # update legend_marker_scale text box
-        if 'legend_marker_scale' in legend_options_dict.keys():
+        if 'legend_marker_scale' in legend_options.keys():
             self.legend_marker_scale_text.value = \
-                float(legend_options_dict['legend_marker_scale'])
+                float(legend_options['legend_marker_scale'])
 
         # update legend_horizontal_spacing text box
-        if 'legend_horizontal_spacing' in legend_options_dict.keys():
+        if 'legend_horizontal_spacing' in legend_options.keys():
             self.legend_horizontal_spacing_text.value = \
-                float(legend_options_dict['legend_horizontal_spacing'])
+                float(legend_options['legend_horizontal_spacing'])
 
         # update legend_vertical_spacing text box
-        if 'legend_vertical_spacing' in legend_options_dict.keys():
+        if 'legend_vertical_spacing' in legend_options.keys():
             self.legend_vertical_spacing_text.value = \
-                float(legend_options_dict['legend_vertical_spacing'])
+                float(legend_options['legend_vertical_spacing'])
 
         # update legend_border
-        if 'legend_border' in legend_options_dict.keys():
+        if 'legend_border' in legend_options.keys():
             self.legend_border_checkbox.value = \
-                legend_options_dict['legend_border']
+                legend_options['legend_border']
 
         # update legend_border_padding text box
-        if 'legend_border_padding' in legend_options_dict.keys():
+        if 'legend_border_padding' in legend_options.keys():
             self.legend_border_padding_text.value = \
-                float(legend_options_dict['legend_border_padding'])
+                float(legend_options['legend_border_padding'])
 
         # update legend_shadow
-        if 'legend_shadow' in legend_options_dict.keys():
-            self.legend_shadow_checkbox.value = \
-                legend_options_dict['legend_shadow']
+        if 'legend_shadow' in legend_options.keys():
+            self.legend_shadow_checkbox.value = legend_options['legend_shadow']
 
         # update legend_rounded_corners
-        if 'legend_rounded_corners' in legend_options_dict.keys():
+        if 'legend_rounded_corners' in legend_options.keys():
             self.legend_rounded_corners_checkbox.value = \
-                legend_options_dict['legend_rounded_corners']
+                legend_options['legend_rounded_corners']
 
         # re-assign render callback
         self.add_render_function(render_function)
@@ -4465,12 +4449,12 @@ class GridOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    grid_options_default : `dict`
+    grid_options : `dict`
         The initial grid options. Example ::
 
-            grid_options_default = {'render_grid': True,
-                                    'grid_line_width': 1,
-                                    'grid_line_style': '-'}
+            grid_options = {'render_grid': True,
+                            'grid_line_width': 1,
+                            'grid_line_style': '-'}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -4484,7 +4468,7 @@ class GridOptionsWidget(ipywidgets.Box):
     render_checkbox_title : `str`, optional
         The description of the show line checkbox.
     """
-    def __init__(self, grid_options_default, render_function=None,
+    def __init__(self, grid_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='Grid Options',
                  render_checkbox_title='Render grid'):
@@ -4493,9 +4477,9 @@ class GridOptionsWidget(ipywidgets.Box):
             visible=toggle_show_visible)
         self.render_grid_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
-            value=grid_options_default['render_grid'])
+            value=grid_options['render_grid'])
         self.grid_line_width_text = ipywidgets.BoundedFloatText(
-            description='Width', value=grid_options_default['grid_line_width'],
+            description='Width', value=grid_options['grid_line_width'],
             min=0., max=10**6)
         grid_line_style_dict = OrderedDict()
         grid_line_style_dict['solid'] = '-'
@@ -4503,7 +4487,7 @@ class GridOptionsWidget(ipywidgets.Box):
         grid_line_style_dict['dash-dot'] = '-.'
         grid_line_style_dict['dotted'] = ':'
         self.grid_line_style_dropdown = ipywidgets.Dropdown(
-            value=grid_options_default['grid_line_style'], description='Style',
+            value=grid_options['grid_line_style'], description='Style',
             options=grid_line_style_dict,)
 
         # Options widget
@@ -4517,13 +4501,13 @@ class GridOptionsWidget(ipywidgets.Box):
                                                           self.options_box])
 
         # Assign output
-        self.selected_values = grid_options_default
+        self.selected_values = grid_options
 
         # Set functionality
         def grid_options_visible(name, value):
             self.grid_line_style_dropdown.disabled = not value
             self.grid_line_width_text.disabled = not value
-        grid_options_visible('', grid_options_default['render_grid'])
+        grid_options_visible('', grid_options['render_grid'])
         self.render_grid_checkbox.on_trait_change(grid_options_visible, 'value')
 
         def save_render_grid(name, value):
@@ -4687,42 +4671,42 @@ class GridOptionsWidget(ipywidgets.Box):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, grid_options_dict, allow_callback=True):
+    def set_widget_state(self, grid_options, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameter
         ---------
-        grid_options_dict : `dict`
+        grid_options : `dict`
             The new set of options. For example ::
 
-                grid_options_dict = {'render_grid': True,
-                                     'grid_line_width': 2,
-                                     'grid_line_style': '-'}
+                grid_options = {'render_grid': True,
+                                'grid_line_width': 2,
+                                'grid_line_style': '-'}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        self.selected_values = grid_options_dict
+        self.selected_values = grid_options
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
         # update render grid checkbox
-        if 'render_grid' in grid_options_dict.keys():
-            self.render_grid_checkbox.value = grid_options_dict['render_grid']
+        if 'render_grid' in grid_options.keys():
+            self.render_grid_checkbox.value = grid_options['render_grid']
 
         # update grid_line_style dropdown menu
-        if 'grid_line_style' in grid_options_dict.keys():
+        if 'grid_line_style' in grid_options.keys():
             self.grid_line_style_dropdown.value = \
-                grid_options_dict['grid_line_style']
+                grid_options['grid_line_style']
 
         # update grid_line_width text box
-        if 'grid_line_width' in grid_options_dict.keys():
+        if 'grid_line_width' in grid_options.keys():
             self.grid_line_width_text.value = \
-                float(grid_options_dict['grid_line_width'])
+                float(grid_options['grid_line_width'])
 
         # re-assign render callback
         self.add_render_function(render_function)
@@ -4773,23 +4757,23 @@ class HOGOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    hog_options_default : `dict`
+    hog_options : `dict`
         The initial options. Example ::
 
-            hog_options_default = {'mode': 'dense',
-                                   'algorithm': 'dalaltriggs',
-                                   'num_bins': 9,
-                                   'cell_size': 8,
-                                   'block_size': 2,
-                                   'signed_gradient': True,
-                                   'l2_norm_clip': 0.2,
-                                   'window_height': 1,
-                                   'window_width': 1,
-                                   'window_unit': 'blocks',
-                                   'window_step_vertical': 1,
-                                   'window_step_horizontal': 1,
-                                   'window_step_unit': 'pixels',
-                                   'padding': True}
+            hog_options = {'mode': 'dense',
+                           'algorithm': 'dalaltriggs',
+                           'num_bins': 9,
+                           'cell_size': 8,
+                           'block_size': 2,
+                           'signed_gradient': True,
+                           'l2_norm_clip': 0.2,
+                           'window_height': 1,
+                           'window_width': 1,
+                           'window_unit': 'blocks',
+                           'window_step_vertical': 1,
+                           'window_step_horizontal': 1,
+                           'window_step_unit': 'pixels',
+                           'padding': True}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -4801,7 +4785,7 @@ class HOGOptionsWidget(ipywidgets.Box):
     toggle_title : `str`, optional
         The title of the toggle button.
     """
-    def __init__(self, hog_options_default, render_function=None,
+    def __init__(self, hog_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='HOG Options'):
         self.toggle_visible = ipywidgets.ToggleButton(
@@ -4812,38 +4796,38 @@ class HOGOptionsWidget(ipywidgets.Box):
         tmp['Dense'] = 'dense'
         tmp['Sparse'] = 'sparse'
         self.mode_radiobuttons = ipywidgets.RadioButtons(
-            options=tmp, description='Mode', value=hog_options_default['mode'])
+            options=tmp, description='Mode', value=hog_options['mode'])
         self.padding_checkbox = ipywidgets.Checkbox(
-            description='Padding', value=hog_options_default['padding'])
+            description='Padding', value=hog_options['padding'])
         self.mode_padding_box = ipywidgets.HBox(
             children=[self.mode_radiobuttons, self.padding_checkbox])
         self.window_height_text = ipywidgets.BoundedIntText(
-            value=hog_options_default['window_height'], description='Height',
+            value=hog_options['window_height'], description='Height',
             min=1, width='2cm')
         self.window_width_text = ipywidgets.BoundedIntText(
-            value=hog_options_default['window_width'], description='Width',
+            value=hog_options['window_width'], description='Width',
             min=1, width='2cm')
         tmp = OrderedDict()
         tmp['Blocks'] = 'blocks'
         tmp['Pixels'] = 'pixels'
         self.window_size_unit_radiobuttons = ipywidgets.RadioButtons(
             options=tmp, description=' Size unit',
-            value=hog_options_default['window_unit'])
+            value=hog_options['window_unit'])
         self.window_size_box = ipywidgets.VBox(
             children=[self.window_height_text, self.window_width_text,
                       self.window_size_unit_radiobuttons])
         self.window_vertical_text = ipywidgets.BoundedIntText(
-            value=hog_options_default['window_step_vertical'],
+            value=hog_options['window_step_vertical'],
             description='Step Y', min=1, width='2cm')
         self.window_horizontal_text = ipywidgets.BoundedIntText(
-            value=hog_options_default['window_step_horizontal'],
+            value=hog_options['window_step_horizontal'],
             description='Step X', min=1, width='2cm')
         tmp = OrderedDict()
         tmp['Pixels'] = 'pixels'
         tmp['Cells'] = 'cells'
         self.window_step_unit_radiobuttons = ipywidgets.RadioButtons(
             options=tmp, description='Step unit',
-            value=hog_options_default['window_step_unit'])
+            value=hog_options['window_step_unit'])
         self.window_step_box = ipywidgets.VBox(
             children=[self.window_vertical_text, self.window_horizontal_text,
                       self.window_step_unit_radiobuttons])
@@ -4857,25 +4841,25 @@ class HOGOptionsWidget(ipywidgets.Box):
         tmp['Dalal & Triggs'] = 'dalaltriggs'
         tmp['Zhu & Ramanan'] = 'zhuramanan'
         self.algorithm_radiobuttons = ipywidgets.RadioButtons(
-            options=tmp, value=hog_options_default['algorithm'],
+            options=tmp, value=hog_options['algorithm'],
             description='Algorithm')
         self.cell_size_text = ipywidgets.BoundedIntText(
-            value=hog_options_default['cell_size'],
+            value=hog_options['cell_size'],
             description='Cell size (in pixels)', min=1, width='2cm')
         self.block_size_text = ipywidgets.BoundedIntText(
-            value=hog_options_default['block_size'],
+            value=hog_options['block_size'],
             description='Block size (in cells)', min=1, width='2cm')
         self.num_bins_text = ipywidgets.BoundedIntText(
-            value=hog_options_default['num_bins'],
+            value=hog_options['num_bins'],
             description='Orientation bins', min=1, width='2cm')
         self.algorithm_sizes_box = ipywidgets.VBox(
             children=[self.cell_size_text, self.block_size_text,
                       self.num_bins_text])
         self.signed_gradient_checkbox = ipywidgets.Checkbox(
-            value=hog_options_default['signed_gradient'],
+            value=hog_options['signed_gradient'],
             description='Signed gradients')
         self.l2_norm_clipping_text = ipywidgets.BoundedFloatText(
-            value=hog_options_default['l2_norm_clip'],
+            value=hog_options['l2_norm_clip'],
             description='L2 norm clipping', min=0., width='2cm')
         self.algorithm_other_box = ipywidgets.Box(
             children=[self.signed_gradient_checkbox,
@@ -4897,7 +4881,7 @@ class HOGOptionsWidget(ipywidgets.Box):
             self.options_box.set_title(k, tl)
 
         # Assign output
-        self.selected_values = hog_options_default
+        self.selected_values = hog_options
 
         # Set functionality
         def window_mode(name, value):
@@ -5269,17 +5253,17 @@ class DaisyOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    daisy_options_default : `dict`
+    daisy_options : `dict`
         The initial options. Example ::
 
-            daisy_options_default = {'step': 1,
-                                     'radius': 15,
-                                     'rings': 2,
-                                     'histograms': 2,
-                                     'orientations': 8,
-                                     'normalization': 'l1',
-                                     'sigmas': None,
-                                     'ring_radii': None}
+            daisy_options = {'step': 1,
+                             'radius': 15,
+                             'rings': 2,
+                             'histograms': 2,
+                             'orientations': 8,
+                             'normalization': 'l1',
+                             'sigmas': None,
+                             'ring_radii': None}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -5291,40 +5275,38 @@ class DaisyOptionsWidget(ipywidgets.Box):
     toggle_title : `str`, optional
         The title of the toggle button.
     """
-    def __init__(self, daisy_options_default, render_function=None,
+    def __init__(self, daisy_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='Daisy Options'):
         self.toggle_visible = ipywidgets.ToggleButton(
             description=toggle_title, value=toggle_show_default,
             visible=toggle_show_visible)
         self.step_text = ipywidgets.BoundedIntText(
-            value=daisy_options_default['step'], description='Step', min=1,
-            max=10**6)
+            value=daisy_options['step'], description='Step', min=1, max=10**6)
         self.radius_text = ipywidgets.BoundedIntText(
-            value=daisy_options_default['radius'], description='Radius', min=1,
+            value=daisy_options['radius'], description='Radius', min=1,
             max=10**6)
         self.rings_text = ipywidgets.BoundedIntText(
-            value=daisy_options_default['rings'], description='Rings', min=1,
-            max=10**6)
+            value=daisy_options['rings'], description='Rings', min=1, max=10**6)
         self.histograms_text = ipywidgets.BoundedIntText(
-            value=daisy_options_default['histograms'], description='Histograms',
+            value=daisy_options['histograms'], description='Histograms',
             min=1, max=10**6)
         self.orientations_text = ipywidgets.BoundedIntText(
-            value=daisy_options_default['orientations'],
-            description='Orientations', min=1, max=10**6)
+            value=daisy_options['orientations'], description='Orientations',
+            min=1, max=10**6)
         tmp = OrderedDict()
         tmp['L1'] = 'l1'
         tmp['L2'] = 'l2'
         tmp['Daisy'] = 'daisy'
         tmp['None'] = None
         self.normalization_dropdown = ipywidgets.Dropdown(
-            value=daisy_options_default['normalization'], options=tmp,
+            value=daisy_options['normalization'], options=tmp,
             description='Normalization')
         self.sigmas_text = ipywidgets.Text(
-            value=_convert_int_list_to_str(daisy_options_default['sigmas']),
+            value=_convert_int_list_to_str(daisy_options['sigmas']),
             description='Sigmas', width='3cm')
         self.ring_radii_text = ipywidgets.Text(
-            value=_convert_int_list_to_str(daisy_options_default['ring_radii']),
+            value=_convert_int_list_to_str(daisy_options['ring_radii']),
             description='Ring radii', width='3cm')
         self.step_radius_rings_histograms_box = ipywidgets.VBox(
             children=[self.step_text, self.radius_text, self.rings_text,
@@ -5339,7 +5321,7 @@ class DaisyOptionsWidget(ipywidgets.Box):
                                                            self.options_box])
 
         # Assign output
-        self.selected_values = daisy_options_default
+        self.selected_values = daisy_options
 
         # Set functionality
         def get_step(name, value):
@@ -5574,16 +5556,16 @@ class LBPOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    lbp_options_default : `dict`
+    lbp_options : `dict`
         The initial options. Example ::
 
-        lbp_options_default = {'radius': range(1, 5),
-                               'samples': [8] * 4,
-                               'mapping_type': 'u2',
-                               'window_step_vertical': 1,
-                               'window_step_horizontal': 1,
-                               'window_step_unit': 'pixels',
-                               'padding': True}
+        lbp_options = {'radius': range(1, 5),
+                       'samples': [8] * 4,
+                       'mapping_type': 'u2',
+                       'window_step_vertical': 1,
+                       'window_step_horizontal': 1,
+                       'window_step_unit': 'pixels',
+                       'padding': True}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -5595,7 +5577,7 @@ class LBPOptionsWidget(ipywidgets.Box):
     toggle_title : `str`, optional
         The title of the toggle button.
     """
-    def __init__(self, lbp_options_default, render_function=None,
+    def __init__(self, lbp_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='LBP Options'):
         self.toggle_visible = ipywidgets.ToggleButton(
@@ -5607,31 +5589,31 @@ class LBPOptionsWidget(ipywidgets.Box):
         tmp['Both'] = 'riu2'
         tmp['None'] = 'none'
         self.mapping_type_dropdown = ipywidgets.Dropdown(
-            value=lbp_options_default['mapping_type'], options=tmp,
+            value=lbp_options['mapping_type'], options=tmp,
             description='Mapping')
         self.radius_text = ipywidgets.Text(
-            value=_convert_int_list_to_str(lbp_options_default['radius']),
+            value=_convert_int_list_to_str(lbp_options['radius']),
             description='Radius')
         self.samples_text = ipywidgets.Text(
-            value=_convert_int_list_to_str(lbp_options_default['samples']),
+            value=_convert_int_list_to_str(lbp_options['samples']),
             description='Samples')
         self.radius_samples_mapping_type_box = ipywidgets.Box(
             children=[self.radius_text, self.samples_text,
                       self.mapping_type_dropdown])
         self.window_vertical_text = ipywidgets.BoundedIntText(
-            value=lbp_options_default['window_step_vertical'],
-            description='Step Y', min=1, max=10**6)
+            value=lbp_options['window_step_vertical'], description='Step Y',
+            min=1, max=10**6)
         self.window_horizontal_text = ipywidgets.BoundedIntText(
-            value=lbp_options_default['window_step_horizontal'],
-            description='Step X', min=1, max=10**6)
+            value=lbp_options['window_step_horizontal'], description='Step X',
+            min=1, max=10**6)
         tmp = OrderedDict()
         tmp['Pixels'] = 'pixels'
         tmp['Windows'] = 'cells'
         self.window_step_unit_radiobuttons = ipywidgets.RadioButtons(
             options=tmp, description='Step unit',
-            value=lbp_options_default['window_step_unit'])
+            value=lbp_options['window_step_unit'])
         self.padding_checkbox = ipywidgets.Checkbox(
-            value=lbp_options_default['padding'], description='Padding')
+            value=lbp_options['padding'], description='Padding')
         self.window_box = ipywidgets.Box(
             children=[self.window_vertical_text, self.window_horizontal_text,
                       self.window_step_unit_radiobuttons,
@@ -5642,7 +5624,7 @@ class LBPOptionsWidget(ipywidgets.Box):
                                                          self.options_box])
 
         # Assign output
-        self.selected_values = lbp_options_default
+        self.selected_values = lbp_options
 
         # Set functionality
         def get_mapping_type(name, value):
@@ -5862,10 +5844,10 @@ class IGOOptionsWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    igo_options_default : `dict`
+    igo_options : `dict`
         The initial options. Example ::
 
-        igo_options_default = {'double_angles': True}
+        igo_options = {'double_angles': True}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -5877,20 +5859,19 @@ class IGOOptionsWidget(ipywidgets.Box):
     toggle_title : `str`, optional
         The title of the toggle button.
     """
-    def __init__(self, igo_options_default, render_function=None,
+    def __init__(self, igo_options, render_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='IGO Options'):
         self.toggle_visible = ipywidgets.ToggleButton(
             description=toggle_title, value=toggle_show_default,
             visible=toggle_show_visible)
         self.double_angles_checkbox = ipywidgets.Checkbox(
-            value=igo_options_default['double_angles'],
-            description='Double angles')
+            value=igo_options['double_angles'], description='Double angles')
         super(IGOOptionsWidget, self).__init__(
             children=[self.toggle_visible, self.double_angles_checkbox])
 
         # Assign output
-        self.selected_values = igo_options_default
+        self.selected_values = igo_options
 
         # Set functionality
         def get_double_angles(name, value):
