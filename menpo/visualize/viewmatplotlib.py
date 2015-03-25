@@ -196,18 +196,24 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         self.image = image
         self.axes_list = []
 
-    def render(self, interpolation='bilinear', alpha=1., render_axes=False,
-               axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+    def render(self, interpolation='bilinear', cmap_name=None, alpha=1.,
+               render_axes=False, axes_font_name='sans-serif',
+               axes_font_size=10, axes_font_style='normal',
+               axes_font_weight='normal', axes_x_limits=None,
+               axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
-        if len(self.image.shape) == 2:  # Single channels are viewed in Gray
-            plt.imshow(self.image, cmap=cm.Greys_r, interpolation=interpolation,
-                       alpha=alpha)
+        if cmap_name is not None:
+            cmap = cm.get_cmap(cmap_name)
+        elif len(self.image.shape) == 2:
+            # Single channels are viewed in Gray by default
+            cmap = cm.Greys_r
         else:
-            plt.imshow(self.image, interpolation=interpolation, alpha=alpha)
+            cmap = None
+
+        plt.imshow(self.image, cmap=cmap, interpolation=interpolation,
+                   alpha=alpha)
 
         # render axes options
         if render_axes:
@@ -250,10 +256,11 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
         self.plot_layout = self._subplot_layout(self.num_subplots)
         self.axes_list = []
 
-    def render(self, interpolation='bilinear', alpha=1., render_axes=False,
-               axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+    def render(self, interpolation='bilinear', cmap_name=None, alpha=1.,
+               render_axes=False, axes_font_name='sans-serif',
+               axes_font_size=10, axes_font_style='normal',
+               axes_font_weight='normal', axes_x_limits=None,
+               axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
@@ -283,8 +290,13 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
             if axes_y_limits is not None:
                 plt.ylim(axes_y_limits[::-1])
 
-            # show image
-            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r,
+            if cmap_name is not None:
+                cmap = cm.get_cmap(cmap_name)
+            else:
+                # Single channels are viewed in Gray by default
+                cmap = cm.Greys_r
+
+            plt.imshow(self.image[:, :, i], cmap=cmap,
                        interpolation=interpolation, alpha=alpha)
 
         # Set figure size

@@ -502,10 +502,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return hist, bin_edges
 
     def _view_2d(self, figure_id=None, new_figure=False, channels=None,
-                 interpolation='bilinear', alpha=1., render_axes=False,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+                 interpolation='bilinear', cmap_name=None, alpha=1.,
+                 render_axes=False, axes_font_name='sans-serif',
+                 axes_font_size=10, axes_font_style='normal',
+                 axes_font_weight='normal', axes_x_limits=None,
+                 axes_y_limits=None, figure_size=(10, 8)):
         r"""
         View the image using the default image viewer. This method will appear 
         on the Image as ``view`` if the Image is 2D.
@@ -530,7 +531,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 {none, nearest, bilinear, bicubic, spline16, spline36,
                 hanning, hamming, hermite, kaiser, quadric, catrom, gaussian,
                 bessel, mitchell, sinc, lanczos}
-
+        cmap_name: `Colormap name`, optional,
+            If None, single channel and three channel images default
+            to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_axes : `bool`, optional
@@ -566,7 +569,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            self.pixels, channels=channels).render(
-            interpolation=interpolation, alpha=alpha,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
@@ -592,7 +595,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def _view_landmarks_2d(self, channels=None, group=None,
                            with_labels=None, without_labels=None,
                            figure_id=None, new_figure=False,
-                           interpolation='bilinear', alpha=1.,
+                           interpolation='bilinear', cmap_name=None, alpha=1.,
                            render_lines=True, line_colour=None, line_style='-',
                            line_width=1, render_markers=True, marker_style='o',
                            marker_size=20, marker_face_colour=None,
@@ -651,6 +654,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 hamming, hermite, kaiser, quadric, catrom, gaussian, bessel,
                 mitchell, sinc, lanczos}
 
+        cmap_name: `Colormap name`, optional,
+            If None, single channel and three channel images default
+            to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_lines : `bool`, optional
@@ -816,13 +822,14 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.visualize import view_image_landmarks
         return view_image_landmarks(
             self, channels, False, group, with_labels, without_labels,
-            figure_id, new_figure, interpolation, alpha, render_lines,
-            line_colour, line_style, line_width, render_markers, marker_style,
-            marker_size, marker_face_colour, marker_edge_colour,
-            marker_edge_width, render_numbering, numbers_horizontal_align,
-            numbers_vertical_align, numbers_font_name, numbers_font_size,
-            numbers_font_style, numbers_font_weight, numbers_font_colour,
-            render_legend, legend_title, legend_font_name, legend_font_style,
+            figure_id, new_figure, interpolation, cmap_name, alpha,
+            render_lines, line_colour, line_style, line_width,
+            render_markers, marker_style, marker_size, marker_face_colour,
+            marker_edge_colour, marker_edge_width, render_numbering,
+            numbers_horizontal_align, numbers_vertical_align,
+            numbers_font_name, numbers_font_size, numbers_font_style,
+            numbers_font_weight, numbers_font_colour, render_legend,
+            legend_title, legend_font_name, legend_font_style,
             legend_font_size, legend_font_weight, legend_marker_scale,
             legend_location, legend_bbox_to_anchor, legend_border_axes_pad,
             legend_n_columns, legend_horizontal_spacing,
