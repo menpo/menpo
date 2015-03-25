@@ -819,10 +819,8 @@ class MaskedImage(Image):
         warped_image = Image.warp_to_mask(self, template_mask, transform,
                                           warp_landmarks=warp_landmarks,
                                           order=order, mode=mode, cval=cval)
-        warped_mask = self.mask.warp_to_mask(template_mask, transform,
-                                             warp_landmarks=warp_landmarks,
-                                             mode=mode, cval=cval)
-        warped_image.mask = warped_mask
+        # Set the template mask as our mask
+        warped_image.mask = template_mask
         return warped_image
 
     # noinspection PyMethodOverriding

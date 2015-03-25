@@ -81,23 +81,34 @@ def test_warp_to_mask_image():
 
 
 def test_warp_to_mask_masked_image():
-    mask = BooleanImage.init_blank((10, 10))
-    # make a funny mask on the original image
-    mask.pixels[:, 2:, :] = False
-    img = MaskedImage.init_blank((10, 10), n_channels=2, mask=mask)
-    img.pixels[...] = 2.5
+    mask = BooleanImage.init_blank((15, 15))
+    # make a truncated mask on the original image
+    mask.pixels[0, -1, -1] = False
+    img = MaskedImage.init_blank((15, 15), n_channels=2, mask=mask,
+                                 fill=2.5)
     template_mask = BooleanImage.init_blank((10, 10), fill=False)
     template_mask.pixels[:, :5, :5] = True
     t = Affine.init_identity(2)
     warped_img = img.warp_to_mask(template_mask, t)
     assert(type(warped_img) == MaskedImage)
+
     result = Image.init_blank((10, 10), n_channels=2).pixels
     result[:, :5, :5] = 2.5
     result_mask = BooleanImage.init_blank((10, 10), fill=False).pixels
-    result_mask[:, :2, :5] = True
-    assert(warped_img.n_true_pixels() == 10)
-    assert(np.all(result == warped_img.pixels))
-    assert(np.all(result_mask == warped_img.mask.pixels))
+    result_mask[:, :5, :5] = True
+    assert(warped_img.n_true_pixels() == 25)
+    assert_allclose(result, warped_img.pixels)
+    assert_allclose(result_mask, warped_img.mask.pixels)
+
+
+def test_warp_to_mask_masked_image_all_true():
+    img = MaskedImage.init_blank((10, 10), fill=2.5)
+
+    template_mask = BooleanImage.init_blank((10, 10), fill=False)
+    template_mask.pixels[:, :5, :5] = True
+    t = Affine.init_identity(2)
+    warped_img = img.warp_to_mask(template_mask, t)
+    assert(type(warped_img) == MaskedImage)
 
 
 def test_warp_to_shape_equal_warp_to_mask():
