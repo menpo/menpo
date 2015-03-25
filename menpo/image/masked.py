@@ -9,6 +9,25 @@ from .base import Image
 from .boolean import BooleanImage
 
 
+class OutOfMaskSampleError(ValueError):
+    r"""
+    Exception that is thrown when an attempt is made to sample an MaskedImage
+    in an area that is masked out (where the mask is ``False``).
+
+    Parameters
+    ----------
+    sampled_mask : `bool ndarray`
+        The sampled mask, ``True`` where the image's mask was ``True`` and
+        ``False`` otherwise. Useful for masking out the sampling array.
+    sampled_values : `ndarray`
+        The sampled values, no attempt at masking is made.
+    """
+    def __init__(self, sampled_mask, sampled_values):
+        super(OutOfMaskSampleError, self).__init__()
+        self.sampled_mask = sampled_mask
+        self.sampled_values = sampled_values
+
+
 class MaskedImage(Image):
     r"""
     Represents an `n`-dimensional `k`-channel image, which has a mask.
@@ -704,6 +723,55 @@ class MaskedImage(Image):
         self.crop_inplace(min_indices, max_indices,
                           constrain_to_boundary=constrain_to_boundary)
 
+    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
+        r"""
+        Sample this image at the given sub-pixel accurate points. The input
+        PointCloud should have the same number of dimensions as the image e.g.
+        a 2D PointCloud for a 2D multi-channel image. A numpy array will be
+        returned the has the values for every given point across each channel
+        of the image.
+
+        If the points to sample are *outside* of the mask (fall on a ``False``
+        value in the mask), an exception is raised. This exception contains
+        the information of which points were outside of the mask (``False``)
+        and *also* returns the sampled points.
+
+        Parameters
+        ----------
+        points_to_sample : :map:`PointCloud`
+            Array of points to sample from the image. Should be
+            `(n_points, n_dims)`
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range [0,5].
+            See warp_to_shape for more information.
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        sampled_pixels : (`n_points`, `n_channels`) `ndarray`
+            The interpolated values taken across every channel of the image.
+
+        Raises
+        ------
+        OutOfMaskSampleError
+            One of the points to sample was outside of the valid area of the
+            mask (``False`` in the mask). This exception contains both the
+            mask of valid sample points, **as well as** the sampled points
+            themselves, in case you want to ignore the error.
+        """
+        sampled_mask = self.mask.sample(points_to_sample, mode=mode, cval=cval)
+        sampled_values = Image.sample(self, points_to_sample, order=order,
+                                      mode=mode, cval=cval)
+        if not np.all(sampled_mask):
+            raise OutOfMaskSampleError(sampled_mask, sampled_values)
+        return sampled_values
+
+    # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
                      order=1, mode='constant', cval=0.):
         r"""
@@ -757,6 +825,7 @@ class MaskedImage(Image):
         warped_image.mask = warped_mask
         return warped_image
 
+    # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
                       order=1, mode='constant', cval=0.):
         """

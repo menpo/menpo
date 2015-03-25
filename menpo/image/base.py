@@ -36,7 +36,6 @@ class ImageBoundaryError(ValueError):
         The per-dimension maximum index that could be used if the crop was
         constrained to the image boundaries.
     """
-
     def __init__(self, requested_min, requested_max, snapped_min,
                  snapped_max):
         super(ImageBoundaryError, self).__init__()
@@ -1231,9 +1230,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 "Trying to warp a {}D image with a {}D transform "
                 "(they must match)".format(self.n_dims, transform.n_dims))
         template_points = template_mask.true_indices()
-        sampled = self._sample_points(template_points, transform,
-                                      batch_size, order=order, mode=mode,
-                                      cval=cval)
+        points_to_sample = transform.apply(template_points,
+                                           batch_size=batch_size)
+        sampled = self.sample(points_to_sample,
+                              order=order, mode=mode, cval=cval)
+
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
@@ -1266,21 +1267,19 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image.from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
-    def _sample_points(self, points_to_sample, transform, batch_size,
-                       order=1, mode='constant', cval=0.0):
+    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
         r"""
+        Sample this image at the given sub-pixel accurate points. The input
+        PointCloud should have the same number of dimensions as the image e.g.
+        a 2D PointCloud for a 2D multi-channel image. A numpy array will be
+        returned the has the values for every given point across each channel
+        of the image.
+
         Parameters
         ----------
-        points_to_sample : `ndarray`
-            Array of points to sample from the image.
-        transform : :map:`Transform`
-            Transform **from the template_shape space back to this image**.
-            Defines, for each index on template_shape, which pixel location
-            should be sampled from on this image.
-        batch_size : `int` or ``None``
-            This size indicates how many points in the image should be warped at
-            a time, which keeps memory usage low. If ``None``, no batching is
-            used and all points are warped at once.
+        points_to_sample : :map:`PointCloud`
+            Array of points to sample from the image. Should be
+            `(n_points, n_dims)`
         order : `int`, optional
             The order of interpolation. The order has to be in the range [0,5].
             See warp_to_shape for more information.
@@ -1290,21 +1289,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+
+        Returns
+        -------
+        sampled_pixels : (`n_points`, `n_channels`) `ndarray`
+            The interpolated values taken across every channel of the image.
         """
-        if batch_size is not None:
-            sampled = np.zeros([self.n_channels, points_to_sample.shape[0]])
-            for lo_ind in range(0, points_to_sample.shape[0], batch_size):
-                hi_ind = lo_ind + batch_size
-                batch_points = transform.apply(points_to_sample[lo_ind:hi_ind])
-                sampled[:, lo_ind:hi_ind] = scipy_interpolation(
-                    self.pixels, batch_points, order=order,  mode=mode,
-                    cval=cval)
-            return sampled
-        else:
-            batch_points = transform.apply(points_to_sample)
-            return scipy_interpolation(
-                self.pixels, batch_points, order=order,  mode=mode,
-                cval=cval)
+        from menpo.shape import PointCloud
+        # The public interface is a PointCloud, but when this is used internally
+        # a numpy array is passed. So let's just treat the PointCloud as a
+        # 'special case' and not document the ndarray ability.
+        if isinstance(points_to_sample, PointCloud):
+            points_to_sample = points_to_sample.points
+        return scipy_interpolation(self.pixels, points_to_sample,
+                                   order=order,  mode=mode, cval=cval)
 
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
                       order=1, mode='constant', cval=0.0, batch_size=None):
@@ -1365,9 +1363,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                            mode=mode, cval=cval)
         else:
             template_points = indices_for_image_of_shape(template_shape)
-            sampled = self._sample_points(template_points, transform,
-                                          batch_size, order=order, mode=mode,
-                                          cval=cval)
+            points_to_sample = transform.apply(template_points,
+                                               batch_size=batch_size)
+            sampled = self.sample(points_to_sample,
+                                  order=order, mode=mode, cval=cval)
 
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0

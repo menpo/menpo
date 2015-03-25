@@ -1,7 +1,9 @@
 import numpy as np
 import menpo
+from nose.tools import raises
 from numpy.testing import assert_allclose
-from menpo.image import BooleanImage, Image, MaskedImage
+from menpo.image import BooleanImage, Image, MaskedImage, OutOfMaskSampleError
+from menpo.shape import PointCloud
 from menpo.transform import Affine
 import menpo.io as mio
 
@@ -116,3 +118,52 @@ def test_warp_to_shape_batch():
 def test_rescale_boolean():
     mask = BooleanImage.init_blank((100, 100))
     mask.resize((10, 10))
+
+
+def test_sample_image():
+    im = Image.init_blank((100, 100), fill=2)
+    p = PointCloud(np.array([[0, 0], [1, 0]]))
+
+    arr = im.sample(p)
+    assert_allclose(arr, [[2., 2.]])
+
+
+def test_sample_maskedimage():
+    im = MaskedImage.init_blank((100, 100), fill=2)
+    p = PointCloud(np.array([[0, 0], [1, 0]]))
+
+    arr = im.sample(p)
+    assert_allclose(arr, [[2., 2.]])
+
+
+@raises(OutOfMaskSampleError)
+def test_sample_maskedimage_error():
+    m = np.zeros([100, 100], dtype=np.bool)
+    im = MaskedImage.init_blank((100, 100), mask=m, fill=2)
+    p = PointCloud(np.array([[0, 0], [1, 0]]))
+    im.sample(p)
+
+
+def test_sample_maskedimage_error_values():
+    m = np.zeros([100, 100], dtype=np.bool)
+    m[1, 0] = True
+    im = MaskedImage.init_blank((100, 100), mask=m, fill=2)
+    p = PointCloud(np.array([[0, 0], [1, 0]]))
+    try:
+        im.sample(p)
+        # Expect exception!
+        assert 0
+    except OutOfMaskSampleError as e:
+        sampled_mask = e.sampled_mask
+        sampled_values = e.sampled_values
+        assert_allclose(sampled_values, [[2., 2.]])
+        assert_allclose(sampled_mask, [[False, True]])
+
+
+def test_sample_booleanimage():
+    im = BooleanImage.init_blank((100, 100))
+    im.pixels[0, 1, 0] = False
+    p = PointCloud(np.array([[0, 0], [1, 0]]))
+
+    arr = im.sample(p)
+    assert_allclose(arr, [[True, False]])

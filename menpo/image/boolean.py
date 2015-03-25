@@ -267,6 +267,35 @@ class BooleanImage(Image):
             boundary=boundary, constrain_to_bounds=constrain_to_bounds)
 
     # noinspection PyMethodOverriding
+    def sample(self, points_to_sample, mode='constant', cval=0.0):
+        r"""
+        Sample this image at the given sub-pixel accurate points. The input
+        PointCloud should have the same number of dimensions as the image e.g.
+        a 2D PointCloud for a 2D multi-channel image. A numpy array will be
+        returned the has the values for every given point across each channel
+        of the image.
+
+        Parameters
+        ----------
+        points_to_sample : :map:`PointCloud`
+            Array of points to sample from the image. Should be
+            `(n_points, n_dims)`
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        sampled_pixels : (`n_points`, `n_channels`) `bool ndarray`
+            The interpolated values taken across every channel of the image.
+        """
+        return Image.sample(self, points_to_sample, order=0, mode=mode,
+                            cval=cval)
+
+    # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
                      mode='constant', cval=0.):
         r"""
