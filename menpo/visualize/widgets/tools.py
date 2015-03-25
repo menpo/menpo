@@ -152,7 +152,7 @@ class LogoWidget(ipywidgets.Box):
                     border_width, padding, margin)
 
 
-class IndexSliderWidget(ipywidgets.Box):
+class IndexSliderWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting an index using a slider. The widget consists
     of:
@@ -187,6 +187,7 @@ class IndexSliderWidget(ipywidgets.Box):
                                            step=index['step'],
                                            description=description)
         super(IndexSliderWidget, self).__init__(children=[self.slider])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = index
@@ -840,6 +841,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             for idx in range(len(self.selected_values['colour'])):
                 self.selected_values['colour'][idx] = tmp
             self.label_dropdown.value = 0
+            if self._render_function is not None:
+                self._render_function('', True)
         self.apply_to_all_button.on_click(apply_to_all_function)
 
         def update_colour_wrt_label(name, value):
@@ -884,7 +887,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=True, border_color='black',
               border_style='solid', border_width=1, padding=0, margin=0,
               font_family='', font_size=None, font_style='',
-              font_weight='', rgb_width='2cm'):
+              font_weight='', rgb_width='1.5cm'):
         r"""
         Function that defines the styling of the widget.
 
@@ -971,12 +974,6 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             self.g_text.on_trait_change(self._render_function, 'value')
             self.b_text.on_trait_change(self._render_function, 'value')
 
-            def apply_to_all_render_function(name):
-                self._render_function('', True)
-            self._apply_to_all_render_function = apply_to_all_render_function
-            self.apply_to_all_button.on_click(
-                self._apply_to_all_render_function)
-
     def remove_render_function(self):
         r"""
         Method that removes the current `self._render_function()` from the
@@ -987,10 +984,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         self.r_text.on_trait_change(self._render_function, 'value', remove=True)
         self.g_text.on_trait_change(self._render_function, 'value', remove=True)
         self.b_text.on_trait_change(self._render_function, 'value', remove=True)
-        self.apply_to_all_button.on_click(self._apply_to_all_render_function,
-                                          remove=True)
         self._render_function = None
-        self._apply_to_all_render_function = None
 
     def replace_render_function(self, render_function):
         r"""
@@ -1116,7 +1110,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         self.g_text.disabled = disabled
 
 
-class ImageOptionsWidget(ipywidgets.Box):
+class ImageOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting image rendering options. Specifically, it
     consists of:
@@ -1166,6 +1160,7 @@ class ImageOptionsWidget(ipywidgets.Box):
                                           visible=toggle_show_default)
         super(ImageOptionsWidget, self).__init__(children=[self.toggle_visible,
                                                            self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = image_options
@@ -1335,7 +1330,7 @@ class ImageOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-class LineOptionsWidget(ipywidgets.Box):
+class LineOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting line rendering options. Specifically, it
     consists of:
@@ -1412,6 +1407,7 @@ class LineOptionsWidget(ipywidgets.Box):
                                            align='end')
         super(LineOptionsWidget, self).__init__(children=[self.toggle_visible,
                                                           self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = line_options
@@ -1541,7 +1537,7 @@ class LineOptionsWidget(ipywidgets.Box):
                                       font_family=font_family,
                                       font_size=font_size,
                                       font_weight=font_weight,
-                                      font_style=font_style, rgb_width='1.0cm')
+                                      font_style=font_style, rgb_width='1.5cm')
 
     def add_render_function(self, render_function):
         r"""
@@ -1649,7 +1645,7 @@ class LineOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-class MarkerOptionsWidget(ipywidgets.Box):
+class MarkerOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting marker rendering options. Specifically, it
     consists of:
@@ -1760,6 +1756,7 @@ class MarkerOptionsWidget(ipywidgets.Box):
             visible=toggle_show_default, align='end')
         super(MarkerOptionsWidget, self).__init__(children=[self.toggle_visible,
                                                             self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = marker_options
@@ -1900,11 +1897,11 @@ class MarkerOptionsWidget(ipywidgets.Box):
         self.marker_edge_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            rgb_width='1.0cm')
+            rgb_width='1.5cm')
         self.marker_face_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            rgb_width='1.0cm')
+            rgb_width='1.5cm')
 
     def add_render_function(self, render_function):
         r"""
@@ -2033,7 +2030,7 @@ class MarkerOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-class NumberingOptionsWidget(ipywidgets.Box):
+class NumberingOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting numbering rendering options. Specifically, it
     consists of:
@@ -2172,6 +2169,7 @@ class NumberingOptionsWidget(ipywidgets.Box):
             visible=toggle_show_default, align='end')
         super(NumberingOptionsWidget, self).__init__(
             children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = numbers_options
@@ -2333,7 +2331,7 @@ class NumberingOptionsWidget(ipywidgets.Box):
         self.numbers_font_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            rgb_width='1.0cm')
+            rgb_width='1.5cm')
 
     def add_render_function(self, render_function):
         r"""
@@ -2480,7 +2478,7 @@ class NumberingOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-class FigureOptionsOneScaleWidget(ipywidgets.Box):
+class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting figure related options. Specifically, it
     consists of:
@@ -2646,6 +2644,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
             visible=toggle_show_default)
         super(FigureOptionsOneScaleWidget, self).__init__(
             children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = figure_options
@@ -3044,7 +3043,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-class FigureOptionsTwoScalesWidget(ipywidgets.Box):
+class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting figure related options. Specifically, it
     consists of:
@@ -3235,6 +3234,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
             visible=toggle_show_default)
         super(FigureOptionsTwoScalesWidget, self).__init__(
             children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = figure_options
@@ -3672,7 +3672,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-class LegendOptionsWidget(ipywidgets.Box):
+class LegendOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting legend rendering options. Specifically, it
     consists of:
@@ -3926,6 +3926,7 @@ class LegendOptionsWidget(ipywidgets.Box):
             visible=toggle_show_default, align='end')
         super(LegendOptionsWidget, self).__init__(
             children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
 
         # Set tab titles
         tab_titles = ['Location', 'Font', 'Formatting']
@@ -4429,7 +4430,7 @@ class LegendOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-class GridOptionsWidget(ipywidgets.Box):
+class GridOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting grid rendering options. Specifically, it
     consists of:
@@ -4499,6 +4500,7 @@ class GridOptionsWidget(ipywidgets.Box):
                                            align='end')
         super(GridOptionsWidget, self).__init__(children=[self.toggle_visible,
                                                           self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = grid_options

@@ -6,7 +6,10 @@ import IPython.html.widgets as ipywidgets
 from IPython.utils.traitlets import link
 
 from .tools import (_format_box, _format_font, IndexButtonsWidget,
-                    IndexSliderWidget)
+                    IndexSliderWidget, LineOptionsWidget, MarkerOptionsWidget,
+                    ImageOptionsWidget, NumberingOptionsWidget,
+                    FigureOptionsOneScaleWidget, FigureOptionsTwoScalesWidget,
+                    LegendOptionsWidget, GridOptionsWidget)
 
 
 class ChannelOptionsWidget(ipywidgets.Box):
@@ -1471,6 +1474,7 @@ class AnimationOptionsWidget(ipywidgets.Box):
             if value:
                 self.play_options_toggle.value = False
         self.toggle_visible.on_trait_change(toggle_function, 'value')
+        toggle_function('', toggle_show_default)
 
         # Set render and update functions
         self._update_function = None
@@ -1691,401 +1695,539 @@ class AnimationOptionsWidget(ipywidgets.Box):
         self.selected_values = index
 
 
-# def viewer_options(viewer_options_default, options_tabs, objects_names=None,
-#                    labels=None, plot_function=None, toggle_show_visible=True,
-#                    toggle_show_default=True):
-#     r"""
-#     Creates a widget with Viewer Options. Specifically, it has:
-#         1) A drop down menu for object selection.
-#         2) A tab widget with any of line, marker, numbers and feature options
-#         3) A toggle button that controls the visibility of all the above, i.e.
-#            the viewer options.
-#
-#     The structure of the widgets is the following:
-#         viewer_options_wid.children = [toggle_button, options]
-#         options.children = [selection_menu, tab_options]
-#         tab_options.children = [line_options, marker_options,
-#                                 numbers_options, figure_options, legend_options]
-#
-#     The returned widget saves the selected values in the following dictionary:
-#         viewer_options_wid.selected_values
-#
-#     To fix the alignment within this widget please refer to
-#     `format_viewer_options()` function.
-#
-#     Parameters
-#     ----------
-#     viewer_options_default : list of `dict`
-#         A list of dictionaries with the initial selected viewer options per
-#         object. Example:
-#
-#             lines_options = {'render_lines': True,
-#                              'line_width': 1,
-#                              'line_colour': ['b'],
-#                              'line_style': '-'}
-#
-#             markers_options = {'render_markers':True,
-#                                'marker_size':20,
-#                                'marker_face_colour':['r'],
-#                                'marker_edge_colour':['k'],
-#                                'marker_style':'o',
-#                                'marker_edge_width':1}
-#
-#             numbers_options = {'render_numbering': True,
-#                                'numbers_font_name': 'serif',
-#                                'numbers_font_size': 10,
-#                                'numbers_font_style': 'normal',
-#                                'numbers_font_weight': 'normal',
-#                                'numbers_font_colour': ['k'],
-#                                'numbers_horizontal_align': 'center',
-#                                'numbers_vertical_align': 'bottom'}
-#
-#             legend_options = {'render_legend':True,
-#                               'legend_title':'',
-#                               'legend_font_name':'serif',
-#                               'legend_font_style':'normal',
-#                               'legend_font_size':10,
-#                               'legend_font_weight':'normal',
-#                               'legend_marker_scale':1.,
-#                               'legend_location':2,
-#                               'legend_bbox_to_anchor':(1.05, 1.),
-#                               'legend_border_axes_pad':1.,
-#                               'legend_n_columns':1,
-#                               'legend_horizontal_spacing':1.,
-#                               'legend_vertical_spacing':1.,
-#                               'legend_border':True,
-#                               'legend_border_padding':0.5,
-#                               'legend_shadow':False,
-#                               'legend_rounded_corners':True}
-#
-#             figure_options = {'x_scale': 1.,
-#                               'y_scale': 1.,
-#                               'render_axes': True,
-#                               'axes_font_name': 'serif',
-#                               'axes_font_size': 10,
-#                               'axes_font_style': 'normal',
-#                               'axes_font_weight': 'normal',
-#                               'axes_x_limits': None,
-#                               'axes_y_limits': None}
-#
-#             grid_options = {'render_grid': True,
-#                             'grid_line_style': '--',
-#                             'grid_line_width': 0.5}
-#
-#             viewer_options_default = {'lines': lines_options,
-#                                       'markers': markers_options,
-#                                       'numbering': numbering_options,
-#                                       'legend': legend_options,
-#                                       'figure': figure_options,
-#                                       'grid': grid_options}
-#
-#     options_tabs : `list` of `str`
-#         List that defines the ordering of the options tabs. It can take one of
-#         {``lines``, ``markers``, ``numbering``, ``figure_one``, ``figure_two``,
-#         ``legend``, ``grid``}
-#
-#     objects_names : `list` of `str`, optional
-#         A list with the names of the objects that will be used in the selection
-#         dropdown menu. If None, then the names will have the form ``%d``.
-#
-#     plot_function : `function` or None, optional
-#         The plot function that is executed when a widgets' value changes.
-#         If None, then nothing is assigned.
-#
-#     toggle_show_default : `boolean`, optional
-#         Defines whether the options will be visible upon construction.
-#
-#     toggle_show_visible : `boolean`, optional
-#         The visibility of the toggle button.
-#     """
-#     import IPython.html.widgets as ipywidgets
-#     # make sure that viewer_options_default is list even with one member
-#     if not isinstance(viewer_options_default, list):
-#         viewer_options_default = [viewer_options_default]
-#
-#     # find number of objects
-#     n_objects = len(viewer_options_default)
-#     selection_visible = n_objects > 1
-#
-#     # Create widgets
-#     # toggle button
-#     but = ipywidgets.ToggleButton(description='Viewer Options',
-#                                   value=toggle_show_default,
-#                                   visible=toggle_show_visible)
-#
-#     # select object drop down menu
-#     objects_dict = OrderedDict()
-#     if objects_names is None:
-#         for k in range(n_objects):
-#             objects_dict[str(k)] = k
-#     else:
-#         for k, g in enumerate(objects_names):
-#             objects_dict[g] = k
-#     selection = ipywidgets.Dropdown(options=objects_dict, value=0,
-#                                     description='Select',
-#                                     visible=(selection_visible and
-#                                              toggle_show_default))
-#
-#     # options widgets
-#     options_widgets = []
-#     tab_titles = []
-#     if labels is None:
-#         labels = [str(j) for j in range(len(options_tabs))]
-#     for j, o in enumerate(options_tabs):
-#         if o == 'lines':
-#             options_widgets.append(
-#                 line_options(viewer_options_default[0]['lines'],
-#                              toggle_show_visible=False,
-#                              toggle_show_default=True,
-#                              plot_function=plot_function,
-#                              show_checkbox_title='Render lines',
-#                              labels=labels[j]))
-#             tab_titles.append('Lines')
-#         elif o == 'markers':
-#             options_widgets.append(
-#                 marker_options(viewer_options_default[0]['markers'],
-#                                toggle_show_visible=False,
-#                                toggle_show_default=True,
-#                                plot_function=plot_function,
-#                                show_checkbox_title='Render markers'))
-#             tab_titles.append('Markers')
-#         elif o == 'image':
-#             options_widgets.append(
-#                 image_options(viewer_options_default[0]['image'],
-#                               toggle_show_visible=False,
-#                               toggle_show_default=True,
-#                               plot_function=plot_function))
-#             tab_titles.append('Image')
-#         elif o == 'numbering':
-#             options_widgets.append(
-#                 numbering_options(viewer_options_default[0]['numbering'],
-#                                   toggle_show_visible=False,
-#                                   toggle_show_default=True,
-#                                   plot_function=plot_function,
-#                                   show_checkbox_title='Render numbering'))
-#             tab_titles.append('Numbering')
-#         elif o == 'figure_one':
-#             options_widgets.append(
-#                 figure_options(viewer_options_default[0]['figure'],
-#                                plot_function=plot_function,
-#                                figure_scale_bounds=(0.1, 4),
-#                                figure_scale_step=0.1, figure_scale_visible=True,
-#                                axes_visible=True, toggle_show_default=True,
-#                                toggle_show_visible=False))
-#             tab_titles.append('Figure/Axes')
-#         elif o == 'figure_two':
-#             options_widgets.append(
-#                 figure_options_two_scales(
-#                     viewer_options_default[0]['figure'],
-#                     plot_function=plot_function, coupled_default=False,
-#                     figure_scales_bounds=(0.1, 4), figure_scales_step=0.1,
-#                     figure_scales_visible=True, axes_visible=True,
-#                     toggle_show_default=True, toggle_show_visible=False))
-#             tab_titles.append('Figure/Axes')
-#         elif o == 'legend':
-#             options_widgets.append(
-#                 legend_options(viewer_options_default[0]['legend'],
-#                                toggle_show_visible=False,
-#                                toggle_show_default=True,
-#                                plot_function=plot_function,
-#                                show_checkbox_title='Render legend'))
-#             tab_titles.append('Legend')
-#         elif o == 'grid':
-#             options_widgets.append(
-#                 grid_options(viewer_options_default[0]['grid'],
-#                              toggle_show_visible=False,
-#                              toggle_show_default=True,
-#                              plot_function=plot_function,
-#                              show_checkbox_title='Render grid'))
-#             tab_titles.append('Grid')
-#     options = ipywidgets.Tab(children=options_widgets)
-#
-#     # Final widget
-#     all_options = ipywidgets.Box(children=[selection, options])
-#     viewer_options_wid = ipywidgets.Box(children=[but, all_options])
-#
-#     # save tab titles and options str to widget in order to be passed to the
-#     # format function
-#     viewer_options_wid.tab_titles = tab_titles
-#     viewer_options_wid.options_tabs = options_tabs
-#
-#     # Assign output list of dicts
-#     viewer_options_wid.selected_values = viewer_options_default
-#
-#     # Update widgets' state
-#     def update_widgets(name, value):
-#         for i, tab in enumerate(options_tabs):
-#             if tab == 'lines':
-#                 update_line_options(
-#                     options_widgets[i],
-#                     viewer_options_default[value]['lines'],
-#                     labels=labels[value])
-#             elif tab == 'markers':
-#                 update_marker_options(
-#                     options_widgets[i],
-#                     viewer_options_default[value]['markers'])
-#             elif tab == 'image':
-#                 update_image_options(
-#                     options_widgets[i],
-#                     viewer_options_default[value]['image'])
-#             elif tab == 'numbering':
-#                 update_numbering_options(
-#                     options_widgets[i],
-#                     viewer_options_default[value]['numbering'])
-#             elif tab == 'figure_one':
-#                 update_figure_options(
-#                     options_widgets[i],
-#                     viewer_options_default[value]['figure'])
-#             elif tab == 'figure_two':
-#                 update_figure_options_two_scales(
-#                     options_widgets[i],
-#                     viewer_options_default[value]['figure'])
-#             elif tab == 'legend':
-#                 update_legend_options(
-#                     options_widgets[i],
-#                     viewer_options_default[value]['legend'])
-#             elif tab == 'grid':
-#                 update_grid_options(
-#                     options_widgets[i],
-#                     viewer_options_default[value]['grid'])
-#     selection.on_trait_change(update_widgets, 'value')
-#
-#     # Toggle button function
-#     def toggle_fun(name, value):
-#         selection.visible = value and selection_visible
-#         options.visible = value
-#     toggle_fun('', toggle_show_default)
-#     but.on_trait_change(toggle_fun, 'value')
-#
-#     return viewer_options_wid
-#
-#
-# def format_viewer_options(viewer_options_wid, container_padding='6px',
-#                           container_margin='6px',
-#                           container_border='1px solid black',
-#                           toggle_button_font_weight='bold',
-#                           border_visible=False, suboptions_border_visible=True):
-#     r"""
-#     Function that corrects the align (style format) of a given
-#     viewer_options widget. Usage example:
-#         viewer_options_wid = viewer_options(default_options)
-#         display(viewer_options_wid)
-#         format_viewer_options(viewer_options_wid)
-#
-#     Parameters
-#     ----------
-#     viewer_options_wid :
-#         The widget object generated by the `viewer_options()` function.
-#
-#     container_padding : `str`, optional
-#         The padding around the widget, e.g. '6px'
-#
-#     container_margin : `str`, optional
-#         The margin around the widget, e.g. '6px'
-#
-#     container_border : `str`, optional
-#         The border around the widget, e.g. '1px solid black'
-#
-#     toggle_button_font_weight : `str`
-#         The font weight of the toggle button, e.g. 'bold'
-#
-#     border_visible : `boolean`, optional
-#         Defines whether to draw the border line around the widget.
-#
-#     suboptions_border_visible : `boolean`, optional
-#         Defines whether to draw the border line around each of the sub options.
-#     """
-#     # format widgets
-#     for k, o in enumerate(viewer_options_wid.options_tabs):
-#         if o == 'lines':
-#             format_line_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 suboptions_border_visible=suboptions_border_visible,
-#                 border_visible=False)
-#         elif o == 'markers':
-#             format_marker_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 suboptions_border_visible=suboptions_border_visible,
-#                 border_visible=False)
-#         elif o == 'image':
-#             format_image_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 border_visible=suboptions_border_visible)
-#         elif o == 'numbering':
-#             format_numbering_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 suboptions_border_visible=suboptions_border_visible,
-#                 border_visible=False)
-#         elif o == 'figure_one':
-#             format_figure_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 border_visible=suboptions_border_visible)
-#         elif o == 'figure_two':
-#             format_figure_options_two_scales(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 border_visible=suboptions_border_visible)
-#         elif o == 'legend':
-#             format_legend_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 suboptions_border_visible=suboptions_border_visible,
-#                 border_visible=False)
-#         elif o == 'grid':
-#             format_grid_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 suboptions_border_visible=suboptions_border_visible,
-#                 border_visible=False)
-#
-#     # set titles
-#     for (k, tl) in enumerate(viewer_options_wid.tab_titles):
-#         viewer_options_wid.children[1].children[1].set_title(k, tl)
-#
-#     # set toggle button font bold
-#     viewer_options_wid.children[0].font_weight = toggle_button_font_weight
-#
-#     # margin and border around container widget
-#     viewer_options_wid.padding = container_padding
-#     viewer_options_wid.margin = container_margin
-#     if border_visible:
-#         viewer_options_wid.border = container_border
-#
-#
-# def update_viewer_options(viewer_options_wid, viewer_options_default,
-#                           labels=None):
-#     for k, o in enumerate(viewer_options_wid.options_tabs):
-#         if o == 'lines' and 'lines' in viewer_options_default:
-#             update_line_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 viewer_options_default['lines'], labels=labels)
-#         elif o == 'markers' and 'markers' in viewer_options_default:
-#             update_marker_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 viewer_options_default['markers'])
-#         elif o == 'image' and 'image' in viewer_options_default:
-#             update_image_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 viewer_options_default['image'])
-#         elif o == 'numbering' and 'numbering' in viewer_options_default:
-#             update_numbering_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 viewer_options_default['numbering'])
-#         elif o == 'figure_one' and 'figure' in viewer_options_default:
-#             update_figure_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 viewer_options_default['figure'])
-#         elif o == 'figure_two' and 'figure' in viewer_options_default:
-#             update_figure_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 viewer_options_default['figure'])
-#         elif o == 'legend' and 'legend' in viewer_options_default:
-#             update_legend_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 viewer_options_default['legend'])
-#         elif o == 'grid' and 'grid' in viewer_options_default:
-#             update_grid_options(
-#                 viewer_options_wid.children[1].children[1].children[k],
-#                 viewer_options_default['grid'])
-#
-#
+class RendererOptionsWidget(ipywidgets.Box):
+    r"""
+    Creates a widget for selecting rendering options when rendering an object.
+    Specifically, it consists of:
+
+        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
+           the options' visibility
+        2) Dropdown [`self.object_selection_dropdown`]: the object selection
+           dropdown
+        3) {Line,Marker,Image,Numbering,Figure,Legend,Grid}OptionsWidget
+           [`self.options_widgets`]: the various rendering sub-options widgets
+        4) Tab [`self.suboptions_tab`]: box that contains (3)
+        5) Box [`self.options_box`]: box that contains (2), (4) and (1)
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `replace_render_function()` methods.
+
+    Parameters
+    ----------
+    renderer_options : `list` of `dict`
+        The selected rendering options per object. The `list` must have length
+        `n_objects` and contain a `dict` of rendering options per object.
+        For example, in case we had two objects to render ::
+
+            lines_options = {'render_lines': True,
+                             'line_width': 1,
+                             'line_colour': ['b', 'r'],
+                             'line_style': '-'}
+            markers_options = {'render_markers': True,
+                               'marker_size': 20,
+                               'marker_face_colour': ['w', 'w'],
+                               'marker_edge_colour': ['b', 'r'],
+                               'marker_style': 'o',
+                               'marker_edge_width': 1}
+            numbering_options = {'render_numbering': True,
+                                 'numbers_font_name': 'serif',
+                                 'numbers_font_size': 10,
+                                 'numbers_font_style': 'normal',
+                                 'numbers_font_weight': 'normal',
+                                 'numbers_font_colour': ['k'],
+                                 'numbers_horizontal_align': 'center',
+                                 'numbers_vertical_align': 'bottom'}
+            legend_options = {'render_legend': True,
+                              'legend_title': '',
+                              'legend_font_name': 'serif',
+                              'legend_font_style': 'normal',
+                              'legend_font_size': 10,
+                              'legend_font_weight': 'normal',
+                              'legend_marker_scale': 1.,
+                              'legend_location': 2,
+                              'legend_bbox_to_anchor': (1.05, 1.),
+                              'legend_border_axes_pad': 1.,
+                              'legend_n_columns': 1,
+                              'legend_horizontal_spacing': 1.,
+                              'legend_vertical_spacing': 1.,
+                              'legend_border': True,
+                              'legend_border_padding': 0.5,
+                              'legend_shadow': False,
+                              'legend_rounded_corners': True}
+            figure_options = {'x_scale': 1.,
+                              'y_scale': 1.,
+                              'render_axes': True,
+                              'axes_font_name': 'serif',
+                              'axes_font_size': 10,
+                              'axes_font_style': 'normal',
+                              'axes_font_weight': 'normal',
+                              'axes_x_limits': None,
+                              'axes_y_limits': None}
+            grid_options = {'render_grid': True,
+                            'grid_line_style': '--',
+                            'grid_line_width': 0.5}
+            rendering_dict = {'lines': lines_options,
+                              'markers': markers_options,
+                              'numbering': numbering_options,
+                              'legend': legend_options,
+                              'figure': figure_options,
+                              'grid': grid_options}
+            renderer_options = [rendering_dict, rendering_dict]
+
+    options_tabs : `list` of `str`
+        `List` that defines the ordering of the options tabs. Possible values
+        are
+
+            ============= ===============================
+            Value         Returned class
+            ============= ===============================
+            'lines'       `LineOptionsWidget`
+            'markers'     `MarkerOptionsWidget`
+            'numbering'   `NumberingOptionsWidget`
+            'figure_one'  `FigureOptionsOneScaleWidget`
+            'figure_two'  `FigureOptionsTwoScalesWidget`
+            'legend'      `LegendOptionsWidget`
+            'grid'        `GridOptionsWidget`
+            ============= ===============================
+
+    objects_names : `list` of `str` or ``None``, optional
+        A `list` with the names of the objects that will be used in the
+        selection dropdown menu. If ``None``, then the names will have the
+        format ``%d``.
+    labels_per_object : `list` of `list` or ``None``, optional
+        A `list` that contains a `list` of labels for each object. Those
+        `labels` are employed by the `ColourSelectionWidget`. An example for
+         which this option is useful is in the case we wish to create rendering
+         options for multiple :map:`LandmarkGroup` objects and each one of them
+         has a different set of `labels`. If ``None``, then `labels_per_object`
+         is a `list` of lenth `n_objects` with ``None``.
+    selected_object : `int`, optional
+        The object for which to show the rendering options in the beginning,
+        when the widget is created.
+    object_selection_dropdown_visible : `bool`, optional
+        Controls the visibility of the object selection dropdown
+        (`self.object_selection_dropdown`).
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    toggle_show_default : `bool`, optional
+        Defines whether the options will be visible upon construction.
+    toggle_show_visible : `bool`, optional
+        The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
+    """
+    def __init__(self, renderer_options, options_tabs, objects_names=None,
+                 labels_per_object=None, selected_object=0,
+                 object_selection_dropdown_visible=True,
+                 render_function=None, toggle_show_visible=True,
+                 toggle_show_default=True, toggle_title='Render Options'):
+        # Make sure that renderer_options is a list even with one member
+        if not isinstance(renderer_options, list):
+            renderer_options = [renderer_options]
+
+        # Get number of objects to be rendered
+        self.n_objects = len(renderer_options)
+
+        # Check labels_per_object
+        if labels_per_object is None:
+            labels_per_object = [None] * self.n_objects
+
+        # Check objects_names
+        if objects_names is None:
+            objects_names = [str(k) for k in range(self.n_objects)]
+
+        # Create widgets
+        # toggle visibility button
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        # object selection dropdown
+        objects_dict = OrderedDict()
+        for k, g in enumerate(objects_names):
+            objects_dict[g] = k
+        tmp_visible = self._selection_dropdown_visible(
+            object_selection_dropdown_visible, toggle_show_default)
+        self.object_selection_dropdown = ipywidgets.Dropdown(
+            options=objects_dict, value=selected_object, description='Select',
+            visible=tmp_visible)
+        # options widgets
+        options_widgets = []
+        tab_titles = []
+        for o in options_tabs:
+            # get the options to pass to the sub-options constructors
+            if o == 'figure_one' or o == 'figure_two':
+                tmp_options = renderer_options[selected_object]['figure']
+            else:
+                tmp_options = renderer_options[selected_object][o]
+            # get the labels to pass in where required
+            tmp_labels = labels_per_object[selected_object]
+            # call sub-options classes
+            if o == 'lines':
+                options_widgets.append(LineOptionsWidget(
+                    tmp_options, render_function=render_function,
+                    toggle_show_visible=False, toggle_show_default=True,
+                    render_checkbox_title='Render lines', labels=tmp_labels))
+                tab_titles.append('Lines')
+            elif o == 'markers':
+                options_widgets.append(MarkerOptionsWidget(
+                    tmp_options, render_function=render_function,
+                    toggle_show_visible=False, toggle_show_default=True,
+                    render_checkbox_title='Render markers', labels=tmp_labels))
+                tab_titles.append('Markers')
+            elif o == 'image':
+                options_widgets.append(ImageOptionsWidget(
+                    tmp_options, render_function=render_function,
+                    toggle_show_visible=False, toggle_show_default=True))
+                tab_titles.append('Image')
+            elif o == 'numbering':
+                options_widgets.append(NumberingOptionsWidget(
+                    tmp_options, render_function=render_function,
+                    toggle_show_visible=False, toggle_show_default=True,
+                    render_checkbox_title='Render numbering'))
+                tab_titles.append('Numbering')
+            elif o == 'figure_one':
+                options_widgets.append(FigureOptionsOneScaleWidget(
+                    tmp_options, render_function=render_function,
+                    toggle_show_visible=False, toggle_show_default=True,
+                    figure_scale_bounds=(0.1, 4.), figure_scale_step=0.1,
+                    figure_scale_visible=True, axes_visible=True))
+                tab_titles.append('Figure/Axes')
+            elif o == 'figure_two':
+                options_widgets.append(FigureOptionsTwoScalesWidget(
+                    tmp_options, render_function=render_function,
+                    toggle_show_visible=False, toggle_show_default=True,
+                    figure_scale_bounds=(0.1, 4.), figure_scale_step=0.1,
+                    figure_scale_visible=True, axes_visible=True,
+                    coupled_default=False))
+                tab_titles.append('Figure/Axes')
+            elif o == 'legend':
+                options_widgets.append(LegendOptionsWidget(
+                    tmp_options, render_function=render_function,
+                    toggle_show_visible=False, toggle_show_default=True,
+                    render_checkbox_title='Render legend'))
+                tab_titles.append('Legend')
+            elif o == 'grid':
+                options_widgets.append(GridOptionsWidget(
+                    tmp_options, render_function=render_function,
+                    toggle_show_visible=False, toggle_show_default=True,
+                    render_checkbox_title='Render grid'))
+                tab_titles.append('Grid')
+        self.options_widgets = options_widgets
+        self.tab_titles = tab_titles
+        self.suboptions_tab = ipywidgets.Tab(children=options_widgets)
+        # set titles
+        for (k, tl) in enumerate(self.tab_titles):
+            self.suboptions_tab.set_title(k, tl)
+        self.options_box = ipywidgets.VBox(
+            children=[self.object_selection_dropdown, self.suboptions_tab],
+            visible=toggle_show_default, align='center')
+        super(RendererOptionsWidget, self).__init__(
+            children=[self.toggle_visible, self.options_box])
+
+        # Assign output
+        self.selected_values = renderer_options
+        self.options_tabs = options_tabs
+        self.objects_names = objects_names
+        self.labels_per_object = labels_per_object
+        self.object_selection_dropdown_visible = \
+            object_selection_dropdown_visible
+
+        # Set functionality
+        def update_widgets(name, value):
+            for i, tab in enumerate(self.options_tabs):
+                # get the options to pass to the sub-options update functions
+                if tab == 'figure_one' or tab == 'figure_two':
+                    tmp_options = self.selected_values[value]['figure']
+                else:
+                    tmp_options = self.selected_values[value][tab]
+                # call sub-options classes
+                if tab == 'lines' or tab == 'markers':
+                    self.options_widgets[i].set_widget_state(
+                        tmp_options, labels=self.labels_per_object[value],
+                        allow_callback=False)
+                else:
+                    self.options_widgets[i].set_widget_state(
+                        tmp_options, allow_callback=False)
+        self.object_selection_dropdown.on_trait_change(update_widgets, 'value')
+
+        def toggle_function(name, value):
+            self.object_selection_dropdown.visible = \
+                self._selection_dropdown_visible(
+                    self.object_selection_dropdown_visible, value)
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+        # Set render function
+        self._render_function = render_function
+
+    def _selection_dropdown_visible(self, object_selection_dropdown_visible,
+                                    toggle_value):
+        return (object_selection_dropdown_visible and self.n_objects > 1
+                and toggle_value)
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=True,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              tabs_box_style=None, tabs_border_visible=True,
+              tabs_border_color='black', tabs_border_style='solid',
+              tabs_border_width=1, tabs_padding=0, tabs_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        slider_width : `str`, optional
+            The width of the slider.
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        for wid in self.options_widgets:
+            wid.style(inner_box_style=tabs_box_style,
+                      inner_border_visible=tabs_border_visible,
+                      inner_border_color=tabs_border_color,
+                      inner_border_style=tabs_border_style,
+                      inner_border_width=tabs_border_width,
+                      inner_padding=tabs_padding, inner_margin=tabs_margin,
+                      font_family=font_family, font_size=font_size,
+                      font_style=font_style, font_weight=font_weight)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.object_selection_dropdown, font_family, font_size,
+                     font_style, font_weight)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            for wid in self.options_widgets:
+                wid.add_render_function(self._render_function)
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        for wid in self.options_widgets:
+            wid.remove_render_function()
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def set_widget_state(self, renderer_options, labels_per_object,
+                         selected_object=None,
+                         object_selection_dropdown_visible=None,
+                         allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+        Note that the number of objects should not change.
+
+        Parameter
+        ---------
+        renderer_options : `list` of `dict`
+            The selected rendering options per object. The `list` must have
+            length `n_objects` and contain a `dict` of rendering options per
+            object. For example, in case we had two objects to render ::
+
+                lines_options = {'render_lines': True,
+                                 'line_width': 1,
+                                 'line_colour': ['b', 'r'],
+                                 'line_style': '-'}
+                markers_options = {'render_markers': True,
+                                   'marker_size': 20,
+                                   'marker_face_colour': ['w', 'w'],
+                                   'marker_edge_colour': ['b', 'r'],
+                                   'marker_style': 'o',
+                                   'marker_edge_width': 1}
+                numbering_options = {'render_numbering': True,
+                                     'numbers_font_name': 'serif',
+                                     'numbers_font_size': 10,
+                                     'numbers_font_style': 'normal',
+                                     'numbers_font_weight': 'normal',
+                                     'numbers_font_colour': ['k'],
+                                     'numbers_horizontal_align': 'center',
+                                     'numbers_vertical_align': 'bottom'}
+                legend_options = {'render_legend': True,
+                                  'legend_title': '',
+                                  'legend_font_name': 'serif',
+                                  'legend_font_style': 'normal',
+                                  'legend_font_size': 10,
+                                  'legend_font_weight': 'normal',
+                                  'legend_marker_scale': 1.,
+                                  'legend_location': 2,
+                                  'legend_bbox_to_anchor': (1.05, 1.),
+                                  'legend_border_axes_pad': 1.,
+                                  'legend_n_columns': 1,
+                                  'legend_horizontal_spacing': 1.,
+                                  'legend_vertical_spacing': 1.,
+                                  'legend_border': True,
+                                  'legend_border_padding': 0.5,
+                                  'legend_shadow': False,
+                                  'legend_rounded_corners': True}
+                figure_options = {'x_scale': 1.,
+                                  'y_scale': 1.,
+                                  'render_axes': True,
+                                  'axes_font_name': 'serif',
+                                  'axes_font_size': 10,
+                                  'axes_font_style': 'normal',
+                                  'axes_font_weight': 'normal',
+                                  'axes_x_limits': None,
+                                  'axes_y_limits': None}
+                grid_options = {'render_grid': True,
+                                'grid_line_style': '--',
+                                'grid_line_width': 0.5}
+                rendering_dict = {'lines': lines_options,
+                                  'markers': markers_options,
+                                  'numbering': numbering_options,
+                                  'legend': legend_options,
+                                  'figure': figure_options,
+                                  'grid': grid_options}
+                renderer_options = [rendering_dict, rendering_dict]
+
+        labels_per_object : `list` of `list` or ``None``, optional
+            A `list` that contains a `list` of labels for each object. Those
+            `labels` are employed by the `ColourSelectionWidget`. An example for
+             which this option is useful is in the case we wish to create
+             rendering options for multiple :map:`LandmarkGroup` objects and
+             each one of them has a different set of `labels`. If ``None``, then
+             `labels_per_object` is a `list` of lenth `n_objects` with ``None``.
+        selected_object : `int`, optional
+            The object for which to show the rendering options in the beginning,
+            when the widget is created.
+        object_selection_dropdown_visible : `bool`, optional
+            Controls the visibility of the object selection dropdown
+            (`self.object_selection_dropdown`).
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Check options
+        if selected_object is None:
+            selected_object = self.object_selection_dropdown.value
+        if object_selection_dropdown_visible is not None:
+            self.object_selection_dropdown.visible = \
+                self._selection_dropdown_visible(
+                    object_selection_dropdown_visible,
+                    self.toggle_visible.value)
+            self.object_selection_dropdown_visible = \
+                object_selection_dropdown_visible
+
+        # Update sub-options widgets
+        for i, tab in enumerate(self.options_tabs):
+            # get the options to pass to the sub-options update functions
+            if tab == 'figure_one' or tab == 'figure_two':
+                tmp_options = renderer_options[selected_object]['figure']
+            else:
+                tmp_options = renderer_options[selected_object][tab]
+            # call sub-options classes
+            if tab == 'lines' or tab == 'markers':
+                self.options_widgets[i].set_widget_state(
+                    tmp_options, labels=labels_per_object[selected_object],
+                    allow_callback=False)
+            else:
+                self.options_widgets[i].set_widget_state(
+                    tmp_options, allow_callback=False)
+
+        # Assign new options dict to selected_values
+        self.selected_values = renderer_options
+        self.labels_per_object = labels_per_object
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
+
+
 # def save_figure_options(renderer, format_default='png', dpi_default=None,
 #                         orientation_default='portrait',
 #                         papertype_default='letter', transparent_default=False,
