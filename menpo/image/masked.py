@@ -312,8 +312,8 @@ class MaskedImage(Image):
                                copy=copy)
 
     def _view_2d(self, figure_id=None, new_figure=False, channels=None,
-                 masked=True, interpolation="bilinear", alpha=1.,
-                 render_axes=False, axes_font_name='sans-serif',
+                 masked=True, interpolation='bilinear', cmap_name=None,
+                 alpha=1., render_axes=False, axes_font_name='sans-serif',
                  axes_font_size=10, axes_font_style='normal',
                  axes_font_weight='normal', axes_x_limits=None,
                  axes_y_limits=None, figure_size=(10, 8)):
@@ -344,6 +344,9 @@ class MaskedImage(Image):
                 hanning, hamming, hermite, kaiser, quadric, catrom, gaussian,
                 bessel, mitchell, sinc, lanczos}
 
+        cmap_name: `str`, optional,
+            If ``None``, single channel and three channel images default
+            to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_axes : `bool`, optional
@@ -389,12 +392,13 @@ class MaskedImage(Image):
                                              axes_y_limits=axes_y_limits,
                                              figure_size=figure_size,
                                              interpolation=interpolation,
+                                             cmap_name=cmap_name,
                                              alpha=alpha)
 
     def _view_landmarks_2d(self, channels=None, masked=True, group=None,
                            with_labels=None, without_labels=None,
                            figure_id=None, new_figure=False,
-                           interpolation='bilinear', alpha=1.,
+                           interpolation='bilinear', cmap_name=None, alpha=1.,
                            render_lines=True, line_colour=None, line_style='-',
                            line_width=1, render_markers=True, marker_style='o',
                            marker_size=20, marker_face_colour=None,
@@ -455,6 +459,9 @@ class MaskedImage(Image):
                 hamming, hermite, kaiser, quadric, catrom, gaussian, bessel,
                 mitchell, sinc, lanczos}
 
+        cmap_name: `str`, optional,
+            If ``None``, single channel and three channel images default
+            to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_lines : `bool`, optional
@@ -620,9 +627,9 @@ class MaskedImage(Image):
         from menpo.visualize import view_image_landmarks
         return view_image_landmarks(
             self, channels, masked, group, with_labels, without_labels,
-            figure_id, new_figure, interpolation, alpha, render_lines,
-            line_colour, line_style, line_width, render_markers, marker_style,
-            marker_size, marker_face_colour, marker_edge_colour,
+            figure_id, new_figure, interpolation, cmap_name, alpha,
+            render_lines, line_colour, line_style, line_width, render_markers,
+            marker_style, marker_size, marker_face_colour, marker_edge_colour,
             marker_edge_width, render_numbering, numbers_horizontal_align,
             numbers_vertical_align, numbers_font_name, numbers_font_size,
             numbers_font_style, numbers_font_weight, numbers_font_colour,
