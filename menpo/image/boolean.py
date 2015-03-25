@@ -178,7 +178,10 @@ class BooleanImage(Image):
             If ``copy=False`` cannot be honored.
         """
         mask = BooleanImage(vector.reshape(self.shape), copy=copy)
-        mask.landmarks = self.landmarks
+        if self.has_landmarks:
+            mask.landmarks = self.landmarks
+        if hasattr(self, 'path'):
+            mask.path = self.path
         return mask
 
     def invert_inplace(self):
@@ -463,7 +466,8 @@ class BooleanImage(Image):
 
         pwa = PiecewiseAffine(pointcloud, pointcloud)
 
-        bounds = pointcloud.bounds(boundary=1)
+        bounds = pointcloud.bounds()
+        bounds = [b.astype(np.int) for b in bounds]
         indices = self.indices()
         # Only consider indices inside the bounding box of the PointCloud
         # This loop is to ensure the code is multi-dimensional
@@ -472,18 +476,20 @@ class BooleanImage(Image):
             indices = indices[indices[:, k] <= bounds[1][k], :]
         # Due to this, make sure the mask starts off as all False
         self.pixels[:] = False
+        # slice(0, 1) because we know we only have 1 channel
+        # Slice all the channels, only inside the bounding box (for setting
+        # the new mask values).
+        all_channels = [slice(0, 1)]
+        slices = all_channels + [slice(bounds[0][k], bounds[1][k] + 1)
+                                 for k in range(self.n_dims)]
         # Make sure that the decision of whether a point is inside or outside
         # the PointCloud is exactly the same as how PWA calculates triangle
         # containment. Then, we use the trick of setting the mask to all the
-        # point that were NOT outside the triangulation.
+        # point that were NOT outside the triangulation. Otherwise, all points
+        # were inside and we just set those as True.
         try:
             pwa.apply(indices, batch_size=batch_size)
+            self.pixels[slices].flat = True
         except TriangleContainmentError as e:
-            # slice(0, 1) because we know we only have 1 channel
-            all_channels = [slice(0, 1)]
-            slices = all_channels + [slice(bounds[0][k], bounds[1][k])
-                                     for k in range(self.n_dims)]
 
-            # Slice all the channels, only inside the bounding box (for setting
-            # the new mask values).
             self.pixels[slices].flat = ~e.points_outside_source_domain
