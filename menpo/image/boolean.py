@@ -292,12 +292,13 @@ class BooleanImage(Image):
         sampled_pixels : (`n_points`, `n_channels`) `bool ndarray`
             The interpolated values taken across every channel of the image.
         """
+        # enforce the order as 0, as this is boolean data, then call super
         return Image.sample(self, points_to_sample, order=0, mode=mode,
                             cval=cval)
 
     # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     mode='constant', cval=0.):
+                     mode='constant', cval=False):
         r"""
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -329,14 +330,14 @@ class BooleanImage(Image):
         warped_image : :map:`BooleanImage`
             A copy of this image, warped.
         """
-        # enforce the order as 0, for this boolean data, then call super
+        # enforce the order as 0, as this is boolean data, then call super
         return Image.warp_to_mask(self, template_mask, transform,
                                   warp_landmarks=warp_landmarks,
                                   order=0, mode=mode, cval=cval)
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      mode='constant', cval=0., order=None):
+                      mode='constant', cval=False, order=None):
         """
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
