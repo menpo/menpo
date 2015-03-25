@@ -120,18 +120,22 @@ class MaskedImage(Image):
             pixels = np.ones((n_channels,) + shape, dtype=dtype) * fill
         return cls(pixels, copy=False, mask=mask)
 
-    def as_unmasked(self, copy=True):
+    def as_unmasked(self, copy=True, fill=None):
         r"""
         Return a copy of this image without the masking behavior.
 
-        By default the mask is simply discarded. In the future more options
-        may be possible.
+        By default the mask is simply discarded. However, there is an optional
+        kwarg, ``fill``, that can be set which will fill the **non-masked**
+        areas with the given value.
 
         Parameters
         ----------
         copy : `bool`, optional
             If ``False``, the produced :map:`Image` will share pixels with
             ``self``. Only suggested to be used for performance.
+        fill : `float` or ``None``, optional
+            If ``None`` the mask is simply discarded. If a number, the
+             *unmasked* regions are filled with the given value.
 
         Returns
         -------
@@ -140,7 +144,13 @@ class MaskedImage(Image):
             no mask.
         """
         img = Image(self.pixels, copy=copy)
-        img.landmarks = self.landmarks
+        if fill is not None:
+            img.pixels[..., ~self.mask.mask] = fill
+
+        if self.has_landmarks:
+            img.landmarks = self.landmarks
+        if hasattr(self, 'path'):
+            img.path = self.path
         return img
 
     def n_true_pixels(self):
