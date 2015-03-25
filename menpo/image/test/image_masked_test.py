@@ -12,6 +12,5 @@ def test_constrain_mask_to_landmarks():
 
     example_mask = BooleanImage.init_blank((10, 10), fill=False)
     example_mask.pixels[0, :6, :6] = True
-    print img.mask, example_mask
     assert(img.mask.n_true() == 36)
     assert_allclose(img.mask.pixels, example_mask.pixels)
