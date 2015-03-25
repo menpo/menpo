@@ -102,7 +102,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     same data-type (`float64`).
 
     Parameters
-    -----------
+    ----------
     image_data : ``(C, M, N ..., Q)`` `ndarray`
         Array representing the image pixels, with the first axis being
         channels.

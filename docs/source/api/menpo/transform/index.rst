@@ -79,7 +79,7 @@ Abstract Bases
 Performance Specializations
 ---------------------------
 
-Mix-ins that provide fast vectorized varients of methods.
+Mix-ins that provide fast vectorized variants of methods.
 
 .. toctree::
   :maxdepth: 1

@@ -294,11 +294,11 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
 
 
 class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, points, adjacency_array):
+    def __init__(self, figure_id, new_figure, points, edges):
         super(MatplotlibPointGraphViewer2d, self).__init__(figure_id,
                                                            new_figure)
         self.points = points
-        self.adjacency_array = adjacency_array
+        self.edges = edges
 
     def render(self, image_view=False, render_lines=True, line_colour='r',
                line_style='-', line_width=1, render_markers=True,
@@ -319,10 +319,10 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
         # Check if graph has edges to be rendered (for example a PointCLoud
         # won't have any edges)
-        if render_lines and np.array(self.adjacency_array).shape[0] > 0:
+        if render_lines and np.array(self.edges).shape[0] > 0:
             # Get edges to be rendered
-            lines = zip(points[self.adjacency_array[:, 0], :],
-                        points[self.adjacency_array[:, 1], :])
+            lines = zip(points[self.edges[:, 0], :],
+                        points[self.edges[:, 1], :])
 
             # Draw line objects
             lc = mc.LineCollection(lines, colors=line_colour,
@@ -410,7 +410,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.pyplot as plt
         import matplotlib.lines as mlines
-        from menpo.shape import PointGraph
+        from menpo.shape import PointCloud, TriMesh
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
@@ -469,7 +469,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             # set legend entry
             if render_legend:
                 tmp_line = line_style
-                if not render_lines or not isinstance(pc, PointGraph):
+                if (not render_lines or isinstance(pc, PointCloud) or
+                        isinstance(pc, TriMesh)):
                     tmp_line = 'None'
                 tmp_marker = marker_style if render_markers else 'None'
                 legend_handles.append(
