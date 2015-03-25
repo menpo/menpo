@@ -959,7 +959,7 @@ class MaskedImage(Image):
                                       normalized_pixels.flatten())
 
     def constrain_mask_to_landmarks(self, group=None, label=None,
-                                    trilist=None):
+                                    trilist=None, batch_size=None):
         r"""
         Restricts this image's mask to be equal to the convex hull around the
         landmarks chosen. This is not a per-pixel convex hull, but is instead
@@ -978,9 +978,16 @@ class MaskedImage(Image):
             Triangle list to be used on the landmarked points in selecting
             the mask region. If None defaults to performing Delaunay
             triangulation on the points.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this value
+            will cause constraining to become much slower. This size indicates
+            how many points in the image should be checked at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are checked at once.
         """
         self.mask.constrain_to_pointcloud(self.landmarks[group][label],
-                                          trilist=trilist)
+                                          trilist=trilist,
+                                          batch_size=batch_size)
 
     def build_mask_around_landmarks(self, patch_size, group=None, label=None):
         r"""

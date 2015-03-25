@@ -400,7 +400,8 @@ class BooleanImage(Image):
             warped_img.pixels[:, warped_img.mask] = sampled_pixel_values
         return warped_img
 
-    def constrain_to_landmarks(self, group=None, label=None, trilist=None):
+    def constrain_to_landmarks(self, group=None, label=None, trilist=None,
+                               batch_size=None):
         r"""
         Restricts this mask to be equal to the convex hull around the
         landmarks chosen. This is not a per-pixel convex hull, but instead
@@ -418,11 +419,18 @@ class BooleanImage(Image):
             Triangle list to be used on the landmarked points in selecting
             the mask region. If ``None``, defaults to performing Delaunay
             triangulation on the points.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this value
+            will cause constraining to become much slower. This size indicates
+            how many points in the image should be checked at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are checked at once.
         """
         self.constrain_to_pointcloud(self.landmarks[group][label],
                                      trilist=trilist)
 
-    def constrain_to_pointcloud(self, pointcloud, trilist=None):
+    def constrain_to_pointcloud(self, pointcloud, trilist=None,
+                                batch_size=None):
         r"""
         Restricts this mask to be equal to the convex hull around a point cloud.
         This is not a per-pixel convex hull, but instead
@@ -436,6 +444,12 @@ class BooleanImage(Image):
             Triangle list to be used on the landmarked points in selecting
             the mask region. If None defaults to performing Delaunay
             triangulation on the points.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this value
+            will cause constraining to become much slower. This size indicates
+            how many points in the image should be checked at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are checked at once.
         """
         from menpo.transform.piecewiseaffine import PiecewiseAffine
         from menpo.transform.piecewiseaffine import TriangleContainmentError
@@ -463,7 +477,7 @@ class BooleanImage(Image):
         # containment. Then, we use the trick of setting the mask to all the
         # point that were NOT outside the triangulation.
         try:
-            pwa.apply(indices)
+            pwa.apply(indices, batch_size=batch_size)
         except TriangleContainmentError as e:
             # slice(0, 1) because we know we only have 1 channel
             all_channels = [slice(0, 1)]
