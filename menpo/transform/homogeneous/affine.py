@@ -39,7 +39,7 @@ class Affine(Homogeneous):
         identity : :class:`Affine`
             The identity matrix transform.
         """
-        return cls(np.eye(n_dims + 1))
+        return cls(np.eye(n_dims + 1), copy=False, skip_checks=True)
 
     @property
     def h_matrix(self):
