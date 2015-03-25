@@ -530,8 +530,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 {none, nearest, bilinear, bicubic, spline16, spline36,
                 hanning, hamming, hermite, kaiser, quadric, catrom, gaussian,
                 bessel, mitchell, sinc, lanczos}
-        cmap_name: `Colormap name`, optional,
-            If None, single channel and three channel images default
+        cmap_name: `str`, optional,
+            If ``None``, single channel and three channel images default
             to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
@@ -653,8 +653,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 hamming, hermite, kaiser, quadric, catrom, gaussian, bessel,
                 mitchell, sinc, lanczos}
 
-        cmap_name: `Colormap name`, optional,
-            If None, single channel and three channel images default
+        cmap_name: `str`, optional,
+            If ``None``, single channel and three channel images default
             to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
