@@ -880,7 +880,10 @@ class MaskedImage(Image):
         # landmarks
         masked_warped_image = MaskedImage(warped_image.pixels, mask=mask,
                                           copy=False)
-        masked_warped_image.landmarks = warped_image.landmarks
+        if warped_image.has_landmarks:
+            masked_warped_image.landmarks = warped_image.landmarks
+        if hasattr(warped_image, 'path'):
+            masked_warped_image.path = warped_image.path
         return masked_warped_image
 
     def normalize_std_inplace(self, mode='all', limit_to_mask=True):
