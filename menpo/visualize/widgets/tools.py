@@ -162,7 +162,7 @@ class IndexSliderWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and functions of the widget, please refer to the `set_widget_state()`,
-    `set_update_function()` and `set_render_function()` methods.
+    `replace_update_function()` and `set_render_function()` methods.
 
     Parameters
     ----------
@@ -392,7 +392,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and functions of the widget, please refer to the `set_widget_state()`,
-    `set_update_function()` and `set_render_function()` methods.
+    `replace_update_function()` and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -413,7 +413,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         The title of the button that decreases the index.
     plus_description : `str`, optional
         The title of the button that increases the index.
-    loop : `bool`, optional
+    loop_enabled : `bool`, optional
         If ``True``, then if by pressing the buttons we reach the minimum
         (maximum) index values, then the counting will continue from the end
         (beginning). If ``False``, the counting will stop at the minimum
@@ -740,7 +740,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -1130,7 +1130,7 @@ class ImageOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -1352,7 +1352,7 @@ class LineOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -1672,7 +1672,7 @@ class MarkerOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -2059,7 +2059,7 @@ class NumberingOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -2509,7 +2509,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -3076,7 +3076,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -3728,7 +3728,7 @@ class LegendOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -4445,7 +4445,7 @@ class GridOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -4753,7 +4753,7 @@ class HOGOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -5249,7 +5249,7 @@ class DaisyOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -5552,7 +5552,7 @@ class LBPOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -5840,7 +5840,7 @@ class IGOOptionsWidget(ipywidgets.Box):
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
-    and `set_render_function()` methods.
+    and `replace_render_function()` methods.
 
     Parameters
     ----------
