@@ -267,7 +267,7 @@ class BooleanImage(Image):
             boundary=boundary, constrain_to_bounds=constrain_to_bounds)
 
     # noinspection PyMethodOverriding
-    def sample(self, points_to_sample, mode='constant', cval=0.0):
+    def sample(self, points_to_sample, mode='constant', cval=False, **kwargs):
         r"""
         Sample this image at the given sub-pixel accurate points. The input
         PointCloud should have the same number of dimensions as the image e.g.
