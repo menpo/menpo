@@ -448,7 +448,28 @@ class BooleanImage(Image):
             pointcloud = TriMesh(pointcloud.points, trilist)
 
         pwa = PiecewiseAffine(pointcloud, pointcloud)
+
+        bounds = pointcloud.bounds(boundary=1)
+        indices = self.indices()
+        # Only consider indices inside the bounding box of the PointCloud
+        # This loop is to ensure the code is multi-dimensional
+        for k in range(self.n_dims):
+            indices = indices[indices[:, k] >= bounds[0][k], :]
+            indices = indices[indices[:, k] <= bounds[1][k], :]
+        # Due to this, make sure the mask starts off as all False
+        self.pixels[:] = False
+        # Make sure that the decision of whether a point is inside or outside
+        # the PointCloud is exactly the same as how PWA calculates triangle
+        # containment. Then, we use the trick of setting the mask to all the
+        # point that were NOT outside the triangulation.
         try:
-            pwa.apply(self.indices())
+            pwa.apply(indices)
         except TriangleContainmentError as e:
-            self.from_vector_inplace(~e.points_outside_source_domain)
+            # slice(0, 1) because we know we only have 1 channel
+            all_channels = [slice(0, 1)]
+            slices = all_channels + [slice(bounds[0][k], bounds[1][k])
+                                     for k in range(self.n_dims)]
+
+            # Slice all the channels, only inside the bounding box (for setting
+            # the new mask values).
+            self.pixels[slices].flat = ~e.points_outside_source_domain
