@@ -57,3 +57,13 @@ def test_tps_apply():
     result = tps.apply(pts)
     expected = np.array([[-0.2, -2.], [-1., 2.], [4.2, -5.]])
     assert_allclose(result.points, expected)
+
+
+def test_tps_apply_batched():
+    src = PointCloud(np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]]))
+    tgt = PointCloud(np.array([[-2.0, -2.0], [-2, 2], [2, -2], [2, 2]]))
+    pts = PointCloud(np.array([[-0.1, -1.0], [-0.5, 1.0], [2.1, -2.5]]))
+    tps = ThinPlateSplines(src, tgt)
+    result = tps.apply(pts, batch_size=2)
+    expected = np.array([[-0.2, -2.], [-1., 2.], [4.2, -5.]])
+    assert_allclose(result.points, expected)
