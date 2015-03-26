@@ -1874,13 +1874,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         Parameters
         ----------
-
         minimum: `float`
             The minimal value of the rescaled pixels
-
         maximum: `float`
             The maximal value of the rescaled pixels
-
         per_channel: `boolean`, optional
             If ``True``, each channel will be rescaled independently. If
             ``False``, the scaling will be over all channels.
