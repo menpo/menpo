@@ -182,10 +182,9 @@ class IndexSliderWidget(ipywidgets.FlexBox):
     """
     def __init__(self, index, render_function=None,
                  update_function=None, description='Index: '):
-        self.slider = ipywidgets.IntSlider(min=index['min'], max=index['max'],
-                                           value=index['index'],
-                                           step=index['step'],
-                                           description=description)
+        self.slider = ipywidgets.IntSlider(
+            min=index['min'], max=index['max'], value=index['index'],
+            step=index['step'], description=description, width='5cm')
         super(IndexSliderWidget, self).__init__(children=[self.slider])
         self.align = 'start'
 

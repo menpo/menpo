@@ -1367,6 +1367,7 @@ class AnimationOptionsWidget(ipywidgets.Box):
                 text_editable=text_editable)
         else:
             raise ValueError('index_style should be either slider or buttons')
+        self.index_wid.style(margin='0.15cm', padding=0)
 
         # Create other widgets
         self.toggle_visible = ipywidgets.ToggleButton(
@@ -1378,16 +1379,19 @@ class AnimationOptionsWidget(ipywidgets.Box):
                                                    value=True, disabled=True)
         self.play_options_toggle = ipywidgets.ToggleButton(
             description='Options', value=False)
-        self.loop_checkbox = ipywidgets.Checkbox(
-            description='Loop', value=loop_enabled, visible=False)
-        self.interval_text = ipywidgets.FloatText(
-            description='Interval (sec)', value=interval, visible=False)
+        self.loop_checkbox = ipywidgets.Checkbox(description='Loop',
+                                                 value=loop_enabled)
+        self.interval_text = ipywidgets.FloatText(description='Interval (sec)',
+                                                  value=interval)
+        self.loop_interval_box = ipywidgets.VBox(
+            children=[self.interval_text, self.loop_checkbox], visible=False,
+            margin='0.1cm', padding='0.1cm', border_color='black',
+            border_style='solid', border_width=1)
         self.play_options_box = ipywidgets.VBox(
-            children=[self.play_options_toggle, self.interval_text,
-                      self.loop_checkbox])
-        self.animation_box = ipywidgets.HBox(children=[self.play_toggle,
-                                                       self.stop_toggle,
-                                                       self.play_options_box])
+            children=[self.play_options_toggle, self.loop_interval_box])
+        self.animation_box = ipywidgets.HBox(
+            children=[self.play_toggle, self.stop_toggle,
+                      self.play_options_box], margin='0.15cm', padding=0)
         self.options_box = ipywidgets.HBox(children=[self.index_wid,
                                                      self.animation_box])
         super(AnimationOptionsWidget, self).__init__(
@@ -1414,8 +1418,7 @@ class AnimationOptionsWidget(ipywidgets.Box):
         self.stop_toggle.on_trait_change(stop_pressed, 'value')
 
         def play_options_visibility(name, value):
-            self.interval_text.visible = value
-            self.loop_checkbox.visible = value
+            self.loop_interval_box.visible = value
         self.play_options_toggle.on_trait_change(play_options_visibility,
                                                  'value')
 
@@ -1583,14 +1586,14 @@ class AnimationOptionsWidget(ipywidgets.Box):
                      font_weight)
         if self.index_style == 'buttons':
             self.index_wid.style(
-                box_style=None, border_visible=False, padding=0, margin=0,
-                font_family=font_family, font_size=font_size,
+                box_style=None, border_visible=False, padding=0,
+                margin='0.15cm', font_family=font_family, font_size=font_size,
                 font_style=font_style, font_weight=font_weight,
                 buttons_width='1cm', text_width='4cm', title_padding=6)
         else:
             self.index_wid.style(
-                box_style=None, border_visible=False, padding=0, margin=0,
-                font_family=font_family, font_size=font_size,
+                box_style=None, border_visible=False, padding=0,
+                margin='0.15cm', font_family=font_family, font_size=font_size,
                 font_style=font_style, font_weight=font_weight,
                 slider_width='')
 
@@ -1805,10 +1808,10 @@ class RendererOptionsWidget(ipywidgets.Box):
     labels_per_object : `list` of `list` or ``None``, optional
         A `list` that contains a `list` of labels for each object. Those
         `labels` are employed by the `ColourSelectionWidget`. An example for
-         which this option is useful is in the case we wish to create rendering
-         options for multiple :map:`LandmarkGroup` objects and each one of them
-         has a different set of `labels`. If ``None``, then `labels_per_object`
-         is a `list` of lenth `n_objects` with ``None``.
+        which this option is useful is in the case we wish to create rendering
+        options for multiple :map:`LandmarkGroup` objects and each one of them
+        has a different set of `labels`. If ``None``, then `labels_per_object`
+        is a `list` of length `n_objects` with ``None``.
     selected_object : `int`, optional
         The object for which to show the rendering options in the beginning,
         when the widget is created.
@@ -1929,7 +1932,7 @@ class RendererOptionsWidget(ipywidgets.Box):
             self.suboptions_tab.set_title(k, tl)
         self.options_box = ipywidgets.VBox(
             children=[self.object_selection_dropdown, self.suboptions_tab],
-            visible=toggle_show_default, align='center')
+            visible=toggle_show_default, align='center', padding='0.2cm')
         super(RendererOptionsWidget, self).__init__(
             children=[self.toggle_visible, self.options_box])
         self.align = 'start'
@@ -1977,7 +1980,7 @@ class RendererOptionsWidget(ipywidgets.Box):
 
     def style(self, outer_box_style=None, outer_border_visible=False,
               outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
+              outer_border_width=1, outer_padding='0.2cm', outer_margin=0,
               inner_box_style=None, inner_border_visible=True,
               inner_border_color='black', inner_border_style='solid',
               inner_border_width=1, inner_padding=0, inner_margin=0,
@@ -2370,23 +2373,28 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             width='10cm')
         self.overwrite_checkbox = ipywidgets.Checkbox(
             description='Overwrite if file exists', value=overwrite)
-        self.error_latex = ipywidgets.Latex(value="", background_color='red')
-        self.save_button = ipywidgets.Button(description='Save')
+        self.error_latex = ipywidgets.Latex(value="", font_weight='bold',
+                                            font_style='italic')
+        self.save_button = ipywidgets.Button(description='Save',
+                                             margin='0.2cm')
 
         # Group widgets
         self.path_box = ipywidgets.VBox(
             children=[self.filename_text, self.file_format_select,
                       self.papertype_select, self.overwrite_checkbox],
-            align='end')
+            align='end', margin='0.2cm')
         self.page_box = ipywidgets.VBox(
             children=[self.orientation_dropdown, self.dpi_text,
-                      self.pad_inches_text])
+                      self.pad_inches_text], margin='0.2cm')
         self.colour_box = ipywidgets.VBox(
             children=[self.facecolour_widget, self.edgecolour_widget,
-                      self.transparent_checkbox])
+                      self.transparent_checkbox], margin='0.2cm')
         self.options_tabs = ipywidgets.Tab(
             children=[self.path_box, self.page_box, self.colour_box],
-            border_visible=True, margin='0.3cm')
+            margin=0, padding='0.1cm')
+        self.options_tabs_box = ipywidgets.Box(
+            children=[self.options_tabs], border_width=1, border_color='black',
+            margin='0.3cm', padding='0.2cm')
         tab_titles = ['Path', 'Page setup', 'Image colour']
         for (k, tl) in enumerate(tab_titles):
             self.options_tabs.set_title(k, tl)
@@ -2441,7 +2449,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                                  'overwrite kwarg if you wish to overwrite '
                                  'the file.'):
                     self.error_latex.value = 'File exists! ' \
-                                             'Tick overwrite to replace.'
+                                             'Tick overwrite to replace it.'
                 else:
                     self.error_latex.value = e.message
 
@@ -2549,8 +2557,6 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                      font_weight)
         _format_font(self.overwrite_checkbox, font_family, font_size,
                      font_style, font_weight)
-        _format_font(self.error_latex, font_family, font_size, font_style,
-                     font_weight)
         _format_font(self.save_button, font_family, font_size, font_style,
                      font_weight)
         _format_font(self.toggle_visible, font_family, font_size, font_style,
@@ -2565,6 +2571,9 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                                      font_size=font_size,
                                      font_weight=font_weight,
                                      font_style=font_style, rgb_width='1.5cm')
+        _format_box(self.options_tabs_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    '0.2cm', '0.3cm')
 
 
 class FeatureOptionsWidget(ipywidgets.FlexBox):
