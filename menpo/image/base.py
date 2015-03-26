@@ -6,6 +6,7 @@ import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
 from menpo.base import Vectorizable
+from menpo.shape import PointCloud
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
                              AlignmentUniformScale, Affine, Rotation)
@@ -1302,7 +1303,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         sampled_pixels : (`n_points`, `n_channels`) `ndarray`
             The interpolated values taken across every channel of the image.
         """
-        from menpo.shape import PointCloud
         # The public interface is a PointCloud, but when this is used internally
         # a numpy array is passed. So let's just treat the PointCloud as a
         # 'special case' and not document the ndarray ability.
