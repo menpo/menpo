@@ -9,10 +9,11 @@ from .tools import (_format_box, _format_font, IndexButtonsWidget,
                     IndexSliderWidget, LineOptionsWidget, MarkerOptionsWidget,
                     ImageOptionsWidget, NumberingOptionsWidget,
                     FigureOptionsOneScaleWidget, FigureOptionsTwoScalesWidget,
-                    LegendOptionsWidget, GridOptionsWidget)
+                    LegendOptionsWidget, GridOptionsWidget,
+                    ColourSelectionWidget)
 
 
-class ChannelOptionsWidget(ipywidgets.Box):
+class ChannelOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting channel options when rendering an image.
     Specifically, it consists of:
@@ -156,6 +157,7 @@ class ChannelOptionsWidget(ipywidgets.Box):
                       self.sliders_and_multiple_options_box])
         super(ChannelOptionsWidget, self).__init__(
             children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = channel_options
@@ -704,6 +706,7 @@ class LandmarkOptionsWidget(ipywidgets.Box):
             visible=toggle_show_default)
         super(LandmarkOptionsWidget, self).__init__(
             children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = landmark_options
@@ -1160,6 +1163,7 @@ class TextPrintWidget(ipywidgets.Box):
                                        visible=toggle_show_default)
         super(TextPrintWidget, self).__init__(children=[self.toggle_visible,
                                                         self.text_box])
+        self.align = 'start'
 
         # Assign options
         self.n_lines = n_lines
@@ -1387,6 +1391,7 @@ class AnimationOptionsWidget(ipywidgets.Box):
                                                      self.animation_box])
         super(AnimationOptionsWidget, self).__init__(
             children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = index
@@ -1926,6 +1931,7 @@ class RendererOptionsWidget(ipywidgets.Box):
             visible=toggle_show_default, align='center')
         super(RendererOptionsWidget, self).__init__(
             children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = renderer_options
@@ -2228,274 +2234,338 @@ class RendererOptionsWidget(ipywidgets.Box):
             self._render_function('', True)
 
 
-# def save_figure_options(renderer, format_default='png', dpi_default=None,
-#                         orientation_default='portrait',
-#                         papertype_default='letter', transparent_default=False,
-#                         facecolour_default='w', edgecolour_default='w',
-#                         pad_inches_default=0.5, overwrite_default=False,
-#                         toggle_show_default=True, toggle_show_visible=True):
-#     r"""
-#     Creates a widget with Save Figure Options.
-#
-#     The structure of the widgets is the following:
-#         save_figure_wid.children = [toggle_button, options, save_button]
-#         options.children = [path, page_setup, image_colour]
-#         path.children = [filename, format, papertype]
-#         page_setup.children = [orientation, dpi, pad_inches]
-#         image_colour.children = [facecolour, edgecolour, transparent]
-#
-#     To fix the alignment within this widget please refer to
-#     `format_save_figure_options()` function.
-#
-#     Parameters
-#     ----------
-#     figure_id : matplotlib.pyplot.Figure instance
-#         The handle of the figure to be saved.
-#
-#     format_default : `str`, optional
-#         The default value of the format.
-#
-#     dpi_default : `float`, optional
-#         The default value of the dpi.
-#
-#     orientation_default : `str`, optional
-#         The default value of the orientation. 'portrait' or 'landscape'.
-#
-#     papertype_default : `str`, optional
-#         The default value of the papertype.
-#
-#     transparent_default : `boolean`, optional
-#         The default value of the transparency flag.
-#
-#     facecolour_default : `str` or `list` of `float`, optional
-#         The default value of the facecolour.
-#
-#     edgecolour_default : `str` or `list` of `float`, optional
-#         The default value of the edgecolour.
-#
-#     pad_inches_default : `float`, optional
-#         The default value of the figure padding in inches.
-#
-#     toggle_show_default : `boolean`, optional
-#         Defines whether the options will be visible upon construction.
-#
-#     toggle_show_visible : `boolean`, optional
-#         The visibility of the toggle button.
-#     """
-#     import IPython.html.widgets as ipywidgets
-#     from os import getcwd
-#     from os.path import join, splitext
-#
-#     # create widgets
-#     but = ipywidgets.ToggleButton(description='Save Figure',
-#                                   value=toggle_show_default,
-#                                   visible=toggle_show_visible)
-#     format_dict = OrderedDict()
-#     format_dict['png'] = 'png'
-#     format_dict['jpg'] = 'jpg'
-#     format_dict['pdf'] = 'pdf'
-#     format_dict['eps'] = 'eps'
-#     format_dict['postscript'] = 'ps'
-#     format_dict['svg'] = 'svg'
-#     format_wid = ipywidgets.Select(options=format_dict,
-#                                    value=format_default,
-#                                    description='Format')
-#
-#     def papertype_visibility(name, value):
-#         papertype_wid.disabled = not value == 'ps'
-#
-#     format_wid.on_trait_change(papertype_visibility, 'value')
-#
-#     def set_extension(name, value):
-#         fileName, fileExtension = splitext(filename.value)
-#         filename.value = fileName + '.' + value
-#
-#     format_wid.on_trait_change(set_extension, 'value')
-#     if dpi_default is None:
-#         dpi_default = 0
-#     dpi_wid = ipywidgets.FloatText(description='DPI', value=dpi_default)
-#     orientation_dict = OrderedDict()
-#     orientation_dict['portrait'] = 'portrait'
-#     orientation_dict['landscape'] = 'landscape'
-#     orientation_wid = ipywidgets.Dropdown(options=orientation_dict,
-#                                           value=orientation_default,
-#                                           description='Orientation')
-#     papertype_dict = OrderedDict()
-#     papertype_dict['letter'] = 'letter'
-#     papertype_dict['legal'] = 'legal'
-#     papertype_dict['executive'] = 'executive'
-#     papertype_dict['ledger'] = 'ledger'
-#     papertype_dict['a0'] = 'a0'
-#     papertype_dict['a1'] = 'a1'
-#     papertype_dict['a2'] = 'a2'
-#     papertype_dict['a3'] = 'a3'
-#     papertype_dict['a4'] = 'a4'
-#     papertype_dict['a5'] = 'a5'
-#     papertype_dict['a6'] = 'a6'
-#     papertype_dict['a7'] = 'a7'
-#     papertype_dict['a8'] = 'a8'
-#     papertype_dict['a9'] = 'a9'
-#     papertype_dict['a10'] = 'a10'
-#     papertype_dict['b0'] = 'b0'
-#     papertype_dict['b1'] = 'b1'
-#     papertype_dict['b2'] = 'b2'
-#     papertype_dict['b3'] = 'b3'
-#     papertype_dict['b4'] = 'b4'
-#     papertype_dict['b5'] = 'b5'
-#     papertype_dict['b6'] = 'b6'
-#     papertype_dict['b7'] = 'b7'
-#     papertype_dict['b8'] = 'b8'
-#     papertype_dict['b9'] = 'b9'
-#     papertype_dict['b10'] = 'b10'
-#     is_ps_type = not format_default == 'ps'
-#     papertype_wid = ipywidgets.Dropdown(options=papertype_dict,
-#                                         value=papertype_default,
-#                                         description='Paper type',
-#                                         disabled=is_ps_type)
-#     transparent_wid = ipywidgets.Checkbox(description='Transparent',
-#                                           value=transparent_default)
-#     facecolour_wid = colour_selection([facecolour_default], title='Face colour')
-#     edgecolour_wid = colour_selection([edgecolour_default], title='Edge colour')
-#     pad_inches_wid = ipywidgets.FloatText(description='Pad (inch)',
-#                                                 value=pad_inches_default)
-#     filename = ipywidgets.Text(description='Path',
-#                                      value=join(getcwd(),
-#                                                 'Untitled.' + format_default))
-#     overwrite = ipywidgets.Checkbox(
-#         description='Overwrite if file exists',
-#         value=overwrite_default)
-#     error_str = ipywidgets.Latex(value="")
-#     save_but = ipywidgets.Button(description='Save')
-#
-#     # create final widget
-#     path_wid = ipywidgets.Box(
-#         children=[filename, format_wid, overwrite,
-#                   papertype_wid])
-#     page_wid = ipywidgets.Box(children=[orientation_wid, dpi_wid,
-#                                                     pad_inches_wid])
-#     colour_wid = ipywidgets.Box(
-#         children=[facecolour_wid, edgecolour_wid,
-#                   transparent_wid])
-#     options_wid = ipywidgets.Tab(
-#         children=[path_wid, page_wid, colour_wid])
-#     save_wid = ipywidgets.Box(children=[save_but, error_str])
-#     save_figure_wid = ipywidgets.Box(
-#         children=[but, options_wid, save_wid])
-#
-#     # Assign renderer
-#     save_figure_wid.renderer = [renderer]
-#
-#     # save function
-#     def save_function(name):
-#         # set save button state
-#         error_str.value = ''
-#         save_but.description = 'Saving...'
-#         save_but.disabled = True
-#
-#         # save figure
-#         selected_dpi = dpi_wid.value
-#         if dpi_wid.value == 0:
-#             selected_dpi = None
-#         try:
-#             save_figure_wid.renderer[0].save_figure(
-#                 filename=filename.value, dpi=selected_dpi,
-#                 face_colour=facecolour_wid.selected_values['colour'][0],
-#                 edge_colour=edgecolour_wid.selected_values['colour'][0],
-#                 orientation=orientation_wid.value,
-#                 paper_type=papertype_wid.value, format=format_wid.value,
-#                 transparent=transparent_wid.value,
-#                 pad_inches=pad_inches_wid.value, overwrite=overwrite.value)
-#             error_str.value = ''
-#         except ValueError as e:
-#             if (e.message == 'File already exists. Please set the overwrite '
-#                              'kwarg if you wish to overwrite the file.'):
-#                 error_str.value = 'File exists! Select overwrite to replace.'
-#             else:
-#                 error_str.value = e.message
-#
-#         # set save button state
-#         save_but.description = 'Save'
-#         save_but.disabled = False
-#     save_but.on_click(save_function)
-#
-#     # Toggle button function
-#     def show_options(name, value):
-#         options_wid.visible = value
-#         save_but.visible = value
-#     show_options('', toggle_show_default)
-#     but.on_trait_change(show_options, 'value')
-#
-#     return save_figure_wid
-#
-#
-# def format_save_figure_options(save_figure_wid, container_padding='6px',
-#                                container_margin='6px',
-#                                container_border='1px solid black',
-#                                toggle_button_font_weight='bold',
-#                                tab_top_margin='0.3cm',
-#                                border_visible=True):
-#     r"""
-#     Function that corrects the align (style format) of a given
-#     save_figure_options widget. Usage example:
-#         save_figure_wid = save_figure_options()
-#         display(save_figure_wid)
-#         format_save_figure_options(save_figure_wid)
-#
-#     Parameters
-#     ----------
-#     save_figure_wid :
-#         The widget object generated by the `save_figure_options()` function.
-#
-#     container_padding : `str`, optional
-#         The padding around the widget, e.g. '6px'
-#
-#     container_margin : `str`, optional
-#         The margin around the widget, e.g. '6px'
-#
-#     tab_top_margin : `str`, optional
-#         The margin around the tab options' widget, e.g. '0.3cm'
-#
-#     container_border : `str`, optional
-#         The border around the widget, e.g. '1px solid black'
-#
-#     toggle_button_font_weight : `str`
-#         The font weight of the toggle button, e.g. 'bold'
-#
-#     border_visible : `boolean`, optional
-#         Defines whether to draw the border line around the widget.
-#     """
-#     # add margin on top of tabs widget
-#     save_figure_wid.children[1].margin_top = tab_top_margin
-#
-#     # align path options to the right
-#     add_class(save_figure_wid.children[1].children[0], 'align-end')
-#
-#     # align save button and error message horizontally
-#     remove_class(save_figure_wid.children[2], 'vbox')
-#     add_class(save_figure_wid.children[2], 'hbox')
-#     save_figure_wid.children[2].children[1].margin_left = '0.5cm'
-#     save_figure_wid.children[2].children[1].background_color = 'red'
-#
-#     # set final tab titles
-#     tab_titles = ['Path', 'Page setup', 'Image colour']
-#     for (k, tl) in enumerate(tab_titles):
-#         save_figure_wid.children[1].set_title(k, tl)
-#
-#     format_colour_selection(save_figure_wid.children[1].children[2].children[0])
-#     format_colour_selection(save_figure_wid.children[1].children[2].children[1])
-#     save_figure_wid.children[1].children[0].children[0].width = '6cm'
-#     save_figure_wid.children[1].children[0].children[1].width = '6cm'
-#
-#     # set toggle button font bold
-#     save_figure_wid.children[0].font_weight = toggle_button_font_weight
-#
-#     # margin and border around container widget
-#     save_figure_wid.padding = container_padding
-#     save_figure_wid.margin = container_margin
-#     if border_visible:
-#         save_figure_wid.border = container_border
-#
-#
+class SaveFigureOptionsWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for saving a figure to file. Specifically, it consists of:
+
+        1) ToggleButton [`self.toggle_visible`]: toggle visibility
+        2) Select [`self.file_format_select`]: image format selection
+        3) FloatText [`self.dpi_text`]: set dpi
+        4) Dropdown [`self.orientation_dropdown`]: paper orientation selection
+        5) Select [`self.papertype_select`]: paper type selection
+        6) Checkbox [`self.transparent_checkbox`]: set transparency
+        7) ColourSelectionWidget [`self.facecolour_widget`]: set face colour
+        8) ColourSelectionWidget [`self.edgecolour_widget`]: set edge colour
+        9) FloatText [`self.pad_inches_text`]: set padding in inches
+        10) Text [`self.filename_text`]: set path and filename
+        11) Checkbox [`self.overwrite_checkbox`]: overwrite flag
+        12) Latex [`self.error_latex`]: error message area
+        13) Button [`self.save_button`]: save button
+        14) VBox [`self.path_box`]: box that contains (10), (2), (11) and (5)
+        15) VBox [`self.page_box`]: box that contains (4), (3) and (9)
+        16) VBox [`self.colour_box`]: box that contains (7), (8) and (6)
+        17) Tab [`self.options_tabs`]: box that contains (14), (15) and (16)
+        18) HBox [`self.save_box`]: box that contains (13) and (12)
+        19) VBox [`self.options_box`]: box that contains (17) and (18)
+
+    To set the styling of this widget please refer to the `style()` method.
+
+    Parameters
+    ----------
+    renderer : :map:`Renderer` class or subclass
+        The renderer object that was used to render the figure.
+    file_format : `str`, optional
+        The initial value of the file format.
+    dpi : `float` or ``None``, optional
+        The initial value of the dpi. If ``None``, then dpi is set to ``0``.
+    orientation : {``portrait``, ``landscape``}, optional
+        The initial value of the orientation.
+    papertype : `str`, optional
+        The initial value of the paper type. Possible options are ::
+
+            {``'letter'``, ``'legal'``, ``'executive'``, ``'ledger'``, ``'a0'``,
+             ``'a1'``, ``'a2'``, ``'a3'``, ``'a4'``, ``'a5'``, ``'a6'``,
+             ``'a7'``, ``'a8'``, ``'a9'``, ``'a10'``, ``'b0'``, ``'b1'``,
+             ``'b2'``, ``'b3'``, ``'b4'``, ``'b5'``, ``'b6'``, ``'b7'``,
+             ``'b8'``, ``'b9'``, ``'b10'``}
+    transparent : `bool`, optional
+        The initial value of the transparency flag.
+    facecolour : `str` or `list` of `float`, optional
+        The initial value of the face colour.
+    edgecolour : `str` or `list` of `float`, optional
+        The initial value of the edge colour.
+    pad_inches : `float`, optional
+        The initial value of the figure padding in inches.
+    overwrite : `bool`, optional
+        The initial value of the overwrite flag.
+    toggle_show_default : `bool`, optional
+        Defines whether the options will be visible upon construction.
+    toggle_show_visible : `bool`, optional
+        The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
+    """
+    def __init__(self, renderer, file_format='png', dpi=None,
+                 orientation='portrait', papertype='letter', transparent=False,
+                 facecolour='w', edgecolour='w', pad_inches=0.,
+                 overwrite=False, toggle_show_default=True,
+                 toggle_show_visible=True, toggle_title='Save Options'):
+        from os import getcwd
+        from os.path import join, splitext
+
+        # Create widgets
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        file_format_dict = OrderedDict()
+        file_format_dict['png'] = 'png'
+        file_format_dict['jpg'] = 'jpg'
+        file_format_dict['pdf'] = 'pdf'
+        file_format_dict['eps'] = 'eps'
+        file_format_dict['postscript'] = 'ps'
+        file_format_dict['svg'] = 'svg'
+        self.file_format_select = ipywidgets.Select(
+            options=file_format_dict, value=file_format, description='Format',
+            width='3cm')
+        if dpi is None:
+            dpi = 0
+        self.dpi_text = ipywidgets.FloatText(description='DPI', value=dpi)
+        orientation_dict = OrderedDict()
+        orientation_dict['portrait'] = 'portrait'
+        orientation_dict['landscape'] = 'landscape'
+        self.orientation_dropdown = ipywidgets.Dropdown(
+            options=orientation_dict, value=orientation,
+            description='Orientation')
+        papertype_dict = OrderedDict()
+        papertype_dict['letter'] = 'letter'
+        papertype_dict['legal'] = 'legal'
+        papertype_dict['executive'] = 'executive'
+        papertype_dict['ledger'] = 'ledger'
+        papertype_dict['a0'] = 'a0'
+        papertype_dict['a1'] = 'a1'
+        papertype_dict['a2'] = 'a2'
+        papertype_dict['a3'] = 'a3'
+        papertype_dict['a4'] = 'a4'
+        papertype_dict['a5'] = 'a5'
+        papertype_dict['a6'] = 'a6'
+        papertype_dict['a7'] = 'a7'
+        papertype_dict['a8'] = 'a8'
+        papertype_dict['a9'] = 'a9'
+        papertype_dict['a10'] = 'a10'
+        papertype_dict['b0'] = 'b0'
+        papertype_dict['b1'] = 'b1'
+        papertype_dict['b2'] = 'b2'
+        papertype_dict['b3'] = 'b3'
+        papertype_dict['b4'] = 'b4'
+        papertype_dict['b5'] = 'b5'
+        papertype_dict['b6'] = 'b6'
+        papertype_dict['b7'] = 'b7'
+        papertype_dict['b8'] = 'b8'
+        papertype_dict['b9'] = 'b9'
+        papertype_dict['b10'] = 'b10'
+        self.papertype_select = ipywidgets.Select(
+            options=papertype_dict, value=papertype, description='Paper type',
+            visible=file_format == 'ps', width='3cm')
+        self.transparent_checkbox = ipywidgets.Checkbox(
+            description='Transparent', value=transparent)
+        self.facecolour_widget = ColourSelectionWidget(
+            [facecolour], description='Face colour')
+        self.edgecolour_widget = ColourSelectionWidget(
+            [edgecolour], description='Edge colour')
+        self.pad_inches_text = ipywidgets.FloatText(description='Pad (inch)',
+                                                    value=pad_inches)
+        self.filename_text = ipywidgets.Text(
+            description='Path', value=join(getcwd(), 'Untitled.' + file_format),
+            width='10cm')
+        self.overwrite_checkbox = ipywidgets.Checkbox(
+            description='Overwrite if file exists', value=overwrite)
+        self.error_latex = ipywidgets.Latex(value="", background_color='red')
+        self.save_button = ipywidgets.Button(description='Save')
+
+        # Group widgets
+        self.path_box = ipywidgets.VBox(
+            children=[self.filename_text, self.file_format_select,
+                      self.papertype_select, self.overwrite_checkbox],
+            align='end')
+        self.page_box = ipywidgets.VBox(
+            children=[self.orientation_dropdown, self.dpi_text,
+                      self.pad_inches_text])
+        self.colour_box = ipywidgets.VBox(
+            children=[self.facecolour_widget, self.edgecolour_widget,
+                      self.transparent_checkbox])
+        self.options_tabs = ipywidgets.Tab(
+            children=[self.path_box, self.page_box, self.colour_box],
+            border_visible=True, margin='0.3cm')
+        tab_titles = ['Path', 'Page setup', 'Image colour']
+        for (k, tl) in enumerate(tab_titles):
+            self.options_tabs.set_title(k, tl)
+        self.save_box = ipywidgets.HBox(
+            children=[self.save_button, self.error_latex], align='center')
+        self.options_box = ipywidgets.VBox(
+            children=[self.options_tabs, self.save_box],
+            visible=toggle_show_default, align='center')
+        super(SaveFigureOptionsWidget, self).__init__(
+            children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
+
+        # Assign renderer
+        self.renderer = renderer
+
+        # Set functionality
+        def papertype_visibility(name, value):
+            self.papertype_select.visible = value == 'ps'
+        self.file_format_select.on_trait_change(papertype_visibility, 'value')
+
+        def set_extension(name, value):
+            file_name, file_extension = splitext(self.filename_text.value)
+            self.filename_text.value = file_name + '.' + value
+        self.file_format_select.on_trait_change(set_extension, 'value')
+
+        def save_function(name):
+            # set save button state
+            self.error_latex.value = ''
+            self.save_button.description = 'Saving...'
+            self.save_button.disabled = True
+
+            # save figure
+            selected_dpi = self.dpi_text.value
+            if self.dpi_text.value == 0:
+                selected_dpi = None
+            try:
+                self.renderer.save_figure(
+                    filename=self.filename_text.value, dpi=selected_dpi,
+                    face_colour=
+                    self.facecolour_widget.selected_values['colour'][0],
+                    edge_colour=
+                    self.edgecolour_widget.selected_values['colour'][0],
+                    orientation=self.orientation_dropdown.value,
+                    paper_type=self.papertype_select.value,
+                    format=self.file_format_select.value,
+                    transparent=self.transparent_checkbox.value,
+                    pad_inches=self.pad_inches_text.value,
+                    overwrite=self.overwrite_checkbox.value)
+                self.error_latex.value = ''
+            except ValueError as e:
+                if (e.message == 'File already exists. Please set the '
+                                 'overwrite kwarg if you wish to overwrite '
+                                 'the file.'):
+                    self.error_latex.value = 'File exists! ' \
+                                             'Tick overwrite to replace.'
+                else:
+                    self.error_latex.value = e.message
+
+            # set save button state
+            self.save_button.description = 'Save'
+            self.save_button.disabled = False
+        self.save_button.on_click(save_function)
+
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=True,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.file_format_select, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.dpi_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.orientation_dropdown, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.papertype_select, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.transparent_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.pad_inches_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.filename_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.overwrite_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.error_latex, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.save_button, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
+        self.facecolour_widget.style(box_style=None, border_visible=False,
+                                     font_family=font_family,
+                                     font_size=font_size,
+                                     font_weight=font_weight,
+                                     font_style=font_style, rgb_width='1.5cm')
+        self.edgecolour_widget.style(box_style=None, border_visible=False,
+                                     font_family=font_family,
+                                     font_size=font_size,
+                                     font_weight=font_weight,
+                                     font_style=font_style, rgb_width='1.5cm')
+
+
 # def features_options(toggle_show_default=True, toggle_show_visible=True):
 #     r"""
 #     Creates a widget with Features Options.

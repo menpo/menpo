@@ -1026,7 +1026,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             If ``True``, it allows triggering of any callback functions.
         """
         if labels is None:
-            labels = self.selected_values['labels']
+            labels = ["label {}".format(k) for k in range(len(colours_list))]
 
         sel_colours = self.selected_values['colour']
         sel_labels = self.selected_values['labels']
@@ -1080,7 +1080,14 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             for k, l in enumerate(labels):
                 labels_dict[l] = k
             self.label_dropdown.options = labels_dict
-            self.label_dropdown.value = 0
+            if len(labels) > 1:
+                if self.label_dropdown.value > 0:
+                    self.label_dropdown.value = 0
+                else:
+                    self.label_dropdown.value = 1
+                    self.label_dropdown.value = 0
+            else:
+                self.label_dropdown.value = 0
             # temporarily remove render_function from r, g, b traits
             render_function = self._render_function
             self.remove_render_function()
