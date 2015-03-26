@@ -790,7 +790,7 @@ class MaskedImage(Image):
 
     # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0.):
+                     order=1, mode='constant', cval=0., batch_size=None):
         r"""
         Warps this image into a different reference space.
 
@@ -825,6 +825,13 @@ class MaskedImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -835,14 +842,15 @@ class MaskedImage(Image):
         # with a blank mask
         warped_image = Image.warp_to_mask(self, template_mask, transform,
                                           warp_landmarks=warp_landmarks,
-                                          order=order, mode=mode, cval=cval)
+                                          order=order, mode=mode, cval=cval,
+                                          batch_size=batch_size)
         # Set the template mask as our mask
         warped_image.mask = template_mask
         return warped_image
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0.):
+                      order=1, mode='constant', cval=0., batch_size=None):
         """
         Return a copy of this :map:`MaskedImage` warped into a different
         reference space.
@@ -879,6 +887,13 @@ class MaskedImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -888,7 +903,8 @@ class MaskedImage(Image):
         # call the super variant and get ourselves an Image back
         warped_image = Image.warp_to_shape(self, template_shape, transform,
                                            warp_landmarks=warp_landmarks,
-                                           order=order, mode=mode, cval=cval)
+                                           order=order, mode=mode, cval=cval,
+                                           batch_size=batch_size)
         # warp the mask separately and reattach.
         mask = self.mask.warp_to_shape(template_shape, transform,
                                        warp_landmarks=warp_landmarks,

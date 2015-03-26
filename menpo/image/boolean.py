@@ -301,7 +301,7 @@ class BooleanImage(Image):
 
     # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     mode='constant', cval=False):
+                     mode='constant', cval=False, batch_size=None):
         r"""
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -327,6 +327,13 @@ class BooleanImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -336,11 +343,12 @@ class BooleanImage(Image):
         # enforce the order as 0, as this is boolean data, then call super
         return Image.warp_to_mask(self, template_mask, transform,
                                   warp_landmarks=warp_landmarks,
-                                  order=0, mode=mode, cval=cval)
+                                  order=0, mode=mode, cval=cval,
+                                  batch_size=batch_size)
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      mode='constant', cval=False, order=None):
+                      mode='constant', cval=False, order=None, batch_size=None):
         """
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -367,6 +375,13 @@ class BooleanImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -377,7 +392,8 @@ class BooleanImage(Image):
         # note that we force the use of order=0 for BooleanImages.
         warped = Image.warp_to_shape(self, template_shape, transform,
                                      warp_landmarks=warp_landmarks,
-                                     order=0, mode=mode, cval=cval)
+                                     order=0, mode=mode, cval=cval,
+                                     batch_size=batch_size)
         # unfortunately we can't escape copying here, let BooleanImage
         # convert us to np.bool
         boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
