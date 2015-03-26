@@ -332,9 +332,10 @@ class ImageViewer(object):
 
 def view_image_landmarks(image, channels, masked, group,
                          with_labels, without_labels, figure_id, new_figure,
-                         interpolation, alpha, render_lines, line_colour,
-                         line_style, line_width, render_markers, marker_style,
-                         marker_size, marker_face_colour, marker_edge_colour,
+                         interpolation, cmap_name, alpha, render_lines,
+                         line_colour, line_style, line_width,
+                         render_markers, marker_style, marker_size,
+                         marker_face_colour, marker_edge_colour,
                          marker_edge_width, render_numbering,
                          numbers_horizontal_align, numbers_vertical_align,
                          numbers_font_name, numbers_font_size,
@@ -369,11 +370,15 @@ def view_image_landmarks(image, channels, masked, group,
     if isinstance(image, MaskedImage):
         self_view = image.view(figure_id=figure_id, new_figure=new_figure,
                                channels=channels, masked=masked,
-                               interpolation=interpolation, alpha=alpha)
+                               interpolation=interpolation,
+                               cmap_name=cmap_name,
+                               alpha=alpha)
     else:
         self_view = image.view(figure_id=figure_id, new_figure=new_figure,
                                channels=channels,
-                               interpolation=interpolation, alpha=alpha)
+                               interpolation=interpolation,
+                               cmap_name=cmap_name,
+                               alpha=alpha)
 
     # Make sure axes are constrained to the image size
     if axes_x_limits is None:

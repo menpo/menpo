@@ -55,9 +55,8 @@ more dependable.
 
 **Summary:**
 
-  - Add graph classes, :map:`PointGraph`, :map:`PointDirectedGraph`,
-    :map:`PointTree`, :map:`PointUndirectedGraph`. This makes visualization
-    of landmarks much nicer looking.
+  - Add graph classes, :map:`PointUndirectedGraph`, :map:`PointDirectedGraph`,
+    :map:`PointTree`. This makes visualization of landmarks much nicer looking.
   - Better support of pickling menpo objects
   - Add a bounding box method to :map:`PointCloud` for calculating the correctly
     oriented bounding box of point clouds.

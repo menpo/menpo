@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import numpy as np
+
 from menpo.landmark.base import LandmarkGroup
 from menpo.landmark.exceptions import LabellingError
 
@@ -129,7 +130,8 @@ def _relabel_group_from_dict(pointcloud, labels_to_ranges):
     adjacency_array = np.vstack(adjacency_lists)
 
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(pointcloud.points, adjacency_array), masks)
+        PointUndirectedGraph.init_from_edges(pointcloud.points,
+                                             adjacency_array), masks)
 
     return new_landmark_group
 
@@ -206,7 +208,8 @@ def ibug_face_68(landmark_group):
     ])
 
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
+                                             total_conn))
 
     new_landmark_group['jaw'] = jaw_indices
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -298,7 +301,8 @@ def ibug_face_66(landmark_group):
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(60), np.arange(61, 64), np.arange(65, 68)))
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['jaw'] = jaw_indices
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -385,7 +389,8 @@ def ibug_face_51(landmark_group):
     # Ignore the two inner mouth points
     ind = np.arange(17, 68)
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
     new_landmark_group['right_eyebrow'] = rbrow_indices
@@ -473,7 +478,8 @@ def ibug_face_49(landmark_group):
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(17, 60), np.arange(61, 64), np.arange(65, 68)))
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['left_eyebrow'] = lbrow_indices
     new_landmark_group['right_eyebrow'] = rbrow_indices
@@ -880,7 +886,8 @@ def ibug_face_65_closed_mouth(landmark_group):
     # Ignore the two inner mouth points
     ind = np.arange(65)
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['jaw'] = jaw_indices
     new_landmark_group['left_eyebrow'] = lbrow_indices
@@ -1025,7 +1032,8 @@ def lfpw_face(landmark_group):
     # Ignore the two inner mouth points
     ind = np.arange(29)
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['chin'] = chin_indices
     new_landmark_group['left_eye'] = np.hstack((outer_leye_indices,
@@ -1124,7 +1132,8 @@ def ibug_open_eye(landmark_group):
                             pupil_connectivity.tolist() +
                             sclera_connectivity)
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
+                                             total_conn))
 
     new_landmark_group['upper_eyelid'] = upper_el_indices
     new_landmark_group['lower_eyelid'] = lower_el_indices
@@ -1183,7 +1192,8 @@ def ibug_close_eye_points(landmark_group):
 
     total_conn = np.asarray(upper_connectivity + lower_connectivity)
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
+                                             total_conn))
 
     new_landmark_group['upper_eyelid'] = upper_indices
     new_landmark_group['lower_eyelid'] = lower_indices
@@ -1409,7 +1419,8 @@ def ibug_hand(landmark_group):
                             pinky_connectivity, palm_connectivity))
 
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
+                                             total_conn))
 
     new_landmark_group['thumb'] = thumb_indices
     new_landmark_group['index'] = index_indices
@@ -1532,7 +1543,8 @@ def lsp_pose(landmark_group):
                             head_connectivity])
 
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
+                                             total_conn))
 
     new_landmark_group['left_leg'] = left_leg_indices
     new_landmark_group['right_leg'] = right_leg_indices
@@ -1646,7 +1658,8 @@ def streetscene_car_view_0(landmark_group):
 
     ind = np.arange(8)
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['front'] = front_indices
     new_landmark_group['bonnet'] = bonnet_indices
@@ -1715,7 +1728,8 @@ def streetscene_car_view_1(landmark_group):
 
     ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['front'] = front_indices
     new_landmark_group['bonnet'] = bonnet_indices
@@ -1772,7 +1786,8 @@ def streetscene_car_view_2(landmark_group):
 
     ind = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['left_side'] = left_side_indices
     del new_landmark_group['all']  # Remove pointless all group
@@ -1839,7 +1854,8 @@ def streetscene_car_view_3(landmark_group):
 
     ind = np.array([0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18])
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['left_side'] = left_side_indices
     new_landmark_group['rear_windshield'] = rear_windshield_indices
@@ -1910,7 +1926,8 @@ def streetscene_car_view_4(landmark_group):
 
     ind = np.hstack((np.arange(8), np.array([9, 11, 13, 15, 17, 19])))
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['front'] = front_indices
     new_landmark_group['bonnet'] = bonnet_indices
@@ -1967,7 +1984,8 @@ def streetscene_car_view_5(landmark_group):
 
     ind = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19])
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['right_side'] = right_side_indices
     del new_landmark_group['all']  # Remove pointless all group
@@ -2034,7 +2052,8 @@ def streetscene_car_view_6(landmark_group):
 
     ind = np.array([1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19])
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind], total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['right_side'] = right_side_indices
     new_landmark_group['rear_windshield'] = rear_windshield_indices
@@ -2099,8 +2118,8 @@ def streetscene_car_view_7(landmark_group):
 
     ind = np.arange(8, 16)
     new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph(landmark_group.lms.points[ind],
-                             total_conn))
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
+                                             total_conn))
 
     new_landmark_group['rear_windshield'] = rear_windshield_indices
     new_landmark_group['trunk'] = trunk_indices
@@ -2193,7 +2212,8 @@ def bu3dfe_83(landmark_group):
     ])
 
     new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph(landmark_group.lms.points, total_conn),
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
+                                             total_conn),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['right_eye'] = reye_indices
