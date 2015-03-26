@@ -37,7 +37,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
             raise ValueError('TPS can only be used on 2D data.')
         if kernel is None:
             kernel = R2LogR2RBF(source.points)
-        self._min_singular_val = min_singular_val
+        self.min_singular_val = min_singular_val
         self.kernel = kernel
         # k[i, j] is the rbf weighting between source i and j
         # (of course, k is thus symmetrical and it's diagonal nil)
@@ -60,7 +60,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
         # matrix is rank deficient and thus not-invertible. Therefore,
         # only take the inverse on the full-rank set of indices.
         _u, _s, _v = np.linalg.svd(self.l)
-        keep = _s.shape[0] - sum(_s < self._min_singular_val)
+        keep = _s.shape[0] - sum(_s < self.min_singular_val)
         inv_l = _u[:, :keep].dot(1.0 / _s[:keep, None] * _v[:keep, :])
         self.coefficients = inv_l.dot(self.y.T)
 
