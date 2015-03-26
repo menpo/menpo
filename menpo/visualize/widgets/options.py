@@ -5,12 +5,13 @@ import numpy as np
 import IPython.html.widgets as ipywidgets
 from IPython.utils.traitlets import link
 
-from .tools import (_format_box, _format_font, IndexButtonsWidget,
-                    IndexSliderWidget, LineOptionsWidget, MarkerOptionsWidget,
-                    ImageOptionsWidget, NumberingOptionsWidget,
-                    FigureOptionsOneScaleWidget, FigureOptionsTwoScalesWidget,
-                    LegendOptionsWidget, GridOptionsWidget,
-                    ColourSelectionWidget)
+from .tools import (_format_box, _format_font, _convert_image_to_bytes,
+                    IndexButtonsWidget, IndexSliderWidget, LineOptionsWidget,
+                    MarkerOptionsWidget, ImageOptionsWidget,
+                    NumberingOptionsWidget, FigureOptionsOneScaleWidget,
+                    FigureOptionsTwoScalesWidget, LegendOptionsWidget,
+                    GridOptionsWidget, ColourSelectionWidget, HOGOptionsWidget,
+                    DaisyOptionsWidget, LBPOptionsWidget, IGOOptionsWidget)
 
 
 class ChannelOptionsWidget(ipywidgets.FlexBox):
@@ -2566,270 +2567,350 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                                      font_style=font_style, rgb_width='1.5cm')
 
 
-# def features_options(toggle_show_default=True, toggle_show_visible=True):
-#     r"""
-#     Creates a widget with Features Options.
-#
-#     The structure of the widgets is the following:
-#         features_options_wid.children = [toggle_button, tab_options]
-#         tab_options.children = [features_radiobuttons, per_feature_options,
-#                                 preview]
-#         per_feature_options.children = [hog_options, igo_options, lbp_options,
-#                                         daisy_options, no_options]
-#         preview.children = [input_size_text, lenna_image, output_size_text,
-#                             elapsed_time]
-#
-#     To fix the alignment within this widget please refer to
-#     `format_features_options()` function.
-#
-#     Parameters
-#     ----------
-#     toggle_show_default : `boolean`, optional
-#         Defines whether the options will be visible upon construction.
-#
-#     toggle_show_visible : `boolean`, optional
-#         The visibility of the toggle button.
-#     """
-#     # import features methods and time
-#     import time
-#     from menpo.feature.features import hog, lbp, igo, es, daisy, gradient, no_op
-#     from menpo.image import Image
-#     import menpo.io as mio
-#     from menpo.visualize.image import glyph
-#     import IPython.html.widgets as ipywidgets
-#
-#     # Toggle button that controls options' visibility
-#     but = ipywidgets.ToggleButton(description='Features Options',
-#                                         value=toggle_show_default,
-#                                         visible=toggle_show_visible)
-#
-#     # feature type
-#     tmp = OrderedDict()
-#     tmp['HOG'] = hog
-#     tmp['IGO'] = igo
-#     tmp['ES'] = es
-#     tmp['Daisy'] = daisy
-#     tmp['LBP'] = lbp
-#     tmp['Gradient'] = gradient
-#     tmp['None'] = no_op
-#     feature = ipywidgets.RadioButtons(value=no_op, options=tmp,
-#                                       description='Feature type:')
-#
-#     # feature-related options
-#     hog_options_wid = hog_options(toggle_show_default=True,
-#                                   toggle_show_visible=False)
-#     igo_options_wid = igo_options(toggle_show_default=True,
-#                                   toggle_show_visible=False)
-#     lbp_options_wid = lbp_options(toggle_show_default=True,
-#                                   toggle_show_visible=False)
-#     daisy_options_wid = daisy_options(toggle_show_default=True,
-#                                       toggle_show_visible=False)
-#     no_options_wid = ipywidgets.Latex(value='No options available.')
-#
-#     # load and rescale preview image (lenna)
-#     image = mio.import_builtin_asset.lenna_png()
-#     image.crop_to_landmarks_proportion_inplace(0.18)
-#     image = image.as_greyscale()
-#
-#     # per feature options widget
-#     per_feature_options = ipywidgets.Box(
-#         children=[hog_options_wid, igo_options_wid, lbp_options_wid,
-#                   daisy_options_wid, no_options_wid])
-#
-#     # preview tab widget
-#     preview_img = ipywidgets.Image(value=_convert_image_to_bytes(image),
-#                                          visible=False)
-#     preview_input = ipywidgets.Latex(
-#         value="Input: {}W x {}H x {}C".format(
-#             image.width, image.height, image.n_channels), visible=False)
-#     preview_output = ipywidgets.Latex(value="")
-#     preview_time = ipywidgets.Latex(value="")
-#     preview = ipywidgets.Box(children=[preview_img, preview_input,
-#                                                    preview_output,
-#                                                    preview_time])
-#
-#     # options tab widget
-#     all_options = ipywidgets.Tab(
-#         children=[feature, per_feature_options, preview])
-#
-#     # Widget container
-#     features_options_wid = ipywidgets.Box(
-#         children=[but, all_options])
-#
-#     # Initialize output dictionary
-#     options = {}
-#     features_options_wid.function = partial(no_op, **options)
-#     features_options_wid.features_function = no_op
-#     features_options_wid.features_options = options
-#
-#     # options visibility
-#     def per_feature_options_visibility(name, value):
-#         if value == hog:
-#             igo_options_wid.visible = False
-#             lbp_options_wid.visible = False
-#             daisy_options_wid.visible = False
-#             no_options_wid.visible = False
-#             hog_options_wid.visible = True
-#         elif value == igo:
-#             hog_options_wid.visible = False
-#             lbp_options_wid.visible = False
-#             daisy_options_wid.visible = False
-#             no_options_wid.visible = False
-#             igo_options_wid.visible = True
-#         elif value == lbp:
-#             hog_options_wid.visible = False
-#             igo_options_wid.visible = False
-#             daisy_options_wid.visible = False
-#             no_options_wid.visible = False
-#             lbp_options_wid.visible = True
-#         elif value == daisy:
-#             hog_options_wid.visible = False
-#             igo_options_wid.visible = False
-#             lbp_options_wid.visible = False
-#             no_options_wid.visible = False
-#             daisy_options_wid.visible = True
-#         else:
-#             hog_options_wid.visible = False
-#             igo_options_wid.visible = False
-#             lbp_options_wid.visible = False
-#             daisy_options_wid.visible = False
-#             no_options_wid.visible = True
-#             for name, f in tmp.items():
-#                 if f == value:
-#                     no_options_wid.value = "{}: No available " \
-#                                            "options.".format(name)
-#     feature.on_trait_change(per_feature_options_visibility, 'value')
-#     per_feature_options_visibility('', no_op)
-#
-#     # get function
-#     def get_function(name, value):
-#         # get options
-#         if feature.value == hog:
-#             opts = hog_options_wid.options
-#         elif feature.value == igo:
-#             opts = igo_options_wid.options
-#         elif feature.value == lbp:
-#             opts = lbp_options_wid.options
-#         elif feature.value == daisy:
-#             opts = daisy_options_wid.options
-#         else:
-#             opts = {}
-#         # get features function closure
-#         func = partial(feature.value, **opts)
-#         # store function
-#         features_options_wid.function = func
-#         features_options_wid.features_function = value
-#         features_options_wid.features_options = opts
-#     feature.on_trait_change(get_function, 'value')
-#     all_options.on_trait_change(get_function, 'selected_index')
-#
-#     # preview function
-#     def preview_function(name, old_value, value):
-#         if value == 2:
-#             # extracting features message
-#             for name, f in tmp.items():
-#                 if f == features_options_wid.function.func:
-#                     val1 = name
-#             preview_output.value = "Previewing {} features...".format(val1)
-#             preview_time.value = ""
-#             # extract feature and time it
-#             t = time.time()
-#             feat_image = features_options_wid.function(image)
-#             t = time.time() - t
-#             # store feature image shape and n_channels
-#             val2 = feat_image.width
-#             val3 = feat_image.height
-#             val4 = feat_image.n_channels
-#             # compute sum of feature image and normalize its pixels in range
-#             # (0, 1) because it is required by as_PILImage
-#             feat_image = glyph(feat_image, vectors_block_size=1,
-#                                use_negative=False)
-#             # feat_image = np.sum(feat_image.pixels, axis=2)
-#             feat_image = feat_image.pixels
-#             feat_image -= np.min(feat_image)
-#             feat_image /= np.max(feat_image)
-#             feat_image = Image(feat_image)
-#             # update preview
-#             preview_img.value = _convert_image_to_bytes(feat_image)
-#             preview_input.visible = True
-#             preview_img.visible = True
-#             # set info
-#             preview_output.value = "{}: {}W x {}H x {}C".format(val1, val2,
-#                                                                 val3, val4)
-#             preview_time.value = "{0:.2f} secs elapsed".format(t)
-#         if old_value == 2:
-#             preview_input.visible = False
-#             preview_img.visible = False
-#     all_options.on_trait_change(preview_function, 'selected_index')
-#
-#     # Toggle button function
-#     def toggle_options(name, value):
-#         all_options.visible = value
-#     but.on_trait_change(toggle_options, 'value')
-#
-#     return features_options_wid
-#
-#
-# def format_features_options(features_options_wid, container_padding='6px',
-#                             container_margin='6px',
-#                             container_border='1px solid black',
-#                             toggle_button_font_weight='bold',
-#                             border_visible=True):
-#     r"""
-#     Function that corrects the align (style format) of a given features_options
-#     widget. Usage example:
-#         features_options_wid = features_options()
-#         display(features_options_wid)
-#         format_features_options(features_options_wid)
-#
-#     Parameters
-#     ----------
-#     features_options_wid :
-#         The widget object generated by the `features_options()` function.
-#
-#     container_padding : `str`, optional
-#         The padding around the widget, e.g. '6px'
-#
-#     container_margin : `str`, optional
-#         The margin around the widget, e.g. '6px'
-#
-#     tab_top_margin : `str`, optional
-#         The margin around the tab options' widget, e.g. '0.3cm'
-#
-#     container_border : `str`, optional
-#         The border around the widget, e.g. '1px solid black'
-#
-#     toggle_button_font_weight : `str`
-#         The font weight of the toggle button, e.g. 'bold'
-#
-#     border_visible : `boolean`, optional
-#         Defines whether to draw the border line around the widget.
-#     """
-#     # format per feature options
-#     format_hog_options(features_options_wid.children[1].children[1].children[0],
-#                        border_visible=False)
-#     format_igo_options(features_options_wid.children[1].children[1].children[1],
-#                        border_visible=False)
-#     format_lbp_options(features_options_wid.children[1].children[1].children[2],
-#                        border_visible=False)
-#     format_daisy_options(
-#         features_options_wid.children[1].children[1].children[3],
-#         border_visible=False)
-#
-#     # set final tab titles
-#     tab_titles = ['Feature', 'Options', 'Preview']
-#     for (k, tl) in enumerate(tab_titles):
-#         features_options_wid.children[1].set_title(k, tl)
-#
-#     # set margin above tab widget
-#     features_options_wid.children[1].margin = '10px'
-#
-#     # set toggle button font bold
-#     features_options_wid.children[0].font_weight = toggle_button_font_weight
-#
-#     # margin and border around container widget
-#     features_options_wid.padding = container_padding
-#     features_options_wid.margin = container_margin
-#     if border_visible:
-#         features_options_wid.border = container_border
+class FeatureOptionsWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting feature options. Specifically, it consists
+    of:
 
+        1) ToggleButton [`self.toggle_visible`]: toggle visibility
+        2) RadioButtons [`self.feature_radiobuttons`]: select feature type
+        3) HOGOptionsWidget [`self.hog_options_widget`]: hog options widget
+        4) IGOOptionsWidget [`self.igo_options_widget`]: igo options widget
+        5) LBPOptionsWidget [`self.lbp_options_widget`]: lbp options widget
+        6) DaisyOptionsWidget [`self.daisy_options_widget`]: daisy options
+           widget
+        7) Latex [`self.no_options_widget`]: message for no options available
+        8) Box [`self.per_feature_options_box`]: box that contains (3), (4),
+           (5), (6) and (7)
+        9) Image [`self.preview_image`]: lenna image
+        10) Latex [`self.preview_input_latex`]: the initial image information
+        11) Latex [`self.preview_output_latex`]: the output image information
+        12) Latex [`self.preview_time_latex`]: the timing information
+        13) VBox [`self.preview_box`]: box that contains (9), (10), (11), (12)
+        14) Tab [`self.options_box`]: box that contains (2), (8) and (13)
+
+    To set the styling of this widget please refer to the `style()` method. The
+    widget stores the features `function` to `self.features_function`, the
+    features options `dict` in `self.features_options` and the `partial`
+    function with the options as `self.function`.
+
+    Parameters
+    ----------
+    toggle_show_default : `bool`, optional
+        Defines whether the options will be visible upon construction.
+    toggle_show_visible : `bool`, optional
+        The visibility of the toggle button.
+    toggle_title : `str`, optional
+        The title of the toggle button.
+    """
+    def __init__(self, toggle_show_default=True, toggle_show_visible=False,
+                 toggle_title='Feature Options'):
+        # import features methods and time
+        import time
+        from menpo.feature.features import (hog, lbp, igo, es, daisy, gradient,
+                                            no_op)
+        from menpo.image import Image
+        import menpo.io as mio
+        from menpo.visualize.image import glyph
+
+        # Create widgets
+        self.toggle_visible = ipywidgets.ToggleButton(
+            description=toggle_title, value=toggle_show_default,
+            visible=toggle_show_visible)
+        tmp = OrderedDict()
+        tmp['HOG'] = hog
+        tmp['IGO'] = igo
+        tmp['ES'] = es
+        tmp['Daisy'] = daisy
+        tmp['LBP'] = lbp
+        tmp['Gradient'] = gradient
+        tmp['None'] = no_op
+        self.feature_radiobuttons = ipywidgets.RadioButtons(
+            value=no_op, options=tmp, description='Feature type:')
+        hog_options_dict = {'mode': 'dense', 'algorithm': 'dalaltriggs',
+                            'num_bins': 9, 'cell_size': 8, 'block_size': 2,
+                            'signed_gradient': True, 'l2_norm_clip': 0.2,
+                            'window_height': 1, 'window_width': 1,
+                            'window_unit': 'blocks', 'window_step_vertical': 1,
+                            'window_step_horizontal': 1,
+                            'window_step_unit': 'pixels', 'padding': True}
+        self.hog_options_widget = HOGOptionsWidget(
+            hog_options_dict, toggle_show_default=True,
+            toggle_show_visible=False, toggle_title='HOG Options')
+        igo_options_dict = {'double_angles': True}
+        self.igo_options_widget = IGOOptionsWidget(
+            igo_options_dict, toggle_show_default=True,
+            toggle_show_visible=False, toggle_title='IGO Options')
+        lbp_options_dict = {'radius': range(1, 5), 'samples': [8] * 4,
+                            'mapping_type': 'u2', 'window_step_vertical': 1,
+                            'window_step_horizontal': 1,
+                            'window_step_unit': 'pixels', 'padding': True}
+        self.lbp_options_widget = LBPOptionsWidget(
+            lbp_options_dict, toggle_show_default=True,
+            toggle_show_visible=False, toggle_title='LBP Options')
+        daisy_options_dict = {'step': 1, 'radius': 15, 'rings': 2,
+                              'histograms': 2, 'orientations': 8,
+                              'normalization': 'l1', 'sigmas': None,
+                              'ring_radii': None}
+        self.daisy_options_widget = DaisyOptionsWidget(
+            daisy_options_dict, toggle_show_default=True,
+            toggle_show_visible=False, toggle_title='Daisy Options')
+        self.no_options_widget = ipywidgets.Latex(value='No options available.')
+
+        # Load and rescale preview image (lenna)
+        self.image = mio.import_builtin_asset.lenna_png()
+        self.image.crop_to_landmarks_proportion_inplace(0.18)
+        self.image = self.image.as_greyscale()
+
+        # Group widgets
+        self.per_feature_options_box = ipywidgets.Box(
+            children=[self.hog_options_widget, self.igo_options_widget,
+                      self.lbp_options_widget, self.daisy_options_widget,
+                      self.no_options_widget])
+        self.preview_image = ipywidgets.Image(
+            value=_convert_image_to_bytes(self.image), visible=False)
+        self.preview_input_latex = ipywidgets.Latex(
+            value="Input: {}W x {}H x {}C".format(
+                self.image.width, self.image.height, self.image.n_channels),
+            visible=False)
+        self.preview_output_latex = ipywidgets.Latex(value="")
+        self.preview_time_latex = ipywidgets.Latex(value="")
+        self.preview_box = ipywidgets.VBox(
+            children=[self.preview_image, self.preview_input_latex,
+                      self.preview_output_latex, self.preview_time_latex])
+        self.options_box = ipywidgets.Tab(
+            children=[self.feature_radiobuttons, self.per_feature_options_box,
+                      self.preview_box])
+        tab_titles = ['Feature', 'Options', 'Preview']
+        for (k, tl) in enumerate(tab_titles):
+            self.options_box.set_title(k, tl)
+        super(FeatureOptionsWidget, self).__init__(
+            children=[self.toggle_visible, self.options_box])
+        self.align = 'start'
+
+        # Initialize output
+        options = {}
+        self.function = partial(no_op, **options)
+        self.features_function = no_op
+        self.features_options = options
+
+        # Set functionality
+        def per_feature_options_visibility(name, value):
+            if value == hog:
+                self.igo_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.hog_options_widget.visible = True
+            elif value == igo:
+                self.hog_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.igo_options_widget.visible = True
+            elif value == lbp:
+                self.hog_options_widget.visible = False
+                self.igo_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.lbp_options_widget.visible = True
+            elif value == daisy:
+                self.hog_options_widget.visible = False
+                self.igo_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.daisy_options_widget.visible = True
+            else:
+                self.hog_options_widget.visible = False
+                self.igo_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.no_options_widget.visible = True
+                for name, f in tmp.items():
+                    if f == value:
+                        self.no_options_widget.value = \
+                            "{}: No available options.".format(name)
+        self.feature_radiobuttons.on_trait_change(
+            per_feature_options_visibility, 'value')
+        per_feature_options_visibility('', no_op)
+
+        def get_function(name, value):
+            # get options
+            if self.feature_radiobuttons.value == hog:
+                opts = self.hog_options_widget.selected_values
+            elif self.feature_radiobuttons.value == igo:
+                opts = self.igo_options_widget.selected_values
+            elif self.feature_radiobuttons.value == lbp:
+                opts = self.lbp_options_widget.selected_values
+            elif self.feature_radiobuttons.value == daisy:
+                opts = self.daisy_options_widget.selected_values
+            else:
+                opts = {}
+            # get features function closure
+            func = partial(self.feature_radiobuttons.value, **opts)
+            # store function
+            self.function = func
+            self.features_function = value
+            self.features_options = opts
+        self.feature_radiobuttons.on_trait_change(get_function, 'value')
+        self.options_box.on_trait_change(get_function, 'selected_index')
+
+        def preview_function(name, old_value, value):
+            if value == 2:
+                # extracting features message
+                for name, f in tmp.items():
+                    if f == self.function.func:
+                        val1 = name
+                self.preview_output_latex.value = \
+                    "Previewing {} features...".format(val1)
+                self.preview_time_latex.value = ""
+                # extract feature and time it
+                t = time.time()
+                feat_image = self.function(self.image)
+                t = time.time() - t
+                # store feature image shape and n_channels
+                val2 = feat_image.width
+                val3 = feat_image.height
+                val4 = feat_image.n_channels
+                # compute sum of feature image and normalize its pixels in range
+                # (0, 1) because it is required by as_PILImage
+                feat_image = glyph(feat_image, vectors_block_size=1,
+                                   use_negative=False)
+                # feat_image = np.sum(feat_image.pixels, axis=2)
+                feat_image = feat_image.pixels
+                feat_image -= np.min(feat_image)
+                feat_image /= np.max(feat_image)
+                feat_image = Image(feat_image)
+                # update preview
+                self.preview_image.value = _convert_image_to_bytes(feat_image)
+                self.preview_input_latex.visible = True
+                self.preview_image.visible = True
+                # set info
+                self.preview_output_latex.value = \
+                    "{}: {}W x {}H x {}C".format(val1, val2, val3, val4)
+                self.preview_time_latex.value = "{0:.2f} secs elapsed".format(t)
+            if old_value == 2:
+                self.preview_input_latex.visible = False
+                self.preview_image.visible = False
+        self.options_box.on_trait_change(preview_function, 'selected_index')
+
+        def toggle_function(name, value):
+            self.options_box.visible = value
+        self.toggle_visible.on_trait_change(toggle_function, 'value')
+
+    def style(self, outer_box_style=None, outer_border_visible=False,
+              outer_border_color='black', outer_border_style='solid',
+              outer_border_width=1, outer_padding=0, outer_margin=0,
+              inner_box_style=None, inner_border_visible=False,
+              inner_border_color='black', inner_border_style='solid',
+              inner_border_width=1, inner_padding=0, inner_margin=0,
+              font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        outer_box_style : `str` or ``None`` (see below), optional
+            Outer box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        outer_border_visible : `bool`, optional
+            Defines whether to draw the border line around the outer box.
+        outer_border_color : `str`, optional
+            The color of the border around the outer box.
+        outer_border_style : `str`, optional
+            The line style of the border around the outer box.
+        outer_border_width : `float`, optional
+            The line width of the border around the outer box.
+        outer_padding : `float`, optional
+            The padding around the outer box.
+        outer_margin : `float`, optional
+            The margin around the outer box.
+        inner_box_style : `str` or ``None`` (see below), optional
+            Inner box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        inner_border_visible : `bool`, optional
+            Defines whether to draw the border line around the inner box.
+        inner_border_color : `str`, optional
+            The color of the border around the inner box.
+        inner_border_style : `str`, optional
+            The line style of the border around the inner box.
+        inner_border_width : `float`, optional
+            The line width of the border around the inner box.
+        inner_padding : `float`, optional
+            The padding around the inner box.
+        inner_margin : `float`, optional
+            The margin around the inner box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, outer_box_style, outer_border_visible,
+                    outer_border_color, outer_border_style, outer_border_width,
+                    outer_padding, outer_margin)
+        _format_box(self.options_box, inner_box_style, inner_border_visible,
+                    inner_border_color, inner_border_style, inner_border_width,
+                    inner_padding, inner_margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.feature_radiobuttons, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.no_options_widget, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.preview_input_latex, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.preview_output_latex, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.preview_time_latex, font_family, font_size,
+                     font_style, font_weight)
+        self.hog_options_widget.style(
+            outer_box_style=None, inner_box_style=None,
+            outer_border_visible=False, inner_border_visible=False,
+            outer_margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        self.igo_options_widget.style(
+            outer_box_style=None, inner_box_style=None,
+            outer_border_visible=False, inner_border_visible=False,
+            outer_margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        self.lbp_options_widget.style(
+            outer_box_style=None, inner_box_style=None,
+            outer_border_visible=False, inner_border_visible=False,
+            outer_margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        self.daisy_options_widget.style(
+            outer_box_style=None, inner_box_style=None,
+            outer_border_visible=False, inner_border_visible=False,
+            outer_margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        self.no_options_widget.margin = '0.2cm'
+        _format_font(self.toggle_visible, font_family, font_size, font_style,
+                     font_weight)
