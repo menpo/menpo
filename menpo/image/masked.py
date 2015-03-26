@@ -992,12 +992,19 @@ class MaskedImage(Image):
                                       normalized_pixels.flatten())
 
     def constrain_mask_to_landmarks(self, group=None, label=None,
-                                    trilist=None, batch_size=None):
+                                    batch_size=None, point_in_pointcloud='pwa',
+                                    trilist=None):
         r"""
-        Restricts this image's mask to be equal to the convex hull around the
-        landmarks chosen. This is not a per-pixel convex hull, but is instead
-        estimated by a triangulation of the points that contain the convex
-        hull.
+        Restricts this mask to be equal to the convex hull around the chosen
+        landmarks.
+
+        The choice of whether a pixel is inside or outside of the pointcloud
+        is determined by the ``point_in_pointcloud`` parameter. By default
+        a Piecewise Affine transform is used to test for containment, which
+        is useful when building efficiently aligning images. For large images,
+        a faster and pixel-accurate method can be used ('convex_hull').
+        Alternatively, a callable can be provided to override the test. By
+        default, the provided implementations are only valid for 2D images.
 
         Parameters
         ----------
@@ -1007,20 +1014,29 @@ class MaskedImage(Image):
         label: `str`, optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
-        trilist: ``(t, 3)`` `ndarray`, optional
-            Triangle list to be used on the landmarked points in selecting
-            the mask region. If None defaults to performing Delaunay
-            triangulation on the points.
         batch_size : `int` or ``None``, optional
             This should only be considered for large images. Setting this value
             will cause constraining to become much slower. This size indicates
             how many points in the image should be checked at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
-            points are checked at once.
+            points are checked at once. By default, this is only used for
+            the 'pwa' point_in_pointcloud choice.
+        point_in_pointcloud : {'pwa', 'convex_hull'} or `callable`
+            The method used to check if pixels in the image fall inside the
+            pointcloud or not. Can be accurate to a Piecewise Affine transform,
+            a pixel accurate convex hull or any arbitrary callable.
+            If a callable is passed, it should take two parameters,
+            the :map:`PointCloud` to constrain with and the pixel locations
+            ((d, n_dims) ndarray) to test and should return a (d, 1) boolean
+            ndarray of whether the pixels were inside (True) or outside (False)
+            of the :map:`PointCloud`.
+        trilist: ``(t, 3)`` `ndarray`, optional
+            Deprecated. Please provide a Trimesh instead of relying on this
+            parameter.
         """
-        self.mask.constrain_to_pointcloud(self.landmarks[group][label],
-                                          trilist=trilist,
-                                          batch_size=batch_size)
+        self.mask.constrain_to_pointcloud(
+            self.landmarks[group][label], trilist=trilist,
+            batch_size=batch_size, point_in_pointcloud=point_in_pointcloud)
 
     def build_mask_around_landmarks(self, patch_size, group=None, label=None):
         r"""
