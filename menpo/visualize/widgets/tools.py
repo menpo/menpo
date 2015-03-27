@@ -792,7 +792,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         5) BoundedFloatText [`self.r_text`]: text area for the R value
         6) BoundedFloatText [`self.g_text`]: text area for the G value
         7) BoundedFloatText [`self.b_text`]: text area for the B value
-        8) Box [`self.rgb_box`]: box with (5), (6) and (7)
+        8) VBox [`self.rgb_values`]: box with (5), (6) and (7)
+        9) VBox [`self.rgb_box`]: box with (4) and (8)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -836,7 +837,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         colour_dict['white'] = 'w'
         colour_dict['custom'] = 'custom'
 
-        # Labels dropdown menu (it must be invisible if multiple == False)
+        # Labels box (it must be invisible if multiple == False)
         labels_dict = OrderedDict()
         if labels is None:
             labels = []
@@ -846,9 +847,9 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         else:
             for k, l in enumerate(labels):
                 labels_dict[l] = k
-        self.label_dropdown = ipywidgets.Dropdown(options=labels_dict, value=0)
-        self.apply_to_all_button = ipywidgets.Button(
-            description='Apply to all')
+        self.label_dropdown = ipywidgets.Dropdown(description='Label',
+                                                  options=labels_dict, value=0)
+        self.apply_to_all_button = ipywidgets.Button(description='Apply to all')
         self.labels_box = ipywidgets.VBox(
             children=[self.label_dropdown, self.apply_to_all_button],
             visible=multiple, align='end')
@@ -857,36 +858,33 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         default_colour, r_val, g_val, b_val = _decode_colour(colours_list[0])
 
         # Create colour widgets
+        self.colour_dropdown = ipywidgets.Dropdown(
+            options=colour_dict, value=default_colour, description=description)
         self.r_text = ipywidgets.BoundedFloatText(
             value=r_val, min=0.0, max=1.0, description='R', width='1.5cm')
         self.g_text = ipywidgets.BoundedFloatText(
             value=g_val, min=0.0, max=1.0, description='G', width='1.5cm')
         self.b_text = ipywidgets.BoundedFloatText(
             value=b_val, min=0.0, max=1.0, description='B', width='1.5cm')
-        self.colour_dropdown = ipywidgets.Dropdown(
-            options=colour_dict, value=default_colour, description='')
-        self.rgb_box = ipywidgets.Box(
+        self.rgb_values = ipywidgets.VBox(
             children=[self.r_text, self.g_text, self.b_text],
-            visible=default_colour == 'custom', padding=3)
-
-        # Set widget description
-        if multiple:
-            self.label_dropdown.description = description
-        else:
-            self.colour_dropdown.description = description
+            visible=default_colour == 'custom', padding=6)
+        self.rgb_box = ipywidgets.VBox(
+            children=[self.colour_dropdown, self.rgb_values], align='start')
 
         # Final widget
         super(ColourSelectionWidget, self).__init__(
-            children=[self.labels_box, self.colour_dropdown, self.rgb_box])
-        self.align = 'end'
+            children=[self.labels_box, self.rgb_box])
+        self.orientation = 'horizontal'
+        self.align = 'start'
 
         # Assign output
         self.selected_values = {'colour': colours_list, 'labels': labels}
 
         # Set functionality
-        def show_rgb_box(name, value):
-            self.rgb_box.visible = value == 'custom'
-        self.colour_dropdown.on_trait_change(show_rgb_box, 'value')
+        def show_rgb_values(name, value):
+            self.rgb_values.visible = value == 'custom'
+        self.colour_dropdown.on_trait_change(show_rgb_values, 'value')
 
         def apply_to_all_function(name):
             if self.colour_dropdown.value == 'custom':
@@ -942,7 +940,9 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight=''):
+              font_weight='', label_background_colour='',
+              colour_background_colour='', rgb_text_background_colour='',
+              apply_to_all_style=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -987,8 +987,20 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        rgb_width : `str`, optional
-            The width of the RGB texts.
+        label_background_colour : `str`, optional
+            The colour of the labels dropdown selection.
+        colour_background_colour : `str`, optional
+            The colour of the colour dropdown selection.
+        rgb_text_background_colour : `str`, optional
+            The colour of the R, G, B text boxes.
+        apply_to_all_style : `str`,
+            Style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``,
+                 ``'primary'``, ``''``}
+                or
+                ``None``
+
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
@@ -1005,6 +1017,12 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                      font_weight)
         _format_font(self.colour_dropdown, font_family, font_size, font_style,
                      font_weight)
+        self.label_dropdown.background_color = label_background_colour
+        self.colour_dropdown.background_color = colour_background_colour
+        self.apply_to_all_button.button_style = apply_to_all_style
+        self.r_text.background_color = rgb_text_background_colour
+        self.g_text.background_color = rgb_text_background_colour
+        self.b_text.background_color = rgb_text_background_colour
 
     def add_render_function(self, render_function):
         r"""
@@ -1116,14 +1134,6 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         elif (not _lists_are_the_same(sel_colours, colours_list) and
               not _lists_are_the_same(sel_labels, labels)):
             # both the colours and the labels are different
-            if len(sel_labels) > 1 and len(labels) == 1:
-                self.colour_dropdown.description = \
-                    self.label_dropdown.description
-                self.label_dropdown.description = ''
-            elif len(sel_labels) == 1 and len(labels) > 1:
-                self.label_dropdown.description = \
-                    self.colour_dropdown.description
-                self.colour_dropdown.description = ''
             self.labels_box.visible = len(labels) > 1
             self.selected_values['colour'] = colours_list
             self.selected_values['labels'] = labels
@@ -1177,7 +1187,7 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
            the options' visibility
         2) Checkbox [`self.interpolation_checkbox`]: interpolation checkbox
         3) FloatSlider [`self.alpha_slider`]: sets the alpha value
-        4) Box [`self.options_box`]: box that contains (2) and (3)
+        4) Select [`self.cmap_select`]: sets the cmap
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1194,30 +1204,57 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     """
-    def __init__(self, image_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Image Options'):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
+    def __init__(self, image_options, render_function=None):
+        # Create widgets
         self.interpolation_checkbox = ipywidgets.Checkbox(
             description='Pixelated',
             value=image_options['interpolation'] == 'none')
         self.alpha_slider = ipywidgets.FloatSlider(
             description='Alpha', value=image_options['alpha'],
-            min=0.0, max=1.0, step=0.05)
-        self.options_box = ipywidgets.Box(children=[self.interpolation_checkbox,
-                                                    self.alpha_slider],
-                                          visible=toggle_show_default)
-        super(ImageOptionsWidget, self).__init__(children=[self.toggle_visible,
-                                                           self.options_box])
+            min=0.0, max=1.0, step=0.05, width='4cm')
+        cmap_dict = OrderedDict()
+        cmap_dict['afmhot'] = 'afmhot'
+        cmap_dict['autumn'] = 'autumn'
+        cmap_dict['binary'] = 'binary'
+        cmap_dict['bone'] = 'bone'
+        cmap_dict['brg'] = 'brg'
+        cmap_dict['bwr'] = 'bwr'
+        cmap_dict['cool'] = 'cool'
+        cmap_dict['coolwarm'] = 'coolwarm'
+        cmap_dict['copper'] = 'copper'
+        cmap_dict['cubehelix']= 'cubehelix'
+        cmap_dict['flag'] = 'flag'
+        cmap_dict['gist_earth'] = 'gist_earth'
+        cmap_dict['gist_heat'] = 'gist_heat'
+        cmap_dict['gist_gray'] = 'gist_gray'
+        cmap_dict['gist_ncar'] = 'gist_ncar'
+        cmap_dict['gist_rainbow'] = 'gist_rainbow'
+        cmap_dict['gist_stern'] = 'gist_stern'
+        cmap_dict['gist_yarg'] = 'gist_yarg'
+        cmap_dict['gnuplot'] = 'gnuplot'
+        cmap_dict['gnuplot2'] = 'gnuplot2'
+        cmap_dict['gray'] = 'gray'
+        cmap_dict['hot'] = 'hot'
+        cmap_dict['hsv'] = 'hsv'
+        cmap_dict['jet'] = 'jet'
+        cmap_dict['nipy_spectral'] = 'nipy_spectral'
+        cmap_dict['ocean'] = 'ocean'
+        cmap_dict['pink'] = 'pink'
+        cmap_dict['prism'] = 'prism'
+        cmap_dict['rainbow'] = 'rainbow'
+        cmap_dict['seismic'] = 'seismic'
+        cmap_dict['spectral'] = 'spectral'
+        cmap_dict['spring'] = 'spring'
+        cmap_dict['summer'] = 'summer'
+        cmap_dict['terrain'] = 'terrain'
+        cmap_dict['winter'] = 'winter'
+        self.cmap_select = ipywidgets.Select(
+            options=cmap_dict, value='gray', description='Colourmap',
+            width='3cm', height='2cm')
+        super(ImageOptionsWidget, self).__init__(
+            children=[self.alpha_slider, self.interpolation_checkbox,
+                      self.cmap_select])
         self.align = 'start'
 
         # Assign output
@@ -1235,18 +1272,18 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
             self.selected_values['alpha'] = value
         self.alpha_slider.on_trait_change(save_alpha, 'value')
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
+        def save_cmap(name, value):
+            self.selected_values['cmap_name'] = value
+        self.cmap_select.on_trait_change(save_cmap, 'value')
 
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
     def style(self, box_style=None, border_visible=False, border_color='black',
-              border_style='solid', border_width=1, padding=0, margin=0,
-              font_family='', font_size=None, font_style='',
-              font_weight='', slider_width=''):
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight='', alpha_colour='', cmap_colour=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -1267,6 +1304,8 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
@@ -1291,19 +1330,22 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        slider_width : `str`, optional
-            The width of the slider.
+        alpha_colour : `str`, optional
+            The colour of the alpha slider.
+        cmap_colour : `str`, optional
+            The colour of the cmap selector.
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
-                    border_width, padding, margin)
-        self.alpha_slider.width = slider_width
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.alpha_slider, font_family, font_size, font_style,
                      font_weight)
         _format_font(self.interpolation_checkbox, font_family, font_size,
                      font_style, font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
+        _format_font(self.cmap_select, font_family, font_size, font_style,
                      font_weight)
+        self.cmap_select.background_color = cmap_colour
+        self.alpha_slider.slider_color = alpha_colour
 
     def add_render_function(self, render_function):
         r"""
@@ -1321,6 +1363,7 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
             self.interpolation_checkbox.on_trait_change(self._render_function,
                                                         'value')
             self.alpha_slider.on_trait_change(self._render_function, 'value')
+            self.cmap_select.on_trait_change(self._render_function, 'value')
 
     def remove_render_function(self):
         r"""
@@ -1331,6 +1374,8 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
                                                     'value', remove=True)
         self.alpha_slider.on_trait_change(self._render_function, 'value',
                                           remove=True)
+        self.cmap_select.on_trait_change(self._render_function, 'value',
+                                         remove=True)
         self._render_function = None
 
     def replace_render_function(self, render_function):
@@ -1379,6 +1424,10 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
         if 'interpolation' in image_options.keys():
             self.interpolation_checkbox.value = \
                 image_options['interpolation'] == 'none'
+
+        # update cmap selector
+        if 'cmap_name' in image_options.keys():
+            self.cmap_select.value = image_options['cmap_name']
 
         # re-assign render callback
         self.add_render_function(render_function)
