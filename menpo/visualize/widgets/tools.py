@@ -10,8 +10,36 @@ MENPO_LOGO = None
 MENPO_LOGO_SCALE = None
 
 
+def _map_styles_to_hex_colours(style):
+    r"""
+    Function that returns the corresponding hex colour of a given style.
+
+    Parameters
+    ----------
+    style : `str` or ``None`` (see below)
+        Style options ::
+
+            {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+            or
+            ``None``
+
+    Returns
+    -------
+    hex_colour : `str`
+        The corresponding hex colour.
+    """
+    if style == 'info':
+        return '#31708f'
+    elif style == 'danger':
+        return '#A52A2A'
+    elif style == 'success':
+        return '#228B22'
+    else:
+        return ''
+
+
 def _format_box(box, box_style, border_visible, border_color, border_style,
-                border_width, padding, margin):
+                border_width, border_radius, padding, margin):
     r"""
     Function that defines the style of an IPython box.
 
@@ -34,6 +62,8 @@ def _format_box(box, box_style, border_visible, border_color, border_style,
         The line style of the border around the widget.
     border_width : `float`
         The line width of the border around the widget.
+    border_radius : `float`
+        The radius of the corners of the box.
     padding : `float`
         The padding around the widget.
     margin : `float`
@@ -46,6 +76,7 @@ def _format_box(box, box_style, border_visible, border_color, border_style,
         box.border_color = border_color
         box.border_style = border_style
         box.border_width = border_width
+        box.border_radius = border_radius
     else:
         box.border_width = 0
 
@@ -121,8 +152,9 @@ class LogoWidget(ipywidgets.Box):
         self.image = ipywidgets.Image(value=_convert_image_to_bytes(MENPO_LOGO))
         super(LogoWidget, self).__init__(children=[self.image])
 
-    def style(self, box_style=None, border_visible=True, border_color='black',
-              border_style='solid', border_width=1, padding=0, margin=0):
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0):
         r"""
         Function that defines the styling of the widget.
 
@@ -143,13 +175,15 @@ class LogoWidget(ipywidgets.Box):
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
-                    border_width, padding, margin)
+                    border_width, border_radius, padding, margin)
 
 
 class IndexSliderWidget(ipywidgets.FlexBox):
@@ -202,10 +236,10 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=True, border_color='black',
-              border_style='solid', border_width=1, padding=0, margin=0,
-              font_family='', font_size=None, font_style='', font_weight='',
-              slider_width=''):
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight='', slider_width='6cm', slider_colour=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -226,6 +260,8 @@ class IndexSliderWidget(ipywidgets.FlexBox):
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
@@ -249,12 +285,18 @@ class IndexSliderWidget(ipywidgets.FlexBox):
                  ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
+
+        slider_width : `float`, optional
+            The width of the slider
+        slider_colour : `str`, optional
+            The colour of the slider's handler.
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
-                    border_width, padding, margin)
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style,
                      font_weight)
         self.slider.width = slider_width
+        self.slider.slider_color = slider_colour
 
     def add_render_function(self, render_function):
         r"""
@@ -424,9 +466,11 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
     def __init__(self, index, render_function=None, update_function=None,
                  description='Index: ', minus_description='-',
                  plus_description='+', loop_enabled=True, text_editable=True):
-        self.title = ipywidgets.Latex(value=description)
-        self.button_minus = ipywidgets.Button(description=minus_description)
-        self.button_plus = ipywidgets.Button(description=plus_description)
+        self.title = ipywidgets.Latex(value=description, padding=6)
+        self.button_minus = ipywidgets.Button(description=minus_description,
+                                              width='1cm')
+        self.button_plus = ipywidgets.Button(description=plus_description,
+                                             width='1cm')
         self.index_text = ipywidgets.IntText(
             value=index['index'], min=index['min'], max=index['max'],
             disabled=not text_editable)
@@ -437,7 +481,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         self.loop_enabled = loop_enabled
         self.text_editable = text_editable
 
-        # Align
+        # Style
         self.orientation = 'horizontal'
         self.align = 'center'
 
@@ -477,10 +521,11 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=True, border_color='black',
-              border_style='solid', border_width=1, padding=0, margin=0,
-              font_family='', font_size=None, font_style='', font_weight='',
-              buttons_width='1cm', text_width='4cm', title_padding=6):
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight='', minus_style='', plus_style='',
+              text_background_colour=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -501,6 +546,8 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
@@ -525,20 +572,27 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        buttons_width : `str`, optional
-            The width of the buttons.
-        text_width : `str`, optional
-            The width of the index text area.
-        title_padding : `float`, optional
-            The padding around the title (description) text.
+        minus_style : `str` or ``None`` (see below), optional
+            Style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``,
+                 ``'primary'``, ``''``}
+                or
+                ``None``
+
+        plus_style : `str` or ``None`` (see below), optional
+            Style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``,
+                 ``'primary'``, ``''``}
+                or
+                ``None``
+
+        text_background_colour : `str`, optional
+            The background colour of the index text.
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
-                    border_width, padding, margin)
-        # TODO: How to change the width of a *Text widget?
-        #self.index_text.width = text_width
-        self.button_minus.width = buttons_width
-        self.button_plus.width = buttons_width
-        self.title.padding = title_padding
+                    border_width, border_radius, padding, margin)
         _format_font(self.title, font_family, font_size, font_style,
                      font_weight)
         _format_font(self.button_minus, font_family, font_size, font_style,
@@ -547,6 +601,9 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
                      font_weight)
         _format_font(self.index_text, font_family, font_size, font_style,
                      font_weight)
+        self.button_minus.button_style = minus_style
+        self.button_plus.button_style = plus_style
+        self.index_text.background_color = text_background_colour
 
     def add_render_function(self, render_function):
         r"""
@@ -791,27 +848,26 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                 labels_dict[l] = k
         self.label_dropdown = ipywidgets.Dropdown(options=labels_dict, value=0)
         self.apply_to_all_button = ipywidgets.Button(
-            description='apply to all labels')
-        self.labels_box = ipywidgets.VBox(children=[self.label_dropdown,
-                                                    self.apply_to_all_button],
-                                          visible=multiple, align='end')
+            description='Apply to all')
+        self.labels_box = ipywidgets.VBox(
+            children=[self.label_dropdown, self.apply_to_all_button],
+            visible=multiple, align='end')
 
         # Decode colour values of the first label
         default_colour, r_val, g_val, b_val = _decode_colour(colours_list[0])
 
         # Create colour widgets
-        self.r_text = ipywidgets.BoundedFloatText(value=r_val, min=0.0, max=1.0,
-                                                  description='R')
-        self.g_text = ipywidgets.BoundedFloatText(value=g_val, min=0.0, max=1.0,
-                                                  description='G')
-        self.b_text = ipywidgets.BoundedFloatText(value=b_val, min=0.0, max=1.0,
-                                                  description='B')
-        self.colour_dropdown = ipywidgets.Dropdown(options=colour_dict,
-                                                   value=default_colour,
-                                                   description='')
-        self.rgb_box = ipywidgets.Box(children=[self.r_text, self.g_text,
-                                                self.b_text],
-                                      visible=default_colour == 'custom')
+        self.r_text = ipywidgets.BoundedFloatText(
+            value=r_val, min=0.0, max=1.0, description='R', width='1.5cm')
+        self.g_text = ipywidgets.BoundedFloatText(
+            value=g_val, min=0.0, max=1.0, description='G', width='1.5cm')
+        self.b_text = ipywidgets.BoundedFloatText(
+            value=b_val, min=0.0, max=1.0, description='B', width='1.5cm')
+        self.colour_dropdown = ipywidgets.Dropdown(
+            options=colour_dict, value=default_colour, description='')
+        self.rgb_box = ipywidgets.Box(
+            children=[self.r_text, self.g_text, self.b_text],
+            visible=default_colour == 'custom', padding=3)
 
         # Set widget description
         if multiple:
@@ -883,10 +939,10 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         self._apply_to_all_render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=True, border_color='black',
-              border_style='solid', border_width=1, padding=0, margin=0,
-              font_family='', font_size=None, font_style='',
-              font_weight='', rgb_width='1.5cm'):
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -935,11 +991,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             The width of the RGB texts.
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
-                    border_width, padding, margin)
-        # TODO: How to change the width of a *Text widget?
-        self.r_text.width = rgb_width
-        self.g_text.width = rgb_width
-        self.b_text.width = rgb_width
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.label_dropdown, font_family, font_size, font_style,
                      font_weight)
