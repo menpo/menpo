@@ -20,18 +20,24 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
         The target points to apply the tps to
     kernel : :class:`menpo.transform.rbf.RadialBasisFunction`, optional
         The kernel to apply.
+    min_singular_val : `float`, optional
+        If the target has points that are nearly coincident, the coefficients
+        matrix is rank deficient, and therefore not invertible. Therefore, we
+        only take the inverse on the full-rank matrix and drop any singular
+        values that are less than this value (close to zero).
 
     Raises
     ------
     ValueError
         TPS is only with on 2-dimensional data
     """
-    def __init__(self, source, target, kernel=None):
+    def __init__(self, source, target, kernel=None, min_singular_val=1e-4):
         Alignment.__init__(self, source, target)
         if self.n_dims != 2:
             raise ValueError('TPS can only be used on 2D data.')
         if kernel is None:
             kernel = R2LogR2RBF(source.points)
+        self.min_singular_val = min_singular_val
         self.kernel = kernel
         # k[i, j] is the rbf weighting between source i and j
         # (of course, k is thus symmetrical and it's diagonal nil)
@@ -49,7 +55,14 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
     def _build_coefficients(self):
         self.v = self.target.points.T.copy()
         self.y = np.hstack([self.v, np.zeros([2, 3])])
-        self.coefficients = np.linalg.solve(self.l, self.y.T)
+
+        # If two points are coincident, or very close to being so, then the
+        # matrix is rank deficient and thus not-invertible. Therefore,
+        # only take the inverse on the full-rank set of indices.
+        _u, _s, _v = np.linalg.svd(self.l)
+        keep = _s.shape[0] - sum(_s < self.min_singular_val)
+        inv_l = _u[:, :keep].dot(1.0 / _s[:keep, None] * _v[:keep, :])
+        self.coefficients = inv_l.dot(self.y.T)
 
     def _sync_state_from_target(self):
         # now the target is updated, we only have to rebuild the
