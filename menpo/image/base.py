@@ -9,7 +9,8 @@ from menpo.base import Vectorizable
 from menpo.shape import PointCloud
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
-                             AlignmentUniformScale, Affine, Rotation)
+                             AlignmentUniformScale, Affine, Rotation,
+                             UniformScale)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .extract_patches import extract_patches
@@ -1619,7 +1620,30 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # floating point inaccuracy.
         return self.rescale(scales, round='round', order=order)
 
-    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0):
+    def zoom(self, scale, cval=0.0):
+        r"""
+        Zoom this image about the centre point. ``scale`` values greater
+        than 1.0 denote zooming **in** to the image and values less than
+        1.0 denote zooming **out** of the image. The size of the image will not
+        change, if you wish to scale an image, please see :meth:`rescale`.
+
+        Parameters
+        ----------
+        scale : `float`
+            ``scale > 1.0`` denotes zooming in. Thus the image will appear
+            larger and areas at the edge of the zoom will be 'cropped' out.
+            ``scale < 1.0`` denotes zooming out. The image will be padded
+            by the value of ``cval``.
+        cval : ``float``, optional
+            The value to be set outside the rotated image boundaries.
+        """
+        centre = Translation(-self.centre)
+        t = (centre.compose_before(UniformScale(1.0 / scale, self.n_dims))
+                   .compose_before(centre.pseudoinverse()))
+
+        return self.warp_to_shape(self.shape, t, cval=cval)
+
+    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0.0):
         r"""
         Return a rotation of this image clockwise about its centre.
 
