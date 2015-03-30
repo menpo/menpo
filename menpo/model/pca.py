@@ -937,15 +937,14 @@ class PCAModel(MeanInstanceLinearModel):
     def __str__(self):
         str_out = 'PCA Model \n'                             \
                   ' - centred:              {}\n'            \
-                  ' - biased:               {}\n'            \
                   ' - # features:           {}\n'            \
                   ' - # active components:  {}\n'            \
                   ' - kept variance:        {:.2}  {:.1%}\n' \
                   ' - noise variance:       {:.2}  {:.1%}\n' \
                   ' - total # components:   {}\n'            \
                   ' - components shape:     {}\n'.format(
-            self.centred,  self.biased, self.n_features,
-            self.n_active_components, self.variance(), self.variance_ratio(),
-            self.noise_variance(), self.noise_variance_ratio(),
-            self.n_components, self.components.shape)
+            self.centred,  self.n_features, self.n_active_components,
+            self.variance(), self.variance_ratio(), self.noise_variance(),
+            self.noise_variance_ratio(), self.n_components,
+            self.components.shape)
         return str_out

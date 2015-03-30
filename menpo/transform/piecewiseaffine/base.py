@@ -280,6 +280,37 @@ class AbstractPWA(Alignment, Transform, Invertible):
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
 
+    def _apply_batched(self, x, batch_size, **kwargs):
+        # This is a rare case where we need to override the batched apply
+        # method. In this case, we override it because we want to the
+        # possibly raised TriangleContainmentError to contain ALL the points
+        # that were considered, and not just the first batch of points.
+        if batch_size is None:
+            return self._apply(x, **kwargs)
+        else:
+            outputs = []
+            points_outside_source_domain = []
+            n_points = x.shape[0]
+            exception_thrown = False
+            for lo_ind in range(0, n_points, batch_size):
+                try:
+                    hi_ind = lo_ind + batch_size
+                    outputs.append(self._apply(x[lo_ind:hi_ind], **kwargs))
+                except TriangleContainmentError as e:
+                    exception_thrown = True
+                    points_outside_source_domain.append(
+                        e.points_outside_source_domain)
+                else:
+                    # No exception was thrown, so all points were inside
+                    points_outside_source_domain.append(
+                        np.zeros(batch_size, dtype=np.bool))
+
+            if exception_thrown:
+                raise TriangleContainmentError(
+                    np.hstack(points_outside_source_domain))
+            else:
+                return np.vstack(outputs)
+
     def index_alpha_beta(self, points):
         """
         Finds for each input point the index of its bounding triangle and the
