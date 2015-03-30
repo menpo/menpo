@@ -33,7 +33,6 @@ xref_map = {
 'MultipleAlignment': ('class', 'menpo.transform.MultipleAlignment'),
 'PCAModel': ('class', 'menpo.model.pca.PCAModel'),
 'PointCloud': ('class', 'menpo.shape.PointCloud'),
-'PointGraph': ('class', 'menpo.shape.PointGraph'),
 'PointGraphViewer2d': ('class', 'menpo.visualize.PointGraphViewer2d'),
 'PointDirectedGraph': ('class', 'menpo.shape.PointDirectedGraph'),
 'pca': ('function', 'menpo.math.pca'),

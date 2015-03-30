@@ -178,7 +178,10 @@ class BooleanImage(Image):
             If ``copy=False`` cannot be honored.
         """
         mask = BooleanImage(vector.reshape(self.shape), copy=copy)
-        mask.landmarks = self.landmarks
+        if self.has_landmarks:
+            mask.landmarks = self.landmarks
+        if hasattr(self, 'path'):
+            mask.path = self.path
         return mask
 
     def invert_inplace(self):
@@ -267,8 +270,38 @@ class BooleanImage(Image):
             boundary=boundary, constrain_to_bounds=constrain_to_bounds)
 
     # noinspection PyMethodOverriding
+    def sample(self, points_to_sample, mode='constant', cval=False, **kwargs):
+        r"""
+        Sample this image at the given sub-pixel accurate points. The input
+        PointCloud should have the same number of dimensions as the image e.g.
+        a 2D PointCloud for a 2D multi-channel image. A numpy array will be
+        returned the has the values for every given point across each channel
+        of the image.
+
+        Parameters
+        ----------
+        points_to_sample : :map:`PointCloud`
+            Array of points to sample from the image. Should be
+            `(n_points, n_dims)`
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        sampled_pixels : (`n_points`, `n_channels`) `bool ndarray`
+            The interpolated values taken across every channel of the image.
+        """
+        # enforce the order as 0, as this is boolean data, then call super
+        return Image.sample(self, points_to_sample, order=0, mode=mode,
+                            cval=cval)
+
+    # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     mode='constant', cval=0.):
+                     mode='constant', cval=False, batch_size=None):
         r"""
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -294,20 +327,28 @@ class BooleanImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
         warped_image : :map:`BooleanImage`
             A copy of this image, warped.
         """
-        # enforce the order as 0, for this boolean data, then call super
+        # enforce the order as 0, as this is boolean data, then call super
         return Image.warp_to_mask(self, template_mask, transform,
                                   warp_landmarks=warp_landmarks,
-                                  order=0, mode=mode, cval=cval)
+                                  order=0, mode=mode, cval=cval,
+                                  batch_size=batch_size)
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      mode='constant', cval=0., order=None):
+                      mode='constant', cval=False, order=None, batch_size=None):
         """
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -334,6 +375,13 @@ class BooleanImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -344,7 +392,8 @@ class BooleanImage(Image):
         # note that we force the use of order=0 for BooleanImages.
         warped = Image.warp_to_shape(self, template_shape, transform,
                                      warp_landmarks=warp_landmarks,
-                                     order=0, mode=mode, cval=cval)
+                                     order=0, mode=mode, cval=cval,
+                                     batch_size=batch_size)
         # unfortunately we can't escape copying here, let BooleanImage
         # convert us to np.bool
         boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
@@ -370,7 +419,8 @@ class BooleanImage(Image):
             warped_img.pixels[:, warped_img.mask] = sampled_pixel_values
         return warped_img
 
-    def constrain_to_landmarks(self, group=None, label=None, trilist=None):
+    def constrain_to_landmarks(self, group=None, label=None, trilist=None,
+                               batch_size=None):
         r"""
         Restricts this mask to be equal to the convex hull around the
         landmarks chosen. This is not a per-pixel convex hull, but instead
@@ -388,11 +438,18 @@ class BooleanImage(Image):
             Triangle list to be used on the landmarked points in selecting
             the mask region. If ``None``, defaults to performing Delaunay
             triangulation on the points.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this value
+            will cause constraining to become much slower. This size indicates
+            how many points in the image should be checked at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are checked at once.
         """
         self.constrain_to_pointcloud(self.landmarks[group][label],
                                      trilist=trilist)
 
-    def constrain_to_pointcloud(self, pointcloud, trilist=None):
+    def constrain_to_pointcloud(self, pointcloud, trilist=None,
+                                batch_size=None):
         r"""
         Restricts this mask to be equal to the convex hull around a point cloud.
         This is not a per-pixel convex hull, but instead
@@ -406,6 +463,12 @@ class BooleanImage(Image):
             Triangle list to be used on the landmarked points in selecting
             the mask region. If None defaults to performing Delaunay
             triangulation on the points.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this value
+            will cause constraining to become much slower. This size indicates
+            how many points in the image should be checked at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are checked at once.
         """
         from menpo.transform.piecewiseaffine import PiecewiseAffine
         from menpo.transform.piecewiseaffine import TriangleContainmentError
@@ -418,7 +481,31 @@ class BooleanImage(Image):
             pointcloud = TriMesh(pointcloud.points, trilist)
 
         pwa = PiecewiseAffine(pointcloud, pointcloud)
+
+        bounds = pointcloud.bounds()
+        bounds = [b.astype(np.int) for b in bounds]
+        indices = self.indices()
+        # Only consider indices inside the bounding box of the PointCloud
+        # This loop is to ensure the code is multi-dimensional
+        for k in range(self.n_dims):
+            indices = indices[indices[:, k] >= bounds[0][k], :]
+            indices = indices[indices[:, k] <= bounds[1][k], :]
+        # Due to this, make sure the mask starts off as all False
+        self.pixels[:] = False
+        # slice(0, 1) because we know we only have 1 channel
+        # Slice all the channels, only inside the bounding box (for setting
+        # the new mask values).
+        all_channels = [slice(0, 1)]
+        slices = all_channels + [slice(bounds[0][k], bounds[1][k] + 1)
+                                 for k in range(self.n_dims)]
+        # Make sure that the decision of whether a point is inside or outside
+        # the PointCloud is exactly the same as how PWA calculates triangle
+        # containment. Then, we use the trick of setting the mask to all the
+        # point that were NOT outside the triangulation. Otherwise, all points
+        # were inside and we just set those as True.
         try:
-            pwa.apply(self.indices())
+            pwa.apply(indices, batch_size=batch_size)
+            self.pixels[slices].flat = True
         except TriangleContainmentError as e:
-            self.from_vector_inplace(~e.points_outside_source_domain)
+
+            self.pixels[slices].flat = ~e.points_outside_source_domain

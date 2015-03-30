@@ -314,7 +314,7 @@ def _parse_ljson_v1(lms_dict):
         if conn:
             # Offset relative connectivity according to the current index
             conn = offset + np.asarray(conn)
-            connectivity.append(conn)
+            connectivity += conn.tolist()
         for p in lms:
             all_points.append(p['point'])
         offset += len(lms)
@@ -324,7 +324,7 @@ def _parse_ljson_v1(lms_dict):
     if len(connectivity) == 0:
         pcloud = PointCloud(points)
     else:
-        pcloud = PointUndirectedGraph(points, np.vstack(connectivity))
+        pcloud = PointUndirectedGraph.init_from_edges(points, connectivity)
     labels_to_masks = OrderedDict()
     # go through each label and build the appropriate boolean array
     for label, l_slice in zip(labels, labels_slices):
@@ -344,7 +344,7 @@ def _parse_ljson_v2(lms_dict):
     if connectivity is None or len(connectivity) == 0:
         pcloud = PointCloud(points)
     else:
-        pcloud = PointUndirectedGraph(points, np.vstack(connectivity))
+        pcloud = PointUndirectedGraph.init_from_edges(points, connectivity)
 
     for label in lms_dict['labels']:
         mask = np.zeros(pcloud.n_points, dtype=np.bool)

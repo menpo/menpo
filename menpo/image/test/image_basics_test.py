@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing import assert_allclose
 from nose.tools import raises
 from pathlib import Path
 
@@ -11,25 +12,34 @@ def test_image_as_masked():
     img = Image(np.random.rand(3, 3, 1), copy=False)
     m_img = img.as_masked()
     assert(type(m_img) == MaskedImage)
-    assert(np.all(m_img.pixels == img.pixels))
+    assert_allclose(m_img.pixels, img.pixels)
 
 
 def test_image_has_nan_values():
-    img = Image(np.random.rand(3, 3, 1), copy=False)
+    img = Image(np.random.rand(1, 3, 3), copy=False)
     img.pixels[0, 0, 0] = np.nan
     assert img.has_nan_values()
 
 
 def test_image_no_nan_values():
-    img = Image(np.random.rand(3, 3, 1), copy=False)
+    img = Image(np.random.rand(1, 3, 3), copy=False)
     assert not img.has_nan_values()
 
 
 def test_masked_image_as_unmasked():
-    m_img = MaskedImage(np.random.rand(3, 3, 1), copy=False)
+    m_img = MaskedImage(np.random.rand(1, 3, 3), copy=False)
     img = m_img.as_unmasked()
     assert(type(img) == Image)
-    assert(np.all(m_img.pixels == img.pixels))
+    assert_allclose(m_img.pixels, img.pixels)
+
+
+def test_masked_image_as_unmasked_fill():
+    m_img = MaskedImage(np.random.rand(1, 3, 3), copy=False)
+    m_img.mask.pixels[0, 0, 0] = False
+    img = m_img.as_unmasked(fill=8)
+    assert(type(img) == Image)
+    assert_allclose(m_img.pixels[0, 1:, 1:], img.pixels[0, 1:, 1:])
+    assert_allclose(img.pixels[0, 0, 0], 8.0)
 
 
 @raises(NotImplementedError)

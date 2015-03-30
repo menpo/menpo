@@ -25,15 +25,19 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8),
                           browser_style='buttons'):
     r"""
     Widget that allows browsing through a `list` of :map:`PointCloud`,
-    :map:`PointGraph` or :map:`TriMesh` or subclasses.
+    :map:`PointUndirectedGraph`, :map:`PointDirectedGraph`, :map:`PointTree`,
+    :map:`TriMesh` or subclasses. All the above can be combined in the `list`.
 
     The widget has options tabs regarding the renderer (lines, markers, figure,
     axes) and saving the figure to file.
 
     Parameters
     ----------
-    pointclouds : `list` of :map:`PointCloud` or :map:`PointGraph` or :map:`TriMesh` or subclasses
-        The `list` of objects to be visualized.
+    pointclouds : `list`
+        The `list` of objects to be visualized. It can contain a combination of
+        :map:`PointCloud`, :map:`PointUndirectedGraph`,
+        :map:`PointDirectedGraph`, :map:`PointTree`, :map:`TriMesh` or
+        subclasses of those.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
     browser_style : {``buttons``, ``slider``}, optional
