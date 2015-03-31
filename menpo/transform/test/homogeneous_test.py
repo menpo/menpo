@@ -518,6 +518,17 @@ def test_homogeneous_apply():
     assert_allclose(p_applied, p_manual)
 
 
+def test_homogeneous_apply_batched():
+    e = np.eye(3) * 2
+    p = np.random.rand(10, 2)
+    e[2, 2] = 1
+    e[:2, -1] = [2, 3]
+    h = Homogeneous(e)
+    p_applied = h.apply(p, batch_size=2)
+    p_manual = p * 2 + np.array([2, 3])
+    assert_allclose(p_applied, p_manual)
+
+
 def test_homogeneous_as_vector():
     e = np.eye(3) * 2
     e[2, 2] = 1

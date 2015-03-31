@@ -1,7 +1,83 @@
+from functools import partial
 from warnings import warn
+import warnings
 import numpy as np
 
 from .base import Image
+from menpo.base import MenpoDeprecationWarning
+
+
+def pwa_point_in_pointcloud(pcloud, indices, batch_size=None):
+    """
+    Make sure that the decision of whether a point is inside or outside
+    the PointCloud is exactly the same as how PWA calculates triangle
+    containment. Then, we use the trick of setting the mask to all the
+    points that were NOT outside the triangulation. Otherwise, all points
+    were inside and we just return those as ``True``. In general, points
+    on the boundary are counted as inside the polygon.
+
+    Parameters
+    ----------
+    pcloud : :map:`PointCloud`
+        The pointcloud to use for the containment test.
+    indices : (d, n_dims) `ndarray`
+        The list of pixel indices to test.
+    batch_size : `int` or ``None``, optional
+        See constrain_to_pointcloud for more information about the batch_size
+        parameter.
+
+    Returns
+    -------
+    mask : (d,) `bool ndarray`
+        Whether each pixel index was in inside the convex hull of the
+        pointcloud or not.
+    """
+    from menpo.transform.piecewiseaffine import PiecewiseAffine
+    from menpo.transform.piecewiseaffine import TriangleContainmentError
+
+    try:
+        pwa = PiecewiseAffine(pcloud, pcloud)
+        pwa.apply(indices, batch_size=batch_size)
+        return np.ones(indices.shape[0], dtype=np.bool)
+    except TriangleContainmentError as e:
+        return ~e.points_outside_source_domain
+
+
+def convex_hull_point_in_pointcloud(pcloud, indices):
+    """
+    Uses the matplotlib ``contains_points`` method, which in turn uses:
+
+        "Crossings Multiply algorithm of InsideTest"
+        By Eric Haines, 3D/Eye Inc, erich@eye.com
+        http://erich.realtimerendering.com/ptinpoly/
+
+    This algorithm uses a per-pixel test and thus tends to produce smoother
+    edges. We also guarantee that all points inside PointCloud will be
+    included by calculating the **convex hull** of the pointcloud before
+    doing the point inside test.
+
+    Points on the boundary are counted as **outside** the polygon.
+
+    Parameters
+    ----------
+    pcloud : :map:`PointCloud`
+        The pointcloud to use for the containment test.
+    indices : (d, n_dims) `ndarray`
+        The list of pixel indices to test.
+
+    Returns
+    -------
+    mask : (d,) `bool ndarray`
+        Whether each pixel index was in inside the convex hull of the
+        pointcloud or not.
+    """
+    from scipy.spatial import ConvexHull
+    from matplotlib.path import Path
+
+    c_hull = ConvexHull(pcloud.points)
+    polygon = pcloud.points[c_hull.vertices, :]
+
+    return Path(polygon).contains_points(indices)
 
 
 class BooleanImage(Image):
@@ -178,7 +254,10 @@ class BooleanImage(Image):
             If ``copy=False`` cannot be honored.
         """
         mask = BooleanImage(vector.reshape(self.shape), copy=copy)
-        mask.landmarks = self.landmarks
+        if self.has_landmarks:
+            mask.landmarks = self.landmarks
+        if hasattr(self, 'path'):
+            mask.path = self.path
         return mask
 
     def invert_inplace(self):
@@ -267,8 +346,38 @@ class BooleanImage(Image):
             boundary=boundary, constrain_to_bounds=constrain_to_bounds)
 
     # noinspection PyMethodOverriding
+    def sample(self, points_to_sample, mode='constant', cval=False, **kwargs):
+        r"""
+        Sample this image at the given sub-pixel accurate points. The input
+        PointCloud should have the same number of dimensions as the image e.g.
+        a 2D PointCloud for a 2D multi-channel image. A numpy array will be
+        returned the has the values for every given point across each channel
+        of the image.
+
+        Parameters
+        ----------
+        points_to_sample : :map:`PointCloud`
+            Array of points to sample from the image. Should be
+            `(n_points, n_dims)`
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        sampled_pixels : (`n_points`, `n_channels`) `bool ndarray`
+            The interpolated values taken across every channel of the image.
+        """
+        # enforce the order as 0, as this is boolean data, then call super
+        return Image.sample(self, points_to_sample, order=0, mode=mode,
+                            cval=cval)
+
+    # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     mode='constant', cval=0.):
+                     mode='constant', cval=False, batch_size=None):
         r"""
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -294,20 +403,28 @@ class BooleanImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
         warped_image : :map:`BooleanImage`
             A copy of this image, warped.
         """
-        # enforce the order as 0, for this boolean data, then call super
+        # enforce the order as 0, as this is boolean data, then call super
         return Image.warp_to_mask(self, template_mask, transform,
                                   warp_landmarks=warp_landmarks,
-                                  order=0, mode=mode, cval=cval)
+                                  order=0, mode=mode, cval=cval,
+                                  batch_size=batch_size)
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      mode='constant', cval=0., order=None):
+                      mode='constant', cval=False, order=None, batch_size=None):
         """
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -334,6 +451,13 @@ class BooleanImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -344,7 +468,8 @@ class BooleanImage(Image):
         # note that we force the use of order=0 for BooleanImages.
         warped = Image.warp_to_shape(self, template_shape, transform,
                                      warp_landmarks=warp_landmarks,
-                                     order=0, mode=mode, cval=cval)
+                                     order=0, mode=mode, cval=cval,
+                                     batch_size=batch_size)
         # unfortunately we can't escape copying here, let BooleanImage
         # convert us to np.bool
         boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
@@ -370,7 +495,8 @@ class BooleanImage(Image):
             warped_img.pixels[:, warped_img.mask] = sampled_pixel_values
         return warped_img
 
-    def constrain_to_landmarks(self, group=None, label=None, trilist=None):
+    def constrain_to_landmarks(self, group=None, label=None, trilist=None,
+                               batch_size=None):
         r"""
         Restricts this mask to be equal to the convex hull around the
         landmarks chosen. This is not a per-pixel convex hull, but instead
@@ -388,37 +514,102 @@ class BooleanImage(Image):
             Triangle list to be used on the landmarked points in selecting
             the mask region. If ``None``, defaults to performing Delaunay
             triangulation on the points.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this value
+            will cause constraining to become much slower. This size indicates
+            how many points in the image should be checked at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are checked at once.
         """
         self.constrain_to_pointcloud(self.landmarks[group][label],
                                      trilist=trilist)
 
-    def constrain_to_pointcloud(self, pointcloud, trilist=None):
+    def constrain_to_pointcloud(self, pointcloud, batch_size=None,
+                                point_in_pointcloud='pwa', trilist=None,):
         r"""
-        Restricts this mask to be equal to the convex hull around a point cloud.
-        This is not a per-pixel convex hull, but instead
-        relies on a triangulated approximation.
+        Restricts this mask to be equal to the convex hull around a pointcloud.
+        The choice of whether a pixel is inside or outside of the pointcloud
+        is determined by the ``point_in_pointcloud`` parameter. By default
+        a Piecewise Affine transform is used to test for containment, which
+        is useful when building efficiently aligning images. For large images,
+        a faster and pixel-accurate method can be used ('convex_hull').
+        Alternatively, a callable can be provided to override the test. By
+        default, the provided implementations are only valid for 2D images.
 
         Parameters
         ----------
         pointcloud : :map:`PointCloud`
             The pointcloud of points that should be constrained to.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this value
+            will cause constraining to become much slower. This size indicates
+            how many points in the image should be checked at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are checked at once. By default, this is only used for
+            the 'pwa' point_in_pointcloud choice.
+        point_in_pointcloud : {'pwa', 'convex_hull'} or `callable`
+            The method used to check if pixels in the image fall inside the
+            pointcloud or not. Can be accurate to a Piecewise Affine transform,
+            a pixel accurate convex hull or any arbitrary callable.
+            If a callable is passed, it should take two parameters,
+            the :map:`PointCloud` to constrain with and the pixel locations
+            ((d, n_dims) ndarray) to test and should return a (d, 1) boolean
+            ndarray of whether the pixels were inside (True) or outside (False)
+            of the :map:`PointCloud`.
         trilist: ``(t, 3)`` `ndarray`, optional
-            Triangle list to be used on the landmarked points in selecting
-            the mask region. If None defaults to performing Delaunay
-            triangulation on the points.
-        """
-        from menpo.transform.piecewiseaffine import PiecewiseAffine
-        from menpo.transform.piecewiseaffine import TriangleContainmentError
+            Deprecated. Please provide a Trimesh instead of relying on this
+            parameter.
 
-        if self.n_dims != 2:
-            raise ValueError("can only constrain mask on 2D images.")
+        Raises
+        ------
+        ValueError
+            If the image is not 2D and a default implementation is chosen.
+        ValueError
+            If the chosen ``point_in_pointcloud`` is unknown.
+        """
+        if point_in_pointcloud in {'pwa', 'convex_hull'} and self.n_dims != 2:
+            raise ValueError('Can only constrain mask on 2D images with the '
+                             'default point_in_pointcloud implementations.'
+                             'Please provide a custom callable for calculating '
+                             'the new mask in this '
+                             '{}D image'.format(self.n_dims))
 
         if trilist is not None:
-            from menpo.shape import TriMesh
-            pointcloud = TriMesh(pointcloud.points, trilist)
+            warnings.warn('trilist parameter is deprecated and is being '
+                          'ignored. Please provide a Trimesh instead of '
+                          'relying on this parameter.', MenpoDeprecationWarning)
 
-        pwa = PiecewiseAffine(pointcloud, pointcloud)
-        try:
-            pwa.apply(self.indices())
-        except TriangleContainmentError as e:
-            self.from_vector_inplace(~e.points_outside_source_domain)
+        if point_in_pointcloud == 'pwa':
+            point_in_pointcloud = partial(pwa_point_in_pointcloud,
+                                          batch_size=batch_size)
+        elif point_in_pointcloud == 'convex_hull':
+            point_in_pointcloud = convex_hull_point_in_pointcloud
+        elif not hasattr(point_in_pointcloud, '__call__'):
+            # Not a function, or a string, so we have an error!
+            raise ValueError('point_in_pointcloud must be a callable that '
+                             'take two arguments: the Menpo PointCloud as a '
+                             'boundary and the ndarray of pixel indices '
+                             'to test. {} is an unknown option.'.format(
+                             point_in_pointcloud))
+
+        # Only consider indices inside the bounding box of the PointCloud
+        bounds = pointcloud.bounds()
+        # Convert to integer to try and reduce boundary fp rounding errors.
+        bounds = [b.astype(np.int) for b in bounds]
+        indices = self.indices()
+
+        # This loop is to ensure the code is multi-dimensional
+        for k in range(self.n_dims):
+            indices = indices[indices[:, k] >= bounds[0][k], :]
+            indices = indices[indices[:, k] <= bounds[1][k], :]
+        # Due to only testing bounding box indices, make sure the mask starts
+        # off as all False
+        self.pixels[:] = False
+
+        # slice(0, 1) because we know we only have 1 channel
+        # Slice all the channels, only inside the bounding box (for setting
+        # the new mask values).
+        all_channels = [slice(0, 1)]
+        slices = all_channels + [slice(bounds[0][k], bounds[1][k] + 1)
+                                 for k in range(self.n_dims)]
+        self.pixels[slices].flat = point_in_pointcloud(pointcloud, indices)
