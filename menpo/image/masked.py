@@ -9,6 +9,25 @@ from .base import Image
 from .boolean import BooleanImage
 
 
+class OutOfMaskSampleError(ValueError):
+    r"""
+    Exception that is thrown when an attempt is made to sample an MaskedImage
+    in an area that is masked out (where the mask is ``False``).
+
+    Parameters
+    ----------
+    sampled_mask : `bool ndarray`
+        The sampled mask, ``True`` where the image's mask was ``True`` and
+        ``False`` otherwise. Useful for masking out the sampling array.
+    sampled_values : `ndarray`
+        The sampled values, no attempt at masking is made.
+    """
+    def __init__(self, sampled_mask, sampled_values):
+        super(OutOfMaskSampleError, self).__init__()
+        self.sampled_mask = sampled_mask
+        self.sampled_values = sampled_values
+
+
 class MaskedImage(Image):
     r"""
     Represents an `n`-dimensional `k`-channel image, which has a mask.
@@ -101,18 +120,22 @@ class MaskedImage(Image):
             pixels = np.ones((n_channels,) + shape, dtype=dtype) * fill
         return cls(pixels, copy=False, mask=mask)
 
-    def as_unmasked(self, copy=True):
+    def as_unmasked(self, copy=True, fill=None):
         r"""
         Return a copy of this image without the masking behavior.
 
-        By default the mask is simply discarded. In the future more options
-        may be possible.
+        By default the mask is simply discarded. However, there is an optional
+        kwarg, ``fill``, that can be set which will fill the **non-masked**
+        areas with the given value.
 
         Parameters
         ----------
         copy : `bool`, optional
             If ``False``, the produced :map:`Image` will share pixels with
             ``self``. Only suggested to be used for performance.
+        fill : `float` or ``None``, optional
+            If ``None`` the mask is simply discarded. If a number, the
+             *unmasked* regions are filled with the given value.
 
         Returns
         -------
@@ -121,7 +144,13 @@ class MaskedImage(Image):
             no mask.
         """
         img = Image(self.pixels, copy=copy)
-        img.landmarks = self.landmarks
+        if fill is not None:
+            img.pixels[..., ~self.mask.mask] = fill
+
+        if self.has_landmarks:
+            img.landmarks = self.landmarks
+        if hasattr(self, 'path'):
+            img.path = self.path
         return img
 
     def n_true_pixels(self):
@@ -711,8 +740,57 @@ class MaskedImage(Image):
         self.crop_inplace(min_indices, max_indices,
                           constrain_to_boundary=constrain_to_boundary)
 
+    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
+        r"""
+        Sample this image at the given sub-pixel accurate points. The input
+        PointCloud should have the same number of dimensions as the image e.g.
+        a 2D PointCloud for a 2D multi-channel image. A numpy array will be
+        returned the has the values for every given point across each channel
+        of the image.
+
+        If the points to sample are *outside* of the mask (fall on a ``False``
+        value in the mask), an exception is raised. This exception contains
+        the information of which points were outside of the mask (``False``)
+        and *also* returns the sampled points.
+
+        Parameters
+        ----------
+        points_to_sample : :map:`PointCloud`
+            Array of points to sample from the image. Should be
+            `(n_points, n_dims)`
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range [0,5].
+            See warp_to_shape for more information.
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        sampled_pixels : (`n_points`, `n_channels`) `ndarray`
+            The interpolated values taken across every channel of the image.
+
+        Raises
+        ------
+        OutOfMaskSampleError
+            One of the points to sample was outside of the valid area of the
+            mask (``False`` in the mask). This exception contains both the
+            mask of valid sample points, **as well as** the sampled points
+            themselves, in case you want to ignore the error.
+        """
+        sampled_mask = self.mask.sample(points_to_sample, mode=mode, cval=cval)
+        sampled_values = Image.sample(self, points_to_sample, order=order,
+                                      mode=mode, cval=cval)
+        if not np.all(sampled_mask):
+            raise OutOfMaskSampleError(sampled_mask, sampled_values)
+        return sampled_values
+
+    # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0.):
+                     order=1, mode='constant', cval=0., batch_size=None):
         r"""
         Warps this image into a different reference space.
 
@@ -747,6 +825,13 @@ class MaskedImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -757,15 +842,15 @@ class MaskedImage(Image):
         # with a blank mask
         warped_image = Image.warp_to_mask(self, template_mask, transform,
                                           warp_landmarks=warp_landmarks,
-                                          order=order, mode=mode, cval=cval)
-        warped_mask = self.mask.warp_to_mask(template_mask, transform,
-                                             warp_landmarks=warp_landmarks,
-                                             mode=mode, cval=cval)
-        warped_image.mask = warped_mask
+                                          order=order, mode=mode, cval=cval,
+                                          batch_size=batch_size)
+        # Set the template mask as our mask
+        warped_image.mask = template_mask
         return warped_image
 
+    # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0.):
+                      order=1, mode='constant', cval=0., batch_size=None):
         """
         Return a copy of this :map:`MaskedImage` warped into a different
         reference space.
@@ -802,6 +887,13 @@ class MaskedImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -811,7 +903,8 @@ class MaskedImage(Image):
         # call the super variant and get ourselves an Image back
         warped_image = Image.warp_to_shape(self, template_shape, transform,
                                            warp_landmarks=warp_landmarks,
-                                           order=order, mode=mode, cval=cval)
+                                           order=order, mode=mode, cval=cval,
+                                           batch_size=batch_size)
         # warp the mask separately and reattach.
         mask = self.mask.warp_to_shape(template_shape, transform,
                                        warp_landmarks=warp_landmarks,
@@ -820,7 +913,10 @@ class MaskedImage(Image):
         # landmarks
         masked_warped_image = MaskedImage(warped_image.pixels, mask=mask,
                                           copy=False)
-        masked_warped_image.landmarks = warped_image.landmarks
+        if warped_image.has_landmarks:
+            masked_warped_image.landmarks = warped_image.landmarks
+        if hasattr(warped_image, 'path'):
+            masked_warped_image.path = warped_image.path
         return masked_warped_image
 
     def normalize_std_inplace(self, mode='all', limit_to_mask=True):
@@ -896,7 +992,7 @@ class MaskedImage(Image):
                                       normalized_pixels.flatten())
 
     def constrain_mask_to_landmarks(self, group=None, label=None,
-                                    trilist=None):
+                                    trilist=None, batch_size=None):
         r"""
         Restricts this image's mask to be equal to the convex hull around the
         landmarks chosen. This is not a per-pixel convex hull, but is instead
@@ -915,9 +1011,16 @@ class MaskedImage(Image):
             Triangle list to be used on the landmarked points in selecting
             the mask region. If None defaults to performing Delaunay
             triangulation on the points.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this value
+            will cause constraining to become much slower. This size indicates
+            how many points in the image should be checked at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are checked at once.
         """
         self.mask.constrain_to_pointcloud(self.landmarks[group][label],
-                                          trilist=trilist)
+                                          trilist=trilist,
+                                          batch_size=batch_size)
 
     def build_mask_around_landmarks(self, patch_size, group=None, label=None):
         r"""

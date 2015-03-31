@@ -18,6 +18,18 @@ def test_cached_pwa_same_as_python_pwa():
     assert_equal(python_pwa.apply(points), cached_pwa.apply(points))
 
 
+def test_cython_pwa_batch_same():
+    cached_pwa = CythonPWA(src, tgt)
+    assert_equal(cached_pwa.apply(points),
+                 cached_pwa.apply(points, batch_size=10))
+
+
+def test_python_pwa_batch_same():
+    cached_pwa = PythonPWA(src, tgt)
+    assert_equal(cached_pwa.apply(points),
+                 cached_pwa.apply(points, batch_size=10))
+
+
 def test_cython_pwa_same_as_python_pwa():
     python = PythonPWA(src, tgt)
     cython = CythonPWA(src, tgt)

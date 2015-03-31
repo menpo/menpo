@@ -6,6 +6,7 @@ import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
 from menpo.base import Vectorizable
+from menpo.shape import PointCloud
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
                              AlignmentUniformScale, Affine, Rotation)
@@ -36,7 +37,6 @@ class ImageBoundaryError(ValueError):
         The per-dimension maximum index that could be used if the crop was
         constrained to the image boundaries.
     """
-
     def __init__(self, requested_min, requested_max, snapped_min,
                  snapped_max):
         super(ImageBoundaryError, self).__init__()
@@ -1181,7 +1181,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     as_single_array=as_single_array)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0.):
+                     order=1, mode='constant', cval=0.0, batch_size=None):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -1220,6 +1220,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -1231,16 +1238,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 "Trying to warp a {}D image with a {}D transform "
                 "(they must match)".format(self.n_dims, transform.n_dims))
         template_points = template_mask.true_indices()
-        points_to_sample = transform.apply(template_points)
-        # we want to sample each channel in turn, returning a vector of
-        # sampled pixels. Store those in a (n_channels, n_pixels) array.
-        sampled_pixel_values = scipy_interpolation(
-            self.pixels, points_to_sample, order=order, mode=mode, cval=cval)
+        points_to_sample = transform.apply(template_points,
+                                           batch_size=batch_size)
+        sampled = self.sample(points_to_sample,
+                              order=order, mode=mode, cval=cval)
+
         # set any nan values to 0
-        sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
+        sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_image = self._build_warped_to_mask(template_mask,
-                                                  sampled_pixel_values)
+        warped_image = self._build_warped_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
@@ -1269,8 +1275,44 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image.from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
+    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
+        r"""
+        Sample this image at the given sub-pixel accurate points. The input
+        PointCloud should have the same number of dimensions as the image e.g.
+        a 2D PointCloud for a 2D multi-channel image. A numpy array will be
+        returned the has the values for every given point across each channel
+        of the image.
+
+        Parameters
+        ----------
+        points_to_sample : :map:`PointCloud`
+            Array of points to sample from the image. Should be
+            `(n_points, n_dims)`
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range [0,5].
+            See warp_to_shape for more information.
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        sampled_pixels : (`n_points`, `n_channels`) `ndarray`
+            The interpolated values taken across every channel of the image.
+        """
+        # The public interface is a PointCloud, but when this is used internally
+        # a numpy array is passed. So let's just treat the PointCloud as a
+        # 'special case' and not document the ndarray ability.
+        if isinstance(points_to_sample, PointCloud):
+            points_to_sample = points_to_sample.points
+        return scipy_interpolation(self.pixels, points_to_sample,
+                                   order=order,  mode=mode, cval=cval)
+
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0.):
+                      order=1, mode='constant', cval=0.0, batch_size=None):
         """
         Return a copy of this image warped into a different reference space.
 
@@ -1306,6 +1348,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -1321,11 +1370,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                            mode=mode, cval=cval)
         else:
             template_points = indices_for_image_of_shape(template_shape)
-            points_to_sample = transform.apply(template_points)
-            # we want to sample each channel in turn, returning a vector of
-            # sampled pixels. Store those in a (n_pixels, n_channels) array.
-            sampled = scipy_interpolation(self.pixels, points_to_sample,
-                                          order=order, mode=mode, cval=cval)
+            points_to_sample = transform.apply(template_points,
+                                               batch_size=batch_size)
+            sampled = self.sample(points_to_sample,
+                                  order=order, mode=mode, cval=cval)
+
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
