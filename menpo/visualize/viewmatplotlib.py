@@ -119,18 +119,13 @@ class MatplotlibRenderer(Renderer):
         _export(save_fig_args, filename, self._extensions_map, format,
                 overwrite=overwrite)
 
-    def save_figure_widget(self, popup=True):
+    def save_figure_widget(self):
         r"""
         Method for saving the figure of the current ``figure_id`` to file using
         :func:`menpo.visualize.widgets.base.save_matplotlib_figure` widget.
-
-        Parameters
-        ----------
-        popup : `bool`, optional
-            If ``True``, the widget will appear as a popup window.
         """
         from menpo.visualize.widgets import save_matplotlib_figure
-        save_matplotlib_figure(self, popup=popup)
+        save_matplotlib_figure(self)
 
 
 class MatplotlibSubplots(object):
@@ -201,18 +196,24 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         self.image = image
         self.axes_list = []
 
-    def render(self, interpolation='bilinear', alpha=1., render_axes=False,
-               axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+    def render(self, interpolation='bilinear', cmap_name=None, alpha=1.,
+               render_axes=False, axes_font_name='sans-serif',
+               axes_font_size=10, axes_font_style='normal',
+               axes_font_weight='normal', axes_x_limits=None,
+               axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
-        if len(self.image.shape) == 2:  # Single channels are viewed in Gray
-            plt.imshow(self.image, cmap=cm.Greys_r, interpolation=interpolation,
-                       alpha=alpha)
+        if cmap_name is not None:
+            cmap = cm.get_cmap(cmap_name)
+        elif len(self.image.shape) == 2:
+            # Single channels are viewed in Gray by default
+            cmap = cm.Greys_r
         else:
-            plt.imshow(self.image, interpolation=interpolation, alpha=alpha)
+            cmap = None
+
+        plt.imshow(self.image, cmap=cmap, interpolation=interpolation,
+                   alpha=alpha)
 
         # render axes options
         if render_axes:
@@ -255,10 +256,11 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
         self.plot_layout = self._subplot_layout(self.num_subplots)
         self.axes_list = []
 
-    def render(self, interpolation='bilinear', alpha=1., render_axes=False,
-               axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+    def render(self, interpolation='bilinear', cmap_name=None, alpha=1.,
+               render_axes=False, axes_font_name='sans-serif',
+               axes_font_size=10, axes_font_style='normal',
+               axes_font_weight='normal', axes_x_limits=None,
+               axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
@@ -288,8 +290,13 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
             if axes_y_limits is not None:
                 plt.ylim(axes_y_limits[::-1])
 
-            # show image
-            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r,
+            if cmap_name is not None:
+                cmap = cm.get_cmap(cmap_name)
+            else:
+                # Single channels are viewed in Gray by default
+                cmap = cm.Greys_r
+
+            plt.imshow(self.image[:, :, i], cmap=cmap,
                        interpolation=interpolation, alpha=alpha)
 
         # Set figure size
@@ -299,11 +306,11 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
 
 
 class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, points, adjacency_array):
+    def __init__(self, figure_id, new_figure, points, edges):
         super(MatplotlibPointGraphViewer2d, self).__init__(figure_id,
                                                            new_figure)
         self.points = points
-        self.adjacency_array = adjacency_array
+        self.edges = edges
 
     def render(self, image_view=False, render_lines=True, line_colour='r',
                line_style='-', line_width=1, render_markers=True,
@@ -324,10 +331,10 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
         # Check if graph has edges to be rendered (for example a PointCLoud
         # won't have any edges)
-        if render_lines and np.array(self.adjacency_array).shape[0] > 0:
+        if render_lines and np.array(self.edges).shape[0] > 0:
             # Get edges to be rendered
-            lines = zip(points[self.adjacency_array[:, 0], :],
-                        points[self.adjacency_array[:, 1], :])
+            lines = zip(points[self.edges[:, 0], :],
+                        points[self.edges[:, 1], :])
 
             # Draw line objects
             lc = mc.LineCollection(lines, colors=line_colour,
@@ -415,7 +422,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.pyplot as plt
         import matplotlib.lines as mlines
-        from menpo.shape import PointGraph
+        from menpo.shape import PointCloud, TriMesh
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
@@ -474,7 +481,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             # set legend entry
             if render_legend:
                 tmp_line = line_style
-                if not render_lines or not isinstance(pc, PointGraph):
+                if (not render_lines or isinstance(pc, PointCloud) or
+                        isinstance(pc, TriMesh)):
                     tmp_line = 'None'
                 tmp_marker = marker_style if render_markers else 'None'
                 legend_handles.append(

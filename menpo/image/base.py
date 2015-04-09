@@ -6,9 +6,11 @@ import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
 from menpo.base import Vectorizable
+from menpo.shape import PointCloud
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
-                             AlignmentUniformScale, Affine, Rotation)
+                             AlignmentUniformScale, Affine, Rotation,
+                             UniformScale)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .extract_patches import extract_patches
@@ -36,7 +38,6 @@ class ImageBoundaryError(ValueError):
         The per-dimension maximum index that could be used if the crop was
         constrained to the image boundaries.
     """
-
     def __init__(self, requested_min, requested_max, snapped_min,
                  snapped_max):
         super(ImageBoundaryError, self).__init__()
@@ -102,7 +103,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     same data-type (`float64`).
 
     Parameters
-    -----------
+    ----------
     image_data : ``(C, M, N ..., Q)`` `ndarray`
         Array representing the image pixels, with the first axis being
         channels.
@@ -502,10 +503,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return hist, bin_edges
 
     def _view_2d(self, figure_id=None, new_figure=False, channels=None,
-                 interpolation='bilinear', alpha=1., render_axes=False,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+                 interpolation='bilinear', cmap_name=None, alpha=1.,
+                 render_axes=False, axes_font_name='sans-serif',
+                 axes_font_size=10, axes_font_style='normal',
+                 axes_font_weight='normal', axes_x_limits=None,
+                 axes_y_limits=None, figure_size=(10, 8)):
         r"""
         View the image using the default image viewer. This method will appear 
         on the Image as ``view`` if the Image is 2D.
@@ -530,7 +532,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 {none, nearest, bilinear, bicubic, spline16, spline36,
                 hanning, hamming, hermite, kaiser, quadric, catrom, gaussian,
                 bessel, mitchell, sinc, lanczos}
-
+        cmap_name: `str`, optional,
+            If ``None``, single channel and three channel images default
+            to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_axes : `bool`, optional
@@ -566,22 +570,19 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            self.pixels, channels=channels).render(
-            interpolation=interpolation, alpha=alpha,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
             axes_y_limits=axes_y_limits, figure_size=figure_size)
 
-    def view_widget(self, popup=False, browser_style='buttons',
-                    figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8)):
         r"""
         Visualizes the image object using the :map:`visualize_images` widget.
         Currently only supports the rendering of 2D images.
 
         Parameters
         ----------
-        popup : `bool`, optional
-            If ``True``, the widget will appear as a popup window.
         browser_style : ``{buttons, slider}``, optional
             It defines whether the selector of the images will have the form of
             plus/minus buttons or a slider.
@@ -589,13 +590,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_images
-        visualize_images(self, figure_size=figure_size, popup=popup,
+        visualize_images(self, figure_size=figure_size,
                          browser_style=browser_style)
 
     def _view_landmarks_2d(self, channels=None, group=None,
                            with_labels=None, without_labels=None,
                            figure_id=None, new_figure=False,
-                           interpolation='bilinear', alpha=1.,
+                           interpolation='bilinear', cmap_name=None, alpha=1.,
                            render_lines=True, line_colour=None, line_style='-',
                            line_width=1, render_markers=True, marker_style='o',
                            marker_size=20, marker_face_colour=None,
@@ -654,6 +655,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 hamming, hermite, kaiser, quadric, catrom, gaussian, bessel,
                 mitchell, sinc, lanczos}
 
+        cmap_name: `str`, optional,
+            If ``None``, single channel and three channel images default
+            to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_lines : `bool`, optional
@@ -819,13 +823,14 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.visualize import view_image_landmarks
         return view_image_landmarks(
             self, channels, False, group, with_labels, without_labels,
-            figure_id, new_figure, interpolation, alpha, render_lines,
-            line_colour, line_style, line_width, render_markers, marker_style,
-            marker_size, marker_face_colour, marker_edge_colour,
-            marker_edge_width, render_numbering, numbers_horizontal_align,
-            numbers_vertical_align, numbers_font_name, numbers_font_size,
-            numbers_font_style, numbers_font_weight, numbers_font_colour,
-            render_legend, legend_title, legend_font_name, legend_font_style,
+            figure_id, new_figure, interpolation, cmap_name, alpha,
+            render_lines, line_colour, line_style, line_width,
+            render_markers, marker_style, marker_size, marker_face_colour,
+            marker_edge_colour, marker_edge_width, render_numbering,
+            numbers_horizontal_align, numbers_vertical_align,
+            numbers_font_name, numbers_font_size, numbers_font_style,
+            numbers_font_weight, numbers_font_colour, render_legend,
+            legend_title, legend_font_name, legend_font_style,
             legend_font_size, legend_font_weight, legend_marker_scale,
             legend_location, legend_bbox_to_anchor, legend_border_axes_pad,
             legend_n_columns, legend_horizontal_spacing,
@@ -1177,7 +1182,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     as_single_array=as_single_array)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0.):
+                     order=1, mode='constant', cval=0.0, batch_size=None):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -1216,6 +1221,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -1227,16 +1239,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 "Trying to warp a {}D image with a {}D transform "
                 "(they must match)".format(self.n_dims, transform.n_dims))
         template_points = template_mask.true_indices()
-        points_to_sample = transform.apply(template_points)
-        # we want to sample each channel in turn, returning a vector of
-        # sampled pixels. Store those in a (n_channels, n_pixels) array.
-        sampled_pixel_values = scipy_interpolation(
-            self.pixels, points_to_sample, order=order, mode=mode, cval=cval)
+        points_to_sample = transform.apply(template_points,
+                                           batch_size=batch_size)
+        sampled = self.sample(points_to_sample,
+                              order=order, mode=mode, cval=cval)
+
         # set any nan values to 0
-        sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
+        sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_image = self._build_warped_to_mask(template_mask,
-                                                  sampled_pixel_values)
+        warped_image = self._build_warped_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
@@ -1265,8 +1276,44 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image.from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
+    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
+        r"""
+        Sample this image at the given sub-pixel accurate points. The input
+        PointCloud should have the same number of dimensions as the image e.g.
+        a 2D PointCloud for a 2D multi-channel image. A numpy array will be
+        returned the has the values for every given point across each channel
+        of the image.
+
+        Parameters
+        ----------
+        points_to_sample : :map:`PointCloud`
+            Array of points to sample from the image. Should be
+            `(n_points, n_dims)`
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range [0,5].
+            See warp_to_shape for more information.
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        sampled_pixels : (`n_points`, `n_channels`) `ndarray`
+            The interpolated values taken across every channel of the image.
+        """
+        # The public interface is a PointCloud, but when this is used internally
+        # a numpy array is passed. So let's just treat the PointCloud as a
+        # 'special case' and not document the ndarray ability.
+        if isinstance(points_to_sample, PointCloud):
+            points_to_sample = points_to_sample.points
+        return scipy_interpolation(self.pixels, points_to_sample,
+                                   order=order,  mode=mode, cval=cval)
+
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0.):
+                      order=1, mode='constant', cval=0.0, batch_size=None):
         """
         Return a copy of this image warped into a different reference space.
 
@@ -1302,6 +1349,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -1317,11 +1371,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                            mode=mode, cval=cval)
         else:
             template_points = indices_for_image_of_shape(template_shape)
-            points_to_sample = transform.apply(template_points)
-            # we want to sample each channel in turn, returning a vector of
-            # sampled pixels. Store those in a (n_pixels, n_channels) array.
-            sampled = scipy_interpolation(self.pixels, points_to_sample,
-                                          order=order, mode=mode, cval=cval)
+            points_to_sample = transform.apply(template_points,
+                                               batch_size=batch_size)
+            sampled = self.sample(points_to_sample,
+                                  order=order, mode=mode, cval=cval)
+
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
@@ -1566,7 +1620,30 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # floating point inaccuracy.
         return self.rescale(scales, round='round', order=order)
 
-    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0):
+    def zoom(self, scale, cval=0.0):
+        r"""
+        Zoom this image about the centre point. ``scale`` values greater
+        than 1.0 denote zooming **in** to the image and values less than
+        1.0 denote zooming **out** of the image. The size of the image will not
+        change, if you wish to scale an image, please see :meth:`rescale`.
+
+        Parameters
+        ----------
+        scale : `float`
+            ``scale > 1.0`` denotes zooming in. Thus the image will appear
+            larger and areas at the edge of the zoom will be 'cropped' out.
+            ``scale < 1.0`` denotes zooming out. The image will be padded
+            by the value of ``cval``.
+        cval : ``float``, optional
+            The value to be set outside the rotated image boundaries.
+        """
+        centre = Translation(-self.centre)
+        t = (centre.compose_before(UniformScale(1.0 / scale, self.n_dims))
+                   .compose_before(centre.pseudoinverse()))
+
+        return self.warp_to_shape(self.shape, t, cval=cval)
+
+    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0.0):
         r"""
         Return a rotation of this image clockwise about its centre.
 

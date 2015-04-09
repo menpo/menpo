@@ -29,6 +29,6 @@ to expect:
 - :map:`MaskedImage` - As :map:`Image`, but with a boolean mask
 - :map:`BooleanImage` - As boolean image that is used for masking images.
 - :map:`PointCloud` - n-dimensional ordered point collection
-- :map:`PointUndirectedGraph` - n-dimensional ordered point collection with directed connectivity
-- :map:`PointDirectedGraph` - n-dimensional ordered point collection with undirected connectivity
+- :map:`PointUndirectedGraph` - n-dimensional ordered point collection with undirected connectivity
+- :map:`PointDirectedGraph` - n-dimensional ordered point collection with directed connectivity
 - :map:`TriMesh` - As :map:`PointCloud`, but with a triangulation

@@ -787,16 +787,11 @@ def no_op(pixels):
     return pixels.copy()
 
 
-def features_selection_widget(popup=True):
+def features_selection_widget():
     r"""
     Widget that allows for easy selection of a features function and its
     options. It also has a 'preview' tab for visual inspection. It returns a
     `list` of length 1 with the selected features function closure.
-
-    Parameters
-    ----------
-    popup : `bool`, optional
-        If ``True``, the widget will appear as a popup window.
 
     Returns
     -------
@@ -821,4 +816,4 @@ def features_selection_widget(popup=True):
     """
     from menpo.visualize.widgets import features_selection
 
-    return features_selection(popup=popup)
+    return features_selection()

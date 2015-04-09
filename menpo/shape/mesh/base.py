@@ -21,8 +21,8 @@ def trilist_to_adjacency_array(trilist):
 
 class TriMesh(PointCloud):
     r"""
-    A pointcloud with a connectivity defined by a triangle list. These are
-    designed to be explicitly 2D or 3D.
+    A :map:`PointCloud` with a connectivity defined by a triangle list. These
+    are designed to be explicitly 2D or 3D.
 
     Parameters
     ----------
@@ -127,7 +127,7 @@ class TriMesh(PointCloud):
         new_mask[isolated_indices] = False
         return new_mask
 
-    def as_pointgraph(self, copy=True):
+    def as_pointgraph(self, copy=True, skip_checks=False):
         """
         Converts the TriMesh to a :map:`PointUndirectedGraph`.
 
@@ -135,6 +135,8 @@ class TriMesh(PointCloud):
         ----------
         copy : `bool`, optional
             If ``True``, the graph will be a copy.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
 
         Returns
         -------
@@ -142,10 +144,13 @@ class TriMesh(PointCloud):
             The point graph.
         """
         from .. import PointUndirectedGraph
+        from ..graph import _convert_edges_to_symmetric_adjacency_matrix
         # Since we have triangles we need the last connection
         # that 'completes' the triangle
-        adjacency_array = trilist_to_adjacency_array(self.trilist)
-        pg = PointUndirectedGraph(self.points, adjacency_array, copy=copy)
+        adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
+            trilist_to_adjacency_array(self.trilist), self.points.shape[0])
+        pg = PointUndirectedGraph(self.points, adjacency_matrix, copy=copy,
+                                  skip_checks=skip_checks)
         # This is always a copy
         pg.landmarks = self.landmarks
         return pg
@@ -325,16 +330,13 @@ class TriMesh(PointCloud):
             from menpo.visualize import Menpo3dErrorMessage
             raise ImportError(Menpo3dErrorMessage)
 
-    def view_widget(self, popup=False, browser_style='buttons',
-                    figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8)):
         r"""
         Visualization of the TriMesh using the :map:`visualize_pointclouds`
         widget.
 
         Parameters
         ----------
-        popup : `bool`, optional
-            If ``True``, the widget will be rendered in a popup window.
         browser_style : ``{buttons, slider}``, optional
             It defines whether the selector of the TriMesh objects will have
             the form of plus/minus buttons or a slider.
@@ -342,5 +344,5 @@ class TriMesh(PointCloud):
             The initial size of the rendered figure.
         """
         from menpo.visualize import visualize_pointclouds
-        visualize_pointclouds(self, popup=popup, figure_size=figure_size,
+        visualize_pointclouds(self, figure_size=figure_size,
                               browser_style=browser_style)
