@@ -14,8 +14,8 @@ def _map_styles_to_hex_colours(style):
     r"""
     Function that returns the corresponding hex colour of a given style.
 
-    Parameters
-    ----------
+    Parameter
+    ---------
     style : `str` or ``None`` (see below)
         Style options ::
 
@@ -744,11 +744,11 @@ def _decode_colour(colour):
         Returns either the original `colour` of ``'custom'`` if the original
         `colour` was a `list`.
     r_val : `float`
-        The R channel. ``0.`` if `colour` is an `str`.
+        The Red channel. ``0.`` if `colour` is an `str`.
     g_val : `float`
-        The G channel. ``0.`` if `colour` is an `str`.
+        The Green channel. ``0.`` if `colour` is an `str`.
     b_val : `float`
-        The B channel. ``0.`` if `colour` is an `str`.
+        The Blue channel. ``0.`` if `colour` is an `str`.
     """
     r_val = g_val = b_val = 0.
     if not isinstance(colour, str):
@@ -824,6 +824,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         # Check if multiple mode should be enabled
         n_labels = len(colours_list)
         multiple = n_labels > 1
+        self.description = description
 
         # Colours dictionary
         colour_dict = OrderedDict()
@@ -847,7 +848,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         else:
             for k, l in enumerate(labels):
                 labels_dict[l] = k
-        self.label_dropdown = ipywidgets.Dropdown(description='Label',
+        self.label_dropdown = ipywidgets.Dropdown(description=description,
                                                   options=labels_dict, value=0)
         self.apply_to_all_button = ipywidgets.Button(description='Apply to all')
         self.labels_box = ipywidgets.VBox(
@@ -859,7 +860,9 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
         # Create colour widgets
         self.colour_dropdown = ipywidgets.Dropdown(
-            options=colour_dict, value=default_colour, description=description)
+            options=colour_dict, value=default_colour, description='')
+        if not multiple:
+            self.colour_dropdown.description = description
         self.r_text = ipywidgets.BoundedFloatText(
             value=r_val, min=0.0, max=1.0, description='R', width='1.5cm')
         self.g_text = ipywidgets.BoundedFloatText(
@@ -1135,6 +1138,10 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
               not _lists_are_the_same(sel_labels, labels)):
             # both the colours and the labels are different
             self.labels_box.visible = len(labels) > 1
+            if len(labels) > 1:
+                self.colour_dropdown.description = ''
+            else:
+                self.colour_dropdown.description = self.description
             self.selected_values['colour'] = colours_list
             self.selected_values['labels'] = labels
             labels_dict = OrderedDict()
@@ -1183,11 +1190,9 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
     Creates a widget for selecting image rendering options. Specifically, it
     consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
-           the options' visibility
-        2) Checkbox [`self.interpolation_checkbox`]: interpolation checkbox
-        3) FloatSlider [`self.alpha_slider`]: sets the alpha value
-        4) Select [`self.cmap_select`]: sets the cmap
+        1) Checkbox [`self.interpolation_checkbox`]: interpolation checkbox
+        2) FloatSlider [`self.alpha_slider`]: sets the alpha value
+        3) Select [`self.cmap_select`]: sets the cmap
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1442,14 +1447,11 @@ class LineOptionsWidget(ipywidgets.FlexBox):
     Creates a widget for selecting line rendering options. Specifically, it
     consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
-           the options' visibility
-        2) Checkbox [`self.render_lines_checkbox`]: whether to render lines
-        3) BoundedFloatText [`self.line_width_text`]: sets the line width
-        4) Dropdown [`self.line_style_dropdown`]: sets the line style
-        5) ColourSelectionWidget [`self.line_colour_widget`]: sets line colour
-        6) Box [`self.line_options_box`]: box that contains (3), (4) and (5)
-        7) Box [`self.options_box`]: box that contains (2) and (6)
+        1) Checkbox [`self.render_lines_checkbox`]: whether to render lines
+        2) BoundedFloatText [`self.line_width_text`]: sets the line width
+        3) Dropdown [`self.line_style_dropdown`]: sets the line style
+        4) ColourSelectionWidget [`self.line_colour_widget`]: sets line colour
+        5) Box [`self.options_box`]: box that contains (2), (3) and (4)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1467,12 +1469,6 @@ class LineOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     render_checkbox_title : `str`, optional
         The description of the show line checkbox.
     labels : `list` or ``None``, optional
@@ -1482,12 +1478,7 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         only for the colour option and not the rest of the options.
     """
     def __init__(self, line_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Line Options',
                  render_checkbox_title='Render lines', labels=None):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
         self.render_lines_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
             value=line_options['render_lines'])
@@ -1505,16 +1496,12 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         self.line_colour_widget = ColourSelectionWidget(
             line_options['line_colour'], description='Colour', labels=labels,
             render_function=render_function)
-        self.line_options_box = ipywidgets.Box(
+        self.options_box = ipywidgets.Box(
             children=[self.line_style_dropdown, self.line_width_text,
                       self.line_colour_widget])
-        self.options_box = ipywidgets.VBox(children=[self.render_lines_checkbox,
-                                                     self.line_options_box],
-                                           visible=toggle_show_default,
-                                           align='end')
-        super(LineOptionsWidget, self).__init__(children=[self.toggle_visible,
-                                                          self.options_box])
-        self.align = 'start'
+        super(LineOptionsWidget, self).__init__(
+            children=[self.render_lines_checkbox, self.options_box])
+        self.align = 'end'
 
         # Assign output
         self.selected_values = line_options
@@ -1543,65 +1530,40 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         self.selected_values['line_colour'] = \
             self.line_colour_widget.selected_values['colour']
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=True,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -1622,15 +1584,9 @@ class LineOptionsWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        slider_width : `str`, optional
-            The width of the slider.
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.render_lines_checkbox, font_family, font_size,
                      font_style, font_weight)
@@ -1638,13 +1594,11 @@ class LineOptionsWidget(ipywidgets.FlexBox):
                      font_style, font_weight)
         _format_font(self.line_width_text, font_family, font_size, font_style,
                      font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
-                     font_weight)
-        self.line_colour_widget.style(box_style=None, border_visible=False,
-                                      font_family=font_family,
-                                      font_size=font_size,
-                                      font_weight=font_weight,
-                                      font_style=font_style, rgb_width='1.5cm')
+        self.line_colour_widget.style(
+            box_style=None, border_visible=False, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style,
+            label_background_colour='', colour_background_colour='',
+            rgb_text_background_colour='', apply_to_all_style='')
 
     def add_render_function(self, render_function):
         r"""
@@ -1697,8 +1651,7 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, line_options, labels=None,
-                         allow_callback=True):
+    def set_widget_state(self, line_options, labels=None, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
@@ -1757,20 +1710,16 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
     Creates a widget for selecting marker rendering options. Specifically, it
     consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
-           the options' visibility
-        2) Checkbox [`self.render_markers_checkbox`]: whether to render markers
-        3) BoundedIntText [`self.marker_size_text`]: sets the marker size
-        4) BoundedFloatText [`self.marker_edge_width_text`]: sets the marker
+        1) Checkbox [`self.render_markers_checkbox`]: whether to render markers
+        2) BoundedIntText [`self.marker_size_text`]: sets the marker size
+        3) BoundedFloatText [`self.marker_edge_width_text`]: sets the marker
            edge width
-        5) Dropdown [`self.marker_style_dropdown`]: sets the marker style
-        6) ColourSelectionWidget [`self.marker_edge_colour_widget`]: sets the
+        4) Dropdown [`self.marker_style_dropdown`]: sets the marker style
+        5) ColourSelectionWidget [`self.marker_edge_colour_widget`]: sets the
            marker edge colour
-        7) ColourSelectionWidget [`self.marker_face_colour_widget`]: sets the
+        6) ColourSelectionWidget [`self.marker_face_colour_widget`]: sets the
            marker face colour
-        8) Box [`self.marker_options_box`]: box that contains (3), (4), (5),
-           (6) and (7)
-        9) Box [`self.options_box`]: box that contains (2) and (8)
+        7) Box [`self.options_box`]: box that contains (2), (3), (4), (5), (6)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1792,12 +1741,6 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     render_checkbox_title : `str`, optional
         The description of the render marker checkbox.
     labels : `list` or ``None``, optional
@@ -1807,18 +1750,13 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         only for the colour option and not the rest of the options.
     """
     def __init__(self, marker_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Marker Options',
                  render_checkbox_title='Render markers', labels=None):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
         self.render_markers_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
             value=marker_options['render_markers'])
         self.marker_size_text = ipywidgets.BoundedIntText(
-            description='Size', value=marker_options['marker_size'],
-            min=0, max=10**6)
+            description='Size', value=marker_options['marker_size'], min=0,
+            max=10**6)
         self.marker_edge_width_text = ipywidgets.BoundedFloatText(
             description='Edge width', min=0., max=10**6,
             value=marker_options['marker_edge_width'])
@@ -1848,22 +1786,19 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
             options=marker_style_dict, value=marker_options['marker_style'],
             description='Style')
         self.marker_face_colour_widget = ColourSelectionWidget(
-            marker_options['marker_face_colour'], description='Face Colour',
+            marker_options['marker_face_colour'], description='Face colour',
             labels=labels, render_function=render_function)
         self.marker_edge_colour_widget = ColourSelectionWidget(
-            marker_options['marker_edge_colour'], description='Edge Colour',
+            marker_options['marker_edge_colour'], description='Edge colour',
             labels=labels, render_function=render_function)
-        self.marker_options_box = ipywidgets.Box(
+        self.options_box = ipywidgets.VBox(
             children=[self.marker_style_dropdown, self.marker_size_text,
                       self.marker_edge_width_text,
                       self.marker_face_colour_widget,
                       self.marker_edge_colour_widget])
-        self.options_box = ipywidgets.VBox(
-            children=[self.render_markers_checkbox, self.marker_options_box],
-            visible=toggle_show_default, align='end')
-        super(MarkerOptionsWidget, self).__init__(children=[self.toggle_visible,
-                                                            self.options_box])
-        self.align = 'start'
+        super(MarkerOptionsWidget, self).__init__(
+            children=[self.render_markers_checkbox, self.options_box])
+        self.align = 'end'
 
         # Assign output
         self.selected_values = marker_options
@@ -1902,65 +1837,40 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         self.selected_values['marker_face_colour'] = \
             self.marker_face_colour_widget.selected_values['colour']
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=True,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -1981,15 +1891,9 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        slider_width : `str`, optional
-            The width of the slider.
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.render_markers_checkbox, font_family, font_size,
                      font_style, font_weight)
@@ -1999,16 +1903,16 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
                      font_weight)
         _format_font(self.marker_edge_width_text, font_family, font_size,
                      font_style, font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
-                     font_weight)
         self.marker_edge_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            rgb_width='1.5cm')
+            label_background_colour='', colour_background_colour='',
+            rgb_text_background_colour='', apply_to_all_style='')
         self.marker_face_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            rgb_width='1.5cm')
+            label_background_colour='', colour_background_colour='',
+            rgb_text_background_colour='', apply_to_all_style='')
 
     def add_render_function(self, render_function):
         r"""
@@ -2142,23 +2046,20 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
     Creates a widget for selecting numbering rendering options. Specifically, it
     consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
-           the options' visibility
-        2) Checkbox [`self.render_numbering_checkbox`]: whether to render
+        1) Checkbox [`self.render_numbering_checkbox`]: whether to render
            numbers
-        3) Dropdown [`self.numbers_font_name_dropdown`]: the font family
-        4) BoundedIntText [`self.numbers_font_size_text`]: the font size
-        5) Dropdown [`self.numbers_font_style_dropdown`]: the font style
-        6) Dropdown [`self.numbers_font_weight_dropdown`]: the font weight
-        7) ColourSelectionWidget [`self.numbers_font_colour_widget`]: sets the
+        2) Dropdown [`self.numbers_font_name_dropdown`]: the font family
+        3) BoundedIntText [`self.numbers_font_size_text`]: the font size
+        4) Dropdown [`self.numbers_font_style_dropdown`]: the font style
+        5) Dropdown [`self.numbers_font_weight_dropdown`]: the font weight
+        6) ColourSelectionWidget [`self.numbers_font_colour_widget`]: sets the
            font colour
-        8) Dropdown [`self.numbers_horizontal_align_dropdown`]: the horizontal
+        7) Dropdown [`self.numbers_horizontal_align_dropdown`]: the horizontal
            alignment
-        9) Dropdown [`self.numbers_vertical_align_dropdown`]: the vertical
+        8) Dropdown [`self.numbers_vertical_align_dropdown`]: the vertical
             alignment
-        10) Box [`self.numbers_options_box`]: box that contains (3), (4), (5),
-            (6), (7), (8) and (9)
-        11) Box [`self.options_box`]: box that contains (2) and (10)
+        9) Box [`self.options_box`]: box that contains (2), (3), (4), (5), (6),
+           (7) and (8)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -2182,12 +2083,6 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     render_checkbox_title : `str`, optional
         The description of the render numbering checkbox.
     labels : `list` or ``None``, optional
@@ -2197,12 +2092,7 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         only for the colour option and not the rest of the options.
     """
     def __init__(self, numbers_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Numbering Options',
                  render_checkbox_title='Render numbering'):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
         self.render_numbering_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
             value=numbers_options['render_numbering'])
@@ -2263,7 +2153,7 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
             options=numbers_vertical_align_dict,
             value=numbers_options['numbers_vertical_align'],
             description='Align ver.')
-        self.numbers_options_box = ipywidgets.Box(
+        self.options_box = ipywidgets.Box(
             children=[self.numbers_font_name_dropdown,
                       self.numbers_font_size_text,
                       self.numbers_font_style_dropdown,
@@ -2271,12 +2161,9 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
                       self.numbers_font_colour_widget,
                       self.numbers_horizontal_align_dropdown,
                       self.numbers_vertical_align_dropdown])
-        self.options_box = ipywidgets.VBox(
-            children=[self.render_numbering_checkbox, self.numbers_options_box],
-            visible=toggle_show_default, align='end')
         super(NumberingOptionsWidget, self).__init__(
-            children=[self.toggle_visible, self.options_box])
-        self.align = 'start'
+            children=[self.render_numbering_checkbox, self.options_box])
+        self.align = 'end'
 
         # Assign output
         self.selected_values = numbers_options
@@ -2332,65 +2219,40 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         self.selected_values['numbers_font_colour'] = \
             self.numbers_font_colour_widget.selected_values['colour']
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=True,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -2412,12 +2274,8 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.render_numbering_checkbox, font_family, font_size,
                      font_style, font_weight)
@@ -2433,12 +2291,11 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
                      font_size, font_style, font_weight)
         _format_font(self.numbers_vertical_align_dropdown, font_family,
                      font_size, font_style, font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
-                     font_weight)
         self.numbers_font_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            rgb_width='1.5cm')
+            label_background_colour='', colour_background_colour='',
+            rgb_text_background_colour='', apply_to_all_style='')
 
     def add_render_function(self, render_function):
         r"""
@@ -2590,26 +2447,24 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
     Creates a widget for selecting figure related options. Specifically, it
     consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
-           the options' visibility
-        2) FloatSlider [`self.figure_scale_slider`]: scale slider
-        3) Checkbox [`self.render_axes_checkbox`]: render axes checkbox
-        4) Dropdown [`self.axes_font_name_dropdown`]: sets font family
-        5) BoundedFloatText [`self.axes_font_size_text`]: sets font size
-        6) Dropdown [`self.axes_font_style_dropdown`]: sets font style
-        7) Dropdown [`self.axes_font_weight_dropdown`]: sets font weight
-        8) FloatText [`self.axes_x_limits_from_text`]: sets x limit from
-        9) FloatText [`self.axes_x_limits_to_text`]: sets x limit to
-        10) Checkbox [`self.axes_x_limits_enable_checkbox`]: enables x limit
-        11) Box [`self.axes_x_limits_from_to_box`]: box that contains (8), (9)
-        12) HBox [`self.axes_x_limits_box`]: box that contains (10), (11)
-        13) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
-        14) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
-        15) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
-        16) Box [`self.axes_x_limits_from_to_box`]: box that contains (13), (14)
-        17) HBox [`self.axes_x_limits_box`]: box that contains (15), (16)
-        18) Box [`self.options_box`]: box that contains (2), (3), (4), (5), (6),
-            (7), (12) and (17)
+        1) FloatSlider [`self.figure_scale_slider`]: scale slider
+        2) Checkbox [`self.render_axes_checkbox`]: render axes checkbox
+        3) Dropdown [`self.axes_font_name_dropdown`]: sets font family
+        4) BoundedFloatText [`self.axes_font_size_text`]: sets font size
+        5) Dropdown [`self.axes_font_style_dropdown`]: sets font style
+        6) Dropdown [`self.axes_font_weight_dropdown`]: sets font weight
+        7) FloatText [`self.axes_x_limits_from_text`]: sets x limit from
+        8) FloatText [`self.axes_x_limits_to_text`]: sets x limit to
+        9) Checkbox [`self.axes_x_limits_enable_checkbox`]: enables x limit
+        10) Box [`self.axes_x_limits_from_to_box`]: box that contains (7), (8)
+        11) HBox [`self.axes_x_limits_box`]: box that contains (9), (10)
+        12) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
+        13) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
+        14) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
+        15) Box [`self.axes_x_limits_from_to_box`]: box that contains (12), (13)
+        16) HBox [`self.axes_x_limits_box`]: box that contains (14), (15)
+        17) Box [`self`]: box that contains (1), (2), (3), (4), (5), (6), (11)
+            and (16)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -2634,12 +2489,6 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     figure_scale_bounds : (`float`, `float`), optional
         The range of scales that can be optionally applied to the figure.
     figure_scale_step : `float`, optional
@@ -2650,13 +2499,8 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
         The visibility of the axes checkbox.
     """
     def __init__(self, figure_options, render_function=None,
-                 toggle_show_default=True, toggle_show_visible=True,
-                 toggle_title='Figure Options', figure_scale_bounds=(0.1, 4.),
-                 figure_scale_step=0.1, figure_scale_visible=True,
-                 axes_visible=True):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
+                 figure_scale_bounds=(0.1, 4.), figure_scale_step=0.1,
+                 figure_scale_visible=True, axes_visible=True):
         self.figure_scale_slider = ipywidgets.FloatSlider(
             description='Figure scale:', value=figure_options['x_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
@@ -2742,16 +2586,14 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
         self.axes_y_limits_box = ipywidgets.HBox(
             children=[self.axes_y_limits_enable_checkbox,
                       self.axes_y_limits_from_to_box])
-        self.options_box = ipywidgets.Box(
+        super(FigureOptionsOneScaleWidget, self).__init__(
             children=[self.figure_scale_slider, self.render_axes_checkbox,
                       self.axes_font_name_dropdown, self.axes_font_size_text,
                       self.axes_font_style_dropdown,
                       self.axes_font_weight_dropdown, self.axes_x_limits_box,
-                      self.axes_y_limits_box],
-            visible=toggle_show_default)
-        super(FigureOptionsOneScaleWidget, self).__init__(
-            children=[self.toggle_visible, self.options_box])
+                      self.axes_y_limits_box])
         self.align = 'start'
+        self.figure_scale_slider.slider_width = '3.5cm'
 
         # Assign output
         self.selected_values = figure_options
@@ -2850,65 +2692,40 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
             self.selected_values['y_scale'] = value
         self.figure_scale_slider.on_trait_change(save_scale, 'value')
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=True,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
-              font_weight='', slider_width='3.5cm'):
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -2929,16 +2746,9 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        slider_width : `str`, optional
-            The width of the slider.
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
-        self.figure_scale_slider.width = slider_width
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.figure_scale_slider, font_family, font_size,
                      font_style, font_weight)
@@ -2966,8 +2776,6 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
                      font_style, font_weight)
         _format_font(self.axes_y_limits_enable_checkbox, font_family, font_size,
                      font_style, font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
-                     font_weight)
 
     def add_render_function(self, render_function):
         r"""
@@ -3155,28 +2963,26 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
     Creates a widget for selecting figure related options. Specifically, it
     consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
-           the options' visibility
-        2) FloatSlider [`self.x_scale_slider`]: scale slider
-        3) FloatSlider [`self.y_scale_slider`]: scale slider
-        4) Checkbox [`self.coupled_checkbox`]: couples x and y sliders
-        5) Box [`self.figure_scale_box`]: box that contains (2), (3), (4)
-        6) Checkbox [`self.render_axes_checkbox`]: render axes checkbox
-        7) Dropdown [`self.axes_font_name_dropdown`]: sets font family
-        8) BoundedFloatText [`self.axes_font_size_text`]: sets font size
-        9) Dropdown [`self.axes_font_style_dropdown`]: sets font style
-        10) Dropdown [`self.axes_font_weight_dropdown`]: sets font weight
-        11) FloatText [`self.axes_x_limits_from_text`]: sets x limit from
-        12) FloatText [`self.axes_x_limits_to_text`]: sets x limit to
-        13) Checkbox [`self.axes_x_limits_enable_checkbox`]: enables x limit
-        14) Box [`self.axes_x_limits_from_to_box`]: box that contains (11), (12)
-        15) HBox [`self.axes_x_limits_box`]: box that contains (13), (14)
-        16) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
-        17) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
-        18) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
-        19) Box [`self.axes_y_limits_from_to_box`]: box that contains (15), (16)
-        20) HBox [`self.axes_y_limits_box`]: box that contains (17), (18)
-        21) Box [`self.options_box`]: box that contains (5), (6), (7), (8), (9),
+        1) FloatSlider [`self.x_scale_slider`]: scale slider
+        2) FloatSlider [`self.y_scale_slider`]: scale slider
+        3) Checkbox [`self.coupled_checkbox`]: couples x and y sliders
+        4) Box [`self.figure_scale_box`]: box that contains (2), (3), (4)
+        5) Checkbox [`self.render_axes_checkbox`]: render axes checkbox
+        6) Dropdown [`self.axes_font_name_dropdown`]: sets font family
+        7) BoundedFloatText [`self.axes_font_size_text`]: sets font size
+        8) Dropdown [`self.axes_font_style_dropdown`]: sets font style
+        9) Dropdown [`self.axes_font_weight_dropdown`]: sets font weight
+        10) FloatText [`self.axes_x_limits_from_text`]: sets x limit from
+        11) FloatText [`self.axes_x_limits_to_text`]: sets x limit to
+        12) Checkbox [`self.axes_x_limits_enable_checkbox`]: enables x limit
+        13) Box [`self.axes_x_limits_from_to_box`]: box that contains (11), (12)
+        14) HBox [`self.axes_x_limits_box`]: box that contains (13), (14)
+        15) FloatText [`self.axes_y_limits_from_text`]: sets y limit from
+        16) FloatText [`self.axes_y_limits_to_text`]: sets y limit to
+        17) Checkbox [`self.axes_y_limits_enable_checkbox`]: enables y limit
+        18) Box [`self.axes_y_limits_from_to_box`]: box that contains (15), (16)
+        19) HBox [`self.axes_y_limits_box`]: box that contains (17), (18)
+        20) Box [`self.options_box`]: box that contains (5), (6), (7), (8), (9),
             (10), (15) and (20)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
@@ -3202,12 +3008,6 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     figure_scale_bounds : (`float`, `float`), optional
         The range of scales that can be optionally applied to the figure.
     figure_scale_step : `float`, optional
@@ -3220,15 +3020,11 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
         If ``True``, x and y scale sliders are coupled.
     """
     def __init__(self, figure_options, render_function=None,
-                 toggle_show_default=True, toggle_show_visible=True,
-                 toggle_title='Figure Options', figure_scale_bounds=(0.1, 4.),
-                 figure_scale_step=0.1, figure_scale_visible=True,
-                 axes_visible=True, coupled_default=False):
+                 figure_scale_bounds=(0.1, 4.), figure_scale_step=0.1,
+                 figure_scale_visible=True, axes_visible=True,
+                 coupled_default=False):
         from IPython.utils.traitlets import link
 
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
         self.x_scale_slider = ipywidgets.FloatSlider(
             description='Figure scale: X', value=figure_options['x_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
@@ -3332,16 +3128,15 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
         self.axes_y_limits_box = ipywidgets.HBox(
             children=[self.axes_y_limits_enable_checkbox,
                       self.axes_y_limits_from_to_box])
-        self.options_box = ipywidgets.Box(
+        super(FigureOptionsTwoScalesWidget, self).__init__(
             children=[self.figure_scale_box, self.render_axes_checkbox,
                       self.axes_font_name_dropdown, self.axes_font_size_text,
                       self.axes_font_style_dropdown,
                       self.axes_font_weight_dropdown, self.axes_x_limits_box,
-                      self.axes_y_limits_box],
-            visible=toggle_show_default)
-        super(FigureOptionsTwoScalesWidget, self).__init__(
-            children=[self.toggle_visible, self.options_box])
+                      self.axes_y_limits_box])
         self.align = 'start'
+        self.slider_width = '3cm'
+        self.slider_width = '3cm'
 
         # Assign output
         self.selected_values = figure_options
@@ -3459,65 +3254,40 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
                                                      'value')
         self.axes_y_limits_to_text.on_trait_change(save_axes_y_limits, 'value')
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=True,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
-              font_weight='', slider_width='3cm'):
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -3538,17 +3308,9 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        slider_width : `str`, optional
-            The width of the slider.
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
-        self.x_scale_slider.width = slider_width
-        self.y_scale_slider.width = slider_width
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.x_scale_slider, font_family, font_size, font_style,
                      font_weight)
@@ -3580,8 +3342,6 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
                      font_style, font_weight)
         _format_font(self.axes_y_limits_enable_checkbox, font_family, font_size,
                      font_style, font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
-                     font_weight)
 
     def add_render_function(self, render_function):
         r"""
@@ -3784,8 +3544,6 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
     Creates a widget for selecting legend rendering options. Specifically, it
     consists of:
 
-        0) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
-           the options' visibility
         1) Checkbox [`self.render_legend_checkbox`]: render legend checkbox
         2) Dropdown [`self.legend_font_name_dropdown`]: legend font family
         3) BoundedIntText [`self.legend_font_size_text`]: legend font size
@@ -3830,7 +3588,6 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
         31) Box [`self.formatting_related_box`]: box containing (24), (27), (30)
 
         32) Tab [`self.tab_box`]: box containing (17), (10) and (31)
-        33) VBox [`self.options_box`]: box containing (1) and (31)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -3863,23 +3620,11 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     render_checkbox_title : `str`, optional
         The description of the render legend checkbox.
     """
     def __init__(self, legend_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Legend Options',
                  render_checkbox_title='Render legend'):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
-
         # render checkbox
         self.render_legend_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
@@ -4028,12 +3773,9 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
         self.tab_box = ipywidgets.Tab(
             children=[self.location_related_box, self.font_related_box,
                       self.formatting_related_box])
-        self.options_box = ipywidgets.VBox(
-            children=[self.render_legend_checkbox, self.tab_box],
-            visible=toggle_show_default, align='end')
         super(LegendOptionsWidget, self).__init__(
-            children=[self.toggle_visible, self.options_box])
-        self.align = 'start'
+            children=[self.render_legend_checkbox, self.tab_box])
+        self.align = 'end'
 
         # Set tab titles
         tab_titles = ['Location', 'Font', 'Formatting']
@@ -4067,9 +3809,9 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
         self.render_legend_checkbox.on_trait_change(legend_options_visible,
                                                     'value')
 
-        def border_pad_disable(name, value):
-            self.legend_border_padding_text.disabled = not value
-        self.legend_border_checkbox.on_trait_change(border_pad_disable, 'value')
+        def border_pad_visible(name, value):
+            self.legend_border_padding_text.visible = value
+        self.legend_border_checkbox.on_trait_change(border_pad_visible, 'value')
 
         def bbox_to_anchor_disable(name, value):
             self.bbox_to_anchor_x_text.disabled = not value
@@ -4159,65 +3901,40 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
         self.legend_rounded_corners_checkbox.on_trait_change(save_fancy_corners,
                                                              'value')
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=True,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -4239,12 +3956,8 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.render_legend_checkbox, font_family, font_size,
                      font_style, font_weight)
@@ -4284,8 +3997,6 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
                      font_style, font_weight)
         _format_font(self.legend_rounded_corners_checkbox, font_family,
                      font_size, font_style, font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
-                     font_weight)
 
     def add_render_function(self, render_function):
         r"""
@@ -4542,13 +4253,10 @@ class GridOptionsWidget(ipywidgets.FlexBox):
     Creates a widget for selecting grid rendering options. Specifically, it
     consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: toggle buttons that controls
-           the options' visibility
-        2) Checkbox [`self.render_grid_checkbox`]: whether to render the grid
-        3) BoundedFloatText [`self.grid_line_width_text`]: sets the line width
-        4) Dropdown [`self.grid_line_style_dropdown`]: sets the line style
-        5) Box [`self.grid_options_box`]: box that contains (3) and (4)
-        6) Box [`self.options_box`]: box that contains (2) and (5)
+        1) Checkbox [`self.render_grid_checkbox`]: whether to render the grid
+        2) BoundedFloatText [`self.grid_line_width_text`]: sets the line width
+        3) Dropdown [`self.grid_line_style_dropdown`]: sets the line style
+        4) Box [`self.grid_options_box`]: box that contains (2) and (3)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -4567,22 +4275,11 @@ class GridOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     render_checkbox_title : `str`, optional
         The description of the show line checkbox.
     """
     def __init__(self, grid_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Grid Options',
                  render_checkbox_title='Render grid'):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
         self.render_grid_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
             value=grid_options['render_grid'])
@@ -4601,13 +4298,9 @@ class GridOptionsWidget(ipywidgets.FlexBox):
         # Options widget
         self.grid_options_box = ipywidgets.Box(
             children=[self.grid_line_style_dropdown, self.grid_line_width_text])
-        self.options_box = ipywidgets.VBox(children=[self.render_grid_checkbox,
-                                                     self.grid_options_box],
-                                           visible=toggle_show_default,
-                                           align='end')
-        super(GridOptionsWidget, self).__init__(children=[self.toggle_visible,
-                                                          self.options_box])
-        self.align = 'start'
+        super(GridOptionsWidget, self).__init__(
+            children=[self.render_grid_checkbox, self.grid_options_box])
+        self.align = 'end'
 
         # Assign output
         self.selected_values = grid_options
@@ -4632,65 +4325,40 @@ class GridOptionsWidget(ipywidgets.FlexBox):
         self.grid_line_style_dropdown.on_trait_change(save_grid_line_style,
                                                       'value')
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=True,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -4711,24 +4379,16 @@ class GridOptionsWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        slider_width : `str`, optional
-            The width of the slider.
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.render_grid_checkbox, font_family, font_size,
                      font_style, font_weight)
         _format_font(self.grid_line_style_dropdown, font_family, font_size,
                      font_style, font_weight)
-        _format_font(self.grid_line_width_text, font_family, font_size, font_style,
-                     font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
-                     font_weight)
+        _format_font(self.grid_line_width_text, font_family, font_size,
+                     font_style, font_weight)
 
     def add_render_function(self, render_function):
         r"""
@@ -4825,39 +4485,38 @@ class GridOptionsWidget(ipywidgets.FlexBox):
             self._render_function('', True)
 
 
-class HOGOptionsWidget(ipywidgets.Box):
+class HOGOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting HOG options. Specifically, it consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: controls visibility
-        2) Radiobuttons [`self.mode_radiobuttons`]: 'dense' or 'sparse' mode
-        3) Checkbox [`self.padding_checkbox`]: controls padding of output image
-        4) HBox [`self.mode_padding_box`]: box that contains (2) and (3)
-        5) BoundedIntText [`self.window_height_text`]: sets window height
-        6) BoundedIntText [`self.window_width_text`]: sets window width
-        7) RadioButtons [`self.window_size_unit_radiobuttons`]: window size unit
-        8) VBox [`self.window_size_box`]: box that contains (5), (6) and (7)
-        9) BoundedIntText [`self.window_vertical_text`]: window step Y
-        10) BoundedIntText [`self.window_horizontal_text`]: window step X
-        11) RadioButtons [`self.window_step_unit_radiobuttons`]: window step
+        1) Radiobuttons [`self.mode_radiobuttons`]: 'dense' or 'sparse' mode
+        2) Checkbox [`self.padding_checkbox`]: controls padding of output image
+        3) HBox [`self.mode_padding_box`]: box that contains (1) and (2)
+        4) BoundedIntText [`self.window_height_text`]: sets window height
+        5) BoundedIntText [`self.window_width_text`]: sets window width
+        6) RadioButtons [`self.window_size_unit_radiobuttons`]: window size unit
+        7) VBox [`self.window_size_box`]: box that contains (4), (5) and (6)
+        8) BoundedIntText [`self.window_vertical_text`]: window step Y
+        9) BoundedIntText [`self.window_horizontal_text`]: window step X
+        10) RadioButtons [`self.window_step_unit_radiobuttons`]: window step
             unit
-        12) VBox [`self.window_step_box`]: box that contains (9), (10) and (11)
-        13) HBox [`self.window_size_step_box`]: box that contains (8) and (12)
-        14) Box [`self.window_box`]: box that contains (4) and (13)
-        15) RadioButtons [`self.algorithm_radiobuttons`]: `zhuramanan` or
+        11) VBox [`self.window_step_box`]: box that contains (8), (9) and (10)
+        12) HBox [`self.window_size_step_box`]: box that contains (7) and (11)
+        13) Box [`self.window_box`]: box that contains (3) and (12)
+        14) RadioButtons [`self.algorithm_radiobuttons`]: `zhuramanan` or
             `dalaltriggs`
-        16) BoundedIntText [`self.cell_size_text`]: cell size in pixels
-        17) BoundedIntText [`self.block_size_text`]: block size in pixels
-        18) BoundedIntText [`self.num_bins_text`]: number of orientation bins
-        19) VBox [`self.algorithm_sizes_box`]: box that contains (16), (17) and
-            (18)
-        20) Checkbox (`self.signed_gradient_checkbox`]: signed or unsigned
+        15) BoundedIntText [`self.cell_size_text`]: cell size in pixels
+        16) BoundedIntText [`self.block_size_text`]: block size in pixels
+        17) BoundedIntText [`self.num_bins_text`]: number of orientation bins
+        18) VBox [`self.algorithm_sizes_box`]: box that contains (15), (16) and
+            (17)
+        19) Checkbox (`self.signed_gradient_checkbox`]: signed or unsigned
             gradients
-        21) BoundedFloatText [`self.l2_norm_clipping_text`]: l2 norm clipping
-        22) Box [`self.algorithm_other_box`]: box that contains (20) and (21)
-        23) HBox [`self.algorithm_options_box`]: box containing (19) and (22)
-        24) Box [`self.algorithm_box`]: box that contains (15) and (23)
-        25) Tab [`self.options_box`]: box that contains (14) and (24)
+        20) BoundedFloatText [`self.l2_norm_clipping_text`]: l2 norm clipping
+        21) Box [`self.algorithm_other_box`]: box that contains (19) and (20)
+        22) HBox [`self.algorithm_options_box`]: box containing (18) and (21)
+        23) Box [`self.algorithm_box`]: box that contains (14) and (22)
+        24) Tab [`self.options_box`]: box that contains (13) and (23)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -4887,19 +4546,8 @@ class HOGOptionsWidget(ipywidgets.Box):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     """
-    def __init__(self, hog_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='HOG Options'):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
+    def __init__(self, hog_options, render_function=None):
         # Window related options
         tmp = OrderedDict()
         tmp['Dense'] = 'dense'
@@ -4981,8 +4629,7 @@ class HOGOptionsWidget(ipywidgets.Box):
         # Final widget
         self.options_box = ipywidgets.Tab(children=[self.window_box,
                                                     self.algorithm_box])
-        super(HOGOptionsWidget, self).__init__(children=[self.toggle_visible,
-                                                         self.options_box])
+        super(HOGOptionsWidget, self).__init__(children=[self.options_box])
 
         # set tab titles
         tab_titles = ['Window', 'Algorithm']
@@ -5072,65 +4719,40 @@ class HOGOptionsWidget(ipywidgets.Box):
             self.selected_values['l2_norm_clip'] = value
         self.l2_norm_clipping_text.on_trait_change(get_l2_norm_clip, 'value')
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=False,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -5152,12 +4774,8 @@ class HOGOptionsWidget(ipywidgets.Box):
                  ``'extra bold'``, ``'black'``}
 
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.options_box, font_family, font_size, font_style,
                      font_weight)
@@ -5336,24 +4954,23 @@ def _convert_int_list_to_str(l):
         return ''
 
 
-class DaisyOptionsWidget(ipywidgets.Box):
+class DaisyOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting Daisy options. Specifically, it consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: controls visibility
-        2) BoundedIntText [`self.step_text`]: sampling step
-        3) BoundedIntText [`self.radius_text`]: radius value
-        4) BoundedIntText [`self.rings_text`]: number of rings
-        5) BoundedIntText [`self.histograms_text`]: histograms
-        6) BoundedIntText [`self.orientations_text`]: orientations
-        7) Dropdown [`self.normalization_dropdown`]: normalization type
-        8) Text [`self.sigmas_text`]: sigmas list
-        9) Text [`self.ring_radii_text`]: ring radii list
-        10) Box [`self.step_radius_rings_histograms_box`]: box that contains
-            (2), (3), (4) and (5)
-        11) Box [`self.orientations_normalization_sigmas_radii_box`]: box that
-            contains (6), (7), (8) and (9)
-        12) HBox [`self.options_box`]: box that contains (10) and (11)
+        1) BoundedIntText [`self.step_text`]: sampling step
+        2) BoundedIntText [`self.radius_text`]: radius value
+        3) BoundedIntText [`self.rings_text`]: number of rings
+        4) BoundedIntText [`self.histograms_text`]: histograms
+        5) BoundedIntText [`self.orientations_text`]: orientations
+        6) Dropdown [`self.normalization_dropdown`]: normalization type
+        7) Text [`self.sigmas_text`]: sigmas list
+        8) Text [`self.ring_radii_text`]: ring radii list
+        9) Box [`self.step_radius_rings_histograms_box`]: box that contains
+            (1), (2), (3) and (4)
+        10) Box [`self.orientations_normalization_sigmas_radii_box`]: box that
+            contains (5), (6), (7) and (8)
+        11) HBox [`self.options_box`]: box that contains (9) and (10)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -5377,19 +4994,8 @@ class DaisyOptionsWidget(ipywidgets.Box):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     """
-    def __init__(self, daisy_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Daisy Options'):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
+    def __init__(self, daisy_options, render_function=None):
         self.step_text = ipywidgets.BoundedIntText(
             value=daisy_options['step'], description='Step', min=1, max=10**6)
         self.radius_text = ipywidgets.BoundedIntText(
@@ -5423,11 +5029,10 @@ class DaisyOptionsWidget(ipywidgets.Box):
         self.orientations_normalization_sigmas_radii_box = ipywidgets.VBox(
             children=[self.orientations_text, self.normalization_dropdown,
                       self.sigmas_text, self.ring_radii_text])
-        self.options_box = ipywidgets.HBox(
+        super(DaisyOptionsWidget, self).__init__(
             children=[self.step_radius_rings_histograms_box,
                       self.orientations_normalization_sigmas_radii_box])
-        super(DaisyOptionsWidget, self).__init__(children=[self.toggle_visible,
-                                                           self.options_box])
+        self.orientation = 'horizontal'
 
         # Assign output
         self.selected_values = daisy_options
@@ -5467,65 +5072,40 @@ class DaisyOptionsWidget(ipywidgets.Box):
                 _convert_str_to_list_float(str(value))
         self.ring_radii_text.on_trait_change(get_ring_radii, 'value')
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=False,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -5547,17 +5127,9 @@ class DaisyOptionsWidget(ipywidgets.Box):
                  ``'extra bold'``, ``'black'``}
 
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
-        _format_font(self.options_box, font_family, font_size, font_style,
-                     font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
-                     font_weight)
         _format_font(self.step_text, font_family, font_size, font_style,
                      font_weight)
         _format_font(self.radius_text, font_family, font_size, font_style,
@@ -5640,23 +5212,22 @@ class DaisyOptionsWidget(ipywidgets.Box):
         self.add_render_function(render_function)
 
 
-class LBPOptionsWidget(ipywidgets.Box):
+class LBPOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting LBP options. Specifically, it consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: controls visibility
-        2) Dropdown [`self.mapping_type_dropdown`]: select mapping type
-        3) Text [`self.radius_text`]: radius list
-        4) Text [`self.samples_text`]: samples list
-        5) Box [`self.radius_samples_mapping_type_box`]: box that contains (2),
+        1) Dropdown [`self.mapping_type_dropdown`]: select mapping type
+        2) Text [`self.radius_text`]: radius list
+        3) Text [`self.samples_text`]: samples list
+        4) Box [`self.radius_samples_mapping_type_box`]: box that contains (2),
            (3) and (4)
-        6) BoundedIntText [`self.window_vertical_text`]: window vertical step
-        7) BoundedIntText [`self.window_horizontal_text`]: window horizontal
+        5) BoundedIntText [`self.window_vertical_text`]: window vertical step
+        6) BoundedIntText [`self.window_horizontal_text`]: window horizontal
            step
-        8) RadioButtons [`self.window_step_unit_radiobuttons`]: window step unit
-        9) Checkbox [`self.padding_checkbox`]: padding
-        10) Box [`self.window_box`]: box that contains (6), (7), (8) and (9)
-        11) HBox [`self.options_box`]: box that contains (5) and (10)
+        7) RadioButtons [`self.window_step_unit_radiobuttons`]: window step unit
+        8) Checkbox [`self.padding_checkbox`]: padding
+        9) Box [`self.window_box`]: box that contains (6), (7), (8) and (9)
+        10) HBox [`self.options_box`]: box that contains (5) and (10)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -5679,19 +5250,8 @@ class LBPOptionsWidget(ipywidgets.Box):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     """
-    def __init__(self, lbp_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='LBP Options'):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
+    def __init__(self, lbp_options, render_function=None):
         tmp = OrderedDict()
         tmp['Uniform-2'] = 'u2'
         tmp['Rotation-Invariant'] = 'ri'
@@ -5727,10 +5287,9 @@ class LBPOptionsWidget(ipywidgets.Box):
             children=[self.window_vertical_text, self.window_horizontal_text,
                       self.window_step_unit_radiobuttons,
                       self.padding_checkbox])
-        self.options_box = ipywidgets.HBox(
+        super(LBPOptionsWidget, self).__init__(
             children=[self.window_box, self.radius_samples_mapping_type_box])
-        super(LBPOptionsWidget, self).__init__(children=[self.toggle_visible,
-                                                         self.options_box])
+        self.orientation = 'horizontal'
 
         # Assign output
         self.selected_values = lbp_options
@@ -5768,65 +5327,40 @@ class LBPOptionsWidget(ipywidgets.Box):
                 _convert_str_to_list_int(str(value))
         self.samples_text.on_trait_change(get_samples, 'value')
 
-        def toggle_function(name, value):
-            self.options_box.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=False,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -5848,17 +5382,9 @@ class LBPOptionsWidget(ipywidgets.Box):
                  ``'extra bold'``, ``'black'``}
 
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.options_box, inner_box_style, inner_border_visible,
-                    inner_border_color, inner_border_style, inner_border_width,
-                    inner_padding, inner_margin)
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
-        _format_font(self.options_box, font_family, font_size, font_style,
-                     font_weight)
-        _format_font(self.toggle_visible, font_family, font_size, font_style,
-                     font_weight)
         _format_font(self.mapping_type_dropdown, font_family, font_size,
                      font_style, font_weight)
         _format_font(self.radius_text, font_family, font_size, font_style,
@@ -5939,12 +5465,11 @@ class LBPOptionsWidget(ipywidgets.Box):
         self.add_render_function(render_function)
 
 
-class IGOOptionsWidget(ipywidgets.Box):
+class IGOOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting IGO options. Specifically, it consists of:
 
-        1) ToggleButton [`self.toggle_visible`]: controls visibility
-        2) Checkbox [`self.double_angles_checkbox`]: enable double angles
+        1) Checkbox [`self.double_angles_checkbox`]: enable double angles
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -5961,23 +5486,12 @@ class IGOOptionsWidget(ipywidgets.Box):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    toggle_show_default : `bool`, optional
-        Defines whether the options will be visible upon construction.
-    toggle_show_visible : `bool`, optional
-        The visibility of the toggle button.
-    toggle_title : `str`, optional
-        The title of the toggle button.
     """
-    def __init__(self, igo_options, render_function=None,
-                 toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='IGO Options'):
-        self.toggle_visible = ipywidgets.ToggleButton(
-            description=toggle_title, value=toggle_show_default,
-            visible=toggle_show_visible)
+    def __init__(self, igo_options, render_function=None):
         self.double_angles_checkbox = ipywidgets.Checkbox(
             value=igo_options['double_angles'], description='Double angles')
         super(IGOOptionsWidget, self).__init__(
-            children=[self.toggle_visible, self.double_angles_checkbox])
+            children=[self.double_angles_checkbox])
 
         # Assign output
         self.selected_values = igo_options
@@ -5987,65 +5501,40 @@ class IGOOptionsWidget(ipywidgets.Box):
             self.selected_values['double_angles'] = value
         self.double_angles_checkbox.on_trait_change(get_double_angles, 'value')
 
-        def toggle_function(name, value):
-            self.double_angles_checkbox.visible = value
-        self.toggle_visible.on_trait_change(toggle_function, 'value')
-
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, outer_box_style=None, outer_border_visible=False,
-              outer_border_color='black', outer_border_style='solid',
-              outer_border_width=1, outer_padding=0, outer_margin=0,
-              inner_box_style=None, inner_border_visible=False,
-              inner_border_color='black', inner_border_style='solid',
-              inner_border_width=1, inner_padding=0, inner_margin=0,
-              font_family='', font_size=None, font_style='',
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
         Parameters
         ----------
-        outer_box_style : `str` or ``None`` (see below), optional
-            Outer box style options ::
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
 
                 {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
                 or
                 ``None``
 
-        outer_border_visible : `bool`, optional
-            Defines whether to draw the border line around the outer box.
-        outer_border_color : `str`, optional
-            The color of the border around the outer box.
-        outer_border_style : `str`, optional
-            The line style of the border around the outer box.
-        outer_border_width : `float`, optional
-            The line width of the border around the outer box.
-        outer_padding : `float`, optional
-            The padding around the outer box.
-        outer_margin : `float`, optional
-            The margin around the outer box.
-        inner_box_style : `str` or ``None`` (see below), optional
-            Inner box style options ::
-
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
-
-        inner_border_visible : `bool`, optional
-            Defines whether to draw the border line around the inner box.
-        inner_border_color : `str`, optional
-            The color of the border around the inner box.
-        inner_border_style : `str`, optional
-            The line style of the border around the inner box.
-        inner_border_width : `float`, optional
-            The line width of the border around the inner box.
-        inner_padding : `float`, optional
-            The padding around the inner box.
-        inner_margin : `float`, optional
-            The margin around the inner box.
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
         font_family : See Below, optional
             The font family to be used.
             Example options ::
@@ -6067,13 +5556,8 @@ class IGOOptionsWidget(ipywidgets.Box):
                  ``'extra bold'``, ``'black'``}
 
         """
-        _format_box(self, outer_box_style, outer_border_visible,
-                    outer_border_color, outer_border_style, outer_border_width,
-                    outer_padding, outer_margin)
-        _format_box(self.double_angles_checkbox, inner_box_style,
-                    inner_border_visible, inner_border_color,
-                    inner_border_style, inner_border_width, inner_padding,
-                    inner_margin)
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.double_angles_checkbox, font_family, font_size,
                      font_style, font_weight)
