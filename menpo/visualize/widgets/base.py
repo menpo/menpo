@@ -10,7 +10,7 @@ from menpo.visualize.viewmatplotlib import (MatplotlibImageViewer2d,
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, AnimationOptionsWidget)
-from .tools import _format_box, LogoWidget
+from .tools import _format_box, LogoWidget, _map_styles_to_hex_colours
 
 
 # This glyph import is called frequently during visualisation, so we ensure
@@ -38,8 +38,9 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
     style : {``'coloured'``, ``'minimal'``}, optional
-        If ``'coloured'``, then the style of the widget will be coloured.
-    browser_style : {``buttons``, ``slider``}, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    browser_style : {``'buttons'``, ``'slider'``}, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
@@ -56,8 +57,8 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     line_options = {'render_lines': True, 'line_width': 1, 'line_colour': ['r'],
                     'line_style': '-'}
     marker_options = {'render_markers': True, 'marker_size': 20,
-                       'marker_face_colour': ['r'], 'marker_edge_colour': ['k'],
-                       'marker_style': 'o', 'marker_edge_width': 1}
+                      'marker_face_colour': ['r'], 'marker_edge_colour': ['k'],
+                      'marker_style': 'o', 'marker_edge_width': 1}
     figure_options = {'x_scale': 1., 'y_scale': 1., 'render_axes': False,
                       'axes_font_name': 'sans-serif', 'axes_font_size': 10,
                       'axes_font_style': 'normal', 'axes_font_weight': 'normal',
@@ -103,8 +104,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
             axes_font_style=tmp3['axes_font_style'],
             axes_font_weight=tmp3['axes_font_weight'],
             axes_x_limits=tmp3['axes_x_limits'],
-            axes_y_limits=tmp3['axes_y_limits'],
-            figure_size=new_figure_size,
+            axes_y_limits=tmp3['axes_y_limits'], figure_size=new_figure_size,
             label=None)
         pltshow()
 
@@ -132,34 +132,26 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     renderer_options_wid = RendererOptionsWidget(
         renderer_options, ['lines', 'markers', 'figure_one'],
         object_selection_dropdown_visible=False,
-        render_function=render_function, toggle_show_visible=False,
-        toggle_show_default=True)
+        render_function=render_function)
     renderer_options_box = ipywidgets.VBox(
         children=[axes_mode_wid, renderer_options_wid], align='start',
         margin='0.1cm')
-    info_wid = TextPrintWidget(n_lines=4, text_per_line=[''] * 4,
-                               toggle_show_default=True,
-                               toggle_show_visible=False)
+    info_wid = TextPrintWidget(n_lines=4, text_per_line=[''] * 4)
     initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
                                                image=np.zeros((10, 10)))
-    save_figure_wid = SaveFigureOptionsWidget(initial_renderer,
-                                              toggle_show_default=True,
-                                              toggle_show_visible=False)
+    save_figure_wid = SaveFigureOptionsWidget(initial_renderer)
 
     # Group widgets
     if n_pointclouds > 1:
         # Pointcloud selection slider
         pointcloud_number_wid = AnimationOptionsWidget(
             index, render_function=render_function, index_style=browser_style,
-            interval=0.3, description='Pointcloud ',
-            minus_description='<', plus_description='>', loop_enabled=True,
-            text_editable=True, toggle_show_default=True,
-            toggle_show_visible=False)
+            interval=0.3, description='Pointcloud ', minus_description='<',
+            plus_description='>', loop_enabled=True, text_editable=True)
 
         # Header widget
-        header_wid = ipywidgets.HBox(children=[LogoWidget(),
-                                               pointcloud_number_wid],
-                                     align='start')
+        header_wid = ipywidgets.HBox(
+            children=[LogoWidget(), pointcloud_number_wid], align='start')
     else:
         # Header widget
         header_wid = LogoWidget()
@@ -171,13 +163,13 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         options_box.set_title(k, tl)
     wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
 
-    # Display final widget
-    ipydisplay.display(wid)
-
     # Format options' widgets
     # set options
     if style == 'coloured':
-        widget_style = 'success'
+        widget_box_style = 'success'
+        widget_border_radius = 15
+        widget_border_visible = True
+        widget_border_width = 1
         play_button_style = 'success'
         play_button_font_weight = 'bold'
         stop_button_style = 'danger'
@@ -187,18 +179,26 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         play_options_border_visible = True
         plus_minus_style = 'info'
         plus_minus_font_weight = 'bold'
-        plus_minus_slider_colour = '#228B22'
+        plus_minus_text_colour = '#DFF0D8'
+        plus_minus_slider_colour = _map_styles_to_hex_colours('success')
         info_style = 'info'
-        info_border_colour = '#31708f'
+        info_border_colour = _map_styles_to_hex_colours('info')
+        info_border_radius = 10
         renderer_box_style = 'info'
-        renderer_box_border_colour = '#31708f'
+        renderer_box_border_colour = _map_styles_to_hex_colours('info')
+        renderer_box_border_radius = 20
         renderer_wid_style = 'danger'
-        renderer_wid_border_colour = '#A52A2A'
-        save_figure_style = 'danger'
-        save_figure_border_colour = '#A52A2A'
+        renderer_wid_border_colour = _map_styles_to_hex_colours('danger')
+        renderer_wid_border_radius = 20
+        save_figure_box_style = 'danger'
+        save_figure_border_colour = _map_styles_to_hex_colours('danger')
+        save_figure_border_radius = 20
         save_figure_button_font_weight = 'bold'
     else:
-        widget_style = ''
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_visible = False
+        widget_border_width = 0
         play_button_style = ''
         play_button_font_weight = 'normal'
         stop_button_style = ''
@@ -208,22 +208,30 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         play_options_border_visible = False
         plus_minus_style = ''
         plus_minus_font_weight = 'normal'
+        plus_minus_text_colour = ''
         plus_minus_slider_colour = ''
         info_style = ''
         info_border_colour = 'black'
+        info_border_radius = 0
         renderer_box_style = ''
         renderer_box_border_colour = 'black'
+        renderer_box_border_radius = 0
         renderer_wid_style = ''
         renderer_wid_border_colour = 'black'
-        save_figure_style = ''
+        renderer_wid_border_radius = 0
+        save_figure_box_style = ''
         save_figure_border_colour = 'black'
+        save_figure_border_radius = 0
         save_figure_button_font_weight = 'normal'
     # set widget style
-    wid.box_style = widget_style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_visible = widget_border_visible
+    wid.border_width = widget_border_width
+    wid.border_color = _map_styles_to_hex_colours(widget_box_style)
     # set animation widget style
     if n_pointclouds > 1:
-        pointcloud_number_wid.style(outer_border_visible=False,
-                                    inner_border_visible=False)
+        pointcloud_number_wid.style(border_visible=False)
         pointcloud_number_wid.play_toggle.button_style = play_button_style
         pointcloud_number_wid.play_toggle.font_weight = play_button_font_weight
         pointcloud_number_wid.stop_toggle.button_style = stop_button_style
@@ -232,7 +240,8 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
             play_options_button_style
         _format_box(pointcloud_number_wid.loop_interval_box,
                     play_options_button_style, play_options_border_visible,
-                    play_options_border_colour, 'solid', 1, '0.1cm', '0.1cm')
+                    play_options_border_colour, 'solid', 1, 10, '0.1cm',
+                    '0.1cm')
         if browser_style == 'buttons':
             pointcloud_number_wid.index_wid.button_plus.button_style = \
                 plus_minus_style
@@ -242,26 +251,30 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
                 plus_minus_style
             pointcloud_number_wid.index_wid.button_minus.font_weight = \
                 plus_minus_font_weight
+            pointcloud_number_wid.index_wid.index_text.background_color = \
+                plus_minus_text_colour
         elif browser_style == 'slider':
             pointcloud_number_wid.index_wid.slider.slider_color = \
                 plus_minus_slider_colour
-    info_wid.style(outer_border_visible=True, inner_border_visible=False,
-                   outer_padding='0.1cm', outer_margin='0.1cm',
-                   outer_box_style=info_style,
-                   outer_border_color=info_border_colour)
+    info_wid.style(border_visible=True, padding='0.1cm', margin='0.3cm',
+                   box_style=info_style, border_color=info_border_colour,
+                   border_radius=info_border_radius)
     _format_box(renderer_options_box, renderer_box_style, True,
-                renderer_box_border_colour, 'solid', 1, '0.1cm', '0.1cm')
-    renderer_options_wid.style(outer_border_visible=True,
-                               inner_border_visible=False,
-                               tabs_border_visible=False, outer_margin='0.5cm',
-                               outer_box_style=renderer_wid_style,
-                               outer_border_color=renderer_wid_border_colour)
-    save_figure_wid.style(
-        inner_border_visible=True, outer_border_visible=False,
-        inner_box_style=save_figure_style,
-        inner_border_color=save_figure_border_colour)
-    save_figure_wid.save_button.button_style = save_figure_style
+                renderer_box_border_colour, 'solid', 1,
+                renderer_box_border_radius, '0.1cm', '0.3cm')
+    renderer_options_wid.style(border_visible=True, tabs_border_visible=False,
+                               margin='0.5cm', box_style=renderer_wid_style,
+                               border_color=renderer_wid_border_colour,
+                               border_radius=renderer_wid_border_radius)
+    save_figure_wid.style(border_visible=True, box_style=save_figure_box_style,
+                          border_color=save_figure_border_colour,
+                          border_radius=save_figure_border_radius,
+                          margin='0.3cm', padding='0.2cm')
+    save_figure_wid.save_button.button_style = save_figure_box_style
     save_figure_wid.save_button.font_weight = save_figure_button_font_weight
+
+    # Display final widget
+    ipydisplay.display(wid)
 
     # Reset value to trigger initial visualization
     axes_mode_wid.value = 1
