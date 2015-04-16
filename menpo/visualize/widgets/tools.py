@@ -474,16 +474,15 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         self.index_text = ipywidgets.IntText(
             value=index['index'], min=index['min'], max=index['max'],
             disabled=not text_editable)
-        super(IndexButtonsWidget, self).__init__(children=[self.title,
-                                                           self.button_minus,
-                                                           self.index_text,
-                                                           self.button_plus])
+        super(IndexButtonsWidget, self).__init__(
+            children=[self.title, self.button_minus, self.index_text,
+                      self.button_plus])
         self.loop_enabled = loop_enabled
         self.text_editable = text_editable
 
         # Style
         self.orientation = 'horizontal'
-        self.align = 'center'
+        self.align = 'start'
 
         # Assign output
         self.selected_values = index
@@ -1204,7 +1203,9 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
     image_options : `dict`
         The initial image options. Example ::
 
-            image_options = {'alpha': 1., 'interpolation': 'bilinear'}
+            image_options = {'alpha': 1.,
+                             'interpolation': 'bilinear',
+                             'cmap_name': 'gray'}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -1409,7 +1410,9 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
         image_options : `dict`
             The image options. Example ::
 
-                image_options = {'alpha': 1., 'interpolation': 'bilinear'}
+                image_options = {'alpha': 1.,
+                                 'interpolation': 'bilinear',
+                                 'cmap_name': 'gray'}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -1496,12 +1499,15 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         self.line_colour_widget = ColourSelectionWidget(
             line_options['line_colour'], description='Colour', labels=labels,
             render_function=render_function)
-        self.options_box = ipywidgets.Box(
+        self.line_options_box = ipywidgets.Box(
             children=[self.line_style_dropdown, self.line_width_text,
                       self.line_colour_widget])
+        self.options_box = ipywidgets.VBox(children=[self.render_lines_checkbox,
+                                                     self.line_options_box],
+                                           align='end')
         super(LineOptionsWidget, self).__init__(
-            children=[self.render_lines_checkbox, self.options_box])
-        self.align = 'end'
+            children=[self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = line_options
@@ -1791,14 +1797,16 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         self.marker_edge_colour_widget = ColourSelectionWidget(
             marker_options['marker_edge_colour'], description='Edge colour',
             labels=labels, render_function=render_function)
-        self.options_box = ipywidgets.VBox(
+        self.marker_options_box = ipywidgets.VBox(
             children=[self.marker_style_dropdown, self.marker_size_text,
                       self.marker_edge_width_text,
                       self.marker_face_colour_widget,
                       self.marker_edge_colour_widget])
-        super(MarkerOptionsWidget, self).__init__(
-            children=[self.render_markers_checkbox, self.options_box])
-        self.align = 'end'
+        self.options_box = ipywidgets.VBox(
+            children=[self.render_markers_checkbox, self.marker_options_box],
+            align='end')
+        super(MarkerOptionsWidget, self).__init__(children=[self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = marker_options
@@ -2153,7 +2161,7 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
             options=numbers_vertical_align_dict,
             value=numbers_options['numbers_vertical_align'],
             description='Align ver.')
-        self.options_box = ipywidgets.Box(
+        self.numbering_options_box = ipywidgets.Box(
             children=[self.numbers_font_name_dropdown,
                       self.numbers_font_size_text,
                       self.numbers_font_style_dropdown,
@@ -2161,9 +2169,12 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
                       self.numbers_font_colour_widget,
                       self.numbers_horizontal_align_dropdown,
                       self.numbers_vertical_align_dropdown])
+        self.options_box = ipywidgets.VBox(
+            children=[self.render_numbering_checkbox,
+                      self.numbering_options_box], align='end')
         super(NumberingOptionsWidget, self).__init__(
-            children=[self.render_numbering_checkbox, self.options_box])
-        self.align = 'end'
+            children=[self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = numbers_options
@@ -3773,9 +3784,10 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
         self.tab_box = ipywidgets.Tab(
             children=[self.location_related_box, self.font_related_box,
                       self.formatting_related_box])
-        super(LegendOptionsWidget, self).__init__(
-            children=[self.render_legend_checkbox, self.tab_box])
-        self.align = 'end'
+        self.options_box = ipywidgets.VBox(
+            children=[self.render_legend_checkbox, self.tab_box], align='start')
+        super(LegendOptionsWidget, self).__init__(children=[self.options_box])
+        self.align = 'start'
 
         # Set tab titles
         tab_titles = ['Location', 'Font', 'Formatting']
@@ -4298,9 +4310,11 @@ class GridOptionsWidget(ipywidgets.FlexBox):
         # Options widget
         self.grid_options_box = ipywidgets.Box(
             children=[self.grid_line_style_dropdown, self.grid_line_width_text])
-        super(GridOptionsWidget, self).__init__(
-            children=[self.render_grid_checkbox, self.grid_options_box])
-        self.align = 'end'
+        self.options_box = ipywidgets.VBox(
+            children=[self.render_grid_checkbox, self.grid_options_box],
+            align='end')
+        super(GridOptionsWidget, self).__init__(children=[self.options_box])
+        self.align = 'start'
 
         # Assign output
         self.selected_values = grid_options
