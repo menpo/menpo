@@ -11,7 +11,8 @@ from .tools import (_format_box, _format_font, _convert_image_to_bytes,
                     NumberingOptionsWidget, FigureOptionsOneScaleWidget,
                     FigureOptionsTwoScalesWidget, LegendOptionsWidget,
                     GridOptionsWidget, ColourSelectionWidget, HOGOptionsWidget,
-                    DaisyOptionsWidget, LBPOptionsWidget, IGOOptionsWidget)
+                    DaisyOptionsWidget, LBPOptionsWidget, IGOOptionsWidget,
+                    _map_styles_to_hex_colours)
 
 
 class ChannelOptionsWidget(ipywidgets.FlexBox):
@@ -58,8 +59,14 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
+    style : `str` (see below)
+        Sets a predefined style at the widget. Possible options are ::
+
+            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+             ``'danger'``, ``''``}
+
     """
-    def __init__(self, channel_options, render_function=None):
+    def __init__(self, channel_options, render_function=None, style='minimal'):
         # If image_is_masked is False, then masked_enabled should be False too
         if not channel_options['image_is_masked']:
             channel_options['masked_enabled'] = False
@@ -105,21 +112,17 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
                 mode_default, channel_options['n_channels']))
         self.glyph_block_size_text = ipywidgets.BoundedIntText(
             description='Block size', min=1, max=25,
-            value=channel_options['glyph_block_size'],
-            visible=self._glyph_options_visible(
-                mode_default, channel_options['n_channels'],
-                channel_options['glyph_enabled']), width='1.5cm')
+            value=channel_options['glyph_block_size'], width='1.5cm')
         self.glyph_use_negative_checkbox = ipywidgets.Checkbox(
-            description='Negative',
-            value=channel_options['glyph_use_negative'],
-            visible=self._glyph_options_visible(
-                mode_default, channel_options['n_channels'],
-                channel_options['glyph_enabled']))
+            description='Negative', value=channel_options['glyph_use_negative'])
 
         # Group widgets
         self.glyph_options_box = ipywidgets.VBox(
             children=[self.glyph_block_size_text,
-                      self.glyph_use_negative_checkbox])
+                      self.glyph_use_negative_checkbox],
+            visible=self._glyph_options_visible(
+                mode_default, channel_options['n_channels'],
+                channel_options['glyph_enabled']))
         self.glyph_box = ipywidgets.VBox(children=[self.glyph_checkbox,
                                                    self.glyph_options_box],
                                          align='start')
@@ -140,6 +143,9 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
         # Assign output
         self.selected_values = channel_options
 
+        # Set style
+        self.predefined_style(style)
+
         # Set functionality
         def mode_selection(name, value):
             # Temporarily remove render function
@@ -155,8 +161,7 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
                 self.sum_checkbox.value = False
                 self.glyph_checkbox.visible = False
                 self.glyph_checkbox.value = False
-                self.glyph_block_size_text.visible = False
-                self.glyph_use_negative_checkbox.visible = False
+                self.glyph_options_box.visible = False
                 self.rgb_checkbox.visible = \
                     self.selected_values['n_channels'] == 3
             else:
@@ -167,8 +172,7 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
                 self.glyph_checkbox.visible = \
                     self.selected_values['n_channels'] > 1
                 self.glyph_checkbox.value = False
-                self.glyph_block_size_text.visible = False
-                self.glyph_use_negative_checkbox.visible = False
+                self.glyph_options_box.visible = False
                 self.rgb_checkbox.visible = False
             # Add render function
             if self._render_function is not None:
@@ -190,8 +194,7 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
                 self.sum_checkbox.on_trait_change(self._render_function,
                                                   'value')
             # Control glyph options visibility
-            self.glyph_block_size_text.visible = value
-            self.glyph_use_negative_checkbox.visible = value
+            self.glyph_options_box.visible = value
         self.glyph_checkbox.on_trait_change(glyph_options_visibility, 'value')
 
         self.link_rgb_checkbox_and_single_slider = link(
@@ -294,7 +297,7 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', slider_width=''):
+              font_weight='', slider_width='', slider_colour=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -343,6 +346,8 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
 
         slider_width : `str`, optional
             The width of the slider.
+        slider_colour : `str`, optional
+            The colour of the sliders.
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
@@ -367,6 +372,52 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
                      font_style, font_weight)
         _format_font(self.glyph_block_size_text, font_family, font_size,
                      font_style, font_weight)
+        self.single_slider.slider_color = slider_colour
+        self.single_slider.background_color = slider_colour
+        self.multiple_slider.slider_color = slider_colour
+        self.multiple_slider.background_color = slider_colour
+
+    def predefined_style(self, style):
+        r"""
+        Function that set a predefined styling on the widget.
+
+        Parameter
+        ---------
+        style : `str` (see below)
+            Style options ::
+
+                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'``, ``''``}
+
+        """
+        if style == 'minimal':
+            self.style(box_style=None, border_visible=True,
+                       border_color='black', border_style='solid',
+                       border_width=1, border_radius=0, padding='0.2cm',
+                       margin='0.3cm', font_family='', font_size=None,
+                       font_style='', font_weight='', slider_width='5cm',
+                       slider_colour='')
+            _format_box(self.glyph_options_box, box_style='',
+                        border_visible=False, border_color='',
+                        border_style='solid', border_width=1, border_radius=0,
+                        padding='0.1cm', margin=0)
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+              style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color=_map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       slider_width='5cm',
+                       slider_colour=_map_styles_to_hex_colours(style))
+            _format_box(self.glyph_options_box, box_style=style,
+                        border_visible=True,
+                        border_color=_map_styles_to_hex_colours(style),
+                        border_style='solid', border_width=1, border_radius=10,
+                        padding='0.1cm', margin=0)
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
 
     def add_render_function(self, render_function):
         r"""
@@ -505,13 +556,11 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
             mode_default, channel_options['n_channels'])
 
         self.glyph_block_size_text.value = channel_options['glyph_block_size']
-        self.glyph_block_size_text.visible = self._glyph_options_visible(
-            mode_default, channel_options['n_channels'],
-            channel_options['glyph_enabled'])
 
         self.glyph_use_negative_checkbox.value = \
             channel_options['glyph_use_negative']
-        self.glyph_use_negative_checkbox.visible = self._glyph_options_visible(
+
+        self.glyph_options_box.visible = self._glyph_options_visible(
             mode_default, channel_options['n_channels'],
             channel_options['glyph_enabled'])
 
@@ -565,8 +614,14 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
+    style : `str` (see below)
+        Sets a predefined style at the widget. Possible options are ::
+
+            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+             ``'danger'``, ``''``}
+
     """
-    def __init__(self, landmark_options, render_function=None):
+    def __init__(self, landmark_options, render_function=None, style='minimal'):
         # Check given options
         landmark_options = self._parse_landmark_options_dict(landmark_options)
 
@@ -607,9 +662,13 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
             children=[self.landmarks_checkbox_and_msg_box,
                       self.group_and_labels_and_text_box])
         self.align = 'start'
+        self.labels_box.padding = '0.3cm'
 
         # Assign output
         self.selected_values = landmark_options
+
+        # Set style
+        self.predefined_style(style)
 
         # Set functionality
         def render_landmarks_fun(name, value):
@@ -749,7 +808,7 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight=''):
+              font_weight='', labels_buttons_style=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -796,6 +855,14 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
+        labels_buttons_style : `str` or ``None`` (see below), optional
+            Style options ::
+
+                {``'primary'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'``, ``''``}
+                or
+                ``None``
+
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
@@ -807,8 +874,40 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         for s_group in self.labels_toggles:
             for w in s_group:
                 _format_font(w, font_family, font_size, font_style, font_weight)
+                w.button_style = labels_buttons_style
         _format_font(self.labels_text, font_family, font_size, font_style,
                      font_weight)
+
+    def predefined_style(self, style):
+        r"""
+        Function that set a predefined styling on the widget.
+
+        Parameter
+        ---------
+        style : `str` (see below)
+            Style options ::
+
+                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'``, ``''``}
+
+        """
+        if style == 'minimal':
+            self.style(box_style=None, border_visible=True,
+                       border_color='black', border_style='solid',
+                       border_width=1, border_radius=0, padding='0.2cm',
+                       margin='0.3cm', font_family='', font_size=None,
+                       font_style='', font_weight='', labels_buttons_style='')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+              style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color=_map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       labels_buttons_style='primary')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
 
     def add_render_function(self, render_function):
         r"""
@@ -1000,8 +1099,14 @@ class TextPrintWidget(ipywidgets.FlexBox):
         The number of lines of the text to be printed.
     text_per_line : `list` of length `n_lines`
         The text to be printed per line.
+    style : `str` (see below)
+        Sets a predefined style at the widget. Possible options are ::
+
+            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+             ``'danger'``, ``''``}
+
     """
-    def __init__(self, n_lines, text_per_line):
+    def __init__(self, n_lines, text_per_line, style='minimal'):
         self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
                             for i in range(n_lines)]
         super(TextPrintWidget, self).__init__(children=self.latex_texts)
@@ -1010,6 +1115,9 @@ class TextPrintWidget(ipywidgets.FlexBox):
         # Assign options
         self.n_lines = n_lines
         self.text_per_line = text_per_line
+
+        # Set style
+        self.predefined_style(style)
 
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1068,6 +1176,36 @@ class TextPrintWidget(ipywidgets.FlexBox):
         for i in range(self.n_lines):
             _format_font(self.latex_texts[i], font_family, font_size,
                          font_style, font_weight)
+
+    def predefined_style(self, style):
+        r"""
+        Function that set a predefined styling on the widget.
+
+        Parameter
+        ---------
+        style : `str` (see below)
+            Style options ::
+
+                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'``, ``''``}
+
+        """
+        if style == 'minimal':
+            self.style(box_style=None, border_visible=True,
+                       border_color='black', border_style='solid',
+                       border_width=1, border_radius=0, padding='0.1cm',
+                       margin='0.3cm', font_family='', font_size=None,
+                       font_style='', font_weight='')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+              style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color=_map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.1cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
 
     def set_widget_state(self, n_lines, text_per_line):
         r"""
@@ -1142,11 +1280,17 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
         (maximum) value.
     text_editable : `bool`, optional
         Flag that determines whether the index text will be editable.
+    style : `str` (see below)
+        Sets a predefined style at the widget. Possible options are ::
+
+            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+             ``'danger'``, ``''``}
+
     """
     def __init__(self, index, render_function=None, update_function=None,
-                 index_style='buttons', interval=0.5,
-                 description='Index: ', minus_description='-',
-                 plus_description='+', loop_enabled=True, text_editable=True):
+                 index_style='buttons', interval=0.5, description='Index: ',
+                 minus_description='-', plus_description='+', loop_enabled=True,
+                 text_editable=True, style='minimal'):
         from time import sleep
         from IPython import get_ipython
 
@@ -1196,6 +1340,9 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
         # Assign output
         self.selected_values = index
         self.index_style = index_style
+
+        # Set style
+        self.predefined_style(style)
 
         # Set functionality
         def play_pressed(name, value):
@@ -1353,6 +1500,64 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
                 box_style=None, border_visible=False, padding=0,
                 margin='0.15cm', font_family=font_family, font_size=font_size,
                 font_style=font_style, font_weight=font_weight)
+
+    def predefined_style(self, style):
+        r"""
+        Function that set a predefined styling on the widget.
+
+        Parameter
+        ---------
+        style : `str` (see below)
+            Style options ::
+
+                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'``, ``''``}
+
+        """
+        if style == 'minimal':
+            self.style(box_style='', border_visible=False)
+            self.play_toggle.button_style = ''
+            self.play_toggle.font_weight = 'normal'
+            self.stop_toggle.button_style = ''
+            self.stop_toggle.font_weight = 'normal'
+            self.play_options_toggle.button_style = ''
+            _format_box(self.loop_interval_box, '', False, 'black', 'solid', 1,
+                        10, '0.1cm', '0.1cm')
+            if self.index_style == 'buttons':
+                self.index_wid.button_plus.button_style = ''
+                self.index_wid.button_plus.font_weight = 'normal'
+                self.index_wid.button_minus.button_style = ''
+                self.index_wid.button_minus.font_weight = 'normal'
+                self.index_wid.index_text.background_color = ''
+            elif self.index_style == 'slider':
+                self.index_wid.slider.slider_color = ''
+                self.index_wid.slider.background_color = ''
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+              style == 'warning'):
+            self.style(box_style=style, border_visible=False)
+            self.play_toggle.button_style = 'success'
+            self.play_toggle.font_weight = 'bold'
+            self.stop_toggle.button_style = 'danger'
+            self.stop_toggle.font_weight = 'bold'
+            self.play_options_toggle.button_style = 'info'
+            _format_box(self.loop_interval_box, 'info', True,
+                        _map_styles_to_hex_colours('info'), 'solid', 1, 10,
+                        '0.1cm', '0.1cm')
+            if self.index_style == 'buttons':
+                self.index_wid.button_plus.button_style = 'primary'
+                self.index_wid.button_plus.font_weight = 'bold'
+                self.index_wid.button_minus.button_style = 'primary'
+                self.index_wid.button_minus.font_weight = 'bold'
+                self.index_wid.index_text.background_color = \
+                    _map_styles_to_hex_colours(style, True)
+            elif self.index_style == 'slider':
+                self.index_wid.slider.slider_color = \
+                    _map_styles_to_hex_colours(style)
+                self.index_wid.slider.background_color = \
+                    _map_styles_to_hex_colours(style)
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
 
     def add_render_function(self, render_function):
         r"""
@@ -1580,10 +1785,24 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
+    style : `str` (see below)
+        Sets a predefined style at the widget. Possible options are ::
+
+            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+             ``'danger'``, ``''``}
+
+    tabs_style : `str` (see below)
+        Sets a predefined style at the tabs of the widget. Possible options
+        are ::
+
+            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+             ``'danger'``, ``''``}
+
     """
     def __init__(self, renderer_options, options_tabs, objects_names=None,
                  labels_per_object=None, selected_object=0,
-                 object_selection_dropdown_visible=True, render_function=None):
+                 object_selection_dropdown_visible=True, render_function=None,
+                 style='minimal', tabs_style='minimal'):
         # Make sure that renderer_options is a list even with one member
         if not isinstance(renderer_options, list):
             renderer_options = [renderer_options]
@@ -1608,7 +1827,7 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
             object_selection_dropdown_visible)
         self.object_selection_dropdown = ipywidgets.Dropdown(
             options=objects_dict, value=selected_object, description='Select',
-            visible=tmp_visible)
+            visible=tmp_visible, margin='0.1cm')
         # options widgets
         options_widgets = []
         tab_titles = []
@@ -1643,13 +1862,11 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
             elif o == 'figure_one':
                 options_widgets.append(FigureOptionsOneScaleWidget(
                     tmp_options, render_function=render_function,
-                    figure_scale_bounds=(0.1, 4.), figure_scale_step=0.1,
                     figure_scale_visible=True, axes_visible=True))
                 tab_titles.append('Figure/Axes')
             elif o == 'figure_two':
                 options_widgets.append(FigureOptionsTwoScalesWidget(
                     tmp_options, render_function=render_function,
-                    figure_scale_bounds=(0.1, 4.), figure_scale_step=0.1,
                     figure_scale_visible=True, axes_visible=True,
                     coupled_default=False))
                 tab_titles.append('Figure/Axes')
@@ -1682,6 +1899,9 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
         self.labels_per_object = labels_per_object
         self.object_selection_dropdown_visible = \
             object_selection_dropdown_visible
+
+        # Set style
+        self.predefined_style(style, tabs_style)
 
         # Set functionality
         def update_widgets(name, value):
@@ -1797,6 +2017,66 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.object_selection_dropdown, font_family, font_size,
                      font_style, font_weight)
+
+    def predefined_style(self, style, tabs_style='minimal'):
+        r"""
+        Function that set a predefined styling on the widget.
+
+        Parameter
+        ---------
+        style : `str` (see below)
+            Style options ::
+
+                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'``, ``''``}
+
+        tabs_style : `str` (see below), optional
+            Style options ::
+
+                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'``, ``''``}
+
+        """
+        if tabs_style == 'minimal' or tabs_style=='':
+            tabs_style = ''
+            tabs_border_visible = False
+            tabs_border_color = 'black'
+            tabs_border_radius = 0
+            tabs_padding = 0
+        else:
+            tabs_style = tabs_style
+            tabs_border_visible = True
+            tabs_border_color = _map_styles_to_hex_colours(tabs_style)
+            tabs_border_radius = 10
+            tabs_padding = '0.3cm'
+
+        if style == 'minimal':
+            self.style(box_style='', border_visible=True, border_color='black',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.2cm', margin='0.5cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       tabs_box_style=tabs_style,
+                       tabs_border_visible=tabs_border_visible,
+                       tabs_border_color=tabs_border_color,
+                       tabs_border_style='solid', tabs_border_width=1,
+                       tabs_border_radius=tabs_border_radius,
+                       tabs_padding=tabs_padding, tabs_margin='0.1cm')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+              style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color=_map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.5cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       tabs_box_style=tabs_style,
+                       tabs_border_visible=tabs_border_visible,
+                       tabs_border_color=tabs_border_color,
+                       tabs_border_style='solid', tabs_border_width=1,
+                       tabs_border_radius=tabs_border_radius,
+                       tabs_padding=tabs_padding, tabs_margin='0.1cm')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
 
     def add_render_function(self, render_function):
         r"""
@@ -2018,11 +2298,17 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         The initial value of the figure padding in inches.
     overwrite : `bool`, optional
         The initial value of the overwrite flag.
+    style : `str` (see below)
+        Sets a predefined style at the widget. Possible options are ::
+
+            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+             ``'danger'``, ``''``}
+
     """
     def __init__(self, renderer, file_format='png', dpi=None,
                  orientation='portrait', papertype='letter', transparent=False,
                  facecolour='w', edgecolour='w', pad_inches=0.,
-                 overwrite=False):
+                 overwrite=False, style='minimal'):
         from os import getcwd
         from os.path import join, splitext
 
@@ -2124,6 +2410,9 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
 
         # Assign renderer
         self.renderer = renderer
+
+        # Set style
+        self.predefined_style(style)
 
         # Set functionality
         def papertype_visibility(name, value):
@@ -2251,6 +2540,39 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         self.edgecolour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style)
+
+    def predefined_style(self, style):
+        r"""
+        Function that set a predefined styling on the widget.
+
+        Parameter
+        ---------
+        style : `str` (see below)
+            Style options ::
+
+                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'``, ``''``}
+
+        """
+        if style == 'minimal':
+            self.style(box_style='', border_visible=True, border_color='black',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+            self.save_button.button_style = ''
+            self.save_button.font_weight = 'normal'
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+              style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color= _map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+            self.save_button.button_style = 'primary'
+            self.save_button.font_weight = 'bold'
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
 
 
 class FeatureOptionsWidget(ipywidgets.FlexBox):

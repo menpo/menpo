@@ -10,7 +10,7 @@ MENPO_LOGO = None
 MENPO_LOGO_SCALE = None
 
 
-def _map_styles_to_hex_colours(style):
+def _map_styles_to_hex_colours(style, background=False):
     r"""
     Function that returns the corresponding hex colour of a given style.
 
@@ -23,19 +23,36 @@ def _map_styles_to_hex_colours(style):
             or
             ``None``
 
+    background : `bool`, optional
+        If `True`, it returns the background (light) colour of each style.
+
     Returns
     -------
     hex_colour : `str`
         The corresponding hex colour.
     """
-    if style == 'info':
-        return '#31708f'
-    elif style == 'danger':
-        return '#A52A2A'
-    elif style == 'success':
-        return '#228B22'
+    if background:
+        if style == 'info':
+            return '#D9EDF7'
+        elif style == 'danger':
+            return '#F2DEDE'
+        elif style == 'success':
+            return '#DFF0D8'
+        elif style == 'warning':
+            return '#FCF8E3'
+        else:
+            return ''
     else:
-        return ''
+        if style == 'info':
+            return '#31708f'
+        elif style == 'danger':
+            return '#A52A2A'
+        elif style == 'success':
+            return '#228B22'
+        elif style == 'warning':
+            return '#8A6D3B'
+        else:
+            return ''
 
 
 def _format_box(box, box_style, border_visible, border_color, border_style,
@@ -2161,14 +2178,18 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
             options=numbers_vertical_align_dict,
             value=numbers_options['numbers_vertical_align'],
             description='Align ver.')
-        self.numbering_options_box = ipywidgets.Box(
+        self.name_size_style_weight = ipywidgets.VBox(
             children=[self.numbers_font_name_dropdown,
                       self.numbers_font_size_text,
                       self.numbers_font_style_dropdown,
-                      self.numbers_font_weight_dropdown,
-                      self.numbers_font_colour_widget,
+                      self.numbers_font_weight_dropdown])
+        self.colour_horizontal_vertical_align = ipywidgets.VBox(
+            children=[self.numbers_font_colour_widget,
                       self.numbers_horizontal_align_dropdown,
                       self.numbers_vertical_align_dropdown])
+        self.numbering_options_box = ipywidgets.HBox(
+            children=[self.name_size_style_weight,
+                      self.colour_horizontal_vertical_align])
         self.options_box = ipywidgets.VBox(
             children=[self.render_numbering_checkbox,
                       self.numbering_options_box], align='end')
@@ -2510,12 +2531,12 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
         The visibility of the axes checkbox.
     """
     def __init__(self, figure_options, render_function=None,
-                 figure_scale_bounds=(0.1, 4.), figure_scale_step=0.1,
+                 figure_scale_bounds=(0.1, 4.), figure_scale_step=0.05,
                  figure_scale_visible=True, axes_visible=True):
         self.figure_scale_slider = ipywidgets.FloatSlider(
             description='Figure scale:', value=figure_options['x_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
-            step=figure_scale_step, visible=figure_scale_visible, width='3.5cm')
+            step=figure_scale_step, visible=figure_scale_visible)
         self.render_axes_checkbox = ipywidgets.Checkbox(
             description='Render axes', value=figure_options['render_axes'],
             visible=axes_visible)
@@ -2597,14 +2618,20 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
         self.axes_y_limits_box = ipywidgets.HBox(
             children=[self.axes_y_limits_enable_checkbox,
                       self.axes_y_limits_from_to_box])
+        self.name_size_x_limits = ipywidgets.VBox(
+            children=[self.axes_font_name_dropdown, self.axes_font_size_text,
+                      self.axes_x_limits_box])
+        self.style_weight_y_limits = ipywidgets.VBox(
+            children=[self.axes_font_style_dropdown,
+                      self.axes_font_weight_dropdown, self.axes_y_limits_box])
+        self.name_size_x_limits_style_weight_y_limits = ipywidgets.HBox(
+            children=[self.name_size_x_limits,
+                      self.style_weight_y_limits])
         super(FigureOptionsOneScaleWidget, self).__init__(
             children=[self.figure_scale_slider, self.render_axes_checkbox,
-                      self.axes_font_name_dropdown, self.axes_font_size_text,
-                      self.axes_font_style_dropdown,
-                      self.axes_font_weight_dropdown, self.axes_x_limits_box,
-                      self.axes_y_limits_box])
+                      self.name_size_x_limits_style_weight_y_limits])
         self.align = 'start'
-        self.figure_scale_slider.slider_width = '3.5cm'
+        self.figure_scale_slider.slider_width = '8cm'
 
         # Assign output
         self.selected_values = figure_options
@@ -3031,7 +3058,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
         If ``True``, x and y scale sliders are coupled.
     """
     def __init__(self, figure_options, render_function=None,
-                 figure_scale_bounds=(0.1, 4.), figure_scale_step=0.1,
+                 figure_scale_bounds=(0.1, 4.), figure_scale_step=0.05,
                  figure_scale_visible=True, axes_visible=True,
                  coupled_default=False):
         from IPython.utils.traitlets import link
@@ -3039,11 +3066,11 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
         self.x_scale_slider = ipywidgets.FloatSlider(
             description='Figure scale: X', value=figure_options['x_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
-            step=figure_scale_step, width='3cm')
+            step=figure_scale_step)
         self.y_scale_slider = ipywidgets.FloatSlider(
             description='Y', value=figure_options['y_scale'],
             min=figure_scale_bounds[0], max=figure_scale_bounds[1],
-            step=figure_scale_step, width='3cm')
+            step=figure_scale_step)
         coupled_default = (coupled_default and
                            (figure_options['x_scale'] ==
                             figure_options['y_scale']))
@@ -3139,15 +3166,22 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
         self.axes_y_limits_box = ipywidgets.HBox(
             children=[self.axes_y_limits_enable_checkbox,
                       self.axes_y_limits_from_to_box])
+        self.name_size_x_limits = ipywidgets.VBox(
+            children=[self.axes_font_name_dropdown, self.axes_font_size_text,
+                      self.axes_x_limits_box])
+        self.style_weight_y_limits = ipywidgets.VBox(
+            children=[self.axes_font_style_dropdown,
+                      self.axes_font_weight_dropdown, self.axes_y_limits_box])
+        self.name_size_x_limits_style_weight_y_limits = ipywidgets.HBox(
+            children=[self.name_size_x_limits,
+                      self.style_weight_y_limits])
         super(FigureOptionsTwoScalesWidget, self).__init__(
             children=[self.figure_scale_box, self.render_axes_checkbox,
-                      self.axes_font_name_dropdown, self.axes_font_size_text,
-                      self.axes_font_style_dropdown,
-                      self.axes_font_weight_dropdown, self.axes_x_limits_box,
-                      self.axes_y_limits_box])
+                      self.name_size_x_limits_style_weight_y_limits])
+
         self.align = 'start'
-        self.slider_width = '3cm'
-        self.slider_width = '3cm'
+        self.x_scale_slider.width = '8cm'
+        self.y_scale_slider.width = '8cm'
 
         # Assign output
         self.selected_values = figure_options
@@ -3785,7 +3819,7 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
             children=[self.location_related_box, self.font_related_box,
                       self.formatting_related_box])
         self.options_box = ipywidgets.VBox(
-            children=[self.render_legend_checkbox, self.tab_box], align='start')
+            children=[self.render_legend_checkbox, self.tab_box], align='end')
         super(LegendOptionsWidget, self).__init__(children=[self.options_box])
         self.align = 'start'
 
