@@ -4,6 +4,6 @@ from .base import (
     AlignmentViewer2d, GraphPlotter, view_image_landmarks)
 from .text_utils import progress_bar_str, print_dynamic, print_bytes
 from .widgets import (visualize_pointclouds, visualize_landmarkgroups,
-                      visualize_landmarks, visualize_images)
-#, features_selection, save_matplotlib_figure)
+                      visualize_landmarks, visualize_images,
+                      save_matplotlib_figure, features_selection)
 from .viewmatplotlib import MatplotlibRenderer

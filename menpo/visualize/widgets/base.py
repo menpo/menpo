@@ -10,7 +10,8 @@ from menpo.visualize.viewmatplotlib import (MatplotlibImageViewer2d,
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, AnimationOptionsWidget,
-                      LandmarkOptionsWidget, ChannelOptionsWidget)
+                      LandmarkOptionsWidget, ChannelOptionsWidget,
+                      FeatureOptionsWidget)
 from .tools import _format_box, LogoWidget, _map_styles_to_hex_colours
 
 
@@ -1157,90 +1158,101 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     renderer_options_wid.options_widgets[3].render_legend_checkbox.value = False
 
 
-#
-# def save_matplotlib_figure(renderer):
-#     r"""
-#     Widget that allows to save a figure, which was generated with Matplotlib,
-#     to file.
-#
-#     Parameters
-#     ----------
-#     renderer : :map:`MatplotlibRenderer`
-#         The Matplotlib renderer object.
-#     """
-#     import IPython.display as ipydisplay
-#     import IPython.html.widgets as ipywidgets
-#     # Create sub-widgets
-#     logo_wid = logo()
-#     save_figure_wid = save_figure_options(renderer, toggle_show_default=True,
-#                                           toggle_show_visible=False)
-#
-#     wid = ipywidgets.Box(children=[logo_wid, save_figure_wid])
-#
-#     # Display widget
-#     ipydisplay.display(wid)
-#
-#     # Format widgets
-#     format_save_figure_options(save_figure_wid, container_padding='6px',
-#                                container_margin='6px',
-#                                container_border='1px solid black',
-#                                toggle_button_font_weight='bold',
-#                                tab_top_margin='0cm', border_visible=True)
-#     format_logo(logo_wid, border_visible=False)
-#
-#
-# def features_selection():
-#     r"""
-#     Widget that allows selecting a features function and its options. The
-#     widget supports all features from :ref:`api-feature-index` and has a
-#     preview tab. It returns a `list` of length 1 with the selected features
-#     function closure.
-#
-#     Returns
-#     -------
-#     features_function : `list` of length ``1``
-#         The function closure of the features function using `functools.partial`.
-#         So the function can be called as: ::
-#
-#             features_image = features_function[0](image)
-#
-#     """
-#     import IPython.display as ipydisplay
-#     import IPython.html.widgets as ipywidgets
-#     # Create sub-widgets
-#     logo_wid = logo()
-#     features_options_wid = features_options(toggle_show_default=True,
-#                                             toggle_show_visible=False)
-#     features_wid = ipywidgets.Box(children=[logo_wid,
-#                                                         features_options_wid])
-#     select_but = ipywidgets.Button(description='Select')
-#
-#     # Create final widget
-#     wid = ipywidgets.Box(children=[features_wid, select_but])
-#
-#     # function for select button
-#     def select_function(name):
-#         wid.close()
-#         output.pop(0)
-#         output.append(features_options_wid.function)
-#     select_but.on_click(select_function)
-#
-#     # Display widget
-#     ipydisplay.display(wid)
-#
-#     # Format widgets
-#     format_features_options(features_options_wid, border_visible=True)
-#     format_logo(logo_wid, border_visible=False)
-#     # align logo at the end
-#     add_class(features_wid, 'align-end')
-#     # align select button at the centre
-#     add_class(wid, 'align-center')
-#
-#     # Initialize output with empty list. It needs to be a list so that
-#     # it's mutable and synchronizes with frontend.
-#     output = [features_options_wid.function]
-#
-#     return output
+def save_matplotlib_figure(renderer, style='coloured'):
+    r"""
+    Widget that allows to save a figure, which was generated with Matplotlib,
+    to file.
+
+    Parameters
+    ----------
+    renderer : :map:`MatplotlibRenderer`
+        The Matplotlib renderer object.
+    style : {``'coloured'``, ``'minimal'``}, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    """
+    # Create sub-widgets
+    logo_wid = LogoWidget()
+    if style == 'coloured':
+        style = 'warning'
+    else:
+        raise ValueError('style must be either coloured or minimal')
+    save_figure_wid = SaveFigureOptionsWidget(renderer, style=style)
+    save_figure_wid.margin = '0.1cm'
+    logo_wid.margin = '0.1cm'
+    wid = ipywidgets.HBox(children=[logo_wid, save_figure_wid])
+
+    # Display widget
+    ipydisplay.display(wid)
+
+
+def features_selection(style='coloured'):
+    r"""
+    Widget that allows selecting a features function and its options. The
+    widget supports all features from :ref:`api-feature-index` and has a
+    preview tab. It returns a `list` of length 1 with the selected features
+    function closure.
+
+    Parameters
+    ----------
+    style : {``'coloured'``, ``'minimal'``}, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+
+    Returns
+    -------
+    features_function : `list` of length ``1``
+        The function closure of the features function using `functools.partial`.
+        So the function can be called as: ::
+
+            features_image = features_function[0](image)
+
+    """
+    # Styling options
+    if style == 'coloured':
+        outer_style = 'info'
+        inner_style = 'warning'
+        but_style = 'primary'
+        rad = 10
+    elif style == 'minimal':
+        outer_style = ''
+        inner_style = 'minimal'
+        but_style = ''
+        rad = 0
+    else:
+        raise ValueError('style must be either coloured or minimal')
+
+    # Create sub-widgets
+    logo_wid = LogoWidget()
+    features_options_wid = FeatureOptionsWidget(style=inner_style)
+    features_wid = ipywidgets.HBox(children=[logo_wid, features_options_wid])
+    select_but = ipywidgets.Button(description='Select')
+
+    # Create final widget
+    wid = ipywidgets.VBox(children=[features_wid, select_but])
+    _format_box(wid, outer_style, True,
+                _map_styles_to_hex_colours(outer_style), 'solid', 1, rad, 0, 0)
+    logo_wid.margin = '0.3cm'
+    features_options_wid.margin = '0.3cm'
+    select_but.margin = '0.2cm'
+    select_but.button_style = but_style
+    wid.align = 'center'
+
+    # function for select button
+    def select_function(name):
+        wid.close()
+        output.pop(0)
+        output.append(features_options_wid.function)
+    select_but.on_click(select_function)
+
+    # Display widget
+    ipydisplay.display(wid)
+
+    # Initialize output with empty list. It needs to be a list so that
+    # it's mutable and synchronizes with frontend.
+    output = [features_options_wid.function]
+
+    return output
 
 
 def _visualize(image, renderer, render_landmarks, image_is_masked,

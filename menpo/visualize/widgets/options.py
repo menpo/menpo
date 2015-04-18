@@ -2657,8 +2657,17 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
     widget stores the features `function` to `self.features_function`, the
     features options `dict` in `self.features_options` and the `partial`
     function with the options as `self.function`.
+
+    Parameter
+    ---------
+    style : `str` (see below)
+        Sets a predefined style at the widget. Possible options are ::
+
+            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+             ``'danger'``, ``''``}
+
     """
-    def __init__(self):
+    def __init__(self, style='minimal'):
         # import features methods and time
         import time
         from menpo.feature.features import (hog, lbp, igo, es, daisy, gradient,
@@ -2743,6 +2752,9 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
         self.function = partial(no_op, **options)
         self.features_function = no_op
         self.features_options = options
+
+        # Set style
+        self.predefined_style(style)
 
         # Set functionality
         def per_feature_options_visibility(name, value):
@@ -2925,3 +2937,32 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
             font_family=font_family, font_size=font_size, font_style=font_style,
             font_weight=font_weight)
         self.no_options_widget.margin = '0.2cm'
+
+    def predefined_style(self, style):
+        r"""
+        Function that set a predefined styling on the widget.
+
+        Parameter
+        ---------
+        style : `str` (see below)
+            Style options ::
+
+                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+                 ``'danger'``, ``''``}
+
+        """
+        if style == 'minimal':
+            self.style(box_style='', border_visible=True, border_color='black',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+              style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color= _map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
