@@ -193,7 +193,10 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     tab_titles = ['Info', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
-    wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    if n_pointclouds > 1:
+        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    else:
+        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
 
     # Set widget's style
     wid.box_style = widget_box_style
@@ -239,7 +242,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
 
     # Make sure that landmarkgroups is a list even with one landmark group
     # member
-    if not isinstance(landmarkgroups, Sized):
+    if not isinstance(landmarkgroups, list):
         landmarkgroups = [landmarkgroups]
 
     # Get the number of landmarkgroups
@@ -492,7 +495,10 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
     tab_titles = ['Info', 'Landmarks', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
-    wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    if n_landmarkgroups > 1:
+        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    else:
+        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
 
     # Set widget's style
     wid.box_style = widget_box_style
@@ -537,7 +543,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
     print('Initializing...')
 
     # Make sure that landmarks is a list even with one landmark manager member
-    if not isinstance(landmarks, Sized):
+    if not isinstance(landmarks, list):
         landmarks = [landmarks]
 
     # Get the number of landmark managers
@@ -807,7 +813,10 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
     tab_titles = ['Info', 'Landmarks', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
-    wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    if n_landmarks > 1:
+        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    else:
+        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
 
     # Set widget's style
     wid.box_style = widget_box_style
@@ -1143,7 +1152,10 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     tab_titles = ['Info', 'Channels', 'Landmarks', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
-    wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    if n_images > 1:
+        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    else:
+        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
 
     # Set widget's style
     wid.box_style = widget_box_style
