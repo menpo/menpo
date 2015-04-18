@@ -614,6 +614,9 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
+    update_function : `function` or ``None``, optional
+        The update function that is executed when the index value changes.
+        If ``None``, then nothing is assigned.
     style : `str` (see below)
         Sets a predefined style at the widget. Possible options are ::
 
@@ -621,7 +624,8 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
              ``'danger'``, ``''``}
 
     """
-    def __init__(self, landmark_options, render_function=None, style='minimal'):
+    def __init__(self, landmark_options, render_function=None,
+                 update_function=None, style='minimal'):
         # Check given options
         landmark_options = self._parse_landmark_options_dict(landmark_options)
 
@@ -712,6 +716,8 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         self._labels_fun = labels_fun
 
         # Set render function
+        self._update_function = None
+        self.add_update_function(update_function)
         self._render_function = None
         self.add_render_function(render_function)
 
@@ -956,6 +962,53 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         # add new function
         self.add_render_function(render_function)
 
+    def add_update_function(self, update_function):
+        r"""
+        Method that adds an `update_function()` to the widget. The signature of
+        the given function is also stored in `self._update_function`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._update_function = update_function
+        if self._update_function is not None:
+            self.render_landmarks_checkbox.on_trait_change(
+                self._update_function, 'value')
+            self.group_dropdown.on_trait_change(self._update_function, 'value')
+            self._add_function_to_labels_toggles(self._update_function)
+
+    def remove_update_function(self):
+        r"""
+        Method that removes the current `self._update_function()` from the
+        widget and sets ``self._update_function = None``.
+        """
+        self.render_landmarks_checkbox.on_trait_change(self._update_function,
+                                                       'value', remove=True)
+        self.group_dropdown.on_trait_change(self._update_function, 'value',
+                                            remove=True)
+        self._remove_function_from_labels_toggles(self._update_function)
+        self._update_function = None
+
+    def replace_update_function(self, update_function):
+        r"""
+        Method that replaces the current `self._update_function()` of the widget
+        with the given `update_function()`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_update_function()
+
+        # add new function
+        self.add_update_function(update_function)
+
     def _compare_groups_and_labels(self, groups, labels):
         r"""
         Function that compares the provided landmarks groups and labels with
@@ -1016,6 +1069,8 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
+        update_function = self._update_function
+        self.remove_update_function()
 
         # temporarily remove the rest of the callbacks
         self.render_landmarks_checkbox.on_trait_change(
@@ -1073,6 +1128,7 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         self._add_function_to_labels_toggles(self._labels_fun)
 
         # Re-assign render callback
+        self.add_update_function(update_function)
         self.add_render_function(render_function)
 
         # Assign new options dict to selected_values
@@ -1080,6 +1136,7 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
 
         # trigger render function if allowed
         if allow_callback:
+            self._update_function('', True)
             self._render_function('', True)
 
 
