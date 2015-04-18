@@ -1237,6 +1237,7 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
             description='Alpha', value=image_options['alpha'],
             min=0.0, max=1.0, step=0.05, width='4cm')
         cmap_dict = OrderedDict()
+        cmap_dict['None'] = None
         cmap_dict['afmhot'] = 'afmhot'
         cmap_dict['autumn'] = 'autumn'
         cmap_dict['binary'] = 'binary'
