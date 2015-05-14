@@ -32,9 +32,6 @@ test:
   imports:
   - menpo
 
-  commands:
-  - python -c "import nose; nose.main()" -s menpo
-
 about:
   home: https://github.com/menpo/menpo/
   license: BSD
