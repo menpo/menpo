@@ -3,7 +3,11 @@ from .base import (
     PointGraphViewer2d, LandmarkViewer2d, ImageViewer2d, ImageViewer,
     AlignmentViewer2d, GraphPlotter, view_image_landmarks)
 from .text_utils import progress_bar_str, print_dynamic, print_bytes
-from .widgets import (visualize_pointclouds, visualize_landmarkgroups,
-                      visualize_landmarks, visualize_images,
-                      save_matplotlib_figure, features_selection)
+# If IPython is not installed, then access to the widgets should be blocked.
+try:
+    from .widgets import (visualize_pointclouds, visualize_landmarkgroups,
+                          visualize_landmarks, visualize_images,
+                          save_matplotlib_figure, features_selection)
+except ImportError:
+    pass
 from .viewmatplotlib import MatplotlibRenderer
