@@ -145,11 +145,11 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         rang = pointcloud.range()
         cm = pointcloud.centre()
         text_per_line = [
-            "> {} points.".format(pointcloud.n_points),
-            "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H.".format(
+            "> {} points".format(pointcloud.n_points),
+            "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
                 min_b[0], max_b[0], min_b[1], max_b[1]),
-            "> Range: {0:.1f}W, {1:.1f}H.".format(rang[0], rang[1]),
-            "> Centre of mass: ({0:.1f}, {1:.1f}).".format(cm[0], cm[1])]
+            "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
+            "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1])]
         info_wid.set_widget_state(n_lines=4, text_per_line=text_per_line)
 
     # Create widgets
@@ -418,16 +418,16 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
 
     # Define function that updates the info text
     def update_info(landmarkgroup):
-        min_b, max_b = landmarkgroup.values()[0].bounds()
-        rang = landmarkgroup.values()[0].range()
-        cm = landmarkgroup.values()[0].centre()
+        min_b, max_b = landmarkgroup.lms.bounds()
+        rang = landmarkgroup.lms.range()
+        cm = landmarkgroup.lms.centre()
         text_per_line = [
-            "> {} landmark points.".format(landmarkgroup.values()[0].n_points),
-            "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H.".format(
+            "> {} landmark points".format(landmarkgroup.n_landmarks),
+            "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
                 min_b[0], max_b[0], min_b[1], max_b[1]),
-            "> Range: {0:.1f}W, {1:.1f}H.".format(rang[0], rang[1]),
-            "> Centre of mass: ({0:.1f}, {1:.1f}).".format(cm[0], cm[1]),
-            "> Norm is {0:.2f}.".format(landmarkgroup.values()[0].norm())]
+            "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
+            "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
+            "> Norm: {0:.2f}".format(landmarkgroup.lms.norm())]
         info_wid.set_widget_state(n_lines=5, text_per_line=text_per_line)
 
     # Create widgets
