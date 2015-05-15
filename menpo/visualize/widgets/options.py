@@ -732,11 +732,9 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
             landmark_options['labels_keys'] = [[' ']]
             landmark_options['with_labels'] = [' ']
         else:
-            if len(landmark_options['with_labels']) == 0:
-                group_idx = landmark_options['group_keys'].index(
-                    landmark_options['group'])
-                landmark_options['with_labels'] = \
-                    landmark_options['labels_keys'][group_idx]
+            if (landmark_options['with_labels'] is not None and
+                    len(landmark_options['with_labels']) == 0):
+                landmark_options['with_labels'] = None
         return landmark_options
 
     def _no_landmarks_msg_visible(self, has_landmarks):
@@ -794,6 +792,8 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         for w in self.labels_box.children:
             if w.description not in with_labels:
                 w.value = False
+            else:
+                w.value = True
 
     def _add_function_to_labels_toggles(self, fun):
         r"""
@@ -1097,6 +1097,9 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         # ones
         if not self._compare_groups_and_labels(landmark_options['group_keys'],
                                                landmark_options['labels_keys']):
+            if landmark_options['group'] is None:
+                landmark_options['group'] = landmark_options['group_keys'][0]
+
             self.group_dropdown.options = landmark_options['group_keys']
             self.group_dropdown.visible = tmp_visible
             self.group_dropdown.disabled = tmp_disabled
@@ -1110,13 +1113,23 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
             group_idx = landmark_options['group_keys'].index(
                 landmark_options['group'])
             self.labels_box.children = self.labels_toggles[group_idx]
+            if landmark_options['with_labels'] is None:
+                landmark_options['with_labels'] = \
+                    landmark_options['labels_keys'][group_idx]
             self._set_labels_toggles_values(landmark_options['with_labels'])
         else:
             self.group_dropdown.visible = tmp_visible
             self.group_dropdown.disabled = tmp_disabled
+
+            if landmark_options['group'] is None:
+                landmark_options['group'] = self.selected_values['group']
             self.group_dropdown.value = landmark_options['group']
 
+            if landmark_options['with_labels'] is None:
+                landmark_options['with_labels'] = \
+                    self.selected_values['with_labels']
             self._set_labels_toggles_values(landmark_options['with_labels'])
+
             for w in self.labels_box.children:
                 w.disabled = tmp_disabled
                 w.visible = tmp_visible
@@ -1127,12 +1140,12 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         self.group_dropdown.on_trait_change(self._group_fun, 'value')
         self._add_function_to_labels_toggles(self._labels_fun)
 
+        # Assign new options dict to selected_values
+        self.selected_values = landmark_options
+
         # Re-assign render callback
         self.add_update_function(update_function)
         self.add_render_function(render_function)
-
-        # Assign new options dict to selected_values
-        self.selected_values = landmark_options
 
         # trigger render function if allowed
         if allow_callback:

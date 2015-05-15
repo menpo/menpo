@@ -149,8 +149,9 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
             "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
                 min_b[0], max_b[0], min_b[1], max_b[1]),
             "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
-            "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1])]
-        info_wid.set_widget_state(n_lines=4, text_per_line=text_per_line)
+            "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
+            "> Norm: {0:.2f}".format(pointcloud.norm())]
+        info_wid.set_widget_state(n_lines=5, text_per_line=text_per_line)
 
     # Create widgets
     axes_mode_wid = ipywidgets.RadioButtons(
@@ -165,7 +166,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     renderer_options_box = ipywidgets.VBox(
         children=[axes_mode_wid, renderer_options_wid], align='center',
         margin='0.1cm')
-    info_wid = TextPrintWidget(n_lines=4, text_per_line=[''] * 4,
+    info_wid = TextPrintWidget(n_lines=5, text_per_line=[''] * 5,
                                style=info_style)
     initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
                                                image=np.zeros((10, 10)))
@@ -360,21 +361,32 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
         tmp5 = renderer_options_wid.selected_values[group_idx]['figure']
         new_figure_size = (tmp5['x_scale'] * figure_size[0],
                            tmp5['y_scale'] * figure_size[1])
-        n_labels = len(landmark_options_wid.selected_values['with_labels'])
+
+        # find the with_labels' indices
+        with_labels_idx = [
+            landmark_options_wid.selected_values['labels_keys'][0].index(lbl)
+            for lbl in landmark_options_wid.selected_values['with_labels']]
+
+        # get line and marker colours
+        line_colour = [tmp1['line_colour'][lbl_idx]
+                       for lbl_idx in with_labels_idx]
+        marker_face_colour = [tmp2['marker_face_colour'][lbl_idx]
+                              for lbl_idx in with_labels_idx]
+        marker_edge_colour = [tmp2['marker_edge_colour'][lbl_idx]
+                              for lbl_idx in with_labels_idx]
 
         if landmark_options_wid.selected_values['render_landmarks']:
             renderer = landmarkgroups[im].view(
                 with_labels=landmark_options_wid.selected_values['with_labels'],
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
                 image_view=axes_mode_wid.value == 1,
-                render_lines=tmp1['render_lines'],
-                line_colour=tmp1['line_colour'][:n_labels],
+                render_lines=tmp1['render_lines'], line_colour=line_colour,
                 line_style=tmp1['line_style'], line_width=tmp1['line_width'],
                 render_markers=tmp2['render_markers'],
                 marker_style=tmp2['marker_style'],
                 marker_size=tmp2['marker_size'],
-                marker_face_colour=tmp2['marker_face_colour'][:n_labels],
-                marker_edge_colour=tmp2['marker_edge_colour'][:n_labels],
+                marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
                 marker_edge_width=tmp2['marker_edge_width'],
                 render_numbering=tmp3['render_numbering'],
                 numbers_font_name=tmp3['numbers_font_name'],
@@ -460,11 +472,12 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
         im = 0
         if n_landmarkgroups > 1:
             im = landmark_number_wid.selected_values['index']
-        landmark_options = {'has_landmarks': True, 'render_landmarks': True,
-                            'group_keys': ['0'],
-                            'labels_keys': [landmarkgroups[im].labels],
-                            'group': '0',
-                            'with_labels': landmarkgroups[im].labels}
+        landmark_options = {
+            'has_landmarks': True,
+            'render_landmarks':
+                landmark_options_wid.selected_values['render_landmarks'],
+            'group_keys': ['0'], 'labels_keys': [landmarkgroups[im].labels],
+            'group': '0', 'with_labels': None}
         landmark_options_wid.set_widget_state(landmark_options, False)
         landmark_options_wid.predefined_style(landmarks_style)
 
@@ -666,22 +679,38 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         tmp5 = renderer_options_wid.selected_values[group_idx]['figure']
         new_figure_size = (tmp5['x_scale'] * figure_size[0],
                            tmp5['y_scale'] * figure_size[1])
-        n_labels = len(landmark_options_wid.selected_values['with_labels'])
 
+        # get selected group
         sel_group = landmark_options_wid.selected_values['group']
+        sel_group_idx = landmark_options_wid.selected_values[
+            'group_keys'].index(sel_group)
+
+        # find the with_labels' indices
+        with_labels_idx = [
+            landmark_options_wid.selected_values['labels_keys'][
+                sel_group_idx].index(lbl)
+            for lbl in landmark_options_wid.selected_values['with_labels']]
+
+        # get line and marker colours
+        line_colour = [tmp1['line_colour'][lbl_idx]
+                       for lbl_idx in with_labels_idx]
+        marker_face_colour = [tmp2['marker_face_colour'][lbl_idx]
+                              for lbl_idx in with_labels_idx]
+        marker_edge_colour = [tmp2['marker_edge_colour'][lbl_idx]
+                              for lbl_idx in with_labels_idx]
+
         if landmark_options_wid.selected_values['render_landmarks']:
             renderer = landmarks[im][sel_group].view(
                 with_labels=landmark_options_wid.selected_values['with_labels'],
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
                 image_view=axes_mode_wid.value == 1,
-                render_lines=tmp1['render_lines'],
-                line_colour=tmp1['line_colour'][:n_labels],
+                render_lines=tmp1['render_lines'], line_colour=line_colour,
                 line_style=tmp1['line_style'], line_width=tmp1['line_width'],
                 render_markers=tmp2['render_markers'],
                 marker_style=tmp2['marker_style'],
                 marker_size=tmp2['marker_size'],
-                marker_face_colour=tmp2['marker_face_colour'][:n_labels],
-                marker_edge_colour=tmp2['marker_edge_colour'][:n_labels],
+                marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
                 marker_edge_width=tmp2['marker_edge_width'],
                 render_numbering=tmp3['render_numbering'],
                 numbers_font_name=tmp3['numbers_font_name'],
@@ -730,15 +759,15 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
             rang = landmarks[group][None].range()
             cm = landmarks[group][None].centre()
             text_per_line = [
-                "> {} landmark points.".format(landmarks[group][None].n_points),
-                "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H.".
+                "> {} landmark points".format(landmarks[group][None].n_points),
+                "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".
                     format(min_b[0], max_b[0], min_b[1], max_b[1]),
-                "> Range: {0:.1f}W, {1:.1f}H.".format(rang[0], rang[1]),
-                "> Centre of mass: ({0:.1f}, {1:.1f}).".format(cm[0], cm[1]),
-                "> Norm is {0:.2f}.".format(landmarks[group][None].norm())]
+                "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
+                "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
+                "> Norm: {0:.2f}".format(landmarks[group][None].norm())]
             n_lines = 5
         else:
-            text_per_line = ["There are no landmarks."]
+            text_per_line = ["No landmarks available."]
             n_lines = 1
         info_wid.set_widget_state(n_lines=n_lines, text_per_line=text_per_line)
 
@@ -779,10 +808,12 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         if n_landmarks > 1:
             im = landmark_number_wid.selected_values['index']
         group_keys, labels_keys = _extract_group_labels_landmarks(landmarks[im])
-        landmark_options = {'has_landmarks': landmarks[im].has_landmarks,
-                            'render_landmarks': True, 'group_keys': group_keys,
-                            'labels_keys': labels_keys, 'group': group_keys[0],
-                            'with_labels': labels_keys[0]}
+        landmark_options = {
+            'has_landmarks': landmarks[im].has_landmarks,
+            'render_landmarks':
+                landmark_options_wid.selected_values['render_landmarks'],
+            'group_keys': group_keys, 'labels_keys': labels_keys,
+            'group': None, 'with_labels': None}
         landmark_options_wid.set_widget_state(landmark_options, False)
         landmark_options_wid.predefined_style(landmarks_style)
 
@@ -994,7 +1025,25 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         tmp6 = renderer_options_wid.selected_values[group_idx]['image']
         new_figure_size = (tmp5['x_scale'] * figure_size[0],
                            tmp5['y_scale'] * figure_size[1])
-        n_labels = len(landmark_options_wid.selected_values['with_labels'])
+
+        # get selected group index
+        sel_group_idx = landmark_options_wid.selected_values[
+            'group_keys'].index(landmark_options_wid.selected_values['group'])
+
+        # find the with_labels' indices
+        with_labels_idx = [
+            landmark_options_wid.selected_values['labels_keys'][
+                sel_group_idx].index(lbl)
+            for lbl in landmark_options_wid.selected_values['with_labels']]
+
+        # get line and marker colours
+        line_colour = [tmp1['line_colour'][lbl_idx]
+                       for lbl_idx in with_labels_idx]
+        marker_face_colour = [tmp2['marker_face_colour'][lbl_idx]
+                              for lbl_idx in with_labels_idx]
+        marker_edge_colour = [tmp2['marker_edge_colour'][lbl_idx]
+                              for lbl_idx in with_labels_idx]
+
         renderer = _visualize(
             images[im], save_figure_wid.renderer,
             landmark_options_wid.selected_values['render_landmarks'],
@@ -1008,10 +1057,9 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             landmark_options_wid.selected_values['group'],
             landmark_options_wid.selected_values['with_labels'],
             tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
-            tmp1['line_colour'][:n_labels], tmp2['render_markers'],
-            tmp2['marker_style'], tmp2['marker_size'],
-            tmp2['marker_edge_width'], tmp2['marker_edge_colour'][:n_labels],
-            tmp2['marker_face_colour'][:n_labels], tmp3['render_numbering'],
+            line_colour, tmp2['render_markers'], tmp2['marker_style'],
+            tmp2['marker_size'], tmp2['marker_edge_width'], marker_edge_colour,
+            marker_face_colour, tmp3['render_numbering'],
             tmp3['numbers_font_name'], tmp3['numbers_font_size'],
             tmp3['numbers_font_style'], tmp3['numbers_font_weight'],
             tmp3['numbers_font_colour'][0], tmp3['numbers_horizontal_align'],
@@ -1038,7 +1086,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         # Prepare masked (or non-masked) string
         masked_str = 'Masked Image' if image_is_masked else 'Image'
         # Get image path, if available
-        path_str = img.path if hasattr(img, 'path') else 'No path available.'
+        path_str = img.path if hasattr(img, 'path') else 'No path available'
         # Create text lines
         text_per_line = [
             "> {} of size {} with {} channel{}".format(
@@ -1051,11 +1099,11 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
                 "> {} masked pixels (attached mask {:.1%} true)".format(
                     img.n_true_pixels(), img.mask.proportion_true()))
             n_lines += 1
-        text_per_line.append("> min={:.3f}, max={:.3f}.".format(
+        text_per_line.append("> min={:.3f}, max={:.3f}".format(
             img.pixels.min(), img.pixels.max()))
         n_lines += 1
         if img.has_landmarks:
-            text_per_line.append("> {} landmark points.".format(
+            text_per_line.append("> {} landmark points".format(
                 img.landmarks[group].lms.n_points))
             n_lines += 1
         info_wid.set_widget_state(n_lines=n_lines, text_per_line=text_per_line)
@@ -1097,7 +1145,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             'render_landmarks':
                 landmark_options_wid.selected_values['render_landmarks'],
             'group_keys': group_keys, 'labels_keys': labels_keys,
-            'group': group_keys[0], 'with_labels': labels_keys[0]}
+            'group': None, 'with_labels': None}
         landmark_options_wid.set_widget_state(landmark_options, False)
         landmark_options_wid.predefined_style(landmarks_style)
 
@@ -1105,7 +1153,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         tmp_channels = channel_options_wid.selected_values['channels']
         tmp_glyph_enabled = channel_options_wid.selected_values['glyph_enabled']
         tmp_sum_enabled = channel_options_wid.selected_values['sum_enabled']
-        if np.max(tmp_channels) > images[im].n_channels:
+        if np.max(tmp_channels) > images[im].n_channels - 1:
             tmp_channels = 0
             tmp_glyph_enabled = False
             tmp_sum_enabled = False
@@ -1187,8 +1235,6 @@ def save_matplotlib_figure(renderer, style='coloured'):
     logo_wid = LogoWidget()
     if style == 'coloured':
         style = 'warning'
-    else:
-        raise ValueError('style must be either coloured or minimal')
     save_figure_wid = SaveFigureOptionsWidget(renderer, style=style)
     save_figure_wid.margin = '0.1cm'
     logo_wid.margin = '0.1cm'
