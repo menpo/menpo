@@ -17,35 +17,46 @@ from .tools import (_format_box, _format_font, _convert_image_to_bytes,
 
 class ChannelOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting channel options when rendering an image.
-    Specifically, it consists of:
+    Creates a widget for selecting channel options when rendering an image. The
+    widget consists of the following parts from `IPython.html.widgets`:
 
-        1) RadioButtons [`self.mode_radiobuttons`]: 'Single' or 'Multiple'
-        2) Checkbox [`self.masked_checkbox`]: enable masked mode
-        3) IntSlider [`self.single_slider`]: channel selection
-        4) IntRangeSlider [`self.multiple_slider`]: channels range selection
-        5) Checkbox [`self.rgb_checkbox`]: view as RGB
-        6) Checkbox [`self.sum_checkbox`]: view sum of channels
-        7) Checkbox [`self.glyph_checkbox`]: view glyph
-        8) BoundedIntText [`self.glyph_block_size_text`]: glyph block size
-        9) Checkbox [`self.glyph_use_negative_checkbox`]: use negative values
-        10) VBox [`self.glyph_options_box`]: box that contains (8) and (9)
-        11) VBox [`self.glyph_box`]: box that contains (7) and (10)
-        12) HBox [`self.multiple_options_box`]: box that contains (6), (11), (5)
-        13) Box [`self.sliders_box`]: box that contains (3) and (4)
-        14) Box [`self.sliders_and_multiple_options_box`]: box that contains
-            (13) and (12)
-        15) VBox [`self.mode_and_masked_box`]: box that contains (1) and (2)
+    == ============== ================================== =======================
+    No Object         Variable (`self.`)                 Description
+    == ============== ================================== =======================
+    1  RadioButtons   `mode_radiobuttons`                The mode selector
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+                                                         'Single' or 'Multiple'
+    2  Checkbox       `masked_checkbox`                  Controls masked mode
+    3  IntSlider      `single_slider`                    Single channel selector
+    4  IntRangeSlider `multiple_slider`                  Channels range selector
+    5  Checkbox       `rgb_checkbox`                     View as RGB
+    6  Checkbox       `sum_checkbox`                     View sum of channels
+    7  Checkbox       `glyph_checkbox`                   View glyph
+    8  BoundedIntText `glyph_block_size_text`            Glyph block size
+    9  Checkbox       `glyph_use_negative_checkbox`      Use negative values
+    10 VBox           `glyph_options_box`                Contains 8, 9
+    11 VBox           `glyph_box`                        Contains 7, 10
+    12 HBox           `multiple_options_box`             Contains 6, 11, 5
+    13 Box            `sliders_box`                      Contains 3, 4
+    14 Box            `sliders_and_multiple_options_box` Contains 13, 12
+    15 VBox           `mode_and_masked_box`              Contains 1, 2
+    == ============== ================================== =======================
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `dict`.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+    * To update the callback function please refer to the
+      ``replace_render_function()`` method.
 
     Parameters
     ----------
     channel_options : `dict`
-        The initial options. For example ::
+        The dictionary with the initial options. For example
+        ::
 
             channel_options = {'n_channels': 10,
                                'image_is_masked': True,
@@ -59,12 +70,65 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    style : `str` (see below)
-        Sets a predefined style at the widget. Possible options are ::
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
 
-            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-             ``'danger'``, ``''``}
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
 
+    Example
+    -------
+    Let's create a channels widget and then update its state. Firstly, we need
+    to import it:
+
+        >>> from menpo.visualize.widgets import ChannelOptionsWidget
+        >>> from IPython.display import display
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected channels and masked flag:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(name, value):
+        >>>     s = "Channels: {}, Masked: {}".format(
+        >>>         wid.selected_values['channels'],
+        >>>         wid.selected_values['masked_enabled'])
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> channel_options = {'n_channels': 30,
+        >>>                    'image_is_masked': True,
+        >>>                    'channels': [0, 10],
+        >>>                    'glyph_enabled': False,
+        >>>                    'glyph_block_size': 3,
+        >>>                    'glyph_use_negative': False,
+        >>>                    'sum_enabled': True,
+        >>>                    'masked_enabled': True}
+        >>> wid = ChannelOptionsWidget(channel_options,
+        >>>                            render_function=render_function,
+        >>>                            style='warning')
+        >>> display(wid)
+
+    By playing around with the widget, printed message gets updated. Finally,
+    let's change the widget status with a new dictionary of options:
+
+        >>> new_options = {'n_channels': 10,
+        >>>                'image_is_masked': True,
+        >>>                'channels': [7, 8, 9],
+        >>>                'glyph_enabled': True,
+        >>>                'glyph_block_size': 3,
+        >>>                'glyph_use_negative': True,
+        >>>                'sum_enabled': False,
+        >>>                'masked_enabled': False}
+        >>> wid.set_widget_state(new_options, allow_callback=False)
     """
     def __init__(self, channel_options, render_function=None, style='minimal'):
         # If image_is_masked is False, then masked_enabled should be False too
@@ -303,12 +367,19 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : `str` or ``None`` (see below), optional
-            Style options ::
+        box_style : See Below, optional
+            Style options
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -328,8 +399,8 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
 
         font_size : `int`, optional
             The font size.
@@ -339,10 +410,9 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
 
         slider_width : `str`, optional
             The width of the slider.
@@ -379,16 +449,23 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
 
     def predefined_style(self, style):
         r"""
-        Function that set a predefined styling on the widget.
+        Function that sets a predefined style on the widget.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         style : `str` (see below)
-            Style options ::
+            Style options
 
-                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'``, ``''``}
-
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,
@@ -491,10 +568,11 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         channel_options : `dict`
-            The initial options. For example ::
+            The dictionary with the new options to be used. For example
+            ::
 
                 channel_options = {'n_channels': 10,
                                    'image_is_masked': True,
@@ -577,32 +655,42 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
 
 class LandmarkOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting landmark options when rendering an image.
-    Specifically, it consists of:
+    Creates a widget for animating through a list of objects. The widget
+    consists of the following parts from `IPython.html.widgets`:
 
-        1) Latex [`self.no_landmarks_msg`]: Message in case there are no
-           landmarks available.
-        2) Checkbox [`self.render_landmarks_checkbox`]: render landmarks
-        3) Box [`self.landmarks_checkbox_and_msg_box`]: box that contains (2)
-           and (1)
-        4) Dropdown [`self.group_dropdown`]: group selector
-        5) ToggleButtons [`self.labels_toggles`]: `list` of `list`s with the
-           labels per group
-        6) Latex [`self.labels_text`]: labels title text
-        7) HBox [`self.labels_box`]: box that contains all (5)
-        8) HBox [`self.labels_and_text_box`]: box contains (6) and (7)
-        9) VBox [`self.group_and_labels_and_text_box`]: box that contains (4)
-            and (8)
+    == ============= ================================ ==========================
+    No Object        Variable (`self.`)               Description
+    == ============= ================================ ==========================
+    1  Latex         `no_landmarks_msg`               Message in case there are
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+                                                      no landmarks available.
+    2  Checkbox      `render_landmarks_checkbox`      Render landmarks
+    3  Box           `landmarks_checkbox_and_msg_box` Contains 2, 1
+    4  Dropdown      `group_dropdown`                 Landmark group selector
+    5  ToggleButtons `labels_toggles`                 `list` of `lists` with
+
+                                                      the labels per group
+    6  Latex         `labels_text`                    Labels title text
+    7  HBox          `labels_box`                     Contains all 5
+    8  HBox          `labels_and_text_box`            Contains 6, 7
+    9  VBox          `group_and_labels_and_text_box`  Contains 4, 8
+    == ============= ================================ ==========================
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `dict`.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+    * To update the callback function please refer to the
+      ``replace_render_function()`` and ``replace_update_function()`` methods.
 
     Parameters
     ----------
     landmark_options : `dict`
-        The initial options. For example ::
+        The dictionary with the initial options. For example
+        ::
 
             landmark_options = {'has_landmarks': True,
                                 'render_landmarks': True,
@@ -618,11 +706,60 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         The update function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     style : `str` (see below)
-        Sets a predefined style at the widget. Possible options are ::
+        Sets a predefined style at the widget. Possible options are
 
-            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-             ``'danger'``, ``''``}
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
 
+    Example
+    -------
+    Let's create a landmarks widget and then update its state. Firstly, we need
+    to import it:
+
+        >>> from from menpo.visualize.widgets import LandmarkOptionsWidget
+        >>> from IPython.display import display
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected index:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(name, value):
+        >>>     s = "Group: {}, Labels: {}".format(
+        >>>         wid.selected_values['group'],
+        >>>         wid.selected_values['with_labels'])
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> landmark_options = {'has_landmarks': True,
+        >>>                     'render_landmarks': True,
+        >>>                     'group_keys': ['PTS', 'ibug_face_68'],
+        >>>                     'labels_keys': [['all'], ['jaw', 'eye', 'mouth']],
+        >>>                     'group': 'ibug_face_68',
+        >>>                     'with_labels': ['eye', 'jaw', 'mouth']}
+        >>> wid = LandmarkOptionsWidget(landmark_options,
+        >>>                              render_function=render_function,
+        >>>                              style='danger')
+        >>> display(wid)
+
+    By playing around with the widget, the printed message gets updated.
+    Finally, let's change the widget status with a new dictionary of options:
+
+        >>> new_options = {'has_landmarks': True,
+        >>>                'render_landmarks': True,
+        >>>                'group_keys': ['new_group'],
+        >>>                'labels_keys': [['1', '2', '3']],
+        >>>                'group': 'new_group',
+        >>>                'with_labels': None}
+        >>> wid.set_widget_state(new_options, allow_callback=False)
     """
     def __init__(self, landmark_options, render_function=None,
                  update_function=None, style='minimal'):
@@ -820,12 +957,19 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : `str` or ``None`` (see below), optional
-            Style options ::
+        box_style : See Below, optional
+            Style options
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -845,8 +989,8 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
 
         font_size : `int`, optional
             The font size.
@@ -856,19 +1000,24 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
 
-        labels_buttons_style : `str` or ``None`` (see below), optional
-            Style options ::
+        labels_buttons_style : See Below, optional
+            Style options
 
-                {``'primary'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'``, ``''``}
-                or
-                ``None``
-
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'primary' Blue-based style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
@@ -886,16 +1035,23 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
 
     def predefined_style(self, style):
         r"""
-        Function that set a predefined styling on the widget.
+        Function that sets a predefined style on the widget.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         style : `str` (see below)
-            Style options ::
+            Style options
 
-                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'``, ``''``}
-
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,
@@ -1051,10 +1207,11 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         landmark_options : `dict`
-            The initial options. For example ::
+            The dictionary with the new options to be used. For example
+            ::
 
                 landmark_options = {'has_landmarks': True,
                                     'render_landmarks': True,
@@ -1155,13 +1312,15 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
 
 class TextPrintWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for printing text. Specifically, it consists of:
+    Creates a widget for printing text. Specifically, it consists of a `list`
+    of `IPython.html.widgets.Latex` objects, i.e. one per text line.
 
-        1) Latex [`self.latex_texts`]: the text lines
+    Note that:
 
-    To set the styling of this widget please refer to the `style()` method. To
-    update the state of the widget, please refer to the `set_widget_state()`
-    method.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
 
     Parameters
     ----------
@@ -1169,12 +1328,42 @@ class TextPrintWidget(ipywidgets.FlexBox):
         The number of lines of the text to be printed.
     text_per_line : `list` of length `n_lines`
         The text to be printed per line.
-    style : `str` (see below)
-        Sets a predefined style at the widget. Possible options are ::
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
 
-            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-             ``'danger'``, ``''``}
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
 
+    Example
+    -------
+    Let's create an text widget and then update its state. Firstly, we need
+    to import it:
+
+        >>> from menpo.visualize.widgets import TextPrintWidget
+        >>> from IPython.display import display
+
+    Create the widget with some initial options and display it:
+
+        >>> n_lines = 3
+        >>> text_per_line = ['> The', '> Menpo', '> Team']
+        >>> wid = TextPrintWidget(n_lines, text_per_line, style='success')
+        >>> display(wid)
+
+    The style of the widget can be changed as:
+
+        >>> wid.predefined_style('danger')
+
+    Update the widget state as:
+
+        >>> wid.set_widget_state(5, ['M', 'E', 'N', 'P', 'O'])
     """
     def __init__(self, n_lines, text_per_line, style='minimal'):
         self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
@@ -1198,12 +1387,19 @@ class TextPrintWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : `str` or ``None`` (see below), optional
-            Style options ::
+        box_style : See Below, optional
+            Style options
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -1223,8 +1419,8 @@ class TextPrintWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
 
         font_size : `int`, optional
             The font size.
@@ -1234,10 +1430,9 @@ class TextPrintWidget(ipywidgets.FlexBox):
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
 
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
@@ -1249,16 +1444,23 @@ class TextPrintWidget(ipywidgets.FlexBox):
 
     def predefined_style(self, style):
         r"""
-        Function that set a predefined styling on the widget.
+        Function that sets a predefined style on the widget.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         style : `str` (see below)
-            Style options ::
+            Style options
 
-                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'``, ``''``}
-
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,
@@ -1281,8 +1483,8 @@ class TextPrintWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         n_lines : `int`
             The number of lines of the text to be printed.
         text_per_line : `list` of length `n_lines`
@@ -1302,29 +1504,48 @@ class TextPrintWidget(ipywidgets.FlexBox):
 
 class AnimationOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting channel options when rendering an image.
-    Specifically, it consists of:
+    Creates a widget for animating through a list of objects. The widget
+    consists of the following parts from `IPython.html.widgets` and
+    `menpo.visualize.widgets.tools`:
 
-        1) ToggleButton [`self.play_toggle`]: the play button
-        2) ToggleButton [`self.stop_toggle`]: the stop button
-        3) ToggleButton [`self.play_options_toggle`]: the play options
-        4) Checkbox [`self.loop_checkbox`]: where animation loops
-        5) FloatText [`self.interval_text`]: animation interval in seconds
-        6) VBox [`self.play_options_box`]: box that contains (3), (4) and (5)
-        7) HBox [`self.animation_box`]: box that contains (1), (2) and (6)
-        8) `IndexButtonsWidget` or `IndexSliderWidget`: the index object
+    == ================== ===================== ====================
+    No Object             Variable (`self.`)    Description
+    == ================== ===================== ====================
+    1  ToggleButton       `play_toggle`         The play button
+    2  ToggleButton       `stop_toggle`         The stop button
+    3  ToggleButton       `play_options_toggle` Button that toggles
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`,
-    `replace_render_function()` and `replace_update_function()` methods.
+                                                the options menu
+    4  Checkbox           `loop_checkbox`       Repeat mode
+    5  FloatText          `interval_text`       Interval (secs)
+    6  VBox               `loop_interval_box`   Contains 4, 5
+    7  VBox               `play_options_box`    Contains 3, 6
+    8  HBox               `animation_box`       Contains 1, 2, 7
+    9  IndexButtonsWidget `index_wid`           The index selector
+
+       IndexSliderWidget                        widget
+    == ================== ===================== ====================
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `dict`.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+    * To update the callback function please refer to the
+      ``replace_render_function()`` and ``replace_update_function()`` methods.
 
     Parameters
     ----------
     index : `dict`
-        The dictionary with the default options. For example ::
+        The dictionary with the initial options. For example
+        ::
 
-            index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+            index = {'min': 0,
+                     'max': 100,
+                     'step': 1,
+                     'index': 10}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -1344,18 +1565,55 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
     plus_description : `str`, optional
         The title of the button that increases the index.
     loop_enabled : `bool`, optional
-        If ``True``, then if by pressing the buttons we reach the minimum
-        (maximum) index values, then the counting will continue from the end
-        (beginning). If ``False``, the counting will stop at the minimum
-        (maximum) value.
+        If ``True``, then after reach the minimum (maximum) index values, the
+        counting will continue from the end (beginning). If ``False``, the
+        counting will stop at the minimum (maximum) value.
     text_editable : `bool`, optional
         Flag that determines whether the index text will be editable.
-    style : `str` (see below)
-        Sets a predefined style at the widget. Possible options are ::
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
 
-            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-             ``'danger'``, ``''``}
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
 
+    Example
+    -------
+    Let's create an animation widget and then update its state. Firstly, we need
+    to import it:
+
+        >>> from menpo.visualize.widgets import AnimationOptionsWidget
+        >>> from IPython.display import display
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected index:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(name, value):
+        >>>     s = "Selected index: {}".format(wid.selected_values['index'])
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+        >>> wid = AnimationOptionsWidget(index, index_style='buttons',
+        >>>                              render_function=render_function,
+        >>>                              style='info')
+        >>> display(wid)
+
+    By pressing the buttons (or simply pressing the Play button), the printed
+    message gets updated. Finally, let's change the widget status with a new
+    dictionary of options:
+
+        >>> new_options = {'min': 0, 'max': 20, 'step': 2, 'index': 16}
+        >>> wid.set_widget_state(new_options, allow_callback=False)
     """
     def __init__(self, index, render_function=None, update_function=None,
                  index_style='buttons', interval=0.5, description='Index: ',
@@ -1505,12 +1763,19 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : `str` or ``None`` (see below), optional
-            Style options ::
+        box_style : See Below, optional
+            Style options
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -1530,8 +1795,8 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
 
         font_size : `int`, optional
             The font size.
@@ -1541,11 +1806,9 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
-
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
@@ -1573,16 +1836,23 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
 
     def predefined_style(self, style):
         r"""
-        Function that set a predefined styling on the widget.
+        Function that sets a predefined style on the widget.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         style : `str` (see below)
-            Style options ::
+            Style options
 
-                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'``, ``''``}
-
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
         """
         if style == 'minimal':
             self.style(box_style='', border_visible=False)
@@ -1713,12 +1983,16 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         index : `dict`
-            The dictionary with the default options. For example ::
+            The dictionary with the new options to be used. For example
+            ::
 
-                index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+                index = {'min': 0,
+                         'max': 100,
+                         'step': 1,
+                         'index': 10}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -1738,26 +2012,47 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
 
 class RendererOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting rendering options when rendering an object.
-    Specifically, it consists of:
+    Creates a widget for selecting rendering options. The widget consists of the
+    following parts from `IPython.html.widgets` and
+    `menpo.visualize.widgets.tools`:
 
-        1) Dropdown [`self.object_selection_dropdown`]: the object selection
-           dropdown
-        2) {Line,Marker,Image,Numbering,Figure,Legend,Grid}OptionsWidget
-           [`self.options_widgets`]: the various rendering sub-options widgets
-        3) Tab [`self.suboptions_tab`]: box that contains (2)
+    == ====================== =========================== ===================
+    No Object                 Variable (`self.`)          Description
+    == ====================== =========================== ===================
+    1  Dropdown               `object_selection_dropdown` The object selector
+    2  LineOptionsWidget      `options_widgets`           `list` with the
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+       MarkerOptionsWidget                                various rendering
+
+       ImageOptionsWidget                                 sub-options widgets
+
+       NumberingOptionsWidget
+
+       FigureOptionsWidget
+
+       LegendOptionsWidget
+
+       GridOptionsWidget
+    3  Tab                    `suboptions_tab`            Contains all 2
+    == ====================== =========================== ===================
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `dict`.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+    * To update the callback function please refer to the
+      ``replace_render_function()`` methods.
 
     Parameters
     ----------
     renderer_options : `list` of `dict`
-        The selected rendering options per object. The `list` must have length
+        The initial rendering options per object. The `list` must have length
         `n_objects` and contain a `dict` of rendering options per object.
-        For example, in case we had two objects to render ::
+        For example, in case we had two objects to render
+        ::
 
             lines_options = {'render_lines': True,
                              'line_width': 1,
@@ -1855,19 +2150,140 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    style : `str` (see below)
-        Sets a predefined style at the widget. Possible options are ::
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
 
-            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-             ``'danger'``, ``''``}
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
 
-    tabs_style : `str` (see below)
+    tabs_style : See Below, optional
         Sets a predefined style at the tabs of the widget. Possible options
-        are ::
+        are
 
-            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-             ``'danger'``, ``''``}
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
 
+    Example
+    -------
+    Let's create a rendering options widget and then update its state. Firstly,
+    we need to import it:
+
+        >>> from menpo.visualize.widgets import RendererOptionsWidget
+        >>> from IPython.display import display
+
+    Let's set some initial options:
+
+        >>> options_tabs = ['markers', 'lines', 'grid']
+        >>> objects_names = ['james', 'patrick']
+        >>> labels_per_object = [['jaw', 'eyes'], None]
+        >>> selected_object = 1
+        >>> object_selection_dropdown_visible = True
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected marker face colour for both
+    objects:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(name, value):
+        >>>     s = "{}: {}, {}: {}".format(
+        >>>         wid.objects_names[0],
+        >>>         wid.selected_values[0]['markers']['marker_face_colour'],
+        >>>         wid.objects_names[1],
+        >>>         wid.selected_values[1]['markers']['marker_face_colour'])
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> # 1st dictionary
+        >>> markers_options = {'render_markers': True, 'marker_size': 20,
+        >>>                    'marker_face_colour': ['w', 'w'],
+        >>>                    'marker_edge_colour': ['b', 'r'],
+        >>>                    'marker_style': 'o', 'marker_edge_width': 1}
+        >>> lines_options = {'render_lines': True, 'line_width': 1,
+        >>>                  'line_colour': ['b', 'r'], 'line_style': '-'}
+        >>> grid_options = {'render_grid': True, 'grid_line_style': '--',
+        >>>                 'grid_line_width': 0.5}
+        >>> rendering_dict_1 = {'lines': lines_options, 'grid': grid_options,
+        >>>                     'markers': markers_options}
+        >>>
+        >>> # 2nd dictionary
+        >>> markers_options = {'render_markers': True, 'marker_size': 200,
+        >>>                    'marker_face_colour': [[0.1, 0.2, 0.3]],
+        >>>                    'marker_edge_colour': ['m'], 'marker_style': 'x',
+        >>>                    'marker_edge_width': 1}
+        >>> lines_options = {'render_lines': True, 'line_width': 100,
+        >>>                  'line_colour': [[0.1, 0.2, 0.3]], 'line_style': '-'}
+        >>> grid_options = {'render_grid': False, 'grid_line_style': '--',
+        >>>                 'grid_line_width': 0.5}
+        >>> rendering_dict_2 = {'lines': lines_options, 'grid': grid_options,
+        >>>                     'markers': markers_options}
+        >>>
+        >>> # Final list
+        >>> rendering_options = [rendering_dict_1, rendering_dict_2]
+        >>>
+        >>> # Create and display widget
+        >>> wid = AnimationOptionsWidget(index, index_style='buttons',
+        >>>                              render_function=render_function,
+        >>>                              style='info')
+        >>> display(wid)
+
+    By playing around, the printed message gets updated. The style of the widget
+    can be changed as:
+
+        >>> wid.predefined_style('minimal', 'info')
+
+    Finally, let's change
+    the widget status with a new dictionary of options:
+
+        >>> # 1st dictionary
+        >>> markers_options = {'render_markers': False, 'marker_size': 20,
+        >>>                    'marker_face_colour': ['k'],
+        >>>                    'marker_edge_colour': ['c'],
+        >>>                    'marker_style': 'o', 'marker_edge_width': 1}
+        >>> lines_options = {'render_lines': False, 'line_width': 1,
+        >>>                  'line_colour': ['r'], 'line_style': '-'}
+        >>> grid_options = {'render_grid': True, 'grid_line_style': '--',
+        >>>                 'grid_line_width': 0.5}
+        >>> rendering_dict_1 = {'lines': lines_options, 'grid': grid_options,
+        >>>                     'markers': markers_options}
+        >>>
+        >>> # 2nd dictionary
+        >>> markers_options = {'render_markers': True, 'marker_size': 200,
+        >>>                    'marker_face_colour': [[0.123, 0.234, 0.345], 'r'],
+        >>>                    'marker_edge_colour': ['m', 'm'],
+        >>>                    'marker_style': 'x', 'marker_edge_width': 1}
+        >>> lines_options = {'render_lines': True, 'line_width': 100,
+        >>>                  'line_colour': [[0.1, 0.2, 0.3], 'b'], 'line_style': '-'}
+        >>> grid_options = {'render_grid': False, 'grid_line_style': '--',
+        >>>                 'grid_line_width': 0.5}
+        >>> rendering_dict_2 = {'lines': lines_options, 'grid': grid_options,
+        >>>                     'markers': markers_options}
+        >>>
+        >>> # Final list
+        >>> new_options = [rendering_dict_1, rendering_dict_2]
+        >>>
+        >>> # Set new labels per object
+        >>> labels_per_object = [['1'], ['jaw', 'eyes']]
+        >>>
+        >>> # Update widget state
+        >>> wid.set_widget_state(new_options, labels_per_object,
+        >>>                      allow_callback=True)
     """
     def __init__(self, renderer_options, options_tabs, objects_names=None,
                  labels_per_object=None, selected_object=0,
@@ -2009,12 +2425,19 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : `str` or ``None`` (see below), optional
-            Style options ::
+        box_style : See Below, optional
+            Style options
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -2030,12 +2453,19 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        tabs_box_style : `str` or ``None`` (see below), optional
-            Style options ::
+        tabs_box_style : See Below, optional
+            Style options
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
 
         tabs_border_visible : `bool`, optional
             Defines whether to draw the border line around the tab widgets.
@@ -2055,8 +2485,8 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
 
         font_size : `int`, optional
             The font size.
@@ -2066,11 +2496,9 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
-
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
@@ -2090,22 +2518,37 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
 
     def predefined_style(self, style, tabs_style='minimal'):
         r"""
-        Function that set a predefined styling on the widget.
+        Function that sets a predefined style on the widget.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         style : `str` (see below)
-            Style options ::
+            Style options
 
-                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'``, ``''``}
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
 
         tabs_style : `str` (see below), optional
-            Style options ::
+            Style options
 
-                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'``, ``''``}
-
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
         """
         if tabs_style == 'minimal' or tabs_style=='':
             tabs_style = ''
@@ -2198,12 +2641,13 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
         Method that updates the state of the widget with a new set of values.
         Note that the number of objects should not change.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         renderer_options : `list` of `dict`
             The selected rendering options per object. The `list` must have
             length `n_objects` and contain a `dict` of rendering options per
-            object. For example, in case we had two objects to render ::
+            object. For example, in case we had two objects to render
+            ::
 
                 lines_options = {'render_lines': True,
                                  'line_width': 1,
@@ -2267,10 +2711,10 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
         labels_per_object : `list` of `list` or ``None``, optional
             A `list` that contains a `list` of labels for each object. Those
             `labels` are employed by the `ColourSelectionWidget`. An example for
-             which this option is useful is in the case we wish to create
-             rendering options for multiple :map:`LandmarkGroup` objects and
-             each one of them has a different set of `labels`. If ``None``, then
-             `labels_per_object` is a `list` of lenth `n_objects` with ``None``.
+            which this option is useful is in the case we wish to create
+            rendering options for multiple :map:`LandmarkGroup` objects and
+            each one of them has a different set of `labels`. If ``None``, then
+            `labels_per_object` is a `list` of lenth `n_objects` with ``None``.
         selected_object : `int`, optional
             The object for which to show the rendering options in the beginning,
             when the widget is created.
@@ -2317,28 +2761,35 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
 
 class SaveFigureOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for saving a figure to file. Specifically, it consists of:
+    Creates a widget for saving a figure to file. The widget consists of the
+    following parts from `IPython.html.widgets` and
+    `menpo.visualize.widgets.tools`:
 
-        1) Select [`self.file_format_select`]: image format selection
-        2) FloatText [`self.dpi_text`]: set dpi
-        3) Dropdown [`self.orientation_dropdown`]: paper orientation selection
-        4) Select [`self.papertype_select`]: paper type selection
-        5) Checkbox [`self.transparent_checkbox`]: set transparency
-        6) ColourSelectionWidget [`self.facecolour_widget`]: set face colour
-        7) ColourSelectionWidget [`self.edgecolour_widget`]: set edge colour
-        8) FloatText [`self.pad_inches_text`]: set padding in inches
-        9) Text [`self.filename_text`]: set path and filename
-        10) Checkbox [`self.overwrite_checkbox`]: overwrite flag
-        11) Latex [`self.error_latex`]: error message area
-        12) Button [`self.save_button`]: save button
-        13) VBox [`self.path_box`]: box that contains (9), (1), (10) and (4)
-        14) VBox [`self.page_box`]: box that contains (3), (2) and (8)
-        15) VBox [`self.colour_box`]: box that contains (6), (7) and (5)
-        16) Tab [`self.options_tabs`]: box that contains (13), (14) and (15)
-        17) HBox [`self.save_box`]: box that contains (12) and (11)
-        18) VBox [`self.options_box`]: box that contains (16) and (17)
+    == ===================== ====================== ==========================
+    No Object                Variable (`self.`)     Description
+    == ===================== ====================== ==========================
+    1  Select                `file_format_select`   Image format selector
+    2  FloatText             `dpi_text`             DPI selector
+    3  Dropdown              `orientation_dropdown` Paper orientation selector
+    4  Select                `papertype_select`     Paper type selector
+    5  Checkbox              `transparent_checkbox` Transparency setter
+    6  ColourSelectionWidget `facecolour_widget`    Face colour selector
+    7  ColourSelectionWidget `edgecolour_widget`    Edge colour selector
+    8  FloatText             `pad_inches_text`      Padding in inches setter
+    9  Text                  `filename_text`        Path and filename
+    10 Checkbox              `overwrite_checkbox`   Overwrite flag
+    11 Latex                 `error_latex`          Error message area
+    12 Button                `save_button`          Save button
+    13 VBox                  `path_box`             Contains 9, 1, 10, 4
+    14 VBox                  `page_box`             Contains 3, 2, 8
+    15 VBox                  `colour_box`           Contains 6, 7, 5
+    16 Tab                   `options_tabs`         Contains 13, 14, 15
+    17 HBox                  `save_box`             Contains 12, 11
+    18 VBox                  `options_box`          Contains 16, 17
+    == ===================== ====================== ==========================
 
-    To set the styling of this widget please refer to the `style()` method.
+    To set the styling please refer to the ``style()`` and
+    ``predefined_style()`` methods.
 
     Parameters
     ----------
@@ -2348,16 +2799,16 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         The initial value of the file format.
     dpi : `float` or ``None``, optional
         The initial value of the dpi. If ``None``, then dpi is set to ``0``.
-    orientation : {``portrait``, ``landscape``}, optional
+    orientation : {``'portrait'``, ``'landscape'``}, optional
         The initial value of the orientation.
     papertype : `str`, optional
-        The initial value of the paper type. Possible options are ::
+        The initial value of the paper type.
+        Possible options are ::
 
-            {``'letter'``, ``'legal'``, ``'executive'``, ``'ledger'``, ``'a0'``,
-             ``'a1'``, ``'a2'``, ``'a3'``, ``'a4'``, ``'a5'``, ``'a6'``,
-             ``'a7'``, ``'a8'``, ``'a9'``, ``'a10'``, ``'b0'``, ``'b1'``,
-             ``'b2'``, ``'b3'``, ``'b4'``, ``'b5'``, ``'b6'``, ``'b7'``,
-             ``'b8'``, ``'b9'``, ``'b10'``}
+            {'letter', 'legal', 'executive', 'ledger', 'a0', 'a1', 'a2', 'a3',
+             'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'b0', 'b1', 'b2', 'b3',
+             'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'}
+
     transparent : `bool`, optional
         The initial value of the transparency flag.
     facecolour : `str` or `list` of `float`, optional
@@ -2368,12 +2819,19 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         The initial value of the figure padding in inches.
     overwrite : `bool`, optional
         The initial value of the overwrite flag.
-    style : `str` (see below)
-        Sets a predefined style at the widget. Possible options are ::
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
 
-            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-             ``'danger'``, ``''``}
-
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
     """
     def __init__(self, renderer, file_format='png', dpi=None,
                  orientation='portrait', papertype='letter', transparent=False,
@@ -2541,12 +2999,19 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : `str` or ``None`` (see below), optional
-            Style options ::
+        box_style : See Below, optional
+            Style options
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -2566,8 +3031,8 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
 
         font_size : `int`, optional
             The font size.
@@ -2577,11 +3042,9 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
-
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
@@ -2613,16 +3076,23 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
 
     def predefined_style(self, style):
         r"""
-        Function that set a predefined styling on the widget.
+        Function that sets a predefined style on the widget.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         style : `str` (see below)
-            Style options ::
+            Style options
 
-                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'``, ``''``}
-
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
         """
         if style == 'minimal':
             self.style(box_style='', border_visible=True, border_color='black',
@@ -2671,8 +3141,8 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
     features options `dict` in `self.features_options` and the `partial`
     function with the options as `self.function`.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     style : `str` (see below)
         Sets a predefined style at the widget. Possible options are ::
 
@@ -2878,12 +3348,19 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : `str` or ``None`` (see below), optional
-            Style options ::
+        box_style : See Below, optional
+            Style options
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
-                or
-                ``None``
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -2903,8 +3380,8 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
 
         font_size : `int`, optional
             The font size.
@@ -2914,11 +3391,9 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
-
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
         """
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
@@ -2953,16 +3428,23 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 
     def predefined_style(self, style):
         r"""
-        Function that set a predefined styling on the widget.
+        Function that sets a predefined style on the widget.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         style : `str` (see below)
-            Style options ::
+            Style options
 
-                {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-                 ``'danger'``, ``''``}
-
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
         """
         if style == 'minimal':
             self.style(box_style='', border_visible=True, border_color='black',

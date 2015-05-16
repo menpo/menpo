@@ -584,10 +584,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         Parameters
         ----------
-        browser_style : ``{buttons, slider}``, optional
+        browser_style : {``'buttons'``, ``'slider'``}, optional
             It defines whether the selector of the images will have the form of
             plus/minus buttons or a slider.
-        figure_size : (`int`, `int`) `tuple`, optional
+        figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
         style : {``'coloured'``, ``'minimal'``}, optional
             If ``'coloured'``, then the style of the widget will be coloured. If

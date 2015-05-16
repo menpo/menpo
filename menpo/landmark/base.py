@@ -296,7 +296,7 @@ class LandmarkManager(MutableMapping, Transformable):
 
         Parameters
         ----------
-        browser_style : {``buttons``, ``slider``}, optional
+        browser_style : {``'buttons'``, ``'slider'``}, optional
             It defines whether the selector of the landmark managers will have
             the form of plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
@@ -896,7 +896,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         Parameters
         ----------
-        browser_style : {``buttons``, ``slider``}, optional
+        browser_style : {``'buttons'``, ``'slider'``}, optional
             It defines whether the selector of the landmark managers will have
             the form of plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional

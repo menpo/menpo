@@ -633,9 +633,9 @@ class PointCloud(Shape):
 
         Parameters
         ----------
-        browser_style : ``{buttons, slider}``, optional
-            It defines whether the selector of the PointCloud objects will have
-            the form of plus/minus buttons or a slider.
+        browser_style : {``'buttons'``, ``'slider'``}, optional
+            It defines whether the selector of the objects will have the form of
+            plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
         style : {``'coloured'``, ``'minimal'``}, optional

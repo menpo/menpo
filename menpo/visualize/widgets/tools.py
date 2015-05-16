@@ -14,8 +14,8 @@ def _map_styles_to_hex_colours(style, background=False):
     r"""
     Function that returns the corresponding hex colour of a given style.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     style : `str` or ``None`` (see below)
         Style options ::
 
@@ -400,8 +400,8 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         Method that updates the state of the widget, if the provided `index`
         values are different than `self.selected_values()`.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         index : `dict`
             The dictionary with the selected options. For example ::
 
@@ -709,8 +709,8 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         Method that updates the state of the widget, if the provided `index`
         values are different than `self.selected_values()`.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         index : `dict`
             The dictionary with the selected options. For example ::
 
@@ -1097,8 +1097,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         `colours_list` and `labels` values are different than
         `self.selected_values()`.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         colours_list : `list` of `str` or [`float`, `float`, `float`]
             If `str`, it must be one of ::
 
@@ -1188,8 +1188,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         r"""
         Method that disables the widget, if the ``disabled == True``.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         disabled : `bool`
             If ``True``, the widget is disabled.
         """
@@ -1423,8 +1423,8 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         image_options : `dict`
             The image options. Example ::
 
@@ -1679,8 +1679,8 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         line_options : `dict`
             The new set of options. For example ::
 
@@ -2003,8 +2003,8 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         marker_options : `dict`
             The new set of options. For example ::
 
@@ -2402,8 +2402,8 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         numbering_options : `dict`
             The new set of options. For example ::
 
@@ -2906,8 +2906,8 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         figure_options : `dict`
             The new set of options. For example ::
 
@@ -3483,8 +3483,8 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         figure_options : `dict`
             The new set of options. For example ::
 
@@ -4163,8 +4163,8 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         legend_options : `dict`
             The new set of options. For example ::
 
@@ -4493,8 +4493,8 @@ class GridOptionsWidget(ipywidgets.FlexBox):
         r"""
         Method that updates the state of the widget with a new set of values.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         grid_options : `dict`
             The new set of options. For example ::
 
