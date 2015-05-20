@@ -630,6 +630,9 @@ def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
 
     """
     suffix = ''.join(filepath.suffixes)
+    if suffix.isupper():
+        # If for some reason the ending is in capital letters, make them lower case first.
+        suffix = suffix.lower()
     importer_type = extensions_map.get(suffix)
     # we couldn't find an importer for all the suffixes (e.g .foo.bar)
     # maybe the file stem has '.' in it? -> try again but this time just use the
