@@ -161,7 +161,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8),
                                         toggle_show_visible=False,
                                         toggle_show_default=True)
     viewer_options_all = ipywidgets.Box(children=[axes_mode_wid,
-                                                    viewer_options_wid])
+                                                  viewer_options_wid])
     info_wid = info_print(n_bullets=4, toggle_show_default=True,
                           toggle_show_visible=False)
 
