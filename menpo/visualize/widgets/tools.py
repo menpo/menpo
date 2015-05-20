@@ -40,6 +40,8 @@ def _map_styles_to_hex_colours(style, background=False):
             return '#DFF0D8'
         elif style == 'warning':
             return '#FCF8E3'
+        elif style == 'primary':
+            return '#337ab7'
         else:
             return ''
     else:
@@ -51,6 +53,8 @@ def _map_styles_to_hex_colours(style, background=False):
             return '#228B22'
         elif style == 'warning':
             return '#8A6D3B'
+        elif style == 'primary':
+            return '#337ab7'
         else:
             return ''
 
