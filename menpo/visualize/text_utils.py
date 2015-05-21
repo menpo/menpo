@@ -85,9 +85,9 @@ def print_dynamic(str_to_print):
     sys.stdout.flush()
 
 
-def print_bytes(num):
+def bytes_str(num):
     r"""
-    Converts bytes to a sensible format to be printed. For example: ::
+    Converts bytes to a human readable format. For example: ::
 
         print_bytes(12345) returns '12.06 KB'
         print_bytes(123456789) returns '117.74 MB'

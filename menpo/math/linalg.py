@@ -1,5 +1,5 @@
 import numpy as np
-from menpo.visualize import print_progress, print_bytes
+from menpo.visualize import print_progress, bytes_str
 
 
 def dot_inplace_left(a, b, block_size=1000):
@@ -127,7 +127,7 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
     data = np.zeros((length, n_features), dtype=template_vector.dtype)
     if verbose:
         print('Allocated data matrix of size {} '
-              '({} samples)'.format(print_bytes(data.nbytes), length))
+              '({} samples)'.format(bytes_str(data.nbytes), length))
 
     # now we can fill in the first element from the template
     data[0] = template_vector

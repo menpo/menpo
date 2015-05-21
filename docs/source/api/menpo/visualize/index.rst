@@ -42,4 +42,4 @@ Print Utilities
   print_progress
   print_dynamic
   progress_bar_str
-  print_bytes
+  bytes_str
