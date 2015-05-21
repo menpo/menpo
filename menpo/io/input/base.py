@@ -602,10 +602,9 @@ def glob_with_suffix(pattern, extensions_map):
         # we want to extract '.pkl.gz' as an extension - for this we need to
         # use suffixes and join.
         # .suffix only takes
-        if ''.join(path.suffixes) in extensions_map:
-            yield path
-        # try again in case the filename has a '.' in it, this time only with the suffix
-        if path.suffix in extensions_map:
+        # However, the filename might have a '.' in it, e.g. '1.1.png'.
+        # In this case, try again with just the suffix.
+        if ''.join(path.suffixes[-2:]) in extensions_map or path.suffix in extensions_map:
             yield path
 
 
