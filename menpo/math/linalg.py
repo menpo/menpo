@@ -115,6 +115,7 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
     Raises
     ------
     ValueError
+        ``vectorizables`` terminates in fewer than ``length`` iterations
     """
     # get the first element as the template and use it to configure the
     # data matrix
