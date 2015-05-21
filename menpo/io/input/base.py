@@ -377,7 +377,8 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
 
     if verbose:
         # wrap the generator with the progress reporter
-        generator = print_progress(generator, n_items=n_files)
+        generator = print_progress(generator, prefix='Importing assets',
+                                   n_items=n_files)
 
     return generator
 
