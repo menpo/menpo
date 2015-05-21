@@ -1,5 +1,5 @@
 from collections import deque
-import datetime
+from datetime import datetime
 import sys
 from time import time
 
@@ -110,7 +110,7 @@ def print_bytes(num):
     return "{0:3.2f} {1:s}".format(num, 'TB')
 
 
-def print_progress(iterable):
+def print_progress(iterable, n_items=None):
     r"""
     Print the remaining time needed to compute over an iterable.
 
@@ -118,33 +118,38 @@ def print_progress(iterable):
     a for loop (see example).
 
     The estimate of the remaining time is based on a moving average of the last
-    10 items completed in the loop.
+    100 items completed in the loop.
 
     Parameters
     ----------
     iterator : `iterator`
         An iterator that will be processed. The iterator is passed through by
         this function.
+    n_items : `int`, optional
+        Allows for ``iterator`` to be a generator whose length will be assumed
+        to be `n_items`. If not provided, then ``iterator`` needs to be
+        `Sizable`.
 
     Examples
     --------
     This for loop: ::
 
         from time import sleep
-        for i in print_progress(range(10)):
+        for i in print_progress(range(100)):
             sleep(1)
 
     prints a progress report of the form: ::
 
         [=============       ] 70% (7/10) 00:00:03 remaining
     """
-    n = len(iterable)
-    timings = deque([], 10)
+    n = n_items if n_items is not None else len(iterable)
+    timings = deque([], 100)
+    time1 = time()
     for i, x in enumerate(iterable):
-        time1 = time()
         yield x
         time2 = time()
         timings.append(time2 - time1)
+        time1 = time2
         remaining = n - i - 1
         duration = datetime.utcfromtimestamp(sum(timings) / len(timings) *
                                              remaining)
