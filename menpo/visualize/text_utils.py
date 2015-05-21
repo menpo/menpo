@@ -1,4 +1,7 @@
+from collections import deque
+import datetime
 import sys
+from time import time
 
 
 def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
@@ -105,3 +108,48 @@ def print_bytes(num):
             return "{0:3.2f} {1:s}".format(num, x)
         num /= 1024.0
     return "{0:3.2f} {1:s}".format(num, 'TB')
+
+
+def print_progress(iterable):
+    r"""
+    Print the remaining time needed to compute over an iterable.
+
+    To use, wrap an existing iterable with this function before processing in
+    a for loop (see example).
+
+    The estimate of the remaining time is based on a moving average of the last
+    10 items completed in the loop.
+
+    Parameters
+    ----------
+    iterator : `iterator`
+        An iterator that will be processed. The iterator is passed through by
+        this function.
+
+    Examples
+    --------
+    This for loop: ::
+
+        from time import sleep
+        for i in print_progress(range(10)):
+            sleep(1)
+
+    prints a progress report of the form: ::
+
+        [=============       ] 70% (7/10) 00:00:03 remaining
+    """
+    n = len(iterable)
+    timings = deque([], 10)
+    for i, x in enumerate(iterable):
+        time1 = time()
+        yield x
+        time2 = time()
+        timings.append(time2 - time1)
+        remaining = n - i - 1
+        duration = datetime.utcfromtimestamp(sum(timings) / len(timings) *
+                                             remaining)
+        remaining_str = duration.strftime('%H:%M:%S')
+        bar_str = progress_bar_str((i + 1.0) / n)
+        print_dynamic('{} ({}/{}) - {} remaining'.format(bar_str, i + 1, n,
+                                                         remaining_str))
+    print('')
