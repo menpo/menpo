@@ -604,6 +604,9 @@ def glob_with_suffix(pattern, extensions_map):
         # .suffix only takes
         if ''.join(path.suffixes) in extensions_map:
             yield path
+        # try again in case the filename has a '.' in it, this time only with the suffix
+        if path.suffix in extensions_map:
+            yield path
 
 
 def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
