@@ -85,12 +85,21 @@ def test_import_landmark_file():
 def test_import_images():
     imgs = list(mio.import_images(mio.data_dir_path()))
     imgs_filenames = set(i.path.stem for i in imgs)
-    exp_imgs_filenames = {'einstein', 'takeo', 'breakingbad', 'lenna',
+    exp_imgs_filenames = {'einstein', 'takeo', 'tongue', 'breakingbad', 'lenna',
                           'menpo_thumbnail'}
-    assert(len(exp_imgs_filenames - imgs_filenames) == 0)
+    assert exp_imgs_filenames == imgs_filenames
 
 
-def test_ls_builtin_assets():
+def test_import_images_are_ordered_and_unduplicated():
+    # we know that import_images returns images in path order
+    imgs = list(mio.import_images(mio.data_dir_path()))
+    imgs_filenames = [i.path.stem for i in imgs]
+    print(imgs_filenames)
+    exp_imgs_filenames = ['breakingbad', 'einstein', 'lenna', 'menpo_thumbnail', 'takeo', 'tongue']
+    assert exp_imgs_filenames == imgs_filenames
+
+
+def test_lsimgs_filenamess():
     assert(set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
                                             'einstein.jpg', 'einstein.pts',
                                             'lenna.png', 'breakingbad.pts',
