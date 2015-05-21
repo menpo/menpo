@@ -123,9 +123,9 @@ def print_progress(iterable, prefix='', n_items=None, offset=0):
 
     Parameters
     ----------
-    iterator : `iterator`
-        An iterator that will be processed. The iterator is passed through by
-        this function.
+    iterable : `iterable`
+        An iterable that will be processed. The iterable is passed through by
+        this function, with the time taken for each complete iteration logged.
     prefix : `str`, optional
         If provided a string that will be prepended to the progress report at
         each level.
@@ -134,7 +134,14 @@ def print_progress(iterable, prefix='', n_items=None, offset=0):
         to be `n_items`. If not provided, then ``iterator`` needs to be
         `Sizable`.
     offset : `int`, optional
-        Report back the progress as if `offset` items have already been handled
+        Useful in combination with ``n_items`` - report back the progress as
+        if `offset` items have already been handled. ``n_items``  will be left
+        unchanged.
+
+    Raises
+    ------
+    ValueError
+        ``offset`` provided without ``n_items``
 
     Examples
     --------
@@ -148,13 +155,16 @@ def print_progress(iterable, prefix='', n_items=None, offset=0):
 
         [=============       ] 70% (7/10) 00:00:03 remaining
     """
+    if n_items is None and offset != 0:
+        raise ValueError('offset can only be set when n_items has been'
+                         ' manually provided.')
     if prefix != '':
         prefix = prefix + ': '
         bar_length = 10
     else:
         bar_length = 20
     n = n_items if n_items is not None else len(iterable)
-    # n = n + offset
+
     timings = deque([], 100)
     time1 = time()
     for i, x in enumerate(iterable, 1 + offset):
