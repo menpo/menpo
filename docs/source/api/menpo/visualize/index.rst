@@ -57,5 +57,6 @@ other custom widgets.
   ChannelOptionsWidget
   LandmarkOptionsWidget
   RendererOptionsWidget
+  GraphOptionsWidget
   SaveFigureOptionsWidget
   TextPrintWidget

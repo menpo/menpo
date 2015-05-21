@@ -2758,6 +2758,437 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
         if allow_callback:
             self._render_function('', True)
 
+    def update_object_names(self, objects_names):
+        r"""
+        Method that updates the options in the dropdown menu for selecting an
+        object. Note that the number of objects should not change.
+
+        Parameters
+        ----------
+        objects_names : `list` of `str`
+            A `list` with the names of the objects that will be used in the
+            selection dropdown menu.
+        """
+        if not self.objects_names == objects_names:
+            # update dropdown options
+            objects_dict = OrderedDict()
+            for k, g in enumerate(objects_names):
+                objects_dict[g] = k
+            self.object_selection_dropdown.options = objects_dict
+            self.objects_names = objects_names
+
+            # make sure the dropdown gets updated
+            tmp = self.object_selection_dropdown.value
+            if self.object_selection_dropdown.value > 0:
+                self.object_selection_dropdown.value = 0
+                self.object_selection_dropdown.value = tmp
+            elif (self.object_selection_dropdown.value == 0 and
+                  len(self.object_selection_dropdown.options) > 1):
+                self.object_selection_dropdown.value = 1
+                self.object_selection_dropdown.value = 0
+
+
+class GraphOptionsWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting options for rendering various curves in a
+    graph. The widget consists of the following parts from
+    `IPython.html.widgets` and `menpo.visualize.widgets.tools`:
+
+    == ===================== ======================= =======================
+    No Object                Variable (`self.`)      Description
+    == ===================== ======================= =======================
+    1  RendererOptionsWidget `renderer_widget`       The rendering widget
+    2  FloatRangeSlider      `x_limit`               Sets the x limit
+    3  FloatRangeSlider      `y_limit`               Sets the y limit
+    4  Text                  `x_label`               Sets the x label
+    5  Text                  `y_label`               Sets the y label
+    6  Text                  `title`                 Sets the title
+    7  Textarea              `legend_entries`        Sets the legend entries
+    8  VBox                  `graph_related_options` Contains 2 - 7
+    9  Tab                   `options_tab`           Contains 8, 1
+    == ===================== ======================= =======================
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `dict`.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+    * To update the callback function please refer to the
+      ``replace_render_function()`` methods.
+
+    Parameters
+    ----------
+    graph_options : `list` of `str`
+        The initial options. For example, in case we had two curves to render
+        ::
+
+            graph_options = {'legend_entries': ['Nontas', 'Leda'],
+                             'x_label': 'X',
+                             'y_label': 'Y',
+                             'title': 'TITLE',
+                             'x_axis_limits': (2, 7),
+                             'y_axis_limits': (-0.2, 0.2),
+                             'render_lines': [True, True],
+                             'line_colour': ['r', 'b'],
+                             'line_style': ['--', '-'],
+                             'line_width': [1, 3],
+                             'render_markers': [True, False],
+                             'marker_style': ['o', 's'],
+                             'marker_size': [6, 12],
+                             'marker_face_colour': ['k', 'm'],
+                             'marker_edge_colour': ['w', 'c'],
+                             'marker_edge_width': [1, 4],
+                             'render_legend': True,
+                             'legend_title': '',
+                             'legend_font_name': 'sans-serif',
+                             'legend_font_style': 'normal',
+                             'legend_font_size': 10,
+                             'legend_font_weight': 'normal',
+                             'legend_marker_scale': 1.,
+                             'legend_location': 2,
+                             'legend_bbox_to_anchor': (1.05, 1.),
+                             'legend_border_axes_pad': 0.,
+                             'legend_n_columns': 1,
+                             'legend_horizontal_spacing': 0,
+                             'legend_vertical_spacing': 0,
+                             'legend_border': True,
+                             'legend_border_padding': 0,
+                             'legend_shadow': False,
+                             'legend_rounded_corners': False,
+                             'render_axes': True,
+                             'axes_font_name': 'sans-serif',
+                             'axes_font_size': 10,
+                             'axes_font_style': 'normal',
+                             'axes_font_weight': 'normal',
+                             'figure_size': (10, 8),
+                             'render_grid': True,
+                             'grid_line_style': '--',
+                             'grid_line_width': 1}
+
+    x_slider_options : (`float`, `float`, `float`)
+        The attributes of the x limit slider in the form (`min`, `max`, `step`).
+    y_slider_options : (`float`, `float`, `float`)
+        The attributes of the y limit slider in the form (`min`, `max`, `step`).
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    tabs_style : See Below, optional
+        Sets a predefined style at the tabs of the widget. Possible options
+        are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    """
+    def __init__(self, graph_options, x_slider_options, y_slider_options,
+                 render_function=None, style='minimal', tabs_style='minimal'):
+        # Get number of curves (objects)
+        if graph_options['legend_entries'] is None:
+            raise ValueError("legend_entries must be a list, not None")
+        self.n_curves = len(graph_options['legend_entries'])
+
+        # Check options
+        graph_options['render_lines'] = \
+            self._check_option(graph_options['render_lines'])
+        graph_options['line_style'] = \
+            self._check_option(graph_options['line_style'])
+        graph_options['line_width'] = \
+            self._check_option(graph_options['line_width'])
+        graph_options['render_markers'] = \
+            self._check_option(graph_options['render_markers'])
+        graph_options['marker_style'] = \
+            self._check_option(graph_options['marker_style'])
+        graph_options['marker_size'] = \
+            self._check_option(graph_options['marker_size'])
+        graph_options['marker_edge_width'] = \
+            self._check_option(graph_options['marker_edge_width'])
+        self.initial_figure_size = graph_options['figure_size']
+
+        # Create renderer dictionaries
+        renderer_options = []
+        legend_options = {
+            'render_legend': graph_options['render_legend'],
+            'legend_title': graph_options['legend_title'],
+            'legend_font_name': graph_options['legend_font_name'],
+            'legend_font_style': graph_options['legend_font_style'],
+            'legend_font_size': graph_options['legend_font_size'],
+            'legend_font_weight': graph_options['legend_font_weight'],
+            'legend_marker_scale': graph_options['legend_marker_scale'],
+            'legend_location': graph_options['legend_location'],
+            'legend_bbox_to_anchor': graph_options['legend_bbox_to_anchor'],
+            'legend_border_axes_pad': graph_options['legend_border_axes_pad'],
+            'legend_n_columns': graph_options['legend_n_columns'],
+            'legend_horizontal_spacing':
+            graph_options['legend_horizontal_spacing'],
+            'legend_vertical_spacing': graph_options['legend_vertical_spacing'],
+            'legend_border': graph_options['legend_border'],
+            'legend_border_padding': graph_options['legend_border_padding'],
+            'legend_shadow': graph_options['legend_shadow'],
+            'legend_rounded_corners': graph_options['legend_rounded_corners']}
+        figure_options = {'x_scale': 1., 'y_scale': 1.,
+                          'render_axes': graph_options['render_axes'],
+                          'axes_font_name': graph_options['axes_font_name'],
+                          'axes_font_size': graph_options['axes_font_size'],
+                          'axes_font_style': graph_options['axes_font_style'],
+                          'axes_font_weight': graph_options['axes_font_weight'],
+                          'axes_x_limits': None,
+                          'axes_y_limits': None}
+        grid_options = {'render_grid': graph_options['render_grid'],
+                        'grid_line_style': graph_options['grid_line_style'],
+                        'grid_line_width': graph_options['grid_line_width']}
+        for i in range(self.n_curves):
+            lines_options = {'render_lines': graph_options['render_lines'][i],
+                             'line_width': graph_options['line_width'][i],
+                             'line_colour': [graph_options['line_colour'][i]],
+                             'line_style': graph_options['line_style'][i]}
+            markers_options = {
+                'render_markers': graph_options['render_markers'][i],
+                'marker_size': graph_options['marker_size'][i],
+                'marker_face_colour': [graph_options['marker_face_colour'][i]],
+                'marker_edge_colour': [graph_options['marker_edge_colour'][i]],
+                'marker_style': graph_options['marker_style'][i],
+                'marker_edge_width': graph_options['marker_edge_width'][i]}
+            rendering_dict = {'lines': lines_options,
+                              'markers': markers_options,
+                              'legend': legend_options,
+                              'figure': figure_options,
+                              'grid': grid_options}
+            renderer_options.append(rendering_dict)
+
+        # Create widgets
+        options_tabs = ['lines', 'markers', 'legend', 'figure_two', 'grid']
+        self.renderer_widget = RendererOptionsWidget(
+            renderer_options, options_tabs=options_tabs,
+            objects_names=graph_options['legend_entries'],
+            object_selection_dropdown_visible=self.n_curves > 1,
+            render_function=None, style=style, tabs_style=tabs_style)
+        # Make the x and y limits of the axes widget invisible. They will be
+        # controlled by the sliders in the graph options.
+        self.renderer_widget.options_widgets[3].axes_x_limits_box.visible = \
+            False
+        self.renderer_widget.options_widgets[3].axes_y_limits_box.visible = \
+            False
+        self.x_limit = ipywidgets.FloatRangeSlider(
+            min=x_slider_options[0], max=x_slider_options[1],
+            step=x_slider_options[2], value=graph_options['x_axis_limits'],
+            description='X limits', margin='0.05cm', width='7.3cm')
+        self.y_limit = ipywidgets.FloatRangeSlider(
+            min=y_slider_options[0], max=y_slider_options[1],
+            step=y_slider_options[2], value=graph_options['y_axis_limits'],
+            description='Y limits', margin='0.05cm', width='7.3cm')
+        self.x_label = ipywidgets.Text(description='X label', margin='0.05cm',
+                                       value=graph_options['x_label'])
+        self.y_label = ipywidgets.Text(description='Y label', margin='0.05cm',
+                                       value=graph_options['y_label'])
+        self.title = ipywidgets.Text(description='Title', margin='0.05cm',
+                                     value=graph_options['title'])
+        self.legend_entries = ipywidgets.Textarea(
+            description='Legend', width='73mm', margin='0.05cm',
+            value=self._convert_list_to_legend_entries(
+                graph_options['legend_entries']))
+        self.graph_related_options = ipywidgets.VBox(
+            children=[self.x_limit, self.y_limit, self.x_label, self.y_label,
+                      self.title, self.legend_entries])
+        self.options_tab = ipywidgets.Tab(
+            children=[self.graph_related_options, self.renderer_widget])
+        self.options_tab.set_title(0, 'Graph')
+        self.options_tab.set_title(1, 'Renderer')
+        super(GraphOptionsWidget, self).__init__(children=[self.options_tab])
+
+        # Assign output
+        self.selected_values = graph_options
+
+        # Set style
+        #self.predefined_style(style, tabs_style)
+
+        # Set functionality
+        def legend_entries_function(name, value):
+            tmp_entries = str(self.legend_entries.value).splitlines()
+            if len(tmp_entries) < self.n_curves:
+                n_missing = self.n_curves - len(tmp_entries)
+                for j in range(n_missing):
+                    kk = j + len(tmp_entries)
+                    tmp_entries.append("curve {}".format(kk))
+            self.selected_values['legend_entries'] = tmp_entries[:self.n_curves]
+        self.legend_entries.on_trait_change(legend_entries_function, 'value')
+
+        def update_renderer_widget_objects(name, value):
+            self.renderer_widget.update_object_names(
+                self.selected_values['legend_entries'])
+        self.options_tab.on_trait_change(update_renderer_widget_objects,
+                                         'selected_index')
+
+        def get_graph_related_options(name, value):
+            self.selected_values['x_label'] = str(self.x_label.value)
+            self.selected_values['y_label'] = str(self.y_label.value)
+            self.selected_values['title'] = str(self.title.value)
+            self.selected_values['x_axis_limits'] = self.x_limit.value
+            self.selected_values['y_axis_limits'] = self.y_limit.value
+        self.x_label.on_trait_change(get_graph_related_options, 'value')
+        self.y_label.on_trait_change(get_graph_related_options, 'value')
+        self.title.on_trait_change(get_graph_related_options, 'value')
+        self.x_limit.on_trait_change(get_graph_related_options, 'value')
+        self.y_limit.on_trait_change(get_graph_related_options, 'value')
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def _check_option(self, val):
+        if isinstance(val, list) and not len(val) == self.n_curves:
+            raise ValueError("lines and markers related options must be lists "
+                             "of length equal to the number of curves.")
+        elif val is None:
+            raise ValueError("lines and markers related options cannot be None")
+        elif val is not None and not isinstance(val, list):
+            val = [val] * self.n_curves
+        return val
+
+    def _convert_list_to_legend_entries(self, l):
+        tmp_lines = []
+        for k in l:
+            tmp_lines.append(k)
+            tmp_lines.append('\n')
+        tmp_lines = tmp_lines[:-1]
+        return unicode().join(tmp_lines)
+
+    def _get_selected_options(self):
+        # legend options
+        legend_tmp = self.renderer_widget.selected_values[0]['legend']
+        self.selected_values.update(legend_tmp)
+
+        # axes options
+        figure_tmp = self.renderer_widget.selected_values[0]['figure']
+        self.selected_values['render_axes'] = figure_tmp['render_axes']
+        self.selected_values['axes_font_name'] = figure_tmp['axes_font_name']
+        self.selected_values['axes_font_size'] = figure_tmp['axes_font_size']
+        self.selected_values['axes_font_style'] = figure_tmp['axes_font_style']
+        self.selected_values['axes_font_weight'] = \
+            figure_tmp['axes_font_weight']
+        self.selected_values['figure_size'] = \
+            (figure_tmp['x_scale'] * self.initial_figure_size[0],
+             figure_tmp['y_scale'] * self.initial_figure_size[1])
+
+        # grid options
+        grid_tmp = self.renderer_widget.selected_values[0]['grid']
+        self.selected_values.update(grid_tmp)
+
+        # lines and markers options
+        for j in range(self.n_curves):
+            self.selected_values['render_lines'][j] = \
+                self.renderer_widget.selected_values[j]['lines']['render_lines']
+            self.selected_values['line_colour'][j] = \
+                self.renderer_widget.selected_values[j]['lines']['line_colour']
+            self.selected_values['line_style'][j] = \
+                self.renderer_widget.selected_values[j]['lines']['line_style']
+            self.selected_values['line_width'][j] = \
+                self.renderer_widget.selected_values[j]['lines']['line_width']
+            self.selected_values['render_markers'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['render_markers']
+            self.selected_values['marker_style'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_style']
+            self.selected_values['marker_size'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_size']
+            self.selected_values['marker_face_colour'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_face_colour']
+            self.selected_values['marker_edge_colour'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_edge_colour']
+            self.selected_values['marker_edge_width'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_edge_width']
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function_tmp = render_function
+        if self._render_function_tmp is None:
+            def render_function_with_get_options(name, value):
+                # Get all the selected values
+                self._get_selected_options()
+                # Make displacements menu invisible
+                self.plot_displacements_menu.visible = False
+        else:
+            def render_function_with_get_options(name, value):
+                # Get all the selected values
+                self._get_selected_options()
+                # Call render function
+                self._render_function_tmp(name, value)
+        self._render_function = render_function_with_get_options
+        self.renderer_widget.add_render_function(self._render_function)
+        self.x_limit.on_trait_change(self._render_function, 'value')
+        self.y_limit.on_trait_change(self._render_function, 'value')
+        self.x_label.on_trait_change(self._render_function, 'value')
+        self.y_label.on_trait_change(self._render_function, 'value')
+        self.title.on_trait_change(self._render_function, 'value')
+        self.legend_entries.on_trait_change(self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.renderer_widget.remove_render_function()
+        self.x_limit.on_trait_change(self._render_function, 'value',
+                                     remove=True)
+        self.y_limit.on_trait_change(self._render_function, 'value',
+                                     remove=True)
+        self.x_label.on_trait_change(self._render_function, 'value',
+                                     remove=True)
+        self.y_label.on_trait_change(self._render_function, 'value',
+                                     remove=True)
+        self.title.on_trait_change(self._render_function, 'value', remove=True)
+        self.legend_entries.on_trait_change(self._render_function, 'value',
+                                            remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
 
 class SaveFigureOptionsWidget(ipywidgets.FlexBox):
     r"""

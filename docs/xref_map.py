@@ -12,6 +12,7 @@ xref_map = {
 'DiscreteAffine': ('class', 'menpo.transform.DiscreteAffine'),
 'from_vector_inplace': ('function', 'menpo.base.Vectorizable.from_vector_inplace'),
 'from_vector': ('function', 'menpo.base.Vectorizable.from_vector'),
+'GraphOptionsWidget': ('class', 'menpo.visualize.widgets.GraphOptionsWidget'),
 'GraphPlotter': ('class', 'menpo.visualize.GraphPlotter'),
 'Homogeneous': ('class', 'menpo.transform.Homogeneous'),
 'HomogFamilyAlignment': ('class', 'menpo.transform.HomogFamilyAlignment'),
