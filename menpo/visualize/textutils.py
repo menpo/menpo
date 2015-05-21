@@ -1,4 +1,8 @@
+from __future__ import division
+from collections import deque
+from datetime import datetime
 import sys
+from time import time
 
 
 def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
@@ -81,9 +85,9 @@ def print_dynamic(str_to_print):
     sys.stdout.flush()
 
 
-def print_bytes(num):
+def bytes_str(num):
     r"""
-    Converts bytes to a sensible format to be printed. For example: ::
+    Converts bytes to a human readable format. For example: ::
 
         print_bytes(12345) returns '12.06 KB'
         print_bytes(123456789) returns '117.74 MB'
@@ -105,3 +109,75 @@ def print_bytes(num):
             return "{0:3.2f} {1:s}".format(num, x)
         num /= 1024.0
     return "{0:3.2f} {1:s}".format(num, 'TB')
+
+
+def print_progress(iterable, prefix='', n_items=None, offset=0):
+    r"""
+    Print the remaining time needed to compute over an iterable.
+
+    To use, wrap an existing iterable with this function before processing in
+    a for loop (see example).
+
+    The estimate of the remaining time is based on a moving average of the last
+    100 items completed in the loop.
+
+    Parameters
+    ----------
+    iterable : `iterable`
+        An iterable that will be processed. The iterable is passed through by
+        this function, with the time taken for each complete iteration logged.
+    prefix : `str`, optional
+        If provided a string that will be prepended to the progress report at
+        each level.
+    n_items : `int`, optional
+        Allows for ``iterator`` to be a generator whose length will be assumed
+        to be `n_items`. If not provided, then ``iterator`` needs to be
+        `Sizable`.
+    offset : `int`, optional
+        Useful in combination with ``n_items`` - report back the progress as
+        if `offset` items have already been handled. ``n_items``  will be left
+        unchanged.
+
+    Raises
+    ------
+    ValueError
+        ``offset`` provided without ``n_items``
+
+    Examples
+    --------
+    This for loop: ::
+
+        from time import sleep
+        for i in print_progress(range(100)):
+            sleep(1)
+
+    prints a progress report of the form: ::
+
+        [=============       ] 70% (7/10) 00:00:03 remaining
+    """
+    if n_items is None and offset != 0:
+        raise ValueError('offset can only be set when n_items has been'
+                         ' manually provided.')
+    if prefix != '':
+        prefix = prefix + ': '
+        bar_length = 10
+    else:
+        bar_length = 20
+    n = n_items if n_items is not None else len(iterable)
+
+    timings = deque([], 100)
+    time1 = time()
+    for i, x in enumerate(iterable, 1 + offset):
+        yield x
+        time2 = time()
+        timings.append(time2 - time1)
+        time1 = time2
+        remaining = n - i
+        duration = datetime.utcfromtimestamp(sum(timings) / len(timings) *
+                                             remaining)
+        remaining_str = duration.strftime('%H:%M:%S')
+        bar_str = progress_bar_str(i / n, bar_length=bar_length)
+        print_dynamic('{}{} ({}/{}) - {} remaining'.format(prefix, bar_str,
+                                                           i, n,
+                                                           remaining_str))
+    print('')

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from ..utils import _norm_path
 from menpo.base import menpo_src_dir_path
-from menpo.visualize import progress_bar_str, print_dynamic
+from menpo.visualize import print_progress
 
 
 def data_dir_path():
@@ -13,7 +13,6 @@ def data_dir_path():
     -------
     ``pathlib.Path``
         The path to the local Menpo ./data folder
-
     """
     return menpo_src_dir_path() / 'data'
 
@@ -37,7 +36,6 @@ def data_path_to(asset_filename):
     ------
     ValueError
         If the asset_filename doesn't exist in the `data` folder.
-
     """
     asset_path = data_dir_path() / asset_filename
     if not asset_path.is_file():
@@ -372,15 +370,17 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
     n_files = len(filepaths)
     if n_files == 0:
         raise ValueError('The glob {} yields no assets'.format(pattern))
-    for i, asset in enumerate(_multi_import_generator(filepaths, extension_map,
-                              landmark_resolver=landmark_resolver,
-                              landmark_ext_map=landmark_ext_map,
-                              importer_kwargs=importer_kwargs)):
-        if verbose:
-            print_dynamic('- Loading {} assets: {}'.format(
-                n_files, progress_bar_str(float(i + 1) / n_files,
-                                          show_bar=True)))
-        yield asset
+
+    generator = _multi_import_generator(
+        filepaths, extension_map,  landmark_resolver=landmark_resolver,
+        landmark_ext_map=landmark_ext_map, importer_kwargs=importer_kwargs)
+
+    if verbose:
+        # wrap the generator with the progress reporter
+        generator = print_progress(generator, prefix='Importing assets',
+                                   n_items=n_files)
+
+    return generator
 
 
 def _import(filepath, extensions_map, keep_importer=False,
