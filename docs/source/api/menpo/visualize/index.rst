@@ -31,6 +31,7 @@ Widgets
   visualize_pointclouds
   features_selection
   save_matplotlib_figure
+  plot_graph
 
 
 Print Utilities

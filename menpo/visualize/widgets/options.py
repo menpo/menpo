@@ -2903,9 +2903,25 @@ class GraphOptionsWidget(ipywidgets.FlexBox):
             ''        No style
             ========= ============================
 
+    renderer_tabs_style : See Below, optional
+        Sets a predefined style at the tabs of the renderer widget. Possible
+        options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
     """
     def __init__(self, graph_options, x_slider_options, y_slider_options,
-                 render_function=None, style='minimal', tabs_style='minimal'):
+                 render_function=None, style='minimal', tabs_style='minimal',
+                 renderer_tabs_style='minimal'):
         # Get number of curves (objects)
         if graph_options['legend_entries'] is None:
             raise ValueError("legend_entries must be a list, not None")
@@ -2985,7 +3001,7 @@ class GraphOptionsWidget(ipywidgets.FlexBox):
             renderer_options, options_tabs=options_tabs,
             objects_names=graph_options['legend_entries'],
             object_selection_dropdown_visible=self.n_curves > 1,
-            render_function=None, style=style, tabs_style=tabs_style)
+            render_function=None)
         # Make the x and y limits of the axes widget invisible. They will be
         # controlled by the sliders in the graph options.
         self.renderer_widget.options_widgets[3].axes_x_limits_box.visible = \
@@ -3023,7 +3039,7 @@ class GraphOptionsWidget(ipywidgets.FlexBox):
         self.selected_values = graph_options
 
         # Set style
-        #self.predefined_style(style, tabs_style)
+        self.predefined_style(style, tabs_style, renderer_tabs_style)
 
         # Set functionality
         def legend_entries_function(name, value):
@@ -3076,6 +3092,294 @@ class GraphOptionsWidget(ipywidgets.FlexBox):
         tmp_lines = tmp_lines[:-1]
         return unicode().join(tmp_lines)
 
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0,
+              padding='0.2cm', margin=0, tabs_box_style=None,
+              tabs_border_visible=True, tabs_border_color='black',
+              tabs_border_style='solid', tabs_border_width=1,
+              tabs_border_radius=1, tabs_padding=0, tabs_margin=0,
+              renderer_tabs_box_style=None, renderer_tabs_border_visible=True,
+              renderer_tabs_border_color='black',
+              renderer_tabs_border_style='solid',
+              renderer_tabs_border_width=1, renderer_tabs_border_radius=1,
+              renderer_tabs_padding=0, renderer_tabs_margin=0,
+              font_family='', font_size=None, font_style='', font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        tabs_box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        tabs_border_visible : `bool`, optional
+            Defines whether to draw the border line around the tab widgets.
+        tabs_border_color : `str`, optional
+            The color of the border around the tab widgets.
+        tabs_border_style : `str`, optional
+            The line style of the border around the tab widgets.
+        tabs_border_width : `float`, optional
+            The line width of the border around the tab widgets.
+        tabs_border_radius : `float`, optional
+            The radius of the corners of the box of the tab widgets.
+        tabs_padding : `float`, optional
+            The padding around the tab widgets.
+        tabs_margin : `float`, optional
+            The margin around the tab widgets.
+
+        renderer_tabs_box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        renderer_tabs_border_visible : `bool`, optional
+            Defines whether to draw the border line around the tab widgets of
+            the renderer widget.
+        renderer_tabs_border_color : `str`, optional
+            The color of the border around the tab widgets of the renderer
+            widget.
+        renderer_tabs_border_style : `str`, optional
+            The line style of the border around the tab widgets of the renderer
+            widget.
+        renderer_tabs_border_width : `float`, optional
+            The line width of the border around the tab widgets of the renderer
+            widget.
+        renderer_tabs_border_radius : `float`, optional
+            The radius of the corners of the box of the tab widgets of the
+            renderer widget.
+        renderer_tabs_padding : `float`, optional
+            The padding around the tab widgets of the renderer widget.
+        renderer_tabs_margin : `float`, optional
+            The margin around the tab widgets of the renderer widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
+        """
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
+        _format_box(self.graph_related_options, tabs_box_style,
+                    tabs_border_visible, tabs_border_color, tabs_border_style,
+                    tabs_border_width, tabs_border_radius, tabs_padding,
+                    tabs_margin)
+        self.x_limit.slider_color = _map_styles_to_hex_colours(tabs_box_style)
+        self.x_limit.background_color = _map_styles_to_hex_colours(tabs_box_style)
+        self.y_limit.slider_color = _map_styles_to_hex_colours(tabs_box_style)
+        self.y_limit.background_color = _map_styles_to_hex_colours(tabs_box_style)
+        _format_box(self.renderer_widget, tabs_box_style, tabs_border_visible,
+                    tabs_border_color, tabs_border_style, tabs_border_width,
+                    tabs_border_radius, tabs_padding, tabs_margin)
+        for wid in self.renderer_widget.options_widgets:
+            wid.style(box_style=renderer_tabs_box_style,
+                      border_visible=renderer_tabs_border_visible,
+                      border_color=renderer_tabs_border_color,
+                      border_style=renderer_tabs_border_style,
+                      border_width=renderer_tabs_border_width,
+                      border_radius=renderer_tabs_border_radius,
+                      padding=renderer_tabs_padding,
+                      margin=renderer_tabs_margin, font_family=font_family,
+                      font_size=font_size, font_style=font_style,
+                      font_weight=font_weight)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.renderer_widget.object_selection_dropdown,
+                     font_family, font_size, font_style, font_weight)
+        _format_font(self.graph_related_options, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.x_limit, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.y_limit, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.x_label, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.y_label, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.title, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.legend_entries, font_family, font_size, font_style,
+                     font_weight)
+
+    def predefined_style(self, style, tabs_style='minimal',
+                         renderer_tabs_style='mininal'):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+
+        tabs_style : `str` (see below), optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+
+        renderer_tabs_style : `str` (see below), optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+        """
+        if renderer_tabs_style == 'minimal' or renderer_tabs_style == '':
+            renderer_tabs_style = ''
+            renderer_tabs_border_visible = False
+            renderer_tabs_border_color = 'black'
+            renderer_tabs_border_radius = 0
+            renderer_tabs_padding = 0
+        else:
+            renderer_tabs_style = renderer_tabs_style
+            renderer_tabs_border_visible = True
+            renderer_tabs_border_color = \
+                _map_styles_to_hex_colours(renderer_tabs_style)
+            renderer_tabs_border_radius = 10
+            renderer_tabs_padding = '0.3cm'
+
+        if tabs_style == 'minimal' or tabs_style == '':
+            tabs_style = ''
+            tabs_border_visible = True
+            tabs_border_color = 'black'
+            tabs_border_radius = 0
+            tabs_padding = 0
+        else:
+            tabs_style = tabs_style
+            tabs_border_visible = True
+            tabs_border_color = _map_styles_to_hex_colours(tabs_style)
+            tabs_border_radius = 10
+            tabs_padding = '0.2cm'
+
+        if style == 'minimal':
+            self.style(box_style='', border_visible=True, border_color='black',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.2cm', margin='0.5cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       tabs_box_style=tabs_style,
+                       tabs_border_visible=tabs_border_visible,
+                       tabs_border_color=tabs_border_color,
+                       tabs_border_style='solid', tabs_border_width=1,
+                       tabs_border_radius=tabs_border_radius,
+                       tabs_padding=tabs_padding, tabs_margin='0.3cm',
+                       renderer_tabs_box_style=renderer_tabs_style,
+                       renderer_tabs_border_visible=renderer_tabs_border_visible,
+                       renderer_tabs_border_color=renderer_tabs_border_color,
+                       renderer_tabs_border_style='solid',
+                       renderer_tabs_border_width=1,
+                       renderer_tabs_border_radius=renderer_tabs_border_radius,
+                       renderer_tabs_padding=renderer_tabs_padding,
+                       renderer_tabs_margin='0.5cm')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+              style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color=_map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.5cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       tabs_box_style=tabs_style,
+                       tabs_border_visible=tabs_border_visible,
+                       tabs_border_color=tabs_border_color,
+                       tabs_border_style='solid', tabs_border_width=1,
+                       tabs_border_radius=tabs_border_radius,
+                       tabs_padding=tabs_padding, tabs_margin='0.3cm',
+                       renderer_tabs_box_style=renderer_tabs_style,
+                       renderer_tabs_border_visible=renderer_tabs_border_visible,
+                       renderer_tabs_border_color=renderer_tabs_border_color,
+                       renderer_tabs_border_style='solid',
+                       renderer_tabs_border_width=1,
+                       renderer_tabs_border_radius=renderer_tabs_border_radius,
+                       renderer_tabs_padding=renderer_tabs_padding,
+                       renderer_tabs_margin='0.5cm')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
+
     def _get_selected_options(self):
         # legend options
         legend_tmp = self.renderer_widget.selected_values[0]['legend']
@@ -3102,7 +3406,7 @@ class GraphOptionsWidget(ipywidgets.FlexBox):
             self.selected_values['render_lines'][j] = \
                 self.renderer_widget.selected_values[j]['lines']['render_lines']
             self.selected_values['line_colour'][j] = \
-                self.renderer_widget.selected_values[j]['lines']['line_colour']
+                self.renderer_widget.selected_values[j]['lines']['line_colour'][0]
             self.selected_values['line_style'][j] = \
                 self.renderer_widget.selected_values[j]['lines']['line_style']
             self.selected_values['line_width'][j] = \
@@ -3114,9 +3418,9 @@ class GraphOptionsWidget(ipywidgets.FlexBox):
             self.selected_values['marker_size'][j] = \
                 self.renderer_widget.selected_values[j]['markers']['marker_size']
             self.selected_values['marker_face_colour'][j] = \
-                self.renderer_widget.selected_values[j]['markers']['marker_face_colour']
+                self.renderer_widget.selected_values[j]['markers']['marker_face_colour'][0]
             self.selected_values['marker_edge_colour'][j] = \
-                self.renderer_widget.selected_values[j]['markers']['marker_edge_colour']
+                self.renderer_widget.selected_values[j]['markers']['marker_edge_colour'][0]
             self.selected_values['marker_edge_width'][j] = \
                 self.renderer_widget.selected_values[j]['markers']['marker_edge_width']
 

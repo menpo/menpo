@@ -11,7 +11,7 @@ from menpo.visualize.viewmatplotlib import (MatplotlibImageViewer2d,
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, AnimationOptionsWidget,
                       LandmarkOptionsWidget, ChannelOptionsWidget,
-                      FeatureOptionsWidget)
+                      FeatureOptionsWidget, GraphOptionsWidget)
 from .tools import _format_box, LogoWidget, _map_styles_to_hex_colours
 
 
@@ -1216,6 +1216,202 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
 
     # Reset value to trigger initial visualization
     renderer_options_wid.options_widgets[3].render_legend_checkbox.value = False
+
+
+def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
+               y_label=None, x_axis_limits=None, y_axis_limits=None,
+               figure_size=(10, 8), style='coloured'):
+    r"""
+    Widget that allows plotting various curves in a graph using
+    :map:`GraphPlotter`.
+
+    The widget has options tabs regarding the graph and the renderer (lines,
+    markers, legend, figure, axes, grid) and saving the figure to file.
+
+    Parameters
+    ----------
+    x_axis : `list` of `float`
+        The values of the horizontal axis. Note that these values are common for
+        all the curves.
+    y_axis : `list` of `lists` of `float`
+        A `list` that stores a `list` of values to be plotted for each curve.
+    legend_entries : `list` or `str` or ``None``, optional
+        The `list` of names that will appear on the legend for each curve. If
+        ``None``, then the names format is ``curve {}.format(i)``.
+    title : `str` or ``None``, optional
+        The title of the graph.
+    x_label : `str` or ``None``, optional
+        The label on the horizontal axis of the graph.
+    y_label : `str` or ``None``, optional
+        The label on the vertical axis of the graph.
+    x_axis_limits : (`float`, `float`) or ``None``, optional
+        The limits of the horizontal axis. If ``None``, the limits are set
+        based on the min and max values of `x_axis`.
+    y_axis_limits : (`float`, `float`), optional
+        The limits of the vertical axis. If ``None``, the limits are set based
+        on the min and max values of `y_axis`.
+    figure_size : (`int`, `int`), optional
+        The initial size of the rendered figure.
+    style : {``'coloured'``, ``'minimal'``}, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    """
+    from menpo.visualize import GraphPlotter
+    print('Initializing...')
+
+    # Get number of curves to be plotted
+    n_curves = len(y_axis)
+
+    # Define the styling options
+    if style == 'coloured':
+        widget_box_style = 'danger'
+        tabs_style = 'warning'
+        renderer_tabs_style = 'info'
+        save_figure_style = 'warning'
+    else:
+        widget_box_style = 'minimal'
+        tabs_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+
+    # Parse options
+    if legend_entries is None:
+        legend_entries = ["curve {}".format(i) for i in range(n_curves)]
+    if title is None:
+        title = ''
+    if x_label is None:
+        x_label = ''
+    if y_label is None:
+        y_label = ''
+    x_min = np.floor(np.min(x_axis))
+    x_max = np.ceil(np.max(x_axis))
+    x_step = 0.05 * (x_max - x_min + 1)
+    x_slider_options = (x_min - 2 * x_step, x_max + 2 * x_step, x_step)
+    y_min = np.floor(np.min([np.min(i) for i in y_axis]))
+    y_max = np.floor(np.max([np.max(i) for i in y_axis]))
+    y_step = 0.05 * (y_max - y_min + 1)
+    y_slider_options = (y_min - 2 * y_step, y_max + 2 * y_step, y_step)
+    if x_axis_limits is None:
+        x_axis_limits = (x_min, x_max)
+    if y_axis_limits is None:
+        y_axis_limits = (y_min, y_max)
+
+    # Get initial line and marker colours for each curve
+    if n_curves == 1:
+        colours = ['b']
+    else:
+        colours_tmp = sample_colours_from_colourmap(n_curves, 'jet')
+        colours = [list(i) for i in colours_tmp]
+
+    # Initial options dictionaries
+    graph_options = {'legend_entries': legend_entries, 'x_label': x_label,
+                     'y_label': y_label, 'title': title,
+                     'x_axis_limits': x_axis_limits,
+                     'y_axis_limits': y_axis_limits,
+                     'render_lines': [True] * n_curves, 'line_colour': colours,
+                     'line_style': ['-'] * n_curves,
+                     'line_width': [1] * n_curves,
+                     'render_markers': [True] * n_curves,
+                     'marker_style': ['s'] * n_curves,
+                     'marker_size': [10] * n_curves,
+                     'marker_face_colour': ['w'] * n_curves,
+                     'marker_edge_colour': colours,
+                     'marker_edge_width': [1] * n_curves,
+                     'render_legend': False, 'legend_title': '',
+                     'legend_font_name': 'sans-serif',
+                     'legend_font_style': 'normal', 'legend_font_size': 10,
+                     'legend_font_weight': 'normal', 'legend_marker_scale': 1.,
+                     'legend_location': 2, 'legend_bbox_to_anchor': (1.05, 1.),
+                     'legend_border_axes_pad': 1., 'legend_n_columns': 1,
+                     'legend_horizontal_spacing': 1.,
+                     'legend_vertical_spacing': 1., 'legend_border': True,
+                     'legend_border_padding': 0.5, 'legend_shadow': False,
+                     'legend_rounded_corners': False, 'render_axes': True,
+                     'axes_font_name': 'sans-serif', 'axes_font_size': 10,
+                     'axes_font_style': 'normal', 'axes_font_weight': 'normal',
+                     'figure_size': figure_size, 'render_grid': True,
+                     'grid_line_style': '--', 'grid_line_width': 1}
+
+    # Define render function
+    def render_function(name, value):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # plot with selected options
+        opts = wid.selected_values
+        plotter = GraphPlotter(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            x_axis=x_axis, y_axis=y_axis, title=opts['title'],
+            legend_entries=opts['legend_entries'], x_label=opts['x_label'],
+            y_label=opts['y_label'], x_axis_limits=opts['x_axis_limits'],
+            y_axis_limits=opts['y_axis_limits'])
+        renderer = plotter.render(
+            render_lines=opts['render_lines'], line_colour=opts['line_colour'],
+            line_style=opts['line_style'],  line_width=opts['line_width'],
+            render_markers=opts['render_markers'],
+            marker_style=opts['marker_style'], marker_size=opts['marker_size'],
+            marker_face_colour=opts['marker_face_colour'],
+            marker_edge_colour=opts['marker_edge_colour'],
+            marker_edge_width=opts['marker_edge_width'],
+            render_legend=opts['render_legend'],
+            legend_title=opts['legend_title'],
+            legend_font_name=opts['legend_font_name'],
+            legend_font_style=opts['legend_font_style'],
+            legend_font_size=opts['legend_font_size'],
+            legend_font_weight=opts['legend_font_weight'],
+            legend_marker_scale=opts['legend_marker_scale'],
+            legend_location=opts['legend_location'],
+            legend_bbox_to_anchor=opts['legend_bbox_to_anchor'],
+            legend_border_axes_pad=opts['legend_border_axes_pad'],
+            legend_n_columns=opts['legend_n_columns'],
+            legend_horizontal_spacing=opts['legend_horizontal_spacing'],
+            legend_vertical_spacing=opts['legend_vertical_spacing'],
+            legend_border=opts['legend_border'],
+            legend_border_padding=opts['legend_border_padding'],
+            legend_shadow=opts['legend_shadow'],
+            legend_rounded_corners=opts['legend_rounded_corners'],
+            render_axes=opts['render_axes'],
+            axes_font_name=opts['axes_font_name'],
+            axes_font_size=opts['axes_font_size'],
+            axes_font_style=opts['axes_font_style'],
+            axes_font_weight=opts['axes_font_weight'],
+            figure_size=opts['figure_size'], render_grid=opts['render_grid'],
+            grid_line_style=opts['grid_line_style'],
+            grid_line_width=opts['grid_line_width'])
+
+        # show plot
+        pltshow()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Create widgets
+    wid = GraphOptionsWidget(graph_options, x_slider_options, y_slider_options,
+                             render_function=render_function,
+                             style=widget_box_style, tabs_style=tabs_style,
+                             renderer_tabs_style=renderer_tabs_style)
+    initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
+                                               image=np.zeros((10, 10)))
+    save_figure_wid = SaveFigureOptionsWidget(initial_renderer,
+                                              style=save_figure_style)
+
+    # Group widgets
+    logo = LogoWidget()
+    logo.margin = '0.1cm'
+    wid.options_tab.children = [wid.graph_related_options, wid.renderer_widget,
+                                save_figure_wid]
+    wid.options_tab.set_title(0, 'Graph')
+    wid.options_tab.set_title(1, 'Renderer')
+    wid.options_tab.set_title(2, 'Export')
+    wid.children = [logo, wid.options_tab]
+    wid.align = 'start'
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Reset value to trigger initial visualization
+    wid.renderer_widget.options_widgets[2].render_legend_checkbox.value = True
 
 
 def save_matplotlib_figure(renderer, style='coloured'):

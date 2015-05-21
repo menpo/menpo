@@ -40,6 +40,7 @@ xref_map = {
 'PointGraphViewer2d': ('class', 'menpo.visualize.PointGraphViewer2d'),
 'PointDirectedGraph': ('class', 'menpo.shape.PointDirectedGraph'),
 'pca': ('function', 'menpo.math.pca'),
+'plot_graph': ('function', 'menpo.visualize.plot_graph'),
 'Shape': ('class', 'menpo.shape.Shape'),
 'PointTree': ('class', 'menpo.shape.PointTree'),
 'PointUndirectedGraph': ('class', 'menpo.shape.PointUndirectedGraph'),
