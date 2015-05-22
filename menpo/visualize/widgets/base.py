@@ -1220,7 +1220,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
 
 def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
                y_label=None, x_axis_limits=None, y_axis_limits=None,
-               figure_size=(10, 8), style='coloured'):
+               figure_size=(10, 6), style='coloured'):
     r"""
     Widget that allows plotting various curves in a graph using
     :map:`GraphPlotter`.
@@ -1288,7 +1288,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
     x_step = 0.05 * (x_max - x_min + 1)
     x_slider_options = (x_min - 2 * x_step, x_max + 2 * x_step, x_step)
     y_min = np.floor(np.min([np.min(i) for i in y_axis]))
-    y_max = np.floor(np.max([np.max(i) for i in y_axis]))
+    y_max = np.ceil(np.max([np.max(i) for i in y_axis]))
     y_step = 0.05 * (y_max - y_min + 1)
     y_slider_options = (y_min - 2 * y_step, y_max + 2 * y_step, y_step)
     if x_axis_limits is None:
@@ -1310,14 +1310,14 @@ def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
                      'y_axis_limits': y_axis_limits,
                      'render_lines': [True] * n_curves, 'line_colour': colours,
                      'line_style': ['-'] * n_curves,
-                     'line_width': [1] * n_curves,
+                     'line_width': [2] * n_curves,
                      'render_markers': [True] * n_curves,
                      'marker_style': ['s'] * n_curves,
-                     'marker_size': [10] * n_curves,
+                     'marker_size': [8] * n_curves,
                      'marker_face_colour': ['w'] * n_curves,
                      'marker_edge_colour': colours,
-                     'marker_edge_width': [1] * n_curves,
-                     'render_legend': False, 'legend_title': '',
+                     'marker_edge_width': [2] * n_curves,
+                     'render_legend': n_curves > 1, 'legend_title': '',
                      'legend_font_name': 'sans-serif',
                      'legend_font_style': 'normal', 'legend_font_size': 10,
                      'legend_font_weight': 'normal', 'legend_marker_scale': 1.,
@@ -1326,7 +1326,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
                      'legend_horizontal_spacing': 1.,
                      'legend_vertical_spacing': 1., 'legend_border': True,
                      'legend_border_padding': 0.5, 'legend_shadow': False,
-                     'legend_rounded_corners': False, 'render_axes': True,
+                     'legend_rounded_corners': False, 'render_axes': False,
                      'axes_font_name': 'sans-serif', 'axes_font_size': 10,
                      'axes_font_style': 'normal', 'axes_font_weight': 'normal',
                      'figure_size': figure_size, 'render_grid': True,
@@ -1411,7 +1411,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
     ipydisplay.display(wid)
 
     # Reset value to trigger initial visualization
-    wid.renderer_widget.options_widgets[2].render_legend_checkbox.value = True
+    wid.renderer_widget.options_widgets[3].render_axes_checkbox.value = True
 
 
 def save_matplotlib_figure(renderer, style='coloured'):
