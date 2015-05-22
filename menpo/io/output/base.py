@@ -101,6 +101,10 @@ def export_pickle(obj, fp, overwrite=False):
     compression. If `.pkl.gz` the object will be pickled using Pickle protocol
     2 with gzip compression (at a fixed compression level of 3).
 
+    Note that a special exception is made for `pathlib.Path` objects - they
+    are pickled down as a `pathlib.PurePath` so that pickles can be easily
+    moved between different platforms.
+
     Parameters
     ----------
     obj : ``object``

@@ -2,7 +2,8 @@ from .base import (
     Renderer, Viewable, LandmarkableViewable, viewwrapper, Menpo3dErrorMessage,
     PointGraphViewer2d, LandmarkViewer2d, ImageViewer2d, ImageViewer,
     AlignmentViewer2d, GraphPlotter, view_image_landmarks)
-from .text_utils import progress_bar_str, print_dynamic, print_bytes
+from .textutils import (print_progress, progress_bar_str, print_dynamic,
+                        bytes_str)
 # If IPython is not installed, then access to the widgets should be blocked.
 try:
     from .widgets import (visualize_pointclouds, visualize_landmarkgroups,
