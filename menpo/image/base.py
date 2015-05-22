@@ -1368,9 +1368,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             if isinstance(transform, Translation) and order == 0:
                 # an integer translation (e.g. a crop) If this lies entirely
                 # in the bounds then we can just do a copy.
-                min_ = transform.translation_component.astype(np.int)
+                t = transform.translation_component.copy()
+                pos_t = t > 0.0
+                t[pos_t] += 0.5
+                t[~pos_t] -= 0.5
+                min_ = t.astype(np.int)
                 max_ = template_shape + min_
-                if np.all(max_ <= template_shape) and np.all(min_ >= 0):
+                if np.all(max_ <= np.array(self.shape)) and np.all(min_ >= 0):
                     # we have a crop - slice the pixels.
                     warped_pixels = self.pixels[:,
                                     int(min_[0]):int(max_[0]),
