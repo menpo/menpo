@@ -57,6 +57,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
 
     # Define the styling options
     if style == 'coloured':
+        logo_style = 'warning'
         widget_box_style = 'warning'
         widget_border_radius = 10
         widget_border_width = 1
@@ -69,6 +70,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         renderer_tabs_style = 'minimal'
         save_figure_style = 'danger'
     else:
+        logo_style = 'minimal'
         widget_box_style = ''
         widget_border_radius = 0
         widget_border_width = 0
@@ -184,10 +186,11 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
 
         # Header widget
         header_wid = ipywidgets.HBox(
-            children=[LogoWidget(), pointcloud_number_wid], align='start')
+            children=[LogoWidget(style=logo_style), pointcloud_number_wid],
+            align='start')
     else:
         # Header widget
-        header_wid = LogoWidget()
+        header_wid = LogoWidget(style=logo_style)
     header_wid.margin = '0.1cm'
     options_box = ipywidgets.Tab(children=[info_wid, renderer_options_box,
                                            save_figure_wid], margin='0.1cm')
@@ -251,6 +254,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
 
     # Define the styling options
     if style == 'coloured':
+        logo_style = 'success'
         widget_box_style = 'success'
         widget_border_radius = 10
         widget_border_width = 1
@@ -264,6 +268,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
         renderer_tabs_style = 'minimal'
         save_figure_style = 'danger'
     else:
+        logo_style = 'minimal'
         widget_box_style = ''
         widget_border_radius = 0
         widget_border_width = 0
@@ -497,10 +502,11 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
 
         # Header widget
         header_wid = ipywidgets.HBox(
-            children=[LogoWidget(), landmark_number_wid], align='start')
+            children=[LogoWidget(style=logo_style), landmark_number_wid],
+            align='start')
     else:
         # Header widget
-        header_wid = LogoWidget()
+        header_wid = LogoWidget(style=logo_style)
     header_wid.margin = '0.2cm'
     options_box = ipywidgets.Tab(
         children=[info_wid, landmark_options_wid, renderer_options_box,
@@ -564,6 +570,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
 
     # Define the styling options
     if style == 'coloured':
+        logo_style = 'info'
         widget_box_style = 'info'
         widget_border_radius = 10
         widget_border_width = 1
@@ -577,6 +584,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         renderer_tabs_style = 'minimal'
         save_figure_style = 'danger'
     else:
+        logo_style = 'minimal'
         widget_box_style = ''
         widget_border_radius = 0
         widget_border_width = 0
@@ -833,10 +841,11 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
 
         # Header widget
         header_wid = ipywidgets.HBox(
-            children=[LogoWidget(), landmark_number_wid], align='start')
+            children=[LogoWidget(style=logo_style), landmark_number_wid],
+            align='start')
     else:
         # Header widget
-        header_wid = LogoWidget()
+        header_wid = LogoWidget(style=logo_style)
     header_wid.margin = '0.2cm'
     options_box = ipywidgets.Tab(
         children=[info_wid, landmark_options_wid, renderer_options_box,
@@ -902,6 +911,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
 
     # Define the styling options
     if style == 'coloured':
+        logo_style = 'info'
         widget_box_style = 'info'
         widget_border_radius = 10
         widget_border_width = 1
@@ -913,6 +923,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         renderer_tabs_style = 'minimal'
         save_figure_style = 'danger'
     else:
+        logo_style = 'minimal'
         widget_box_style = ''
         widget_border_radius = 0
         widget_border_width = 0
@@ -1189,10 +1200,11 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
 
         # Header widget
         header_wid = ipywidgets.HBox(
-            children=[LogoWidget(), image_number_wid], align='start')
+            children=[LogoWidget(style=logo_style), image_number_wid],
+            align='start')
     else:
         # Header widget
-        header_wid = LogoWidget()
+        header_wid = LogoWidget(style=logo_style)
     header_wid.margin = '0.2cm'
     options_box = ipywidgets.Tab(
         children=[info_wid, channel_options_wid, landmark_options_wid,
@@ -1264,11 +1276,13 @@ def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
 
     # Define the styling options
     if style == 'coloured':
+        logo_style = 'danger'
         widget_box_style = 'danger'
         tabs_style = 'warning'
         renderer_tabs_style = 'info'
         save_figure_style = 'warning'
     else:
+        logo_style = 'minimal'
         widget_box_style = 'minimal'
         tabs_style = 'minimal'
         renderer_tabs_style = 'minimal'
@@ -1397,7 +1411,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
                                               style=save_figure_style)
 
     # Group widgets
-    logo = LogoWidget()
+    logo = LogoWidget(style=logo_style)
     logo.margin = '0.1cm'
     wid.options_tab.children = [wid.graph_related_options, wid.renderer_widget,
                                 save_figure_wid]
@@ -1428,9 +1442,9 @@ def save_matplotlib_figure(renderer, style='coloured'):
         ``minimal``, then the style is simple using black and white colours.
     """
     # Create sub-widgets
-    logo_wid = LogoWidget()
     if style == 'coloured':
         style = 'warning'
+    logo_wid = LogoWidget(style='minimal')
     save_figure_wid = SaveFigureOptionsWidget(renderer, style=style)
     save_figure_wid.margin = '0.1cm'
     logo_wid.margin = '0.1cm'
@@ -1464,11 +1478,13 @@ def features_selection(style='coloured'):
     """
     # Styling options
     if style == 'coloured':
+        logo_style = 'info'
         outer_style = 'info'
         inner_style = 'warning'
         but_style = 'primary'
         rad = 10
     elif style == 'minimal':
+        logo_style = 'minimal'
         outer_style = ''
         inner_style = 'minimal'
         but_style = ''
@@ -1477,7 +1493,7 @@ def features_selection(style='coloured'):
         raise ValueError('style must be either coloured or minimal')
 
     # Create sub-widgets
-    logo_wid = LogoWidget()
+    logo_wid = LogoWidget(style=logo_style)
     features_options_wid = FeatureOptionsWidget(style=inner_style)
     features_wid = ipywidgets.HBox(children=[logo_wid, features_options_wid])
     select_but = ipywidgets.Button(description='Select')
