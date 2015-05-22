@@ -1006,6 +1006,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             constrain_to_boundary=constrain_to_boundary)
 
     def _propagate_crop_to_inplace(self, cropped):
+        # helper method that sets self's state to the result of a crop call.
+        # only needed for the deprecation period of the inplace crop methods.
         self.pixels = cropped.pixels
         self.landmarks = cropped.landmarks
         if hasattr(self, 'mask'):
@@ -1397,6 +1399,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                            warp_landmarks)
 
     def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks):
+        # factored out common logic from the different paths we can take in
+        # warp_to_shape. Rebuilds an image post-warp, adjusting landmarks
+        # as necessary.
         warped_image = Image(warped_pixels, copy=False)
 
         # warp landmarks if requested.
