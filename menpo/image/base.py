@@ -1937,6 +1937,39 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         else:
             self.from_vector_inplace(centered_pixels / scale_factor)
 
+    def rescale_pixels(self, minimum, maximum, per_channel=True):
+        r"""A copy of this image with pixels linearly rescaled to fit a range.
+
+        Note that the only pixels that will considered and rescaled are those
+        that feature in the vectorized form of this image. If you want to use
+        this routine on all the pixels in a :map:`MaskedImage`, consider
+        using `as_unmasked()` prior to this call.
+
+        Parameters
+        ----------
+        minimum: `float`
+            The minimal value of the rescaled pixels
+        maximum: `float`
+            The maximal value of the rescaled pixels
+        per_channel: `boolean`, optional
+            If ``True``, each channel will be rescaled independently. If
+            ``False``, the scaling will be over all channels.
+
+        Returns
+        -------
+        rescaled_image: ``type(self)``
+            A copy of this image with pixels linearly rescaled to fit in the
+            range provided.
+        """
+        v = self.as_vector(keep_channels=True).T
+        if per_channel:
+            min_, max_ = v.min(axis=0), v.max(axis=0)
+        else:
+            min_, max_ = v.min(), v.max()
+        sf = ((maximum - minimum) * 1.0) / (max_ - min_)
+        v_new = ((v - min_) * sf) + minimum
+        return self.from_vector(v_new.T.ravel())
+
 
 def round_image_shape(shape, round):
     if round not in ['ceil', 'round', 'floor']:
