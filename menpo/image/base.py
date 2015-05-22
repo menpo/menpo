@@ -5,7 +5,7 @@ import numpy as np
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
-from menpo.base import Vectorizable
+from menpo.base import Vectorizable, MenpoDeprecationWarning
 from menpo.shape import PointCloud
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
@@ -863,66 +863,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.feature import gradient as grad_feature
         return grad_feature(self)
 
-    def crop_inplace(self, min_indices, max_indices,
-                     constrain_to_boundary=True):
-        r"""
-        Crops this image using the given minimum and maximum indices.
-        Landmarks are correctly adjusted so they maintain their position
-        relative to the newly cropped image.
-
-        Parameters
-        ----------
-        min_indices : ``(n_dims,)`` `ndarray`
-            The minimum index over each dimension.
-        max_indices : ``(n_dims,)`` `ndarray`
-            The maximum index over each dimension.
-        constrain_to_boundary : `bool`, optional
-            If ``True`` the crop will be snapped to not go beyond this images
-            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
-            if an attempt is made to go beyond the edge of the image.
-
-        Returns
-        -------
-        cropped_image : `type(self)`
-            This image, cropped.
-
-        Raises
-        ------
-        ValueError
-            ``min_indices`` and ``max_indices`` both have to be of length
-            ``n_dims``. All ``max_indices`` must be greater than
-            ``min_indices``.
-        :map:`ImageBoundaryError`
-            Raised if ``constrain_to_boundary=False``, and an attempt is made
-            to crop the image in a way that violates the image bounds.
-        """
-        min_indices = np.floor(min_indices)
-        max_indices = np.ceil(max_indices)
-        if not (min_indices.size == max_indices.size == self.n_dims):
-            raise ValueError(
-                "Both min and max indices should be 1D numpy arrays of"
-                " length n_dims ({})".format(self.n_dims))
-        elif not np.all(max_indices > min_indices):
-            raise ValueError("All max indices must be greater that the min "
-                             "indices")
-        min_bounded = self.constrain_points_to_bounds(min_indices)
-        max_bounded = self.constrain_points_to_bounds(max_indices)
-        all_max_bounded = np.all(min_bounded == min_indices)
-        all_min_bounded = np.all(max_bounded == max_indices)
-        if not (constrain_to_boundary or all_max_bounded or all_min_bounded):
-            # points have been constrained and the user didn't want this -
-            raise ImageBoundaryError(min_indices, max_indices,
-                                     min_bounded, max_bounded)
-        slices = [slice(int(min_i), int(max_i))
-                  for min_i, max_i in
-                  zip(list(min_bounded), list(max_bounded))]
-        self.pixels = self.pixels[
-            [slice(0, self.n_channels, None)] + slices].copy()
-        # update all our landmarks
-        lm_translation = Translation(-min_bounded)
-        lm_translation.apply_inplace(self.landmarks)
-        return self
-
     def crop(self, min_indices, max_indices,
              constrain_to_boundary=False):
         r"""
@@ -956,16 +896,33 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        cropped_image = self.copy()
-        return cropped_image.crop_inplace(
-            min_indices, max_indices,
-            constrain_to_boundary=constrain_to_boundary)
+        min_indices = np.floor(min_indices)
+        max_indices = np.ceil(max_indices)
+        if not (min_indices.size == max_indices.size == self.n_dims):
+            raise ValueError(
+                "Both min and max indices should be 1D numpy arrays of"
+                " length n_dims ({})".format(self.n_dims))
+        elif not np.all(max_indices > min_indices):
+            raise ValueError("All max indices must be greater that the min "
+                             "indices")
+        min_bounded = self.constrain_points_to_bounds(min_indices)
+        max_bounded = self.constrain_points_to_bounds(max_indices)
+        all_max_bounded = np.all(min_bounded == min_indices)
+        all_min_bounded = np.all(max_bounded == max_indices)
+        if not (constrain_to_boundary or all_max_bounded or all_min_bounded):
+            # points have been constrained and the user didn't want this -
+            raise ImageBoundaryError(min_indices, max_indices,
+                                     min_bounded, max_bounded)
 
-    def crop_to_landmarks_inplace(self, group=None, label=None, boundary=0,
-                                  constrain_to_boundary=True):
+        new_shape = max_bounded - min_bounded
+        return self.warp_to_shape(new_shape, Translation(min_bounded),
+                                  order=0, warp_landmarks=True)
+
+    def crop_to_landmarks(self, group=None, label=None, boundary=0,
+                          constrain_to_boundary=True):
         r"""
-        Crop this image to be bounded around a set of landmarks with an
-        optional ``n_pixel`` boundary
+        Return a copy of this image cropped so that it is bounded around a set
+        of landmarks with an optional ``n_pixel`` boundary
 
         Parameters
         ----------
@@ -985,7 +942,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         Returns
         -------
         image : :map:`Image`
-            This image, cropped to its landmarks.
+            A copy of this image cropped to its landmarks.
 
         Raises
         ------
@@ -995,13 +952,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         pc = self.landmarks[group][label]
         min_indices, max_indices = pc.bounds(boundary=boundary)
-        return self.crop_inplace(min_indices, max_indices,
-                                 constrain_to_boundary=constrain_to_boundary)
+        return self.crop(min_indices, max_indices,
+                         constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks_proportion_inplace(self, boundary_proportion,
-                                             group=None, label=None,
-                                             minimum=True,
-                                             constrain_to_boundary=True):
+    def crop_to_landmarks_proportion(self, boundary_proportion,
+                                     group=None, label=None, minimum=True,
+                                     constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with a
         border proportional to the landmark spread or range.
@@ -1045,9 +1001,48 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             boundary = boundary_proportion * np.min(pc.range())
         else:
             boundary = boundary_proportion * np.max(pc.range())
-        return self.crop_to_landmarks_inplace(
+        return self.crop_to_landmarks(
             group=group, label=label, boundary=boundary,
             constrain_to_boundary=constrain_to_boundary)
+
+    def _propagate_crop_to_inplace(self, cropped):
+        self.pixels = cropped.pixels
+        self.landmarks = cropped.landmarks
+        if hasattr(self, 'mask'):
+            self.mask = cropped.mask
+        return self
+
+    def crop_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated: please use :map:`crop` instead.
+        """
+        warn('crop_inplace() is deprecated and will be removed in the next '
+             'major version of menpo. '
+             'Please use crop() instead.', MenpoDeprecationWarning)
+        cropped = self.crop(*args, **kwargs)
+        return self._propagate_crop_to_inplace(cropped)
+
+    def crop_to_landmarks_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated: please use :map:`crop_to_landmarks` instead.
+        """
+        warn('crop_to_landmarks_inplace() is deprecated and will be removed in'
+             ' the next major version of menpo. '
+             'Please use crop_to_landmarks() instead.',
+             MenpoDeprecationWarning)
+        cropped = self.crop_to_landmarks(*args, **kwargs)
+        return self._propagate_crop_to_inplace(cropped)
+
+    def crop_to_landmarks_proportion_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated: please use :map:`crop_to_landmarks_proportion` instead.
+        """
+        warn('crop_to_landmarks_proportion_inplace() is deprecated and will be'
+             ' removed in the next major version of menpo. Please use '
+             'crop_to_landmarks_proportion() instead.',
+             MenpoDeprecationWarning)
+        cropped = self.crop_to_landmarks_proportion(*args, **kwargs)
+        return self._propagate_crop_to_inplace(cropped)
 
     def constrain_points_to_bounds(self, points):
         r"""
@@ -1362,10 +1357,27 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image : `type(self)`
             A copy of this image, warped.
         """
+        template_shape = np.array(template_shape, dtype=np.int)
         if (isinstance(transform, Affine) and order in range(4) and
             self.n_dims == 2):
-            # skimage has an optimised Cython interpolation for 2D affine
-            # warps
+
+            # we are going to be able to go fast.
+
+            if isinstance(transform, Translation) and order == 0:
+                # an integer translation (e.g. a crop) If this lies entirely
+                # in the bounds then we can just do a copy.
+                min_ = transform.translation_component.astype(np.int)
+                max_ = template_shape + min_
+                if np.all(max_ <= template_shape) and np.all(min_ >= 0):
+                    # we have a crop - slice the pixels.
+                    warped_pixels = self.pixels[:,
+                                    int(min_[0]):int(max_[0]),
+                                    int(min_[1]):int(max_[1])].copy()
+                    return self._build_warp_to_shape(warped_pixels,
+                                                       transform,
+                                                       warp_landmarks)
+            # we couldn't do the crop, but skimage has an optimised Cython
+            # interpolation for 2D affine warps - let's use that
             sampled = cython_interpolation(self.pixels, template_shape,
                                            transform, order=order,
                                            mode=mode, cval=cval)
@@ -1375,11 +1387,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                                batch_size=batch_size)
             sampled = self.sample(points_to_sample,
                                   order=order, mode=mode, cval=cval)
-
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_pixels = sampled.reshape((self.n_channels,) + template_shape)
+        warped_pixels = sampled.reshape(
+            (self.n_channels,) + tuple(template_shape))
+
+        return self._build_warp_to_shape(warped_pixels, transform,
+                                           warp_landmarks)
+
+    def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks):
         warped_image = Image(warped_pixels, copy=False)
 
         # warp landmarks if requested.
