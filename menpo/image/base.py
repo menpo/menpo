@@ -1367,7 +1367,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
             if isinstance(transform, Translation) and order == 0:
                 # an integer translation (e.g. a crop) If this lies entirely
-                # in the bounds then we can just do a copy.
+                # in the bounds then we can just do a copy. We need to match
+                # the behavior of cython_interpolation exactly, which means
+                # matching its rounding behavior too:
                 t = transform.translation_component.copy()
                 pos_t = t > 0.0
                 t[pos_t] += 0.5
