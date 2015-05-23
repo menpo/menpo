@@ -23,7 +23,7 @@ requirements:
     - mock
     - nose
     - pip
-    - ipython-notebook 2.4.*
+    - ipython-notebook
 
 test:
   requires:
