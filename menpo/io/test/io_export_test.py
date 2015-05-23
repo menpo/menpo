@@ -230,7 +230,7 @@ def test_export_pickle(mock_open, exists, pickle_dump):
 @patch('{}.open'.format(builtins_str))
 def test_export_pickle_with_path_uses_open(mock_open, exists, pickle_dump):
     exists.return_value = False
-    fake_path = '/fake/fake.pkl.gz'
+    fake_path = str(Path('/fake.pkl.gz'))
     mock_open_enter = MagicMock()
     # Make sure the name attribute returns the path
     mock_open_enter.__enter__.return_value.configure_mock(name=fake_path)

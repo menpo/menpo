@@ -106,4 +106,3 @@ After installing `nose`, running
     >> nosetests .
 
 from the top of the repository will run all of the unit tests.
-

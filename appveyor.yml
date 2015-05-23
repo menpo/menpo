@@ -26,6 +26,4 @@ notifications:
     auth_token:
       secure: Jyd2NTPkBrrwBnl1C0mkNp5sUPGXzKrDgpZVDvPj72OUJtovXsO3795UsvktLucG
     channel: general
-    on_build_success: false
-    on_build_failure: false
     on_build_status_changed: true
