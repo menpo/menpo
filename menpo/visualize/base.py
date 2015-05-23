@@ -16,11 +16,12 @@ class Renderer(object):
 
     It is assumed that the renderers follow some form of stateful pattern for
     rendering to Figures. Therefore, the major interface for rendering involves
-    providing a `figure_id` or a boolean about whether a new figure should
-    be used. If neither are provided then the default state of the rendering
-    engine is assumed to be maintained.
+    providing a `figure_id` or a `bool` about whether a new figure should be
+    used. If neither are provided then the default state of the rendering engine
+    is assumed to be maintained.
 
-    Providing both a `figure_id` and `new_figure == True` is not a valid state.
+    Providing both a ``figure_id`` and ``new_figure == True`` is not a valid
+    state.
 
     Parameters
     ----------
@@ -78,7 +79,7 @@ class Renderer(object):
     def save_figure(self, **kwargs):
         r"""
         Abstract method for saving the figure of the current `figure_id` to
-        file. It needs to be overridden by the renderer.
+        file. It will implement the actual saving code for a given object class.
 
         Parameters
         ----------
@@ -97,9 +98,11 @@ class viewwrapper(object):
     to add the mental overhead of implementing different 2D and 3D PointCloud
     classes for example, since, outside of viewing, their implementations would
     be identical.
+
     Also note that we could have separated out viewing entirely and made the
     check there, but the view method is an important paradigm in menpo that
     we want to maintain.
+
     Therefore, this function cleverly (and obscurely) returns the correct
     view method for the dimensionality of the given object.
     """
@@ -134,8 +137,10 @@ class Viewable(object):
 
     @viewwrapper
     def view(self):
-        # See viewwrapper documentation for an explanation of how the view
-        # method works.
+        r"""
+        Abstract method for viewing. See the :map:`viewwrapper` documentation
+        for an explanation of how the `view` method works.
+        """
         pass
 
     def _view_2d(self, **kwargs):
@@ -148,7 +153,7 @@ class Viewable(object):
 class LandmarkableViewable(object):
     r"""
     Mixin for :map:`Landmarkable` and :map:`Viewable` objects. Provides a
-    single helper method for viewing Landmarks and self on the same figure.
+    single helper method for viewing Landmarks and `self` on the same figure.
     """
 
     @viewwrapper
@@ -217,6 +222,13 @@ class ImageViewer(object):
             self._parse_channels(channels, pixels)
         self.pixels = self._masked_pixels(pixels, mask)
 
+        self._flip_image_channels()
+
+    def _flip_image_channels(self):
+        if self.pixels.ndim == 3:
+            from menpo.image.base import channels_to_back
+            self.pixels = channels_to_back(self.pixels)
+
     def _parse_channels(self, channels, pixels):
         r"""
         Parse `channels` parameter. If `channels` is `int` or `list`, keep it as
@@ -242,22 +254,22 @@ class ImageViewer(object):
         """
         # Flag to trigger ImageSubplotsViewer2d or ImageViewer2d
         use_subplots = True
-        n_channels = pixels.shape[2]
+        n_channels = pixels.shape[0]
         if channels is None:
             if n_channels == 1:
-                pixels = pixels[..., 0]
+                pixels = pixels[0, ...]
                 use_subplots = False
             elif n_channels == 3:
                 use_subplots = False
         elif channels != 'all':
             if isinstance(channels, Iterable):
                 if len(channels) == 1:
-                    pixels = pixels[..., channels[0]]
+                    pixels = pixels[channels[0], ...]
                     use_subplots = False
                 else:
-                    pixels = pixels[..., channels]
+                    pixels = pixels[channels, ...]
             else:
-                pixels = pixels[..., channels]
+                pixels = pixels[channels, ...]
                 use_subplots = False
 
         return pixels, use_subplots
@@ -284,7 +296,7 @@ class ImageViewer(object):
         """
         if mask is not None:
             nanmax = np.nanmax(pixels)
-            pixels[~mask] = nanmax + (0.01 * nanmax)
+            pixels[..., ~mask] = nanmax + (0.01 * nanmax)
         return pixels
 
     def render(self, **kwargs):
@@ -320,9 +332,10 @@ class ImageViewer(object):
 
 def view_image_landmarks(image, channels, masked, group,
                          with_labels, without_labels, figure_id, new_figure,
-                         interpolation, alpha, render_lines, line_colour,
-                         line_style, line_width, render_markers, marker_style,
-                         marker_size, marker_face_colour, marker_edge_colour,
+                         interpolation, cmap_name, alpha, render_lines,
+                         line_colour, line_style, line_width,
+                         render_markers, marker_style, marker_size,
+                         marker_face_colour, marker_edge_colour,
                          marker_edge_width, render_numbering,
                          numbers_horizontal_align, numbers_vertical_align,
                          numbers_font_name, numbers_font_size,
@@ -357,11 +370,15 @@ def view_image_landmarks(image, channels, masked, group,
     if isinstance(image, MaskedImage):
         self_view = image.view(figure_id=figure_id, new_figure=new_figure,
                                channels=channels, masked=masked,
-                               interpolation=interpolation, alpha=alpha)
+                               interpolation=interpolation,
+                               cmap_name=cmap_name,
+                               alpha=alpha)
     else:
         self_view = image.view(figure_id=figure_id, new_figure=new_figure,
                                channels=channels,
-                               interpolation=interpolation, alpha=alpha)
+                               interpolation=interpolation,
+                               cmap_name=cmap_name,
+                               alpha=alpha)
 
     # Make sure axes are constrained to the image size
     if axes_x_limits is None:

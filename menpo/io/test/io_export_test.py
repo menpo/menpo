@@ -1,12 +1,20 @@
 import numpy as np
-from mock import patch, PropertyMock
+import os
+from mock import patch, PropertyMock, MagicMock
 from nose.tools import raises
+import sys
 
 import menpo.io as mio
 from menpo.image import Image
+from menpo.io.output.pickle import pickle_paths_as_pure
+from pathlib import PosixPath, WindowsPath, Path
 
+
+builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
 test_lg = mio.import_landmark_file(mio.data_path_to('breakingbad.pts'))
+nan_lg = test_lg.copy()
+nan_lg.lms.points[0, :] = np.nan
 test_img = Image(np.random.random([100, 100]))
 fake_path = '/tmp/test.fake'
 
@@ -164,6 +172,23 @@ def test_export_landmark_ljson(mock_open, exists, json_dump):
     json_dump.assert_called_once()
 
 
+@patch('menpo.io.output.base.Path.exists')
+@patch('{}.open'.format(__name__), create=True)
+def test_export_landmark_ljson_nan_values(mock_open, exists):
+    exists.return_value = False
+    fake_path = '/fake/fake.ljson'
+    with open(fake_path) as f:
+        type(f).name = PropertyMock(return_value=fake_path)
+        mio.export_landmark_file(nan_lg, f, extension='ljson')
+
+    # This is a bit ugly, but we parse the write calls to check that json
+    # wrote null values
+    first_null = mock_open.mock_calls[97][1][0][1:].strip()
+    second_null = mock_open.mock_calls[98][1][0][1:].strip()
+    assert first_null == 'null'
+    assert second_null == 'null'
+
+
 @patch('menpo.io.output.landmark.np.savetxt')
 @patch('menpo.io.output.base.Path.exists')
 @patch('{}.open'.format(__name__), create=True)
@@ -202,10 +227,60 @@ def test_export_pickle(mock_open, exists, pickle_dump):
 
 @patch('menpo.io.output.pickle.pickle.dump')
 @patch('menpo.io.output.base.Path.exists')
-@patch('__builtin__.open')
+@patch('{}.open'.format(builtins_str))
 def test_export_pickle_with_path_uses_open(mock_open, exists, pickle_dump):
     exists.return_value = False
     fake_path = '/fake/fake.pkl.gz'
+    mock_open_enter = MagicMock()
+    # Make sure the name attribute returns the path
+    mock_open_enter.__enter__.return_value.configure_mock(name=fake_path)
+    mock_open.return_value = mock_open_enter
     mio.export_pickle(test_lg, fake_path)
     pickle_dump.assert_called_once()
     mock_open.assert_called_once_with(fake_path, 'wb')
+
+
+@patch('menpo.io.output.pickle.pickle.dump')
+@patch('menpo.io.output.base.Path.exists')
+@patch('{}.open'.format(builtins_str))
+def test_export_pickle_with_path_expands_vars(mock_open, exists, pickle_dump):
+    exists.return_value = False
+    fake_path = '~/fake/fake.pkl.gz'
+    mock_open_enter = MagicMock()
+    # Make sure the name attribute returns the path
+    mock_open_enter.__enter__.return_value.configure_mock(name=fake_path)
+    mock_open.return_value = mock_open_enter
+    mio.export_pickle(test_lg, fake_path)
+    pickle_dump.assert_called_once()
+    expected_path = os.path.join(os.path.expanduser('~'), 'fake', 'fake.pkl.gz')
+    mock_open.assert_called_once_with(expected_path, 'wb')
+
+
+def test_pickle_paths_as_pure_switches_reduce_method_on_path():
+    prev_reduce = Path.__reduce__
+    with pickle_paths_as_pure():
+        assert prev_reduce != Path.__reduce__
+    assert prev_reduce == Path.__reduce__
+
+
+def test_pickle_paths_as_pure_switches_reduce_method_on_posix_path():
+    prev_reduce = PosixPath.__reduce__
+    with pickle_paths_as_pure():
+        assert prev_reduce != PosixPath.__reduce__
+    assert prev_reduce == PosixPath.__reduce__
+
+
+def test_pickle_paths_as_pure_switches_reduce_method_on_windows_path():
+    prev_reduce = WindowsPath.__reduce__
+    with pickle_paths_as_pure():
+        assert prev_reduce != WindowsPath.__reduce__
+    assert prev_reduce == WindowsPath.__reduce__
+
+
+def test_pickle_paths_as_pure_cleans_up_on_exception():
+    prev_reduce = Path.__reduce__
+    try:
+        with pickle_paths_as_pure():
+            raise ValueError()
+    except ValueError:
+        assert prev_reduce == Path.__reduce__  # ensure we clean up

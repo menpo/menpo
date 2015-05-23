@@ -64,10 +64,11 @@ rules.
 
 Key Points
 ----------
-- **Menpo is n-dimensional**. We try and avoid speaking of ``x`` and ``y`` because there are many different conventions in use.
+- **Menpo is n-dimensional**. We try and avoid speaking of ``x`` and ``y``,
+  because there are many different conventions in use.
 
-- **The IO module ensures that different data formats are normalized** upon loading into Menpo.
+- **The IO module ensures that different data formats are normalized** upon
+  loading into Menpo. For example, :map:`Image` types are imported as 64-bit
+  floating point numbers normalised between [0, 1], by default.
 
 - **axis 0 of landmarks corresponds to axis 0 of the container it is an annotation of**.
-
-

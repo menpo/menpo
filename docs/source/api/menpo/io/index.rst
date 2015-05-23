@@ -7,14 +7,14 @@ Input
 -----
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   import_image
   import_images
-  import_pickle
-  import_pickles
   import_landmark_file
   import_landmark_files
+  import_pickle
+  import_pickles
   import_builtin_asset
 
 
@@ -22,18 +22,18 @@ Output
 ------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-  export_pickle
   export_image
   export_landmark_file
+  export_pickle
 
 
 Path Operations
 ---------------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   image_paths
   landmark_file_paths

@@ -4,17 +4,16 @@
 =====================
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
 
 Abstract Classes
 ----------------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   Landmarkable
-  LandmarkableViewable
   LabellingError
 
 
@@ -22,10 +21,10 @@ Landmarks & Labeller
 --------------------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-  LandmarkGroup
   LandmarkManager
+  LandmarkGroup
   labeller
 
 
@@ -33,7 +32,7 @@ Face Labels
 -----------
 
 .. toctree::
-   :maxdepth: 2
+  :maxdepth: 2
 
   ibug_face_49
   ibug_face_51
@@ -50,7 +49,7 @@ Eyes Labels
 -----------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   ibug_open_eye
   ibug_open_eye_trimesh
@@ -62,7 +61,7 @@ Hands Labels
 ------------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   ibug_hand
 
@@ -71,7 +70,7 @@ Pose Labels
 -----------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   stickmen_pose
   flic_pose
@@ -82,7 +81,7 @@ Car Labels
 ----------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   streetscene_car_view_0
   streetscene_car_view_1
@@ -98,6 +97,6 @@ Tongue Labels
 -------------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   ibug_tongue

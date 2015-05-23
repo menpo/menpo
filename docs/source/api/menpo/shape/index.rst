@@ -3,38 +3,46 @@
 :mod:`menpo.shape`
 ==================
 
+
+Base Classes
+------------
+
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
+
+  Shape
 
 
 PointCloud
---------------------
+----------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   PointCloud
 
 
-Graphs & PointGraphs
---------------------
+Graphs
+------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   UndirectedGraph
   DirectedGraph
-  PointUndirectedGraph
-  PointDirectedGraph
+  Tree
 
 
-Trees & PointTrees
-------------------
+PointGraphs
+-----------
+
+Mix-ins of Graphs and :map:`PointCloud` for graphs with geometry.
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-  Tree
+  PointUndirectedGraph
+  PointDirectedGraph
   PointTree
 
 
@@ -42,7 +50,7 @@ Triangular Meshes
 -----------------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   TriMesh
   ColouredTriMesh
@@ -53,6 +61,6 @@ Group Operations
 ----------------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
-   mean_pointcloud
+  mean_pointcloud

@@ -51,8 +51,9 @@ cdef inline np.ndarray[FLOAT64_T, ndim=2] cross(double[:, :] x,
         The array of vectors representing the cross product between each
         corresponding vector.
     """
-    cdef np.ndarray[FLOAT64_T, ndim=2] z = np.empty_like(x)
-    cdef int n = x.shape[0]
+    cdef:
+        np.ndarray[FLOAT64_T, ndim=2] z = np.empty_like(x)
+        Py_ssize_t n = x.shape[0], i = 0
     for i in range(n):
         z[i, 0] = x[i, 1] * y[i, 2] - x[i, 2] * y[i, 1]
         z[i, 1] = x[i, 2] * y[i, 0] - x[i, 0] * y[i, 2]
@@ -94,7 +95,7 @@ cpdef compute_normals(np.ndarray[FLOAT64_T, ndim=2] vertex,
 
     # Calculate per-vertex normal
     cdef np.ndarray[FLOAT64_T, ndim=2] vertex_normal = np.zeros([nvert, 3])
-    cdef int f0, f1, f2
+    cdef integrals f0, f1, f2
     for i in range(nface):
         f0 = face[i, 0]
         f1 = face[i, 1]

@@ -84,8 +84,8 @@ def log_gabor(image, **kwargs):
     Creates a log-gabor filter bank, including smoothing the images via a
     low-pass filter at the edges.
 
-    To create a 2D filter bank, simply specify
-    the number of phi orientations (orientations in the xy-plane).
+    To create a 2D filter bank, simply specify the number of phi
+    orientations (orientations in the xy-plane).
 
     To create a 3D filter bank, you must specify both the number of
     phi (azimuth) and theta (elevation) orientations.
@@ -164,7 +164,7 @@ def log_gabor(image, **kwargs):
         odd symmetric filter.
     bandpass : ``(num_scales, image.shape)`` `ndarray`
         Bandpass images corresponding to each scale `s`
-    S: ``(image.shape,)`` `ndarray`
+    S : ``(image.shape,)`` `ndarray`
         Convolved image
 
     Examples

@@ -4,38 +4,26 @@
 ======================
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
 
 Abstract Classes
 ----------------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   Renderer
   Viewable
+  LandmarkableViewable
   MatplotlibRenderer
-
-
-Viewers
--------
-
-.. toctree::
-   :maxdepth: 1
-
-  PointCloudViewer
-  PointGraphViewer
-  LandmarkViewer
-  TriMeshViewer
-  ImageViewer
 
 
 Widgets
 -------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   visualize_images
   visualize_landmarks
@@ -45,11 +33,13 @@ Widgets
   save_matplotlib_figure
 
 
-Text Utils
-----------
+Print Utilities
+---------------
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
+  print_progress
   print_dynamic
   progress_bar_str
+  bytes_str

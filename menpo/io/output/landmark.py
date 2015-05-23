@@ -1,4 +1,5 @@
 import json
+import itertools
 import numpy as np
 
 
@@ -22,8 +23,18 @@ def LJSONExporter(landmark_group, file_handle):
     lg_json = landmark_group.tojson()
     # Add version string
     lg_json['version'] = 2
+
+    # Convert nan values to None so that json correctly maps them to 'null'
+    points = lg_json['landmarks']['points']
+    # Flatten list
+    filtered_points = [None if np.isnan(x) else x
+                       for x in itertools.chain(*points)]
+    # Recreate tuples
+    lg_json['landmarks']['points'] = list(zip(filtered_points[::2],
+                                              filtered_points[1::2]))
+
     return json.dump(lg_json, file_handle, indent=4, separators=(',', ': '),
-                     sort_keys=True)
+                     sort_keys=True, allow_nan=False)
 
 
 def PTSExporter(landmark_group, file_handle):

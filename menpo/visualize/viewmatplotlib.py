@@ -1,5 +1,3 @@
-import abc
-
 import numpy as np
 
 from menpo.visualize.base import Renderer
@@ -11,14 +9,12 @@ class MatplotlibRenderer(Renderer):
 
     Parameters
     ----------
-    figure_id : int or `None`
-        A figure id or `None`. `None` assumes we maintain the Matplotlib
+    figure_id : `int` or ``None``
+        A figure id or ``None``. ``None`` assumes we maintain the Matplotlib
         state machine and use `plt.gcf()`.
-    new_figure : bool
-        If `True`, creates a new figure to render on.
+    new_figure : `bool`
+        If ``True``, it creates a new figure to render on.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, figure_id, new_figure):
         super(MatplotlibRenderer, self).__init__(figure_id, new_figure)
@@ -34,9 +30,9 @@ class MatplotlibRenderer(Renderer):
 
     def get_figure(self):
         r"""
-        Gets the figure specified by the combination of `self.figure_id` and
-        `self.new_figure`. If `self.figure_id == None` then `plt.gcf()`
-        is used. `self.figure_id` is also set to the correct id of the figure
+        Gets the figure specified by the combination of ``self.figure_id`` and
+        ``self.new_figure``. If ``self.figure_id == None`` then ``plt.gcf()``
+        is used. ``self.figure_id`` is also set to the correct id of the figure
         if a new figure is created.
 
         Returns
@@ -69,19 +65,37 @@ class MatplotlibRenderer(Renderer):
         format : `str`
             The format to use. This must match the file path if the file path is
             a `str`.
-        dpi : `int` > 0 or None, optional
+        dpi : `int` > 0 or ``None``, optional
             The resolution in dots per inch.
-        face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                       ``(3, )`` `ndarray`, optional
+        face_colour : See Below, optional
             The face colour of the figure rectangle.
-        edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                       ``(3, )`` `ndarray`, optional
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or
+                ``(3, )`` `ndarray`
+                or
+                `list` of len 3
+
+        edge_colour : See Below, optional
             The edge colour of the figure rectangle.
+            Example options ::
+
+                {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                or
+                ``(3, )`` `ndarray`
+                or
+                `list` of len 3
+
         orientation : {``portrait``, ``landscape``}, optional
             The page orientation.
-        paper_type : {``letter``, ``legal``, ``executive``, ``ledger``,
-                      ``a0`` through ``a10``, ``b0` through ``b10``}, optional
+        paper_type : See Below, optional
             The type of the paper.
+            Example options ::
+
+                {``letter``, ``legal``, ``executive``, ``ledger``,
+                 ``a0`` through ``a10``, ``b0` through ``b10``}
+
         transparent : `bool`, optional
             If ``True``, the axes patches will all be transparent; the figure
             patch will also be transparent unless `face_colour` and/or
@@ -105,23 +119,16 @@ class MatplotlibRenderer(Renderer):
         _export(save_fig_args, filename, self._extensions_map, format,
                 overwrite=overwrite)
 
-    def save_figure_widget(self, popup=True):
+    def save_figure_widget(self):
         r"""
-        Method for saving the figure of the current `figure_id` to file using
-        :map:`menpo.visualize.widgets.save_matplotlib_figure` widget.
-
-        Parameters
-        ----------
-        popup : `bool`, optional
-            If ``True``, the widget will appear as a popup window.
+        Method for saving the figure of the current ``figure_id`` to file using
+        :func:`menpo.visualize.widgets.base.save_matplotlib_figure` widget.
         """
         from menpo.visualize.widgets import save_matplotlib_figure
-        save_matplotlib_figure(self, popup=popup)
+        save_matplotlib_figure(self)
 
 
 class MatplotlibSubplots(object):
-
-    __metaclass__ = abc.ABCMeta
 
     def _subplot_layout(self, num_subplots):
         if num_subplots < 2:
@@ -189,18 +196,24 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         self.image = image
         self.axes_list = []
 
-    def render(self, interpolation='bilinear', alpha=1., render_axes=False,
-               axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+    def render(self, interpolation='bilinear', cmap_name=None, alpha=1.,
+               render_axes=False, axes_font_name='sans-serif',
+               axes_font_size=10, axes_font_style='normal',
+               axes_font_weight='normal', axes_x_limits=None,
+               axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
-        if len(self.image.shape) == 2:  # Single channels are viewed in Gray
-            plt.imshow(self.image, cmap=cm.Greys_r, interpolation=interpolation,
-                       alpha=alpha)
+        if cmap_name is not None:
+            cmap = cm.get_cmap(cmap_name)
+        elif len(self.image.shape) == 2:
+            # Single channels are viewed in Gray by default
+            cmap = cm.Greys_r
         else:
-            plt.imshow(self.image, interpolation=interpolation, alpha=alpha)
+            cmap = None
+
+        plt.imshow(self.image, cmap=cmap, interpolation=interpolation,
+                   alpha=alpha)
 
         # render axes options
         if render_axes:
@@ -214,6 +227,8 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
                 l.set_fontweight(axes_font_weight)
         else:
             plt.axis('off')
+            plt.xticks([])
+            plt.yticks([])
 
         # Set axes limits
         if axes_x_limits is not None:
@@ -241,10 +256,11 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
         self.plot_layout = self._subplot_layout(self.num_subplots)
         self.axes_list = []
 
-    def render(self, interpolation='bilinear', alpha=1., render_axes=False,
-               axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+    def render(self, interpolation='bilinear', cmap_name=None, alpha=1.,
+               render_axes=False, axes_font_name='sans-serif',
+               axes_font_size=10, axes_font_style='normal',
+               axes_font_weight='normal', axes_x_limits=None,
+               axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
@@ -265,6 +281,8 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
                     l.set_fontweight(axes_font_weight)
             else:
                 plt.axis('off')
+                plt.xticks([])
+                plt.yticks([])
 
             # Set axes limits
             if axes_x_limits is not None:
@@ -272,8 +290,13 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
             if axes_y_limits is not None:
                 plt.ylim(axes_y_limits[::-1])
 
-            # show image
-            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r,
+            if cmap_name is not None:
+                cmap = cm.get_cmap(cmap_name)
+            else:
+                # Single channels are viewed in Gray by default
+                cmap = cm.Greys_r
+
+            plt.imshow(self.image[:, :, i], cmap=cmap,
                        interpolation=interpolation, alpha=alpha)
 
         # Set figure size
@@ -283,11 +306,11 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
 
 
 class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, points, adjacency_array):
+    def __init__(self, figure_id, new_figure, points, edges):
         super(MatplotlibPointGraphViewer2d, self).__init__(figure_id,
                                                            new_figure)
         self.points = points
-        self.adjacency_array = adjacency_array
+        self.edges = edges
 
     def render(self, image_view=False, render_lines=True, line_colour='r',
                line_style='-', line_width=1, render_markers=True,
@@ -308,10 +331,10 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
         # Check if graph has edges to be rendered (for example a PointCLoud
         # won't have any edges)
-        if render_lines and np.array(self.adjacency_array).shape[0] > 0:
+        if render_lines and np.array(self.edges).shape[0] > 0:
             # Get edges to be rendered
-            lines = zip(points[self.adjacency_array[:, 0], :],
-                        points[self.adjacency_array[:, 1], :])
+            lines = zip(points[self.edges[:, 0], :],
+                        points[self.edges[:, 1], :])
 
             # Draw line objects
             lc = mc.LineCollection(lines, colors=line_colour,
@@ -345,6 +368,8 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
                 l.set_fontweight(axes_font_weight)
         else:
             plt.axis('off')
+            plt.xticks([])
+            plt.yticks([])
 
         # Plot on image mode
         if image_view:
@@ -396,17 +421,31 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                axes_font_style='normal', axes_font_weight='normal',
                axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
         import matplotlib.pyplot as plt
+        import matplotlib.lines as mlines
+        from menpo.shape import PointCloud, TriMesh
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
+        # TODO: All marker and line options could be defined as lists...
         n_labels = len(self.labels_to_masks)
         line_colour = _check_colours_list(
             render_lines, line_colour, n_labels,
             'Must pass a list of line colours with length n_labels or a single '
             'line colour for all labels.')
+        marker_face_colour = _check_colours_list(
+            render_markers, marker_face_colour, n_labels,
+            'Must pass a list of marker face colours with length n_labels or '
+            'a single marker face colour for all labels.')
+        marker_edge_colour = _check_colours_list(
+            render_markers, marker_edge_colour, n_labels,
+            'Must pass a list of marker edge colours with length n_labels or '
+            'a single marker edge colour for all labels.')
 
         # Get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
+
+        # Initialize legend_handles list
+        legend_handles = []
 
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
@@ -417,15 +456,14 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                     line_style=line_style, line_width=line_width,
                     render_markers=render_markers, marker_style=marker_style,
                     marker_size=marker_size,
-                    marker_face_colour=marker_face_colour,
-                    marker_edge_colour=marker_edge_colour,
+                    marker_face_colour=marker_face_colour[i],
+                    marker_edge_colour=marker_edge_colour[i],
                     marker_edge_width=marker_edge_width,
                     render_axes=render_axes, axes_font_name=axes_font_name,
                     axes_font_size=axes_font_size,
                     axes_font_style=axes_font_style,
                     axes_font_weight=axes_font_weight, axes_x_limits=None,
-                    axes_y_limits=None, figure_size=figure_size,
-                    label='{0}: {1}'.format(self.group, label))
+                    axes_y_limits=None, figure_size=figure_size)
 
             ax = plt.gca()
 
@@ -440,6 +478,23 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                                 fontweight=numbers_font_weight,
                                 color=numbers_font_colour)
 
+            # set legend entry
+            if render_legend:
+                tmp_line = line_style
+                if (not render_lines or isinstance(pc, PointCloud) or
+                        isinstance(pc, TriMesh)):
+                    tmp_line = 'None'
+                tmp_marker = marker_style if render_markers else 'None'
+                legend_handles.append(
+                    mlines.Line2D([], [], linewidth=line_width,
+                                  linestyle=tmp_line, color=line_colour[i],
+                                  marker=tmp_marker,
+                                  markersize=marker_size ** 0.5,
+                                  markeredgewidth=marker_edge_width,
+                                  markeredgecolor=marker_edge_colour[i],
+                                  markerfacecolor=marker_face_colour[i],
+                                  label='{0}: {1}'.format(self.group, label)))
+
         # Plot on image mode
         if image_view:
             plt.gca().set_aspect('equal', adjustable='box')
@@ -452,8 +507,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                     'weight': legend_font_weight}
 
             # Render legend
-            ax.legend(title=legend_title, prop=prop, loc=legend_location,
-                      bbox_to_anchor=legend_bbox_to_anchor,
+            ax.legend(handles=legend_handles, title=legend_title, prop=prop,
+                      loc=legend_location, bbox_to_anchor=legend_bbox_to_anchor,
                       borderaxespad=legend_border_axes_pad,
                       ncol=legend_n_columns,
                       columnspacing=legend_horizontal_spacing,
@@ -493,7 +548,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
 
     def _build_sub_pointclouds(self):
         sub_pointclouds = []
-        for label, indices in self.labels_to_masks.iteritems():
+        for label, indices in self.labels_to_masks.items():
             mask = self.labels_to_masks[label]
             sub_pointclouds.append((label, self.pointcloud.from_mask(mask)))
         return sub_pointclouds
@@ -571,7 +626,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         self.x_axis = x_axis
         self.y_axis = y_axis
         if legend_entries is None:
-            legend_entries = ["Curve {}".format(i) for i in range(len(y_axis))]
+            legend_entries = ['Curve {}'.format(i) for i in range(len(y_axis))]
         self.legend_entries = legend_entries
         self.title = title
         self.x_label = x_label
@@ -581,7 +636,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
 
     def render(self, render_lines=True, line_colour='r',
                line_style='-', line_width=1, render_markers=True,
-               marker_style='o', marker_size=20, marker_face_colour='r',
+               marker_style='o', marker_size=6, marker_face_colour='r',
                marker_edge_colour='k', marker_edge_width=1.,
                render_legend=True, legend_title='',
                legend_font_name='sans-serif', legend_font_style='normal',

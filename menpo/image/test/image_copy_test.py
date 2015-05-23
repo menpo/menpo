@@ -6,7 +6,7 @@ from menpo.testing import is_same_array
 
 
 def test_image_copy():
-    pixels = np.ones([10, 10, 1])
+    pixels = np.ones([1, 10, 10])
     landmarks = PointCloud(np.ones([3, 2]), copy=False)
     im = Image(pixels, copy=False)
     im.landmarks['test'] = landmarks
@@ -30,7 +30,7 @@ def test_booleanimage_copy():
 
 
 def test_maskedimage_copy():
-    pixels = np.ones([10, 10, 1])
+    pixels = np.ones([1, 10, 10])
     landmarks = PointCloud(np.ones([3, 2]), copy=False)
     im = MaskedImage(pixels, copy=False)
     im.landmarks['test'] = landmarks

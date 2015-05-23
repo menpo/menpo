@@ -1,8 +1,13 @@
+import sys
 import numpy as np
-from mock import patch
+from mock import patch, MagicMock
 from nose.tools import raises
 from PIL import Image as PILImage
 import menpo.io as mio
+import warnings
+
+
+builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
 
 @raises(ValueError)
@@ -38,6 +43,16 @@ def test_lenna_import():
     assert(img.landmarks['LJSON'].n_landmarks == 68)
 
 
+def test_import_builtin_ljson():
+    lmarks = mio.import_builtin_asset('lenna.ljson')
+    assert(lmarks.n_landmarks == 68)
+
+
+def test_import_builtin_pts():
+    lmarks = mio.import_builtin_asset('einstein.pts')
+    assert(lmarks.n_landmarks == 68)
+
+
 def test_path():
     # choose a random asset (all should have it!)
     img = mio.import_builtin_asset('einstein.jpg')
@@ -47,6 +62,45 @@ def test_path():
     assert(img.path.suffix == '.jpg')
     assert(img.path.parent == mio.data_dir_path())
     assert(img.path.name == 'einstein.jpg')
+
+
+@patch('menpo.io.input.base._pathlib_glob_for_pattern')
+def test_single_suffix_dot_in_path(pathlib_glob):
+    import menpo.io.input.base as mio_base
+    from pathlib import Path
+
+    fake_path = Path('fake_path.t0.t1.t2')
+    pathlib_glob.return_value = [fake_path]
+    ext_map = MagicMock()
+    ext_map.__contains__.side_effect = lambda x: x == '.t2'
+
+    ret_val = next(mio_base.glob_with_suffix('*.t0.t1.t2', ext_map))
+    assert (ret_val == fake_path)
+    ext_map.__contains__.assert_called_with('.t2')
+
+
+def test_upper_extension_mapped_to_lower():
+    import menpo.io.input.base as mio_base
+    from pathlib import Path
+    ext_map = MagicMock()
+
+    mio_base.importer_for_filepath(Path('fake_path.JPG'), ext_map)
+    ext_map.get.assert_called_with('.jpg')
+
+
+@patch('menpo.io.input.base._pathlib_glob_for_pattern')
+def test_double_suffix(pathlib_glob):
+    import menpo.io.input.base as mio_base
+    from pathlib import Path
+
+    fake_path = Path('fake_path.t1.t2')
+    pathlib_glob.return_value = [fake_path]
+    ext_map = MagicMock()
+    ext_map.__contains__.side_effect = lambda x: x == '.t1.t2'
+
+    ret_val = next(mio_base.glob_with_suffix('*.t1.t2', ext_map))
+    assert (ret_val == fake_path)
+    ext_map.__contains__.assert_called_with('.t1.t2')
 
 
 def test_import_image():
@@ -70,12 +124,21 @@ def test_import_landmark_file():
 def test_import_images():
     imgs = list(mio.import_images(mio.data_dir_path()))
     imgs_filenames = set(i.path.stem for i in imgs)
-    exp_imgs_filenames = {'einstein', 'takeo', 'breakingbad', 'lenna',
+    exp_imgs_filenames = {'einstein', 'takeo', 'tongue', 'breakingbad', 'lenna',
                           'menpo_thumbnail'}
-    assert(len(exp_imgs_filenames - imgs_filenames) == 0)
+    assert exp_imgs_filenames == imgs_filenames
 
 
-def test_ls_builtin_assets():
+def test_import_images_are_ordered_and_unduplicated():
+    # we know that import_images returns images in path order
+    imgs = list(mio.import_images(mio.data_dir_path()))
+    imgs_filenames = [i.path.stem for i in imgs]
+    print(imgs_filenames)
+    exp_imgs_filenames = ['breakingbad', 'einstein', 'lenna', 'menpo_thumbnail', 'takeo', 'tongue']
+    assert exp_imgs_filenames == imgs_filenames
+
+
+def test_lsimgs_filenamess():
     assert(set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
                                             'einstein.jpg', 'einstein.pts',
                                             'lenna.png', 'breakingbad.pts',
@@ -261,3 +324,58 @@ def test_importing_GIF_non_pallete_exception(is_file, mock_image):
     is_file.return_value = True
 
     mio.import_image('fake_image_being_mocked.gif', normalise=False)
+
+
+@patch('menpo.io.input.landmark.json.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
+    v1_ljson = { "groups": [
+        { "connectivity": [ [ 0, 1 ], [ 1, 2 ], [ 2, 3 ] ],
+          "label": "chin", "landmarks": [
+            { "point": [ 987.9, 1294.1 ] }, { "point": [ 96.78, 1246.8 ] },
+            { "point": [ None, 0.1 ] }, { "point": [303.22, 167.2 ] } ] },
+        { "connectivity": [ [ 0, 1 ] ],
+          "label": "leye", "landmarks": [
+            { "point": [ None, None ] },
+            { "point": [ None, None ] }] }
+        ], "version": 1 }
+    mock_dict.return_value = v1_ljson
+    is_file.return_value = True
+
+    with warnings.catch_warnings(record=True) as w:
+        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+    nan_points = np.isnan(lmark.lms.points)
+
+    # Should raise deprecation warning
+    assert len(w) == 1
+    assert nan_points[2, 0]  # y-coord None point is nan
+    assert not nan_points[2, 1]  # x-coord point is not nan
+    assert np.all(nan_points[4:, :]) # all of leye label is nan
+
+
+@patch('menpo.io.input.landmark.json.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
+    v2_ljson = { "labels": [
+                    { "label": "left_eye", "mask": [0, 1, 2] },
+                    { "label": "right_eye", "mask": [3, 4, 5] }
+                 ],
+                 "landmarks": {
+                     "connectivity": [ [0, 1], [1, 2], [2, 0], [3, 4],
+                                       [4, 5],  [5, 3] ],
+                     "points": [ [None, 200.5], [None, None],
+                                 [316.8, 199.15], [339.48, 205.0],
+                                 [358.54, 217.82], [375.0, 233.4]]
+                 },
+                 "version": 2 }
+
+    mock_dict.return_value = v2_ljson
+    is_file.return_value = True
+
+    lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+    nan_points = np.isnan(lmark.lms.points)
+    assert nan_points[0, 0]  # y-coord None point is nan
+    assert not nan_points[0, 1]  # x-coord point is not nan
+    assert np.all(nan_points[1, :]) # all of leye label is nan

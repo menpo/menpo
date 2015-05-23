@@ -50,10 +50,13 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 import menpo
 
+# add an up to date mathjax path
+mathjax_path = 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+needs_sphinx = '1.3'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -63,8 +66,9 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.mathjax',
               'sphinx.ext.viewcode',
               'sphinx.ext.autosummary',
-              'numpydoc',
+              'sphinx.ext.napoleon',
               'sphinxext.ref_prettify',
+              'sphinxext.theme_hack',
               'sphinxmapxrefrole']
 
 # Import the mapping dictionary and set it for sphinxmapxrefrole
@@ -73,10 +77,17 @@ xref_mapping_dict = xref_map
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+html_static_path = ['_static']
 
 # Otherwise Sphinx emits thousands of warnings
-numpydoc_show_class_members = False
-numpydoc_class_members_toctree = False
+napoleon_include_special_with_doc = False
+napoleon_numpy_docstring = True
+napoleon_use_rtype = False
+napoleon_use_ivar = False
+napoleon_use_param = True
+napoleon_use_admonition_for_examples = True
+napoleon_use_admonition_for_notes = True
+napoleon_use_admonition_for_references = True
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -87,7 +98,7 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'index'
 
-# Sort attributes by type (functions seperate from properties)
+# Sort attributes by type (functions separate from properties)
 autodoc_member_order = 'groupwise'
 
 # General information about the project.
@@ -134,7 +145,7 @@ exclude_patterns = ['_build', '**/test/**']
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+#pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []

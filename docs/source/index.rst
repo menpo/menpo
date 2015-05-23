@@ -1,24 +1,42 @@
-=======
 Welcome
 =======
+**Welcome to the Menpo documentation!**
 
-Welcome to Menpo's documentation.
+Menpo is a Python package designed to make manipulating annotated data more
+simple. In particular, sparse locations on either images or meshes, referred
+to as **landmarks** within Menpo, are tightly coupled with their reference
+objects. For areas such as Computer Vision that involve learning models
+based on prior knowledge of object location (such as object detection
+and landmark localisation), Menpo is a very powerful toolkit.
 
-If you are new to Menpo, we strongly recommend you check out the
-:ref:`User Guide <ug-introduction>`, which provides a broad overview of the project. After
-that you may wish to explore the
-`Menpo Notebooks <http://www.menpo.io/notebooks.html>`_, which give detailed
-examples for all aspects of Menpo that you can execute for yourself.
+A short example is often more illustrative than a verbose explanation. Let's
+assume that you want to load a set of images that have been annotated with
+bounding boxes, and that these bounding box locations live in text files
+next to the images. Here's how we would load the images and extract the
+areas within the bounding boxes using Menpo:
 
-Finally, Menpo's source is extensively documented. If you have a question about
-the behaviour of a particular class or function you should head to the the
-:ref:`api-index`.
+.. code-block:: python
 
-Contents
-========
+    import menpo.io as mio
+
+    images = []
+    for image in mio.import_images('./images_folder'):
+        image.crop_to_landmarks_inplace()
+        images.append(image)
+
+Where :map:`import_images` yields a generator to keep memory usage low.
+
+Although the above is a very simple example, we believe that being able
+to easily manipulate and couple landmarks with images *and* meshes, is an
+important problem for building powerful models in areas such as facial
+point localisation.
+
+To get started, check out the User Guide for instructions on installation
+and some of the core concepts within Menpo.
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 2
+  :hidden:
 
-   userguide/index
-   api/index
+  userguide/index
+  api/index

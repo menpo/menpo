@@ -20,11 +20,11 @@ class TexturedTriMesh(TriMesh):
         The texture coordinates for the mesh.
     texture : :map:`Image`
         The texture for the mesh.
-    trilist : ``(M, 3)`` `ndarray` or `None`, optional
-        The triangle list. If `None`, a Delaunay triangulation of
+    trilist : ``(M, 3)`` `ndarray` or ``None``, optional
+        The triangle list. If ``None``, a Delaunay triangulation of
         the points will be used instead.
     copy: `bool`, optional
-        If `False`, the points, trilist and texture will not be copied on
+        If ``False``, the points, trilist and texture will not be copied on
         assignment.
         In general this should only be used if you know what you are doing.
     """
@@ -40,27 +40,29 @@ class TexturedTriMesh(TriMesh):
 
     def tcoords_pixel_scaled(self):
         r"""
-        Returns a PointCloud that is modified to be suitable for directly
+        Returns a :map:`PointCloud` that is modified to be suitable for directly
         indexing into the pixels of the texture (e.g. for manual mapping
         operations). The resulting tcoords behave just like image landmarks
-        do:
-
-        ::
-
-            texture = texturedtrimesh.texture
-            tc_ps = texturedtrimesh.tcoords_pixel_scaled()
-            pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
+        do.
 
         The operations that are performed are:
 
-        - Flipping the origin from bottom-left to top-left
-        - Scaling the tcoords by the image shape (denormalising them)
-        - Permuting the axis so that
+          - Flipping the origin from bottom-left to top-left
+          - Scaling the tcoords by the image shape (denormalising them)
+          - Permuting the axis so that
 
         Returns
         -------
         tcoords_scaled : :map:`PointCloud`
-            A copy of the tcoords that behave like Image landmarks
+            A copy of the tcoords that behave like :map:`Image` landmarks
+
+        Examples
+        --------
+        Recovering pixel values for every texture coordinate:
+
+        >>> texture = texturedtrimesh.texture
+        >>> tc_ps = texturedtrimesh.tcoords_pixel_scaled()
+        >>> pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
         """
         scale = Scale(np.array(self.texture.shape)[::-1])
         tcoords = self.tcoords.points.copy()
@@ -74,7 +76,7 @@ class TexturedTriMesh(TriMesh):
 
     def from_vector(self, flattened):
         r"""
-        Builds a new :class:`TexturedTriMesh` given then `flattened` vector.
+        Builds a new :class:`TexturedTriMesh` given the `flattened` 1D vector.
         Note that the trilist, texture, and tcoords will be drawn from self.
 
         Parameters
@@ -85,7 +87,7 @@ class TexturedTriMesh(TriMesh):
         Returns
         --------
         trimesh : :map:`TriMesh`
-            A new trimesh created from the vector with self's trilist.
+            A new trimesh created from the vector with ``self`` trilist.
         """
         return TexturedTriMesh(flattened.reshape([-1, self.n_dims]),
                                self.tcoords.points, self.texture,
@@ -129,23 +131,21 @@ class TexturedTriMesh(TriMesh):
     def _view_3d(self, figure_id=None, new_figure=False, textured=True,
                  **kwargs):
         r"""
-        Visualize the :class:`TexturedTriMesh`. Only 3D objects are currently
-        supported.
+        Visualize the :map:`TexturedTriMesh` in 3D.
 
         Parameters
         ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
         textured : `bool`, optional
-            If ``True``, render the texture.
+            If `True`, render the texture.
 
         Returns
         -------
-        viewer : :class:`menpo.visualize.base.Renderer`
+        viewer : :map:`Renderer`
             The viewer object.
-
-        Raises
-        ------
-        DimensionalityError
-            If `self.n_dims != 3`.
         """
         if textured:
             try:
@@ -169,8 +169,102 @@ class TexturedTriMesh(TriMesh):
                  marker_edge_width=1., render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=None,
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
                  label=None):
+        r"""
+        Visualization of the TriMesh in 2D. Currently, explicit textured TriMesh
+        viewing is not supported, and therefore viewing falls back to untextured
+        2D TriMesh viewing.
+
+        Returns
+        -------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        image_view : `bool`, optional
+            If ``True`` the TexturedTriMesh will be viewed as if it is in the
+            image coordinate system.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : See Below, optional
+            The colour of the lines.
+            Example options::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_style : ``{-, --, -., :}``, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : See Below, optional
+            The style of the markers. Example options ::
+
+                {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+        marker_face_colour : See Below, optional
+            The face (filling) colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_colour : See Below, optional
+            The edge colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : See Below, optional
+            The font of the axes.
+            Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
+            The font style of the axes.
+        axes_font_weight : See Below, optional
+            The font weight of the axes.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the x axis.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis.
+        figure_size : (`float`, `float`) `tuple` or ``None``, optional
+            The size of the figure in inches.
+        label : `str`, optional
+            The name entry in case of a legend.
+
+        Returns
+        -------
+        viewer : :map:`PointGraphViewer2d`
+            The viewer object.
+
+        Raises
+        ------
+        warning
+            2D Viewing of Coloured TriMeshes is not supported, automatically
+            falls back to 2D :map:`TriMesh` viewing.
+        """
         import warnings
         warnings.warn(Warning('2D Viewing of Textured TriMeshes is not '
                               'supported, falling back to TriMesh viewing.'))
