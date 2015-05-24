@@ -9,17 +9,21 @@ environment:
     - PYTHON_VERSION: 2.7
 #    - PYTHON_VERSION: 3.4
 
+matrix:
+  fast_finish: true
+
 platform:
 - x86
 #- x64
 
 init:
-- ps: Start-FileDownload 'https://raw.githubusercontent.com/jabooth/condaci/v0.2.1/condaci.py' C:\\condaci.py; echo "Done"
-- cmd: python C:\\condaci.py setup %PYTHON_VERSION% --channel %BINSTAR_USER%
-- cmd: C:\\Miniconda\\Scripts\\conda config --add channels %BINSTAR_USER%/channel/master
+#- ps: Start-FileDownload 'https://raw.githubusercontent.com/jabooth/condaci/v0.2.1/condaci.py' C:\\condaci.py; echo "Done"
+#- cmd: python C:\\condaci.py setup %PYTHON_VERSION% --channel %BINSTAR_USER%
+#- cmd: C:\\Miniconda\\Scripts\\conda config --add channels %BINSTAR_USER%/channel/master
 
 install:
-- cmd: C:\\Miniconda\\python C:\\condaci.py auto ./conda --binstaruser %BINSTAR_USER% --binstarkey %BINSTAR_KEY%
+- cmd: EXIT 1
+#- cmd: C:\\Miniconda\\python C:\\condaci.py auto ./conda --binstaruser %BINSTAR_USER% --binstarkey %BINSTAR_KEY%
 
 notifications:
   - provider: Slack
