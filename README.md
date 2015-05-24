@@ -105,4 +105,12 @@ After installing `nose`, running
 
     >> nosetests .
 
-from the top of the repository will run all of the unit tests.
+from the top of the repository will run all of the unit tests. Some tests
+check the behavior of viewing functions which should only be importable if the
+user also has `menpo3d` installed - if you are running the test suite in an
+environment with all of the menpo libraries installed, you will want to exclude
+these tests by running
+
+    >> nosetests -a '!viewing' .
+
+instead.
