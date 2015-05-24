@@ -7,7 +7,7 @@ requirements:
     - python
     - setuptools
     - numpy >=1.9.1,<1.10
-    - cython 0.21*
+    - cython 0.21.*
 
   run:
     - python
