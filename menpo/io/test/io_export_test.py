@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from menpo.io.utils import _norm_path
 from mock import patch, PropertyMock, MagicMock
 from nose.tools import raises
 import sys
@@ -230,7 +231,7 @@ def test_export_pickle(mock_open, exists, pickle_dump):
 @patch('{}.open'.format(builtins_str))
 def test_export_pickle_with_path_uses_open(mock_open, exists, pickle_dump):
     exists.return_value = False
-    fake_path = '/fake/fake.pkl.gz'
+    fake_path = _norm_path('fake.pkl.gz')
     mock_open_enter = MagicMock()
     # Make sure the name attribute returns the path
     mock_open_enter.__enter__.return_value.configure_mock(name=fake_path)

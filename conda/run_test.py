@@ -1,3 +1,8 @@
 import nose
+import sys
 
-nose.run(argv=['', 'menpo'])
+
+if nose.run(argv=['', 'menpo']):
+    sys.exit(0)
+else:
+    sys.exit(1)
