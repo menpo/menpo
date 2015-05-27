@@ -1119,7 +1119,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             n_lines += 1
         info_wid.set_widget_state(n_lines=n_lines, text_per_line=text_per_line)
 
-    # Define update function of landmark widget
+    # Define update function of renderer widget
     def update_renderer_widget(name, value):
         renderer_options_wid.object_selection_dropdown.value = \
             all_groups.index(landmark_options_wid.selected_values['group'])
@@ -1312,24 +1312,27 @@ def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
 
     # Get initial line and marker colours for each curve
     if n_curves == 1:
-        colours = ['b']
+        line_colours = ['b']
+        marker_edge_colours = ['b']
     else:
         colours_tmp = sample_colours_from_colourmap(n_curves, 'jet')
-        colours = [list(i) for i in colours_tmp]
+        line_colours = [list(i) for i in colours_tmp]
+        marker_edge_colours = [list(i) for i in colours_tmp]
 
     # Initial options dictionaries
     graph_options = {'legend_entries': legend_entries, 'x_label': x_label,
                      'y_label': y_label, 'title': title,
                      'x_axis_limits': x_axis_limits,
                      'y_axis_limits': y_axis_limits,
-                     'render_lines': [True] * n_curves, 'line_colour': colours,
+                     'render_lines': [True] * n_curves,
+                     'line_colour': line_colours,
                      'line_style': ['-'] * n_curves,
                      'line_width': [2] * n_curves,
                      'render_markers': [True] * n_curves,
                      'marker_style': ['s'] * n_curves,
                      'marker_size': [8] * n_curves,
                      'marker_face_colour': ['w'] * n_curves,
-                     'marker_edge_colour': colours,
+                     'marker_edge_colour': marker_edge_colours,
                      'marker_edge_width': [2] * n_curves,
                      'render_legend': n_curves > 1, 'legend_title': '',
                      'legend_font_name': 'sans-serif',
