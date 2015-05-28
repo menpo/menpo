@@ -2,6 +2,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 import versioneer
+import glob
 
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
@@ -34,6 +35,10 @@ else:
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')
 
+# Explicitly specify the image/landmark data in the data folder
+builtin_data = filter(lambda x: os.path.isfile(x), glob.glob('menpo/data/*'))
+builtin_data = [os.path.relpath(x, start='menpo') for x in builtin_data]
+
 # Versioneer allows us to automatically generate versioning from
 # our git tagging system which makes releases simpler.
 versioneer.VCS = 'git'
@@ -52,11 +57,12 @@ setup(name='menpo',
       ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=install_requires,
-      package_data={'menpo': ['data/*',
-                              'feature/cpp/*.cpp',
-                              'feature/cpp/*.h',
-                              'transform/piecewiseaffine/fastpwa/*.c',
-                              'transform/piecewiseaffine/fastpwa/*.h'],
+      package_data={'menpo': builtin_data + [
+                             'data/logos/*',
+                             'feature/cpp/*.cpp',
+                             'feature/cpp/*.h',
+                             'transform/piecewiseaffine/fastpwa/*.c',
+                             'transform/piecewiseaffine/fastpwa/*.h'],
                     '': ['*.pxd', '*.pyx']},
       tests_require=['nose', 'mock']
 )
