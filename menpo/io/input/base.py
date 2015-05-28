@@ -322,7 +322,7 @@ def ls_builtin_assets():
         Filenames of all assets in the data directory shipped with Menpo
 
     """
-    return [p.name for p in data_dir_path().glob('*')]
+    return [p.name for p in data_dir_path().glob('*') if not p.is_dir()]
 
 
 def import_builtin(x):

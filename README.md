@@ -114,3 +114,4 @@ these tests by running
     >> nosetests -a '!viewing' .
 
 instead.
+

@@ -675,6 +675,26 @@ class PCAModel(MeanInstanceLinearModel):
             grid_line_style=grid_line_style, grid_line_width=grid_line_width,
             figure_size=figure_size)
 
+    def plot_eigenvalues_widget(self, figure_size=(10, 6), style='coloured'):
+        r"""
+        Plot of the eigenvalues using :map:`plot_graph` widget.
+
+        Parameters
+        ----------
+        figure_size : (`float`, `float`) or ``None``, optional
+            The size of the figure in inches.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
+        """
+        from menpo.visualize import plot_graph
+        plot_graph(x_axis=range(self.n_active_components),
+                   y_axis=[self.eigenvalues], legend_entries=['Eigenvalues'],
+                   title='Eigenvalues', x_label='Component Number',
+                   y_label='Eigenvalue',
+                   x_axis_limits=(0, self.n_active_components - 1),
+                   y_axis_limits=None, figure_size=figure_size, style=style)
+
     def plot_eigenvalues_ratio(self, figure_id=None, new_figure=False,
                                render_lines=True, line_colour='b',
                                line_style='-', line_width=2,
@@ -802,6 +822,29 @@ class PCAModel(MeanInstanceLinearModel):
             grid_line_style=grid_line_style, grid_line_width=grid_line_width,
             figure_size=figure_size)
 
+    def plot_eigenvalues_ratio_widget(self, figure_size=(10, 6),
+                                      style='coloured'):
+        r"""
+        Plot of the variance ratio captured by the eigenvalues using
+        :map:`plot_graph` widget.
+
+        Parameters
+        ----------
+        figure_size : (`float`, `float`) or ``None``, optional
+            The size of the figure in inches.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
+        """
+        from menpo.visualize import plot_graph
+        plot_graph(x_axis=range(self.n_active_components),
+                   y_axis=[self.eigenvalues_ratio()],
+                   legend_entries=['Eigenvalues ratio'],
+                   title='Variance Ratio of Eigenvalues',
+                   x_label='Component Number', y_label='Variance Ratio',
+                   x_axis_limits=(0, self.n_active_components - 1),
+                   y_axis_limits=None, figure_size=figure_size, style=style)
+
     def plot_eigenvalues_cumulative_ratio(self, figure_id=None,
                                           new_figure=False, render_lines=True,
                                           line_colour='b', line_style='-',
@@ -819,7 +862,7 @@ class PCAModel(MeanInstanceLinearModel):
                                           grid_line_style='--',
                                           grid_line_width=0.5):
         r"""
-        Plot of the variance ratio captured by the eigenvalues.
+        Plot of the cumulative variance ratio captured by the eigenvalues.
 
         Parameters
         ----------
@@ -933,6 +976,30 @@ class PCAModel(MeanInstanceLinearModel):
             axes_font_weight=axes_font_weight, render_grid=render_grid,
             grid_line_style=grid_line_style, grid_line_width=grid_line_width,
             figure_size=figure_size)
+
+    def plot_eigenvalues_cumulative_ratio_widget(self, figure_size=(10, 6),
+                                                 style='coloured'):
+        r"""
+        Plot of the cumulative variance ratio captured by the eigenvalues using
+        :map:`plot_graph` widget.
+
+        Parameters
+        ----------
+        figure_size : (`float`, `float`) or ``None``, optional
+            The size of the figure in inches.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
+        """
+        from menpo.visualize import plot_graph
+        plot_graph(x_axis=range(self.n_active_components),
+                   y_axis=[self.eigenvalues_cumulative_ratio()],
+                   legend_entries=['Eigenvalues cumulative ratio'],
+                   title='Cumulative Variance Ratio of Eigenvalues',
+                   x_label='Component Number',
+                   y_label='Cumulative Variance Ratio',
+                   x_axis_limits=(0, self.n_active_components - 1),
+                   y_axis_limits=None, figure_size=figure_size, style=style)
 
     def __str__(self):
         str_out = 'PCA Model \n'                             \
