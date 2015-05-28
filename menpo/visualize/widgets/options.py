@@ -1511,17 +1511,16 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
     == ================== ===================== ====================
     No Object             Variable (`self.`)    Description
     == ================== ===================== ====================
-    1  ToggleButton       `play_toggle`         The play button
-    2  ToggleButton       `stop_toggle`         The stop button
-    3  ToggleButton       `play_options_toggle` Button that toggles
+    1  ToggleButton       `play_stop_toggle`    The play/stop button
+    2  ToggleButton       `play_options_toggle` Button that toggles
 
                                                 the options menu
-    4  Checkbox           `loop_checkbox`       Repeat mode
-    5  FloatText          `interval_text`       Interval (secs)
-    6  VBox               `loop_interval_box`   Contains 4, 5
-    7  VBox               `play_options_box`    Contains 3, 6
-    8  HBox               `animation_box`       Contains 1, 2, 7
-    9  IndexButtonsWidget `index_wid`           The index selector
+    3  Checkbox           `loop_checkbox`       Repeat mode
+    4  FloatText          `interval_text`       Interval (secs)
+    5  VBox               `loop_interval_box`   Contains 3, 4
+    6  VBox               `play_options_box`    Contains 2, 5
+    7  HBox               `animation_box`       Contains 1, 6
+    8  IndexButtonsWidget `index_wid`           The index selector
 
        IndexSliderWidget                        widget
     == ================== ===================== ====================
@@ -1641,12 +1640,16 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
                              padding=0, margin='0.15cm')
 
         # Create other widgets
-        self.play_toggle = ipywidgets.ToggleButton(description='Play >',
-                                                   value=False)
-        self.stop_toggle = ipywidgets.ToggleButton(description='Stop',
-                                                   value=True, disabled=True)
+        self.play_stop_toggle = ipywidgets.ToggleButton(description='Play >',
+                                                        value=False)
+        self._toggle_play_style = 'success'
+        self._toggle_stop_style = 'danger'
+        if style == 'minimal':
+            self._toggle_play_style = ''
+            self._toggle_stop_style = ''
         self.play_options_toggle = ipywidgets.ToggleButton(
-            description='Options', value=False)
+            description='Options', value=False,
+            button_style=self._toggle_play_style)
         self.loop_checkbox = ipywidgets.Checkbox(description='Loop',
                                                  value=loop_enabled)
         self.interval_text = ipywidgets.FloatText(description='Interval (sec)',
@@ -1658,8 +1661,8 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
         self.play_options_box = ipywidgets.VBox(
             children=[self.play_options_toggle, self.loop_interval_box])
         self.animation_box = ipywidgets.HBox(
-            children=[self.play_toggle, self.stop_toggle,
-                      self.play_options_box], margin='0.15cm', padding=0)
+            children=[self.play_stop_toggle, self.play_options_box],
+            margin='0.15cm', padding=0)
         super(AnimationOptionsWidget, self).__init__(
             children=[self.index_wid, self.animation_box])
         self.align = 'start'
@@ -1673,19 +1676,23 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
         self.predefined_style(style)
 
         # Set functionality
-        def play_pressed(name, value):
-            self.stop_toggle.value = not value
-            self.play_toggle.disabled = value
-            self.play_options_toggle.disabled = value
+        def play_stop_pressed(name, value):
             if value:
+                # Animation was not playing, so Play was pressed.
+                # Change the button style
+                self.play_stop_toggle.button_style = self._toggle_stop_style
+                # Change the description to Stop
+                self.play_stop_toggle.description = 'Stop -'
+                # Make sure that play options are off
                 self.play_options_toggle.value = False
-        self.play_toggle.on_trait_change(play_pressed, 'value')
-
-        def stop_pressed(name, value):
-            self.play_toggle.value = not value
-            self.stop_toggle.disabled = value
-            self.play_options_toggle.disabled = not value
-        self.stop_toggle.on_trait_change(stop_pressed, 'value')
+            else:
+                # Animation was playing, so Stop was pressed.
+                # Change the button style
+                self.play_stop_toggle.button_style = self._toggle_play_style
+                # Change the description to Play
+                self.play_stop_toggle.description = 'Play >'
+            self.play_options_toggle.disabled = value
+        self.play_stop_toggle.on_trait_change(play_stop_pressed, 'value')
 
         def play_options_visibility(name, value):
             self.loop_interval_box.visible = value
@@ -1702,7 +1709,7 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
                     i = self.selected_values['min']
 
                 while (i <= self.selected_values['max'] and
-                       not self.stop_toggle.value):
+                       self.play_stop_toggle.value):
                     # update index value
                     if index_style == 'slider':
                         self.index_wid.slider.value = i
@@ -1727,7 +1734,7 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
                 i = self.selected_values['index']
                 i += self.selected_values['step']
                 while (i <= self.selected_values['max'] and
-                       not self.stop_toggle.value):
+                       self.play_stop_toggle.value):
                     # update index value
                     if index_style == 'slider':
                         self.index_wid.slider.value = i
@@ -1745,8 +1752,8 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
                     # wait
                     sleep(self.interval_text.value)
                 if i > self.selected_values['max']:
-                    self.stop_toggle.value = True
-        self.play_toggle.on_trait_change(animate, 'value')
+                    self.play_stop_toggle.value = False
+        self.play_stop_toggle.on_trait_change(animate, 'value')
 
         # Set render and update functions
         self._update_function = None
@@ -1813,9 +1820,7 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
-        _format_font(self.play_toggle, font_family, font_size, font_style,
-                     font_weight)
-        _format_font(self.stop_toggle, font_family, font_size, font_style,
+        _format_font(self.play_stop_toggle, font_family, font_size, font_style,
                      font_weight)
         _format_font(self.play_options_toggle, font_family, font_size,
                      font_style, font_weight)
@@ -1856,10 +1861,8 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
         """
         if style == 'minimal':
             self.style(box_style='', border_visible=False)
-            self.play_toggle.button_style = ''
-            self.play_toggle.font_weight = 'normal'
-            self.stop_toggle.button_style = ''
-            self.stop_toggle.font_weight = 'normal'
+            self.play_stop_toggle.button_style = ''
+            self.play_stop_toggle.font_weight = 'normal'
             self.play_options_toggle.button_style = ''
             _format_box(self.loop_interval_box, '', False, 'black', 'solid', 1,
                         10, '0.1cm', '0.1cm')
@@ -1875,10 +1878,8 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
         elif (style == 'info' or style == 'success' or style == 'danger' or
               style == 'warning'):
             self.style(box_style=style, border_visible=False)
-            self.play_toggle.button_style = 'success'
-            self.play_toggle.font_weight = 'bold'
-            self.stop_toggle.button_style = 'danger'
-            self.stop_toggle.font_weight = 'bold'
+            self.play_stop_toggle.button_style = 'success'
+            self.play_stop_toggle.font_weight = 'bold'
             self.play_options_toggle.button_style = 'info'
             _format_box(self.loop_interval_box, 'info', True,
                         _map_styles_to_hex_colours('info'), 'solid', 1, 10,
@@ -1997,8 +1998,8 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        if self.play_toggle.value:
-            self.play_toggle.value = False
+        if self.play_stop_toggle.value:
+            self.play_stop_toggle.value = False
         if self.index_style == 'slider':
             self.index_wid.set_widget_state(index,
                                             allow_callback=allow_callback)
