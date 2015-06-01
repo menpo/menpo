@@ -1639,7 +1639,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : ``float``, optional
             The value to be set outside the rotated image boundaries.
         """
-        centre = Translation(-self.centre)
+        centre = Translation(-self.centre())
         t = (centre.compose_before(UniformScale(1.0 / scale, self.n_dims))
                    .compose_before(centre.pseudoinverse()))
 
