@@ -1,3 +1,4 @@
+from itertools import islice
 import numpy as np
 from menpo.visualize import print_progress, bytes_str
 
@@ -110,6 +111,11 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
     template : :map:`Vectorizable`, optional
         If ``return_template == True``, will return the template used to
         build the matrix `M`.
+
+    Raises
+    ------
+    ValueError
+        ``vectorizables`` terminates in fewer than ``length`` iterations
     """
     # get the first element as the template and use it to configure the
     # data matrix
@@ -133,15 +139,23 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
     data[0] = template_vector
     del template_vector
 
+    # ensure we take at most the remaining length - 1 elements
+    vectorizables = islice(vectorizables, length - 1)
+
     if verbose:
         vectorizables = print_progress(vectorizables, n_items=length, offset=1,
                                        prefix='Building data matrix')
 
     # 1-based as we have the template vector set already
+    i = 0
     for i, sample in enumerate(vectorizables, 1):
-        if i >= length:
-            break
         data[i] = sample.as_vector()
+
+    # we have exhausted the iterable, but did we get enough items?
+    if i != length - 1:  # -1
+        raise ValueError('Incomplete data matrix due to early iterator '
+                         'termination (expected {} items, got {})'.format(
+            length, i + 1))
 
     if return_template:
         return data, template
