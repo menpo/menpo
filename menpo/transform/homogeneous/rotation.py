@@ -87,7 +87,8 @@ class Rotation(DiscreteAffine, Similarity):
             # convert to radians
             theta = theta * np.pi / 180.0
         return Rotation(np.array([[np.cos(theta), -np.sin(theta)],
-                                  [np.sin(theta),  np.cos(theta)]]))
+                                  [np.sin(theta),  np.cos(theta)]]),
+                        skip_checks=True)
 
     @property
     def rotation_matrix(self):

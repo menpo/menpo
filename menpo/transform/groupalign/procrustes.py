@@ -1,11 +1,13 @@
 import numpy as np
 
-from menpo.transform import AlignmentSimilarity, UniformScale, Translation
+from ..homogeneous import AlignmentSimilarity
 from .base import MultipleAlignment
 
-mean_pointcloud = None  # to avoid circular imports
-PointCloud = None       # to avoid circular imports
-Similarity = None       # to avoid circular imports
+
+avoid_circular = None      # to avoid circular imports
+mean_pointcloud = None     # to avoid circular imports
+PointCloud = None          # to avoid circular imports
+scale_about_centre = None  # to avoid circular imports
 
 
 class GeneralizedProcrustesAnalysis(MultipleAlignment):
@@ -45,10 +47,12 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         r"""
         Recursively calculates a procrustes alignment.
         """
-        global mean_pointcloud, PointCloud, Similarity
-        if mean_pointcloud is None or PointCloud is None or Similarity is None:
+        global mean_pointcloud, PointCloud, scale_about_centre, avoid_circular
+        if avoid_circular is None:
             from menpo.shape import mean_pointcloud, PointCloud
-            from menpo.transform import Similarity
+            from ..compositions import scale_about_centre
+            avoid_circular = True
+
         if self.n_iterations > self.max_iterations:
             return False
         new_tgt = mean_pointcloud([PointCloud(t.aligned_source().points,
@@ -56,14 +60,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
                                    for t in self.transforms])
         # rescale the new_target to be the same size as the original about
         # it's centre
-        rescale = Similarity.init_identity(new_tgt.n_dims)
-
-        s = UniformScale(self.initial_target_scale / new_tgt.norm(),
-                         self.n_dims, skip_checks=True)
-        t = Translation(-new_tgt.centre(), skip_checks=True)
-        rescale.compose_before_inplace(t)
-        rescale.compose_before_inplace(s)
-        rescale.compose_before_inplace(t.pseudoinverse())
+        rescale = scale_about_centre(new_tgt,
+                                     self.initial_target_scale / new_tgt.norm())
         rescale.apply_inplace(new_tgt)
         # check to see if we have converged yet
         delta_target = np.linalg.norm(self.target.points - new_tgt.points)

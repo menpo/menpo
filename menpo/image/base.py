@@ -9,8 +9,8 @@ from menpo.base import Vectorizable
 from menpo.shape import PointCloud
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
-                             AlignmentUniformScale, Affine, Rotation,
-                             UniformScale)
+                             AlignmentUniformScale, Affine, scale_about_centre,
+                             rotate_ccw_about_centre)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .extract_patches import extract_patches
@@ -1639,10 +1639,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : ``float``, optional
             The value to be set outside the rotated image boundaries.
         """
-        centre = Translation(-self.centre)
-        t = (centre.compose_before(UniformScale(1.0 / scale, self.n_dims))
-                   .compose_before(centre.pseudoinverse()))
-
+        t = scale_about_centre(self, 1.0 / scale)
         return self.warp_to_shape(self.shape, t, cval=cval)
 
     def rotate_ccw_about_centre(self, theta, degrees=True, cval=0.0):
@@ -1667,10 +1664,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if self.n_dims != 2:
             raise ValueError('Image rotation is presently only supported on '
                              '2D images')
-        # create a translation that moves the centre of the image to the origin
-        t = Translation(self.centre)
-        r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
-        r_about_centre = t.pseudoinverse().compose_before(r).compose_before(t)
+
+        r_about_centre = rotate_ccw_about_centre(self, theta, degrees=degrees)
         return self.warp_to_shape(self.shape, r_about_centre.pseudoinverse(),
                                   warp_landmarks=True, cval=cval)
 

@@ -199,4 +199,3 @@ def test_zoom_booleanimage():
 
     zim = im.zoom(1.2)
     assert np.all(zim.pixels)
-    
