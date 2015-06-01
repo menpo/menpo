@@ -47,7 +47,7 @@ def test_image_blank_n_channels():
 def test_image_centre():
     pixels = np.ones((1, 10, 20))
     image = Image(pixels)
-    assert(np.all(image.centre == np.array([5, 10])))
+    assert(np.all(image.centre() == np.array([5, 10])))
 
 
 def test_image_str_shape_4d():
@@ -680,27 +680,27 @@ def test_image_extract_channels_multiple_reversed():
 
 def test_diagonal_greyscale():
     image = Image.init_blank((100, 250), n_channels=1)
-    assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
+    assert image.diagonal() == (100 ** 2 + 250 ** 2) ** 0.5
 
 
 def test_diagonal_color():
     image = Image.init_blank((100, 250), n_channels=3)
-    assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
+    assert image.diagonal() == (100 ** 2 + 250 ** 2) ** 0.5
 
 
 def test_diagonal_greyscale_ndim():
     image = Image.init_blank((100, 250, 50), n_channels=1)
-    assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
+    assert image.diagonal() == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
 
 
 def test_diagonal_kchannel_ndim():
     image = Image.init_blank((100, 250, 50), n_channels=5)
-    assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
+    assert image.diagonal() == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
 
 
 def test_rescale_to_diagonal():
     image = Image.init_blank((8, 6), n_channels=2)
-    assert image.diagonal == 10
+    assert image.diagonal() == 10
     rescaled = image.rescale_to_diagonal(5)
     assert rescaled.shape == (4, 3)
     assert rescaled.n_channels == 2

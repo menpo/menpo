@@ -272,7 +272,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return self.pixels.shape[1:]
 
-    @property
     def diagonal(self):
         r"""
         The diagonal size of this image
@@ -281,7 +280,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return np.sqrt(np.sum(np.array(self.shape) ** 2))
 
-    @property
     def centre(self):
         r"""
         The geometric centre of the Image - the subpixel that is in the
@@ -1488,7 +1486,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         rescaled_image : type(self)
             A copy of this image, rescaled.
         """
-        return self.rescale(diagonal / self.diagonal, round=round)
+        return self.rescale(diagonal / self.diagonal(), round=round)
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
                                    label=None, round='ceil', order=1):
