@@ -1,8 +1,39 @@
 import numpy as np
 from warnings import warn
+from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
 from menpo.shape.base import Shape
+
+
+def bounding_box(top_left, bottom_right):
+    r"""
+    Return a bounding box from the two corner points as a directed graph.
+    The the first point (0) will be nearest the origin.
+    In the case of an image, this ordering would appear as:
+
+    ::
+
+        0<--3
+        |   ^
+        |   |
+        v   |
+        1-->2
+
+    Returns
+    -------
+    bounding_box : :map:`PointDirectedGraph`
+        The axis aligned bounding box from the two given corners.
+    """
+    from .graph import PointDirectedGraph
+
+    adjacency_matrix = csr_matrix(([1] * 4, ([0, 1, 2, 3], [1, 2, 3, 0])),
+                                  shape=(4, 4))
+    return PointDirectedGraph(np.array([top_left,
+                                        [bottom_right[0], top_left[1]],
+                                        bottom_right,
+                                        [top_left[0], bottom_right[1]]]),
+                              adjacency_matrix, copy=False)
 
 
 class PointCloud(Shape):
@@ -194,14 +225,8 @@ class PointCloud(Shape):
         bounding_box : :map:`PointDirectedGraph`
             The axis aligned bounding box of the PointCloud.
         """
-        from .graph import PointDirectedGraph
-        from scipy.sparse import csr_matrix
         min_p, max_p = self.bounds()
-        adjacency_matrix = csr_matrix(([1] * 4, ([0, 1, 2, 3], [1, 2, 3, 0])),
-                                      shape=(4, 4))
-        return PointDirectedGraph(np.array([min_p, [max_p[0], min_p[1]],
-                                            max_p, [min_p[0], max_p[1]]]),
-                                  adjacency_matrix, copy=False)
+        return bounding_box(min_p, max_p)
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_markers=True, marker_style='o', marker_size=20,
