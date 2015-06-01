@@ -1875,6 +1875,8 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
             elif self.index_style == 'slider':
                 self.index_wid.slider.slider_color = ''
                 self.index_wid.slider.background_color = ''
+            self._toggle_play_style = ''
+            self._toggle_stop_style = ''
         elif (style == 'info' or style == 'success' or style == 'danger' or
               style == 'warning'):
             self.style(box_style=style, border_visible=False)
@@ -1896,6 +1898,8 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
                     _map_styles_to_hex_colours(style)
                 self.index_wid.slider.background_color = \
                     _map_styles_to_hex_colours(style)
+            self._toggle_play_style = 'success'
+            self._toggle_stop_style = 'danger'
         else:
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')
