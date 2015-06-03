@@ -20,6 +20,7 @@ Features
   es
   lbp
   hog
+  dsift
   daisy
 
 

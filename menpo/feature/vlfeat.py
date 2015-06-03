@@ -44,7 +44,7 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
         Flag to print SIFT related information.
 
     Raises
-    -------
+    ------
     ValueError
         Only 2D arrays are supported
     ValueError
