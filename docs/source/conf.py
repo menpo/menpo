@@ -92,7 +92,7 @@ napoleon_use_admonition_for_notes = True
 napoleon_use_admonition_for_references = True
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+#source_suffix = '.rst'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'

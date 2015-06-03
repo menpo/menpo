@@ -1020,7 +1020,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def crop_inplace(self, *args, **kwargs):
         r"""
-        Deprecated: please use :map:`crop` instead.
+        Deprecated: please use :meth:`crop` instead.
         """
         warn('crop_inplace() is deprecated and will be removed in the next '
              'major version of menpo. '
@@ -1030,7 +1030,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def crop_to_landmarks_inplace(self, *args, **kwargs):
         r"""
-        Deprecated: please use :map:`crop_to_landmarks` instead.
+        Deprecated: please use :meth:`crop_to_landmarks` instead.
         """
         warn('crop_to_landmarks_inplace() is deprecated and will be removed in'
              ' the next major version of menpo. '
@@ -1041,7 +1041,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def crop_to_landmarks_proportion_inplace(self, *args, **kwargs):
         r"""
-        Deprecated: please use :map:`crop_to_landmarks_proportion` instead.
+        Deprecated: please use :meth:`crop_to_landmarks_proportion` instead.
         """
         warn('crop_to_landmarks_proportion_inplace() is deprecated and will be'
              ' removed in the next major version of menpo. Please use '
