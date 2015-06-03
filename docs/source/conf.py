@@ -34,7 +34,7 @@ if on_rtd:
                     'scipy.spatial.distance', 'IPython', 'IPython.display',
                     'IPython.html', 'IPython.html.widgets',
                     'numpy.dtype', 'scipy.ndimage', 'scipy.linalg.blas',
-                    'scipy.sparse']
+                    'scipy.sparse', 'IPython.utils.traitlets']
     # Masking our Cython modules
     MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
                      'menpo.feature.windowiterator',
