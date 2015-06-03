@@ -39,6 +39,7 @@ if on_rtd:
     MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
                      'menpo.feature.windowiterator',
                      'menpo.shape.mesh.normals',
+                     'menpo.feature.gradient',
                      'menpo.external.skimage._warps_cy',
                      'menpo.image.extract_patches']
     for mod_name in MOCK_MODULES:
