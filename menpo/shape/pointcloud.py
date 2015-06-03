@@ -1,6 +1,7 @@
 import numpy as np
 from warnings import warn
 from scipy.spatial.distance import cdist
+
 from menpo.shape.base import Shape
 
 
@@ -194,11 +195,13 @@ class PointCloud(Shape):
             The axis aligned bounding box of the PointCloud.
         """
         from .graph import PointDirectedGraph
+        from scipy.sparse import csr_matrix
         min_p, max_p = self.bounds()
+        adjacency_matrix = csr_matrix(([1] * 4, ([0, 1, 2, 3], [1, 2, 3, 0])),
+                                      shape=(4, 4))
         return PointDirectedGraph(np.array([min_p, [max_p[0], min_p[1]],
                                             max_p, [min_p[0], max_p[1]]]),
-                                  np.array([[0, 1], [1, 2], [2, 3], [3, 0]]),
-                                  copy=False)
+                                  adjacency_matrix, copy=False)
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_markers=True, marker_style='o', marker_size=20,
@@ -622,24 +625,25 @@ class PointCloud(Shape):
             from menpo.visualize import Menpo3dErrorMessage
             raise ImportError(Menpo3dErrorMessage)
 
-    def view_widget(self, popup=False, browser_style='buttons',
-                    figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+                    style='coloured'):
         r"""
         Visualization of the PointCloud using the :map:`visualize_pointclouds`
         widget.
 
         Parameters
         ----------
-        popup : `bool`, optional
-            If ``True``, the widget will be rendered in a popup window.
-        browser_style : ``{buttons, slider}``, optional
-            It defines whether the selector of the PointCloud objects will have
-            the form of plus/minus buttons or a slider.
+        browser_style : {``'buttons'``, ``'slider'``}, optional
+            It defines whether the selector of the objects will have the form of
+            plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
         """
         from menpo.visualize import visualize_pointclouds
-        visualize_pointclouds(self, popup=popup, figure_size=figure_size,
+        visualize_pointclouds(self, figure_size=figure_size, style=style,
                               browser_style=browser_style)
 
     def _transform_self_inplace(self, transform):

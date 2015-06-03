@@ -31,6 +31,7 @@ Widgets
   visualize_pointclouds
   features_selection
   save_matplotlib_figure
+  plot_graph
 
 
 Print Utilities
@@ -39,6 +40,25 @@ Print Utilities
 .. toctree::
   :maxdepth: 1
 
+  print_progress
   print_dynamic
   progress_bar_str
-  print_bytes
+  bytes_str
+
+
+Create Custom Widgets
+---------------------
+
+Collection of widgets that can be used as the main ingredients for creating
+other custom widgets.
+
+.. toctree::
+  :maxdepth: 1
+
+  AnimationOptionsWidget
+  ChannelOptionsWidget
+  LandmarkOptionsWidget
+  RendererOptionsWidget
+  GraphOptionsWidget
+  SaveFigureOptionsWidget
+  TextPrintWidget

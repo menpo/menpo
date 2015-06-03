@@ -4,7 +4,7 @@ from menpo.transform.piecewiseaffine.base import (CythonPWA, CachedPWA,
                                                   PythonPWA)
 
 b = menpo.io.import_builtin_asset('breakingbad.jpg').as_masked()
-b.crop_to_landmarks_proportion_inplace(0.1)
+b = b.crop_to_landmarks_proportion(0.1)
 b = b.rescale_landmarks_to_diagonal_range(120)
 b.constrain_mask_to_landmarks()
 points = b.mask.true_indices()
@@ -16,6 +16,18 @@ def test_cached_pwa_same_as_python_pwa():
     cached_pwa = CythonPWA(src, tgt)
     python_pwa = PythonPWA(src, tgt)
     assert_equal(python_pwa.apply(points), cached_pwa.apply(points))
+
+
+def test_cython_pwa_batch_same():
+    cached_pwa = CythonPWA(src, tgt)
+    assert_equal(cached_pwa.apply(points),
+                 cached_pwa.apply(points, batch_size=10))
+
+
+def test_python_pwa_batch_same():
+    cached_pwa = PythonPWA(src, tgt)
+    assert_equal(cached_pwa.apply(points),
+                 cached_pwa.apply(points, batch_size=10))
 
 
 def test_cython_pwa_same_as_python_pwa():

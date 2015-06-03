@@ -1,5 +1,6 @@
+from itertools import islice
 import numpy as np
-from menpo.visualize import print_dynamic, progress_bar_str
+from menpo.visualize import print_progress, bytes_str
 
 
 def dot_inplace_left(a, b, block_size=1000):
@@ -110,6 +111,11 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
     template : :map:`Vectorizable`, optional
         If ``return_template == True``, will return the template used to
         build the matrix `M`.
+
+    Raises
+    ------
+    ValueError
+        ``vectorizables`` terminates in fewer than ``length`` iterations
     """
     # get the first element as the template and use it to configure the
     # data matrix
@@ -126,23 +132,30 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
 
     data = np.zeros((length, n_features), dtype=template_vector.dtype)
     if verbose:
-        print('Allocated data matrix {:.2f}'
-              'GB'.format(data.nbytes / 2 ** 30))
+        print('Allocated data matrix of size {} '
+              '({} samples)'.format(bytes_str(data.nbytes), length))
 
     # now we can fill in the first element from the template
     data[0] = template_vector
     del template_vector
 
+    # ensure we take at most the remaining length - 1 elements
+    vectorizables = islice(vectorizables, length - 1)
+
+    if verbose:
+        vectorizables = print_progress(vectorizables, n_items=length, offset=1,
+                                       prefix='Building data matrix')
+
     # 1-based as we have the template vector set already
+    i = 0
     for i, sample in enumerate(vectorizables, 1):
-        if i >= length:
-            break
-        if verbose:
-            print_dynamic(
-                'Building data matrix from {} samples - {}'.format(
-                    length,
-                    progress_bar_str(float(i + 1) / length, show_bar=True)))
         data[i] = sample.as_vector()
+
+    # we have exhausted the iterable, but did we get enough items?
+    if i != length - 1:  # -1
+        raise ValueError('Incomplete data matrix due to early iterator '
+                         'termination (expected {} items, got {})'.format(
+            length, i + 1))
 
     if return_template:
         return data, template

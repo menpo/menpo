@@ -79,6 +79,11 @@ def test_as_matrix_short_length():
     assert_equal(data.shape, (1, 20))
 
 
+@raises(ValueError)
+def test_as_matrix_long_length_raises_value_error():
+    as_matrix((template.copy() for _ in range(4)), length=5)
+
+
 def test_as_matrix_return_template():
     data, t = as_matrix((template.copy() for _ in range(n_images)),
                         length=1, return_template=True)

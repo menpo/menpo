@@ -5,10 +5,12 @@ import numpy as np
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
-from menpo.base import Vectorizable
+from menpo.base import Vectorizable, MenpoDeprecationWarning
+from menpo.shape import PointCloud
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
-                             AlignmentUniformScale, Affine, Rotation)
+                             AlignmentUniformScale, Affine, Rotation,
+                             UniformScale)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .extract_patches import extract_patches
@@ -36,7 +38,6 @@ class ImageBoundaryError(ValueError):
         The per-dimension maximum index that could be used if the crop was
         constrained to the image boundaries.
     """
-
     def __init__(self, requested_min, requested_max, snapped_min,
                  snapped_max):
         super(ImageBoundaryError, self).__init__()
@@ -102,7 +103,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     same data-type (`float64`).
 
     Parameters
-    -----------
+    ----------
     image_data : ``(C, M, N ..., Q)`` `ndarray`
         Array representing the image pixels, with the first axis being
         channels.
@@ -502,10 +503,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return hist, bin_edges
 
     def _view_2d(self, figure_id=None, new_figure=False, channels=None,
-                 interpolation='bilinear', alpha=1., render_axes=False,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+                 interpolation='bilinear', cmap_name=None, alpha=1.,
+                 render_axes=False, axes_font_name='sans-serif',
+                 axes_font_size=10, axes_font_style='normal',
+                 axes_font_weight='normal', axes_x_limits=None,
+                 axes_y_limits=None, figure_size=(10, 8)):
         r"""
         View the image using the default image viewer. This method will appear 
         on the Image as ``view`` if the Image is 2D.
@@ -530,7 +532,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 {none, nearest, bilinear, bicubic, spline16, spline36,
                 hanning, hamming, hermite, kaiser, quadric, catrom, gaussian,
                 bessel, mitchell, sinc, lanczos}
-
+        cmap_name: `str`, optional,
+            If ``None``, single channel and three channel images default
+            to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_axes : `bool`, optional
@@ -566,36 +570,37 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            self.pixels, channels=channels).render(
-            interpolation=interpolation, alpha=alpha,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
             axes_y_limits=axes_y_limits, figure_size=figure_size)
 
-    def view_widget(self, popup=False, browser_style='buttons',
-                    figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+                    style='coloured'):
         r"""
         Visualizes the image object using the :map:`visualize_images` widget.
         Currently only supports the rendering of 2D images.
 
         Parameters
         ----------
-        popup : `bool`, optional
-            If ``True``, the widget will appear as a popup window.
-        browser_style : ``{buttons, slider}``, optional
+        browser_style : {``'buttons'``, ``'slider'``}, optional
             It defines whether the selector of the images will have the form of
             plus/minus buttons or a slider.
-        figure_size : (`int`, `int`) `tuple`, optional
+        figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
         """
         from menpo.visualize import visualize_images
-        visualize_images(self, figure_size=figure_size, popup=popup,
+        visualize_images(self, figure_size=figure_size, style=style,
                          browser_style=browser_style)
 
     def _view_landmarks_2d(self, channels=None, group=None,
                            with_labels=None, without_labels=None,
                            figure_id=None, new_figure=False,
-                           interpolation='bilinear', alpha=1.,
+                           interpolation='bilinear', cmap_name=None, alpha=1.,
                            render_lines=True, line_colour=None, line_style='-',
                            line_width=1, render_markers=True, marker_style='o',
                            marker_size=20, marker_face_colour=None,
@@ -654,6 +659,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 hamming, hermite, kaiser, quadric, catrom, gaussian, bessel,
                 mitchell, sinc, lanczos}
 
+        cmap_name: `str`, optional,
+            If ``None``, single channel and three channel images default
+            to greyscale and rgb colormaps respectively.
         alpha : `float`, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
         render_lines : `bool`, optional
@@ -819,13 +827,14 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.visualize import view_image_landmarks
         return view_image_landmarks(
             self, channels, False, group, with_labels, without_labels,
-            figure_id, new_figure, interpolation, alpha, render_lines,
-            line_colour, line_style, line_width, render_markers, marker_style,
-            marker_size, marker_face_colour, marker_edge_colour,
-            marker_edge_width, render_numbering, numbers_horizontal_align,
-            numbers_vertical_align, numbers_font_name, numbers_font_size,
-            numbers_font_style, numbers_font_weight, numbers_font_colour,
-            render_legend, legend_title, legend_font_name, legend_font_style,
+            figure_id, new_figure, interpolation, cmap_name, alpha,
+            render_lines, line_colour, line_style, line_width,
+            render_markers, marker_style, marker_size, marker_face_colour,
+            marker_edge_colour, marker_edge_width, render_numbering,
+            numbers_horizontal_align, numbers_vertical_align,
+            numbers_font_name, numbers_font_size, numbers_font_style,
+            numbers_font_weight, numbers_font_colour, render_legend,
+            legend_title, legend_font_name, legend_font_style,
             legend_font_size, legend_font_weight, legend_marker_scale,
             legend_location, legend_bbox_to_anchor, legend_border_axes_pad,
             legend_n_columns, legend_horizontal_spacing,
@@ -857,66 +866,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         from menpo.feature import gradient as grad_feature
         return grad_feature(self)
-
-    def crop_inplace(self, min_indices, max_indices,
-                     constrain_to_boundary=True):
-        r"""
-        Crops this image using the given minimum and maximum indices.
-        Landmarks are correctly adjusted so they maintain their position
-        relative to the newly cropped image.
-
-        Parameters
-        ----------
-        min_indices : ``(n_dims,)`` `ndarray`
-            The minimum index over each dimension.
-        max_indices : ``(n_dims,)`` `ndarray`
-            The maximum index over each dimension.
-        constrain_to_boundary : `bool`, optional
-            If ``True`` the crop will be snapped to not go beyond this images
-            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
-            if an attempt is made to go beyond the edge of the image.
-
-        Returns
-        -------
-        cropped_image : `type(self)`
-            This image, cropped.
-
-        Raises
-        ------
-        ValueError
-            ``min_indices`` and ``max_indices`` both have to be of length
-            ``n_dims``. All ``max_indices`` must be greater than
-            ``min_indices``.
-        :map:`ImageBoundaryError`
-            Raised if ``constrain_to_boundary=False``, and an attempt is made
-            to crop the image in a way that violates the image bounds.
-        """
-        min_indices = np.floor(min_indices)
-        max_indices = np.ceil(max_indices)
-        if not (min_indices.size == max_indices.size == self.n_dims):
-            raise ValueError(
-                "Both min and max indices should be 1D numpy arrays of"
-                " length n_dims ({})".format(self.n_dims))
-        elif not np.all(max_indices > min_indices):
-            raise ValueError("All max indices must be greater that the min "
-                             "indices")
-        min_bounded = self.constrain_points_to_bounds(min_indices)
-        max_bounded = self.constrain_points_to_bounds(max_indices)
-        all_max_bounded = np.all(min_bounded == min_indices)
-        all_min_bounded = np.all(max_bounded == max_indices)
-        if not (constrain_to_boundary or all_max_bounded or all_min_bounded):
-            # points have been constrained and the user didn't want this -
-            raise ImageBoundaryError(min_indices, max_indices,
-                                     min_bounded, max_bounded)
-        slices = [slice(int(min_i), int(max_i))
-                  for min_i, max_i in
-                  zip(list(min_bounded), list(max_bounded))]
-        self.pixels = self.pixels[
-            [slice(0, self.n_channels, None)] + slices].copy()
-        # update all our landmarks
-        lm_translation = Translation(-min_bounded)
-        lm_translation.apply_inplace(self.landmarks)
-        return self
 
     def crop(self, min_indices, max_indices,
              constrain_to_boundary=False):
@@ -951,16 +900,33 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        cropped_image = self.copy()
-        return cropped_image.crop_inplace(
-            min_indices, max_indices,
-            constrain_to_boundary=constrain_to_boundary)
+        min_indices = np.floor(min_indices)
+        max_indices = np.ceil(max_indices)
+        if not (min_indices.size == max_indices.size == self.n_dims):
+            raise ValueError(
+                "Both min and max indices should be 1D numpy arrays of"
+                " length n_dims ({})".format(self.n_dims))
+        elif not np.all(max_indices > min_indices):
+            raise ValueError("All max indices must be greater that the min "
+                             "indices")
+        min_bounded = self.constrain_points_to_bounds(min_indices)
+        max_bounded = self.constrain_points_to_bounds(max_indices)
+        all_max_bounded = np.all(min_bounded == min_indices)
+        all_min_bounded = np.all(max_bounded == max_indices)
+        if not (constrain_to_boundary or all_max_bounded or all_min_bounded):
+            # points have been constrained and the user didn't want this -
+            raise ImageBoundaryError(min_indices, max_indices,
+                                     min_bounded, max_bounded)
 
-    def crop_to_landmarks_inplace(self, group=None, label=None, boundary=0,
-                                  constrain_to_boundary=True):
+        new_shape = max_bounded - min_bounded
+        return self.warp_to_shape(new_shape, Translation(min_bounded),
+                                  order=0, warp_landmarks=True)
+
+    def crop_to_landmarks(self, group=None, label=None, boundary=0,
+                          constrain_to_boundary=True):
         r"""
-        Crop this image to be bounded around a set of landmarks with an
-        optional ``n_pixel`` boundary
+        Return a copy of this image cropped so that it is bounded around a set
+        of landmarks with an optional ``n_pixel`` boundary
 
         Parameters
         ----------
@@ -980,7 +946,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         Returns
         -------
         image : :map:`Image`
-            This image, cropped to its landmarks.
+            A copy of this image cropped to its landmarks.
 
         Raises
         ------
@@ -990,13 +956,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         pc = self.landmarks[group][label]
         min_indices, max_indices = pc.bounds(boundary=boundary)
-        return self.crop_inplace(min_indices, max_indices,
-                                 constrain_to_boundary=constrain_to_boundary)
+        return self.crop(min_indices, max_indices,
+                         constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks_proportion_inplace(self, boundary_proportion,
-                                             group=None, label=None,
-                                             minimum=True,
-                                             constrain_to_boundary=True):
+    def crop_to_landmarks_proportion(self, boundary_proportion,
+                                     group=None, label=None, minimum=True,
+                                     constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with a
         border proportional to the landmark spread or range.
@@ -1040,9 +1005,50 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             boundary = boundary_proportion * np.min(pc.range())
         else:
             boundary = boundary_proportion * np.max(pc.range())
-        return self.crop_to_landmarks_inplace(
+        return self.crop_to_landmarks(
             group=group, label=label, boundary=boundary,
             constrain_to_boundary=constrain_to_boundary)
+
+    def _propagate_crop_to_inplace(self, cropped):
+        # helper method that sets self's state to the result of a crop call.
+        # only needed for the deprecation period of the inplace crop methods.
+        self.pixels = cropped.pixels
+        self.landmarks = cropped.landmarks
+        if hasattr(self, 'mask'):
+            self.mask = cropped.mask
+        return self
+
+    def crop_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated: please use :meth:`crop` instead.
+        """
+        warn('crop_inplace() is deprecated and will be removed in the next '
+             'major version of menpo. '
+             'Please use crop() instead.', MenpoDeprecationWarning)
+        cropped = self.crop(*args, **kwargs)
+        return self._propagate_crop_to_inplace(cropped)
+
+    def crop_to_landmarks_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated: please use :meth:`crop_to_landmarks` instead.
+        """
+        warn('crop_to_landmarks_inplace() is deprecated and will be removed in'
+             ' the next major version of menpo. '
+             'Please use crop_to_landmarks() instead.',
+             MenpoDeprecationWarning)
+        cropped = self.crop_to_landmarks(*args, **kwargs)
+        return self._propagate_crop_to_inplace(cropped)
+
+    def crop_to_landmarks_proportion_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated: please use :meth:`crop_to_landmarks_proportion` instead.
+        """
+        warn('crop_to_landmarks_proportion_inplace() is deprecated and will be'
+             ' removed in the next major version of menpo. Please use '
+             'crop_to_landmarks_proportion() instead.',
+             MenpoDeprecationWarning)
+        cropped = self.crop_to_landmarks_proportion(*args, **kwargs)
+        return self._propagate_crop_to_inplace(cropped)
 
     def constrain_points_to_bounds(self, points):
         r"""
@@ -1177,7 +1183,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     as_single_array=as_single_array)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0.):
+                     order=1, mode='constant', cval=0.0, batch_size=None):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -1216,6 +1222,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
@@ -1227,16 +1240,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 "Trying to warp a {}D image with a {}D transform "
                 "(they must match)".format(self.n_dims, transform.n_dims))
         template_points = template_mask.true_indices()
-        points_to_sample = transform.apply(template_points)
-        # we want to sample each channel in turn, returning a vector of
-        # sampled pixels. Store those in a (n_channels, n_pixels) array.
-        sampled_pixel_values = scipy_interpolation(
-            self.pixels, points_to_sample, order=order, mode=mode, cval=cval)
+        points_to_sample = transform.apply(template_points,
+                                           batch_size=batch_size)
+        sampled = self.sample(points_to_sample,
+                              order=order, mode=mode, cval=cval)
+
         # set any nan values to 0
-        sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
+        sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_image = self._build_warped_to_mask(template_mask,
-                                                  sampled_pixel_values)
+        warped_image = self._build_warped_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
@@ -1265,8 +1277,44 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image.from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
+    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
+        r"""
+        Sample this image at the given sub-pixel accurate points. The input
+        PointCloud should have the same number of dimensions as the image e.g.
+        a 2D PointCloud for a 2D multi-channel image. A numpy array will be
+        returned the has the values for every given point across each channel
+        of the image.
+
+        Parameters
+        ----------
+        points_to_sample : :map:`PointCloud`
+            Array of points to sample from the image. Should be
+            `(n_points, n_dims)`
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range [0,5].
+            See warp_to_shape for more information.
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        sampled_pixels : (`n_points`, `n_channels`) `ndarray`
+            The interpolated values taken across every channel of the image.
+        """
+        # The public interface is a PointCloud, but when this is used internally
+        # a numpy array is passed. So let's just treat the PointCloud as a
+        # 'special case' and not document the ndarray ability.
+        if isinstance(points_to_sample, PointCloud):
+            points_to_sample = points_to_sample.points
+        return scipy_interpolation(self.pixels, points_to_sample,
+                                   order=order,  mode=mode, cval=cval)
+
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0.):
+                      order=1, mode='constant', cval=0.0, batch_size=None):
         """
         Return a copy of this image warped into a different reference space.
 
@@ -1302,30 +1350,68 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        batch_size : `int` or ``None``, optional
+            This should only be considered for large images. Setting this
+            value can cause warping to become much slower, particular for
+            cached warps such as Piecewise Affine. This size indicates
+            how many points in the image should be warped at a time, which
+            keeps memory usage low. If ``None``, no batching is used and all
+            points are warped at once.
 
         Returns
         -------
         warped_image : `type(self)`
             A copy of this image, warped.
         """
+        template_shape = np.array(template_shape, dtype=np.int)
         if (isinstance(transform, Affine) and order in range(4) and
             self.n_dims == 2):
-            # skimage has an optimised Cython interpolation for 2D affine
-            # warps
+
+            # we are going to be able to go fast.
+
+            if isinstance(transform, Translation) and order == 0:
+                # an integer translation (e.g. a crop) If this lies entirely
+                # in the bounds then we can just do a copy. We need to match
+                # the behavior of cython_interpolation exactly, which means
+                # matching its rounding behavior too:
+                t = transform.translation_component.copy()
+                pos_t = t > 0.0
+                t[pos_t] += 0.5
+                t[~pos_t] -= 0.5
+                min_ = t.astype(np.int)
+                max_ = template_shape + min_
+                if np.all(max_ <= np.array(self.shape)) and np.all(min_ >= 0):
+                    # we have a crop - slice the pixels.
+                    warped_pixels = self.pixels[:,
+                                    int(min_[0]):int(max_[0]),
+                                    int(min_[1]):int(max_[1])].copy()
+                    return self._build_warp_to_shape(warped_pixels,
+                                                       transform,
+                                                       warp_landmarks)
+            # we couldn't do the crop, but skimage has an optimised Cython
+            # interpolation for 2D affine warps - let's use that
             sampled = cython_interpolation(self.pixels, template_shape,
                                            transform, order=order,
                                            mode=mode, cval=cval)
         else:
             template_points = indices_for_image_of_shape(template_shape)
-            points_to_sample = transform.apply(template_points)
-            # we want to sample each channel in turn, returning a vector of
-            # sampled pixels. Store those in a (n_pixels, n_channels) array.
-            sampled = scipy_interpolation(self.pixels, points_to_sample,
-                                          order=order, mode=mode, cval=cval)
+            points_to_sample = transform.apply(template_points,
+                                               batch_size=batch_size)
+            sampled = self.sample(points_to_sample,
+                                  order=order, mode=mode, cval=cval)
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_pixels = sampled.reshape((self.n_channels,) + template_shape)
+        warped_pixels = sampled.reshape(
+            (self.n_channels,) + tuple(template_shape))
+
+        return self._build_warp_to_shape(warped_pixels, transform,
+                                           warp_landmarks)
+
+    def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks):
+        # factored out common logic from the different paths we can take in
+        # warp_to_shape. Rebuilds an image post-warp, adjusting landmarks
+        # as necessary.
         warped_image = Image(warped_pixels, copy=False)
 
         # warp landmarks if requested.
@@ -1566,7 +1652,30 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # floating point inaccuracy.
         return self.rescale(scales, round='round', order=order)
 
-    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0):
+    def zoom(self, scale, cval=0.0):
+        r"""
+        Zoom this image about the centre point. ``scale`` values greater
+        than 1.0 denote zooming **in** to the image and values less than
+        1.0 denote zooming **out** of the image. The size of the image will not
+        change, if you wish to scale an image, please see :meth:`rescale`.
+
+        Parameters
+        ----------
+        scale : `float`
+            ``scale > 1.0`` denotes zooming in. Thus the image will appear
+            larger and areas at the edge of the zoom will be 'cropped' out.
+            ``scale < 1.0`` denotes zooming out. The image will be padded
+            by the value of ``cval``.
+        cval : ``float``, optional
+            The value to be set outside the rotated image boundaries.
+        """
+        centre = Translation(-self.centre)
+        t = (centre.compose_before(UniformScale(1.0 / scale, self.n_dims))
+                   .compose_before(centre.pseudoinverse()))
+
+        return self.warp_to_shape(self.shape, t, cval=cval)
+
+    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0.0):
         r"""
         Return a rotation of this image clockwise about its centre.
 
@@ -1859,6 +1968,39 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                              "normalized")
         else:
             self.from_vector_inplace(centered_pixels / scale_factor)
+
+    def rescale_pixels(self, minimum, maximum, per_channel=True):
+        r"""A copy of this image with pixels linearly rescaled to fit a range.
+
+        Note that the only pixels that will considered and rescaled are those
+        that feature in the vectorized form of this image. If you want to use
+        this routine on all the pixels in a :map:`MaskedImage`, consider
+        using `as_unmasked()` prior to this call.
+
+        Parameters
+        ----------
+        minimum: `float`
+            The minimal value of the rescaled pixels
+        maximum: `float`
+            The maximal value of the rescaled pixels
+        per_channel: `boolean`, optional
+            If ``True``, each channel will be rescaled independently. If
+            ``False``, the scaling will be over all channels.
+
+        Returns
+        -------
+        rescaled_image: ``type(self)``
+            A copy of this image with pixels linearly rescaled to fit in the
+            range provided.
+        """
+        v = self.as_vector(keep_channels=True).T
+        if per_channel:
+            min_, max_ = v.min(axis=0), v.max(axis=0)
+        else:
+            min_, max_ = v.min(), v.max()
+        sf = ((maximum - minimum) * 1.0) / (max_ - min_)
+        v_new = ((v - min_) * sf) + minimum
+        return self.from_vector(v_new.T.ravel())
 
 
 def round_image_shape(shape, round):

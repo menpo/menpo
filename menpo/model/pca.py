@@ -406,14 +406,17 @@ class PCAModel(MeanInstanceLinearModel):
         self.n_active_components = n_components
 
         if self.n_active_components < self.n_components:
-            # set self.n_components to n_components
-            self._components = self._components[:self.n_active_components]
+            # Just stored so that we can fit < 80 chars
+            nac = self.n_active_components
+            # set self.n_components to n_components. We have to copy to ensure
+            # that the data is actually removed, otherwise a view is returned
+            self._components = self._components[:nac].copy()
             # store the eigenvalues associated to the discarded components
             self._trimmed_eigenvalues = np.hstack((
                 self._trimmed_eigenvalues,
                 self._eigenvalues[self.n_active_components:]))
             # make sure that the eigenvalues are trimmed too
-            self._eigenvalues = self._eigenvalues[:self.n_active_components]
+            self._eigenvalues = self._eigenvalues[:nac].copy()
 
     def project_whitened(self, instance):
         """
@@ -672,6 +675,26 @@ class PCAModel(MeanInstanceLinearModel):
             grid_line_style=grid_line_style, grid_line_width=grid_line_width,
             figure_size=figure_size)
 
+    def plot_eigenvalues_widget(self, figure_size=(10, 6), style='coloured'):
+        r"""
+        Plot of the eigenvalues using :map:`plot_graph` widget.
+
+        Parameters
+        ----------
+        figure_size : (`float`, `float`) or ``None``, optional
+            The size of the figure in inches.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
+        """
+        from menpo.visualize import plot_graph
+        plot_graph(x_axis=range(self.n_active_components),
+                   y_axis=[self.eigenvalues], legend_entries=['Eigenvalues'],
+                   title='Eigenvalues', x_label='Component Number',
+                   y_label='Eigenvalue',
+                   x_axis_limits=(0, self.n_active_components - 1),
+                   y_axis_limits=None, figure_size=figure_size, style=style)
+
     def plot_eigenvalues_ratio(self, figure_id=None, new_figure=False,
                                render_lines=True, line_colour='b',
                                line_style='-', line_width=2,
@@ -799,6 +822,29 @@ class PCAModel(MeanInstanceLinearModel):
             grid_line_style=grid_line_style, grid_line_width=grid_line_width,
             figure_size=figure_size)
 
+    def plot_eigenvalues_ratio_widget(self, figure_size=(10, 6),
+                                      style='coloured'):
+        r"""
+        Plot of the variance ratio captured by the eigenvalues using
+        :map:`plot_graph` widget.
+
+        Parameters
+        ----------
+        figure_size : (`float`, `float`) or ``None``, optional
+            The size of the figure in inches.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
+        """
+        from menpo.visualize import plot_graph
+        plot_graph(x_axis=range(self.n_active_components),
+                   y_axis=[self.eigenvalues_ratio()],
+                   legend_entries=['Eigenvalues ratio'],
+                   title='Variance Ratio of Eigenvalues',
+                   x_label='Component Number', y_label='Variance Ratio',
+                   x_axis_limits=(0, self.n_active_components - 1),
+                   y_axis_limits=None, figure_size=figure_size, style=style)
+
     def plot_eigenvalues_cumulative_ratio(self, figure_id=None,
                                           new_figure=False, render_lines=True,
                                           line_colour='b', line_style='-',
@@ -816,7 +862,7 @@ class PCAModel(MeanInstanceLinearModel):
                                           grid_line_style='--',
                                           grid_line_width=0.5):
         r"""
-        Plot of the variance ratio captured by the eigenvalues.
+        Plot of the cumulative variance ratio captured by the eigenvalues.
 
         Parameters
         ----------
@@ -931,18 +977,41 @@ class PCAModel(MeanInstanceLinearModel):
             grid_line_style=grid_line_style, grid_line_width=grid_line_width,
             figure_size=figure_size)
 
+    def plot_eigenvalues_cumulative_ratio_widget(self, figure_size=(10, 6),
+                                                 style='coloured'):
+        r"""
+        Plot of the cumulative variance ratio captured by the eigenvalues using
+        :map:`plot_graph` widget.
+
+        Parameters
+        ----------
+        figure_size : (`float`, `float`) or ``None``, optional
+            The size of the figure in inches.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
+        """
+        from menpo.visualize import plot_graph
+        plot_graph(x_axis=range(self.n_active_components),
+                   y_axis=[self.eigenvalues_cumulative_ratio()],
+                   legend_entries=['Eigenvalues cumulative ratio'],
+                   title='Cumulative Variance Ratio of Eigenvalues',
+                   x_label='Component Number',
+                   y_label='Cumulative Variance Ratio',
+                   x_axis_limits=(0, self.n_active_components - 1),
+                   y_axis_limits=None, figure_size=figure_size, style=style)
+
     def __str__(self):
         str_out = 'PCA Model \n'                             \
                   ' - centred:              {}\n'            \
-                  ' - biased:               {}\n'            \
                   ' - # features:           {}\n'            \
                   ' - # active components:  {}\n'            \
                   ' - kept variance:        {:.2}  {:.1%}\n' \
                   ' - noise variance:       {:.2}  {:.1%}\n' \
                   ' - total # components:   {}\n'            \
                   ' - components shape:     {}\n'.format(
-            self.centred,  self.biased, self.n_features,
-            self.n_active_components, self.variance(), self.variance_ratio(),
-            self.noise_variance(), self.noise_variance_ratio(),
-            self.n_components, self.components.shape)
+            self.centred,  self.n_features, self.n_active_components,
+            self.variance(), self.variance_ratio(), self.noise_variance(),
+            self.noise_variance_ratio(), self.n_components,
+            self.components.shape)
         return str_out

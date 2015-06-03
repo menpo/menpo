@@ -1,3 +1,5 @@
+import numpy as np
+
 from menpo.base import Copyable
 
 
@@ -126,7 +128,7 @@ class Transform(Copyable):
             raise ValueError('apply_inplace can only be used on Transformable'
                              ' objects.')
 
-    def apply(self, x, **kwargs):
+    def apply(self, x, batch_size=None, **kwargs):
         r"""
         Applies this transform to ``x``.
 
@@ -144,6 +146,11 @@ class Transform(Copyable):
         ----------
         x : :map:`Transformable` or ``(n_points, n_dims)`` `ndarray`
             The array or object to be transformed.
+        batch_size : `int`, optional
+            If not ``None``, this determines how many items from the numpy
+            array will be passed through the transform at a time. This is
+            useful for operations that require large intermediate matrices
+            to be computed.
         kwargs : `dict`
             Passed through to :meth:`_apply`.
 
@@ -158,12 +165,23 @@ class Transform(Copyable):
             Local closure which calls the :meth:`_apply` method with the
             `kwargs` attached.
             """
-            return self._apply(x_, **kwargs)
+            return self._apply_batched(x_, batch_size, **kwargs)
 
         try:
             return x._transform(transform)
         except AttributeError:
+            return self._apply_batched(x, batch_size, **kwargs)
+
+    def _apply_batched(self, x, batch_size, **kwargs):
+        if batch_size is None:
             return self._apply(x, **kwargs)
+        else:
+            outputs = []
+            n_points = x.shape[0]
+            for lo_ind in range(0, n_points, batch_size):
+                hi_ind = lo_ind + batch_size
+                outputs.append(self._apply(x[lo_ind:hi_ind], **kwargs))
+            return np.vstack(outputs)
 
     def compose_before(self, transform):
         r"""

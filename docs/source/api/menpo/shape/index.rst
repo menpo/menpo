@@ -22,26 +22,27 @@ PointCloud
   PointCloud
 
 
-Graphs & PointGraphs
---------------------
+Graphs
+------
 
 .. toctree::
   :maxdepth: 1
 
   UndirectedGraph
   DirectedGraph
-  PointGraph
-  PointUndirectedGraph
-  PointDirectedGraph
+  Tree
 
 
-Trees & PointTrees
-------------------
+PointGraphs
+-----------
+
+Mix-ins of Graphs and :map:`PointCloud` for graphs with geometry.
 
 .. toctree::
   :maxdepth: 1
 
-  Tree
+  PointUndirectedGraph
+  PointDirectedGraph
   PointTree
 
 

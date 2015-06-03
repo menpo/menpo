@@ -13,7 +13,7 @@ env:
     - PYTHON_VERSION: 3.4
 
 install:
-- wget https://raw.githubusercontent.com/jabooth/condaci/v0.2.0/condaci.py -O condaci.py
+- wget https://raw.githubusercontent.com/jabooth/condaci/v0.2.1/condaci.py -O condaci.py
 - python condaci.py setup $PYTHON_VERSION --channel $BINSTAR_USER
 - export PATH=$HOME/miniconda/bin:$PATH
 - conda config --add channels $BINSTAR_USER/channel/master
@@ -22,11 +22,9 @@ script:
 - python condaci.py auto ./conda --binstaruser $BINSTAR_USER --binstarkey $BINSTAR_KEY
 
 notifications:
-  slack: menpo:19gyWImMkOfCj0iDAgTbDlDA
+  slack:
+    rooms:
+      - menpo:19gyWImMkOfCj0iDAgTbDlDA
+    on_success: :change
+    on_failure: :change
   email: false
-  webhooks:
-    urls:
-    - https://webhooks.gitter.im/e/7599ff4870c99ba51310
-    on_success: always
-    on_failure: always
-    on_start: never
