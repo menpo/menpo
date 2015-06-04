@@ -68,10 +68,11 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
         geometry=(num_bins_horizontal, num_bins_vertical, num_or_bins),
         verbose=False)
 
-    # get output image shape
-    #shape = pixels.shape[1:] - 2 * centers[:2, 0]
-    shape = ((centers[:, -1] - centers[:, 0]) /
-             [window_step_vertical, window_step_horizontal]) + 1
+    # the output shape can be calculated from looking at the range of
+    # centres / the window step size in each dimension. Note that cyvlfeat
+    # returns x, y centres, so we need to flip the shape we get here.
+    shape = (((centers[:, -1] - centers[:, 0]) /
+              [window_step_horizontal, window_step_vertical]) + 1)[::-1]
 
     # print information
     if verbose:
