@@ -34,7 +34,7 @@ if on_rtd:
                     'scipy.spatial.distance', 'IPython', 'IPython.display',
                     'IPython.html', 'IPython.html.widgets',
                     'numpy.dtype', 'scipy.ndimage', 'scipy.linalg.blas',
-                    'scipy.sparse', 'IPython.utils.traitlets']
+                    'scipy.sparse', 'IPython.utils', 'IPython.utils.traitlets']
     # Masking our Cython modules
     MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
                      'menpo.feature.windowiterator',
@@ -242,6 +242,10 @@ htmlhelp_basename = 'Menpodoc'
 
 # -- Options for LaTeX output --------------------------------------------------
 
+latex_preamble = """
+\usepackage{enumitem}
+\setlistdepth{999}
+"""
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #'papersize': 'letterpaper',
@@ -250,7 +254,7 @@ latex_elements = {
     #'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+    'preamble': latex_preamble
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
