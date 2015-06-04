@@ -69,7 +69,9 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
         verbose=False)
 
     # get output image shape
-    shape = pixels.shape[1:] - 2 * centers[:2, 0]
+    #shape = pixels.shape[1:] - 2 * centers[:2, 0]
+    shape = ((centers[:, -1] - centers[:, 0]) /
+             [window_step_vertical, window_step_horizontal]) + 1
 
     # print information
     if verbose:
@@ -91,5 +93,5 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
     # return SIFT and centers in the correct form
     return (np.require(output.reshape((-1, shape[0], shape[1])),
                        dtype=np.double),
-            np.require(centers[:2, ...].T[..., ::-1].reshape(
-                (shape[0], shape[1], 2)), dtype=np.int))
+            np.require(centers[::-1].T.reshape(tuple(shape) + (-1,)),
+                       dtype=np.int))
