@@ -1,10 +1,11 @@
 from __future__ import division
+import random
 import numpy as np
 from numpy.testing import assert_allclose
-import random
+from nose.plugins.attrib import attr
 
 from menpo.image import Image, MaskedImage
-from menpo.feature import hog, lbp, es, igo, daisy, dsift
+from menpo.feature import hog, lbp, es, igo, daisy
 import menpo.io as mio
 
 
@@ -150,7 +151,9 @@ def test_hog_channels_zhuramanan():
         assert_allclose(hog_img.n_channels, n_channels)
 
 
+@attr('cyvlfeat')
 def test_dsift_channels():
+    from menpo.feature import dsift
     n_cases = 3
     num_bins_horizontal = np.random.randint(1, 3, [n_cases, 1])
     num_bins_vertical = np.random.randint(1, 3, [n_cases, 1])
@@ -259,7 +262,9 @@ def test_daisy_values():
     assert_allclose(np.around(daisy_img.pixels[40, 1, 1], 6), 0.000163)
 
 
+@attr('cyvlfeat')
 def test_dsift_values():
+    from menpo.feature import dsift
     image = Image([[1, 2, 3, 4], [2, 1, 3, 4], [1, 2, 3, 4], [2, 1, 3, 4]])
     sift_img = dsift(image, cell_size_horizontal=2, cell_size_vertical=2)
     assert_allclose(np.around(sift_img.pixels[0, 0, 0], 6), 62.748379)
