@@ -6,10 +6,10 @@ from scipy.spatial.distance import cdist
 from menpo.shape.base import Shape
 
 
-def bounding_box(top_left, bottom_right):
+def bounding_box(closest_to_origin, opposite_corner):
     r"""
-    Return a bounding box from the two corner points as a directed graph.
-    The the first point (0) will be nearest the origin.
+    Return a bounding box from two corner points as a directed graph.
+    The the first point (0) should be nearest the origin.
     In the case of an image, this ordering would appear as:
 
     ::
@@ -20,6 +20,29 @@ def bounding_box(top_left, bottom_right):
         v   |
         1-->2
 
+    In the case of a pointcloud, the ordering will appear as:
+
+    ::
+
+        3<--2
+        |   ^
+        |   |
+        v   |
+        0-->1
+
+
+    Parameters
+    ----------
+    closest_to_origin : (`float`, `float`)
+        Two floats representing the coordinates closest to the origin.
+        Represented by (0) in the graph above. For an image, this will
+        be the top left. For a pointcloud, this will be the bottom left.
+    opposite_corner  : (`float`, `float`)
+        Two floats representing the coordinates opposite the corner closest
+        to the origin.
+        Represented by (2) in the graph above. For an image, this will
+        be the bottom right. For a pointcloud, this will be the top right.
+
     Returns
     -------
     bounding_box : :map:`PointDirectedGraph`
@@ -27,13 +50,16 @@ def bounding_box(top_left, bottom_right):
     """
     from .graph import PointDirectedGraph
 
+    if len(closest_to_origin) != 2 or len(opposite_corner) != 2:
+        raise ValueError('Only 2D bounding boxes can be created.')
+
     adjacency_matrix = csr_matrix(([1] * 4, ([0, 1, 2, 3], [1, 2, 3, 0])),
                                   shape=(4, 4))
-    return PointDirectedGraph(np.array([top_left,
-                                        [bottom_right[0], top_left[1]],
-                                        bottom_right,
-                                        [top_left[0], bottom_right[1]]]),
-                              adjacency_matrix, copy=False)
+    box = np.array([closest_to_origin,
+                    [opposite_corner[0], closest_to_origin[1]],
+                    opposite_corner,
+                    [closest_to_origin[0], opposite_corner[1]]], dtype=np.float)
+    return PointDirectedGraph(box, adjacency_matrix, copy=False)
 
 
 class PointCloud(Shape):
@@ -207,9 +233,8 @@ class PointCloud(Shape):
 
     def bounding_box(self):
         r"""
-        Return the bounding box of this PointCloud as a directed graph.
-        The the first point (0) will be nearest the origin for an axis aligned
-        Pointcloud.
+        Return a bounding box from two corner points as a directed graph.
+        The the first point (0) should be nearest the origin.
         In the case of an image, this ordering would appear as:
 
         ::
@@ -220,11 +245,24 @@ class PointCloud(Shape):
             v   |
             1-->2
 
+        In the case of a pointcloud, the ordering will appear as:
+
+        ::
+
+            3<--2
+            |   ^
+            |   |
+            v   |
+            0-->1
+
         Returns
         -------
         bounding_box : :map:`PointDirectedGraph`
             The axis aligned bounding box of the PointCloud.
         """
+        if self.n_dims != 2:
+            raise ValueError('Bounding boxes are only supported for 2D '
+                             'pointclouds.')
         min_p, max_p = self.bounds()
         return bounding_box(min_p, max_p)
 
