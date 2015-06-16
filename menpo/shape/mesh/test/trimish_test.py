@@ -160,7 +160,7 @@ def test_trimesh_face_normals():
     expected_normals = np.array([[-np.sqrt(3)/3, -np.sqrt(3)/3, np.sqrt(3)/3],
                                  [-0, -0, 1]])
     trimesh = TriMesh(points, trilist)
-    face_normals = trimesh.face_normals()
+    face_normals = trimesh.tri_normals()
     assert_allclose(face_normals, expected_normals)
 
 
