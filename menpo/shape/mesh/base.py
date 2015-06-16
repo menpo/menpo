@@ -183,7 +183,7 @@ class TriMesh(PointCloud):
         Returns
         -------
         normals : ``(n_tris, 3)`` `ndarray`
-            Normal at each face.
+            Normal at each triangle face.
 
         Raises
         ------
@@ -214,7 +214,7 @@ class TriMesh(PointCloud):
         elif self.n_dims == 3:
             return np.linalg.norm(np.cross(ij, ik), axis=1) * 0.5
         else:
-            raise ValueError('face_areas can only be calculated on a 2D or '
+            raise ValueError('tri_areas can only be calculated on a 2D or '
                              '3D mesh')
 
     def mean_tri_area(self):
