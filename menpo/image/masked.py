@@ -671,48 +671,6 @@ class MaskedImage(Image):
             axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
             axes_y_limits, figure_size)
 
-    def crop_inplace(self, min_indices, max_indices,
-                     constrain_to_boundary=True):
-        r"""
-        Crops this image using the given minimum and maximum indices.
-        Landmarks are correctly adjusted so they maintain their position
-        relative to the newly cropped image.
-
-        Parameters
-        ----------
-        min_indices: ``(n_dims, )`` `ndarray`
-            The minimum index over each dimension.
-        max_indices: ``(n_dims, )`` `ndarray`
-            The maximum index over each dimension.
-        constrain_to_boundary : `bool`, optional
-            If ``True`` the crop will be snapped to not go beyond this images
-            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
-            if an attempt is made to go beyond the edge of the image.
-
-        Returns
-        -------
-        cropped_image : `type(self)`
-            This image, but cropped.
-
-        Raises
-        ------
-        ValueError
-            ``min_indices`` and ``max_indices`` both have to be of length
-            ``n_dims``. All ``max_indices`` must be greater than
-            ``min_indices``.
-        :map`ImageBoundaryError`
-            Raised if ``constrain_to_boundary=False``, and an attempt is made
-            to crop the image in a way that violates the image bounds.
-        """
-        # crop our image
-        super(MaskedImage, self).crop_inplace(
-            min_indices, max_indices,
-            constrain_to_boundary=constrain_to_boundary)
-        # crop our mask
-        self.mask.crop_inplace(min_indices, max_indices,
-                               constrain_to_boundary=constrain_to_boundary)
-        return self
-
     def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True):
         r"""
         Crop this image to be bounded just the `True` values of it's mask.
@@ -728,6 +686,11 @@ class MaskedImage(Image):
             if an attempt is made to go beyond the edge of the image. Note that
             is only possible if ``boundary != 0``.
 
+        Returns
+        -------
+        cropped_image : ``type(self)``
+            A copy of this image, cropped to the true mask.
+
         Raises
         ------
         ImageBoundaryError
@@ -737,8 +700,8 @@ class MaskedImage(Image):
         min_indices, max_indices = self.mask.bounds_true(
             boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
-        self.crop_inplace(min_indices, max_indices,
-                          constrain_to_boundary=constrain_to_boundary)
+        return self.crop(min_indices, max_indices,
+                         constrain_to_boundary=constrain_to_boundary)
 
     def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
         r"""
@@ -911,10 +874,7 @@ class MaskedImage(Image):
                                        mode=mode, cval=cval)
         # efficiently turn the Image into a MaskedImage, attaching the
         # landmarks
-        masked_warped_image = MaskedImage(warped_image.pixels, mask=mask,
-                                          copy=False)
-        if warped_image.has_landmarks:
-            masked_warped_image.landmarks = warped_image.landmarks
+        masked_warped_image = warped_image.as_masked(mask=mask, copy=False)
         if hasattr(warped_image, 'path'):
             masked_warped_image.path = warped_image.path
         return masked_warped_image
@@ -992,12 +952,19 @@ class MaskedImage(Image):
                                       normalized_pixels.flatten())
 
     def constrain_mask_to_landmarks(self, group=None, label=None,
-                                    trilist=None, batch_size=None):
+                                    batch_size=None, point_in_pointcloud='pwa',
+                                    trilist=None):
         r"""
-        Restricts this image's mask to be equal to the convex hull around the
-        landmarks chosen. This is not a per-pixel convex hull, but is instead
-        estimated by a triangulation of the points that contain the convex
-        hull.
+        Restricts this mask to be equal to the convex hull around the chosen
+        landmarks.
+
+        The choice of whether a pixel is inside or outside of the pointcloud
+        is determined by the ``point_in_pointcloud`` parameter. By default
+        a Piecewise Affine transform is used to test for containment, which
+        is useful when building efficiently aligning images. For large images,
+        a faster and pixel-accurate method can be used ('convex_hull').
+        Alternatively, a callable can be provided to override the test. By
+        default, the provided implementations are only valid for 2D images.
 
         Parameters
         ----------
@@ -1007,20 +974,29 @@ class MaskedImage(Image):
         label: `str`, optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
-        trilist: ``(t, 3)`` `ndarray`, optional
-            Triangle list to be used on the landmarked points in selecting
-            the mask region. If None defaults to performing Delaunay
-            triangulation on the points.
         batch_size : `int` or ``None``, optional
             This should only be considered for large images. Setting this value
             will cause constraining to become much slower. This size indicates
             how many points in the image should be checked at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
-            points are checked at once.
+            points are checked at once. By default, this is only used for
+            the 'pwa' point_in_pointcloud choice.
+        point_in_pointcloud : {'pwa', 'convex_hull'} or `callable`
+            The method used to check if pixels in the image fall inside the
+            pointcloud or not. Can be accurate to a Piecewise Affine transform,
+            a pixel accurate convex hull or any arbitrary callable.
+            If a callable is passed, it should take two parameters,
+            the :map:`PointCloud` to constrain with and the pixel locations
+            ((d, n_dims) ndarray) to test and should return a (d, 1) boolean
+            ndarray of whether the pixels were inside (True) or outside (False)
+            of the :map:`PointCloud`.
+        trilist: ``(t, 3)`` `ndarray`, optional
+            Deprecated. Please provide a Trimesh instead of relying on this
+            parameter.
         """
-        self.mask.constrain_to_pointcloud(self.landmarks[group][label],
-                                          trilist=trilist,
-                                          batch_size=batch_size)
+        self.mask.constrain_to_pointcloud(
+            self.landmarks[group][label], trilist=trilist,
+            batch_size=batch_size, point_in_pointcloud=point_in_pointcloud)
 
     def build_mask_around_landmarks(self, patch_size, group=None, label=None):
         r"""

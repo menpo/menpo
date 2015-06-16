@@ -178,3 +178,25 @@ def test_sample_booleanimage():
 
     arr = im.sample(p)
     assert_allclose(arr, [[True, False]])
+
+
+def test_zoom_image():
+    im = Image.init_blank((100, 100), fill=0)
+    # White square in the centre of size 10x10
+    im.pixels[0, 45:55, 45:55] = 1.0
+
+    # Zoom in 50% makes the white square 5 pixel bigger in theory (16x16)
+    zim = im.zoom(1.5)
+    assert np.count_nonzero(zim.pixels) == 256
+
+
+def test_zoom_booleanimage():
+    im = BooleanImage.init_blank((100, 100))
+    im.pixels[0, 0, :] = False
+    im.pixels[0, -1, :] = False
+    im.pixels[0, :, 0] = False
+    im.pixels[0, :, -1] = False
+
+    zim = im.zoom(1.2)
+    assert np.all(zim.pixels)
+    

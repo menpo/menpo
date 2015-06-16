@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from mock import patch
+from mock import patch, MagicMock
 from nose.tools import raises
 from PIL import Image as PILImage
 import menpo.io as mio
@@ -64,6 +64,45 @@ def test_path():
     assert(img.path.name == 'einstein.jpg')
 
 
+@patch('menpo.io.input.base._pathlib_glob_for_pattern')
+def test_single_suffix_dot_in_path(pathlib_glob):
+    import menpo.io.input.base as mio_base
+    from pathlib import Path
+
+    fake_path = Path('fake_path.t0.t1.t2')
+    pathlib_glob.return_value = [fake_path]
+    ext_map = MagicMock()
+    ext_map.__contains__.side_effect = lambda x: x == '.t2'
+
+    ret_val = next(mio_base.glob_with_suffix('*.t0.t1.t2', ext_map))
+    assert (ret_val == fake_path)
+    ext_map.__contains__.assert_called_with('.t2')
+
+
+def test_upper_extension_mapped_to_lower():
+    import menpo.io.input.base as mio_base
+    from pathlib import Path
+    ext_map = MagicMock()
+
+    mio_base.importer_for_filepath(Path('fake_path.JPG'), ext_map)
+    ext_map.get.assert_called_with('.jpg')
+
+
+@patch('menpo.io.input.base._pathlib_glob_for_pattern')
+def test_double_suffix(pathlib_glob):
+    import menpo.io.input.base as mio_base
+    from pathlib import Path
+
+    fake_path = Path('fake_path.t1.t2')
+    pathlib_glob.return_value = [fake_path]
+    ext_map = MagicMock()
+    ext_map.__contains__.side_effect = lambda x: x == '.t1.t2'
+
+    ret_val = next(mio_base.glob_with_suffix('*.t1.t2', ext_map))
+    assert (ret_val == fake_path)
+    ext_map.__contains__.assert_called_with('.t1.t2')
+
+
 def test_import_image():
     img_path = mio.data_dir_path() / 'einstein.jpg'
     im = mio.import_image(img_path)
@@ -85,12 +124,21 @@ def test_import_landmark_file():
 def test_import_images():
     imgs = list(mio.import_images(mio.data_dir_path()))
     imgs_filenames = set(i.path.stem for i in imgs)
-    exp_imgs_filenames = {'einstein', 'takeo', 'breakingbad', 'lenna',
+    exp_imgs_filenames = {'einstein', 'takeo', 'tongue', 'breakingbad', 'lenna',
                           'menpo_thumbnail'}
-    assert(len(exp_imgs_filenames - imgs_filenames) == 0)
+    assert exp_imgs_filenames == imgs_filenames
 
 
-def test_ls_builtin_assets():
+def test_import_images_are_ordered_and_unduplicated():
+    # we know that import_images returns images in path order
+    imgs = list(mio.import_images(mio.data_dir_path()))
+    imgs_filenames = [i.path.stem for i in imgs]
+    print(imgs_filenames)
+    exp_imgs_filenames = ['breakingbad', 'einstein', 'lenna', 'menpo_thumbnail', 'takeo', 'tongue']
+    assert exp_imgs_filenames == imgs_filenames
+
+
+def test_lsimgs_filenamess():
     assert(set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
                                             'einstein.jpg', 'einstein.pts',
                                             'lenna.png', 'breakingbad.pts',
