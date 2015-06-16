@@ -260,10 +260,9 @@ class TriMesh(PointCloud):
     def edge_vectors(self):
         r"""A vector of edges of each triangle face.
 
-        Note that there will be two edges
-        present in cases where two triangles 'share' an edge. Consider
-        :meth:`unique_edge_vectors` for a single vector for each physical edge
-        on the :map:`TriMesh`.
+        Note that there will be two edges present in cases where two triangles
+        'share' an edge. Consider :meth:`unique_edge_vectors` for a
+        single vector for each physical edge on the :map:`TriMesh`.
 
         Returns
         -------
@@ -279,20 +278,20 @@ class TriMesh(PointCloud):
                           t[:, 2] - t[:, 0]))
 
     def edge_indices(self):
-        r"""An unordered index into points that rebuilds the edges of this :map:`TriMesh`.
+        r"""An unordered index into points that rebuilds the edges of this
+        :map:`TriMesh`.
 
         Note that there will be two edges present in cases where two triangles
         'share' an edge. Consider :meth:`unique_edge_indices` for a single index
-         for each physical edge on the :map:`TriMesh`.
+        for each physical edge on the :map:`TriMesh`.
 
         Returns
         -------
         edge_indices : ``(n_tris * 3, 2)`` `ndarray`
             For each triangle (ABC), returns the pair of point indices that
             rebuild AB, AC, BC. All edge indices are concatenated for a total
-            of ``n_tris * 3`` edge_indices. The
-            ordering is done so that all AB vectors are first in the returned
-            list, followed by BC, then CA.
+            of ``n_tris * 3`` edge_indices. The ordering is done so that all
+            AB vectors are first in the returned list, followed by BC, then CA.
         """
         tl = self.trilist
         return np.vstack((tl[:, [0, 1]],
@@ -300,8 +299,8 @@ class TriMesh(PointCloud):
                           tl[:, [2, 0]]))
 
     def unique_edge_indicies(self):
-        r"""An unordered index into points that rebuilds the unique edges of this
-        :map:`TriMesh`.
+        r"""An unordered index into points that rebuilds the unique edges of
+        this :map:`TriMesh`.
 
         Note that each physical edge will only be counted once in this method
         (i.e. edges shared between neighbouring triangles are only counted once
@@ -346,9 +345,9 @@ class TriMesh(PointCloud):
         r"""The length of each edge in this :map:`TriMesh`.
 
         Note that there will be two edges present in cases where two triangles
-        'share' an edge. Consider :meth:`unique_edge_indices` for a single index
-         for each physical edge on the :map:`TriMesh`. The ordering matches the
-         case for edges and edge_indices.
+        'share' an edge. Consider :meth:`unique_edge_indices` for a single
+        index for each physical edge on the :map:`TriMesh`. The ordering
+        matches the case for edges and edge_indices.
 
         Returns
         -------
@@ -385,7 +384,8 @@ class TriMesh(PointCloud):
         mean_edge_length : ``float``
             The mean length of each edge in this :map:`TriMesh`
         """
-        return np.mean(self.unique_edge_lengths() if unique else self.edge_lengths())
+        return np.mean(self.unique_edge_lengths() if unique
+                       else self.edge_lengths())
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r', line_style='-',
