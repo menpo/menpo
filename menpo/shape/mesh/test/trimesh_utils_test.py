@@ -36,7 +36,7 @@ gt_edge_lengths = np.array([1., 1.41421356, 1., 1., 1.41421356, 1.])
 
 gt_unique_edge_lengths = np.array([1., 1.41421356, 1., 1., 1.])
 
-gt_face_areas = np.array([0.5, 0.5])
+gt_tri_areas = np.array([0.5, 0.5])
 
 
 def test_edge_indices():
@@ -60,12 +60,12 @@ def test_unique_edge_lengths():
                        gt_unique_edge_lengths)
 
 
-def test_face_areas():
-    assert np.allclose(utils_mesh().face_areas(), gt_face_areas)
+def test_tri_areas():
+    assert np.allclose(utils_mesh().tri_areas(), gt_tri_areas)
 
 
-def test_mean_face_area():
-    assert utils_mesh().mean_face_area() == 0.5
+def test_mean_tri_area():
+    assert utils_mesh().mean_tri_area() == 0.5
 
 
 def test_mean_edge_length():

@@ -175,9 +175,9 @@ class TriMesh(PointCloud):
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[0]
 
-    def face_normals(self):
+    def tri_normals(self):
         r"""
-        Compute the face normals from the current set of points and
+        Compute the triangle face normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
 
         Returns
@@ -194,13 +194,13 @@ class TriMesh(PointCloud):
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
 
-    def face_areas(self):
+    def tri_areas(self):
         r"""The area of each triangle face.
 
         Returns
         -------
         areas : ``(n_tris,)`` `ndarray`
-            Area of each face, ordered as the trilist is
+            Area of each triangle, ordered as the trilist is
 
         Raises
         ------
@@ -217,27 +217,27 @@ class TriMesh(PointCloud):
             raise ValueError('face_areas can only be calculated on a 2D or '
                              '3D mesh')
 
-    def mean_face_area(self):
-        r"""The mean area of each face in this :map:`TriMesh`.
+    def mean_tri_area(self):
+        r"""The mean area of each triangle face in this :map:`TriMesh`.
 
         Returns
         -------
-        mean_face_area : ``float``
-            The mean area of each face in this :map:`TriMesh`
+        mean_tri_area : ``float``
+            The mean area of each triangle face in this :map:`TriMesh`
 
         Raises
         ------
         ValueError
             If mesh is not 3D
         """
-        return np.mean(self.face_areas())
+        return np.mean(self.tri_areas())
 
-    def boundary_face_index(self):
+    def boundary_tri_index(self):
         r"""Boolean index into triangles that are at the edge of the TriMesh
 
         Returns
         -------
-        boundary_face_index : ``(n_tris,)`` `ndarray`
+        boundary_tri_index : ``(n_tris,)`` `ndarray`
             For each triangle (ABC), returns whether any of it's edges is not
             also an edge of another triangle (and so this triangle exists on
             the boundary of the TriMesh)
@@ -262,8 +262,8 @@ class TriMesh(PointCloud):
 
         Note that there will be two edges
         present in cases where two triangles 'share' an edge. Consider
-        :meth:`unique_edge_vectors` for a single vector for each physical edge on the
-        :map:`TriMesh`.
+        :meth:`unique_edge_vectors` for a single vector for each physical edge
+        on the :map:`TriMesh`.
 
         Returns
         -------
