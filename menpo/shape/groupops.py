@@ -1,19 +1,20 @@
 from __future__ import division
-from .pointcloud import PointCloud
 
 
 def mean_pointcloud(pointclouds):
     r"""
-    Compute the mean of a `list` of :map:`PointCloud` objects.
+    Compute the mean of a `list` of :map:`PointCloud` or subclass objects.
 
     Parameters
     ----------
-    pointclouds: `list` of :map:`PointCloud`
-        List of point cloud objects from which we want to compute the mean.
+    pointclouds: `list` of :map:`PointCloud` or subclass
+        List of point cloud or subclass objects from which we want to compute
+        the mean.
 
     Returns
     -------
-    mean_pointcloud : :map:`PointCloud`
-        The mean point cloud.
+    mean_pointcloud : :map:`PointCloud` or subclass
+        The mean point cloud or subclass.
     """
-    return PointCloud(sum(pc.points for pc in pointclouds) / len(pointclouds))
+    return pointclouds[0].from_vector(
+        sum(pc.points for pc in pointclouds) / len(pointclouds))
