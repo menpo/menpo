@@ -18,7 +18,7 @@ requirements:
     - scipy 0.15.*
     - matplotlib 1.4.*
     - pillow  2.7.0
-    - cyvlfeat 0.3.*
+    - cyvlfeat 0.3*
 
     # Convienience dependences (not strictly required)
     - mock
