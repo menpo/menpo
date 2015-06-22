@@ -7,7 +7,7 @@ requirements:
     - python
     - setuptools
     - numpy >=1.9.1,<1.10
-    - cython 0.21*
+    - cython 0.21.*
 
   run:
     - python
@@ -31,9 +31,6 @@ test:
 
   imports:
   - menpo
-
-  commands:
-  - python -c "import nose; nose.main()" -s menpo
 
 about:
   home: https://github.com/menpo/menpo/

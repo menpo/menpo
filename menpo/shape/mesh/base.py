@@ -1,4 +1,5 @@
 # coding=utf-8
+from collections import Counter
 import numpy as np
 from warnings import warn
 
@@ -174,15 +175,15 @@ class TriMesh(PointCloud):
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[0]
 
-    def face_normals(self):
+    def tri_normals(self):
         r"""
-        Compute the face normals from the current set of points and
+        Compute the triangle face normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
 
         Returns
         -------
         normals : ``(n_tris, 3)`` `ndarray`
-            Normal at each face.
+            Normal at each triangle face.
 
         Raises
         ------
@@ -192,6 +193,199 @@ class TriMesh(PointCloud):
         if self.n_dims != 3:
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
+
+    def tri_areas(self):
+        r"""The area of each triangle face.
+
+        Returns
+        -------
+        areas : ``(n_tris,)`` `ndarray`
+            Area of each triangle, ordered as the trilist is
+
+        Raises
+        ------
+        ValueError
+            If mesh is not 2D or 3D
+        """
+        t = self.points[self.trilist]
+        ij, ik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
+        if self.n_dims == 2:
+            return np.cross(ij, ik) * 0.5
+        elif self.n_dims == 3:
+            return np.linalg.norm(np.cross(ij, ik), axis=1) * 0.5
+        else:
+            raise ValueError('tri_areas can only be calculated on a 2D or '
+                             '3D mesh')
+
+    def mean_tri_area(self):
+        r"""The mean area of each triangle face in this :map:`TriMesh`.
+
+        Returns
+        -------
+        mean_tri_area : ``float``
+            The mean area of each triangle face in this :map:`TriMesh`
+
+        Raises
+        ------
+        ValueError
+            If mesh is not 3D
+        """
+        return np.mean(self.tri_areas())
+
+    def boundary_tri_index(self):
+        r"""Boolean index into triangles that are at the edge of the TriMesh
+
+        Returns
+        -------
+        boundary_tri_index : ``(n_tris,)`` `ndarray`
+            For each triangle (ABC), returns whether any of it's edges is not
+            also an edge of another triangle (and so this triangle exists on
+            the boundary of the TriMesh)
+        """
+        trilist = self.trilist
+        # Get a sorted list of edge pairs
+        edge_pairs = np.sort(np.vstack((trilist[:, [0, 1]],
+                                        trilist[:, [0, 2]],
+                                        trilist[:, [1, 2]])))
+
+        # convert to a tuple per edge pair
+        edges = [tuple(x) for x in edge_pairs]
+        # count the occurrences of the ordered edge pairs - edge pairs that
+        # occur once are at the edge of the whole mesh
+        mesh_edges = (e for e, i in Counter(edges).items() if i == 1)
+        # index back into the edges to find which triangles contain these edges
+        return np.array(list(set(edges.index(e) % trilist.shape[0]
+                                 for e in mesh_edges)))
+
+    def edge_vectors(self):
+        r"""A vector of edges of each triangle face.
+
+        Note that there will be two edges present in cases where two triangles
+        'share' an edge. Consider :meth:`unique_edge_vectors` for a
+        single vector for each physical edge on the :map:`TriMesh`.
+
+        Returns
+        -------
+        edges : ``(n_tris * 3, n_dims)`` `ndarray`
+            For each triangle (ABC), returns the edge vectors AB, BC, CA. All
+            edges are concatenated for a total of ``n_tris * 3`` edges. The
+            ordering is done so that all AB vectors are first in the returned
+            list, followed by BC, then CA.
+        """
+        t = self.points[self.trilist]
+        return np.vstack((t[:, 1] - t[:, 0],
+                          t[:, 2] - t[:, 1],
+                          t[:, 2] - t[:, 0]))
+
+    def edge_indices(self):
+        r"""An unordered index into points that rebuilds the edges of this
+        :map:`TriMesh`.
+
+        Note that there will be two edges present in cases where two triangles
+        'share' an edge. Consider :meth:`unique_edge_indices` for a single index
+        for each physical edge on the :map:`TriMesh`.
+
+        Returns
+        -------
+        edge_indices : ``(n_tris * 3, 2)`` `ndarray`
+            For each triangle (ABC), returns the pair of point indices that
+            rebuild AB, AC, BC. All edge indices are concatenated for a total
+            of ``n_tris * 3`` edge_indices. The ordering is done so that all
+            AB vectors are first in the returned list, followed by BC, then CA.
+        """
+        tl = self.trilist
+        return np.vstack((tl[:, [0, 1]],
+                          tl[:, [1, 2]],
+                          tl[:, [2, 0]]))
+
+    def unique_edge_indicies(self):
+        r"""An unordered index into points that rebuilds the unique edges of
+        this :map:`TriMesh`.
+
+        Note that each physical edge will only be counted once in this method
+        (i.e. edges shared between neighbouring triangles are only counted once
+        not twice). The ordering should be considered random.
+
+        Returns
+        -------
+        unique_edge_indicies : ``(n_unique_edges, 2)`` `ndarray`
+            Return a point index that rebuilds all edges present in this
+            :map:`TriMesh` only once.
+        """
+        # Get a sorted list of edge pairs. sort ensures that each edge is
+        # ordered from lowest index to highest.
+        edge_pairs = np.sort(self.edge_indices())
+
+        # We want to remove duplicates - this is a little hairy: basically we
+        # get a view on the array where each pair is considered by numpy to be
+        # one item
+        edge_pair_view = np.ascontiguousarray(edge_pairs).view(
+            np.dtype((np.void, edge_pairs.dtype.itemsize * edge_pairs.shape[1])))
+        # Now we can use this view to ask for only unique edges...
+        unique_edge_index = np.unique(edge_pair_view, return_index=True)[1]
+        # And use that to filter our original list down
+        return edge_pairs[unique_edge_index]
+
+    def unique_edge_vectors(self):
+        r"""An unordered vector of unique edges for the whole :map:`TriMesh`.
+
+        Note that each physical edge will only be counted once in this method
+        (i.e. edges shared between neighbouring triangles are only counted once
+        not twice). The ordering should be considered random.
+
+        Returns
+        -------
+        unique_edge_vectors : ``(n_unique_edges, n_dims)`` `ndarray`
+            Vectors for each unique edge in this :map:`TriMesh`.
+        """
+        x = self.points[self.unique_edge_indicies()]
+        return x[:, 1] - x[:, 0]
+
+    def edge_lengths(self):
+        r"""The length of each edge in this :map:`TriMesh`.
+
+        Note that there will be two edges present in cases where two triangles
+        'share' an edge. Consider :meth:`unique_edge_indices` for a single
+        index for each physical edge on the :map:`TriMesh`. The ordering
+        matches the case for edges and edge_indices.
+
+        Returns
+        -------
+        edge_lengths : ``(n_tris * 3, )`` `ndarray`
+            Scalar euclidean lengths for each edge in this :map:`TriMesh`.
+        """
+        return np.linalg.norm(self.edge_vectors(), axis=1)
+
+    def unique_edge_lengths(self):
+        r"""The length of each edge in this :map:`TriMesh`.
+
+        Note that each physical edge will only be counted once in this method
+        (i.e. edges shared between neighbouring triangles are only counted once
+        not twice). The ordering should be considered random.
+
+        Returns
+        -------
+        edge_lengths : ``(n_tris * 3, )`` `ndarray`
+            Scalar euclidean lengths for each edge in this :map:`TriMesh`.
+        """
+        return np.linalg.norm(self.unique_edge_vectors(), axis=1)
+
+    def mean_edge_length(self, unique=True):
+        r"""The mean length of each edge in this :map:`TriMesh`.
+
+        Parameters
+        ----------
+        unique : `bool`, optional
+            If ``True``, each shared edge will only be counted once towards
+            the average. If false, shared edges will be counted twice.
+
+        Returns
+        -------
+        mean_edge_length : ``float``
+            The mean length of each edge in this :map:`TriMesh`
+        """
+        return np.mean(self.unique_edge_lengths() if unique
+                       else self.edge_lengths())
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r', line_style='-',
@@ -330,19 +524,23 @@ class TriMesh(PointCloud):
             from menpo.visualize import Menpo3dErrorMessage
             raise ImportError(Menpo3dErrorMessage)
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+                    style='coloured'):
         r"""
         Visualization of the TriMesh using the :map:`visualize_pointclouds`
         widget.
 
         Parameters
         ----------
-        browser_style : ``{buttons, slider}``, optional
-            It defines whether the selector of the TriMesh objects will have
-            the form of plus/minus buttons or a slider.
+        browser_style : {``'buttons'``, ``'slider'``}, optional
+            It defines whether the selector of the objects will have the form of
+            plus/minus buttons or a slider.
         figure_size : (`int`, `int`) `tuple`, optional
             The initial size of the rendered figure.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
         """
         from menpo.visualize import visualize_pointclouds
-        visualize_pointclouds(self, figure_size=figure_size,
+        visualize_pointclouds(self, figure_size=figure_size, style=style,
                               browser_style=browser_style)
