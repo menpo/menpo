@@ -1,6 +1,8 @@
 import warnings
 import numpy as np
-from menpo.shape import PointCloud
+from nose.tools import raises
+from numpy.testing import assert_allclose
+from menpo.shape import PointCloud, bounding_box
 from menpo.testing import is_same_array
 
 
@@ -81,3 +83,27 @@ def test_pointcloud_flatten_rebuild():
     assert (np.all(new_pc.n_dims == pc.n_dims))
     assert (np.all(new_pc.n_points == pc.n_points))
     assert (np.all(pc.points == new_pc.points))
+
+
+def test_pointcloud_bounding_box():
+    points = np.array([[0, 0],
+                       [1, 1],
+                       [0, 2]])
+    pc = PointCloud(points)
+    bb = pc.bounding_box()
+    bb_bounds = bb.bounds()
+    assert_allclose(bb_bounds[0], [0., 0.])
+    assert_allclose(bb_bounds[1], [1., 2.])
+
+
+@raises(ValueError)
+def test_pointcloud_bounding_box_3d_fail():
+    points = np.array([[0, 0, 0],
+                       [1, 1, 1]])
+    pc = PointCloud(points)
+    pc.bounding_box()
+
+
+def test_bounding_box_creation():
+    bb = bounding_box([0, 0], [1, 1])
+    assert_allclose(bb.points, [[0, 0], [1, 0], [1, 1], [0, 1]])
