@@ -5,7 +5,7 @@ import numpy as np
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
-from menpo.base import Vectorizable
+from menpo.base import Vectorizable, MenpoDeprecationWarning
 from menpo.shape import PointCloud
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
@@ -1405,7 +1405,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             (self.n_channels,) + tuple(template_shape))
 
         return self._build_warp_to_shape(warped_pixels, transform,
-                                           warp_landmarks)
+                                         warp_landmarks)
 
     def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks):
         # factored out common logic from the different paths we can take in
