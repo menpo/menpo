@@ -535,39 +535,281 @@ def ibug_face_68_trimesh(landmark_group):
 
     _validate_input(landmark_group, n_expected_points, group)
 
-    tri_list = np.array([[47, 29, 28], [44, 43, 23], [38, 20, 21], [47, 28,42],
-                        [49, 61, 60], [40, 41, 37], [37, 19, 20], [28, 40, 39],
-                        [38, 21, 39], [36,  1, 	0], [48, 59,  4], [49, 60, 48],
-                        [67, 59, 60], [13, 53, 14], [61, 51, 62], [57,  8,  7],
-                        [52, 51, 33], [61, 67, 60], [52, 63, 51], [66, 56, 57],
-                        [35, 30, 29], [53, 52, 35], [37, 36, 17], [18, 37, 17],
-                        [37, 38, 40], [38, 37, 20], [19, 37, 18], [38, 39, 40],
-                        [28, 29, 40], [41, 36, 37], [27, 39, 21], [41, 31,  1],
-                        [30, 32, 31], [33, 51, 50], [33, 30, 34], [31, 40, 29],
-                        [36,  0, 17], [31,  2,  1], [31, 41, 40], [ 1, 36, 41],
-                        [31, 49,  2], [ 2, 49,  3], [60, 59, 48], [ 3, 49, 48],
-                        [31, 32, 50], [48,  4,  3], [59,  5,  4], [58, 67, 66],
-                        [ 5, 59, 58], [58, 59, 67], [ 7,  6, 58], [66, 57, 58],
-                        [13, 54, 53], [ 7, 58, 57], [ 6,  5, 58], [50, 61, 49],
-                        [62, 67, 61], [31, 50, 49], [32, 33, 50], [30, 33, 32],
-                        [34, 52, 33], [35, 52, 34], [53, 63, 52], [62, 63, 65],
-                        [62, 51, 63], [66, 65, 56], [63, 53, 64], [62, 66, 67],
-                        [62, 65, 66], [57, 56,  9], [65, 63, 64], [ 8, 57,  9],
-                        [ 9, 56, 10], [10, 56, 11], [11, 56, 55], [11, 55, 12],
-                        [56, 65, 55], [55, 64, 54], [55, 65, 64], [55, 54, 12],
-                        [64, 53, 54], [12, 54, 13], [45, 46, 44], [35, 34, 30],
-                        [14, 53, 35], [15, 46, 45], [27, 28, 39], [27, 42, 28],
-                        [35, 29, 47], [30, 31, 29], [15, 35, 46], [15, 14, 35],
-                        [43, 22, 23], [27, 21, 22], [24, 44, 23], [44, 47, 43],
-                        [43, 47, 42], [46, 35, 47], [26, 45, 44], [46, 47, 44],
-                        [25, 44, 24], [25, 26, 44], [16, 15, 45], [16, 45, 26],
-                        [22, 42, 43], [50, 51, 61], [27, 22, 42]])
+    tri_list = np.array([[47, 29, 28], [44, 43, 23], [38, 20, 21],
+                         [47, 28, 42], [49, 61, 60], [40, 41, 37],
+                         [37, 19, 20], [28, 40, 39], [38, 21, 39],
+                         [36,  1,  0], [48, 59,  4], [49, 60, 48],
+                         [67, 59, 60], [13, 53, 14], [61, 51, 62],
+                         [57,  8,  7], [52, 51, 33], [61, 67, 60],
+                         [52, 63, 51], [66, 56, 57], [35, 30, 29],
+                         [53, 52, 35], [37, 36, 17], [18, 37, 17],
+                         [37, 38, 40], [38, 37, 20], [19, 37, 18],
+                         [38, 39, 40], [28, 29, 40], [41, 36, 37],
+                         [27, 39, 21], [41, 31,  1], [30, 32, 31],
+                         [33, 51, 50], [33, 30, 34], [31, 40, 29],
+                         [36,  0, 17], [31,  2,  1], [31, 41, 40],
+                         [ 1, 36, 41], [31, 49,  2], [ 2, 49,  3],
+                         [60, 59, 48], [ 3, 49, 48], [31, 32, 50],
+                         [48,  4,  3], [59,  5,  4], [58, 67, 66],
+                         [ 5, 59, 58], [58, 59, 67], [ 7,  6, 58],
+                         [66, 57, 58], [13, 54, 53], [ 7, 58, 57],
+                         [ 6,  5, 58], [50, 61, 49], [62, 67, 61],
+                         [31, 50, 49], [32, 33, 50], [30, 33, 32],
+                         [34, 52, 33], [35, 52, 34], [53, 63, 52],
+                         [62, 63, 65], [62, 51, 63], [66, 65, 56],
+                         [63, 53, 64], [62, 66, 67], [62, 65, 66],
+                         [57, 56,  9], [65, 63, 64], [ 8, 57,  9],
+                         [ 9, 56, 10], [10, 56, 11], [11, 56, 55],
+                         [11, 55, 12], [56, 65, 55], [55, 64, 54],
+                         [55, 65, 64], [55, 54, 12], [64, 53, 54],
+                         [12, 54, 13], [45, 46, 44], [35, 34, 30],
+                         [14, 53, 35], [15, 46, 45], [27, 28, 39],
+                         [27, 42, 28], [35, 29, 47], [30, 31, 29],
+                         [15, 35, 46], [15, 14, 35], [43, 22, 23],
+                         [27, 21, 22], [24, 44, 23], [44, 47, 43],
+                         [43, 47, 42], [46, 35, 47], [26, 45, 44],
+                         [46, 47, 44], [25, 44, 24], [25, 26, 44],
+                         [16, 15, 45], [16, 45, 26], [22, 42, 43],
+                         [50, 51, 61], [27, 22, 42]])
     new_landmark_group = LandmarkGroup(
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
         OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
 
     return group, new_landmark_group
 
+
+def ibug_face_66_trimesh(landmark_group):
+    """
+    Apply the ibug's "standard" 66 point triangulation to the landmarks in
+    the given landmark group.
+
+    The group label will be 'ibug_face_66_trimesh'.
+
+    The semantic labels applied are as follows:
+
+      - tri
+
+    Parameters
+    ----------
+    landmark_group : :map:`LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    group : `str`
+        The group label: 'ibug_face_66_trimesh'
+    landmark_group : :map:`LandmarkGroup`
+        New landmark group.
+
+    Raises
+    ------
+    :class:`menpo.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 66 points
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
+    """
+    from menpo.shape import TriMesh
+
+    # apply ibug_face_66
+    _, landmark_group = ibug_face_66(landmark_group)
+
+    group = 'ibug_face_66_trimesh'
+    n_expected_points = 66
+    n_points = landmark_group.lms.n_points
+
+    _validate_input(landmark_group, n_expected_points, group)
+
+    tri_list = np.array([[47, 29, 28], [44, 43, 23], [38, 20, 21],
+                         [47, 28, 42], [40, 41, 37], [51, 62, 61],
+                         [37, 19, 20], [28, 40, 39], [38, 21, 39],
+                         [36,  1,  0],  [48, 59, 4], [49, 60, 48],
+                         [13, 53, 14], [60, 51, 61], [51, 51, 62],
+                         [52, 51, 33], [49, 50, 60], [57,  7,  8],
+                         [64, 56, 57], [35, 30, 29], [52, 62, 53],
+                         [53, 52, 35], [37, 36, 17], [18, 37, 17],
+                         [37, 38, 40], [38, 37, 20], [19, 37, 18],
+                         [38, 39, 40], [28, 29, 40], [41, 36, 37],
+                         [27, 39, 21], [41, 31,  1], [30, 32, 31],
+                         [33, 51, 50], [33, 30, 34], [31, 40, 29],
+                         [36,  0, 17], [31,  2,  1], [31, 41, 40],
+                         [ 1, 36, 41], [31, 49,  2], [ 2, 49,  3],
+                         [ 3, 49, 48], [31, 32, 50], [62, 53, 54],
+                         [48,  4,  3], [59,  5,  4], [58, 65, 64],
+                         [ 5, 59, 58], [58, 59, 65], [ 7,  6, 58],
+                         [64, 57, 58], [13, 54, 53], [ 7, 58, 57],
+                         [ 6,  5, 58], [63, 55, 54], [65, 59, 48],
+                         [31, 50, 49], [32, 33, 50], [30, 33, 32],
+                         [34, 52, 33], [35, 52, 34], [48, 60, 65],
+                         [64, 63, 56], [60, 65, 61], [65, 64, 61],
+                         [57, 56,  9], [ 8, 57,  9], [64, 63, 61],
+                         [ 9, 56, 10], [10, 56, 11], [11, 56, 55],
+                         [11, 55, 12], [56, 63, 55], [51, 52, 62],
+                         [55, 54, 12], [63, 54, 62], [61, 62, 63],
+                         [12, 54, 13], [45, 46, 44], [35, 34, 30],
+                         [14, 53, 35], [15, 46, 45], [27, 28, 39],
+                         [27, 42, 28], [35, 29, 47], [30, 31, 29],
+                         [15, 35, 46], [15, 14, 35], [43, 22, 23],
+                         [27, 21, 22], [24, 44, 23], [44, 47, 43],
+                         [43, 47, 42], [46, 35, 47], [26, 45, 44],
+                         [46, 47, 44], [25, 44, 24], [25, 26, 44],
+                         [16, 15, 45], [16, 45, 26], [22, 42, 43],
+                         [50, 60, 51], [27, 22, 42]])
+    new_landmark_group = LandmarkGroup(
+        TriMesh(landmark_group.lms.points, tri_list, copy=False),
+        OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
+
+    return group, new_landmark_group
+
+
+def ibug_face_51_trimesh(landmark_group):
+    """
+    Apply the ibug's "standard" 51 point triangulation to the landmarks in
+    the given landmark group.
+
+    The group label will be 'ibug_face_51_trimesh'.
+
+    The semantic labels applied are as follows:
+
+      - tri
+
+    Parameters
+    ----------
+    landmark_group : :map:`LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    group : `str`
+        The group label: 'ibug_face_51_trimesh'
+    landmark_group : :map:`LandmarkGroup`
+        New landmark group.
+
+    Raises
+    ------
+    :class:`menpo.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 51 points
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
+    """
+    from menpo.shape import TriMesh
+
+    # apply ibug_face_51
+    _, landmark_group = ibug_face_51(landmark_group)
+
+    group = 'ibug_face_51_trimesh'
+    n_expected_points = 51
+    n_points = landmark_group.lms.n_points
+
+    _validate_input(landmark_group, n_expected_points, group)
+
+    tri_list = np.array([[30, 12, 11], [27, 26,  6], [21,  3,  4],
+                         [30, 11, 25], [32, 44, 43], [23, 24, 20],
+                         [20,  2,  3], [11, 23, 22], [21,  4, 22],
+                         [32, 43, 31], [50, 42, 43], [44, 34, 45],
+                         [35, 34, 16], [44, 50, 43], [35, 46, 34],
+                         [49, 39, 40], [18, 13, 12], [36, 35, 18],
+                         [20, 19,  0], [ 1, 20,  0], [20, 21, 23],
+                         [21, 20,  3], [ 2, 20,  1], [21, 22, 23],
+                         [11, 12, 23], [24, 19, 20], [10, 22,  4],
+                         [13, 15, 14], [16, 34, 33], [16, 13, 17],
+                         [14, 23, 12], [14, 24, 23], [43, 42, 31],
+                         [14, 15, 33], [41, 50, 49], [41, 42, 50],
+                         [49, 40, 41], [33, 44, 32], [45, 50, 44],
+                         [14, 33, 32], [15, 16, 33], [13, 16, 15],
+                         [17, 35, 16], [18, 35, 17], [36, 46, 35],
+                         [45, 46, 48], [45, 34, 46], [49, 48, 39],
+                         [46, 36, 47], [45, 49, 50], [45, 48, 49],
+                         [48, 46, 47], [39, 48, 38], [38, 47, 37],
+                         [38, 48, 47], [47, 36, 37], [28, 29, 27],
+                         [18, 17, 13], [10, 11, 22], [10, 25, 11],
+                         [18, 12, 30], [13, 14, 12], [26,  5,  6],
+                         [10,  4,  5], [ 7, 27,  6], [27, 30, 26],
+                         [26, 30, 25], [29, 18, 30], [ 9, 28, 27],
+                         [29, 30, 27], [ 8, 27,  7], [ 8,  9, 27],
+                         [ 5, 25, 26], [33, 34, 44], [10,  5, 25]])
+    new_landmark_group = LandmarkGroup(
+        TriMesh(landmark_group.lms.points, tri_list, copy=False),
+        OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
+
+    return group, new_landmark_group
+
+
+def ibug_face_49_trimesh(landmark_group):
+    """
+    Apply the ibug's "standard" 49 point triangulation to the landmarks in
+    the given landmark group.
+
+    The group label will be 'ibug_face_49_trimesh'.
+
+    The semantic labels applied are as follows:
+
+      - tri
+
+    Parameters
+    ----------
+    landmark_group : :map:`LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    group : `str`
+        The group label: 'ibug_face_49_trimesh'
+    landmark_group : :map:`LandmarkGroup`
+        New landmark group.
+
+    Raises
+    ------
+    :class:`menpo.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 49 points
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
+    """
+    from menpo.shape import TriMesh
+
+    # apply ibug_face_49
+    _, landmark_group = ibug_face_49(landmark_group)
+
+    group = 'ibug_face_49_trimesh'
+    n_expected_points = 49
+    n_points = landmark_group.lms.n_points
+
+    _validate_input(landmark_group, n_expected_points, group)
+
+    tri_list = np.array([[30, 12, 11], [27, 26,  6], [21,  3,  4],
+                         [30, 11, 25], [23, 24, 20], [34, 45, 44],
+                         [20,  2,  3], [11, 23, 22], [21,  4, 22],
+                         [32, 43, 31], [43, 34, 44], [34, 34, 45],
+                         [35, 34, 16], [32, 33, 43], [47, 39, 40],
+                         [18, 13, 12], [35, 45, 36], [36, 35, 18],
+                         [20, 19,  0], [ 1, 20,  0], [20, 21, 23],
+                         [21, 20,  3], [ 2, 20,  1], [21, 22, 23],
+                         [11, 12, 23], [24, 19, 20], [10, 22,  4],
+                         [13, 15, 14], [16, 34, 33], [16, 13, 17],
+                         [14, 23, 12], [14, 24, 23], [14, 15, 33],
+                         [45, 36, 37], [41, 48, 47], [41, 42, 48],
+                         [47, 40, 41], [46, 38, 37], [48, 42, 31],
+                         [14, 33, 32], [15, 16, 33], [13, 16, 15],
+                         [17, 35, 16], [18, 35, 17], [31, 43, 48],
+                         [47, 46, 39], [43, 48, 44], [48, 47, 44],
+                         [47, 46, 44], [39, 46, 38], [46, 37, 45],
+                         [28, 29, 27], [18, 17, 13], [10, 11, 22],
+                         [10, 25, 11], [18, 12, 30], [13, 14, 12],
+                         [26,  5,  6], [10,  4,  5], [ 7, 27,  6],
+                         [27, 30, 26], [26, 30, 25], [29, 18, 30],
+                         [ 9, 28, 27], [29, 30, 27], [ 8, 27,  7],
+                         [ 8,  9, 27], [ 5, 25, 26], [33, 43, 34],
+                         [10,  5, 25], [34, 35, 45], [44, 45, 46]])
+    new_landmark_group = LandmarkGroup(
+        TriMesh(landmark_group.lms.points, tri_list, copy=False),
+        OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
+
+    return group, new_landmark_group
 
 def ibug_face_65_closed_mouth(landmark_group):
     """
