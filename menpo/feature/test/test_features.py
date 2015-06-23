@@ -267,13 +267,14 @@ def test_dsift_values():
     from menpo.feature import dsift
     image = Image([[1, 2, 3, 4], [2, 1, 3, 4], [1, 2, 3, 4], [2, 1, 3, 4]])
     sift_img = dsift(image, cell_size_horizontal=2, cell_size_vertical=2)
-    assert_allclose(np.around(sift_img.pixels[0, 0, 0], 6), 62.748379,
+    assert_allclose(np.around(sift_img.pixels[0, 0, 0], 6), 76.002098000000004,
                     rtol=1e-04)
-    assert_allclose(np.around(sift_img.pixels[1, 0, 1], 6), 141.535736,
+    assert_allclose(np.around(sift_img.pixels[1, 0, 1], 6), 139.76733400000001,
                     rtol=1e-04)
-    assert_allclose(np.around(sift_img.pixels[0, 1, 0], 6), 19.556328,
+    assert_allclose(np.around(sift_img.pixels[0, 1, 0], 6), 155.95297199999999,
                     rtol=1e-04)
-    assert_allclose(np.around(sift_img.pixels[5, 1, 1], 6), 0.0)
+    assert_allclose(np.around(sift_img.pixels[5, 1, 1], 6), 18.307358000000001,
+                    rtol=1e-04)
 
 
 def test_lbp_values():
