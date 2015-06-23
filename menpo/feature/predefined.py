@@ -12,8 +12,8 @@ sparse_hog.__doc__ = hog.__doc__
 try:
     from .vlfeat import dsift
     fast_dsift = partial(dsift, fast=True, cell_size_vertical=5,
-                         cell_size_horizontal=5, num_bins_horizontal=2,
-                         num_bins_vertical=2, num_or_bins=9)
+                         cell_size_horizontal=5, num_bins_horizontal=1,
+                         num_bins_vertical=1, num_or_bins=8)
     fast_dsift.__name__ = 'fast_dsift'
     fast_dsift.__doc__ = dsift.__doc__
 except ImportError:
