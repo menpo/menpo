@@ -39,18 +39,10 @@ else:
 builtin_data = filter(lambda x: os.path.isfile(x), glob.glob('menpo/data/*'))
 builtin_data = [os.path.relpath(x, start='menpo') for x in builtin_data]
 
-# Versioneer allows us to automatically generate versioning from
-# our git tagging system which makes releases simpler.
-versioneer.VCS = 'git'
-versioneer.versionfile_source = 'menpo/_version.py'
-versioneer.versionfile_build = 'menpo/_version.py'
-versioneer.tag_prefix = 'v'  # tags are like v1.2.0
-versioneer.parentdir_prefix = 'menpo-'  # dirname like 'menpo-v1.2.0'
-
 setup(name='menpo',
       version=versioneer.get_version(),
       cmdclass=versioneer.get_cmdclass(),
-      description='iBUG Facial Modelling Toolkit',
+      description='A Python toolkit for handling annotated data',
       author='James Booth',
       author_email='james.booth08@imperial.ac.uk',
       include_dirs=include_dirs,
@@ -66,3 +58,4 @@ setup(name='menpo',
                     '': ['*.pxd', '*.pyx']},
       tests_require=['nose', 'mock']
 )
+
