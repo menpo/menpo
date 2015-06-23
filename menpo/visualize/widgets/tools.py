@@ -5013,6 +5013,278 @@ class HOGOptionsWidget(ipywidgets.FlexBox):
         self.add_render_function(render_function)
 
 
+class DSIFTOptionsWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting desnse SIFT options. Specifically, it
+    consists of:
+
+        1) BoundedIntText [`self.window_vertical_text`]: window step Y
+        2) BoundedIntText [`self.window_horizontal_text`]: window step X
+        3) Checkbox (`self.fast_checkbox`]: fast computation
+        4) VBox [`self.window_step_box']: box that contains (1), (2) and (3)
+        5) BoundedIntText [`self.cell_size_vertical_text`]: cell size Y
+        6) BoundedIntText [`self.cell_size_horizontal_text`]: cell size X
+        7) VBox [`self.cell_size_box']: box that contains (5) and (6)
+        8) BoundedIntText [`self.num_bins_vertical_text`]: num bins Y
+        9) BoundedIntText [`self.num_bins_horizontal_text`]: num bins X
+        10) BoundedIntText [`self.num_or_bins_text`]: orientation bins
+        11) VBox [`self.cell_size_box']: box that contains (9), (0) and (10)
+        12) Tab [`self.options_box`]: box that contains (4), (7) and (11)
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `replace_render_function()` methods.
+
+    Parameters
+    ----------
+    dsift_options : `dict`
+        The initial options. Example ::
+
+            dsift_options = {'window_step_horizontal': 1,
+                             'window_step_vertical': 1,
+                             'num_bins_horizontal': 2,
+                             'num_bins_vertical': 2,
+                             'num_or_bins': 9,
+                             'cell_size_horizontal': 6,
+                             'cell_size_vertical': 6,
+                             'fast': True}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    """
+    def __init__(self, dsift_options, render_function=None):
+        # Create widgets
+        self.window_vertical_text = ipywidgets.BoundedIntText(
+            value=dsift_options['window_step_vertical'],
+            description='Step Y', min=1, width='2cm')
+        self.window_horizontal_text = ipywidgets.BoundedIntText(
+            value=dsift_options['window_step_horizontal'],
+            description='Step X', min=1, width='2cm')
+        self.fast_checkbox = ipywidgets.Checkbox(
+            value=dsift_options['fast'],
+            description='Fast computation')
+        self.cell_size_vertical_text = ipywidgets.BoundedIntText(
+            value=dsift_options['cell_size_vertical'],
+            description='Cell size Y', min=1, width='2cm')
+        self.cell_size_horizontal_text = ipywidgets.BoundedIntText(
+            value=dsift_options['cell_size_horizontal'],
+            description='Cell size X', min=1, width='2cm')
+        self.num_bins_vertical_text = ipywidgets.BoundedIntText(
+            value=dsift_options['num_bins_vertical'],
+            description='Bins Y', min=1, width='2cm')
+        self.num_bins_horizontal_text = ipywidgets.BoundedIntText(
+            value=dsift_options['num_bins_horizontal'],
+            description='Bins X', min=1, width='2cm')
+        self.num_or_bins_text = ipywidgets.BoundedIntText(
+            value=dsift_options['num_or_bins'],
+            description='Orientation bins', min=1, width='2cm')
+
+        # Final widget
+        self.window_step_box = ipywidgets.VBox(
+            children=[self.window_vertical_text, self.window_horizontal_text,
+                      self.fast_checkbox])
+        self.cell_size_box = ipywidgets.VBox(
+            children=[self.cell_size_vertical_text,
+                      self.cell_size_horizontal_text])
+        self.num_bins_box = ipywidgets.VBox(
+            children=[self.num_bins_vertical_text,
+                      self.num_bins_horizontal_text, self.num_or_bins_text])
+        self.options_box = ipywidgets.HBox(children=[self.window_step_box,
+                                                     self.cell_size_box,
+                                                     self.num_bins_box])
+        super(DSIFTOptionsWidget, self).__init__(children=[self.options_box])
+
+        # Assign output
+        self.selected_values = dsift_options
+
+        # Get options
+        def get_window_step_vertical(name, value):
+            self.selected_values['window_step_vertical'] = value
+        self.window_vertical_text.on_trait_change(get_window_step_vertical,
+                                                  'value')
+
+        def get_window_step_horizontal(name, value):
+            self.selected_values['window_step_horizontal'] = value
+        self.window_horizontal_text.on_trait_change(get_window_step_horizontal,
+                                                    'value')
+
+        def get_num_bins_vertical(name, value):
+            self.selected_values['num_bins_vertical'] = value
+        self.num_bins_vertical_text.on_trait_change(get_num_bins_vertical,
+                                                    'value')
+
+        def get_num_bins_horizontal(name, value):
+            self.selected_values['num_bins_horizontal'] = value
+        self.num_bins_horizontal_text.on_trait_change(get_num_bins_horizontal,
+                                                      'value')
+
+        def get_num_or_bins(name, value):
+            self.selected_values['num_or_bins'] = value
+        self.num_or_bins_text.on_trait_change(get_num_or_bins, 'value')
+
+        def get_cell_size_vertical(name, value):
+            self.selected_values['cell_size_vertical'] = value
+        self.cell_size_vertical_text.on_trait_change(get_cell_size_vertical,
+                                                     'value')
+
+        def get_cell_size_horizontal(name, value):
+            self.selected_values['cell_size_horizontal'] = value
+        self.cell_size_horizontal_text.on_trait_change(get_cell_size_horizontal,
+                                                       'value')
+
+        def get_fast(name, value):
+            self.selected_values['fast'] = value
+        self.fast_checkbox.on_trait_change(get_fast, 'value')
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.options_box, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.window_vertical_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.window_horizontal_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.num_bins_vertical_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.num_bins_horizontal_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.num_or_bins_text, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.cell_size_vertical_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.cell_size_horizontal_text, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.fast_checkbox, font_family, font_size, font_style,
+                     font_weight)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.window_vertical_text.on_trait_change(self._render_function,
+                                                      'value')
+            self.window_horizontal_text.on_trait_change(self._render_function,
+                                                        'value')
+            self.num_bins_vertical_text.on_trait_change(self._render_function,
+                                                        'value')
+            self.num_bins_horizontal_text.on_trait_change(self._render_function,
+                                                          'value')
+            self.num_or_bins_text.on_trait_change(self._render_function,
+                                                  'value')
+            self.cell_size_vertical_text.on_trait_change(self._render_function,
+                                                         'value')
+            self.cell_size_horizontal_text.on_trait_change(
+                self._render_function, 'value')
+            self.fast_checkbox.on_trait_change(self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.window_vertical_text.on_trait_change(self._render_function,
+                                                  'value', remove=True)
+        self.window_horizontal_text.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self.num_bins_vertical_text.on_trait_change(self._render_function,
+                                                    'value', remove=True)
+        self.num_bins_horizontal_text.on_trait_change(self._render_function,
+                                                      'value', remove=True)
+        self.num_or_bins_text.on_trait_change(self._render_function, 'value',
+                                              remove=True)
+        self.cell_size_vertical_text.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+        self.cell_size_horizontal_text.on_trait_change(self._render_function,
+                                                       'value', remove=True)
+        self.fast_checkbox.on_trait_change(self._render_function, 'value',
+                                           remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+
 def _convert_str_to_list_int(s):
     r"""
     Function that converts a given `str` to a `list` of `int` numbers. For

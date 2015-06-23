@@ -103,7 +103,6 @@ def gaussian_filter(pixels, sigma):
     return output
 
 
-# TODO: Needs fixing ...
 @winitfeature
 def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,

@@ -12,7 +12,7 @@ from .tools import (_format_box, _format_font, _convert_image_to_bytes,
                     FigureOptionsTwoScalesWidget, LegendOptionsWidget,
                     GridOptionsWidget, ColourSelectionWidget, HOGOptionsWidget,
                     DaisyOptionsWidget, LBPOptionsWidget, IGOOptionsWidget,
-                    _map_styles_to_hex_colours)
+                    DSIFTOptionsWidget, _map_styles_to_hex_colours)
 
 
 class ChannelOptionsWidget(ipywidgets.FlexBox):
@@ -3861,20 +3861,21 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
     of:
 
         1) RadioButtons [`self.feature_radiobuttons`]: select feature type
-        2) HOGOptionsWidget [`self.hog_options_widget`]: hog options widget
-        3) IGOOptionsWidget [`self.igo_options_widget`]: igo options widget
-        4) LBPOptionsWidget [`self.lbp_options_widget`]: lbp options widget
-        5) DaisyOptionsWidget [`self.daisy_options_widget`]: daisy options
+        2) DSIFTOptionsWidget [`self.dsift_options_widget`]: dsift options widget
+        3) HOGOptionsWidget [`self.hog_options_widget`]: hog options widget
+        4) IGOOptionsWidget [`self.igo_options_widget`]: igo options widget
+        5) LBPOptionsWidget [`self.lbp_options_widget`]: lbp options widget
+        6) DaisyOptionsWidget [`self.daisy_options_widget`]: daisy options
            widget
-        6) Latex [`self.no_options_widget`]: message for no options available
-        7) Box [`self.per_feature_options_box`]: box that contains (2), (3),
-           (4), (5) and (6)
-        8) Image [`self.preview_image`]: lenna image
-        9) Latex [`self.preview_input_latex`]: the initial image information
-        10) Latex [`self.preview_output_latex`]: the output image information
-        11) Latex [`self.preview_time_latex`]: the timing information
-        12) VBox [`self.preview_box`]: box that contains (8), (9), (10), (11)
-        13) Tab [`self.options_box`]: box that contains (1), (7) and (12)
+        7) Latex [`self.no_options_widget`]: message for no options available
+        8) Box [`self.per_feature_options_box`]: box that contains (2), (3),
+           (4), (5), (6) and (7)
+        9) Image [`self.preview_image`]: lenna image
+        10) Latex [`self.preview_input_latex`]: the initial image information
+        11) Latex [`self.preview_output_latex`]: the output image information
+        12) Latex [`self.preview_time_latex`]: the timing information
+        13) VBox [`self.preview_box`]: box that contains (9), (10), (11), (12)
+        14) Tab [`self.options_box`]: box that contains (1), (8) and (13)
 
     To set the styling of this widget please refer to the `style()` method. The
     widget stores the features `function` to `self.features_function`, the
@@ -3893,14 +3894,15 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
     def __init__(self, style='minimal'):
         # import features methods and time
         import time
-        from menpo.feature.features import (hog, lbp, igo, es, daisy, gradient,
-                                            no_op)
+        from menpo.feature import (dsift, hog, lbp, igo, es, daisy, gradient,
+                                   no_op)
         from menpo.image import Image
         import menpo.io as mio
         from menpo.visualize.image import glyph
 
         # Create widgets
         tmp = OrderedDict()
+        tmp['DSIFT'] = dsift
         tmp['HOG'] = hog
         tmp['IGO'] = igo
         tmp['ES'] = es
@@ -3910,6 +3912,14 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
         tmp['None'] = no_op
         self.feature_radiobuttons = ipywidgets.RadioButtons(
             value=no_op, options=tmp, description='Feature type:')
+        dsift_options_dict = {'window_step_horizontal': 1,
+                              'window_step_vertical': 1,
+                              'num_bins_horizontal': 2, 'num_bins_vertical': 2,
+                              'num_or_bins': 9, 'cell_size_horizontal': 6,
+                              'cell_size_vertical': 6, 'fast': True}
+        self.dsift_options_widget = DSIFTOptionsWidget(dsift_options_dict)
+        self.dsift_options_widget.style(box_style=None, border_visible=False,
+                                        margin='0.2cm')
         hog_options_dict = {'mode': 'dense', 'algorithm': 'dalaltriggs',
                             'num_bins': 9, 'cell_size': 8, 'block_size': 2,
                             'signed_gradient': True, 'l2_norm_clip': 0.2,
@@ -3947,9 +3957,9 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 
         # Group widgets
         self.per_feature_options_box = ipywidgets.Box(
-            children=[self.hog_options_widget, self.igo_options_widget,
-                      self.lbp_options_widget, self.daisy_options_widget,
-                      self.no_options_widget])
+            children=[self.dsift_options_widget, self.hog_options_widget,
+                      self.igo_options_widget, self.lbp_options_widget,
+                      self.daisy_options_widget, self.no_options_widget])
         self.preview_image = ipywidgets.Image(
             value=_convert_image_to_bytes(self.image), visible=False)
         self.preview_input_latex = ipywidgets.Latex(
@@ -3981,35 +3991,47 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 
         # Set functionality
         def per_feature_options_visibility(name, value):
-            if value == hog:
+            if value == dsift:
                 self.igo_options_widget.visible = False
                 self.lbp_options_widget.visible = False
                 self.daisy_options_widget.visible = False
                 self.no_options_widget.visible = False
+                self.hog_options_widget.visible = False
+                self.dsift_options_widget.visible = True
+            elif value == hog:
+                self.igo_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.dsift_options_widget.visible = False
                 self.hog_options_widget.visible = True
             elif value == igo:
                 self.hog_options_widget.visible = False
                 self.lbp_options_widget.visible = False
                 self.daisy_options_widget.visible = False
                 self.no_options_widget.visible = False
+                self.dsift_options_widget.visible = False
                 self.igo_options_widget.visible = True
             elif value == lbp:
                 self.hog_options_widget.visible = False
                 self.igo_options_widget.visible = False
                 self.daisy_options_widget.visible = False
                 self.no_options_widget.visible = False
+                self.dsift_options_widget.visible = False
                 self.lbp_options_widget.visible = True
             elif value == daisy:
                 self.hog_options_widget.visible = False
                 self.igo_options_widget.visible = False
                 self.lbp_options_widget.visible = False
                 self.no_options_widget.visible = False
+                self.dsift_options_widget.visible = False
                 self.daisy_options_widget.visible = True
             else:
                 self.hog_options_widget.visible = False
                 self.igo_options_widget.visible = False
                 self.lbp_options_widget.visible = False
                 self.daisy_options_widget.visible = False
+                self.dsift_options_widget.visible = False
                 self.no_options_widget.visible = True
                 for name, f in tmp.items():
                     if f == value:
@@ -4021,7 +4043,9 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 
         def get_function(name, value):
             # get options
-            if self.feature_radiobuttons.value == hog:
+            if self.feature_radiobuttons.value == dsift:
+                opts = self.dsift_options_widget.selected_values
+            elif self.feature_radiobuttons.value == hog:
                 opts = self.hog_options_widget.selected_values
             elif self.feature_radiobuttons.value == igo:
                 opts = self.igo_options_widget.selected_values
@@ -4148,6 +4172,10 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                      font_style, font_weight)
         _format_font(self.preview_time_latex, font_family, font_size,
                      font_style, font_weight)
+        self.dsift_options_widget.style(
+            box_style=None, border_visible=False, margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
         self.hog_options_widget.style(
             box_style=None, border_visible=False, margin='0.2cm',
             font_family=font_family, font_size=font_size, font_style=font_style,

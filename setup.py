@@ -30,6 +30,7 @@ else:
                         'scipy>=0.15,<0.16',
                         'matplotlib>=1.4,<1.5',
                         'pillow==2.7.0',
+                        'cyvlfeat==0.3',
                         'Cython>=0.21,<0.22']
 
     if sys.version_info.major == 2:
