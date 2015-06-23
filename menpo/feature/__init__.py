@@ -5,5 +5,12 @@ try:
     from .vlfeat import dsift
 except ImportError:
     pass
+
 from .predefined import sparse_hog, double_igo
+try:
+    from .predefined import fast_dsift
+except ImportError:
+    pass
+
 from .base import ndfeature, imgfeature
+
