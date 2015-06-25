@@ -7,7 +7,7 @@ requirements:
     - python
     - setuptools
     - numpy >=1.9.1,<1.10
-    - cython 0.21.*
+    - cython 0.22.*
 
   run:
     - python
@@ -17,14 +17,13 @@ requirements:
     - numpy >=1.9.1,<1.10
     - scipy 0.15.*
     - matplotlib 1.4.*
-    - pillow  2.7.0
+    - pillow  2.8.*
     - cyvlfeat 0.3*
 
-    # Convienience dependences (not strictly required)
+    # Convenience dependencies (not strictly required)
     - mock
     - nose
-    - pip
-    - ipython-notebook
+    - ipython-notebook 3.*
 
 test:
   requires:

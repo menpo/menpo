@@ -29,9 +29,9 @@ else:
     install_requires = ['numpy>=1.9.1,<1.10',
                         'scipy>=0.15,<0.16',
                         'matplotlib>=1.4,<1.5',
-                        'pillow==2.7.0',
-                        'cyvlfeat==0.3',
-                        'Cython>=0.21,<0.22']
+                        'pillow>=2.8,<2.9',
+                        'cyvlfeat>=0.3,<0.4',
+                        'Cython>=0.22,<0.23']
 
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')
@@ -59,4 +59,3 @@ setup(name='menpo',
                     '': ['*.pxd', '*.pyx']},
       tests_require=['nose', 'mock']
 )
-
