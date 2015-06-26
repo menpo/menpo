@@ -17,9 +17,8 @@ platform:
 - x64
 
 init:
-- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/v0.2.3/condaci.py' C:\\condaci.py; echo "Done"
+- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/v0.2.4/condaci.py' C:\\condaci.py; echo "Done"
 - cmd: python C:\\condaci.py setup %PYTHON_VERSION% --channel %BINSTAR_USER%
-- cmd: C:\\Miniconda\\Scripts\\conda config --add channels %BINSTAR_USER%/channel/master
 
 install:
 - cmd: C:\\Miniconda\\python C:\\condaci.py auto ./conda --binstaruser %BINSTAR_USER% --binstarkey %BINSTAR_KEY%
