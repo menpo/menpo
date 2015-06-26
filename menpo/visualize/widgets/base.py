@@ -1552,7 +1552,7 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
         from menpo.visualize.image import glyph
     global image_cls
     if image_cls is None:
-        from menpo.image import Image
+        from menpo.image import Image as image_cls
 
     # This makes the code shorter for dealing with masked images vs non-masked
     # images
@@ -1609,7 +1609,7 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
                     figure_size=figure_size, interpolation=interpolation,
                     alpha=alpha, cmap_name=cmap_name, **mask_arguments)
         elif sum_enabled:
-            renderer = Image(np.sum(image.pixels[channels], axis=0)).\
+            renderer = image_cls(np.sum(image.pixels[channels], axis=0)).\
                 view_landmarks(
                     group=group, with_labels=with_labels, without_labels=None,
                     figure_id=renderer.figure_id, new_figure=False,
@@ -1708,7 +1708,7 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
                 **mask_arguments)
         elif sum_enabled:
             # image, not landmarks, masked, glyph
-            renderer = Image(np.sum(image.pixels[channels], axis=0)).view(
+            renderer = image_cls(np.sum(image.pixels[channels], axis=0)).view(
                 render_axes=render_axes, axes_font_name=axes_font_name,
                 axes_font_size=axes_font_size, axes_font_style=axes_font_style,
                 axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
