@@ -6,5 +6,5 @@ AnimationOptionsWidget
 ======================
 .. autoclass:: AnimationOptionsWidget
   :members:
-  :inherited-members:
+  :no-inherited-members:
   :show-inheritance:

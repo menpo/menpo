@@ -6,5 +6,5 @@ GraphOptionsWidget
 ==================
 .. autoclass:: GraphOptionsWidget
   :members:
-  :inherited-members:
+  :no-inherited-members:
   :show-inheritance:

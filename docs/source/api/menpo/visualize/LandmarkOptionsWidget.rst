@@ -6,5 +6,5 @@ LandmarkOptionsWidget
 =====================
 .. autoclass:: LandmarkOptionsWidget
   :members:
-  :inherited-members:
+  :no-inherited-members:
   :show-inheritance:

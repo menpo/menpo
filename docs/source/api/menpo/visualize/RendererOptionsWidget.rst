@@ -6,5 +6,5 @@ RendererOptionsWidget
 =====================
 .. autoclass:: RendererOptionsWidget
   :members:
-  :inherited-members:
+  :no-inherited-members:
   :show-inheritance:

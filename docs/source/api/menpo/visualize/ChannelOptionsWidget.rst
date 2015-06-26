@@ -6,5 +6,5 @@ ChannelOptionsWidget
 ====================
 .. autoclass:: ChannelOptionsWidget
   :members:
-  :inherited-members:
+  :no-inherited-members:
   :show-inheritance:

@@ -6,5 +6,5 @@ TextPrintWidget
 ===============
 .. autoclass:: TextPrintWidget
   :members:
-  :inherited-members:
+  :no-inherited-members:
   :show-inheritance:

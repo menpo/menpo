@@ -6,5 +6,5 @@ SaveFigureOptionsWidget
 =======================
 .. autoclass:: SaveFigureOptionsWidget
   :members:
-  :inherited-members:
+  :no-inherited-members:
   :show-inheritance:
