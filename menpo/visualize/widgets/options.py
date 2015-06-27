@@ -284,8 +284,6 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
                 self.glyph_use_negative_checkbox.value
             self.selected_values['glyph_block_size'] = \
                 self.glyph_block_size_text.value
-            if self.selected_values['sum_enabled']:
-                self.selected_values['glyph_block_size'] = 1
         self.glyph_checkbox.on_trait_change(get_glyph_options, 'value')
         self.sum_checkbox.on_trait_change(get_glyph_options, 'value')
         self.glyph_use_negative_checkbox.on_trait_change(get_glyph_options,
