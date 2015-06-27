@@ -4,6 +4,27 @@ from scipy.misc import imrotate
 from menpo.feature import ndfeature
 
 
+@ndfeature
+def sum_channels(pixels, channels=None):
+    r"""
+    Sum the channels of an image.
+
+    Parameters
+    ----------
+    pixels : `ndarray`
+        The input image's pixels.
+    channels : `int`
+        Defines the channels to be summed.
+    """
+    # if channels is None, then all channels are used
+    if channels is None:
+        channels = range(pixels.shape[0])
+    # compute sum image
+    sum_image = np.sum(pixels[channels], axis=0)
+    # return as c-contiguous
+    return np.ascontiguousarray(sum_image[None, ...])  # add a channel axis
+
+
 # TODO: Needs fixing ...
 @ndfeature
 def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
@@ -17,11 +38,9 @@ def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
     ----------
     pixels : `ndarray`
         The input image's pixels.
-
-    vectors_block_size: int
+    vectors_block_size : `int`
         Defines the size of each block with vectors of the glyph image.
-
-    use_negative: bool
+    use_negative : `bool`
         Defines whether to take into account possible negative values of
         feature_data.
     """
@@ -57,9 +76,9 @@ def _create_feature_glyph(feature, vbs):
 
     Parameters
     ----------
-    feature : (N, D) ndarray
+    feature : ``(N, D)`` `ndarray`
         The feature pixels to use.
-    vbs: int
+    vbs : `int`
         Defines the size of each block with vectors of the glyph image.
     """
     # vbs = Vector block size
