@@ -18,11 +18,11 @@ def sum_channels(pixels, channels=None):
     """
     # if channels is None, then all channels are used
     if channels is None:
-        channels = range(pixels.shape[0])
-    # compute sum image
-    sum_image = np.sum(pixels[channels], axis=0)
-    # return as c-contiguous
-    return np.ascontiguousarray(sum_image[None, ...])  # add a channel axis
+        # Not indexing is twice as fast
+        sum_image = np.sum(pixels, axis=0)
+    else:
+        sum_image = np.sum(pixels[channels], axis=0)
+    return sum_image.reshape((1,) + sum_image.shape)  # add a channel axis
 
 
 # TODO: Needs fixing ...
