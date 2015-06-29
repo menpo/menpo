@@ -31,6 +31,7 @@ reimporting it. If this is the case, please visit the user group for advice.
 
 Github Pull Requests
 ....................
+- `#598`_  Visualize sum of channels in widgets (@nontas, @patricksnape)
 - `#597`_  test new dev tag behavior on condaci (@jabooth)
 - `#591`_  Scale around centre (@patricksnape)
 - `#596`_  Update to versioneer v0.15 (@jabooth, @patricksnape)
@@ -72,6 +73,7 @@ Github Pull Requests
 - `#532`_  Incremental PCA (@patricksnape, @jabooth, @jalabort)
 - `#528`_  New as_matrix and from_matrix methods (@patricksnape)
 
+.. _#598: https://github.com/menpo/menpo/pull/598
 .. _#597: https://github.com/menpo/menpo/pull/597
 .. _#591: https://github.com/menpo/menpo/pull/591
 .. _#596: https://github.com/menpo/menpo/pull/596
