@@ -42,17 +42,31 @@ to an image, a potential cause of confusion.
 The *worst* part about this is that once we go to voxel data (which
 :map:`Image` largely supports, and will fully support in the future), a z-axis
 is added.
-Now we drop all the swapping business - and the third axis of the spatial
-data once more corresponds with the third axis of the image data. Trying to
+
+**There is one important caveat**, unfortunately. The **first axis of an image
+represents the channels**. Unlike in other software, such as Matlab, which
+follows the fortran convention of being column major, Python and other C-like
+languages generally conform to a row major order. Practically this means that if
+you want to iterate over each channel of an image, you need the memory layout
+to reflect this. This means you want the pixel data of each channel to be
+contiguous in memory. **For row major memory, this implies that the first axis
+should represent an iteration over the channel data.**
+
+Now, as was mentioned, we want to drop all the swapping business. Therefore,
+forgiving that the **first axis indexes the channel data**, the following axes
+always match the spatial data. For example, The zeroth axis of the spatial
+data once more corresponds with the first axis (the first axis is *after the
+zeroth axis representing the channel data*) of the image data. Trying to
 keep track of these rules muddies an otherwise very simple concept.
 
 Menpo's approach
 ----------------
 Menpo's solution to this problem is simple - **drop the insistence of calling
-axes x, y, and z**. The zeroth axis of the pixel data is simply that - the
-zeroth axis. It corresponds exactly with the zeroth axis on the point cloud.
+axes x, y, and z**. Skipping the channel data, which represents the zeroth
+axis, the first axis of the pixel data is simply that - the
+first axis. It corresponds exactly with the zeroth axis on the point cloud.
 If you have an image with annotations provided the zeroth axis of the
-`PointCloud` representing the annotations will correspond with the zeroth
+`PointCloud` representing the annotations will correspond with the first
 axis of the image. This rule makes working with images and spatial data simple -
 short you should never have to think about flipping axes in Menpo.
 
@@ -72,3 +86,7 @@ Key Points
   floating point numbers normalised between [0, 1], by default.
 
 - **axis 0 of landmarks corresponds to axis 0 of the container it is an annotation of**.
+
+- **The first axis of image types is always the channel data. The remaining
+  axes map exactly to the other spatial axes.** Therefore, the first image
+  axis maps exactly to the zeroth axis of a PointCloud.
