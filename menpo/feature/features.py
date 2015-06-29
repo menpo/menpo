@@ -50,7 +50,7 @@ def gradient(pixels):
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(C, X, Y, ...)`` `ndarray`
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
         Either the image object itself or an array where the first dimension
         is interpreted as channels. This means an N-dimensional image is
         represented by an N+1 dimensional array.
@@ -80,8 +80,8 @@ def gaussian_filter(pixels, sigma):
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
         dimension is interpreted as channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
     sigma : `float` or `list` of `float`
@@ -115,8 +115,8 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
         dimension is interpreted as channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
     mode : {``dense``, ``sparse``}, optional
@@ -420,7 +420,7 @@ def es(pixels, verbose=False):
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(C, X, Y, ...)`` `ndarray`
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
         Either an image object itself or an array where the first axis
         represents the number of channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
@@ -485,8 +485,8 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
         dimension is interpreted as channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
     step : `int`, optional
@@ -607,8 +607,8 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
         dimension is interpreted as channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
     radius : `int` or `list` of `int` or ``None``, optional
@@ -773,8 +773,8 @@ def no_op(pixels):
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        Either the image object itself or an array with the pixels. The last
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
         dimension is interpreted as channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
 

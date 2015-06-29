@@ -284,8 +284,6 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
                 self.glyph_use_negative_checkbox.value
             self.selected_values['glyph_block_size'] = \
                 self.glyph_block_size_text.value
-            if self.selected_values['sum_enabled']:
-                self.selected_values['glyph_block_size'] = 1
         self.glyph_checkbox.on_trait_change(get_glyph_options, 'value')
         self.sum_checkbox.on_trait_change(get_glyph_options, 'value')
         self.glyph_use_negative_checkbox.on_trait_change(get_glyph_options,
@@ -3898,7 +3896,7 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                                    no_op)
         from menpo.image import Image
         import menpo.io as mio
-        from menpo.visualize.image import glyph
+        from menpo.feature.visualize import sum_channels
 
         # Create widgets
         tmp = OrderedDict()
@@ -4083,8 +4081,7 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                 val4 = feat_image.n_channels
                 # compute sum of feature image and normalize its pixels in range
                 # (0, 1) because it is required by as_PILImage
-                feat_image = glyph(feat_image, vectors_block_size=1,
-                                   use_negative=False)
+                feat_image = sum_channels(feat_image, channels=None)
                 # feat_image = np.sum(feat_image.pixels, axis=2)
                 feat_image = feat_image.pixels
                 feat_image -= np.min(feat_image)

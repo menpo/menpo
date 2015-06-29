@@ -13,4 +13,4 @@ except ImportError:
     pass
 
 from .base import ndfeature, imgfeature
-
+from .visualize import glyph, sum_channels

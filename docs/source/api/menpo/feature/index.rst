@@ -24,6 +24,16 @@ Features
   daisy
 
 
+Visualization
+-------------
+
+.. toctree::
+  :maxdepth: 1
+
+  glyph
+  sum_channels
+
+
 Widget
 ------
 
