@@ -1,20 +1,23 @@
 import numpy as np
 from scipy.misc import imrotate
 
-from menpo.feature import ndfeature
+from .base import ndfeature
 
 
 @ndfeature
 def sum_channels(pixels, channels=None):
     r"""
-    Sum the channels of an image.
+    Create the sum of the channels of an image that can be used for
+    visualization.
 
     Parameters
     ----------
-    pixels : `ndarray`
-        The input image's pixels.
-    channels : `int`
-        Defines the channels to be summed.
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels.
+    channels : `list` of `int` or ``None``
+        The list of channels to be used. If ``None``, then all the channels are
+        employed.
     """
     # if channels is None, then all channels are used
     if channels is None:
@@ -29,20 +32,24 @@ def sum_channels(pixels, channels=None):
 @ndfeature
 def glyph(pixels, vectors_block_size=10, use_negative=False, channels=None):
     r"""
-    Create glyph of a feature image. If `pixels` have negative values, the
-    `use_negative` flag controls whether there will be created a glyph of
-    both positive and negative values concatenated the one on top of the
-    other.
+    Create the glyph of a feature image that can be used for visualization. If
+    `pixels` have negative values, the `use_negative` flag controls whether
+    there will be created a glyph of both positive and negative values
+    concatenated the one on top of the other.
 
     Parameters
     ----------
-    pixels : `ndarray`
-        The input image's pixels.
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels.
     vectors_block_size : `int`
         Defines the size of each block with vectors of the glyph image.
     use_negative : `bool`
         Defines whether to take into account possible negative values of
         feature_data.
+    channels : `list` of `int` or ``None``
+        The list of channels to be used. If ``None``, then all the channels are
+        employed.
     """
     # first, choose the appropriate channels
     if channels is None:

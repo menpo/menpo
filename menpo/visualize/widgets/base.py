@@ -1549,10 +1549,10 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
                alpha, cmap_name):
     global glyph
     if glyph is None:
-        from menpo.visualize.image import glyph
+        from menpo.feature.visualize import glyph
     global sum_channels
     if sum_channels is None:
-        from menpo.visualize.image import sum_channels
+        from menpo.feature.visualize import sum_channels
 
     # This makes the code shorter for dealing with masked images vs non-masked
     # images
