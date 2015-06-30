@@ -2,6 +2,7 @@ from __future__ import division
 from warnings import warn
 import numpy as np
 binary_erosion = None  # expensive, from scipy.ndimage
+binary_dilation = None  # expensive, from scipy.ndimage
 
 from menpo.visualize.base import ImageViewer
 
@@ -1066,3 +1067,57 @@ class MaskedImage(Image):
         np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
         # set all the boundary pixels to a particular value
         self.pixels[..., eroded_mask] = value
+
+    def erode(self, n_pixels=1):
+        r"""
+        Returns a copy of this :map:`MaskedImage` in which the mask has been
+        shrunk by n pixels along its boundary.
+
+        Parameters
+        ----------
+        n_pixels : int, optional
+            The number of pixels by which we want to shrink the mask along
+            its own boundary.
+
+        Returns
+        -------
+         : :map:`MaskedImage`
+            The copy of the masked image in which the mask has been shrunk
+            by n pixels along its boundary.
+        """
+        global binary_erosion
+        if binary_erosion is None:
+            from scipy.ndimage import binary_erosion  # expensive
+        # Erode the edge of the mask in by one pixel
+        eroded_mask = binary_erosion(self.mask.mask, iterations=n_pixels)
+
+        image = self.copy()
+        image.mask = BooleanImage(eroded_mask)
+        return image
+
+    def dilate(self, n_pixels=1):
+        r"""
+        Returns a copy of this :map:`MaskedImage` in which its mask has
+        been expanded by n pixels along its boundary.
+
+        Parameters
+        ----------
+        n_pixels : int, optional
+            The number of pixels by which we want to expand the mask along
+            its own boundary.
+
+        Returns
+        -------
+         : :map:`MaskedImage`
+            The copy of the masked image in which the mask has been expanded
+            by n pixels along its boundary.
+        """
+        global binary_dilation
+        if binary_dilation is None:
+            from scipy.ndimage import binary_dilation  # expensive
+        # Erode the edge of the mask in by one pixel
+        dilated_mask = binary_dilation(self.mask.mask, iterations=n_pixels)
+
+        image = self.copy()
+        image.mask = BooleanImage(dilated_mask)
+        return image
