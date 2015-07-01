@@ -1603,6 +1603,96 @@ def flic_pose(landmark_group):
     return group, _relabel_group_from_dict(landmark_group.lms, labels)
 
 
+def human36M_pose_32(landmark_group):
+    """
+    Apply the human3.6M "standard" 32 point semantic labels to the landmark
+    group.
+
+    The group label will be ``human36M_pose``.
+
+    The semantic labels applied are as follows:
+
+      - pelvis
+      - right_leg
+      - left_leg
+      - spine
+      - head
+      - left_arm
+      - left_hand
+      - right_arm
+      - right_hand
+
+    Parameters
+    ----------
+    landmark_group : :map:`LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    group : `str`
+        The group label: ``human36M_pose``
+    landmark_group : :map:`LandmarkGroup`
+        New landmark group.
+
+    Raises
+    ------
+    error : :map:`LabellingError`
+        If the given landmark group contains less than 32 points
+
+    References
+    ----------
+    .. [1] http://vision.imar.ro/human3.6m/
+    """
+    from menpo.shape import PointUndirectedGraph
+
+    group = 'human36M_pose'
+    _validate_input(landmark_group, 32, group)
+
+    pelvis_indices = np.array([1, 0, 6])
+    right_leg_indices = np.array(range(1, 6))
+    left_leg_indices = np.array(range(6, 11))
+    spine_indices = np.array([11, 12, 13])
+    head_indices = np.array([13, 14, 15])
+    left_arm_indices = np.array([16, 17, 18, 19, 23])
+    left_hand_indices = np.array([20, 21, 22])
+    right_arm_indices = np.array([24, 25, 26, 27, 29, 31])
+    right_hand_indices = np.array([28, 29, 30])
+
+    pelvis_connectivity = _connectivity_from_array(pelvis_indices)
+    right_leg_connectivity = _connectivity_from_array(right_leg_indices)
+    left_leg_connectivity = _connectivity_from_array(left_leg_indices)
+    spine_connectivity = _connectivity_from_array(spine_indices)
+    head_connectivity = _connectivity_from_array(head_indices)
+    left_arm_connectivity = _connectivity_from_array(left_arm_indices)
+    left_hand_connectivity = _connectivity_from_array(left_hand_indices)
+    right_arm_connectivity = _connectivity_from_array(right_arm_indices)
+    right_hand_connectivity = _connectivity_from_array(right_hand_indices)
+
+    total_conn = np.vstack([
+        pelvis_connectivity, right_leg_connectivity, left_leg_connectivity,
+        spine_connectivity, head_connectivity, left_arm_connectivity,
+        left_hand_connectivity, right_arm_connectivity,
+        right_hand_connectivity])
+
+    new_landmark_group = LandmarkGroup.init_with_all_label(
+        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
+                                             total_conn))
+
+    new_landmark_group['pelvis'] = pelvis_indices
+    new_landmark_group['right_leg'] = right_leg_indices
+    new_landmark_group['left_leg'] = left_leg_indices
+    new_landmark_group['spine'] = spine_indices
+    new_landmark_group['head'] = head_indices
+    new_landmark_group['left_arm'] = left_arm_indices
+    new_landmark_group['left_hand'] = left_hand_indices
+    new_landmark_group['right_arm'] = right_arm_indices
+    new_landmark_group['right_hand'] = right_hand_indices
+
+    del new_landmark_group['all']  # Remove pointless all group
+
+    return group, new_landmark_group
+
+
 def streetscene_car_view_0(landmark_group):
     """
     Apply the 8 point semantic labels of the view 0  of the MIT Street Scene
