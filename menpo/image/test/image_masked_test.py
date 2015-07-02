@@ -69,3 +69,21 @@ def test_constrain_mask_to_landmarks_unknown_key():
     img = MaskedImage.init_blank((10, 10))
     img.landmarks['box'] = PointCloud(np.array([[0., 0., 0.]]))
     img.constrain_mask_to_landmarks(point_in_pointcloud='unknown')
+
+
+def test_erode():
+    img = MaskedImage.init_blank((10, 10))
+    img2 = img.erode()
+    assert(img2.mask.n_true() == 64)
+    img3 = img.erode(n_pixels=3)
+    assert(img3.mask.n_true() == 16)
+
+
+def test_dilate():
+    img = MaskedImage.init_blank((10, 10))
+    img = img.erode(n_pixels=3)
+    img2 = img.dilate()
+    assert(img2.mask.n_true() == 32)
+    img3 = img.dilate(n_pixels=3)
+    assert(img3.mask.n_true() == 76)
+
