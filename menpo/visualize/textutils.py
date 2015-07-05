@@ -111,7 +111,8 @@ def bytes_str(num):
     return "{0:3.2f} {1:s}".format(num, 'TB')
 
 
-def print_progress(iterable, prefix='', n_items=None, offset=0):
+def print_progress(iterable, prefix='', n_items=None, offset=0,
+                   show_count=True):
     r"""
     Print the remaining time needed to compute over an iterable.
 
@@ -137,6 +138,8 @@ def print_progress(iterable, prefix='', n_items=None, offset=0):
         Useful in combination with ``n_items`` - report back the progress as
         if `offset` items have already been handled. ``n_items``  will be left
         unchanged.
+    show_count : `bool`, optional
+        If False, The item count (e.g.: (4/25)) will be hidden.
 
     Raises
     ------
@@ -177,7 +180,7 @@ def print_progress(iterable, prefix='', n_items=None, offset=0):
                                              remaining)
         remaining_str = duration.strftime('%H:%M:%S')
         bar_str = progress_bar_str(i / n, bar_length=bar_length)
-        print_dynamic('{}{} ({}/{}) - {} remaining'.format(prefix, bar_str,
-                                                           i, n,
-                                                           remaining_str))
+        count_str = ' ({}/{})'.format(i, n) if show_count else ''
+        print_dynamic('{}{}{} - {} remaining'.format(prefix, bar_str,
+                                                     count_str, remaining_str))
     print('')
