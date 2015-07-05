@@ -265,17 +265,18 @@ def test_daisy_values():
 @attr('cyvlfeat')
 def test_dsift_values():
     from menpo.feature import dsift
+    # Equivalent to the transpose of image in Matlab
     image = Image([[1, 2, 3, 4], [2, 1, 3, 4], [1, 2, 3, 4], [2, 1, 3, 4]])
     sift_img = dsift(image, cell_size_horizontal=2, cell_size_vertical=2)
-    assert_allclose(np.around(sift_img.pixels[0, 0, 0], 6), 76.002098000000004,
+    assert_allclose(np.around(sift_img.pixels[0, 0, 0], 6), 19.719786,
                     rtol=1e-04)
-    assert_allclose(np.around(sift_img.pixels[1, 0, 1], 6), 139.76733400000001,
+    assert_allclose(np.around(sift_img.pixels[1, 0, 1], 6), 141.535736,
                     rtol=1e-04)
-    assert_allclose(np.around(sift_img.pixels[0, 1, 0], 6), 155.95297199999999,
+    assert_allclose(np.around(sift_img.pixels[0, 1, 0], 6), 184.377472,
                     rtol=1e-04)
-    assert_allclose(np.around(sift_img.pixels[5, 1, 1], 6), 18.307358000000001,
+    assert_allclose(np.around(sift_img.pixels[5, 1, 1], 6), 39.04007,
                     rtol=1e-04)
-
+    assert 1
 
 def test_lbp_values():
     image = Image([[0., 6., 0.], [5., 18., 13.], [0., 20., 0.]])
