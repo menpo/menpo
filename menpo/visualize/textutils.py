@@ -113,7 +113,8 @@ def bytes_str(num):
 
 
 def print_progress(iterable, prefix='', n_items=None, offset=0,
-                   show_bar=True, show_count=True, show_eta=True):
+                   show_bar=True, show_count=True, show_eta=True,
+                   end_with_newline=True):
     r"""
     Print the remaining time needed to compute over an iterable.
 
@@ -146,6 +147,12 @@ def print_progress(iterable, prefix='', n_items=None, offset=0,
     show_eta : `bool`, optional
         If False, The estimated time to finish (e.g. - 00:00:03 remaining)
         will be hidden.
+    end_with_newline : `bool`, optional
+        If False, there will be no new line added at the end of the dynamic
+        printing. This means the next print statement will overwrite the
+        dynamic report presented here. Useful if you want to follow up a
+        print_progress with a second print_progress, where the second
+        overwrites the first on the same line.
 
     Raises
     ------
@@ -194,4 +201,6 @@ def print_progress(iterable, prefix='', n_items=None, offset=0,
     count_str = ' ({}/{})'.format(n, n) if show_count else ''
     bar_str = progress_bar_str(1, bar_length=bar_length, show_bar=show_bar)
     print_dynamic('{}{}{} - done.'.format(prefix, bar_str, count_str))
-    print('')
+
+    if end_with_newline:
+        print('')
