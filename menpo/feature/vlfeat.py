@@ -63,14 +63,14 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
         pixels[0], step=[window_step_vertical, window_step_horizontal],
         size=[cell_size_vertical, cell_size_horizontal], bounds=None,
         norm=False, fast=fast, float_descriptors=True,
-        geometry=(num_bins_horizontal, num_bins_vertical, num_or_bins),
+        geometry=(num_bins_vertical, num_bins_horizontal, num_or_bins),
         verbose=False)
 
     # the output shape can be calculated from looking at the range of
     # centres / the window step size in each dimension. Note that cyvlfeat
     # returns x, y centres.
-    shape = (((centers[:, -1] - centers[:, 0]) /
-              [window_step_horizontal, window_step_vertical]) + 1)
+    shape = (((centers[-1, :] - centers[0, :]) /
+              [window_step_vertical, window_step_horizontal]) + 1)
 
     # print information
     if verbose:
@@ -90,9 +90,8 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
         print(info_str)
 
     # return SIFT and centers in the correct form
-    return (np.require(np.transpose(output.reshape((-1, shape[1], shape[0])),
-                                    [0, 2, 1]),
+    return (np.require(np.rollaxis(output.reshape((shape[0], shape[1], -1)),
+                                   -1),
                        dtype=np.double, requirements=['C']),
-            np.require(np.transpose(centers.reshape((-1, shape[1], shape[0])),
-                                    (2, 1, 0)),
-                       dtype=np.int, requirements=['C']))
+            np.require(centers.reshape((shape[0], shape[1], -1)),
+                       dtype=np.int))
