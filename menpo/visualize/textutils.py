@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 from collections import deque
 from datetime import datetime
 import sys
@@ -81,7 +81,8 @@ def print_dynamic(str_to_print):
     str_to_print : `str`
         The string to print.
     """
-    sys.stdout.write("\r%s" % str_to_print)
+    # here we use the print function, so we need the __future__ import for Py2
+    print("{}".format(str_to_print.ljust(80)), end='\r')
     sys.stdout.flush()
 
 
@@ -111,7 +112,8 @@ def bytes_str(num):
     return "{0:3.2f} {1:s}".format(num, 'TB')
 
 
-def print_progress(iterable, prefix='', n_items=None, offset=0):
+def print_progress(iterable, prefix='', n_items=None, offset=0,
+                   show_bar=True, show_count=True, show_eta=True):
     r"""
     Print the remaining time needed to compute over an iterable.
 
@@ -137,6 +139,13 @@ def print_progress(iterable, prefix='', n_items=None, offset=0):
         Useful in combination with ``n_items`` - report back the progress as
         if `offset` items have already been handled. ``n_items``  will be left
         unchanged.
+    show_bar : `bool`, optional
+        If False, The progress bar (e.g. [=========      ]) will be hidden.
+    show_count : `bool`, optional
+        If False, The item count (e.g. (4/25)) will be hidden.
+    show_eta : `bool`, optional
+        If False, The estimated time to finish (e.g. - 00:00:03 remaining)
+        will be hidden.
 
     Raises
     ------
@@ -153,7 +162,7 @@ def print_progress(iterable, prefix='', n_items=None, offset=0):
 
     prints a progress report of the form: ::
 
-        [=============       ] 70% (7/10) 00:00:03 remaining
+        [=============       ] 70% (7/10) - 00:00:03 remaining
     """
     if n_items is None and offset != 0:
         raise ValueError('offset can only be set when n_items has been'
@@ -175,9 +184,14 @@ def print_progress(iterable, prefix='', n_items=None, offset=0):
         remaining = n - i
         duration = datetime.utcfromtimestamp(sum(timings) / len(timings) *
                                              remaining)
-        remaining_str = duration.strftime('%H:%M:%S')
-        bar_str = progress_bar_str(i / n, bar_length=bar_length)
-        print_dynamic('{}{} ({}/{}) - {} remaining'.format(prefix, bar_str,
-                                                           i, n,
-                                                           remaining_str))
+        bar_str = progress_bar_str(i / n, bar_length=bar_length, show_bar=show_bar)
+        count_str = ' ({}/{})'.format(i, n) if show_count else ''
+        eta_str = " - {} remaining".format(duration.strftime('%H:%M:%S')) if show_eta else ''
+        print_dynamic('{}{}{}{}'.format(prefix, bar_str, count_str, eta_str))
+
+    # the iterable has now finished - to make it clear redraw the progress with
+    # a done message. We also hide the eta at this stage.
+    count_str = ' ({}/{})'.format(n, n) if show_count else ''
+    bar_str = progress_bar_str(1, bar_length=bar_length, show_bar=show_bar)
+    print_dynamic('{}{}{} - done.'.format(prefix, bar_str, count_str))
     print('')
