@@ -772,23 +772,36 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         # temporarily store visible and disabled values
         tmp_visible = self._options_visible(landmark_options['has_landmarks'])
         tmp_disabled = not landmark_options['render_landmarks']
+        # create render landmarks checkbox and no landmarks message
         self.render_landmarks_checkbox = ipywidgets.Checkbox(
             description='Render landmarks',
             value=landmark_options['render_landmarks'], visible=tmp_visible)
         self.landmarks_checkbox_and_msg_box = ipywidgets.Box(
             children=[self.render_landmarks_checkbox, self.no_landmarks_msg])
+        # get group value and index
+        group_val = landmark_options['group']
+        group_idx = landmark_options['group_keys'].index(group_val)
+        # create group dropdown and slider selectors
+        dropdown_dict = OrderedDict()
+        for cc, kk in enumerate(landmark_options['group_keys']):
+            dropdown_dict[kk] = cc
         self.group_dropdown = ipywidgets.Dropdown(
-            options=landmark_options['group_keys'], description='Group',
-            visible=tmp_visible, value=landmark_options['group'],
-            disabled=tmp_disabled)
+            options=dropdown_dict, description='Group', visible=tmp_visible,
+            value=group_idx, disabled=tmp_disabled)
+        self.group_slider = ipywidgets.IntSlider(
+            min=0, max=len(landmark_options['group_keys']) - 1,
+            font_size=0, value=group_idx, visible=tmp_visible,
+            disabled=tmp_disabled, width='3cm')
+        self.group_selection = ipywidgets.HBox(children=[self.group_dropdown,
+                                                         self.group_slider])
+        self.link_group_dropdown_and_slider = link(
+            (self.group_dropdown, 'value'), (self.group_slider, 'value'))
         self.labels_toggles = [
             [ipywidgets.ToggleButton(description=k, value=True,
                                      visible=tmp_visible, disabled=tmp_disabled)
              for k in s_keys]
             for s_keys in landmark_options['labels_keys']]
         self.labels_text = ipywidgets.Latex(value='Labels', visible=tmp_visible)
-        group_idx = landmark_options['group_keys'].index(
-            landmark_options['group'])
         self.labels_box = ipywidgets.HBox(
             children=self.labels_toggles[group_idx])
         self.labels_and_text_box = ipywidgets.HBox(children=[self.labels_text,
@@ -796,7 +809,7 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
                                                    align='center')
         self._set_labels_toggles_values(landmark_options['with_labels'])
         self.group_and_labels_and_text_box = ipywidgets.VBox(
-            children=[self.group_dropdown, self.labels_and_text_box])
+            children=[self.group_selection, self.labels_and_text_box])
         super(LandmarkOptionsWidget, self).__init__(
             children=[self.landmarks_checkbox_and_msg_box,
                       self.group_and_labels_and_text_box])
@@ -815,6 +828,7 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
             self.selected_values['render_landmarks'] = value
             # disable group drop down menu
             self.group_dropdown.disabled = not value
+            self.group_slider.disabled = not value
             # set disability of all labels toggles
             for s_keys in self.labels_toggles:
                 for k in s_keys:
@@ -827,11 +841,10 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
 
         def group_fun(name, value):
             # save group value
-            self.selected_values['group'] = value
+            self.selected_values['group'] = \
+                self.selected_values['group_keys'][value]
             # assign the correct children to the labels toggles
-            group_idx = self.selected_values['group_keys'].index(
-                self.selected_values['group'])
-            self.labels_box.children = self.labels_toggles[group_idx]
+            self.labels_box.children = self.labels_toggles[value]
             # save with_labels value
             self._save_with_labels()
         self.group_dropdown.on_trait_change(group_fun, 'value')
