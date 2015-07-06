@@ -83,7 +83,11 @@ def print_dynamic(str_to_print):
     """
     # here we use the print function, so we need the __future__ import for Py2
     print("{}".format(str_to_print.ljust(80)), end='\r')
-    sys.stdout.flush()
+    # If we are in a terminal then we can flush the output and it will display
+    # smoothly. However, in a notebook, this call seems to prevent anything
+    # from being displayed at all, so we skip it.
+    if sys.stdout.isatty():
+        sys.stdout.flush()
 
 
 def bytes_str(num):
