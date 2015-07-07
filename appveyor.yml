@@ -18,7 +18,7 @@ platform:
 
 install:
 - ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/master/condaci.py' C:\\condaci.py; echo "Done"
-- cmd: C:\\Miniconda\\python C:\\condaci.py auto ./conda
+- cmd: C:\\Miniconda\\python C:\\condaci.py ./conda
 
 notifications:
   - provider: Slack

@@ -16,7 +16,7 @@ env:
 
 script:
 - wget https://raw.githubusercontent.com/menpo/condaci/master/condaci.py -O ~/condaci.py
-- python ~/condaci.py auto ./conda
+- python ~/condaci.py ./conda
 
 notifications:
   slack:
