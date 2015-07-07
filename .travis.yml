@@ -14,13 +14,11 @@ env:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.4
 
-install:
-- wget https://raw.githubusercontent.com/menpo/condaci/v0.3.0/condaci.py -O condaci.py
-- python condaci.py setup $PYTHON_VERSION --channel $BINSTAR_USER
-- export PATH=$HOME/miniconda/bin:$PATH
-
 script:
-- python condaci.py auto ./conda --binstaruser $BINSTAR_USER --binstarkey $BINSTAR_KEY
+- wget https://raw.githubusercontent.com/menpo/condaci/v0.3.0/condaci.py -O ~/condaci.py
+- python ~/condaci.py setup $PYTHON_VERSION --channel $BINSTAR_USER
+- export PATH=$HOME/miniconda/bin:$PATH
+- python ~/condaci.py auto ./conda --binstaruser $BINSTAR_USER --binstarkey $BINSTAR_KEY
 
 notifications:
   slack:
