@@ -1,8 +1,43 @@
+import numpy as np
 from nose.tools import assert_equals
 
 import menpo.io as mio
 from menpo.landmark import labeller, ibug_face_68
 from menpo.shape import PointCloud
+
+
+def test_double_type():
+    image = mio.import_builtin_asset('breakingbad.jpg')
+    patch_shape = (16, 16)
+    patches = image.extract_patches(image.landmarks['PTS'].lms,
+                                    patch_size=patch_shape)
+    assert(patches[0].pixels.dtype == np.float64)
+
+
+def test_float_type():
+    image = mio.import_builtin_asset('breakingbad.jpg')
+    image.pixels = image.pixels.astype(np.float32)
+    patch_shape = (16, 16)
+    patches = image.extract_patches(image.landmarks['PTS'].lms,
+                                    patch_size=patch_shape)
+    assert(patches[0].pixels.dtype == np.float32)
+
+
+def test_uint8_type():
+    image = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
+    patch_shape = (16, 16)
+    patches = image.extract_patches(image.landmarks['PTS'].lms,
+                                    patch_size=patch_shape)
+    assert(patches[0].pixels.dtype == np.uint8)
+
+
+def test_uint8_type_single_array():
+    image = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
+    patch_shape = (16, 16)
+    patches = image.extract_patches(image.landmarks['PTS'].lms,
+                                    patch_size=patch_shape,
+                                    as_single_array=True)
+    assert(patches.dtype == np.uint8)
 
 
 def test_squared_even_patches():

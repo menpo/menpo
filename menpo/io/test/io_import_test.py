@@ -22,6 +22,11 @@ def test_breaking_bad_import():
     assert(img.landmarks['PTS'].n_landmarks == 68)
 
 
+def test_breaking_bad_import_kwargs():
+    img = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
+    assert(img.pixels.dtype == np.uint8)
+
+
 def test_takeo_import():
     img = mio.import_builtin_asset('takeo.ppm')
     assert(img.shape == (225, 150))

@@ -286,7 +286,7 @@ def import_pickles(pattern, max_pickles=None, verbose=False):
         yield asset
 
 
-def _import_builtin_asset(asset_name):
+def _import_builtin_asset(asset_name, **kwargs):
     r"""Single builtin asset (landmark or image) importer.
 
     Imports the relevant builtin asset from the ``./data`` directory that
@@ -308,9 +308,11 @@ def _import_builtin_asset(asset_name):
     # importing them both separately.
     try:
         return _import(asset_path, image_types,
-                       landmark_ext_map=image_landmark_types)
+                       landmark_ext_map=image_landmark_types,
+                       importer_kwargs=kwargs)
     except ValueError:
-        return _import(asset_path, image_landmark_types)
+        return _import(asset_path, image_landmark_types,
+                       importer_kwargs=kwargs)
 
 
 def ls_builtin_assets():
@@ -320,23 +322,22 @@ def ls_builtin_assets():
     -------
     list of strings
         Filenames of all assets in the data directory shipped with Menpo
-
     """
     return [p.name for p in data_dir_path().glob('*') if not p.is_dir()]
 
 
 def import_builtin(x):
 
-    def execute():
-        return _import_builtin_asset(x)
+    def execute(**kwargs):
+        return _import_builtin_asset(x, **kwargs)
 
     return execute
 
 
 class BuiltinAssets(object):
 
-    def __call__(self, asset_name):
-        return _import_builtin_asset(asset_name)
+    def __call__(self, asset_name, **kwargs):
+        return _import_builtin_asset(asset_name, **kwargs)
 
 import_builtin_asset = BuiltinAssets()
 
