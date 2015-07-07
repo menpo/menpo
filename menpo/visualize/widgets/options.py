@@ -764,38 +764,45 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         # Check given options
         landmark_options = self._parse_landmark_options_dict(landmark_options)
 
+        # Temporarily store visible and disabled values
+        tmp_visible = self._options_visible(landmark_options['has_landmarks'])
+        tmp_disabled = not landmark_options['render_landmarks']
+        tmp_slider_visible = self._group_slider_visible(
+            landmark_options['group_keys'])
+        # Get selected group value index
+        group_idx = landmark_options['group_keys'].index(
+            landmark_options['group'])
+
         # Create widgets
+        # Render landmarks checkbox and no landmarks message
         self.no_landmarks_msg = ipywidgets.Latex(
             value='No landmarks available.',
             visible=self._no_landmarks_msg_visible(
                 landmark_options['has_landmarks']))
-        # temporarily store visible and disabled values
-        tmp_visible = self._options_visible(landmark_options['has_landmarks'])
-        tmp_disabled = not landmark_options['render_landmarks']
-        # create render landmarks checkbox and no landmarks message
         self.render_landmarks_checkbox = ipywidgets.Checkbox(
             description='Render landmarks',
             value=landmark_options['render_landmarks'], visible=tmp_visible)
         self.landmarks_checkbox_and_msg_box = ipywidgets.Box(
             children=[self.render_landmarks_checkbox, self.no_landmarks_msg])
-        # get group value and index
-        group_val = landmark_options['group']
-        group_idx = landmark_options['group_keys'].index(group_val)
-        # create group dropdown and slider selectors
+        # Create group description, dropdown and slider
+        self.group_description = ipywidgets.Latex(value='Group', margin='0.1cm')
         dropdown_dict = OrderedDict()
-        for cc, kk in enumerate(landmark_options['group_keys']):
-            dropdown_dict[kk] = cc
-        self.group_dropdown = ipywidgets.Dropdown(
-            options=dropdown_dict, description='Group', visible=tmp_visible,
-            value=group_idx, disabled=tmp_disabled)
+        for gn, gk in enumerate(landmark_options['group_keys']):
+            dropdown_dict[gk] = gn
         self.group_slider = ipywidgets.IntSlider(
-            min=0, max=len(landmark_options['group_keys']) - 1,
-            font_size=0, value=group_idx, visible=tmp_visible,
-            disabled=tmp_disabled, width='3cm')
-        self.group_selection = ipywidgets.HBox(children=[self.group_dropdown,
-                                                         self.group_slider])
+            min=0, max=len(landmark_options['group_keys']) - 1, margin='0.1cm',
+            font_size=0, value=group_idx, disabled=tmp_disabled, width='3cm',
+            visible=tmp_slider_visible)
+        self.group_dropdown = ipywidgets.Dropdown(
+            options=dropdown_dict, description='', disabled=tmp_disabled,
+            value=group_idx, margin='0.1cm')
+        self.group_selection_box = ipywidgets.HBox(
+            children=[self.group_description, self.group_slider,
+                      self.group_dropdown], visible=tmp_visible, align='center')
+        # Link the values of group dropdown and slider
         self.link_group_dropdown_and_slider = link(
             (self.group_dropdown, 'value'), (self.group_slider, 'value'))
+        # Create labels
         self.labels_toggles = [
             [ipywidgets.ToggleButton(description=k, value=True,
                                      visible=tmp_visible, disabled=tmp_disabled)
@@ -809,7 +816,7 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
                                                    align='center')
         self._set_labels_toggles_values(landmark_options['with_labels'])
         self.group_and_labels_and_text_box = ipywidgets.VBox(
-            children=[self.group_selection, self.labels_and_text_box])
+            children=[self.group_selection_box, self.labels_and_text_box])
         super(LandmarkOptionsWidget, self).__init__(
             children=[self.landmarks_checkbox_and_msg_box,
                       self.group_and_labels_and_text_box])
@@ -890,6 +897,9 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
 
     def _options_visible(self, has_landmarks):
         return has_landmarks
+
+    def _group_slider_visible(self, group_keys):
+        return len(group_keys) > 1
 
     def _all_labels_false_1(self):
         r"""
@@ -1036,6 +1046,8 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         _format_font(self.render_landmarks_checkbox, font_family, font_size,
                      font_style, font_weight)
         _format_font(self.group_dropdown, font_family, font_size, font_style,
+                     font_weight)
+        _format_font(self.group_description, font_family, font_size, font_style,
                      font_weight)
         for s_group in self.labels_toggles:
             for w in s_group:
@@ -1250,12 +1262,15 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
         # Check given options
         landmark_options = self._parse_landmark_options_dict(landmark_options)
 
+        # Temporarily store visible and disabled values
+        tmp_visible = self._options_visible(landmark_options['has_landmarks'])
+        tmp_disabled = not landmark_options['render_landmarks']
+        tmp_slider_visible = self._group_slider_visible(
+            landmark_options['group_keys'])
+
         # Update widgets
         self.no_landmarks_msg.visible = self._no_landmarks_msg_visible(
             landmark_options['has_landmarks'])
-        # temporarily store visible and disabled values
-        tmp_visible = self._options_visible(landmark_options['has_landmarks'])
-        tmp_disabled = not landmark_options['render_landmarks']
         self.render_landmarks_checkbox.value = \
             landmark_options['render_landmarks']
         self.render_landmarks_checkbox.visible = tmp_visible
@@ -1267,31 +1282,41 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
                                                landmark_options['labels_keys']):
             if landmark_options['group'] is None:
                 landmark_options['group'] = landmark_options['group_keys'][0]
+            group_idx = landmark_options['group_keys'].index(
+                landmark_options['group'])
 
-            self.group_dropdown.options = landmark_options['group_keys']
-            self.group_dropdown.visible = tmp_visible
+            dropdown_dict = OrderedDict()
+            for gn, gk in enumerate(landmark_options['group_keys']):
+                dropdown_dict[gk] = gn
+
+            self.group_selection_box.visible = tmp_visible
+            self.group_dropdown.options = dropdown_dict
             self.group_dropdown.disabled = tmp_disabled
-            self.group_dropdown.value = landmark_options['group']
+            self.group_slider.max = len(landmark_options['group_keys']) - 1
+            self.group_slider.disabled = tmp_disabled
+            self.group_slider.visible = tmp_slider_visible
+            self.group_dropdown.value = group_idx
 
             self.labels_toggles = [
                 [ipywidgets.ToggleButton(description=k, disabled=tmp_disabled,
                                          visible=tmp_visible, value=True)
                  for k in s_keys]
                 for s_keys in landmark_options['labels_keys']]
-            group_idx = landmark_options['group_keys'].index(
-                landmark_options['group'])
             self.labels_box.children = self.labels_toggles[group_idx]
             if landmark_options['with_labels'] is None:
                 landmark_options['with_labels'] = \
                     landmark_options['labels_keys'][group_idx]
             self._set_labels_toggles_values(landmark_options['with_labels'])
         else:
-            self.group_dropdown.visible = tmp_visible
+            self.group_selection_box.visible = tmp_visible
+            self.group_slider.disabled = tmp_disabled
             self.group_dropdown.disabled = tmp_disabled
 
             if landmark_options['group'] is None:
                 landmark_options['group'] = self.selected_values['group']
-            self.group_dropdown.value = landmark_options['group']
+            group_idx = landmark_options['group_keys'].index(
+                landmark_options['group'])
+            self.group_dropdown.value = group_idx
 
             if landmark_options['with_labels'] is None:
                 landmark_options['with_labels'] = \
