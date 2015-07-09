@@ -2,7 +2,7 @@ sudo: false
 
 os:
 - linux
-- osx
+#- osx  for now our own build bot is much faster
 
 git:
   depth: 200
