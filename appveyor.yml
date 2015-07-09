@@ -16,12 +16,9 @@ platform:
 - x86
 - x64
 
-init:
-- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/v0.3.0/condaci.py' C:\\condaci.py; echo "Done"
-- cmd: python C:\\condaci.py setup %PYTHON_VERSION% --channel %BINSTAR_USER%
-
 install:
-- cmd: C:\\Miniconda\\python C:\\condaci.py auto ./conda --binstaruser %BINSTAR_USER% --binstarkey %BINSTAR_KEY%
+- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/master/condaci.py' C:\\condaci.py; echo "Done"
+- cmd: C:\\Miniconda\\python C:\\condaci.py ./conda
 
 notifications:
   - provider: Slack
