@@ -56,5 +56,5 @@ setup(name='menpo',
                              'transform/piecewiseaffine/fastpwa/*.c',
                              'transform/piecewiseaffine/fastpwa/*.h'],
                     '': ['*.pxd', '*.pyx']},
-      tests_require=['nose', 'mock']
+      tests_require=['nose', 'mock==1.0.1']
 )

@@ -18,10 +18,10 @@ requirements:
     - scipy 0.15.*
     - matplotlib 1.4.*
     - pillow  2.8.*
-    - cyvlfeat 0.3*
+    - cyvlfeat 0.4.*
 
     # Convenience dependencies (not strictly required)
-    - mock
+    - mock 1.0.1
     - nose
     - ipython-notebook 3.*
 
