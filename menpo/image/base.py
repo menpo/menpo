@@ -88,7 +88,8 @@ def channels_to_back(image):
     else:
         pixels = image.pixels
 
-    return np.ascontiguousarray(np.rollaxis(pixels, 0, pixels.ndim))
+    return np.require(np.rollaxis(pixels, 0, pixels.ndim), dtype=pixels.dtype,
+                      requirements=['C'])
 
 
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
@@ -126,11 +127,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         super(Image, self).__init__()
         if not copy:
             if not image_data.flags.c_contiguous:
-                image_data = np.array(image_data, copy=True, order='C')
+                image_data = np.array(image_data, copy=True, order='C',
+                                      dtype=image_data.dtype)
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
                      'Please ensure the data you pass is C-contiguous.')
         else:
-            image_data = np.array(image_data, copy=True, order='C')
+            image_data = np.array(image_data, copy=True, order='C',
+                                  dtype=image_data.dtype)
             # Degenerate case whereby we can just put the extra axis
             # on ourselves
             if image_data.ndim == 2:
@@ -405,9 +408,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             if not image_data.flags.c_contiguous:
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
                      'Please ensure the data you pass is C-contiguous.')
-                image_data = np.array(image_data, copy=True, order='C')
+                image_data = np.array(image_data, copy=True, order='C',
+                                      dtype=image_data.dtype)
         else:
-            image_data = np.array(image_data, copy=True, order='C')
+            image_data = np.array(image_data, copy=True, order='C',
+                                  dtype=image_data.dtype)
         self.pixels = image_data
 
     def extract_channels(self, channels):
