@@ -42,7 +42,6 @@ cdef inline IMAGE_TYPES nearest_neighbour_interpolation(IMAGE_TYPES* image,
     -------
     value : double
         Interpolated value.
-
     """
 
     return get_pixel2d(image, rows, cols, round(r), round(c), mode, cval)
@@ -72,7 +71,6 @@ cdef inline IMAGE_TYPES bilinear_interpolation(IMAGE_TYPES* image,
     -------
     value : double
         Interpolated value.
-
     """
     cdef double dr, dc, top, bottom
     cdef Py_ssize_t minr, minc, maxr, maxc
@@ -106,7 +104,6 @@ cdef inline double quadratic_interpolation(double x, double[3] f):
     -------
     value : double
         Interpolated value.
-
     """
     return f[1] - 0.25 * (f[0] - f[2]) * x
 
@@ -135,7 +132,6 @@ cdef inline IMAGE_TYPES biquadratic_interpolation(IMAGE_TYPES* image,
     -------
     value : double
         Interpolated value.
-
     """
 
     cdef Py_ssize_t r0 = round(r)
@@ -181,7 +177,6 @@ cdef inline double cubic_interpolation(double x, double[4] f):
     -------
     value : double
         Interpolated value.
-
     """
     return \
         f[1] + 0.5 * x * \
@@ -213,7 +208,6 @@ cdef inline IMAGE_TYPES bicubic_interpolation(IMAGE_TYPES* image,
     -------
     value : double
         Interpolated value.
-
     """
 
     cdef Py_ssize_t r0 = <Py_ssize_t>r - 1
@@ -263,7 +257,6 @@ cdef inline IMAGE_TYPES get_pixel2d(IMAGE_TYPES* image, Py_ssize_t rows,
     -------
     value : double
         Pixel value at given position.
-
     """
     if mode == 'C':
         if (r < 0) or (r > rows - 1) or (c < 0) or (c > cols - 1):
@@ -287,7 +280,6 @@ cdef inline Py_ssize_t coord_map(Py_ssize_t dim, Py_ssize_t coord, char mode):
     mode : {'W', 'R', 'N'}
         Whether to wrap or reflect the coordinate if it
         falls outside [0, dim).
-
     """
     dim = dim - 1
     if mode == 'R': # reflect

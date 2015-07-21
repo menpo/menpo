@@ -31,7 +31,6 @@ cdef inline void _matrix_transform(double x, double y, double* H, double *x_,
         Transformation matrix.
     x_, y_ : *double
         Output coordinate.
-
     """
     cdef double xx, yy, zz
 
@@ -84,7 +83,6 @@ def _warp_fast(IMAGE_TYPES[:, :] image, cnp.ndarray H, output_shape=None,
     cval : string, optional (default 0)
         Used in conjunction with mode 'C' (constant), the value
         outside the image boundaries.
-
     """
 
     cdef IMAGE_TYPES[:, ::1] img = np.ascontiguousarray(image)
@@ -131,4 +129,3 @@ def _warp_fast(IMAGE_TYPES[:, :] image, cnp.ndarray H, output_shape=None,
                                         mode_c, cval)
 
     return np.asarray(out, dtype=dtype)
-
