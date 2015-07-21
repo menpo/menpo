@@ -370,7 +370,8 @@ class PCAModel(MeanInstanceLinearModel):
                 "Number of weightings cannot be greater than {}".format(
                     self.n_active_components))
         else:
-            full_weights = np.zeros((n_instances, self.n_active_components))
+            full_weights = np.zeros((n_instances, self.n_active_components),
+                                    dtype=self._components.dtype)
             full_weights[..., :n_weights] = weights
             weights = full_weights
         return self._instance_vectors_for_full_weights(weights)

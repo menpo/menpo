@@ -127,13 +127,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         super(Image, self).__init__()
         if not copy:
             if not image_data.flags.c_contiguous:
-                image_data = np.array(image_data, copy=True, order='C',
-                                      dtype=image_data.dtype)
+                image_data = np.array(image_data, copy=True, order='C')
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
                      'Please ensure the data you pass is C-contiguous.')
         else:
-            image_data = np.array(image_data, copy=True, order='C',
-                                  dtype=image_data.dtype)
+            image_data = np.array(image_data, copy=True, order='C')
             # Degenerate case whereby we can just put the extra axis
             # on ourselves
             if image_data.ndim == 2:
@@ -1389,8 +1387,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     int(min_[0]):int(max_[0]),
                                     int(min_[1]):int(max_[1])].copy()
                     return self._build_warp_to_shape(warped_pixels,
-                                                       transform,
-                                                       warp_landmarks)
+                                                     transform,
+                                                     warp_landmarks)
             # we couldn't do the crop, but skimage has an optimised Cython
             # interpolation for 2D affine warps - let's use that
             sampled = cython_interpolation(self.pixels, template_shape,
