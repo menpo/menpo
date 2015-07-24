@@ -316,7 +316,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # noinspection PyUnresolvedReferences
         return np.array(self.shape, dtype=np.double) / 2
 
-    @property
     def _str_shape(self):
         if self.n_dims > 2:
             return ' x '.join(str(dim) for dim in self.shape)
@@ -1908,7 +1907,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(
-            self._str_shape, self.n_dims, self.n_channels,
+            self._str_shape(), self.n_dims, self.n_channels,
             's' * (self.n_channels > 1)))
 
     @property

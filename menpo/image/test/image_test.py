@@ -53,13 +53,13 @@ def test_image_centre():
 def test_image_str_shape_4d():
     pixels = np.ones((1, 10, 20, 11, 12))
     image = Image(pixels)
-    assert(image._str_shape == '10 x 20 x 11 x 12')
+    assert(image._str_shape() == '10 x 20 x 11 x 12')
 
 
 def test_image_str_shape_2d():
     pixels = np.ones((1, 10, 20))
     image = Image(pixels)
-    assert(image._str_shape == '20W x 10H')
+    assert(image._str_shape() == '20W x 10H')
 
 
 def test_image_as_vector():

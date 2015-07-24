@@ -1102,7 +1102,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         # Create text lines
         text_per_line = [
             "> {} of size {} with {} channel{}".format(
-                masked_str, img._str_shape, img.n_channels,
+                masked_str, img._str_shape(), img.n_channels,
                 's' * (img.n_channels > 1)),
             "> Path: '{}'".format(path_str)]
         n_lines = 2
