@@ -945,6 +945,38 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return self.warp_to_shape(new_shape, Translation(min_bounded),
                                   order=0, warp_landmarks=True)
 
+    def crop_to_pointcloud(self, pointcloud, boundary=0,
+                           constrain_to_boundary=True):
+        r"""
+        Return a copy of this image cropped so that it is bounded around a
+        pointcloud with an optional ``n_pixel`` boundary.
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            The pointcloud to crop around.
+        boundary : `int`, optional
+            An extra padding to be added all around the landmarks bounds.
+        constrain_to_boundary : `bool`, optional
+            If ``True`` the crop will be snapped to not go beyond this images
+            boundary. If ``False``, an :map`ImageBoundaryError` will be raised
+            if an attempt is made to go beyond the edge of the image.
+
+        Returns
+        -------
+        image : :map:`Image`
+            A copy of this image cropped to the bounds of the pointcloud.
+
+        Raises
+        ------
+        ImageBoundaryError
+            Raised if ``constrain_to_boundary=False``, and an attempt is made
+            to crop the image in a way that violates the image bounds.
+        """
+        min_indices, max_indices = pointcloud.bounds(boundary=boundary)
+        return self.crop(min_indices, max_indices,
+                         constrain_to_boundary=constrain_to_boundary)
+
     def crop_to_landmarks(self, group=None, label=None, boundary=0,
                           constrain_to_boundary=True):
         r"""
@@ -978,9 +1010,53 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label]
-        min_indices, max_indices = pc.bounds(boundary=boundary)
-        return self.crop(min_indices, max_indices,
-                         constrain_to_boundary=constrain_to_boundary)
+        return self.crop_to_pointcloud(
+            pc, boundary=boundary, constrain_to_boundary=constrain_to_boundary)
+
+    def crop_to_pointcloud_proportion(self, pointcloud, boundary_proportion,
+                                      minimum=True,
+                                      constrain_to_boundary=True):
+        r"""
+        Return a copy of this image cropped so that it is bounded around a
+        pointcloud with an optional ``n_pixel`` boundary.
+
+        Parameters
+        ----------
+        boundary_proportion : `float`
+            Additional padding to be added all around the landmarks
+            bounds defined as a proportion of the landmarks range. See
+            the minimum parameter for a definition of how the range is
+            calculated.
+        pointcloud : :map:`PointCloud`
+            The pointcloud to crop around.
+        minimum : `bool`, optional
+            If ``True`` the specified proportion is relative to the minimum
+            value of the pointclouds' per-dimension range; if ``False`` w.r.t.
+            the maximum value of the pointclouds' per-dimension range.
+        constrain_to_boundary : `bool`, optional
+            If ``True``, the crop will be snapped to not go beyond this images
+            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
+            if an attempt is made to go beyond the edge of the image.
+
+        Returns
+        -------
+        image : :map:`Image`
+            A copy of this image cropped to the border proportional to
+            the pointcloud spread or range.
+
+        Raises
+        ------
+        ImageBoundaryError
+            Raised if ``constrain_to_boundary=False``, and an attempt is made
+            to crop the image in a way that violates the image bounds.
+        """
+        if minimum:
+            boundary = boundary_proportion * np.min(pointcloud.range())
+        else:
+            boundary = boundary_proportion * np.max(pointcloud.range())
+        return self.crop_to_pointcloud(
+            pointcloud, boundary=boundary,
+            constrain_to_boundary=constrain_to_boundary)
 
     def crop_to_landmarks_proportion(self, boundary_proportion,
                                      group=None, label=None, minimum=True,
@@ -1024,12 +1100,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label]
-        if minimum:
-            boundary = boundary_proportion * np.min(pc.range())
-        else:
-            boundary = boundary_proportion * np.max(pc.range())
-        return self.crop_to_landmarks(
-            group=group, label=label, boundary=boundary,
+        return self.crop_to_pointcloud_proportion(
+            pc, boundary_proportion, minimum=minimum,
             constrain_to_boundary=constrain_to_boundary)
 
     def _propagate_crop_to_inplace(self, cropped):
@@ -1545,15 +1617,27 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def rescale_to_reference_shape(self, reference_shape, group=None,
                                    label=None, round='ceil', order=1):
         r"""
+        Deprecated: please use :meth:`rescale_to_pointcloud` instead.
+        """
+        warn('rescale_to_reference_shape() is deprecated and will be removed '
+             'in the next major version of menpo. '
+             'Please use rescale_to_pointcloud() instead.',
+             MenpoDeprecationWarning)
+        return self.rescale_to_pointcloud(reference_shape, group=group,
+                                          label=label, round=round, order=order)
+
+    def rescale_to_pointcloud(self, pointcloud, group=None,
+                              label=None, round='ceil', order=1):
+        r"""
         Return a copy of this image, rescaled so that the scale of a
         particular group of landmarks matches the scale of the passed
-        reference landmarks.
+        reference pointcloud.
 
         Parameters
         ----------
-        reference_shape: :map:`PointCloud`
-            The reference shape to which the landmarks scale will be matched
-            against.
+        pointcloud: :map:`PointCloud`
+            The reference pointcloud to which the landmarks specified by
+            ``group`` will be scaled to match.
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
@@ -1582,15 +1666,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             A copy of this image, rescaled.
         """
         pc = self.landmarks[group][label]
-        scale = AlignmentUniformScale(pc, reference_shape).as_vector().copy()
+        scale = AlignmentUniformScale(pc, pointcloud).as_vector().copy()
         return self.rescale(scale, round=round, order=order)
 
     def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
                                             label=None, round='ceil', order=1):
         r"""
-        Return a copy of this image, rescaled so that the diagonal_range of the
-        bounding box containing its landmarks matches the specified
-        diagonal_range range.
+        Return a copy of this image, rescaled so that the ``diagonal_range`` of
+        the bounding box containing its landmarks matches the specified
+        ``diagonal_range`` range.
 
         Parameters
         ----------
