@@ -585,11 +585,13 @@ def test_as_greyscale_luminosity():
     assert (new_image.n_channels == 1)
     assert_allclose(new_image.pixels[0], ones[0] * 0.850532)
 
+
 def test_rolled_channels():
     ones = np.ones([3, 120, 120])
     image = MaskedImage(ones)
     rolled_channels = image.rolled_channels()
     assert rolled_channels.shape == (120, 120, 3)
+
 
 def test_as_greyscale_average():
     ones = np.ones([3, 120, 120])

@@ -175,6 +175,29 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # We know there is no need to copy...
         return cls(pixels, copy=False)
 
+    @classmethod
+    def init_from_rolled_channels(cls, pixels):
+        r"""
+        Create an Image from a set of pixels where the channels axis is on
+        the last axis (the back). This is common in other frameworks, and
+        therefore this method provides a convenient means of creating a menpo
+        Image from such data. Note that a copy is always created due to the
+        need to rearrange the data.
+
+        Parameters
+        ----------
+        pixels : ``(M, N ..., Q, C)`` `ndarray`
+            Array representing the image pixels, with the last axis being
+            channels.
+
+        Returns
+        -------
+        image : :map:`Image`
+            A new image from the given pixels, with the FIRST axis as the
+            channels.
+        """
+        return cls(np.rollaxis(pixels, -1))
+
     def as_masked(self, mask=None, copy=True):
         r"""
         Return a copy of this image with an attached mask behavior.
