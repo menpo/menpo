@@ -97,7 +97,7 @@ def gaussian_filter(pixels, sigma):
     global scipy_gaussian_filter
     if scipy_gaussian_filter is None:
         from scipy.ndimage import gaussian_filter as scipy_gaussian_filter
-    output = np.empty(pixels.shape)
+    output = np.empty(pixels.shape, dtype=pixels.dtype)
     for dim in range(pixels.shape[0]):
         scipy_gaussian_filter(pixels[dim], sigma, output=output[dim])
     return output
@@ -383,7 +383,8 @@ def igo(pixels, double_angles=False, verbose=False):
     grad_orient = np.angle(grad[:n_img_chnls] + 1j * grad[n_img_chnls:])
     # compute igo image
     igo_pixels = np.empty((n_img_chnls * feat_chnls,
-                           pixels.shape[1], pixels.shape[2]))
+                           pixels.shape[1], pixels.shape[2]),
+                          dtype=pixels.dtype)
 
     if double_angles:
         dbl_grad_orient = 2 * grad_orient
@@ -458,7 +459,8 @@ def es(pixels, verbose=False):
     # compute es image
     grad_abs = grad_abs + np.median(grad_abs)
     es_pixels = np.empty((pixels.shape[0] * feat_channels,
-                          pixels.shape[1], pixels.shape[2]))
+                          pixels.shape[1], pixels.shape[2]),
+                         dtype=pixels.dtype)
 
     es_pixels[:n_img_chnls] = grad[:n_img_chnls] / grad_abs
     es_pixels[n_img_chnls:] = grad[n_img_chnls:] / grad_abs

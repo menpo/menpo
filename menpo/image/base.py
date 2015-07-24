@@ -88,7 +88,8 @@ def channels_to_back(image):
     else:
         pixels = image.pixels
 
-    return np.ascontiguousarray(np.rollaxis(pixels, 0, pixels.ndim))
+    return np.require(np.rollaxis(pixels, 0, pixels.ndim), dtype=pixels.dtype,
+                      requirements=['C'])
 
 
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
@@ -405,9 +406,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             if not image_data.flags.c_contiguous:
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
                      'Please ensure the data you pass is C-contiguous.')
-                image_data = np.array(image_data, copy=True, order='C')
+                image_data = np.array(image_data, copy=True, order='C',
+                                      dtype=image_data.dtype)
         else:
-            image_data = np.array(image_data, copy=True, order='C')
+            image_data = np.array(image_data, copy=True, order='C',
+                                  dtype=image_data.dtype)
         self.pixels = image_data
 
     def extract_channels(self, channels):
@@ -1384,8 +1387,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     int(min_[0]):int(max_[0]),
                                     int(min_[1]):int(max_[1])].copy()
                     return self._build_warp_to_shape(warped_pixels,
-                                                       transform,
-                                                       warp_landmarks)
+                                                     transform,
+                                                     warp_landmarks)
             # we couldn't do the crop, but skimage has an optimised Cython
             # interpolation for 2D affine warps - let's use that
             sampled = cython_interpolation(self.pixels, template_shape,

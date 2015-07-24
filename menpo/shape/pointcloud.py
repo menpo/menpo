@@ -118,7 +118,9 @@ class PointCloud(Shape):
 
         :type: ``type(self)``
         """
-        return np.concatenate((self.points.T, np.ones(self.n_points)[None, :]))
+        return np.concatenate((self.points.T,
+                               np.ones(self.n_points,
+                                       dtype=self.points.dtype)[None, :]))
 
     def centre(self):
         r"""

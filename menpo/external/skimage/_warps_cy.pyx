@@ -1,14 +1,22 @@
+#distutils: language=c++
 #cython: cdivision=True
 #cython: boundscheck=False
 #cython: nonecheck=False
 #cython: wraparound=False
 import numpy as np
-
 cimport numpy as cnp
+
 from .interpolation cimport (nearest_neighbour_interpolation,
                              bilinear_interpolation,
                              biquadratic_interpolation,
                              bicubic_interpolation)
+from menpo.cy_utils cimport dtype_from_memoryview
+
+
+ctypedef fused IMAGE_TYPES:
+    float
+    double
+    cnp.uint8_t
 
 
 cdef inline void _matrix_transform(double x, double y, double* H, double *x_,
@@ -23,7 +31,6 @@ cdef inline void _matrix_transform(double x, double y, double* H, double *x_,
         Transformation matrix.
     x_, y_ : *double
         Output coordinate.
-
     """
     cdef double xx, yy, zz
 
@@ -35,7 +42,7 @@ cdef inline void _matrix_transform(double x, double y, double* H, double *x_,
     y_[0] = yy / zz
 
 
-def _warp_fast(cnp.ndarray image, cnp.ndarray H, output_shape=None,
+def _warp_fast(IMAGE_TYPES[:, :] image, cnp.ndarray H, output_shape=None,
                int order=1, mode='constant', double cval=0):
     """Projective transformation (homography).
 
@@ -76,16 +83,29 @@ def _warp_fast(cnp.ndarray image, cnp.ndarray H, output_shape=None,
     cval : string, optional (default 0)
         Used in conjunction with mode 'C' (constant), the value
         outside the image boundaries.
-
     """
 
-    cdef double[:, ::1] img = np.ascontiguousarray(image, dtype=np.double)
+    cdef IMAGE_TYPES[:, ::1] img = np.ascontiguousarray(image)
     cdef double[:, ::1] M = np.ascontiguousarray(H)
+    dtype = dtype_from_memoryview(image)
 
     if mode not in ('constant', 'wrap', 'reflect', 'nearest'):
         raise ValueError("Invalid mode specified.  Please use "
                          "`constant`, `nearest`, `wrap` or `reflect`.")
     cdef char mode_c = ord(mode[0].upper())
+
+    cdef IMAGE_TYPES (*interp_func)(IMAGE_TYPES*, Py_ssize_t, Py_ssize_t,
+                                    double, double, char, double)
+    if order == 0:
+        interp_func = nearest_neighbour_interpolation
+    elif order == 1:
+        interp_func = bilinear_interpolation
+    elif order == 2:
+        interp_func = biquadratic_interpolation
+    elif order == 3:
+        interp_func = bicubic_interpolation
+    else:
+        raise ValueError('Order must be in the range [0, 3]')
 
     cdef Py_ssize_t out_r, out_c
     if output_shape is None:
@@ -95,23 +115,12 @@ def _warp_fast(cnp.ndarray image, cnp.ndarray H, output_shape=None,
         out_r = int(output_shape[0])
         out_c = int(output_shape[1])
 
-    cdef double[:, ::1] out = np.zeros((out_r, out_c), dtype=np.double)
+    cdef IMAGE_TYPES[:, ::1] out = np.zeros((out_r, out_c), dtype=dtype)
 
     cdef Py_ssize_t tfr, tfc
     cdef double r, c
     cdef Py_ssize_t rows = img.shape[0]
     cdef Py_ssize_t cols = img.shape[1]
-
-    cdef double (*interp_func)(double*, Py_ssize_t, Py_ssize_t, double, double,
-                               char, double)
-    if order == 0:
-        interp_func = nearest_neighbour_interpolation
-    elif order == 1:
-        interp_func = bilinear_interpolation
-    elif order == 2:
-        interp_func = biquadratic_interpolation
-    elif order == 3:
-        interp_func = bicubic_interpolation
 
     for tfr in range(out_r):
         for tfc in range(out_c):
@@ -119,5 +128,4 @@ def _warp_fast(cnp.ndarray image, cnp.ndarray H, output_shape=None,
             out[tfr, tfc] = interp_func(&img[0, 0], rows, cols, r, c,
                                         mode_c, cval)
 
-    return np.asarray(out)
-
+    return np.asarray(out, dtype=dtype)

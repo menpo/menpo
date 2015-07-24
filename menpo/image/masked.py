@@ -311,7 +311,8 @@ class MaskedImage(Image):
             # we can just reshape the array!
             image_data = vector.reshape(((n_channels,) + self.shape))
         else:
-            image_data = np.zeros((n_channels,) + self.shape)
+            image_data = np.zeros((n_channels,) + self.shape,
+                                  dtype=vector.dtype)
             pixels_per_channel = vector.reshape((n_channels, -1))
             image_data[..., self.mask.mask] = pixels_per_channel
         new_image = MaskedImage(image_data, mask=self.mask)
@@ -1020,7 +1021,7 @@ class MaskedImage(Image):
         pc = self.landmarks[group][label]
         patch_size = np.ceil(patch_size)
         patch_half_size = patch_size / 2
-        mask = np.zeros(self.shape)
+        mask = np.zeros(self.shape, dtype=np.bool)
         max_x = self.shape[0] - 1
         max_y = self.shape[1] - 1
 
