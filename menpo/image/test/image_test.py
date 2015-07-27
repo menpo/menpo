@@ -53,13 +53,13 @@ def test_image_centre():
 def test_image_str_shape_4d():
     pixels = np.ones((1, 10, 20, 11, 12))
     image = Image(pixels)
-    assert(image._str_shape == '10 x 20 x 11 x 12')
+    assert(image._str_shape() == '10 x 20 x 11 x 12')
 
 
 def test_image_str_shape_2d():
     pixels = np.ones((1, 10, 20))
     image = Image(pixels)
-    assert(image._str_shape == '20W x 10H')
+    assert(image._str_shape() == '20W x 10H')
 
 
 def test_image_as_vector():
@@ -585,11 +585,13 @@ def test_as_greyscale_luminosity():
     assert (new_image.n_channels == 1)
     assert_allclose(new_image.pixels[0], ones[0] * 0.850532)
 
+
 def test_rolled_channels():
     ones = np.ones([3, 120, 120])
     image = MaskedImage(ones)
     rolled_channels = image.rolled_channels()
     assert rolled_channels.shape == (120, 120, 3)
+
 
 def test_as_greyscale_average():
     ones = np.ones([3, 120, 120])

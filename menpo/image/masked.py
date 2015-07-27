@@ -246,7 +246,7 @@ class MaskedImage(Image):
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '
                 'Attached mask {:.1%} true'.format(
-            self._str_shape, self.n_dims, self.n_channels,
+            self._str_shape(), self.n_dims, self.n_channels,
             self.mask.proportion_true()))
 
     def _as_vector(self, keep_channels=False):

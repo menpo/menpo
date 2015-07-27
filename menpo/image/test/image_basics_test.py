@@ -69,3 +69,11 @@ def test_warp_to_shape_boolean_preserves_path():
     i2 = i1.rescale(0.8)
     assert hasattr(i2, 'path')
     assert i2.path == i1.path
+
+
+def test_init_from_rolled_channels():
+    p = np.empty([50, 60, 3])
+    im = Image.init_from_rolled_channels(p)
+    assert im.n_channels == 3
+    assert im.height == 50
+    assert im.width == 60

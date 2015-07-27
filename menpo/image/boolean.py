@@ -223,7 +223,7 @@ class BooleanImage(Image):
 
     def __str__(self):
         return ('{} {}D mask, {:.1%} '
-                'of which is True'.format(self._str_shape, self.n_dims,
+                'of which is True'.format(self._str_shape(), self.n_dims,
                                           self.proportion_true()))
 
     def from_vector(self, vector, copy=True):

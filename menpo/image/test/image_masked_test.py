@@ -87,3 +87,10 @@ def test_dilate():
     img3 = img.dilate(n_pixels=3)
     assert(img3.mask.n_true() == 76)
 
+
+def test_init_from_rolled_channels():
+    p = np.empty([50, 60, 3])
+    im = MaskedImage.init_from_rolled_channels(p)
+    assert im.n_channels == 3
+    assert im.height == 50
+    assert im.width == 60
