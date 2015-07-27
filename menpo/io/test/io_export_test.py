@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing import assert_allclose
 import os
 from menpo.io.utils import _norm_path
 from mock import patch, PropertyMock, MagicMock
@@ -172,6 +173,24 @@ def test_export_landmark_ljson(mock_open, exists, json_dump):
         mio.export_landmark_file(test_lg, f, extension='ljson')
     json_dump.assert_called_once()
 
+@patch('menpo.io.output.landmark.json.dump')
+@patch('menpo.io.output.base.Path.exists')
+@patch('{}.open'.format(__name__), create=True)
+def test_export_landmark_ljson_3d(mock_open, exists, json_dump):
+    exists.return_value = False
+    fake_path = '/fake/fake3d.ljson'
+    test3d_lg = test_lg.copy()
+    fake_z_points = np.random.random(test3d_lg.lms.points.shape[0])
+    test3d_lg.lms.points = np.concatenate([
+        test3d_lg.lms.points, fake_z_points[..., None]], axis=-1)
+
+    with open(fake_path) as f:
+        type(f).name = PropertyMock(return_value=fake_path)
+        mio.export_landmark_file(test3d_lg, f, extension='ljson')
+
+    json_dump.assert_called_once()
+    json_points = np.array(json_dump.call_args[0][0]['landmarks']['points'])
+    assert_allclose(json_points[:, -1], fake_z_points)
 
 @patch('menpo.io.output.base.Path.exists')
 @patch('{}.open'.format(__name__), create=True)
