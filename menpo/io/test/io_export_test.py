@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing import assert_allclose
 import os
 from menpo.io.utils import _norm_path
 from mock import patch, PropertyMock, MagicMock
