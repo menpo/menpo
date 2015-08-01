@@ -379,7 +379,7 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
     filepaths = list(glob_with_suffix(pattern, extension_map,
                                       sort=(not shuffle)))
     if shuffle:
-        filepaths = random.shuffle(filepaths)
+        random.shuffle(filepaths)
     if max_assets:
         filepaths = filepaths[:max_assets]
     n_files = len(filepaths)
