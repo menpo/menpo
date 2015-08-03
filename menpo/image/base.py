@@ -199,6 +199,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.image import MaskedImage
         img = MaskedImage(self.pixels, mask=mask, copy=copy)
         img.landmarks = self.landmarks
+        if hasattr(self, 'path'):
+            img.path = self.path
         return img
 
     @property
