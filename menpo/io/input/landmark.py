@@ -291,7 +291,8 @@ class LM2Importer(LandmarkImporter):
 def _ljson_parse_null_values(points_list):
     filtered_points = [np.nan if x is None else x
                        for x in itertools.chain(*points_list)]
-    return np.array(filtered_points).reshape([-1, len(points_list[0])])
+    return np.array(filtered_points,
+                    dtype=np.float).reshape([-1, len(points_list[0])])
 
 
 def _parse_ljson_v1(lms_dict):
