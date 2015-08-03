@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-
+import random
 from ..utils import _norm_path
 from menpo.base import menpo_src_dir_path
 from menpo.visualize import print_progress
@@ -137,8 +137,8 @@ def import_pickle(filepath):
     return _import(filepath, pickle_types)
 
 
-def import_images(pattern, max_images=None, landmark_resolver=same_name,
-                  normalise=True, verbose=False):
+def import_images(pattern, max_images=None, shuffle=False,
+                  landmark_resolver=same_name, normalise=True, verbose=False):
     r"""Multiple image (and associated landmarks) importer.
 
     For each image found yields an :map:`Image` or
@@ -161,6 +161,10 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
     max_images : positive `int`, optional
         If not ``None``, only import the first ``max_images`` found. Else,
         import all.
+    shuffle : `bool`, optional
+        If ``True``, the order of the returned images will be randomised. If
+        ``False``, the order of the returned images will be alphanumerically
+        ordered.
     landmark_resolver : `function`, optional
         This function will be used to find landmarks for the
         image. The function should take one argument (the image itself) and
@@ -200,7 +204,7 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
     """
     kwargs = {'normalise': normalise}
     for asset in _import_glob_generator(pattern, image_types,
-                                        max_assets=max_images,
+                                        max_assets=max_images, shuffle=shuffle,
                                         landmark_resolver=landmark_resolver,
                                         landmark_ext_map=image_landmark_types,
                                         verbose=verbose,
@@ -208,7 +212,8 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
         yield asset
 
 
-def import_landmark_files(pattern, max_landmarks=None, verbose=False):
+def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
+                          verbose=False):
     r"""Multiple landmark file import generator.
 
     Note that this is a generator function.
@@ -220,11 +225,13 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
         landmark file found to match the glob will be imported one by one.
         See :map:`landmark_file_paths` for more details of what landmark files
         will be found.
-
     max_landmark_files : positive `int`, optional
         If not ``None``, only import the first ``max_landmark_files`` found.
         Else, import all.
-
+    shuffle : `bool`, optional
+        If ``True``, the order of the returned landmark files will be
+        randomised. If ``False``, the order of the returned landmark files will
+        be  alphanumerically  ordered.
     verbose : `bool`, optional
         If ``True`` progress of the importing will be dynamically reported.
 
@@ -241,11 +248,12 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
     """
     for asset in _import_glob_generator(pattern, image_landmark_types,
                                         max_assets=max_landmarks,
+                                        shuffle=shuffle,
                                         verbose=verbose):
         yield asset
 
 
-def import_pickles(pattern, max_pickles=None, verbose=False):
+def import_pickles(pattern, max_pickles=None, shuffle=False, verbose=False):
     r"""Multiple pickle file import generator.
 
     Note that this is a generator function.
@@ -260,11 +268,13 @@ def import_pickles(pattern, max_pickles=None, verbose=False):
     pattern : `str`
         The glob path pattern to search for pickles. Every pickle file found
         to match the glob will be imported one by one.
-
     max_pickles : positive `int`, optional
         If not ``None``, only import the first ``max_pickles`` found.
         Else, import all.
-
+    shuffle : `bool`, optional
+        If ``True``, the order of the returned pickles will be randomised. If
+        ``False``, the order of the returned pickles will be alphanumerically
+        ordered.
     verbose : `bool`, optional
         If ``True`` progress of the importing will be dynamically reported.
 
@@ -282,6 +292,7 @@ def import_pickles(pattern, max_pickles=None, verbose=False):
     """
     for asset in _import_glob_generator(pattern, pickle_types,
                                         max_assets=max_pickles,
+                                        shuffle=shuffle,
                                         verbose=verbose):
         yield asset
 
@@ -362,10 +373,13 @@ def landmark_file_paths(pattern):
 
 
 def _import_glob_generator(pattern, extension_map, max_assets=None,
-                           landmark_resolver=same_name,
+                           landmark_resolver=same_name, shuffle=False,
                            landmark_ext_map=None, importer_kwargs=None,
                            verbose=False):
-    filepaths = list(glob_with_suffix(pattern, extension_map))
+    filepaths = list(glob_with_suffix(pattern, extension_map,
+                                      sort=(not shuffle)))
+    if shuffle:
+        random.shuffle(filepaths)
     if max_assets:
         filepaths = filepaths[:max_assets]
     n_files = len(filepaths)
@@ -478,7 +492,6 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
 
     Note that if a single file yields multiple assets, each is yielded in
     turn (this function will never yield an iterable of assets in one go).
-    Assets are yielded in alphabetical order from the filepaths provided.
 
     Parameters
     ----------
@@ -511,7 +524,7 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
         yielded asset.
     """
     importer = None
-    for f in sorted(filepaths):
+    for f in filepaths:
         imported = _import(f, extensions_map, keep_importer=keep_importers,
                            landmark_resolver=landmark_resolver,
                            landmark_ext_map=landmark_ext_map,
@@ -537,7 +550,7 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
             yield imported
 
 
-def _pathlib_glob_for_pattern(pattern):
+def _pathlib_glob_for_pattern(pattern, sort=True):
     r"""Generator for glob matching a string path pattern
 
     Splits the provided ``pattern`` into a root path for pathlib and a
@@ -548,6 +561,9 @@ def _pathlib_glob_for_pattern(pattern):
     pattern : `str`
         Path including glob patterns. If no glob patterns are present and the
         pattern is a dir, a '**/*' pattern will be automatically added.
+    sort : `bool`, optional
+        If True, the returned paths will be sorted. If False, no guarantees are
+        made about the ordering of the results.
 
     Yields
     ------
@@ -577,10 +593,13 @@ def _pathlib_glob_for_pattern(pattern):
         preglob, pattern_prefix = os.path.split(preglob)
         pattern = pattern_prefix + pattern
     p = Path(preglob)
-    return sorted(p.glob(str(pattern)))
+    paths = p.glob(str(pattern))
+    if sort:
+        paths = sorted(paths)
+    return paths
 
 
-def glob_with_suffix(pattern, extensions_map):
+def glob_with_suffix(pattern, extensions_map, sort=True):
     r"""
     Filters the results from the glob pattern passed in to only those files
     that have an importer given in `extensions_map`.
@@ -593,19 +612,23 @@ def glob_with_suffix(pattern, extensions_map):
         A map from extensions to importers. The importers are expected to be
         non-instantiated classes. The extensions are expected to
         contain the leading period eg. `.obj`.
+    sort : `bool`, optional
+        If True, the returned paths will be sorted. If False, no guarantees are
+        made about the ordering of the results.
 
     Yields
     ------
     filepaths : list of string
         The list of filepaths that have valid extensions.
     """
-    for path in _pathlib_glob_for_pattern(pattern):
+    for path in _pathlib_glob_for_pattern(pattern, sort=sort):
         # we want to extract '.pkl.gz' as an extension - for this we need to
         # use suffixes and join.
         # .suffix only takes
         # However, the filename might have a '.' in it, e.g. '1.1.png'.
         # In this case, try again with just the suffix.
-        if ''.join(path.suffixes[-2:]) in extensions_map or path.suffix in extensions_map:
+        if (''.join(path.suffixes[-2:]) in extensions_map or
+                path.suffix in extensions_map):
             yield path
 
 
