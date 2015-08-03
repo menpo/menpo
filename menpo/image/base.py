@@ -222,6 +222,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.image import MaskedImage
         img = MaskedImage(self.pixels, mask=mask, copy=copy)
         img.landmarks = self.landmarks
+        if hasattr(self, 'path'):
+            img.path = self.path
         return img
 
     @property
@@ -887,6 +889,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             gradient of a 2D, single channel image, will have length `2`.
             The length of a 2D, 3-channel image, will have length `6`.
         """
+        warn('gradient() is deprecated and will be removed in'
+             ' the next major version of menpo. '
+             'Please use menpo.feature.gradient instead.',
+             MenpoDeprecationWarning)
+
         from menpo.feature import gradient as grad_feature
         return grad_feature(self)
 
