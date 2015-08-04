@@ -3,7 +3,6 @@ from nose.tools import assert_equals
 
 import menpo.io as mio
 from menpo.landmark import labeller, ibug_face_68
-from menpo.shape import PointCloud
 
 
 def test_double_type():
@@ -111,7 +110,7 @@ def test_squared_even_patches_single_array():
 def test_squared_even_patches_sample_offsets():
     image = mio.import_builtin_asset('breakingbad.jpg')
     image = labeller(image, 'PTS', ibug_face_68)
-    sample_offsets = PointCloud([[0, 0], [1, 0]])
+    sample_offsets = np.array([[0, 0], [1, 0]])
     patches = image.extract_patches(image.landmarks['PTS'].lms,
                                     sample_offsets=sample_offsets)
     assert_equals(len(patches), 136)
