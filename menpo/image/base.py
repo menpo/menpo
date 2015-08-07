@@ -13,7 +13,7 @@ from menpo.transform import (Translation, NonUniformScale,
                              rotate_ccw_about_centre)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
-from .extract_patches import extract_patches
+from .patches import extract_patches
 
 
 # Cache the greyscale luminosity coefficients as they are invariant.
