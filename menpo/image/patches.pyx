@@ -149,11 +149,11 @@ cpdef extract_patches(IMAGE_TYPES[:, :, :] image,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef insert_patches(IMAGE_TYPES[:, :, :, :, :] patches,
-                     IMAGE_TYPES[:, :, :] image,
-                     CENTRE_TYPES[:, :] centres,
-                     Py_ssize_t[:, :] offset,
-                     Py_ssize_t offset_index):
+cpdef set_patches(IMAGE_TYPES[:, :, :, :, :] patches,
+                  IMAGE_TYPES[:, :, :] image,
+                  CENTRE_TYPES[:, :] centres,
+                  Py_ssize_t[:, :] offset,
+                  Py_ssize_t offset_index):
     cdef:
         Py_ssize_t n_centres = centres.shape[0]
         object extents_size = [n_centres, 2]

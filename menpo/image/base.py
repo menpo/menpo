@@ -13,7 +13,7 @@ from menpo.transform import (Translation, NonUniformScale,
                              rotate_ccw_about_centre)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
-from .patches import extract_patches
+from .patches import extract_patches, set_patches
 
 
 # Cache the greyscale luminosity coefficients as they are invariant.
@@ -1202,10 +1202,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             of the patch (no offset) and (1, 0) would be sampling the patch
             from 1 pixel up the first axis away from the centre.
         as_single_array : `bool`, optional
-            If ``True``, an ``(n_center * n_offset, self.shape...)``
+            If ``True``, an ``(n_center, n_offset, self.n_channels, patch_size)``
             `ndarray`, thus a single numpy array is returned containing each
-            patch. If ``False``, a `list` of :map:`Image` objects is returned
-            representing each patch.
+            patch. If ``False``, a `list` of ``n_center * n_offset``
+            :map:`Image` objects is returned representing each patch.
 
         Returns
         -------
@@ -1262,10 +1262,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             of the patch (no offset) and (1, 0) would be sampling the patch
             from 1 pixel up the first axis away from the centre.
         as_single_array : `bool`, optional
-            If ``True``, an ``(n_center * n_offset, self.shape...)``
+            If ``True``, an ``(n_center, n_offset, self.n_channels, patch_size)``
             `ndarray`, thus a single numpy array is returned containing each
-            patch. If ``False``, a `list` of :map:`Image` objects is returned
-            representing each patch.
+            patch. If ``False``, a `list` of ``n_center * n_offset``
+            :map:`Image` objects is returned representing each patch.
 
         Returns
         -------
@@ -1283,6 +1283,98 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     patch_size=patch_size,
                                     sample_offsets=sample_offsets,
                                     as_single_array=as_single_array)
+
+    def set_patches(self, patches, patch_centers, offset=None,
+                    offset_index=None):
+        r"""
+        Set the values of a group of patches in the image. Given an array of
+        patches and a set of patch centers, the patches' values are copied in
+        the regions of the image that are centred on the coordinates of the
+        given centers.
+
+        The patches are expected to be an
+        ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`, as
+         returned from the `extract_patches` method.
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patches : ``(n_center, n_offset, n_channels, patch_size)`` `ndarray`
+            A numpy array that contains the values of each patch. It has the
+            form of the array returned by the `extract_patches` method.
+        patch_centers : :map:`PointCloud`
+            The centers to set the patches around.
+        offset : `(``x``, ``y``)` or ``(1, 2)`` `ndarray` or ``None``, optional
+            The offset to apply on the patch centers within the image.
+            If ``None``, then (0, 0) is used.
+        offset_index : `int` or ``None``, optional
+            The offset index within the provided patches array, thus the index
+            of the second dimension from which to sample. If ``None``, then 0 is
+            used.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        ValueError
+            If offset does not have shape (1, 2)
+        """
+        # parse arguments
+        if self.n_dims != 2:
+            raise ValueError('Only two dimensional patch insertion is '
+                             'currently supported.')
+        if offset is None:
+            offset = np.zeros([1, 2], dtype=np.intp)
+        else:
+            offset = np.asarray(offset, dtype=np.intp)
+        if not offset.shape == (1, 2):
+            raise ValueError('The offset must have shape (1, 2).')
+        if offset_index is None:
+            offset_index = 0
+
+        # set patches
+        set_patches(patches, self.pixels, patch_centers.points, offset,
+                    offset_index)
+
+    def set_patches_around_landmarks(self, patches, group=None, label=None,
+                                     offset=None, offset_index=None):
+        r"""
+        Set the values of a group of patches around the landmarks existing in
+        the image. Given an array of patches, a group and a label, the patches'
+        values are copied in the regions of the image that are centred on the
+        coordinates of corresponding landmarks.
+
+        See `set_patches` for more information.
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patches : ``(n_center, n_offset, n_channels, patch_size)`` `ndarray`
+            A numpy array that contains the values of each patch. It has the
+            form of the array returned by the `extract_patches` method.
+        group : `str` or ``None`` optional
+            The landmark group to use as patch centres.
+        label : `str` or ``None`` optional
+            The landmark label within the group to use as centres.
+        offset : `(``x``, ``y``)` or ``(1, 2)`` `ndarray` or ``None``, optional
+            The offset to apply on the patch centers within the image.
+            If ``None``, then (0, 0) is used.
+        offset_index : `int` or ``None``, optional
+            The offset index within the provided patches array, thus the index
+            of the second dimension from which to sample. If ``None``, then 0 is
+            used.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        ValueError
+            If offset does not have shape (1, 2)
+        """
+        return self.set_patches(patches, self.landmarks[group][label],
+                                offset=offset, offset_index=offset_index)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
                      order=1, mode='constant', cval=0.0, batch_size=None):
