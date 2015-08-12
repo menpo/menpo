@@ -298,7 +298,7 @@ class TriMesh(PointCloud):
                           tl[:, [1, 2]],
                           tl[:, [2, 0]]))
 
-    def unique_edge_indicies(self):
+    def unique_edge_indices(self):
         r"""An unordered index into points that rebuilds the unique edges of
         this :map:`TriMesh`.
 
@@ -308,7 +308,7 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        unique_edge_indicies : ``(n_unique_edges, 2)`` `ndarray`
+        unique_edge_indices : ``(n_unique_edges, 2)`` `ndarray`
             Return a point index that rebuilds all edges present in this
             :map:`TriMesh` only once.
         """
@@ -338,7 +338,7 @@ class TriMesh(PointCloud):
         unique_edge_vectors : ``(n_unique_edges, n_dims)`` `ndarray`
             Vectors for each unique edge in this :map:`TriMesh`.
         """
-        x = self.points[self.unique_edge_indicies()]
+        x = self.points[self.unique_edge_indices()]
         return x[:, 1] - x[:, 0]
 
     def edge_lengths(self):

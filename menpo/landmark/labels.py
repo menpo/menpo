@@ -2367,8 +2367,8 @@ def bu3dfe_83(landmark_group):
     leye_indices = np.arange(8, 16)
     rbrow_indices = np.arange(16, 26)
     lbrow_indices = np.arange(26, 36)
-    rnose_indicies = np.arange(36, 39)
-    lnose_indicies = np.arange(39, 42)
+    rnose_indices = np.arange(36, 39)
+    lnose_indices = np.arange(39, 42)
     nostril_indices = np.arange(42, 48)
     outermouth_indices = np.arange(48, 60)
     innermouth_indices = np.arange(60, 68)
@@ -2380,9 +2380,9 @@ def bu3dfe_83(landmark_group):
                                                   close_loop=True)
     lbrow_connectivity = _connectivity_from_array(lbrow_indices,
                                                   close_loop=True)
-    rnose_connectivity = _connectivity_from_array(rnose_indicies)
+    rnose_connectivity = _connectivity_from_array(rnose_indices)
     nostril_connectivity = _connectivity_from_array(nostril_indices)
-    lnose_connectivity = _connectivity_from_array(lnose_indicies)
+    lnose_connectivity = _connectivity_from_array(lnose_indices)
     outermouth_connectivity = _connectivity_from_array(outermouth_indices,
                                                        close_loop=True)
     innermouth_connectivity = _connectivity_from_array(innermouth_indices,
@@ -2406,8 +2406,8 @@ def bu3dfe_83(landmark_group):
     new_landmark_group['left_eye'] = leye_indices
     new_landmark_group['right_eyebrow'] = rbrow_indices
     new_landmark_group['left_eyebrow'] = lbrow_indices
-    new_landmark_group['right_nose'] = rnose_indicies
-    new_landmark_group['left_nose'] = lnose_indicies
+    new_landmark_group['right_nose'] = rnose_indices
+    new_landmark_group['left_nose'] = lnose_indices
     new_landmark_group['nostrils'] = nostril_indices
     new_landmark_group['outer_mouth'] = outermouth_indices
     new_landmark_group['inner_mouth'] = innermouth_indices
