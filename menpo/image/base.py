@@ -1327,9 +1327,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if offset is None:
             offset = np.zeros([1, 2], dtype=np.intp)
         else:
-            offset = np.asarray(offset, dtype=np.intp)
+            offset = np.require(offset, dtype=np.intp)
         if not offset.shape == (1, 2):
-            raise ValueError('The offset must have shape (1, 2).')
+            raise ValueError('The offset must be a numpy.array with shape '
+                             '(1, 2).')
         if offset_index is None:
             offset_index = 0
 
