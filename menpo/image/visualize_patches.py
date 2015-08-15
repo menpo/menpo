@@ -47,3 +47,38 @@ def create_patches_image(patches, patch_centers, patches_indices=None,
                                                offset_index=offset_index)
 
     return patches_image
+
+
+def render_rectangles_around_patches(centers, patch_shape, axes=None, image_view=True,
+                                     line_colour='r', line_style='-', line_width=1):
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+
+    # Dictionary with the line styles
+    line_style_dict = {'-': 'solid', '--': 'dashed', '-.': 'dashdot',
+                       '.': 'dotted'}
+
+    # Get axes object
+    if axes is None:
+        axes = plt.gca()
+
+    # Need those in order to compute the lower left corner of the rectangle
+    half_patch_shape = [patch_shape[0] / 2,
+                        patch_shape[1] / 2]
+
+    # Set the view mode
+    if image_view:
+        xi = 1
+        yi = 0
+    else:
+        xi = 0
+        yi = 1
+
+    # Render rectangles
+    for p in range(centers.shape[0]):
+        xc = np.intp(centers[p, xi] - half_patch_shape[xi]) - 0.5
+        yc = np.intp(centers[p, yi] - half_patch_shape[yi]) - 0.5
+        axes.add_patch(Rectangle((xc, yc), patch_shape[xi], patch_shape[yi],
+                                 fill=False, edgecolor=line_colour,
+                                 linewidth=line_width,
+                                 linestyle=line_style_dict[line_style]))
