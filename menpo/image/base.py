@@ -1287,22 +1287,29 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def set_patches(self, patches, patch_centers, offset=None,
                     offset_index=None):
         r"""
-        Set the values of a group of patches in the image. Given an array of
-        patches and a set of patch centers, the patches' values are copied in
-        the regions of the image that are centred on the coordinates of the
-        given centers.
+        Set the values of a group of patches into the correct regions of the
+        image. Given an array of patches and a set of patch centers, the
+        patches' values are copied in the regions of the image that are centred
+        on the coordinates of the given centers.
 
-        The patches are expected to be an
-        ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`, as
-         returned from the `extract_patches` method.
+        The patches argument can have any of the two formats that are returned
+        from the `extract_patches()` and `extract_patches_around_landmarks()`
+        methods. Specifically it can be:
+
+            1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+            2. `list` of ``n_center * n_offset`` :map:`Image` objects
 
         Currently only 2D images are supported.
 
         Parameters
         ----------
-        patches : ``(n_center, n_offset, n_channels, patch_size)`` `ndarray`
-            A numpy array that contains the values of each patch. It has the
-            form of the array returned by the `extract_patches` method.
+        patches : `ndarray` or `list`
+            The values of the patches. It can have any of the two formats that
+            are returned from the `extract_patches()` and
+            `extract_patches_around_landmarks()` methods. Specifically, it can
+            either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+            `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
+            objects.
         patch_centers : :map:`PointCloud`
             The centers to set the patches around.
         offset : `(``x``, ``y``)` or ``(1, 2)`` `ndarray` or ``None``, optional
@@ -1334,6 +1341,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if offset_index is None:
             offset_index = 0
 
+        # if patches is a list, convert it to array
+        if isinstance(patches, list):
+            patches = convert_patches_list_to_single_array(
+                patches, patch_centers.n_points)
+
         # set patches
         set_patches(patches, self.pixels, patch_centers.points, offset,
                     offset_index)
@@ -1346,15 +1358,24 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         values are copied in the regions of the image that are centred on the
         coordinates of corresponding landmarks.
 
-        See `set_patches` for more information.
+        The patches argument can have any of the two formats that are returned
+        from the `extract_patches()` and `extract_patches_around_landmarks()`
+        methods. Specifically it can be:
+
+            1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+            2. `list` of ``n_center * n_offset`` :map:`Image` objects
 
         Currently only 2D images are supported.
 
         Parameters
         ----------
-        patches : ``(n_center, n_offset, n_channels, patch_size)`` `ndarray`
-            A numpy array that contains the values of each patch. It has the
-            form of the array returned by the `extract_patches` method.
+        patches : `ndarray` or `list`
+            The values of the patches. It can have any of the two formats that
+            are returned from the `extract_patches()` and
+            `extract_patches_around_landmarks()` methods. Specifically, it can
+            either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+            `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
+            objects.
         group : `str` or ``None`` optional
             The landmark group to use as patch centres.
         label : `str` or ``None`` optional
@@ -2211,3 +2232,37 @@ def round_image_shape(shape, round):
         raise ValueError('round must be either ceil, round or floor')
     # Ensure that the '+' operator means concatenate tuples
     return tuple(getattr(np, round)(shape).astype(np.int))
+
+
+def convert_patches_list_to_single_array(patches_list, n_center):
+    r"""
+    Converts patches from a `list` of :map:`Image` objects to a single `ndarray`
+    with shape ``(n_center, n_offset, self.n_channels, patch_size)``.
+
+    Note that these two are the formats returned by the `extract_patches()`
+    and `extract_patches_around_landmarks()` methods of :map:`Image` class.
+
+    Parameters
+    ----------
+    patches_list : `list` of `n_center * n_offset` :map:`Image` objects
+        A `list` that contains all the patches as :map:`Image` objects.
+    n_center : `int`
+        The number of centers from which the patches are extracted.
+
+    Returns
+    -------
+    patches_array : `ndarray` ``(n_center, n_offset, self.n_channels, patch_size)``
+        The numpy array that contains all the patches.
+    """
+    n_offsets = np.int(len(patches_list) / n_center)
+    n_channels = patches_list[0].n_channels
+    height = patches_list[0].height
+    width = patches_list[0].width
+    patches_array = np.empty((n_center, n_offsets, n_channels, height, width),
+                             dtype=patches_list[0].pixels.dtype)
+    total_index = 0
+    for p in range(n_center):
+        for o in range(n_offsets):
+            patches_array[p, o, ...] = patches_list[total_index].pixels
+            total_index += 1
+    return patches_array
