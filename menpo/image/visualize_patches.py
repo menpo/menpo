@@ -3,11 +3,16 @@ from collections import Iterable
 import numpy as np
 
 from menpo.shape import PointCloud
-from .base import Image
+from .base import Image, convert_patches_list_to_single_array
 
 
 def create_patches_image(patches, patch_centers, patches_indices=None,
                          offset_index=None):
+    # If patches is a list, convert it to array
+    if isinstance(patches, list):
+        patches = convert_patches_list_to_single_array(patches,
+                                                       patch_centers.n_points)
+
     # Parse inputs
     if offset_index is None:
         offset_index = 0
@@ -104,6 +109,11 @@ def view_patches(patches, patch_centers, patches_indices=None,
                  axes_font_name='sans-serif',  axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+    # If patches is a list, convert it to array
+    if isinstance(patches, list):
+        patches = convert_patches_list_to_single_array(patches,
+                                                       patch_centers.n_points)
+
     # Create patches image
     patches_image = create_patches_image(patches, patch_centers,
                                          patches_indices=patches_indices,
@@ -164,6 +174,11 @@ def view_patches_with_landmarks(patches, patch_centers, patches_indices=None,
                                 axes_font_style='normal',
                                 axes_font_weight='normal', axes_x_limits=None,
                                 axes_y_limits=None, figure_size=(10, 8)):
+    # If patches is a list, convert it to array
+    if isinstance(patches, list):
+        patches = convert_patches_list_to_single_array(patches,
+                                                       patch_centers.n_points)
+
     # Create patches image
     patches_image = create_patches_image(patches, patch_centers,
                                          patches_indices=patches_indices,
