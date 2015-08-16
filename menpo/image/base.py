@@ -1316,9 +1316,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The offset to apply on the patch centers within the image.
             If ``None``, then (0, 0) is used.
         offset_index : `int` or ``None``, optional
-            The offset index within the provided patches array, thus the index
-            of the second dimension from which to sample. If ``None``, then 0 is
-            used.
+            The offset index within the provided `patches` argument, thus the
+            index of the second dimension from which to sample. If ``None``,
+            then ``0`` is used.
 
         Raises
         ------
@@ -1384,9 +1384,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The offset to apply on the patch centers within the image.
             If ``None``, then (0, 0) is used.
         offset_index : `int` or ``None``, optional
-            The offset index within the provided patches array, thus the index
-            of the second dimension from which to sample. If ``None``, then 0 is
-            used.
+            The offset index within the provided `patches` argument, thus the
+            index of the second dimension from which to sample. If ``None``,
+            then ``0`` is used.
 
         Raises
         ------

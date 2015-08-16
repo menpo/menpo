@@ -8,6 +8,44 @@ from .base import Image, convert_patches_list_to_single_array
 
 def create_patches_image(patches, patch_centers, patches_indices=None,
                          offset_index=None):
+    r"""
+    Creates an :map:`Image` object in which the patches are located on the
+    correct regions based on the centers. Thus, the image is a block-sparse
+    matrix. It has also two attached :map:`LandmarkGroup` objects. The
+    `all_patch_centers` one contains all the patch centers, while the
+    `selected_patch_centers` one contains only the centers that correspond to
+    the patches that the user selected to set.
+
+    The patches argument can have any of the two formats that are returned
+    from the `extract_patches()` and `extract_patches_around_landmarks()`
+    methods of the :map:`Image` class. Specifically it can be:
+
+        1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+        2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+    Parameters
+    ----------
+    patches : `ndarray` or `list`
+        The values of the patches. It can have any of the two formats that are
+        returned from the `extract_patches()` and
+        `extract_patches_around_landmarks()` methods. Specifically, it can
+        either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+        `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image` objects.
+    patch_centers : :map:`PointCloud`
+        The centers to set the patches around.
+    patches_indices : `int` or `list` of `int` or ``None``, optional
+        Defines the patches that will be set (copied) to the image. If ``None``,
+        then all the patches are copied.
+    offset_index : `int` or ``None``, optional
+        The offset index within the provided `patches` argument, thus the index
+        of the second dimension from which to sample. If ``None``, then ``0`` is
+        used.
+
+    Returns
+    -------
+    patches_image : :map:`Image`
+        The output patches image object.
+    """
     # If patches is a list, convert it to array
     if isinstance(patches, list):
         patches = convert_patches_list_to_single_array(patches,
@@ -58,6 +96,45 @@ def render_rectangles_around_patches(centers, patch_shape, axes=None,
                                      image_view=True, line_colour='r',
                                      line_style='-', line_width=1,
                                      interpolation='none'):
+    r"""
+    Method that renders rectangles of the specified `patch_shape` centered
+    around all the points of the provided `centers`.
+
+    Parameters
+    ----------
+    centers : :map:`PointCloud`
+        The centers around which to draw the rectangles.
+    patch_shape : `tuple` or `ndarray`, optional
+        The size of the rectangle to render.
+    axes : `matplotlib.pyplot.axes` object or ``None``, optional
+        The axes object on which to render.
+    image_view : `bool`, optional
+        If ``True`` the rectangles will be viewed as if they are in the image
+        coordinate system.
+    line_colour : See Below, optional
+        The colour of the lines.
+        Example options::
+
+            {r, g, b, c, m, k, w}
+            or
+            (3, ) ndarray
+
+    line_style : ``{-, --, -., :}``, optional
+        The style of the lines.
+    line_width : `float`, optional
+        The width of the lines.
+    interpolation : See Below, optional
+        In case a patch-based image is already rendered on the specified axes,
+        this argument controls how tight the rectangles would be to the patches.
+        It needs to have the same value as the one used when rendering the
+        patches image, otherwise there is the danger that the rectangles won't
+        be exactly on the border of the patches. Example options ::
+
+            {none, nearest, bilinear, bicubic, spline16, spline36,
+            hanning, hamming, hermite, kaiser, quadric, catrom, gaussian,
+            bessel, mitchell, sinc, lanczos}
+
+    """
     import matplotlib.pyplot as plt
     from matplotlib.patches import Rectangle
 
@@ -104,12 +181,250 @@ def render_rectangles_around_patches(centers, patch_shape, axes=None,
 def view_patches(patches, patch_centers, patches_indices=None,
                  offset_index=None, figure_id=None, new_figure=False,
                  channels=None, interpolation='none', cmap_name=None, alpha=1.,
-                 render_patches_bboxes=True, bboxes_line_colour='b',
-                 bboxes_line_style='-', bboxes_line_width=1, render_axes=False,
-                 axes_font_name='sans-serif',  axes_font_size=10,
+                 render_patches_bboxes=True, bboxes_line_colour='r',
+                 bboxes_line_style='-', bboxes_line_width=1,
+                 render_centers=True, render_lines=True, line_colour=None,
+                 line_style='-', line_width=1, render_markers=True,
+                 marker_style='o', marker_size=20, marker_face_colour=None,
+                 marker_edge_colour=None, marker_edge_width=1.,
+                 render_numbering=False, numbers_horizontal_align='center',
+                 numbers_vertical_align='bottom',
+                 numbers_font_name='sans-serif', numbers_font_size=10,
+                 numbers_font_style='normal', numbers_font_weight='normal',
+                 numbers_font_colour='k', render_legend=False, legend_title='',
+                 legend_font_name='sans-serif', legend_font_style='normal',
+                 legend_font_size=10, legend_font_weight='normal',
+                 legend_marker_scale=None, legend_location=2,
+                 legend_bbox_to_anchor=(1.05, 1.), legend_border_axes_pad=None,
+                 legend_n_columns=1, legend_horizontal_spacing=None,
+                 legend_vertical_spacing=None, legend_border=True,
+                 legend_border_padding=None, legend_shadow=False,
+                 legend_rounded_corners=False, render_axes=False,
+                 axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
-    # If patches is a list, convert it to array
+    r"""
+    Method that renders the provided `patches` on a black canvas. The user can
+    choose whether to render the patch centers (`render_centers`) as well as
+    rectangle boundaries around the patches (`render_patches_bboxes`).
+
+    The patches argument can have any of the two formats that are returned
+    from the `extract_patches()` and `extract_patches_around_landmarks()`
+    methods of the :map:`Image` class. Specifically it can be:
+
+        1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+        2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+    Parameters
+    ----------
+    patches : `ndarray` or `list`
+        The values of the patches. It can have any of the two formats that are
+        returned from the `extract_patches()` and
+        `extract_patches_around_landmarks()` methods. Specifically, it can
+        either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+        `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image` objects.
+    patch_centers : :map:`PointCloud`
+        The centers around which to visualize the patches.
+    patches_indices : `int` or `list` of `int` or ``None``, optional
+        Defines the patches that will be visualized. If ``None``, then all the
+        patches are selected.
+    offset_index : `int` or ``None``, optional
+        The offset index within the provided `patches` argument, thus the index
+        of the second dimension from which to sample. If ``None``, then ``0`` is
+        used.
+    figure_id : `object`, optional
+        The id of the figure to be used.
+    new_figure : `bool`, optional
+        If ``True``, a new figure is created.
+    channels : `int` or `list` of `int` or ``all`` or ``None``, optional
+        If `int` or `list` of `int`, the specified channel(s) will be
+        rendered. If ``all``, all the channels will be rendered in subplots.
+        If ``None`` and the image is RGB, it will be rendered in RGB mode.
+        If ``None`` and the image is not RGB, it is equivalent to ``all``.
+    interpolation : See Below, optional
+        The interpolation used to render the image. For example, if
+        ``bilinear``, the image will be smooth and if ``nearest``, the
+        image will be pixelated. Example options ::
+
+            {none, nearest, bilinear, bicubic, spline16, spline36, hanning,
+            hamming, hermite, kaiser, quadric, catrom, gaussian, bessel,
+            mitchell, sinc, lanczos}
+
+    cmap_name: `str`, optional,
+        If ``None``, single channel and three channel images default
+        to greyscale and rgb colormaps respectively.
+    alpha : `float`, optional
+        The alpha blending value, between 0 (transparent) and 1 (opaque).
+    render_patches_bboxes : `bool`, optional
+        Flag that determines whether to render the bounding box lines around the
+        patches.
+    bboxes_line_colour : See Below, optional
+        The colour of the lines.
+        Example options::
+
+            {r, g, b, c, m, k, w}
+            or
+            (3, ) ndarray
+    bboxes_line_style : ``{-, --, -., :}``, optional
+        The style of the lines.
+    bboxes_line_width : `float`, optional
+        The width of the lines.
+    render_centers : `bool`, optional
+        Flag that determines whether to render the patch centers.
+    render_lines : `bool`, optional
+        If ``True``, the edges will be rendered.
+    line_colour : See Below, optional
+        The colour of the lines.
+        Example options::
+
+            {r, g, b, c, m, k, w}
+            or
+            (3, ) ndarray
+
+    line_style : ``{-, --, -., :}``, optional
+        The style of the lines.
+    line_width : `float`, optional
+        The width of the lines.
+    render_markers : `bool`, optional
+        If ``True``, the markers will be rendered.
+    marker_style : See Below, optional
+        The style of the markers. Example options ::
+
+            {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
+    marker_size : `int`, optional
+        The size of the markers in points^2.
+    marker_face_colour : See Below, optional
+        The face (filling) colour of the markers.
+        Example options ::
+
+            {r, g, b, c, m, k, w}
+            or
+            (3, ) ndarray
+
+    marker_edge_colour : See Below, optional
+        The edge colour of the markers.
+        Example options ::
+
+            {r, g, b, c, m, k, w}
+            or
+            (3, ) ndarray
+
+    marker_edge_width : `float`, optional
+        The width of the markers' edge.
+    render_numbering : `bool`, optional
+        If ``True``, the landmarks will be numbered.
+    numbers_horizontal_align : ``{center, right, left}``, optional
+        The horizontal alignment of the numbers' texts.
+    numbers_vertical_align : ``{center, top, bottom, baseline}``, optional
+        The vertical alignment of the numbers' texts.
+    numbers_font_name : See Below, optional
+        The font of the numbers. Example options ::
+
+            {serif, sans-serif, cursive, fantasy, monospace}
+
+    numbers_font_size : `int`, optional
+        The font size of the numbers.
+    numbers_font_style : ``{normal, italic, oblique}``, optional
+        The font style of the numbers.
+    numbers_font_weight : See Below, optional
+        The font weight of the numbers.
+        Example options ::
+
+            {ultralight, light, normal, regular, book, medium, roman,
+            semibold, demibold, demi, bold, heavy, extra bold, black}
+
+    numbers_font_colour : See Below, optional
+        The font colour of the numbers.
+        Example options ::
+
+            {r, g, b, c, m, k, w}
+            or
+            (3, ) ndarray
+
+    render_legend : `bool`, optional
+        If ``True``, the legend will be rendered.
+    legend_title : `str`, optional
+        The title of the legend.
+    legend_font_name : See below, optional
+        The font of the legend. Example options ::
+
+            {serif, sans-serif, cursive, fantasy, monospace}
+
+    legend_font_style : ``{normal, italic, oblique}``, optional
+        The font style of the legend.
+    legend_font_size : `int`, optional
+        The font size of the legend.
+    legend_font_weight : See Below, optional
+        The font weight of the legend.
+        Example options ::
+
+            {ultralight, light, normal, regular, book, medium, roman,
+            semibold, demibold, demi, bold, heavy, extra bold, black}
+
+    legend_marker_scale : `float`, optional
+        The relative size of the legend markers with respect to the original
+    legend_location : `int`, optional
+        The location of the legend. The predefined values are:
+
+        =============== ==
+        'best'          0
+        'upper right'   1
+        'upper left'    2
+        'lower left'    3
+        'lower right'   4
+        'right'         5
+        'center left'   6
+        'center right'  7
+        'lower center'  8
+        'upper center'  9
+        'center'        10
+        =============== ==
+
+    legend_bbox_to_anchor : (`float`, `float`) `tuple`, optional
+        The bbox that the legend will be anchored.
+    legend_border_axes_pad : `float`, optional
+        The pad between the axes and legend border.
+    legend_n_columns : `int`, optional
+        The number of the legend's columns.
+    legend_horizontal_spacing : `float`, optional
+        The spacing between the columns.
+    legend_vertical_spacing : `float`, optional
+        The vertical space between the legend entries.
+    legend_border : `bool`, optional
+        If ``True``, a frame will be drawn around the legend.
+    legend_border_padding : `float`, optional
+        The fractional whitespace inside the legend border.
+    legend_shadow : `bool`, optional
+        If ``True``, a shadow will be drawn behind legend.
+    legend_rounded_corners : `bool`, optional
+        If ``True``, the frame's corners will be rounded (fancybox).
+    render_axes : `bool`, optional
+        If ``True``, the axes will be rendered.
+    axes_font_name : See Below, optional
+        The font of the axes. Example options ::
+
+            {serif, sans-serif, cursive, fantasy, monospace}
+
+    axes_font_size : `int`, optional
+        The font size of the axes.
+    axes_font_style : ``{normal, italic, oblique}``, optional
+        The font style of the axes.
+    axes_font_weight : See Below, optional
+        The font weight of the axes.
+        Example options ::
+
+            {ultralight, light, normal, regular, book, medium, roman,
+            semibold,demibold, demi, bold, heavy, extra bold, black}
+
+    axes_x_limits : (`float`, `float`) `tuple` or ``None`` optional
+        The limits of the x axis.
+    axes_y_limits : (`float`, `float`) `tuple` or ``None`` optional
+        The limits of the y axis.
+    figure_size : (`float`, `float`) `tuple` or ``None`` optional
+        The size of the figure in inches.
+    """
+    # If patches is a list, convert it to an array
     if isinstance(patches, list):
         patches = convert_patches_list_to_single_array(patches,
                                                        patch_centers.n_points)
@@ -120,105 +435,53 @@ def view_patches(patches, patch_centers, patches_indices=None,
                                          offset_index=offset_index)
 
     # Render patches image
-    patches_image.view(figure_id=figure_id, new_figure=new_figure,
-                       channels=channels, interpolation=interpolation,
-                       cmap_name=cmap_name, alpha=alpha,
-                       render_axes=render_axes, axes_font_name=axes_font_name,
-                       axes_font_size=axes_font_size,
-                       axes_font_style=axes_font_style,
-                       axes_font_weight=axes_font_weight,
-                       axes_x_limits=axes_x_limits,
-                       axes_y_limits=axes_y_limits, figure_size=figure_size)
-
-    # Render rectangles around patches
-    if render_patches_bboxes:
-        patch_shape = [patches.shape[3], patches.shape[4]]
-        render_rectangles_around_patches(
-            patches_image.landmarks['selected_patch_centers'].lms.points,
-            patch_shape, image_view=True, line_colour=bboxes_line_colour,
-            line_style=bboxes_line_style, line_width=bboxes_line_width,
-            interpolation=interpolation)
-
-
-def view_patches_with_landmarks(patches, patch_centers, patches_indices=None,
-                                offset_index=None, figure_id=None,
-                                new_figure=False, channels=None,
-                                interpolation='none', cmap_name=None, alpha=1.,
-                                render_patches_bboxes=True,
-                                bboxes_line_colour='r', bboxes_line_style='-',
-                                bboxes_line_width=1, render_lines=True,
-                                line_colour=None, line_style='-', line_width=1,
-                                render_markers=True, marker_style='o',
-                                marker_size=20, marker_face_colour=None,
-                                marker_edge_colour=None, marker_edge_width=1.,
-                                render_numbering=False,
-                                numbers_horizontal_align='center',
-                                numbers_vertical_align='bottom',
-                                numbers_font_name='sans-serif',
-                                numbers_font_size=10,
-                                numbers_font_style='normal',
-                                numbers_font_weight='normal',
-                                numbers_font_colour='k', render_legend=False,
-                                legend_title='', legend_font_name='sans-serif',
-                                legend_font_style='normal', legend_font_size=10,
-                                legend_font_weight='normal',
-                                legend_marker_scale=None, legend_location=2,
-                                legend_bbox_to_anchor=(1.05, 1.),
-                                legend_border_axes_pad=None, legend_n_columns=1,
-                                legend_horizontal_spacing=None,
-                                legend_vertical_spacing=None,
-                                legend_border=True,
-                                legend_border_padding=None, legend_shadow=False,
-                                legend_rounded_corners=False, render_axes=False,
-                                axes_font_name='sans-serif', axes_font_size=10,
-                                axes_font_style='normal',
-                                axes_font_weight='normal', axes_x_limits=None,
-                                axes_y_limits=None, figure_size=(10, 8)):
-    # If patches is a list, convert it to array
-    if isinstance(patches, list):
-        patches = convert_patches_list_to_single_array(patches,
-                                                       patch_centers.n_points)
-
-    # Create patches image
-    patches_image = create_patches_image(patches, patch_centers,
-                                         patches_indices=patches_indices,
-                                         offset_index=offset_index)
-
-    # Render patches image
-    patches_image.view_landmarks(
-        channels=channels, group='all_patch_centers', figure_id=figure_id,
-        new_figure=new_figure, interpolation=interpolation, cmap_name=cmap_name,
-        alpha=alpha, render_lines=render_lines, line_colour=line_colour,
-        line_style=line_style, line_width=line_width,
-        render_markers=render_markers, marker_style=marker_style,
-        marker_size=marker_size, marker_face_colour=marker_face_colour,
-        marker_edge_colour=marker_edge_colour,
-        marker_edge_width=marker_edge_width, render_numbering=render_numbering,
-        numbers_horizontal_align=numbers_horizontal_align,
-        numbers_vertical_align=numbers_vertical_align,
-        numbers_font_name=numbers_font_name,
-        numbers_font_size=numbers_font_size,
-        numbers_font_style=numbers_font_style,
-        numbers_font_weight=numbers_font_weight,
-        numbers_font_colour=numbers_font_colour, render_legend=render_legend,
-        legend_title=legend_title, legend_font_name=legend_font_name,
-        legend_font_style=legend_font_style, legend_font_size=legend_font_size,
-        legend_font_weight=legend_font_weight,
-        legend_marker_scale=legend_marker_scale,
-        legend_location=legend_location,
-        legend_bbox_to_anchor=legend_bbox_to_anchor,
-        legend_border_axes_pad=legend_border_axes_pad,
-        legend_n_columns=legend_n_columns,
-        legend_horizontal_spacing=legend_horizontal_spacing,
-        legend_vertical_spacing=legend_vertical_spacing,
-        legend_border=legend_border,
-        legend_border_padding=legend_border_padding,
-        legend_shadow=legend_shadow,
-        legend_rounded_corners=legend_rounded_corners, render_axes=render_axes,
-        axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-        axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-        axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-        figure_size=figure_size)
+    if render_centers:
+        patches_image.view_landmarks(
+            channels=channels, group='all_patch_centers', figure_id=figure_id,
+            new_figure=new_figure, interpolation=interpolation,
+            cmap_name=cmap_name, alpha=alpha, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_legend=render_legend, legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=figure_size)
+    else:
+        patches_image.view(
+            figure_id=figure_id, new_figure=new_figure, channels=channels,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=figure_size)
 
     # Render rectangles around patches
     if render_patches_bboxes:
