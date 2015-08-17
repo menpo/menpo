@@ -6288,12 +6288,19 @@ def _parse_command(cmd, length):
     cmd = cmd.replace("]", "")
 
     # cmd has the form of "range(1, 10, 2)" or "range(10)"
-    if cmd.startswith("range(") and cmd.endswith(")"):
-        cmd = cmd[6:-1]
-        if cmd.count(",") > 0:
-            cmd = cmd.replace(",", ":")
+    if cmd.startswith("range("):
+        if cmd.endswith(")"):
+            cmd = cmd[6:-1]
+            if cmd.count(",") > 0:
+                cmd = cmd.replace(",", ":")
+            else:
+                cmd = "0:" + cmd
         else:
-            cmd = "0:" + cmd
+            raise ValueError("Wrong command.")
+
+    # empty command
+    if cmd == "":
+        return []
 
     # get number of ':' and number of ','
     n_colon = cmd.count(":")
@@ -6318,8 +6325,354 @@ def _parse_command(cmd, length):
                 raise ValueError("Command cannot contain numbers greater "
                                  "than {}.".format(length))
             else:
-                 return n
-    elif len(cmd) == 0:
-        return []
+                return [n]
+        else:
+            raise ValueError("Wrong command.")
     else:
         raise ValueError("Wrong command.")
+
+
+def list_has_constant_step(l):
+    r"""
+    Function that checks if a list of integers has a constant step between them
+    and returns the step.
+
+    Parameters
+    ----------
+    l : `list`
+        The list to check.
+
+    Returns
+    -------
+    has_constant_step : `bool`
+        ``True`` if the `list` elements have a constant step between them.
+    step : `int`
+        The step value. ``None`` if `has_constant_step` is ``False``.
+    """
+    if len(l) == 1:
+        return False, None
+    step = l[1] - l[0]
+    s = step
+    i = 2
+    while s == step and i < len(l):
+        s = l[i] - l[i - 1]
+        i += 1
+    if i == len(l) and s == step:
+        return True, step
+    else:
+        return False, None
+
+
+class SlicingCommandWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting a slicing command. Specifically, it consists
+    of:
+
+        1) Text [`self.cmd_text`]: the command text
+        2) Latex [`self.example`]: explains what kind of commands are accepted
+        3) Latex [`self.error_msg`]: error message text
+        4) IntSlider [`self.single_slider`]: slider for selecting single indices
+        5) IntRangeSlider [`self.multiple_slider`]: slider for index range
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `replace_render_function()` methods.
+
+    Parameters
+    ----------
+    slice_cmd : `dict`
+        The initial slicing options. Example ::
+
+            slice_cmd = {'cmd': '::3',
+                         'length': 68}
+
+    description : `str`, optional
+        The description of the command text box.
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    """
+    def __init__(self, slice_cmd, description='Command:', render_function=None):
+        # Create command text widget
+        self.cmd_text = ipywidgets.Text(value=slice_cmd['cmd'],
+                                        description=description)
+
+        # Assign output
+        self.selected_values = slice_cmd
+        slice_cmd['cmd'] = _parse_command(slice_cmd['cmd'], slice_cmd['length'])
+
+        # Create the rest of the widgets
+        self.example = ipywidgets.Latex(
+            value="e.g. ':3', '-3:', '1:{}:2', '3::', '0, {}', '7', "
+                  "'range({})' etc.".format(slice_cmd['length'],
+                                            slice_cmd['length'],
+                                            slice_cmd['length']),
+            font_size=11, font_style='italic')
+        self.error_msg = ipywidgets.Latex(value='', font_weight='bold',
+                                          font_style='italic', color='#FF0000')
+        self.single_slider = ipywidgets.IntSlider(
+            min=0, max=slice_cmd['length']-1, value=0, width='6.8cm',
+            visible=self._single_slider_visible())
+        self.multiple_slider = ipywidgets.IntRangeSlider(
+            min=0, max=slice_cmd['length']-1, value=(0, 1), width='6.8cm',
+            visible=self._multiple_slider_visible()[0])
+        super(SlicingCommandWidget, self).__init__(
+            children=[self.cmd_text, self.example, self.error_msg,
+                      self.single_slider, self.multiple_slider])
+        self.orientation = 'vertical'
+        self.align = 'end'
+
+        # Set functionality
+        def save_cmd(name):
+            self.error_msg.value = ''
+            try:
+                self.selected_values['cmd'] = _parse_command(
+                    str(self.cmd_text.value), self.selected_values['length'])
+            except ValueError as e:
+                if e.message == "Command contains more than two ':'.":
+                    self.error_msg.value = "Error! More than 2 ':'"
+                elif e.message == "Wrong command.":
+                    self.error_msg.value = "Error! Wrong command"
+                elif e.message == "Command must contain positive or " \
+                                  "negative integers.":
+                    self.error_msg.value = "Error! Only positive or negative " \
+                                           "integers"
+                elif e.message == "Command cannot start or end with ','.":
+                    self.error_msg.value = "Error! ',' at start or end"
+                elif e.message == "Command cannot contain numbers greater " \
+                                  "than {}.".format(
+                        self.selected_values['length']):
+                    self.error_msg.value = "Error! Number > {}".format(
+                        self.selected_values['length'])
+                else:
+                    self.error_latex.value = e.message
+
+            # set single slider visibility and value
+            self.single_slider.visible = self._single_slider_visible()
+            if self._single_slider_visible():
+                self.single_slider.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+                self.single_slider.value = self.selected_values['cmd'][0]
+                self.single_slider.on_trait_change(self._render_function,
+                                                   'value')
+
+            # set multiple slider visibility and value
+            vis, step = self._multiple_slider_visible()
+            self.multiple_slider.visible = vis
+            if vis:
+                self.multiple_slider.step = step
+                self.multiple_slider.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+                self.multiple_slider.value = (self.selected_values['cmd'][0],
+                                              self.selected_values['cmd'][-1])
+                self.multiple_slider.on_trait_change(self._render_function,
+                                                     'value')
+        self.cmd_text.on_submit(save_cmd)
+
+        def single_slider_value(name, value):
+            self.selected_values['cmd'] = [value]
+            self.cmd_text.value = str(value)
+        self.single_slider.on_trait_change(single_slider_value, 'value')
+
+        def multiple_slider_value(name, value):
+            self.selected_values['cmd'] = range(value[0], value[1]+1,
+                                                self.multiple_slider.step)
+            self.cmd_text.value = "{}:{}:{}".format(value[0], value[1]+1,
+                                                    self.multiple_slider.step)
+        self.multiple_slider.on_trait_change(multiple_slider_value, 'value')
+
+        # Set render function
+        self._render_function = None
+        self._render_function_2 = None
+        self.add_render_function(render_function)
+
+    def _single_slider_visible(self):
+        return len(self.selected_values['cmd']) == 1
+
+    def _multiple_slider_visible(self):
+        return list_has_constant_step(self.selected_values['cmd'])
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            def render_function_2(name):
+                self._render_function(name, '')
+
+            self._render_function_2 = render_function_2
+
+            self.cmd_text.on_submit(self._render_function_2)
+            self.single_slider.on_trait_change(self._render_function, 'value')
+            self.multiple_slider.on_trait_change(self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.cmd_text.on_submit(self._render_function_2, remove=True)
+        self.single_slider.on_trait_change(self._render_function, 'value',
+                                           remove=True)
+        self.multiple_slider.on_trait_change(self._render_function, 'value',
+                                             remove=True)
+        self._render_function = None
+        self._render_function_2 = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def set_widget_state(self, slice_cmd, allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+
+        Parameters
+        ----------
+        slice_cmd : `dict`
+            The initial slicing options. Example ::
+
+                slice_cmd = {'cmd': '10',
+                             'length': 30}
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Assign new options dict to selected_values
+        cmd_str = slice_cmd['cmd']
+        slice_cmd['cmd'] = _parse_command(slice_cmd['cmd'], slice_cmd['length'])
+        self.selected_values = slice_cmd
+
+        # update single slider
+        self.single_slider.visible = self._single_slider_visible()
+        self.single_slider.max = self.selected_values['length'] - 1
+        if self._single_slider_visible():
+            self.single_slider.on_trait_change(self._render_function, 'value',
+                                               remove=True)
+            self.single_slider.value = self.selected_values['cmd'][0]
+            self.single_slider.on_trait_change(self._render_function, 'value')
+
+        # update multiple slider
+        vis, step = self._multiple_slider_visible()
+        self.multiple_slider.visible = vis
+        self.multiple_slider.max = self.selected_values['length'] - 1
+        if vis:
+            self.multiple_slider.step = step
+            self.multiple_slider.on_trait_change(self._render_function, 'value',
+                                                 remove=True)
+            self.multiple_slider.value = (self.selected_values['cmd'][0],
+                                          self.selected_values['cmd'][-1])
+            self.multiple_slider.on_trait_change(self._render_function, 'value')
+
+        # update command text
+        self.cmd_text.value = cmd_str
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', 0)
+
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, text_box_style=None, text_box_background_color=None,
+              text_box_width=None, font_family='', font_size=None,
+              font_style='', font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        text_box_style : `str` or ``None`` (see below), optional
+            Command text box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        text_box_background_color : `str`, optional
+            The background color of the command text box.
+        text_box_width : `str`, optional
+            The width of the command text box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.cmd_text, font_family, font_size, font_style,
+                     font_weight)
+        self.cmd_text.color = _map_styles_to_hex_colours(text_box_style)
+        self.cmd_text.background_color = _map_styles_to_hex_colours(
+            text_box_background_color, background=True)
+        self.cmd_text.border_color = _map_styles_to_hex_colours(text_box_style)
+        self.cmd_text.font_family = 'monospace'
+        self.cmd_text.border_width = 1
+        self.cmd_text.width = text_box_width
+        self.single_slider.slider_color = _map_styles_to_hex_colours(
+            box_style, background=False)
+        self.single_slider.background_color = _map_styles_to_hex_colours(
+            box_style, background=False)
+        self.multiple_slider.slider_color = _map_styles_to_hex_colours(
+            box_style, background=False)
+        self.multiple_slider.background_color = _map_styles_to_hex_colours(
+            box_style, background=False)
