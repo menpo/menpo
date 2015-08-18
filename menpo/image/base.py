@@ -1186,7 +1186,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         same grid of patches around the landmarks.
 
         If sample offsets are used, to access the offsets for each patch you
-        need to slice the resulting list. So for 2 offsets, the first centers
+        need to slice the resulting `list`. So for 2 offsets, the first centers
         offset patches would be ``patches[:2]``.
 
         Currently only 2D images are supported.
@@ -1195,12 +1195,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ----------
         patch_centers : :map:`PointCloud`
             The centers to extract patches around.
-        patch_size : `tuple` or `ndarray`, optional
+        patch_size : ``(1, n_dims)`` `tuple` or `ndarray`, optional
             The size of the patch to extract
-        sample_offsets : :map:`PointCloud`, optional
-            The offsets to sample from within a patch. So (0, 0) is the centre
-            of the patch (no offset) and (1, 0) would be sampling the patch
-            from 1 pixel up the first axis away from the centre.
+        sample_offsets : ``(n_offsets, n_dims)`` `ndarray` or ``None``, optional
+            The offsets to sample from within a patch. So ``(0, 0)`` is the
+            centre of the patch (no offset) and ``(1, 0)`` would be sampling the
+            patch from 1 pixel up the first axis away from the centre.
+            If ``None``, then no offsets are applied.
         as_single_array : `bool`, optional
             If ``True``, an ``(n_center * n_offset, self.shape...)``
             `ndarray`, thus a single numpy array is returned containing each
@@ -1224,14 +1225,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                              'currently supported.')
 
         if sample_offsets is None:
-            sample_offsets_arr = np.zeros([1, 2], dtype=np.intp)
+            sample_offsets = np.zeros([1, 2], dtype=np.intp)
         else:
-            sample_offsets_arr = np.require(sample_offsets.points,
-                                            dtype=np.intp)
+            sample_offsets = np.require(sample_offsets, dtype=np.intp)
 
         single_array = extract_patches(self.pixels, patch_centers.points,
                                        np.asarray(patch_size, dtype=np.intp),
-                                       sample_offsets_arr)
+                                       sample_offsets)
 
         if as_single_array:
             return single_array
@@ -1251,16 +1251,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         Parameters
         ----------
-        group : `str` or ``None`` optional
+        group : `str` or ``None``, optional
             The landmark group to use as patch centres.
-        label : `str` or ``None`` optional
+        label : `str` or ``None``, optional
             The landmark label within the group to use as centres.
         patch_size : `tuple` or `ndarray`, optional
             The size of the patch to extract
-        sample_offsets : :map:`PointCloud`, optional
-            The offsets to sample from within a patch. So (0,0) is the centre
-            of the patch (no offset) and (1, 0) would be sampling the patch
-            from 1 pixel up the first axis away from the centre.
+        sample_offsets : ``(n_offsets, n_dims)`` `ndarray` or ``None``, optional
+            The offsets to sample from within a patch. So ``(0, 0)`` is the
+            centre of the patch (no offset) and ``(1, 0)`` would be sampling the
+            patch from 1 pixel up the first axis away from the centre.
+            If ``None``, then no offsets are applied.
         as_single_array : `bool`, optional
             If ``True``, an ``(n_center * n_offset, self.shape...)``
             `ndarray`, thus a single numpy array is returned containing each
