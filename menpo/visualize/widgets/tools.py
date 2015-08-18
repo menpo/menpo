@@ -3,7 +3,7 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-import IPython.html.widgets as ipywidgets
+import ipywidgets
 
 # Global variables to try and reduce overhead of loading the logo
 MENPO_MINIMAL_LOGO = None
@@ -320,7 +320,7 @@ class IndexSliderWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', slider_width='6cm', slider_colour=''):
+              font_weight='', slider_width='6cm', slider_colour=None):
         r"""
         Function that defines the styling of the widget.
 
@@ -1023,8 +1023,9 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', label_background_colour='',
-              colour_background_colour='', rgb_text_background_colour='',
+              font_weight='', label_background_colour=None,
+              colour_background_colour=None,
+              rgb_text_background_colour=None,
               apply_to_all_style=''):
         r"""
         Function that defines the styling of the widget.
@@ -1371,7 +1372,7 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', alpha_colour='', cmap_colour=''):
+              font_weight='', alpha_colour=None, cmap_colour=None):
         r"""
         Function that defines the styling of the widget.
 
@@ -1685,8 +1686,8 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         self.line_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            label_background_colour='', colour_background_colour='',
-            rgb_text_background_colour='', apply_to_all_style='')
+            label_background_colour=None, colour_background_colour=None,
+            rgb_text_background_colour=None, apply_to_all_style='')
 
     def add_render_function(self, render_function):
         r"""
@@ -1996,13 +1997,13 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         self.marker_edge_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            label_background_colour='', colour_background_colour='',
-            rgb_text_background_colour='', apply_to_all_style='')
+            label_background_colour=None, colour_background_colour=None,
+            rgb_text_background_colour=None, apply_to_all_style='')
         self.marker_face_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            label_background_colour='', colour_background_colour='',
-            rgb_text_background_colour='', apply_to_all_style='')
+            label_background_colour=None, colour_background_colour=None,
+            rgb_text_background_colour=None, apply_to_all_style='')
 
     def add_render_function(self, render_function):
         r"""
@@ -2391,8 +2392,8 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         self.numbers_font_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            label_background_colour='', colour_background_colour='',
-            rgb_text_background_colour='', apply_to_all_style='')
+            label_background_colour=None, colour_background_colour=None,
+            rgb_text_background_colour=None, apply_to_all_style='')
 
     def add_render_function(self, render_function):
         r"""
