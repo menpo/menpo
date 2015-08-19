@@ -5990,17 +5990,17 @@ class IGOOptionsWidget(ipywidgets.FlexBox):
         self.add_render_function(render_function)
 
 
-def _str_is_int(cmd):
+def _str_is_int(s):
     r"""
     Function that returns ``True`` if a given `str` is a positive or negative
     integer.
 
     Parameters
     ----------
-    cmd : `str`
+    s : `str`
         The command string.
     """
-    return cmd.isdigit() or (cmd.startswith('-') and cmd[1:].isdigit())
+    return s.isdigit() or (s.startswith('-') and s[1:].isdigit())
 
 
 def _parse_command_with_comma(cmd, length):
@@ -6349,7 +6349,7 @@ def list_has_constant_step(l):
     step : `int`
         The step value. ``None`` if `has_constant_step` is ``False``.
     """
-    if len(l) == 1:
+    if len(l) <= 1:
         return False, None
     step = l[1] - l[0]
     s = step
@@ -6384,7 +6384,8 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
     slice_cmd : `dict`
         The initial slicing options. Example ::
 
-            slice_cmd = {'cmd': '::3',
+            slice_cmd = {'indices': [0, 1, 2],
+                         'command': ':3',
                          'length': 68}
 
     description : `str`, optional
@@ -6395,12 +6396,13 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
     """
     def __init__(self, slice_cmd, description='Command:', render_function=None):
         # Create command text widget
-        self.cmd_text = ipywidgets.Text(value=slice_cmd['cmd'],
+        slice_cmd['indices'] = _parse_command(slice_cmd['command'],
+                                              slice_cmd['length'])
+        self.cmd_text = ipywidgets.Text(value=slice_cmd['command'],
                                         description=description)
 
         # Assign output
         self.selected_values = slice_cmd
-        slice_cmd['cmd'] = _parse_command(slice_cmd['cmd'], slice_cmd['length'])
 
         # Create the rest of the widgets
         self.example = ipywidgets.Latex(
@@ -6409,8 +6411,8 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
                                             slice_cmd['length'],
                                             slice_cmd['length']),
             font_size=11, font_style='italic')
-        self.error_msg = ipywidgets.Latex(value='', font_weight='bold',
-                                          font_style='italic', color='#FF0000')
+        self.error_msg = ipywidgets.Latex(value='', font_style='italic',
+                                          color='#FF0000')
         self.single_slider = ipywidgets.IntSlider(
             min=0, max=slice_cmd['length']-1, value=0, width='6.8cm',
             visible=self._single_slider_visible())
@@ -6427,7 +6429,8 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
         def save_cmd(name):
             self.error_msg.value = ''
             try:
-                self.selected_values['cmd'] = _parse_command(
+                self.selected_values['command'] = str(self.cmd_text.value)
+                self.selected_values['indices'] = _parse_command(
                     str(self.cmd_text.value), self.selected_values['length'])
             except ValueError as e:
                 if e.message == "Command contains more than two ':'.":
@@ -6453,7 +6456,7 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
             if self._single_slider_visible():
                 self.single_slider.on_trait_change(self._render_function,
                                                    'value', remove=True)
-                self.single_slider.value = self.selected_values['cmd'][0]
+                self.single_slider.value = self.selected_values['indices'][0]
                 self.single_slider.on_trait_change(self._render_function,
                                                    'value')
 
@@ -6464,22 +6467,25 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
                 self.multiple_slider.step = step
                 self.multiple_slider.on_trait_change(self._render_function,
                                                      'value', remove=True)
-                self.multiple_slider.value = (self.selected_values['cmd'][0],
-                                              self.selected_values['cmd'][-1])
+                self.multiple_slider.value = (
+                    self.selected_values['indices'][0],
+                    self.selected_values['indices'][-1])
                 self.multiple_slider.on_trait_change(self._render_function,
                                                      'value')
         self.cmd_text.on_submit(save_cmd)
 
         def single_slider_value(name, value):
-            self.selected_values['cmd'] = [value]
+            self.selected_values['indices'] = [value]
             self.cmd_text.value = str(value)
+            self.selected_values['command'] = str(value)
         self.single_slider.on_trait_change(single_slider_value, 'value')
 
         def multiple_slider_value(name, value):
-            self.selected_values['cmd'] = range(value[0], value[1]+1,
-                                                self.multiple_slider.step)
+            self.selected_values['indices'] = range(value[0], value[1]+1,
+                                                    self.multiple_slider.step)
             self.cmd_text.value = "{}:{}:{}".format(value[0], value[1]+1,
                                                     self.multiple_slider.step)
+            self.selected_values['command'] = str(self.cmd_text.value)
         self.multiple_slider.on_trait_change(multiple_slider_value, 'value')
 
         # Set render function
@@ -6488,10 +6494,10 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
         self.add_render_function(render_function)
 
     def _single_slider_visible(self):
-        return len(self.selected_values['cmd']) == 1
+        return len(self.selected_values['indices']) == 1
 
     def _multiple_slider_visible(self):
-        return list_has_constant_step(self.selected_values['cmd'])
+        return list_has_constant_step(self.selected_values['indices'])
 
     def add_render_function(self, render_function):
         r"""
@@ -6554,15 +6560,16 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
         slice_cmd : `dict`
             The initial slicing options. Example ::
 
-                slice_cmd = {'cmd': '10',
+                slice_cmd = {'indices': [10],
+                             'command': '10',
                              'length': 30}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        cmd_str = slice_cmd['cmd']
-        slice_cmd['cmd'] = _parse_command(slice_cmd['cmd'], slice_cmd['length'])
+        slice_cmd['indices'] = _parse_command(slice_cmd['command'],
+                                              slice_cmd['length'])
         self.selected_values = slice_cmd
 
         # update single slider
@@ -6571,7 +6578,7 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
         if self._single_slider_visible():
             self.single_slider.on_trait_change(self._render_function, 'value',
                                                remove=True)
-            self.single_slider.value = self.selected_values['cmd'][0]
+            self.single_slider.value = self.selected_values['indices'][0]
             self.single_slider.on_trait_change(self._render_function, 'value')
 
         # update multiple slider
@@ -6582,12 +6589,12 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
             self.multiple_slider.step = step
             self.multiple_slider.on_trait_change(self._render_function, 'value',
                                                  remove=True)
-            self.multiple_slider.value = (self.selected_values['cmd'][0],
-                                          self.selected_values['cmd'][-1])
+            self.multiple_slider.value = (self.selected_values['indices'][0],
+                                          self.selected_values['indices'][-1])
             self.multiple_slider.on_trait_change(self._render_function, 'value')
 
         # update command text
-        self.cmd_text.value = cmd_str
+        self.cmd_text.value = slice_cmd['command']
 
         # trigger render function if allowed
         if allow_callback:

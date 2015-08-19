@@ -4,4 +4,5 @@ from .base import (visualize_pointclouds, visualize_landmarkgroups,
 from .options import (AnimationOptionsWidget, ChannelOptionsWidget,
                       LandmarkOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, RendererOptionsWidget,
-                      FeatureOptionsWidget, GraphOptionsWidget)
+                      FeatureOptionsWidget, GraphOptionsWidget,
+                      PatchOptionsWidget)
