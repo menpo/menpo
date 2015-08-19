@@ -2,7 +2,7 @@ import numpy as np
 from collections import Sized
 from matplotlib.pyplot import show as pltshow
 
-import IPython.html.widgets as ipywidgets
+import ipywidgets
 import IPython.display as ipydisplay
 
 from menpo.visualize.viewmatplotlib import (MatplotlibImageViewer2d,
