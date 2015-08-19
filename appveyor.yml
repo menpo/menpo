@@ -21,9 +21,9 @@ init:
 - cmd: python C:\\condaci.py setup
 
 install:
-- ps: $env:APPV_MINICONDA_DIR = python C:\condaci.py miniconda_dir; echo $env:APPV_MINICONDA_DIR
-- ps: $env:APPV_MINICONDA_EXE = $env:APPV_MINICONDA_DIR + "\python.exe"; echo $env:APPV_MINICONDA_EXE
-- ps: invoke-expression -command "$env:APPV_MINICONDA_EXE C:\condaci.py build conda"
+- cmd: "set tmp_cmd=python C:\\condaci.py miniconda_dir && FOR /F %i IN (' %tmp_cmd% ') DO SET APPV_MINICONDA_DIR=%i"
+- cmd: set APPV_MINICONDA_EXE="%APPV_MINICONDA_DIR%\python.exe"
+- cmd: "%APPV_MINICONDA_EXE% C:\\condaci.py build conda"
 
 notifications:
   - provider: Slack
