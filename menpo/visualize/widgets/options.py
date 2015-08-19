@@ -2,8 +2,8 @@ from collections import OrderedDict
 from functools import partial
 import numpy as np
 
-import IPython.html.widgets as ipywidgets
-from IPython.utils.traitlets import link
+import ipywidgets
+from traitlets import link
 
 from .tools import (_format_box, _format_font, _convert_image_to_bytes,
                     IndexButtonsWidget, IndexSliderWidget, LineOptionsWidget,
@@ -360,7 +360,7 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', slider_width='', slider_colour=''):
+              font_weight='', slider_width='', slider_colour=None):
         r"""
         Function that defines the styling of the widget.
 
@@ -1908,10 +1908,10 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
                 self.index_wid.button_plus.font_weight = 'normal'
                 self.index_wid.button_minus.button_style = ''
                 self.index_wid.button_minus.font_weight = 'normal'
-                self.index_wid.index_text.background_color = ''
+                self.index_wid.index_text.background_color = None
             elif self.index_style == 'slider':
-                self.index_wid.slider.slider_color = ''
-                self.index_wid.slider.background_color = ''
+                self.index_wid.slider.slider_color = None
+                self.index_wid.slider.background_color = None
             self._toggle_play_style = ''
             self._toggle_stop_style = ''
         elif (style == 'info' or style == 'success' or style == 'danger' or

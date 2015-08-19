@@ -23,7 +23,8 @@ requirements:
     # Convenience dependencies (not strictly required)
     - mock 1.0.1
     - nose
-    - ipython-notebook 3.*
+    - ipython 4.*
+    - jupyter 1.*
 
 test:
   requires:
