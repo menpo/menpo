@@ -21,8 +21,8 @@ init:
 - cmd: python C:\\condaci.py setup
 
 install:
-- ps: "python" "C:\condaci.py" "miniconda_dir" | Tee-Object -Variable APPV_MINICONDA_DIR
-- cmd: "%APPV_MINICONDA_DIR%\python.exe" C:\\condaci.py build ./conda
+- ps: "python C:\\condaci.py miniconda_dir | Tee-Object -Variable APPV_MINICONDA_DIR"
+- cmd: "%APPV_MINICONDA_DIR%\\python.exe C:\\condaci.py build ./conda"
 
 notifications:
   - provider: Slack
