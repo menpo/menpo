@@ -4379,23 +4379,23 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
     By playing around with the widget, printed message gets updated. Finally,
     let's change the widget status with a new dictionary of options:
 
-        >>> patch_options = {'patches' : {'command' : '',
-        >>>                               'indices' : [],
-        >>>                               'length' : 68},
-        >>>                  'offset_index' : 0,
-        >>>                  'n_offsets' : 5,
-        >>>                  'bboxes' : {'render_lines' : True,
-        >>>                              'line_colour' : ['r'],
-        >>>                              'line_style' : '-',
-        >>>                              'line_width' : 1}
-        >>>                 }
+        >>> new_options = {'patches' : {'command' : '',
+        >>>                             'indices' : [],
+        >>>                             'length' : 68},
+        >>>                'offset_index' : 0,
+        >>>                'n_offsets' : 5,
+        >>>                'bboxes' : {'render_lines' : True,
+        >>>                            'line_colour' : ['r'],
+        >>>                            'line_style' : '-',
+        >>>                            'line_width' : 1}
+        >>>                }
         >>> wid.set_widget_state(new_options, allow_callback=False)
     """
     def __init__(self, patch_options, render_function=None, style='minimal',
                  substyle='minimal'):
         # Create widgets
         self.offset_text = ipywidgets.IntText(
-            min=0, max=patch_options['n_offsets'],
+            min=0, max=patch_options['n_offsets'], width='3cm',
             value=patch_options['offset_index'], description='Offset:')
         self.slicing_wid = SlicingCommandWidget(patch_options['patches'],
                                                 description='Patches:')

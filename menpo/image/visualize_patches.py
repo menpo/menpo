@@ -191,15 +191,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
                  numbers_vertical_align='bottom',
                  numbers_font_name='sans-serif', numbers_font_size=10,
                  numbers_font_style='normal', numbers_font_weight='normal',
-                 numbers_font_colour='k', render_legend=False, legend_title='',
-                 legend_font_name='sans-serif', legend_font_style='normal',
-                 legend_font_size=10, legend_font_weight='normal',
-                 legend_marker_scale=None, legend_location=2,
-                 legend_bbox_to_anchor=(1.05, 1.), legend_border_axes_pad=None,
-                 legend_n_columns=1, legend_horizontal_spacing=None,
-                 legend_vertical_spacing=None, legend_border=True,
-                 legend_border_padding=None, legend_shadow=False,
-                 legend_rounded_corners=False, render_axes=False,
+                 numbers_font_colour='k', render_axes=False,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
@@ -342,63 +334,6 @@ def view_patches(patches, patch_centers, patches_indices=None,
             or
             (3, ) ndarray
 
-    render_legend : `bool`, optional
-        If ``True``, the legend will be rendered.
-    legend_title : `str`, optional
-        The title of the legend.
-    legend_font_name : See below, optional
-        The font of the legend. Example options ::
-
-            {serif, sans-serif, cursive, fantasy, monospace}
-
-    legend_font_style : ``{normal, italic, oblique}``, optional
-        The font style of the legend.
-    legend_font_size : `int`, optional
-        The font size of the legend.
-    legend_font_weight : See Below, optional
-        The font weight of the legend.
-        Example options ::
-
-            {ultralight, light, normal, regular, book, medium, roman,
-            semibold, demibold, demi, bold, heavy, extra bold, black}
-
-    legend_marker_scale : `float`, optional
-        The relative size of the legend markers with respect to the original
-    legend_location : `int`, optional
-        The location of the legend. The predefined values are:
-
-        =============== ==
-        'best'          0
-        'upper right'   1
-        'upper left'    2
-        'lower left'    3
-        'lower right'   4
-        'right'         5
-        'center left'   6
-        'center right'  7
-        'lower center'  8
-        'upper center'  9
-        'center'        10
-        =============== ==
-
-    legend_bbox_to_anchor : (`float`, `float`) `tuple`, optional
-        The bbox that the legend will be anchored.
-    legend_border_axes_pad : `float`, optional
-        The pad between the axes and legend border.
-    legend_n_columns : `int`, optional
-        The number of the legend's columns.
-    legend_horizontal_spacing : `float`, optional
-        The spacing between the columns.
-    legend_vertical_spacing : `float`, optional
-        The vertical space between the legend entries.
-    legend_border : `bool`, optional
-        If ``True``, a frame will be drawn around the legend.
-    legend_border_padding : `float`, optional
-        The fractional whitespace inside the legend border.
-    legend_shadow : `bool`, optional
-        If ``True``, a shadow will be drawn behind legend.
-    legend_rounded_corners : `bool`, optional
-        If ``True``, the frame's corners will be rounded (fancybox).
     render_axes : `bool`, optional
         If ``True``, the axes will be rendered.
     axes_font_name : See Below, optional
@@ -454,26 +389,11 @@ def view_patches(patches, patch_centers, patches_indices=None,
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
             numbers_font_colour=numbers_font_colour,
-            render_legend=render_legend, legend_title=legend_title,
-            legend_font_name=legend_font_name,
-            legend_font_style=legend_font_style,
-            legend_font_size=legend_font_size,
-            legend_font_weight=legend_font_weight,
-            legend_marker_scale=legend_marker_scale,
-            legend_location=legend_location,
-            legend_bbox_to_anchor=legend_bbox_to_anchor,
-            legend_border_axes_pad=legend_border_axes_pad,
-            legend_n_columns=legend_n_columns,
-            legend_horizontal_spacing=legend_horizontal_spacing,
-            legend_vertical_spacing=legend_vertical_spacing,
-            legend_border=legend_border,
-            legend_border_padding=legend_border_padding,
-            legend_shadow=legend_shadow,
-            legend_rounded_corners=legend_rounded_corners,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, figure_size=figure_size)
+            render_legend=False, render_axes=render_axes,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size)
     else:
         patches_image.view(
             figure_id=figure_id, new_figure=new_figure, channels=channels,

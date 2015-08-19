@@ -47,7 +47,7 @@ def _map_styles_to_hex_colours(style, background=False):
         elif style == 'primary':
             return '#337ab7'
         else:
-            return ''
+            return None
     else:
         if style == 'info':
             return '#31708f'
@@ -60,7 +60,7 @@ def _map_styles_to_hex_colours(style, background=False):
         elif style == 'primary':
             return '#337ab7'
         else:
-            return ''
+            return None
 
 
 def _format_box(box, box_style, border_visible, border_color, border_style,
