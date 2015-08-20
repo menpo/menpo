@@ -4276,7 +4276,7 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
     == ==================== ========================= ======================
     No Object               Variable (`self.`)        Description
     == ==================== ========================= ======================
-    1  IntText              `offset_text`             Offset index selection
+    1  Dropdown             `offset_dropdown`         Offset index selection
     2  SlicingCommandWidget `slicing_wid`             Patch index selection
     3  LineOptionsWidget    `bboxes_line_options_wid` Bboxes options
     4  VBox                 `offset_patches_box`      Contains 1, 2
@@ -4392,11 +4392,13 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         >>> wid.set_widget_state(new_options, allow_callback=False)
     """
     def __init__(self, patch_options, render_function=None, style='minimal',
-                 substyle='minimal'):
+                 subwidgets_style='minimal'):
         # Create widgets
-        self.offset_text = ipywidgets.IntText(
-            min=0, max=patch_options['n_offsets'], width='3cm',
-            value=patch_options['offset_index'], description='Offset:')
+        offsets_dict = OrderedDict()
+        for i in range(patch_options['n_offsets']):
+            offsets_dict[str(i)] = i
+        self.offset_dropdown = ipywidgets.Dropdown(
+            options=offsets_dict, value=0, description='Offset:')
         self.slicing_wid = SlicingCommandWidget(patch_options['patches'],
                                                 description='Patches:')
         self.bboxes_line_options_wid = LineOptionsWidget(
@@ -4404,8 +4406,8 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
             render_checkbox_title='Render bounding boxes')
 
         # Group widgets
-        self.offset_patches_box = ipywidgets.VBox(children=[self.offset_text,
-                                                            self.slicing_wid])
+        self.offset_patches_box = ipywidgets.VBox(
+            children=[self.offset_dropdown, self.slicing_wid])
         super(PatchOptionsWidget, self).__init__(
             children=[self.offset_patches_box, self.bboxes_line_options_wid])
         self.align = 'start'
@@ -4415,12 +4417,12 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         self.selected_values = patch_options
 
         # Set style
-        self.predefined_style(style, substyle)
+        self.predefined_style(style, subwidgets_style)
 
         # Set functionality
         def get_offset(name, value):
-            patch_options['offset'] = int(value)
-        self.offset_text.on_trait_change(get_offset, 'value')
+            patch_options['offset_index'] = int(value)
+        self.offset_dropdown.on_trait_change(get_offset, 'value')
 
         # Set render function
         self._render_function = None
@@ -4439,7 +4441,7 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         """
         self._render_function = render_function
         if self._render_function is not None:
-            self.offset_text.on_trait_change(self._render_function, 'value')
+            self.offset_dropdown.on_trait_change(self._render_function, 'value')
             self.slicing_wid.add_render_function(self._render_function)
             self.bboxes_line_options_wid.add_render_function(
                 self._render_function)
@@ -4449,8 +4451,8 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         Method that removes the current `self._render_function()` from the
         widget and sets ``self._render_function = None``.
         """
-        self.offset_text.on_trait_change(self._render_function, 'value',
-                                         remove=True)
+        self.offset_dropdown.on_trait_change(self._render_function, 'value',
+                                             remove=True)
         self.slicing_wid.remove_render_function()
         self.bboxes_line_options_wid.remove_render_function()
         self._render_function = None
@@ -4598,7 +4600,7 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         _format_box(self, box_style, border_visible, border_color, border_style,
                     border_width, border_radius, padding, margin)
         _format_font(self, font_family, font_size, font_style, font_weight)
-        _format_font(self.offset_text, font_family, font_size, font_style,
+        _format_font(self.offset_dropdown, font_family, font_size, font_style,
                      font_weight)
         self.bboxes_line_options_wid.style(
             box_style=bboxes_box_style, border_visible=bboxes_border_visible,
@@ -4619,7 +4621,7 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
                     border_radius=patches_border_radius,
                     padding=patches_padding, margin=patches_margin)
 
-    def predefined_style(self, style, substyle):
+    def predefined_style(self, style, subwidgets_style):
         r"""
         Function that sets a predefined style on the widget.
 
@@ -4639,7 +4641,7 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
                 ''        No style
                 ========= ============================
 
-        substyle : `str` (see below)
+        subwidgets_style : `str` (see below)
             Sub-widgets (patches and bounding boxes) style options
 
                 ========= ============================
@@ -4655,42 +4657,56 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
 
         """
         if style == 'minimal':
-            self.style(
-                box_style=None, border_visible=True, border_color='black',
-                border_style='solid', border_width=1, border_radius=0,
-                padding='0.2cm', margin='0.3cm', font_family='', font_size=None,
-                font_style='', font_weight='', bboxes_box_style=None,
-                bboxes_border_visible=True, bboxes_border_color='black',
-                bboxes_border_style='solid', bboxes_border_width=1,
-                bboxes_border_radius=0, bboxes_padding='0.2cm',
-                bboxes_margin='0.1cm', patches_box_style=None,
-                patches_border_visible=False, patches_border_color='black',
-                patches_border_style='solid', patches_border_width=1,
-                patches_border_radius=0, patches_padding='0.2cm',
-                patches_margin='0.1cm')
-        elif ((style == 'info' or style == 'success' or style == 'danger' or
-              style == 'warning') and
-              (substyle == 'info' or substyle == 'success' or
-               substyle == 'danger' or substyle == 'warning')):
-            self.style(
-                box_style=style, border_visible=True,
-                border_color=_map_styles_to_hex_colours(style),
-                border_style='solid', border_width=1, border_radius=10,
-                padding='0.2cm', margin='0.3cm', font_family='', font_size=None,
-                font_style='', font_weight='', bboxes_box_style=substyle,
-                bboxes_border_visible=True,
-                bboxes_border_color=_map_styles_to_hex_colours(substyle),
-                bboxes_border_style='solid', bboxes_border_width=1,
-                bboxes_border_radius=10, bboxes_padding='0.2cm',
-                bboxes_margin='0.1cm', patches_box_style=substyle,
-                patches_border_visible=True,
-                patches_border_color=_map_styles_to_hex_colours(substyle),
-                patches_border_style='solid', patches_border_width=1,
-                patches_border_radius=10, patches_padding='0.2cm',
-                patches_margin='0.1cm')
+            box_style = None
+            border_visible = False
+            border_color = 'black'
+            border_radius = 0
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+              style == 'warning'):
+            box_style = style
+            border_visible = True
+            border_color = _map_styles_to_hex_colours(style)
+            border_radius = 10
         else:
-            raise ValueError('style and substyle must be minimal or info or '
-                             'success or danger or warning')
+            raise ValueError('style and must be minimal or info or success '
+                             'or danger or warning')
+
+        if subwidgets_style == 'minimal':
+            bboxes_box_style = None
+            bboxes_border_color = 'black'
+            bboxes_border_radius = 0
+            patches_box_style = None
+            patches_border_visible = False
+            patches_border_color = 'black'
+            patches_border_radius = 0
+        elif (subwidgets_style == 'info' or subwidgets_style == 'success' or
+              subwidgets_style == 'danger' or subwidgets_style == 'warning'):
+            bboxes_box_style = subwidgets_style
+            bboxes_border_color = _map_styles_to_hex_colours(subwidgets_style)
+            bboxes_border_radius = 10
+            patches_box_style = subwidgets_style
+            patches_border_visible = True
+            patches_border_color = _map_styles_to_hex_colours(subwidgets_style)
+            patches_border_radius = 10
+        else:
+            raise ValueError('subwidgets_style and must be minimal or info '
+                             'or success or danger or warning')
+
+        self.style(
+            box_style=box_style, border_visible=border_visible,
+            border_color=border_color, border_style='solid', border_width=1,
+            border_radius=border_radius, padding='0.2cm', margin='0.3cm',
+            font_family='', font_size=None, font_style='', font_weight='',
+            bboxes_box_style=bboxes_box_style, bboxes_border_visible=True,
+            bboxes_border_color=bboxes_border_color,
+            bboxes_border_style='solid', bboxes_border_width=1,
+            bboxes_border_radius=bboxes_border_radius, bboxes_padding='0.2cm',
+            bboxes_margin='0.1cm', patches_box_style=subwidgets_style,
+            patches_border_visible=True,
+            patches_border_color=patches_border_color,
+            patches_border_style='solid', patches_border_width=1,
+            patches_border_radius=patches_border_radius,
+            patches_padding='0.2cm', patches_margin='0.1cm')
 
     def set_widget_state(self, patch_options, allow_callback=True):
         r"""
@@ -4721,19 +4737,33 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         self.remove_render_function()
 
         # Update state
-        self.offset_text.max = patch_options['n_offsets']
-        self.offset_text.value = patch_options['offset_index']
-        self.slicing_wid.set_widget_state(patch_options['patches'],
-                                          allow_callback=False)
-        self.bboxes_line_options_wid.set_widget_state(patch_options['bboxes'],
-                                                      labels=None,
-                                                      allow_callback=False)
+        if 'n_offsets' in patch_options.keys():
+            if patch_options['n_offsets'] != self.selected_values['n_offsets']:
+                offsets_dict = OrderedDict()
+                for i in range(patch_options['n_offsets']):
+                    offsets_dict[str(i)] = i
+                self.offset_dropdown.options = offsets_dict
+                if self.offset_dropdown.value > patch_options['n_offsets'] - 1:
+                    self.offset_dropdown.value = 0
+                    self.selected_values['offset_index'] = 0
+                self.selected_values['n_offsets'] = patch_options['n_offsets']
+
+        if 'offset_index' in patch_options.keys():
+            self.offset_dropdown.value = patch_options['offset_index']
+            self.selected_values['offset_index'] = patch_options['offset_index']
+
+        if 'patches' in patch_options.keys():
+            self.slicing_wid.set_widget_state(patch_options['patches'],
+                                              allow_callback=False)
+            self.selected_values['patches'] = patch_options['patches']
+
+        if 'bboxes' in patch_options.keys():
+            self.bboxes_line_options_wid.set_widget_state(
+                patch_options['bboxes'], labels=None, allow_callback=False)
+            self.selected_values['bboxes'] = patch_options['bboxes']
 
         # Re-assign render callback
         self.add_render_function(render_function)
-
-        # Assign new options dict to selected_values
-        self.selected_values = patch_options
 
         # trigger render function if allowed
         if allow_callback:

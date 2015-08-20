@@ -140,7 +140,7 @@ def render_rectangles_around_patches(centers, patch_shape, axes=None,
 
     # Dictionary with the line styles
     line_style_dict = {'-': 'solid', '--': 'dashed', '-.': 'dashdot',
-                       '.': 'dotted'}
+                       ':': 'dotted'}
 
     # Get axes object
     if axes is None:
@@ -358,6 +358,11 @@ def view_patches(patches, patch_centers, patches_indices=None,
         The limits of the y axis.
     figure_size : (`float`, `float`) `tuple` or ``None`` optional
         The size of the figure in inches.
+
+    Returns
+    -------
+    viewer : `ImageViewer`
+        The image viewing object.
     """
     # If patches is a list, convert it to an array
     if isinstance(patches, list):
@@ -371,7 +376,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
 
     # Render patches image
     if render_centers:
-        patches_image.view_landmarks(
+        patch_view = patches_image.view_landmarks(
             channels=channels, group='all_patch_centers', figure_id=figure_id,
             new_figure=new_figure, interpolation=interpolation,
             cmap_name=cmap_name, alpha=alpha, render_lines=render_lines,
@@ -395,7 +400,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
             axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
             figure_size=figure_size)
     else:
-        patches_image.view(
+        patch_view = patches_image.view(
             figure_id=figure_id, new_figure=new_figure, channels=channels,
             interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
             render_axes=render_axes, axes_font_name=axes_font_name,
@@ -411,3 +416,5 @@ def view_patches(patches, patch_centers, patches_indices=None,
             patch_shape, image_view=True, line_colour=bboxes_line_colour,
             line_style=bboxes_line_style, line_width=bboxes_line_width,
             interpolation=interpolation)
+
+    return patch_view

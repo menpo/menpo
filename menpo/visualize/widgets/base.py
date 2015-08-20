@@ -11,7 +11,8 @@ from menpo.visualize.viewmatplotlib import (MatplotlibImageViewer2d,
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, AnimationOptionsWidget,
                       LandmarkOptionsWidget, ChannelOptionsWidget,
-                      FeatureOptionsWidget, GraphOptionsWidget)
+                      FeatureOptionsWidget, GraphOptionsWidget,
+                      PatchOptionsWidget)
 from .tools import _format_box, LogoWidget, _map_styles_to_hex_colours
 
 
@@ -1229,6 +1230,334 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
 
     # Reset value to trigger initial visualization
     renderer_options_wid.options_widgets[3].render_legend_checkbox.value = False
+
+
+def visualize_patches(patches, patch_centers, figure_size=(10, 8),
+                      style='coloured', browser_style='buttons'):
+    r"""
+    Widget that allows browsing through a `list` of patch-based images.
+
+    The patches argument can have any of the two formats that are returned from
+    the `extract_patches()` and `extract_patches_around_landmarks()` methods.
+    Specifically it can be:
+
+        1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+        2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+    The patches can have a combination of different attributes, e.g. number of
+    centers, number of offsets, number of channels etc. The widget has options
+    tabs regarding the visualized patches, channels, the renderer (lines,
+    markers, numbering, figure, axes, image) and saving the figure to file.
+
+    Parameters
+    ----------
+    patches : `list`
+        The `list` of patch-based images to be visualized. It can consist of
+        objects with any of the two formats that are returned from the
+        `extract_patches()` and `extract_patches_around_landmarks()` methods.
+        Specifically, it can either be an
+        ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray` or a
+        `list` of ``n_center * n_offset`` :map:`Image` objects.
+    patch_centers : `list` of :map:`PointCloud`
+        The centers to set the patches around. If the `list` has only one
+        :map:`PointCLoud` then this will be used for all patches members.
+        Otherwise, it needs to have the same length as patches.
+    figure_size : (`int`, `int`), optional
+        The initial size of the rendered figure.
+    style : {``'coloured'``, ``'minimal'``}, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    browser_style : {``'buttons'``, ``'slider'``}, optional
+        It defines whether the selector of the objects will have the form of
+        plus/minus buttons or a slider.
+    """
+    from menpo.image import (Image, convert_patches_list_to_single_array,
+                             view_patches)
+    print('Initializing...')
+
+    # Make sure that patches is a list even with one patches member
+    if (isinstance(patches, list) and isinstance(patches[0], Image)) or \
+            not isinstance(patches, list):
+        patches = [patches]
+
+    # Make sure that patch_centers is a list even with one pointcloud
+    if not isinstance(patch_centers, list):
+        patch_centers = [patch_centers] * len(patches)
+    elif isinstance(patch_centers, list) and len(patch_centers) == 1:
+        patch_centers *= len(patches)
+
+    # Make sure all patch-based images are in the single array format
+    for i in range(len(patches)):
+        if isinstance(patches[i], list):
+            patches[i] = convert_patches_list_to_single_array(
+                patches[i], patch_centers[i].n_points)
+
+    # Get the number of patch_based images
+    n_patches = len(patches)
+
+    # Define the styling options
+    if style == 'coloured':
+        logo_style = 'warning'
+        widget_box_style = 'warning'
+        widget_border_radius = 10
+        widget_border_width = 1
+        animation_style = 'warning'
+        channels_style = 'info'
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'danger'
+        info_style = 'info'
+        renderer_style = 'info'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'danger'
+    else:
+        logo_style = 'minimal'
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_width = 0
+        channels_style = 'minimal'
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'minimal'
+        animation_style = 'minimal'
+        info_style = 'minimal'
+        renderer_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+
+    # Initial options dictionaries
+    channels_default = 0
+    if patches[0].shape[2] == 3:
+        channels_default = None
+    channel_options = {'n_channels': patches[0].shape[2],
+                       'image_is_masked': False,
+                       'channels': channels_default, 'glyph_enabled': False,
+                       'glyph_block_size': 3, 'glyph_use_negative': False,
+                       'sum_enabled': False,
+                       'masked_enabled': False}
+    n_centers = patches[0].shape[0]
+    n_offsets = patches[0].shape[1]
+    patch_options = {'patches': {'command': "range({})".format(n_centers),
+                                 'indices': range(n_centers),
+                                 'length': n_centers},
+                     'offset_index': 0,
+                     'n_offsets': n_offsets,
+                     'bboxes': {'render_lines': False, 'line_colour': ['b'],
+                                'line_style': '-', 'line_width': 1}}
+    index = {'min': 0, 'max': n_patches-1, 'step': 1, 'index': 0}
+    image_options = {'alpha': 1.0, 'interpolation': 'none', 'cmap_name': None}
+    line_options = {'render_lines': True, 'line_width': 1, 'line_colour': ['r'],
+                    'line_style': '-'}
+    marker_options = {'render_markers': True, 'marker_size': 20,
+                      'marker_face_colour': ['r'], 'marker_edge_colour': ['k'],
+                      'marker_style': 'o', 'marker_edge_width': 1}
+    numbering_options = {'render_numbering': False,
+                         'numbers_font_name': 'sans-serif',
+                         'numbers_font_size': 10,
+                         'numbers_font_style': 'normal',
+                         'numbers_font_weight': 'normal',
+                         'numbers_font_colour': ['k'],
+                         'numbers_horizontal_align': 'center',
+                         'numbers_vertical_align': 'bottom'}
+    figure_options = {'x_scale': 1., 'y_scale': 1., 'render_axes': False,
+                      'axes_font_name': 'sans-serif', 'axes_font_size': 10,
+                      'axes_font_style': 'normal', 'axes_font_weight': 'normal',
+                      'axes_x_limits': None, 'axes_y_limits': None}
+    renderer_options = {'lines': line_options, 'markers': marker_options,
+                        'numbering': numbering_options,
+                        'figure': figure_options, 'image': image_options}
+
+    # Define render function
+    def render_function(name, value):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # get selected index
+        im = 0
+        if n_patches > 1:
+            im = image_number_wid.selected_values['index']
+
+        # update info text widget
+        update_info(patches[im])
+
+        # show patch-based image with selected options
+        tmp1 = renderer_options_wid.selected_values[0]['lines']
+        tmp2 = renderer_options_wid.selected_values[0]['markers']
+        tmp3 = renderer_options_wid.selected_values[0]['numbering']
+        tmp4 = renderer_options_wid.selected_values[0]['figure']
+        tmp5 = renderer_options_wid.selected_values[0]['image']
+        new_figure_size = (tmp4['x_scale'] * figure_size[0],
+                           tmp4['y_scale'] * figure_size[1])
+        renderer = view_patches(
+            patches[im],
+            patch_centers[im],
+            patches_indices=
+            patch_options_wid.selected_values['patches']['indices'],
+            offset_index=patch_options_wid.selected_values['offset_index'],
+            figure_id=save_figure_wid.renderer.figure_id,
+            new_figure=False,
+            channels=channel_options_wid.selected_values['channels'],
+            interpolation=tmp5['interpolation'],
+            cmap_name=tmp5['cmap_name'],
+            alpha=tmp5['alpha'],
+            render_patches_bboxes=
+            patch_options_wid.selected_values['bboxes']['render_lines'],
+            bboxes_line_colour=
+            patch_options_wid.selected_values['bboxes']['line_colour'][0],
+            bboxes_line_style=
+            patch_options_wid.selected_values['bboxes']['line_style'],
+            bboxes_line_width=
+            patch_options_wid.selected_values['bboxes']['line_width'],
+            render_centers=True,
+            render_lines=tmp1['render_lines'],
+            line_colour=tmp1['line_colour'][0],
+            line_style=tmp1['line_style'],
+            line_width=tmp1['line_width'],
+            render_markers=tmp2['render_markers'],
+            marker_style=tmp2['marker_style'],
+            marker_size=tmp2['marker_size'],
+            marker_face_colour=tmp2['marker_face_colour'],
+            marker_edge_colour=tmp2['marker_edge_colour'],
+            marker_edge_width=tmp2['marker_edge_width'],
+            render_numbering=tmp3['render_numbering'],
+            numbers_horizontal_align=tmp3['numbers_horizontal_align'],
+            numbers_vertical_align=tmp3['numbers_vertical_align'],
+            numbers_font_name=tmp3['numbers_font_name'],
+            numbers_font_size=tmp3['numbers_font_size'],
+            numbers_font_style=tmp3['numbers_font_style'],
+            numbers_font_weight=tmp3['numbers_font_weight'],
+            numbers_font_colour=tmp3['numbers_font_colour'][0],
+            render_axes=tmp4['render_axes'],
+            axes_font_name=tmp4['axes_font_name'],
+            axes_font_size=tmp4['axes_font_size'],
+            axes_font_style=tmp4['axes_font_style'],
+            axes_font_weight=tmp4['axes_font_weight'],
+            axes_x_limits=tmp4['axes_x_limits'],
+            axes_y_limits=tmp4['axes_y_limits'],
+            figure_size=new_figure_size)
+        pltshow()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that updates the info text
+    def update_info(ptchs):
+        text_per_line = [
+            "> Patch-Based Image with {} patches and {} offsets.".format(
+                ptchs.shape[0], ptchs.shape[1]),
+            "> Each patch has size {}H x {}W with {} channels.".format(
+                ptchs.shape[3], ptchs.shape[4], ptchs.shape[2]),
+            "> min={:.3f}, max={:.3f}".format(ptchs.min(), ptchs.max())]
+        info_wid.set_widget_state(n_lines=len(text_per_line),
+                                  text_per_line=text_per_line)
+
+    # Create widgets
+    patch_options_wid = PatchOptionsWidget(
+        patch_options, render_function=render_function, style=patches_style,
+        subwidgets_style=patches_subwidgets_style)
+    channel_options_wid = ChannelOptionsWidget(
+        channel_options, render_function=render_function, style=channels_style)
+    renderer_options_wid = RendererOptionsWidget(
+        renderer_options,
+        ['lines', 'markers', 'numbering', 'figure_one', 'image'],
+        object_selection_dropdown_visible=False,
+        render_function=render_function, style=renderer_style,
+        tabs_style=renderer_tabs_style)
+    info_wid = TextPrintWidget(n_lines=3, text_per_line=[''] * 3,
+                               style=info_style)
+    initial_renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
+                                               image=np.zeros((10, 10)))
+    save_figure_wid = SaveFigureOptionsWidget(initial_renderer,
+                                              style=save_figure_style)
+
+    # Define function that updates options' widgets state
+    def update_widgets(name, value):
+        # Get new groups and labels, then update landmark options
+        im = 0
+        if n_patches > 1:
+            im = image_number_wid.selected_values['index']
+
+        # Update patch options
+        if (patch_options_wid.selected_values['patches']['length'] ==
+                patches[im].shape[0]):
+            new_patch_options = {
+                'n_offsets': patches[im].shape[1],
+                'bboxes': patch_options_wid.selected_values['bboxes']}
+        else:
+            tmp_patches = {
+                'command': "range({})".format(patches[im].shape[0]),
+                'indices': range(patches[im].shape[0]),
+                'length': patches[im].shape[0]}
+            new_patch_options = {
+                'patches': tmp_patches, 'n_offsets': patches[im].shape[1],
+                'bboxes': patch_options_wid.selected_values['bboxes']}
+        patch_options_wid.set_widget_state(new_patch_options,
+                                           allow_callback=False)
+
+        # Update channel options
+        tmp_channels = channel_options_wid.selected_values['channels']
+        tmp_glyph_enabled = channel_options_wid.selected_values['glyph_enabled']
+        tmp_sum_enabled = channel_options_wid.selected_values['sum_enabled']
+        if np.max(tmp_channels) > patches[im].shape[2] - 1:
+            tmp_channels = 0
+            tmp_glyph_enabled = False
+            tmp_sum_enabled = False
+        tmp_glyph_block_size = \
+            channel_options_wid.selected_values['glyph_block_size']
+        tmp_glyph_use_negative = \
+            channel_options_wid.selected_values['glyph_use_negative']
+        if not(patches[im].shape[2] == 3) and tmp_channels is None:
+            tmp_channels = 0
+        channel_options = {
+            'n_channels': patches[im].shape[2],
+            'image_is_masked': False,
+            'channels': tmp_channels, 'glyph_enabled': tmp_glyph_enabled,
+            'glyph_block_size': tmp_glyph_block_size,
+            'glyph_use_negative': tmp_glyph_use_negative,
+            'sum_enabled': tmp_sum_enabled,
+            'masked_enabled': False}
+        channel_options_wid.set_widget_state(channel_options,
+                                             allow_callback=True)
+
+    # Group widgets
+    if n_patches > 1:
+        # Image selection slider
+        image_number_wid = AnimationOptionsWidget(
+            index, render_function=render_function,
+            update_function=update_widgets, index_style=browser_style,
+            interval=0.3, description='Image', minus_description='<',
+            plus_description='>', loop_enabled=True, text_editable=True,
+            style=animation_style)
+
+        # Header widget
+        header_wid = ipywidgets.HBox(
+            children=[LogoWidget(style=logo_style), image_number_wid],
+            align='start')
+    else:
+        # Header widget
+        header_wid = LogoWidget(style=logo_style)
+    header_wid.margin = '0.2cm'
+    options_box = ipywidgets.Tab(
+        children=[info_wid, patch_options_wid, channel_options_wid,
+                  renderer_options_wid, save_figure_wid], margin='0.2cm')
+    tab_titles = ['Info', 'Patches', 'Channels', 'Renderer', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    if n_patches > 1:
+        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    else:
+        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
+
+    # Set widget's style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_width = widget_border_width
+    wid.border_color = _map_styles_to_hex_colours(widget_box_style)
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Reset value to trigger initial visualization
+    patch_options_wid.bboxes_line_options_wid.render_lines_checkbox.value = True
 
 
 def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,

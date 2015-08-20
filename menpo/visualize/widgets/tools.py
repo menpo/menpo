@@ -547,7 +547,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
     def __init__(self, index, render_function=None, update_function=None,
                  description='Index: ', minus_description='-',
                  plus_description='+', loop_enabled=True, text_editable=True):
-        self.title = ipywidgets.Latex(value=description, padding=6)
+        self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
         self.button_minus = ipywidgets.Button(description=minus_description,
                                               width='1cm')
         self.button_plus = ipywidgets.Button(description=plus_description,
@@ -605,7 +605,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', minus_style='', plus_style='',
-              text_background_colour=''):
+              text_background_colour=None):
         r"""
         Function that defines the styling of the widget.
 
@@ -6418,8 +6418,9 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
             min=0, max=slice_cmd['length']-1, value=0, width='6.8cm',
             visible=self._single_slider_visible())
         self.multiple_slider = ipywidgets.IntRangeSlider(
-            min=0, max=slice_cmd['length']-1, value=(0, 1), width='6.8cm',
-            visible=self._multiple_slider_visible()[0])
+            min=0, max=slice_cmd['length']-1,
+            value=(slice_cmd['indices'][0], slice_cmd['indices'][-1]),
+            width='6.8cm', visible=self._multiple_slider_visible()[0])
         super(SlicingCommandWidget, self).__init__(
             children=[self.cmd_text, self.example, self.error_msg,
                       self.single_slider, self.multiple_slider])
