@@ -605,7 +605,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', minus_style='', plus_style='',
-              text_background_colour=''):
+              text_background_colour=None):
         r"""
         Function that defines the styling of the widget.
 
