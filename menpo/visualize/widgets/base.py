@@ -1442,10 +1442,12 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
     # Define function that updates the info text
     def update_info(ptchs):
         text_per_line = [
-            "> Patch-Based Image with {} patches and {} offsets.".format(
-                ptchs.shape[0], ptchs.shape[1]),
-            "> Each patch has size {}H x {}W with {} channels.".format(
-                ptchs.shape[3], ptchs.shape[4], ptchs.shape[2]),
+            "> Patch-Based Image with {} patche{} and {} offset{}.".format(
+                ptchs.shape[0], 's' * (ptchs.shape[0] > 1), ptchs.shape[1],
+                's' * (ptchs.shape[1] > 1)),
+            "> Each patch has size {}H x {}W with {} channel{}.".format(
+                ptchs.shape[3], ptchs.shape[4], ptchs.shape[2],
+                's' * (ptchs.shape[2] > 1)),
             "> min={:.3f}, max={:.3f}".format(ptchs.min(), ptchs.max())]
         info_wid.set_widget_state(n_lines=len(text_per_line),
                                   text_per_line=text_per_line)
@@ -1516,7 +1518,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
             'sum_enabled': tmp_sum_enabled,
             'masked_enabled': False}
         channel_options_wid.set_widget_state(channel_options,
-                                             allow_callback=True)
+                                             allow_callback=False)
 
     # Group widgets
     if n_patches > 1:

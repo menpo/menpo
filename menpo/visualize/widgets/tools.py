@@ -6574,29 +6574,30 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
                                               slice_cmd['length'])
         self.selected_values = slice_cmd
 
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
         # update single slider
         self.single_slider.visible = self._single_slider_visible()
         self.single_slider.max = self.selected_values['length'] - 1
         if self._single_slider_visible():
-            self.single_slider.on_trait_change(self._render_function, 'value',
-                                               remove=True)
             self.single_slider.value = self.selected_values['indices'][0]
-            self.single_slider.on_trait_change(self._render_function, 'value')
 
         # update multiple slider
         vis, step = self._multiple_slider_visible()
         self.multiple_slider.visible = vis
-        self.multiple_slider.max = self.selected_values['length'] - 1
+        self.multiple_slider.max = slice_cmd['length'] - 1
         if vis:
             self.multiple_slider.step = step
-            self.multiple_slider.on_trait_change(self._render_function, 'value',
-                                                 remove=True)
-            self.multiple_slider.value = (self.selected_values['indices'][0],
-                                          self.selected_values['indices'][-1])
-            self.multiple_slider.on_trait_change(self._render_function, 'value')
+            self.multiple_slider.value = (slice_cmd['indices'][0],
+                                          slice_cmd['indices'][-1])
 
         # update command text
-        self.cmd_text.value = slice_cmd['command']
+        self.cmd_text.value = self.selected_values['command']
+
+        # re-assign render callback
+        self.add_render_function(render_function)
 
         # trigger render function if allowed
         if allow_callback:
