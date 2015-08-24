@@ -1,6 +1,8 @@
 from collections import OrderedDict
+from functools import wraps
 import numpy as np
 
+from menpo.base import name_of_callable
 from menpo.landmark.base import LandmarkGroup
 from menpo.landmark.exceptions import LabellingError
 
@@ -52,22 +54,14 @@ def _mask_from_range(range_tuple, n_points):
     return mask
 
 
-def _build_labelling_error_msg(group, n_expected_points,
-                               n_actual_points):
-    return '{} mark-up expects exactly {} ' \
-           'points. However, the given landmark group ' \
-           'has {} points'.format(group, n_expected_points,
-                                  n_actual_points)
-
-
-def _validate_input(landmark_group, n_expected_points, group):
+def _validate_input(pcloud, n_expected_points, group):
     r"""
     Ensure that the input matches the number of expected points.
 
     Parameters
     ----------
-    landmark_group : :map:`LandmarkGroup`
-        Landmark group to validate
+    pcloud : :map:`PointCloud`
+        Input Pointcloud to validate
     n_expected_points : `int`
         Number of expected points
     group : `str`
@@ -79,11 +73,12 @@ def _validate_input(landmark_group, n_expected_points, group):
         If the number of expected points doesn't match the number of given
         points
     """
-    n_points = landmark_group.lms.n_points
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group,
-                                                        n_expected_points,
-                                                        n_points))
+    n_actual_points = pcloud.n_points
+    if n_actual_points != n_expected_points:
+        msg = '{} mark-up expects exactly {} ' \
+              'points. However, the given landmark group ' \
+              'has {} points'.format(group, n_expected_points, n_actual_points)
+        raise LabellingError(msg)
 
 
 def _relabel_group_from_dict(pointcloud, labels_to_ranges):
@@ -134,6 +129,51 @@ def _relabel_group_from_dict(pointcloud, labels_to_ranges):
                                              adjacency_array), masks)
 
     return new_landmark_group
+
+
+def _labeller(group_label=None):
+    r"""
+    Decorator for labelling functions. Labelling functions should return
+    a template pointcloud and a mapping dictionary (from labels to indices).
+    This decorator then takes that output and returns the correctly labelled
+    object depending on if a landmark group, pointcloud or numpy array is
+    passed. See the docstrings of the labelling methods where this
+    has been made clear.
+
+    Note that we duck type the group label (usually just the name of the
+    labelling function) on to the function itself for the labeller method
+    below.
+    """
+    def decorator(labelling_method):
+        # Shadowing parent scope variables inside a nested function
+        # kills the scope of the parent variable, so we need a unique alias
+        # for the group name
+        gl = (group_label if group_label is not None
+              else name_of_callable(labelling_method))
+        # Duck type group label onto method itself
+        labelling_method.group_label = gl
+
+        @wraps(labelling_method)
+        def wrapper(x):
+            from menpo.shape import PointCloud
+            # Accepts LandmarkGroup, PointCloud or ndarray
+            if isinstance(x, np.ndarray):
+                x = PointCloud(x, copy=False)
+
+            # Call the actual labelling method to get the template
+            # and dictionary mapping labels to indices
+            template, mapping = labelling_method()
+            n_expected_points = template.n_points
+
+            if isinstance(x, PointCloud):
+                _validate_input(x, n_expected_points, gl)
+                return template.from_vector(x.as_vector())
+            if isinstance(x, LandmarkGroup):
+                _validate_input(x.lms, n_expected_points, gl)
+                return LandmarkGroup.init_from_indices_mapping(
+                    template.from_vector(x.lms.as_vector()), mapping)
+        return wrapper
+    return decorator
 
 
 def labeller(landmarkable, group, label_func):
