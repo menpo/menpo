@@ -4,7 +4,7 @@ from .face import (
     ibug_open_eye_trimesh,
     ibug_face_49, ibug_face_49_trimesh, ibug_face_51, ibug_face_51_trimesh,
     ibug_face_65_closed_mouth, ibug_face_66, ibug_face_66_trimesh,
-    ibug_face_68, ibug_face_68_trimesh,
+    face_ibug_68_to_face_ibug_68, ibug_face_68_trimesh,
     imm_face, lfpw_face)
 from .hand import ibug_hand
 from .mesh import bu3dfe_83

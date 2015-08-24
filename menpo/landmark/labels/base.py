@@ -202,6 +202,6 @@ def labeller(landmarkable, group, label_func):
         Augmented ``landmarkable`` (this is just for convenience,
         the object will actually be modified in place)
     """
-    new_group, lmark_group = label_func(landmarkable.landmarks[group])
-    landmarkable.landmarks[new_group] = lmark_group
+    new_group = label_func(landmarkable.landmarks[group])
+    landmarkable.landmarks[label_func.group_label] = new_group
     return landmarkable

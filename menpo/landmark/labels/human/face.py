@@ -1,20 +1,21 @@
 from collections import OrderedDict
 import numpy as np
-from menpo.landmark.base import LandmarkGroup
 
+from menpo.landmark.base import LandmarkGroup
 from menpo.landmark.labels.base import (
     _validate_input, _connectivity_from_array, _relabel_group_from_dict,
-    _connectivity_from_range)
+    _connectivity_from_range, _labeller)
 
 
-def ibug_face_68(landmark_group):
+@_labeller()
+def face_ibug_68_to_face_ibug_68():
     """
-    Apply the ibug's "standard" 68 point semantic labels (based on the
-    original semantic labels of multiPIE) to the landmark group.
+    Apply the IBUG 68 point semantic labels (based on the
+    original semantic labels of multiPIE and 300W).
 
     The group label will be ``ibug_face_68``.
 
-    The semantic labels applied are as follows:
+    The semantic labels are as follows:
 
       - jaw
       - left_eyebrow
@@ -26,29 +27,36 @@ def ibug_face_68(landmark_group):
 
     Parameters
     ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
+    x : :map:`LandmarkGroup` or :map:`PointCloud` or `ndarray`
+        The input landmark group, pointcloud or array to label. If a pointcloud
+        is passed, then only the connectivity information is propagated to
+        the pointcloud (a subclass of :map:`PointCloud` may be returned).
 
     Returns
     -------
-    group : `str`
-        The group label: ``ibug_face_68``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
+    x_labelled : :map:`LandmarkGroup` or :map:`PointCloud`
+        If a :map:`LandmarkGroup` was passed, a :map:`LandmarkGroup` is
+        returned. This landmark group will contain specific labels and
+        these labels may refer to sub-pointclouds with specific connectivity
+        information.
+
+        If a :map:`PointCloud` was passed, a :map:`PointCloud` is returned. Only
+        the connectivity information is propagated to the pointcloud
+        (a subclass of :map:`PointCloud` may be returned).
 
     Raises
     ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 68 points
+    :map:`LabellingError`
+        If the given landmark group/pointcloud contains less than 68 points.
 
     References
     ----------
     .. [1] http://www.multipie.org/
+    .. [2] http://ibug.doc.ic.ac.uk/resources/300-W/
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'ibug_face_68'
-    _validate_input(landmark_group, 68, group)
+    n_expected_points = 68
 
     jaw_indices = np.arange(0, 17)
     lbrow_indices = np.arange(17, 22)
@@ -66,35 +74,35 @@ def ibug_face_68(landmark_group):
     nose_connectivity = np.vstack([
         _connectivity_from_array(upper_nose_indices),
         _connectivity_from_array(lower_nose_indices)])
-    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+    leye_connectivity = _connectivity_from_array(leye_indices,
+                                                 close_loop=True)
+    reye_connectivity = _connectivity_from_array(reye_indices,
+                                                 close_loop=True)
     mouth_connectivity = np.vstack([
         _connectivity_from_array(outer_mouth_indices, close_loop=True),
         _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-    total_conn = np.vstack([
+    all_connectivity = np.vstack([
         jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
         nose_connectivity, leye_connectivity, reye_connectivity,
         mouth_connectivity
     ])
 
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
-                                             total_conn))
+    template = PointUndirectedGraph.init_from_edges(
+        np.zeros([n_expected_points, 2]), all_connectivity)
 
-    new_landmark_group['jaw'] = jaw_indices
-    new_landmark_group['left_eyebrow'] = lbrow_indices
-    new_landmark_group['right_eyebrow'] = rbrow_indices
-    new_landmark_group['nose'] = np.hstack((upper_nose_indices,
-                                            lower_nose_indices))
-    new_landmark_group['left_eye'] = leye_indices
-    new_landmark_group['right_eye'] = reye_indices
-    new_landmark_group['mouth'] = np.hstack((outer_mouth_indices,
-                                             inner_mouth_indices))
+    mapping = OrderedDict()
+    mapping['jaw'] = jaw_indices
+    mapping['left_eyebrow'] = lbrow_indices
+    mapping['right_eyebrow'] = rbrow_indices
+    mapping['nose'] = np.hstack((upper_nose_indices,
+                                       lower_nose_indices))
+    mapping['left_eye'] = leye_indices
+    mapping['right_eye'] = reye_indices
+    mapping['mouth'] = np.hstack((outer_mouth_indices,
+                                        inner_mouth_indices))
 
-    del new_landmark_group['all']  # Remove pointless all group
-
-    return group, new_landmark_group
+    return template, mapping
 
 
 def ibug_face_66(landmark_group):
