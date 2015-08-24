@@ -121,6 +121,33 @@ class MaskedImage(Image):
             pixels = np.ones((n_channels,) + shape, dtype=dtype) * fill
         return cls(pixels, copy=False, mask=mask)
 
+    @classmethod
+    def init_from_rolled_channels(cls, pixels, mask=None):
+        r"""
+        Create an Image from a set of pixels where the channels axis is on
+        the last axis (the back). This is common in other frameworks, and
+        therefore this method provides a convenient means of creating a menpo
+        Image from such data. Note that a copy is always created due to the
+        need to rearrange the data.
+
+        Parameters
+        ----------
+        pixels : ``(M, N ..., Q, C)`` `ndarray`
+            Array representing the image pixels, with the last axis being
+            channels.
+        mask : ``(M, N)`` `bool ndarray` or :map:`BooleanImage`, optional
+            A binary array representing the mask. Must be the same
+            shape as the image. Only one mask is supported for an image (so the
+            mask is applied to every channel equally).
+
+        Returns
+        -------
+        image : :map:`Image`
+            A new image from the given pixels, with the FIRST axis as the
+            channels.
+        """
+        return cls(np.rollaxis(pixels, -1), mask=mask)
+
     def as_unmasked(self, copy=True, fill=None):
         r"""
         Return a copy of this image without the masking behavior.
