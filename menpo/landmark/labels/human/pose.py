@@ -1,11 +1,11 @@
 from collections import OrderedDict
 import numpy as np
 
-from ..base import (_labeller, _validate_input, _connectivity_from_array,
-                    _pcloud_and_lgroup_from_ranges)
+from ..base import (labeller_func, validate_input, connectivity_from_array,
+                    pcloud_and_lgroup_from_ranges)
 
 
-@_labeller(group_label='pose_stickmen_12')
+@labeller_func(group_label='pose_stickmen_12')
 def pose_stickmen_12_to_pose_stickmen_12(pcloud):
     """
     Apply the 'stickmen' 12-point semantic labels.
@@ -24,7 +24,7 @@ def pose_stickmen_12_to_pose_stickmen_12(pcloud):
     .. [1] http://www.robots.ox.ac.uk/~vgg/data/stickmen/
     """
     n_expected_points = 12
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     labels = OrderedDict([
         ('torso', (0, 2, False)),
@@ -34,10 +34,10 @@ def pose_stickmen_12_to_pose_stickmen_12(pcloud):
         ('left_lower_arm', (8, 10, False)),
         ('head', (10, 12, False))
     ])
-    return _pcloud_and_lgroup_from_ranges(pcloud, labels)
+    return pcloud_and_lgroup_from_ranges(pcloud, labels)
 
 
-@_labeller(group_label='pose_lsp_14')
+@labeller_func(group_label='pose_lsp_14')
 def pose_lsp_14_to_pose_lsp_14(pcloud):
     """
     Apply the lsp 14-point semantic labels.
@@ -57,7 +57,7 @@ def pose_lsp_14_to_pose_lsp_14(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 14
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     left_leg_indices = np.arange(0, 3)
     right_leg_indices = np.arange(3, 6)
@@ -65,11 +65,11 @@ def pose_lsp_14_to_pose_lsp_14(pcloud):
     right_arm_indices = np.arange(9, 12)
     head_indices = np.arange(12, 14)
 
-    left_leg_connectivity = _connectivity_from_array(left_leg_indices)
-    right_leg_connectivity = _connectivity_from_array(right_leg_indices)
-    left_arm_connectivity = _connectivity_from_array(left_arm_indices)
-    right_arm_connectivity = _connectivity_from_array(right_arm_indices)
-    head_connectivity = _connectivity_from_array(head_indices)
+    left_leg_connectivity = connectivity_from_array(left_leg_indices)
+    right_leg_connectivity = connectivity_from_array(right_leg_indices)
+    left_arm_connectivity = connectivity_from_array(left_arm_indices)
+    right_arm_connectivity = connectivity_from_array(right_arm_indices)
+    head_connectivity = connectivity_from_array(head_indices)
 
     all_connectivity = np.vstack([
         left_leg_connectivity, right_leg_connectivity,
@@ -90,7 +90,7 @@ def pose_lsp_14_to_pose_lsp_14(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='pose_flic_11')
+@labeller_func(group_label='pose_flic_11')
 def pose_flic_11_to_pose_flic_11(pcloud):
     """
     Apply the flic  11-point semantic labels.
@@ -107,7 +107,7 @@ def pose_flic_11_to_pose_flic_11(pcloud):
     .. [1] http://vision.grasp.upenn.edu/cgi-bin/index.php?n=VideoLearning.FLIC
     """
     n_expected_points = 11
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     labels = OrderedDict([
         ('left_arm', (0, 3, False)),
@@ -115,10 +115,10 @@ def pose_flic_11_to_pose_flic_11(pcloud):
         ('hips', (6, 8, False)),
         ('face', (8, 11, True))])
 
-    return _pcloud_and_lgroup_from_ranges(pcloud, labels)
+    return pcloud_and_lgroup_from_ranges(pcloud, labels)
 
 
-@_labeller(group_label='pose_human36M_32')
+@labeller_func(group_label='pose_human36M_32')
 def pose_human36M_32_to_pose_human36M_32(pcloud):
     """
     Apply the human3.6M 32-point semantic labels.
@@ -143,7 +143,7 @@ def pose_human36M_32_to_pose_human36M_32(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 32
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     pelvis_indices = np.array([1, 0, 6])
     right_leg_indices = np.array(range(1, 6))
@@ -156,16 +156,16 @@ def pose_human36M_32_to_pose_human36M_32(pcloud):
     right_hand_indices = np.array([28, 29, 30])
     torso_indices = np.array([0, 1, 25, 13, 17, 6])
 
-    pelvis_connectivity = _connectivity_from_array(pelvis_indices)
-    right_leg_connectivity = _connectivity_from_array(right_leg_indices)
-    left_leg_connectivity = _connectivity_from_array(left_leg_indices)
-    spine_connectivity = _connectivity_from_array(spine_indices)
-    head_connectivity = _connectivity_from_array(head_indices)
-    left_arm_connectivity = _connectivity_from_array(left_arm_indices)
-    left_hand_connectivity = _connectivity_from_array(left_hand_indices)
-    right_arm_connectivity = _connectivity_from_array(right_arm_indices)
-    right_hand_connectivity = _connectivity_from_array(right_hand_indices)
-    torso_connectivity = _connectivity_from_array(torso_indices,
+    pelvis_connectivity = connectivity_from_array(pelvis_indices)
+    right_leg_connectivity = connectivity_from_array(right_leg_indices)
+    left_leg_connectivity = connectivity_from_array(left_leg_indices)
+    spine_connectivity = connectivity_from_array(spine_indices)
+    head_connectivity = connectivity_from_array(head_indices)
+    left_arm_connectivity = connectivity_from_array(left_arm_indices)
+    left_hand_connectivity = connectivity_from_array(left_hand_indices)
+    right_arm_connectivity = connectivity_from_array(right_arm_indices)
+    right_hand_connectivity = connectivity_from_array(right_hand_indices)
+    torso_connectivity = connectivity_from_array(torso_indices,
                                                   close_loop=True)
 
     all_connectivity = np.vstack([
@@ -193,7 +193,7 @@ def pose_human36M_32_to_pose_human36M_32(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='pose_human36M_17')
+@labeller_func(group_label='pose_human36M_17')
 def pose_human36M_17_to_pose_human36M_17(pcloud):
     """
     Apply the human3.6M 17-point semantic labels (based on the
@@ -218,7 +218,7 @@ def pose_human36M_17_to_pose_human36M_17(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 17
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     pelvis_indices = np.array([1, 0, 4])
     right_leg_indices = np.arange(1, 4)
@@ -229,14 +229,14 @@ def pose_human36M_17_to_pose_human36M_17(pcloud):
     right_arm_indices = np.array([8, 14, 15, 16])
     torso_indices = np.array([0, 1, 14, 8, 11, 4])
 
-    pelvis_connectivity = _connectivity_from_array(pelvis_indices)
-    right_leg_connectivity = _connectivity_from_array(right_leg_indices)
-    left_leg_connectivity = _connectivity_from_array(left_leg_indices)
-    spine_connectivity = _connectivity_from_array(spine_indices)
-    head_connectivity = _connectivity_from_array(head_indices)
-    left_arm_connectivity = _connectivity_from_array(left_arm_indices)
-    right_arm_connectivity = _connectivity_from_array(right_arm_indices)
-    torso_connectivity = _connectivity_from_array(torso_indices,
+    pelvis_connectivity = connectivity_from_array(pelvis_indices)
+    right_leg_connectivity = connectivity_from_array(right_leg_indices)
+    left_leg_connectivity = connectivity_from_array(left_leg_indices)
+    spine_connectivity = connectivity_from_array(spine_indices)
+    head_connectivity = connectivity_from_array(head_indices)
+    left_arm_connectivity = connectivity_from_array(left_arm_indices)
+    right_arm_connectivity = connectivity_from_array(right_arm_indices)
+    torso_connectivity = connectivity_from_array(torso_indices,
                                                   close_loop=True)
 
     all_connectivity = np.vstack([

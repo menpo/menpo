@@ -1,10 +1,10 @@
 from collections import OrderedDict
 import numpy as np
 
-from ..base import _validate_input, _connectivity_from_array, _labeller
+from ..base import validate_input, connectivity_from_array, labeller_func
 
 
-@_labeller(group_label='hand_ibug_39')
+@labeller_func(group_label='hand_ibug_39')
 def hand_ibug_39_to_hand_ibug_39(pcloud):
     """
     Apply the IBUG 39-point semantic labels.
@@ -21,7 +21,7 @@ def hand_ibug_39_to_hand_ibug_39(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 39
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     thumb_indices = np.arange(0, 5)
     index_indices = np.arange(5, 12)
@@ -31,17 +31,17 @@ def hand_ibug_39_to_hand_ibug_39(pcloud):
     palm_indices = np.hstack((np.array([32, 25, 18, 11, 33, 34, 4]),
                               np.arange(35, 39)))
 
-    thumb_connectivity = _connectivity_from_array(thumb_indices,
+    thumb_connectivity = connectivity_from_array(thumb_indices,
                                                   close_loop=False)
-    index_connectivity = _connectivity_from_array(index_indices,
+    index_connectivity = connectivity_from_array(index_indices,
                                                   close_loop=False)
-    middle_connectivity = _connectivity_from_array(middle_indices,
+    middle_connectivity = connectivity_from_array(middle_indices,
                                                    close_loop=False)
-    ring_connectivity = _connectivity_from_array(ring_indices,
+    ring_connectivity = connectivity_from_array(ring_indices,
                                                  close_loop=False)
-    pinky_connectivity = _connectivity_from_array(pinky_indices,
+    pinky_connectivity = connectivity_from_array(pinky_indices,
                                                   close_loop=False)
-    palm_connectivity = _connectivity_from_array(palm_indices,
+    palm_connectivity = connectivity_from_array(palm_indices,
                                                  close_loop=True)
 
     all_connectivity = np.vstack([thumb_connectivity, index_connectivity,

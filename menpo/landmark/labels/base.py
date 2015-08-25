@@ -7,7 +7,7 @@ from menpo.landmark.base import LandmarkGroup
 from menpo.landmark.exceptions import LabellingError
 
 
-def _connectivity_from_array(array, close_loop=False):
+def connectivity_from_array(array, close_loop=False):
     r"""
     Build the connectivity over a given array. For example, given ::
 
@@ -27,7 +27,7 @@ def _connectivity_from_array(array, close_loop=False):
     return np.asarray(conn)
 
 
-def _connectivity_from_range(range_tuple, close_loop=False):
+def connectivity_from_range(range_tuple, close_loop=False):
     r"""
     Build the connectivity over a range. For example, given ::
 
@@ -40,21 +40,11 @@ def _connectivity_from_range(range_tuple, close_loop=False):
     If ``close_loop`` is true, add an extra connection from the last point to
     the first.
     """
-    return _connectivity_from_array(
+    return connectivity_from_array(
         np.arange(*range_tuple), close_loop=close_loop)
 
 
-def _mask_from_range(range_tuple, n_points):
-    r"""
-    Generate a mask over the range. The mask will be true inside the range.
-    """
-    mask = np.zeros(n_points, dtype=np.bool)
-    range_slice = slice(*range_tuple)
-    mask[range_slice] = True
-    return mask
-
-
-def _validate_input(pcloud, n_expected_points):
+def validate_input(pcloud, n_expected_points):
     r"""
     Ensure that the input matches the number of expected points.
 
@@ -79,7 +69,7 @@ def _validate_input(pcloud, n_expected_points):
         raise LabellingError(msg)
 
 
-def _pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
+def pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
     """
     Label the given pointcloud according to the given ordered dictionary
     of labels to ranges. This assumes that you can semantically label the group
@@ -114,7 +104,7 @@ def _pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
         range_tuple = tup[:-1]
         close_loop = tup[-1]
 
-        connectivity = _connectivity_from_range(range_tuple,
+        connectivity = connectivity_from_range(range_tuple,
                                                 close_loop=close_loop)
         all_connectivity.append(connectivity)
         mapping[label] = np.arange(*range_tuple)
@@ -162,7 +152,7 @@ _labeller_docs = r"""
          expected number of points.
 """
 
-def _labeller(group_label=None):
+def labeller_func(group_label=None):
     r"""
     Decorator for labelling functions. Labelling functions should return
     a template pointcloud and a mapping dictionary (from labels to indices).

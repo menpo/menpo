@@ -1,12 +1,12 @@
 from collections import OrderedDict
 import numpy as np
 
-from ..base import (_validate_input, _connectivity_from_array,
-                    _pcloud_and_lgroup_from_ranges, _connectivity_from_range,
-                    _labeller)
+from ..base import (
+    validate_input, connectivity_from_array, pcloud_and_lgroup_from_ranges,
+    connectivity_from_range, labeller_func)
 
 
-@_labeller(group_label='face_ibug_68')
+@labeller_func(group_label='face_ibug_68')
 def face_ibug_68_to_face_ibug_68(pcloud):
     """
     Apply the IBUG 68-point semantic labels.
@@ -29,7 +29,7 @@ def face_ibug_68_to_face_ibug_68(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 68
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     jaw_indices = np.arange(0, 17)
     lbrow_indices = np.arange(17, 22)
@@ -41,19 +41,19 @@ def face_ibug_68_to_face_ibug_68(pcloud):
     outer_mouth_indices = np.arange(48, 60)
     inner_mouth_indices = np.arange(60, 68)
 
-    jaw_connectivity = _connectivity_from_array(jaw_indices)
-    lbrow_connectivity = _connectivity_from_array(lbrow_indices)
-    rbrow_connectivity = _connectivity_from_array(rbrow_indices)
+    jaw_connectivity = connectivity_from_array(jaw_indices)
+    lbrow_connectivity = connectivity_from_array(lbrow_indices)
+    rbrow_connectivity = connectivity_from_array(rbrow_indices)
     nose_connectivity = np.vstack([
-        _connectivity_from_array(upper_nose_indices),
-        _connectivity_from_array(lower_nose_indices)])
-    leye_connectivity = _connectivity_from_array(leye_indices,
+        connectivity_from_array(upper_nose_indices),
+        connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = connectivity_from_array(leye_indices,
                                                  close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices,
+    reye_connectivity = connectivity_from_array(reye_indices,
                                                  close_loop=True)
     mouth_connectivity = np.vstack([
-        _connectivity_from_array(outer_mouth_indices, close_loop=True),
-        _connectivity_from_array(inner_mouth_indices, close_loop=True)])
+        connectivity_from_array(outer_mouth_indices, close_loop=True),
+        connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
     all_connectivity = np.vstack([
         jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
@@ -76,7 +76,7 @@ def face_ibug_68_to_face_ibug_68(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='face_ibug_66')
+@labeller_func(group_label='face_ibug_66')
 def face_ibug_68_to_face_ibug_66(pcloud):
     """
     Apply the IBUG 66-point semantic labels, but ignoring the 2 points
@@ -100,7 +100,7 @@ def face_ibug_68_to_face_ibug_66(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 68
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     jaw_indices = np.arange(0, 17)
     lbrow_indices = np.arange(17, 22)
@@ -113,17 +113,17 @@ def face_ibug_68_to_face_ibug_66(pcloud):
     inner_mouth_indices = np.hstack((48, np.arange(60, 63),
                                      54, np.arange(63, 66)))
 
-    jaw_connectivity = _connectivity_from_array(jaw_indices)
-    lbrow_connectivity = _connectivity_from_array(lbrow_indices)
-    rbrow_connectivity = _connectivity_from_array(rbrow_indices)
+    jaw_connectivity = connectivity_from_array(jaw_indices)
+    lbrow_connectivity = connectivity_from_array(lbrow_indices)
+    rbrow_connectivity = connectivity_from_array(rbrow_indices)
     nose_connectivity = np.vstack([
-        _connectivity_from_array(upper_nose_indices),
-        _connectivity_from_array(lower_nose_indices)])
-    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+        connectivity_from_array(upper_nose_indices),
+        connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = connectivity_from_array(reye_indices, close_loop=True)
     mouth_connectivity = np.vstack([
-        _connectivity_from_array(outer_mouth_indices, close_loop=True),
-        _connectivity_from_array(inner_mouth_indices, close_loop=True)])
+        connectivity_from_array(outer_mouth_indices, close_loop=True),
+        connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
     all_connectivity = np.vstack([
         jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
@@ -146,7 +146,7 @@ def face_ibug_68_to_face_ibug_66(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='face_ibug_51')
+@labeller_func(group_label='face_ibug_51')
 def face_ibug_68_to_face_ibug_51(pcloud):
     """
     Apply the IBUG 51-point semantic labels, but removing the annotations
@@ -169,7 +169,7 @@ def face_ibug_68_to_face_ibug_51(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 68
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     lbrow_indices = np.arange(0, 5)
     rbrow_indices = np.arange(5, 10)
@@ -180,16 +180,16 @@ def face_ibug_68_to_face_ibug_51(pcloud):
     outer_mouth_indices = np.arange(31, 43)
     inner_mouth_indices = np.arange(43, 51)
 
-    lbrow_connectivity = _connectivity_from_array(lbrow_indices)
-    rbrow_connectivity = _connectivity_from_array(rbrow_indices)
+    lbrow_connectivity = connectivity_from_array(lbrow_indices)
+    rbrow_connectivity = connectivity_from_array(rbrow_indices)
     nose_connectivity = np.vstack([
-        _connectivity_from_array(upper_nose_indices),
-        _connectivity_from_array(lower_nose_indices)])
-    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+        connectivity_from_array(upper_nose_indices),
+        connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = connectivity_from_array(reye_indices, close_loop=True)
     mouth_connectivity = np.vstack([
-        _connectivity_from_array(outer_mouth_indices, close_loop=True),
-        _connectivity_from_array(inner_mouth_indices, close_loop=True)])
+        connectivity_from_array(outer_mouth_indices, close_loop=True),
+        connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
     all_connectivity = np.vstack([
         lbrow_connectivity, rbrow_connectivity, nose_connectivity,
@@ -211,7 +211,7 @@ def face_ibug_68_to_face_ibug_51(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='face_ibug_49')
+@labeller_func(group_label='face_ibug_49')
 def face_ibug_68_to_face_ibug_49(pcloud):
     """
     Apply the IBUG 49-point semantic labels, but removing the annotations
@@ -235,7 +235,7 @@ def face_ibug_68_to_face_ibug_49(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 68
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     lbrow_indices = np.arange(0, 5)
     rbrow_indices = np.arange(5, 10)
@@ -247,16 +247,16 @@ def face_ibug_68_to_face_ibug_49(pcloud):
     inner_mouth_indices = np.hstack((31, np.arange(43, 46),
                                      37, np.arange(46, 49)))
 
-    lbrow_connectivity = _connectivity_from_array(lbrow_indices)
-    rbrow_connectivity = _connectivity_from_array(rbrow_indices)
+    lbrow_connectivity = connectivity_from_array(lbrow_indices)
+    rbrow_connectivity = connectivity_from_array(rbrow_indices)
     nose_connectivity = np.vstack([
-        _connectivity_from_array(upper_nose_indices),
-        _connectivity_from_array(lower_nose_indices)])
-    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+        connectivity_from_array(upper_nose_indices),
+        connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = connectivity_from_array(reye_indices, close_loop=True)
     mouth_connectivity = np.vstack([
-        _connectivity_from_array(outer_mouth_indices, close_loop=True),
-        _connectivity_from_array(inner_mouth_indices, close_loop=True)])
+        connectivity_from_array(outer_mouth_indices, close_loop=True),
+        connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
     all_connectivity = np.vstack([
         lbrow_connectivity, rbrow_connectivity, nose_connectivity,
@@ -278,7 +278,7 @@ def face_ibug_68_to_face_ibug_49(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='face_ibug_68_trimesh')
+@labeller_func(group_label='face_ibug_68_trimesh')
 def face_ibug_68_to_face_ibug_68_trimesh(pcloud):
     """
     Apply the IBUG 68-point semantic labels, with trimesh connectivity.
@@ -295,7 +295,7 @@ def face_ibug_68_to_face_ibug_68_trimesh(pcloud):
     from menpo.shape import TriMesh
 
     n_expected_points = 68
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     tri_list = np.array([[47, 29, 28], [44, 43, 23], [38, 20, 21],
                          [47, 28, 42], [49, 61, 60], [40, 41, 37],
@@ -341,7 +341,7 @@ def face_ibug_68_to_face_ibug_68_trimesh(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='face_ibug_66_trimesh')
+@labeller_func(group_label='face_ibug_66_trimesh')
 def face_ibug_68_to_face_ibug_66_trimesh(pcloud):
     """
     Apply the IBUG 66-point semantic labels, with trimesh connectivity.
@@ -405,7 +405,7 @@ def face_ibug_68_to_face_ibug_66_trimesh(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='face_ibug_51_trimesh')
+@labeller_func(group_label='face_ibug_51_trimesh')
 def face_ibug_68_to_face_ibug_51_trimesh(pcloud):
     """
     Apply the IBUG 51-point semantic labels, with trimesh connectivity..
@@ -459,7 +459,7 @@ def face_ibug_68_to_face_ibug_51_trimesh(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='face_ibug_49_trimesh')
+@labeller_func(group_label='face_ibug_49_trimesh')
 def face_ibug_68_to_face_ibug_49_trimesh(pcloud):
     """
     Apply the IBUG 49-point semantic labels, with trimesh connectivity.
@@ -523,7 +523,7 @@ def face_ibug_68_to_face_ibug_49_trimesh(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='face_ibug_65')
+@labeller_func(group_label='face_ibug_65')
 def face_ibug_68_to_face_ibug_65(pcloud):
     """
     Apply the IBUG 68 point semantic labels, but ignore the 3 points that are
@@ -556,7 +556,7 @@ def face_ibug_68_to_face_ibug_65(pcloud):
     edges = new_pcloud.edges[:-8]
     # Re-add the inner mouth without the bottom 3 points
     edges = np.vstack([edges,
-                       _connectivity_from_range((60, 65), close_loop=True)])
+                       connectivity_from_range((60, 65), close_loop=True)])
 
     new_pcloud = PointUndirectedGraph.init_from_edges(
         new_pcloud.points[:-3], edges)
@@ -569,7 +569,7 @@ def face_ibug_68_to_face_ibug_65(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='face_imm_58')
+@labeller_func(group_label='face_imm_58')
 def face_imm_58_to_face_imm_58(pcloud):
     """
     Apply the 58-point semantic labels from the IMM dataset.
@@ -589,7 +589,7 @@ def face_imm_58_to_face_imm_58(pcloud):
     .. [1] http://www2.imm.dtu.dk/~aam/
     """
     n_expected_points = 58
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     labels = OrderedDict([
         ('jaw', (0, 13, False)),
@@ -600,10 +600,10 @@ def face_imm_58_to_face_imm_58(pcloud):
         ('mouth', (39, 47, True)),
         ('nose', (47, 58, False))
     ])
-    return _pcloud_and_lgroup_from_ranges(pcloud, labels)
+    return pcloud_and_lgroup_from_ranges(pcloud, labels)
 
 
-@_labeller(group_label='face_lfpw_29')
+@labeller_func(group_label='face_lfpw_29')
 def face_lfpw_29_to_face_lfpw_29(pcloud):
     """
     Apply the 29-point semantic labels from the original LFPW dataset.
@@ -625,7 +625,7 @@ def face_lfpw_29_to_face_lfpw_29(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 29
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     chin_indices = np.array([28])
     outer_leye_indices = np.array([8, 12, 10, 13])
@@ -638,19 +638,19 @@ def face_lfpw_29_to_face_lfpw_29(pcloud):
     inner_mouth_indices = np.array([22, 25, 23, 26])
     nose_indices = np.array([18, 20, 19, 21])
 
-    chin_connectivity = _connectivity_from_array(chin_indices, close_loop=True)
-    leye_connectivity = _connectivity_from_array(outer_leye_indices,
+    chin_connectivity = connectivity_from_array(chin_indices, close_loop=True)
+    leye_connectivity = connectivity_from_array(outer_leye_indices,
                                                  close_loop=True)
-    reye_connectivity = _connectivity_from_array(outer_reye_indices,
+    reye_connectivity = connectivity_from_array(outer_reye_indices,
                                                  close_loop=True)
-    lbrow_connectivity = _connectivity_from_array(lbrow_indices,
+    lbrow_connectivity = connectivity_from_array(lbrow_indices,
                                                   close_loop=True)
-    rbrow_connectivity = _connectivity_from_array(rbrow_indices,
+    rbrow_connectivity = connectivity_from_array(rbrow_indices,
                                                   close_loop=True)
     mouth_connectivity = np.vstack([
-        _connectivity_from_array(outer_mouth_indices, close_loop=True),
-        _connectivity_from_array(inner_mouth_indices, close_loop=True)])
-    nose_connectivity = _connectivity_from_array(nose_indices, close_loop=True)
+        connectivity_from_array(outer_mouth_indices, close_loop=True),
+        connectivity_from_array(inner_mouth_indices, close_loop=True)])
+    nose_connectivity = connectivity_from_array(nose_indices, close_loop=True)
 
     all_connectivity = np.vstack([
         chin_connectivity, leye_connectivity, reye_connectivity,
@@ -685,7 +685,7 @@ def _build_upper_eyelid():
     return upper_eyelid_indices, upper_eyelid_connectivity
 
 
-@_labeller(group_label='eye_ibug_open_38')
+@labeller_func(group_label='eye_ibug_open_38')
 def eye_ibug_open_38_to_eye_ibug_open_38(pcloud):
     """
     Apply the IBUG 38-point open eye semantic labels.
@@ -701,7 +701,7 @@ def eye_ibug_open_38_to_eye_ibug_open_38(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 38
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     upper_el_indices, upper_el_connectivity = _build_upper_eyelid()
 
@@ -714,8 +714,8 @@ def eye_ibug_open_38_to_eye_ibug_open_38(pcloud):
     lower_el_bottom = np.arange(7, 12)
     lower_el_indices = np.hstack((6, lower_el_top, 0, lower_el_bottom))
 
-    iris_connectivity = _connectivity_from_range(iris_range, close_loop=True)
-    pupil_connectivity = _connectivity_from_range(pupil_range, close_loop=True)
+    iris_connectivity = connectivity_from_range(iris_range, close_loop=True)
+    pupil_connectivity = connectivity_from_range(pupil_range, close_loop=True)
 
     sclera_connectivity = zip(sclera_top, sclera_top[1:])
     sclera_connectivity += [(0, 21)]
@@ -745,7 +745,7 @@ def eye_ibug_open_38_to_eye_ibug_open_38(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='eye_ibug_close_17')
+@labeller_func(group_label='eye_ibug_close_17')
 def eye_ibug_close_17_to_eye_ibug_close_17(pcloud):
     """
     Apply the IBUG 17-point close eye semantic labels.
@@ -758,7 +758,7 @@ def eye_ibug_close_17_to_eye_ibug_close_17(pcloud):
     from menpo.shape import PointUndirectedGraph
 
     n_expected_points = 17
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     upper_indices, upper_connectivity = _build_upper_eyelid()
 
@@ -781,7 +781,7 @@ def eye_ibug_close_17_to_eye_ibug_close_17(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='eye_ibug_open_38_trimesh')
+@labeller_func(group_label='eye_ibug_open_38_trimesh')
 def eye_ibug_open_38_to_eye_ibug_open_38_trimesh(pcloud):
     """
     Apply the IBUG 38-point open eye semantic labels, with trimesh connectivity.
@@ -793,7 +793,7 @@ def eye_ibug_open_38_to_eye_ibug_open_38_trimesh(pcloud):
     from menpo.shape import TriMesh
 
     n_expected_points = 38
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     tri_list = np.array([[29, 36, 28], [22, 13, 23], [12,  1,  2],
                          [29, 30, 37], [13,  3, 14], [13, 12,  2],
@@ -825,7 +825,7 @@ def eye_ibug_open_38_to_eye_ibug_open_38_trimesh(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='eye_ibug_close_17_trimesh')
+@labeller_func(group_label='eye_ibug_close_17_trimesh')
 def eye_ibug_close_17_to_eye_ibug_close_17_trimesh(pcloud):
     """
     Apply the IBUG 17-point close eye semantic labels, with trimesh
@@ -838,7 +838,7 @@ def eye_ibug_close_17_to_eye_ibug_close_17_trimesh(pcloud):
     from menpo.shape import TriMesh
 
     n_expected_points = 17
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     tri_list = np.array([[10, 11, 13], [ 3, 13,  2], [ 4, 14,  3],
                          [15,  5, 16], [12, 11,  0], [13, 14, 10],
@@ -856,7 +856,7 @@ def eye_ibug_close_17_to_eye_ibug_close_17_trimesh(pcloud):
     return new_pcloud, mapping
 
 
-@_labeller(group_label='tongue_ibug_19')
+@labeller_func(group_label='tongue_ibug_19')
 def tongue_ibug_19_to_tongue_ibug_19(pcloud):
     """
     Apply the IBUG 19-point tongue semantic labels.
@@ -867,10 +867,10 @@ def tongue_ibug_19_to_tongue_ibug_19(pcloud):
       - bisector
     """
     n_expected_points = 19
-    _validate_input(pcloud, n_expected_points)
+    validate_input(pcloud, n_expected_points)
 
     labels = OrderedDict([
         ('outline', (0, 13, False)),
         ('bisector', (13, 19, False))
     ])
-    return _pcloud_and_lgroup_from_ranges(pcloud, labels)
+    return pcloud_and_lgroup_from_ranges(pcloud, labels)
