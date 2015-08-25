@@ -20,3 +20,4 @@ Exceptions
   :maxdepth: 1
 
   ImageBoundaryError
+  OutOfMaskSampleError

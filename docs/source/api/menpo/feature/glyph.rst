@@ -1,6 +1,6 @@
-.. _menpo-feature-visualize-glyph:
+.. _menpo-feature-glyph:
 
-.. currentmodule:: menpo.feature.visualize
+.. currentmodule:: menpo.feature
 
 glyph
 =====
