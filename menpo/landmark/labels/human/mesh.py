@@ -6,7 +6,7 @@ from ..base import labeller_func, validate_input, connectivity_from_array
 
 @labeller_func(group_label='face_bu3dfe_83')
 def face_bu3dfe_83_to_face_bu3dfe_83(pcloud):
-    """
+    r"""
     Apply the BU-3DFE (Binghamton University 3D Facial Expression)
     Database 83-point facial semantic labels.
 

@@ -8,7 +8,7 @@ from ..base import (
 
 @labeller_func(group_label='face_ibug_68')
 def face_ibug_68_to_face_ibug_68(pcloud):
-    """
+    r"""
     Apply the IBUG 68-point semantic labels.
 
     The semantic labels are as follows:
@@ -78,7 +78,7 @@ def face_ibug_68_to_face_ibug_68(pcloud):
 
 @labeller_func(group_label='face_ibug_66')
 def face_ibug_68_to_face_ibug_66(pcloud):
-    """
+    r"""
     Apply the IBUG 66-point semantic labels, but ignoring the 2 points
     describing the inner mouth corners).
 
@@ -148,7 +148,7 @@ def face_ibug_68_to_face_ibug_66(pcloud):
 
 @labeller_func(group_label='face_ibug_51')
 def face_ibug_68_to_face_ibug_51(pcloud):
-    """
+    r"""
     Apply the IBUG 51-point semantic labels, but removing the annotations
     corresponding to the jaw region.
 
@@ -213,7 +213,7 @@ def face_ibug_68_to_face_ibug_51(pcloud):
 
 @labeller_func(group_label='face_ibug_49')
 def face_ibug_68_to_face_ibug_49(pcloud):
-    """
+    r"""
     Apply the IBUG 49-point semantic labels, but removing the annotations
     corresponding to the jaw region and the 2 describing the inner mouth
     corners.
@@ -280,7 +280,7 @@ def face_ibug_68_to_face_ibug_49(pcloud):
 
 @labeller_func(group_label='face_ibug_68_trimesh')
 def face_ibug_68_to_face_ibug_68_trimesh(pcloud):
-    """
+    r"""
     Apply the IBUG 68-point semantic labels, with trimesh connectivity.
 
     The semantic labels applied are as follows:
@@ -343,7 +343,7 @@ def face_ibug_68_to_face_ibug_68_trimesh(pcloud):
 
 @labeller_func(group_label='face_ibug_66_trimesh')
 def face_ibug_68_to_face_ibug_66_trimesh(pcloud):
-    """
+    r"""
     Apply the IBUG 66-point semantic labels, with trimesh connectivity.
 
     The semantic labels applied are as follows:
@@ -407,7 +407,7 @@ def face_ibug_68_to_face_ibug_66_trimesh(pcloud):
 
 @labeller_func(group_label='face_ibug_51_trimesh')
 def face_ibug_68_to_face_ibug_51_trimesh(pcloud):
-    """
+    r"""
     Apply the IBUG 51-point semantic labels, with trimesh connectivity..
 
     The semantic labels applied are as follows:
@@ -461,7 +461,7 @@ def face_ibug_68_to_face_ibug_51_trimesh(pcloud):
 
 @labeller_func(group_label='face_ibug_49_trimesh')
 def face_ibug_68_to_face_ibug_49_trimesh(pcloud):
-    """
+    r"""
     Apply the IBUG 49-point semantic labels, with trimesh connectivity.
 
     The semantic labels applied are as follows:
@@ -525,7 +525,7 @@ def face_ibug_68_to_face_ibug_49_trimesh(pcloud):
 
 @labeller_func(group_label='face_ibug_65')
 def face_ibug_68_to_face_ibug_65(pcloud):
-    """
+    r"""
     Apply the IBUG 68 point semantic labels, but ignore the 3 points that are
     coincident for a closed mouth (bottom of the inner mouth).
 
@@ -571,7 +571,7 @@ def face_ibug_68_to_face_ibug_65(pcloud):
 
 @labeller_func(group_label='face_imm_58')
 def face_imm_58_to_face_imm_58(pcloud):
-    """
+    r"""
     Apply the 58-point semantic labels from the IMM dataset.
 
     The semantic labels applied are as follows:
@@ -605,7 +605,7 @@ def face_imm_58_to_face_imm_58(pcloud):
 
 @labeller_func(group_label='face_lfpw_29')
 def face_lfpw_29_to_face_lfpw_29(pcloud):
-    """
+    r"""
     Apply the 29-point semantic labels from the original LFPW dataset.
 
     The semantic labels applied are as follows:
@@ -687,7 +687,7 @@ def _build_upper_eyelid():
 
 @labeller_func(group_label='eye_ibug_open_38')
 def eye_ibug_open_38_to_eye_ibug_open_38(pcloud):
-    """
+    r"""
     Apply the IBUG 38-point open eye semantic labels.
 
     The semantic labels applied are as follows:
@@ -747,7 +747,7 @@ def eye_ibug_open_38_to_eye_ibug_open_38(pcloud):
 
 @labeller_func(group_label='eye_ibug_close_17')
 def eye_ibug_close_17_to_eye_ibug_close_17(pcloud):
-    """
+    r"""
     Apply the IBUG 17-point close eye semantic labels.
 
     The semantic labels applied are as follows:
@@ -783,7 +783,7 @@ def eye_ibug_close_17_to_eye_ibug_close_17(pcloud):
 
 @labeller_func(group_label='eye_ibug_open_38_trimesh')
 def eye_ibug_open_38_to_eye_ibug_open_38_trimesh(pcloud):
-    """
+    r"""
     Apply the IBUG 38-point open eye semantic labels, with trimesh connectivity.
 
     The semantic labels applied are as follows:
@@ -827,7 +827,7 @@ def eye_ibug_open_38_to_eye_ibug_open_38_trimesh(pcloud):
 
 @labeller_func(group_label='eye_ibug_close_17_trimesh')
 def eye_ibug_close_17_to_eye_ibug_close_17_trimesh(pcloud):
-    """
+    r"""
     Apply the IBUG 17-point close eye semantic labels, with trimesh
     connectivity.
 
@@ -858,7 +858,7 @@ def eye_ibug_close_17_to_eye_ibug_close_17_trimesh(pcloud):
 
 @labeller_func(group_label='tongue_ibug_19')
 def tongue_ibug_19_to_tongue_ibug_19(pcloud):
-    """
+    r"""
     Apply the IBUG 19-point tongue semantic labels.
 
     The semantic labels applied are as follows:

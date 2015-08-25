@@ -147,9 +147,9 @@ _labeller_docs = r"""
 
     Raises
     ------
-    :map:`LabellingError`
+    : :map:`LabellingError`
         If the given landmark group/pointcloud contains less than the
-         expected number of points.
+        expected number of points.
 """
 
 def labeller_func(group_label=None):

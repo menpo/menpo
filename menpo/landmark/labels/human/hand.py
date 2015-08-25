@@ -6,7 +6,7 @@ from ..base import validate_input, connectivity_from_array, labeller_func
 
 @labeller_func(group_label='hand_ibug_39')
 def hand_ibug_39_to_hand_ibug_39(pcloud):
-    """
+    r"""
     Apply the IBUG 39-point semantic labels.
 
     The semantic labels applied are as follows:

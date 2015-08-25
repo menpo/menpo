@@ -6,7 +6,7 @@ from .base import labeller_func, validate_input, connectivity_from_array
 
 @labeller_func(group_label='car_streetscene_view_0_8')
 def car_streetscene_20_to_car_streetscene_view_0_8(pcloud):
-    """
+    r"""
     Apply the 8-point semantic labels of "view 0" from the MIT Street Scene
     Car dataset (originally a 20-point markup).
 
@@ -107,7 +107,7 @@ def car_streetscene_20_to_car_streetscene_view_1_14(pcloud):
 
 @labeller_func(group_label='car_streetscene_view_2_10')
 def car_streetscene_20_to_car_streetscene_view_2_10(pcloud):
-    """
+    r"""
     Apply the 10-point semantic labels of "view 2" from the MIT Street Scene
     Car dataset (originally a 20-point markup).
 
@@ -143,7 +143,7 @@ def car_streetscene_20_to_car_streetscene_view_2_10(pcloud):
 
 @labeller_func(group_label='car_streetscene_view_3_14')
 def car_streetscene_20_to_car_streetscene_view_3_14(pcloud):
-    """
+    r"""
     Apply the 14-point semantic labels of "view 3" from the MIT Street Scene
     Car dataset (originally a 20-point markup).
 
@@ -196,7 +196,7 @@ def car_streetscene_20_to_car_streetscene_view_3_14(pcloud):
 
 @labeller_func(group_label='car_streetscene_view_4_14')
 def car_streetscene_20_to_car_streetscene_view_4_14(pcloud):
-    """
+    r"""
     Apply the 14-point semantic labels of "view 4" from the MIT Street Scene
     Car dataset (originally a 20-point markup).
 
@@ -250,7 +250,7 @@ def car_streetscene_20_to_car_streetscene_view_4_14(pcloud):
 
 @labeller_func(group_label='car_streetscene_view_5_10')
 def car_streetscene_20_to_car_streetscene_view_5_10(pcloud):
-    """
+    r"""
     Apply the 10-point semantic labels of "view 5" from the MIT Street Scene
     Car dataset (originally a 20-point markup).
 
@@ -286,7 +286,7 @@ def car_streetscene_20_to_car_streetscene_view_5_10(pcloud):
 
 @labeller_func(group_label='car_streetscene_view_6_14')
 def car_streetscene_20_to_car_streetscene_view_6_14(pcloud):
-    """
+    r"""
     Apply the 14-point semantic labels of "view 6" from the MIT Street Scene
     Car dataset (originally a 20-point markup).
 
@@ -339,7 +339,7 @@ def car_streetscene_20_to_car_streetscene_view_6_14(pcloud):
 
 @labeller_func(group_label='car_streetscene_view_7_8')
 def car_streetscene_20_to_car_streetscene_view_7_8(pcloud):
-    """
+    r"""
     Apply the 8-point semantic labels of "view 7" from the MIT Street Scene
     Car dataset (originally a 20-point markup).
 

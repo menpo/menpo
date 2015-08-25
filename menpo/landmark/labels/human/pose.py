@@ -7,7 +7,7 @@ from ..base import (labeller_func, validate_input, connectivity_from_array,
 
 @labeller_func(group_label='pose_stickmen_12')
 def pose_stickmen_12_to_pose_stickmen_12(pcloud):
-    """
+    r"""
     Apply the 'stickmen' 12-point semantic labels.
 
     The semantic labels applied are as follows:
@@ -39,7 +39,7 @@ def pose_stickmen_12_to_pose_stickmen_12(pcloud):
 
 @labeller_func(group_label='pose_lsp_14')
 def pose_lsp_14_to_pose_lsp_14(pcloud):
-    """
+    r"""
     Apply the lsp 14-point semantic labels.
 
     The semantic labels applied are as follows:
@@ -92,7 +92,7 @@ def pose_lsp_14_to_pose_lsp_14(pcloud):
 
 @labeller_func(group_label='pose_flic_11')
 def pose_flic_11_to_pose_flic_11(pcloud):
-    """
+    r"""
     Apply the flic  11-point semantic labels.
 
     The semantic labels applied are as follows:
@@ -120,7 +120,7 @@ def pose_flic_11_to_pose_flic_11(pcloud):
 
 @labeller_func(group_label='pose_human36M_32')
 def pose_human36M_32_to_pose_human36M_32(pcloud):
-    """
+    r"""
     Apply the human3.6M 32-point semantic labels.
 
     The semantic labels applied are as follows:
@@ -195,7 +195,7 @@ def pose_human36M_32_to_pose_human36M_32(pcloud):
 
 @labeller_func(group_label='pose_human36M_17')
 def pose_human36M_17_to_pose_human36M_17(pcloud):
-    """
+    r"""
     Apply the human3.6M 17-point semantic labels (based on the
     original semantic labels of Human3.6 but removing the annotations
     corresponding to duplicate points, soles and palms).
