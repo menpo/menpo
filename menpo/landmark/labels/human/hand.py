@@ -1,14 +1,13 @@
+from collections import OrderedDict
 import numpy as np
-from menpo.landmark.base import LandmarkGroup
 
-from menpo.landmark.labels.base import _validate_input, _connectivity_from_array
+from ..base import _validate_input, _connectivity_from_array, _labeller
 
 
-def ibug_hand(landmark_group):
+@_labeller(group_label='hand_ibug_39')
+def hand_ibug_39_to_hand_ibug_39(pcloud):
     """
-    Apply the ibug's "standard" 39 point semantic labels to the landmark group.
-
-    The group label will be ``ibug_hand``.
+    Apply the IBUG 39-point semantic labels.
 
     The semantic labels applied are as follows:
 
@@ -18,28 +17,11 @@ def ibug_hand(landmark_group):
       - ring
       - pinky
       - palm
-
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``ibug_hand``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 39 points
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'ibug_hand'
-    _validate_input(landmark_group, 39, group)
+    n_expected_points = 39
+    _validate_input(pcloud, n_expected_points)
 
     thumb_indices = np.arange(0, 5)
     index_indices = np.arange(5, 12)
@@ -62,20 +44,19 @@ def ibug_hand(landmark_group):
     palm_connectivity = _connectivity_from_array(palm_indices,
                                                  close_loop=True)
 
-    total_conn = np.vstack((thumb_connectivity, index_connectivity,
-                            middle_connectivity, ring_connectivity,
-                            pinky_connectivity, palm_connectivity))
+    all_connectivity = np.vstack([thumb_connectivity, index_connectivity,
+                                  middle_connectivity, ring_connectivity,
+                                  pinky_connectivity, palm_connectivity])
 
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points,
+                                                      all_connectivity)
 
-    new_landmark_group['thumb'] = thumb_indices
-    new_landmark_group['index'] = index_indices
-    new_landmark_group['middle'] = middle_indices
-    new_landmark_group['ring'] = ring_indices
-    new_landmark_group['pinky'] = pinky_indices
-    new_landmark_group['palm'] = palm_indices
-    del new_landmark_group['all']  # Remove pointless all group
+    mapping = OrderedDict()
+    mapping['thumb'] = thumb_indices
+    mapping['index'] = index_indices
+    mapping['middle'] = middle_indices
+    mapping['ring'] = ring_indices
+    mapping['pinky'] = pinky_indices
+    mapping['palm'] = palm_indices
 
-    return group, new_landmark_group
+    return new_pcloud, mapping

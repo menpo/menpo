@@ -1,17 +1,14 @@
 from collections import OrderedDict
 import numpy as np
-from menpo.landmark.base import LandmarkGroup
 
-from menpo.landmark.labels.base import (
-    _validate_input, _connectivity_from_array, _relabel_group_from_dict)
+from ..base import (_labeller, _validate_input, _connectivity_from_array,
+                    _pcloud_and_lgroup_from_ranges)
 
 
-def stickmen_pose(landmark_group):
+@_labeller(group_label='pose_stickmen_12')
+def pose_stickmen_12_to_pose_stickmen_12(pcloud):
     """
-    Apply the stickmen "standard" 12 point semantic labels to the landmark
-    group.
-
-    The group label will be ``stickmen_pose``.
+    Apply the 'stickmen' 12-point semantic labels.
 
     The semantic labels applied are as follows:
 
@@ -22,29 +19,13 @@ def stickmen_pose(landmark_group):
       - left_lower_arm
       - head
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``stickmen_pose``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 12 points
-
     References
     ----------
     .. [1] http://www.robots.ox.ac.uk/~vgg/data/stickmen/
     """
-    group = 'stickmen_pose'
-    _validate_input(landmark_group, 12, group)
+    n_expected_points = 12
+    _validate_input(pcloud, n_expected_points)
+
     labels = OrderedDict([
         ('torso', (0, 2, False)),
         ('right_upper arm', (2, 4, False)),
@@ -53,15 +34,13 @@ def stickmen_pose(landmark_group):
         ('left_lower_arm', (8, 10, False)),
         ('head', (10, 12, False))
     ])
-    return group, _relabel_group_from_dict(landmark_group.lms, labels)
+    return _pcloud_and_lgroup_from_ranges(pcloud, labels)
 
 
-def lsp_pose(landmark_group):
+@_labeller(group_label='pose_lsp_14')
+def pose_lsp_14_to_pose_lsp_14(pcloud):
     """
-    Apply the lsp "standard" 14 point semantic labels to the landmark
-    group.
-
-    The group label will be ``lsp_pose``.
+    Apply the lsp 14-point semantic labels.
 
     The semantic labels applied are as follows:
 
@@ -71,31 +50,14 @@ def lsp_pose(landmark_group):
       - right_arm
       - head
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``lsp_pose``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 14 points
-
     References
     ----------
     .. [1] http://www.comp.leeds.ac.uk/mat4saj/lsp.html
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'lsp_pose'
-    _validate_input(landmark_group, 14, group)
+    n_expected_points = 14
+    _validate_input(pcloud, n_expected_points)
 
     left_leg_indices = np.arange(0, 3)
     right_leg_indices = np.arange(3, 6)
@@ -109,33 +71,29 @@ def lsp_pose(landmark_group):
     right_arm_connectivity = _connectivity_from_array(right_arm_indices)
     head_connectivity = _connectivity_from_array(head_indices)
 
-    total_conn = np.vstack([left_leg_connectivity,
-                            right_leg_connectivity,
-                            left_arm_connectivity,
-                            right_arm_connectivity,
-                            head_connectivity])
+    all_connectivity = np.vstack([
+        left_leg_connectivity, right_leg_connectivity,
+        left_arm_connectivity, right_arm_connectivity,
+        head_connectivity
+    ])
 
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points,
+                                                      all_connectivity)
 
-    new_landmark_group['left_leg'] = left_leg_indices
-    new_landmark_group['right_leg'] = right_leg_indices
-    new_landmark_group['left_arm'] = left_arm_indices
-    new_landmark_group['right_arm'] = right_arm_indices
-    new_landmark_group['head'] = head_indices
+    mapping = OrderedDict()
+    mapping['left_leg'] = left_leg_indices
+    mapping['right_leg'] = right_leg_indices
+    mapping['left_arm'] = left_arm_indices
+    mapping['right_arm'] = right_arm_indices
+    mapping['head'] = head_indices
 
-    del new_landmark_group['all']  # Remove pointless all group
-
-    return group, new_landmark_group
+    return new_pcloud, mapping
 
 
-def flic_pose(landmark_group):
+@_labeller(group_label='pose_flic_11')
+def pose_flic_11_to_pose_flic_11(pcloud):
     """
-    Apply the flic "standard" 11 point semantic labels to the landmark
-    group.
-
-    The group label will be ``flic_pose``.
+    Apply the flic  11-point semantic labels.
 
     The semantic labels applied are as follows:
 
@@ -144,44 +102,26 @@ def flic_pose(landmark_group):
       - hips
       - face
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``flic_pose``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 11 points
-
     References
     ----------
     .. [1] http://vision.grasp.upenn.edu/cgi-bin/index.php?n=VideoLearning.FLIC
     """
-    group = 'flic_pose'
-    _validate_input(landmark_group, 11, group)
+    n_expected_points = 11
+    _validate_input(pcloud, n_expected_points)
+
     labels = OrderedDict([
         ('left_arm', (0, 3, False)),
         ('right_arm', (3, 6, False)),
         ('hips', (6, 8, False)),
         ('face', (8, 11, True))])
 
-    return group, _relabel_group_from_dict(landmark_group.lms, labels)
+    return _pcloud_and_lgroup_from_ranges(pcloud, labels)
 
 
-def human36M_pose_32(landmark_group):
+@_labeller(group_label='pose_human36M_32')
+def pose_human36M_32_to_pose_human36M_32(pcloud):
     """
-    Apply the human3.6M "standard" 32 point semantic labels to the landmark
-    group.
-
-    The group label will be ``human36M_pose_32``.
+    Apply the human3.6M 32-point semantic labels.
 
     The semantic labels applied are as follows:
 
@@ -196,31 +136,14 @@ def human36M_pose_32(landmark_group):
       - right_hand
       - torso
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``human36M_pose_32``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 32 points
-
     References
     ----------
     .. [1] http://vision.imar.ro/human3.6m/
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'human36M_pose_32'
-    _validate_input(landmark_group, 32, group)
+    n_expected_points = 32
+    _validate_input(pcloud, n_expected_points)
 
     pelvis_indices = np.array([1, 0, 6])
     right_leg_indices = np.array(range(1, 6))
@@ -245,39 +168,37 @@ def human36M_pose_32(landmark_group):
     torso_connectivity = _connectivity_from_array(torso_indices,
                                                   close_loop=True)
 
-    total_conn = np.vstack([
+    all_connectivity = np.vstack([
         pelvis_connectivity, right_leg_connectivity, left_leg_connectivity,
         spine_connectivity, head_connectivity, left_arm_connectivity,
         left_hand_connectivity, right_arm_connectivity,
-        right_hand_connectivity, torso_connectivity])
+        right_hand_connectivity, torso_connectivity
+    ])
 
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points,
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points,
+                                                      all_connectivity)
 
-    new_landmark_group['pelvis'] = pelvis_indices
-    new_landmark_group['right_leg'] = right_leg_indices
-    new_landmark_group['left_leg'] = left_leg_indices
-    new_landmark_group['spine'] = spine_indices
-    new_landmark_group['head'] = head_indices
-    new_landmark_group['left_arm'] = left_arm_indices
-    new_landmark_group['left_hand'] = left_hand_indices
-    new_landmark_group['right_arm'] = right_arm_indices
-    new_landmark_group['right_hand'] = right_hand_indices
-    new_landmark_group['torso'] = torso_indices
+    mapping = OrderedDict()
+    mapping['pelvis'] = pelvis_indices
+    mapping['right_leg'] = right_leg_indices
+    mapping['left_leg'] = left_leg_indices
+    mapping['spine'] = spine_indices
+    mapping['head'] = head_indices
+    mapping['left_arm'] = left_arm_indices
+    mapping['left_hand'] = left_hand_indices
+    mapping['right_arm'] = right_arm_indices
+    mapping['right_hand'] = right_hand_indices
+    mapping['torso'] = torso_indices
 
-    del new_landmark_group['all']  # Remove pointless all group
-
-    return group, new_landmark_group
+    return new_pcloud, mapping
 
 
-def human36M_pose_17(landmark_group):
+@_labeller(group_label='pose_human36M_17')
+def pose_human36M_17_to_pose_human36M_17(pcloud):
     """
-    Apply the human3.6M "standard" 17 point semantic labels (based on the
+    Apply the human3.6M 17-point semantic labels (based on the
     original semantic labels of Human3.6 but removing the annotations
-    corresponding to duplicate points, soles and palms) to the landmark group.
-
-    The group label will be ``human36M_pose_17``.
+    corresponding to duplicate points, soles and palms).
 
     The semantic labels applied are as follows:
 
@@ -290,31 +211,14 @@ def human36M_pose_17(landmark_group):
       - right_arm
       - torso
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``human36M_pose_17``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 32 points
-
     References
     ----------
     .. [1] http://vision.imar.ro/human3.6m/
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'human36M_pose_17'
-    _validate_input(landmark_group, 32, group)
+    n_expected_points = 17
+    _validate_input(pcloud, n_expected_points)
 
     pelvis_indices = np.array([1, 0, 4])
     right_leg_indices = np.arange(1, 4)
@@ -335,27 +239,26 @@ def human36M_pose_17(landmark_group):
     torso_connectivity = _connectivity_from_array(torso_indices,
                                                   close_loop=True)
 
-    total_conn = np.vstack([
+    all_connectivity = np.vstack([
         pelvis_connectivity, right_leg_connectivity, left_leg_connectivity,
         spine_connectivity, head_connectivity, left_arm_connectivity,
-        right_arm_connectivity, torso_connectivity])
+        right_arm_connectivity, torso_connectivity
+    ])
 
     # Ignore duplicate points, sole and palms
-    ind = np.hstack((np.arange(0, 4), np.arange(6, 9), np.arange(12, 16),
-                     np.arange(17, 20), np.arange(25, 28)))
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
-                                             total_conn))
+    ind = np.hstack([np.arange(0, 4), np.arange(6, 9), np.arange(12, 16),
+                     np.arange(17, 20), np.arange(25, 28)])
+    new_pcloud = PointUndirectedGraph.init_from_edges(
+        pcloud.points[ind], all_connectivity)
 
-    new_landmark_group['pelvis'] = pelvis_indices
-    new_landmark_group['right_leg'] = right_leg_indices
-    new_landmark_group['left_leg'] = left_leg_indices
-    new_landmark_group['spine'] = spine_indices
-    new_landmark_group['head'] = head_indices
-    new_landmark_group['left_arm'] = left_arm_indices
-    new_landmark_group['right_arm'] = right_arm_indices
-    new_landmark_group['torso'] = torso_indices
+    mapping = OrderedDict()
+    mapping['pelvis'] = pelvis_indices
+    mapping['right_leg'] = right_leg_indices
+    mapping['left_leg'] = left_leg_indices
+    mapping['spine'] = spine_indices
+    mapping['head'] = head_indices
+    mapping['left_arm'] = left_arm_indices
+    mapping['right_arm'] = right_arm_indices
+    mapping['torso'] = torso_indices
 
-    del new_landmark_group['all']  # Remove pointless all group
-
-    return group, new_landmark_group
+    return new_pcloud, mapping

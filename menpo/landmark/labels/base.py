@@ -54,7 +54,7 @@ def _mask_from_range(range_tuple, n_points):
     return mask
 
 
-def _validate_input(pcloud, n_expected_points, group):
+def _validate_input(pcloud, n_expected_points):
     r"""
     Ensure that the input matches the number of expected points.
 
@@ -64,8 +64,6 @@ def _validate_input(pcloud, n_expected_points, group):
         Input Pointcloud to validate
     n_expected_points : `int`
         Number of expected points
-    group : `str`
-        Group label for error message
 
     Raises
     ------
@@ -75,13 +73,13 @@ def _validate_input(pcloud, n_expected_points, group):
     """
     n_actual_points = pcloud.n_points
     if n_actual_points != n_expected_points:
-        msg = '{} mark-up expects exactly {} ' \
+        msg = 'Label expects exactly {} ' \
               'points. However, the given landmark group ' \
-              'has {} points'.format(group, n_expected_points, n_actual_points)
+              'has {} points'.format(n_expected_points, n_actual_points)
         raise LabellingError(msg)
 
 
-def _relabel_group_from_dict(pointcloud, labels_to_ranges):
+def _pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
     """
     Label the given pointcloud according to the given ordered dictionary
     of labels to ranges. This assumes that you can semantically label the group
@@ -97,39 +95,72 @@ def _relabel_group_from_dict(pointcloud, labels_to_ranges):
     ----------
     pointcloud : :map:`PointCloud`
         The pointcloud to apply semantic labels to.
-    labels_to_ranges : `OrderedDict`
+    labels_to_ranges : `ordereddict` {`str` -> (`int`, `int`, `bool`)}
         Ordered dictionary of string labels to range tuples.
 
     Returns
     -------
-    landmark_group: :map:`LandmarkGroup`
-        New landmark group
-
-    Raises
-    ------
-    :class:`menpo.landmark.exceptions.LabellingError`
-        If the given pointcloud contains less than ``n_expected_points``
-        points.
+    new_pcloud : :map:`PointCloud`
+        New pointcloud with specific connectivity information applied.
+    mapping : `ordereddict` {`str` -> `int ndarray`}
+        For each label, the indices in to the pointcloud that belong to the
+        label.
     """
     from menpo.shape import PointUndirectedGraph
 
-    n_points = pointcloud.n_points
-    masks = OrderedDict()
-    adjacency_lists = []
+    mapping = OrderedDict()
+    all_connectivity = []
     for label, tup in labels_to_ranges.items():
         range_tuple = tup[:-1]
         close_loop = tup[-1]
-        adjacency_lists.append(_connectivity_from_range(
-            range_tuple, close_loop=close_loop))
-        masks[label] = _mask_from_range(range_tuple, n_points)
-    adjacency_array = np.vstack(adjacency_lists)
 
-    new_landmark_group = LandmarkGroup(
-        PointUndirectedGraph.init_from_edges(pointcloud.points,
-                                             adjacency_array), masks)
+        connectivity = _connectivity_from_range(range_tuple,
+                                                close_loop=close_loop)
+        all_connectivity.append(connectivity)
+        mapping[label] = np.arange(*range_tuple)
+    all_connectivity = np.vstack(all_connectivity)
 
-    return new_landmark_group
+    new_pcloud = PointUndirectedGraph.init_from_edges(pointcloud.points,
+                                                      all_connectivity)
 
+    return new_pcloud, mapping
+
+
+_labeller_docs = r"""
+    Parameters
+    ----------
+    x : :map:`LandmarkGroup` or :map:`PointCloud` or `ndarray`
+        The input landmark group, pointcloud or array to label. If a pointcloud
+        is passed, then only the connectivity information is propagated to
+        the pointcloud (a subclass of :map:`PointCloud` may be returned).
+    include_mapping : `bool`, optional
+        Only applicable if a :map:`PointCloud` or `ndarray` is passed. Returns
+        the mapping dictionary which maps labels to indices into the resulting
+        :map:`PointCloud` (which is then used to for building a
+        :map:`LandmarkGroup`. This parameter is only provided for internal
+        use so that other labellers can piggyback off one another.
+
+    Returns
+    -------
+    x_labelled : :map:`LandmarkGroup` or :map:`PointCloud`
+        If a :map:`LandmarkGroup` was passed, a :map:`LandmarkGroup` is
+        returned. This landmark group will contain specific labels and
+        these labels may refer to sub-pointclouds with specific connectivity
+        information.
+
+        If a :map:`PointCloud` was passed, a :map:`PointCloud` is returned. Only
+        the connectivity information is propagated to the pointcloud
+        (a subclass of :map:`PointCloud` may be returned).
+    mapping_dict : `ordereddict` {`str` -> `int ndarray`}, optional
+        Only returned if ``include_mapping==True``. Used for building
+        :map:`LandmarkGroup`.
+
+    Raises
+    ------
+    :map:`LabellingError`
+        If the given landmark group/pointcloud contains less than the
+         expected number of points.
+"""
 
 def _labeller(group_label=None):
     r"""
@@ -152,26 +183,28 @@ def _labeller(group_label=None):
               else name_of_callable(labelling_method))
         # Duck type group label onto method itself
         labelling_method.group_label = gl
+        # Set up the global docs
+        labelling_method.__doc__ += _labeller_docs
 
         @wraps(labelling_method)
-        def wrapper(x):
+        def wrapper(x, include_mapping=False):
             from menpo.shape import PointCloud
             # Accepts LandmarkGroup, PointCloud or ndarray
             if isinstance(x, np.ndarray):
                 x = PointCloud(x, copy=False)
 
-            # Call the actual labelling method to get the template
-            # and dictionary mapping labels to indices
-            template, mapping = labelling_method()
-            n_expected_points = template.n_points
-
             if isinstance(x, PointCloud):
-                _validate_input(x, n_expected_points, gl)
-                return template.from_vector(x.as_vector())
+                new_pcloud, mapping = labelling_method(x)
+                # This parameter is only provided for internal use so that
+                # other labellers can piggyback off one another
+                if include_mapping:
+                    return new_pcloud, mapping
+                else:
+                    return new_pcloud
             if isinstance(x, LandmarkGroup):
-                _validate_input(x.lms, n_expected_points, gl)
-                return LandmarkGroup.init_from_indices_mapping(
-                    template.from_vector(x.lms.as_vector()), mapping)
+                new_pcloud, mapping = labelling_method(x.lms)
+                return LandmarkGroup.init_from_indices_mapping(new_pcloud, 
+                                                               mapping)
         return wrapper
     return decorator
 

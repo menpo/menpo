@@ -1,15 +1,14 @@
+from collections import OrderedDict
 import numpy as np
-from menpo.landmark.base import LandmarkGroup
 
-from menpo.landmark.labels.base import _validate_input, _connectivity_from_array
+from .base import _labeller, _validate_input, _connectivity_from_array
 
 
-def streetscene_car_view_0(landmark_group):
+@_labeller(group_label='car_streetscene_view_0_8')
+def car_streetscene_20_to_car_streetscene_view_0_8(pcloud):
     """
-    Apply the 8 point semantic labels of the view 0  of the MIT Street Scene
-    Car dataset to the landmark group.
-
-    The group label will be ``streetscene_car_view_0``.
+    Apply the 8-point semantic labels of "view 0" from the MIT Street Scene
+    Car dataset (originally a 20-point markup).
 
     The semantic labels applied are as follows:
 
@@ -17,31 +16,14 @@ def streetscene_car_view_0(landmark_group):
       - bonnet
       - windshield
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``streetscene_car_view_0``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 20 points
-
     References
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'streetscene_car_view_0'
-    _validate_input(landmark_group, 20, group)
+    n_expected_points = 20
+    _validate_input(pcloud, n_expected_points)
 
     front_indices = np.array([0, 1, 3, 2])
     bonnet_indices = np.array([2, 3, 5, 4])
@@ -54,28 +36,26 @@ def streetscene_car_view_0(landmark_group):
     windshield_connectivity = _connectivity_from_array(windshield_indices,
                                                        close_loop=True)
 
-    total_conn = np.vstack((front_connectivity, bonnet_connectivity,
-                            windshield_connectivity))
+    all_connectivity = np.vstack([front_connectivity, bonnet_connectivity,
+                                  windshield_connectivity])
 
     ind = np.arange(8)
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
+                                                      all_connectivity)
 
-    new_landmark_group['front'] = front_indices
-    new_landmark_group['bonnet'] = bonnet_indices
-    new_landmark_group['windshield'] = windshield_indices
-    del new_landmark_group['all']  # Remove pointless all group
+    mapping = OrderedDict()
+    mapping['front'] = front_indices
+    mapping['bonnet'] = bonnet_indices
+    mapping['windshield'] = windshield_indices
 
-    return group, new_landmark_group
+    return new_pcloud, mapping
 
 
-def streetscene_car_view_1(landmark_group):
+@_labeller(group_label='car_streetscene_view_1_14')
+def car_streetscene_20_to_car_streetscene_view_1_14(pcloud):
     """
-    Apply the 14 point semantic labels of the view 1  of the MIT Street Scene
-    Car dataset to the landmark group.
-
-    The group label will be ``streetscene_car_view_1``.
+    Apply the 14-point semantic labels of "view 1" from the MIT Street Scene
+    Car dataset (originally a 20-point markup).
 
     The semantic labels applied are as follows:
 
@@ -84,31 +64,14 @@ def streetscene_car_view_1(landmark_group):
       - windshield
       - left_side
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``streetscene_car_view_1``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 20 points
-
     References
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'streetscene_car_view_1'
-    _validate_input(landmark_group, 20, group)
+    n_expected_points = 20
+    _validate_input(pcloud, n_expected_points)
 
     front_indices = np.array([0, 1, 3, 2])
     bonnet_indices = np.array([2, 3, 5, 4])
@@ -124,50 +87,33 @@ def streetscene_car_view_1(landmark_group):
     left_side_connectivity = _connectivity_from_array(left_side_indices,
                                                       close_loop=True)
 
-    total_conn = np.vstack((front_connectivity, bonnet_connectivity,
-                            windshield_connectivity, left_side_connectivity))
+    all_connectivity = np.vstack([
+        front_connectivity, bonnet_connectivity, windshield_connectivity,
+        left_side_connectivity
+    ])
 
     ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
+                                             all_connectivity)
 
-    new_landmark_group['front'] = front_indices
-    new_landmark_group['bonnet'] = bonnet_indices
-    new_landmark_group['windshield'] = windshield_indices
-    new_landmark_group['left_side'] = left_side_indices
-    del new_landmark_group['all']  # Remove pointless all group
+    mapping = OrderedDict()
+    mapping['front'] = front_indices
+    mapping['bonnet'] = bonnet_indices
+    mapping['windshield'] = windshield_indices
+    mapping['left_side'] = left_side_indices
 
-    return group, new_landmark_group
+    return new_pcloud, mapping
 
 
-def streetscene_car_view_2(landmark_group):
+@_labeller(group_label='car_streetscene_view_2_10')
+def car_streetscene_20_to_car_streetscene_view_2_10(pcloud):
     """
-    Apply the 10 point semantic labels of the view 2  of the MIT Street Scene
-    Car dataset to the landmark group.
-
-    The group label will be ``streetscene_car_view_2``.
+    Apply the 10-point semantic labels of "view 2" from the MIT Street Scene
+    Car dataset (originally a 20-point markup).
 
     The semantic labels applied are as follows:
 
       - left_side
-
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: 'streetscene_car_view_2'
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 20 points
 
     References
     ----------
@@ -175,33 +121,31 @@ def streetscene_car_view_2(landmark_group):
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'streetscene_car_view_2'
-    _validate_input(landmark_group, 20, group)
+    n_expected_points = 20
+    _validate_input(pcloud, n_expected_points)
 
     left_side_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 9, 8])
 
     left_side_connectivity = _connectivity_from_array(left_side_indices,
                                                       close_loop=True)
 
-    total_conn = left_side_connectivity
+    all_connectivity = left_side_connectivity
 
     ind = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
+                                                      all_connectivity)
 
-    new_landmark_group['left_side'] = left_side_indices
-    del new_landmark_group['all']  # Remove pointless all group
+    mapping = OrderedDict()
+    mapping['left_side'] = left_side_indices
 
-    return group, new_landmark_group
+    return new_pcloud, mapping
 
 
-def streetscene_car_view_3(landmark_group):
+@_labeller(group_label='car_streetscene_view_3_14')
+def car_streetscene_20_to_car_streetscene_view_3_14(pcloud):
     """
-    Apply the 14 point semantic labels of the view 3  of the MIT Street Scene
-    Car dataset to the landmark group.
-
-    The group label will be ``streetscene_car_view_2``.
+    Apply the 14-point semantic labels of "view 3" from the MIT Street Scene
+    Car dataset (originally a 20-point markup).
 
     The semantic labels applied are as follows:
 
@@ -210,31 +154,14 @@ def streetscene_car_view_3(landmark_group):
       - trunk
       - rear
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``streetscene_car_view_3``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 20 points
-
     References
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'streetscene_car_view_3'
-    _validate_input(landmark_group, 20, group)
+    n_expected_points = 20
+    _validate_input(pcloud, n_expected_points)
 
     left_side_indices = np.array([0, 1, 2, 3, 4, 6, 8, 10, 13, 12])
     rear_windshield_indices = np.array([4, 5, 7, 6])
@@ -249,30 +176,29 @@ def streetscene_car_view_3(landmark_group):
                                                   close_loop=True)
     rear_connectivity = _connectivity_from_array(rear_indices, close_loop=True)
 
-    total_conn = np.vstack((left_side_connectivity,
-                            rear_windshield_connectivity,
-                            trunk_connectivity, rear_connectivity))
+    all_connectivity = np.vstack([
+        left_side_connectivity, rear_windshield_connectivity,
+        trunk_connectivity, rear_connectivity
+    ])
 
     ind = np.array([0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18])
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
+                                                      all_connectivity)
 
-    new_landmark_group['left_side'] = left_side_indices
-    new_landmark_group['rear_windshield'] = rear_windshield_indices
-    new_landmark_group['trunk'] = trunk_indices
-    new_landmark_group['rear'] = rear_indices
-    del new_landmark_group['all']  # Remove pointless all group
+    mapping = OrderedDict()
+    mapping['left_side'] = left_side_indices
+    mapping['rear_windshield'] = rear_windshield_indices
+    mapping['trunk'] = trunk_indices
+    mapping['rear'] = rear_indices
 
-    return group, new_landmark_group
+    return new_pcloud, mapping
 
 
-def streetscene_car_view_4(landmark_group):
+@_labeller(group_label='car_streetscene_view_4_14')
+def car_streetscene_20_to_car_streetscene_view_4_14(pcloud):
     """
-    Apply the 14 point semantic labels of the view 4  of the MIT Street Scene
-    Car dataset to the landmark group.
-
-    The group label will be ``streetscene_car_view_4``.
+    Apply the 14-point semantic labels of "view 4" from the MIT Street Scene
+    Car dataset (originally a 20-point markup).
 
     The semantic labels applied are as follows:
 
@@ -281,31 +207,14 @@ def streetscene_car_view_4(landmark_group):
       - windshield
       - right_side
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: 'streetscene_car_view_4'
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 20 points
-
     References
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'streetscene_car_view_4'
-    _validate_input(landmark_group, 20, group)
+    n_expected_points = 20
+    _validate_input(pcloud, n_expected_points)
 
     front_indices = np.array([0, 1, 3, 2])
     bonnet_indices = np.array([2, 3, 5, 4])
@@ -321,51 +230,33 @@ def streetscene_car_view_4(landmark_group):
     right_side_connectivity = _connectivity_from_array(right_side_indices,
                                                        close_loop=True)
 
-    total_conn = np.vstack((front_connectivity, bonnet_connectivity,
-                            windshield_connectivity,
-                            right_side_connectivity))
+    total_conn = np.vstack([
+        front_connectivity, bonnet_connectivity, windshield_connectivity,
+        right_side_connectivity
+    ])
 
-    ind = np.hstack((np.arange(8), np.array([9, 11, 13, 15, 17, 19])))
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
-                                             total_conn))
+    ind = np.hstack([np.arange(8), np.array([9, 11, 13, 15, 17, 19])])
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
+                                                      total_conn)
 
-    new_landmark_group['front'] = front_indices
-    new_landmark_group['bonnet'] = bonnet_indices
-    new_landmark_group['windshield'] = windshield_indices
-    new_landmark_group['right_side'] = right_side_indices
-    del new_landmark_group['all']  # Remove pointless all group
+    mapping = OrderedDict()
+    mapping['front'] = front_indices
+    mapping['bonnet'] = bonnet_indices
+    mapping['windshield'] = windshield_indices
+    mapping['right_side'] = right_side_indices
 
-    return group, new_landmark_group
+    return new_pcloud, mapping
 
 
-def streetscene_car_view_5(landmark_group):
+@_labeller(group_label='car_streetscene_view_5_10')
+def car_streetscene_20_to_car_streetscene_view_5_10(pcloud):
     """
-    Apply the 10 point semantic labels of the view 5 of the MIT Street Scene
-    Car dataset to the landmark group.
-
-    The group label will be ``streetscene_car_view_5``.
+    Apply the 10-point semantic labels of "view 5" from the MIT Street Scene
+    Car dataset (originally a 20-point markup).
 
     The semantic labels applied are as follows:
 
       - right_side
-
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``streetscene_car_view_5``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 20 points
 
     References
     ----------
@@ -373,33 +264,31 @@ def streetscene_car_view_5(landmark_group):
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'streetscene_car_view_5'
-    _validate_input(landmark_group, 20, group)
+    n_expected_points = 20
+    _validate_input(pcloud, n_expected_points)
 
     right_side_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 9, 8])
 
     right_side_connectivity = _connectivity_from_array(right_side_indices,
                                                        close_loop=True)
 
-    total_conn = right_side_connectivity
+    all_connectivity = right_side_connectivity
 
     ind = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19])
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
+                                                      all_connectivity)
 
-    new_landmark_group['right_side'] = right_side_indices
-    del new_landmark_group['all']  # Remove pointless all group
+    mapping = OrderedDict()
+    mapping['right_side'] = right_side_indices
 
-    return group, new_landmark_group
+    return new_pcloud, mapping
 
 
-def streetscene_car_view_6(landmark_group):
+@_labeller(group_label='car_streetscene_view_6_14')
+def car_streetscene_20_to_car_streetscene_view_6_14(pcloud):
     """
-    Apply the 14 point semantic labels of the view 6  of the MIT Street Scene
-    Car dataset to the landmark group.
-
-    The group label will be ``streetscene_car_view_6``.
+    Apply the 14-point semantic labels of "view 6" from the MIT Street Scene
+    Car dataset (originally a 20-point markup).
 
     The semantic labels applied are as follows:
 
@@ -408,31 +297,14 @@ def streetscene_car_view_6(landmark_group):
       - trunk
       - rear
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``streetscene_car_view_3``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 20 points
-
     References
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'streetscene_car_view_6'
-    _validate_input(landmark_group, 20, group)
+    n_expected_points = 20
+    _validate_input(pcloud, n_expected_points)
 
     right_side_indices = np.array([0, 1, 2, 3, 5, 7, 9, 11, 13, 12])
     rear_windshield_indices = np.array([4, 5, 7, 6])
@@ -447,30 +319,29 @@ def streetscene_car_view_6(landmark_group):
                                                   close_loop=True)
     rear_connectivity = _connectivity_from_array(rear_indices, close_loop=True)
 
-    total_conn = np.vstack((right_side_connectivity,
-                            rear_windshield_connectivity,
-                            trunk_connectivity, rear_connectivity))
+    all_connectivity = np.vstack([
+        right_side_connectivity, rear_windshield_connectivity,
+        trunk_connectivity, rear_connectivity
+    ])
 
     ind = np.array([1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19])
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
+                                                      all_connectivity)
 
-    new_landmark_group['right_side'] = right_side_indices
-    new_landmark_group['rear_windshield'] = rear_windshield_indices
-    new_landmark_group['trunk'] = trunk_indices
-    new_landmark_group['rear'] = rear_indices
-    del new_landmark_group['all']  # Remove pointless all group
+    mapping = OrderedDict()
+    mapping['right_side'] = right_side_indices
+    mapping['rear_windshield'] = rear_windshield_indices
+    mapping['trunk'] = trunk_indices
+    mapping['rear'] = rear_indices
 
-    return group, new_landmark_group
+    return new_pcloud, mapping
 
 
-def streetscene_car_view_7(landmark_group):
+@_labeller(group_label='car_streetscene_view_7_8')
+def car_streetscene_20_to_car_streetscene_view_7_8(pcloud):
     """
-    Apply the 8 point semantic labels of the view 0  of the MIT Street Scene
-    Car dataset to the landmark group.
-
-    The group label will be ``streetscene_car_view_7``.
+    Apply the 8-point semantic labels of "view 7" from the MIT Street Scene
+    Car dataset (originally a 20-point markup).
 
     The semantic labels applied are as follows:
 
@@ -478,31 +349,14 @@ def streetscene_car_view_7(landmark_group):
       - trunk
       - rear
 
-    Parameters
-    ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group : `str`
-        The group label: ``streetscene_car_view_7``
-    landmark_group : :map:`LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    error : :map:`LabellingError`
-        If the given landmark group contains less than 20 points
-
     References
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
     from menpo.shape import PointUndirectedGraph
 
-    group = 'streetscene_car_view_7'
-    _validate_input(landmark_group, 20, group)
+    n_expected_points = 20
+    _validate_input(pcloud, n_expected_points)
 
     rear_windshield_indices = np.array([0, 1, 3, 2])
     trunk_indices = np.array([2, 3, 5, 4])
@@ -514,17 +368,16 @@ def streetscene_car_view_7(landmark_group):
                                                   close_loop=True)
     rear_connectivity = _connectivity_from_array(rear_indices, close_loop=True)
 
-    total_conn = np.vstack((rear_windshield_connectivity,
-                            trunk_connectivity, rear_connectivity))
+    all_connectivity = np.vstack([rear_windshield_connectivity,
+                                  trunk_connectivity, rear_connectivity])
 
     ind = np.arange(8, 16)
-    new_landmark_group = LandmarkGroup.init_with_all_label(
-        PointUndirectedGraph.init_from_edges(landmark_group.lms.points[ind],
-                                             total_conn))
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
+                                                      all_connectivity)
 
-    new_landmark_group['rear_windshield'] = rear_windshield_indices
-    new_landmark_group['trunk'] = trunk_indices
-    new_landmark_group['rear'] = rear_indices
-    del new_landmark_group['all']  # Remove pointless all group
+    mapping = OrderedDict()
+    mapping['rear_windshield'] = rear_windshield_indices
+    mapping['trunk'] = trunk_indices
+    mapping['rear'] = rear_indices
 
-    return group, new_landmark_group
+    return new_pcloud, mapping
