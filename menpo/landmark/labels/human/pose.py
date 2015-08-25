@@ -166,7 +166,7 @@ def pose_human36M_32_to_pose_human36M_32(pcloud):
     right_arm_connectivity = connectivity_from_array(right_arm_indices)
     right_hand_connectivity = connectivity_from_array(right_hand_indices)
     torso_connectivity = connectivity_from_array(torso_indices,
-                                                  close_loop=True)
+                                                 close_loop=True)
 
     all_connectivity = np.vstack([
         pelvis_connectivity, right_leg_connectivity, left_leg_connectivity,
@@ -237,7 +237,7 @@ def pose_human36M_17_to_pose_human36M_17(pcloud):
     left_arm_connectivity = connectivity_from_array(left_arm_indices)
     right_arm_connectivity = connectivity_from_array(right_arm_indices)
     torso_connectivity = connectivity_from_array(torso_indices,
-                                                  close_loop=True)
+                                                 close_loop=True)
 
     all_connectivity = np.vstack([
         pelvis_connectivity, right_leg_connectivity, left_leg_connectivity,

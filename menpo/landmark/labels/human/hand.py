@@ -32,17 +32,17 @@ def hand_ibug_39_to_hand_ibug_39(pcloud):
                               np.arange(35, 39)))
 
     thumb_connectivity = connectivity_from_array(thumb_indices,
-                                                  close_loop=False)
-    index_connectivity = connectivity_from_array(index_indices,
-                                                  close_loop=False)
-    middle_connectivity = connectivity_from_array(middle_indices,
-                                                   close_loop=False)
-    ring_connectivity = connectivity_from_array(ring_indices,
                                                  close_loop=False)
-    pinky_connectivity = connectivity_from_array(pinky_indices,
+    index_connectivity = connectivity_from_array(index_indices,
+                                                 close_loop=False)
+    middle_connectivity = connectivity_from_array(middle_indices,
                                                   close_loop=False)
+    ring_connectivity = connectivity_from_array(ring_indices,
+                                                close_loop=False)
+    pinky_connectivity = connectivity_from_array(pinky_indices,
+                                                 close_loop=False)
     palm_connectivity = connectivity_from_array(palm_indices,
-                                                 close_loop=True)
+                                                close_loop=True)
 
     all_connectivity = np.vstack([thumb_connectivity, index_connectivity,
                                   middle_connectivity, ring_connectivity,

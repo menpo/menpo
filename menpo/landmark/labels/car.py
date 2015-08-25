@@ -30,11 +30,11 @@ def car_streetscene_20_to_car_streetscene_view_0_8(pcloud):
     windshield_indices = np.array([4, 5, 7, 6])
 
     front_connectivity = connectivity_from_array(front_indices,
-                                                  close_loop=True)
+                                                 close_loop=True)
     bonnet_connectivity = connectivity_from_array(bonnet_indices,
-                                                   close_loop=True)
+                                                  close_loop=True)
     windshield_connectivity = connectivity_from_array(windshield_indices,
-                                                       close_loop=True)
+                                                      close_loop=True)
 
     all_connectivity = np.vstack([front_connectivity, bonnet_connectivity,
                                   windshield_connectivity])
@@ -79,13 +79,13 @@ def car_streetscene_20_to_car_streetscene_view_1_14(pcloud):
     left_side_indices = np.array([0, 2, 4, 6, 8, 9, 10, 11, 13, 12])
 
     front_connectivity = connectivity_from_array(front_indices,
-                                                  close_loop=True)
+                                                 close_loop=True)
     bonnet_connectivity = connectivity_from_array(bonnet_indices,
-                                                   close_loop=True)
+                                                  close_loop=True)
     windshield_connectivity = connectivity_from_array(windshield_indices,
-                                                       close_loop=True)
-    left_side_connectivity = connectivity_from_array(left_side_indices,
                                                       close_loop=True)
+    left_side_connectivity = connectivity_from_array(left_side_indices,
+                                                     close_loop=True)
 
     all_connectivity = np.vstack([
         front_connectivity, bonnet_connectivity, windshield_connectivity,
@@ -94,7 +94,7 @@ def car_streetscene_20_to_car_streetscene_view_1_14(pcloud):
 
     ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
     new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
-                                             all_connectivity)
+                                                      all_connectivity)
 
     mapping = OrderedDict()
     mapping['front'] = front_indices
@@ -127,7 +127,7 @@ def car_streetscene_20_to_car_streetscene_view_2_10(pcloud):
     left_side_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 9, 8])
 
     left_side_connectivity = connectivity_from_array(left_side_indices,
-                                                      close_loop=True)
+                                                     close_loop=True)
 
     all_connectivity = left_side_connectivity
 
@@ -169,11 +169,10 @@ def car_streetscene_20_to_car_streetscene_view_3_14(pcloud):
     rear_indices = np.array([8, 9, 11, 10])
 
     left_side_connectivity = connectivity_from_array(left_side_indices,
-                                                      close_loop=True)
+                                                     close_loop=True)
     rear_windshield_connectivity = connectivity_from_array(
         rear_windshield_indices, close_loop=True)
-    trunk_connectivity = connectivity_from_array(trunk_indices,
-                                                  close_loop=True)
+    trunk_connectivity = connectivity_from_array(trunk_indices, close_loop=True)
     rear_connectivity = connectivity_from_array(rear_indices, close_loop=True)
 
     all_connectivity = np.vstack([
@@ -222,13 +221,13 @@ def car_streetscene_20_to_car_streetscene_view_4_14(pcloud):
     right_side_indices = np.array([8, 9, 10, 11, 13, 12, 1, 3, 5, 7])
 
     front_connectivity = connectivity_from_array(front_indices,
-                                                  close_loop=True)
+                                                 close_loop=True)
     bonnet_connectivity = connectivity_from_array(bonnet_indices,
-                                                   close_loop=True)
+                                                  close_loop=True)
     windshield_connectivity = connectivity_from_array(windshield_indices,
-                                                       close_loop=True)
+                                                      close_loop=True)
     right_side_connectivity = connectivity_from_array(right_side_indices,
-                                                       close_loop=True)
+                                                      close_loop=True)
 
     total_conn = np.vstack([
         front_connectivity, bonnet_connectivity, windshield_connectivity,
@@ -270,7 +269,7 @@ def car_streetscene_20_to_car_streetscene_view_5_10(pcloud):
     right_side_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 9, 8])
 
     right_side_connectivity = connectivity_from_array(right_side_indices,
-                                                       close_loop=True)
+                                                      close_loop=True)
 
     all_connectivity = right_side_connectivity
 
@@ -312,11 +311,10 @@ def car_streetscene_20_to_car_streetscene_view_6_14(pcloud):
     rear_indices = np.array([8, 9, 11, 10])
 
     right_side_connectivity = connectivity_from_array(right_side_indices,
-                                                       close_loop=True)
+                                                      close_loop=True)
     rear_windshield_connectivity = connectivity_from_array(
         rear_windshield_indices, close_loop=True)
-    trunk_connectivity = connectivity_from_array(trunk_indices,
-                                                  close_loop=True)
+    trunk_connectivity = connectivity_from_array(trunk_indices, close_loop=True)
     rear_connectivity = connectivity_from_array(rear_indices, close_loop=True)
 
     all_connectivity = np.vstack([
@@ -364,8 +362,7 @@ def car_streetscene_20_to_car_streetscene_view_7_8(pcloud):
 
     rear_windshield_connectivity = connectivity_from_array(
         rear_windshield_indices, close_loop=True)
-    trunk_connectivity = connectivity_from_array(trunk_indices,
-                                                  close_loop=True)
+    trunk_connectivity = connectivity_from_array(trunk_indices, close_loop=True)
     rear_connectivity = connectivity_from_array(rear_indices, close_loop=True)
 
     all_connectivity = np.vstack([rear_windshield_connectivity,

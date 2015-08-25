@@ -105,7 +105,7 @@ def pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
         close_loop = tup[-1]
 
         connectivity = connectivity_from_range(range_tuple,
-                                                close_loop=close_loop)
+                                               close_loop=close_loop)
         all_connectivity.append(connectivity)
         mapping[label] = np.arange(*range_tuple)
     all_connectivity = np.vstack(all_connectivity)

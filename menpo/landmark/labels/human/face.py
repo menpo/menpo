@@ -47,10 +47,8 @@ def face_ibug_68_to_face_ibug_68(pcloud):
     nose_connectivity = np.vstack([
         connectivity_from_array(upper_nose_indices),
         connectivity_from_array(lower_nose_indices)])
-    leye_connectivity = connectivity_from_array(leye_indices,
-                                                 close_loop=True)
-    reye_connectivity = connectivity_from_array(reye_indices,
-                                                 close_loop=True)
+    leye_connectivity = connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = connectivity_from_array(reye_indices, close_loop=True)
     mouth_connectivity = np.vstack([
         connectivity_from_array(outer_mouth_indices, close_loop=True),
         connectivity_from_array(inner_mouth_indices, close_loop=True)])
@@ -640,13 +638,13 @@ def face_lfpw_29_to_face_lfpw_29(pcloud):
 
     chin_connectivity = connectivity_from_array(chin_indices, close_loop=True)
     leye_connectivity = connectivity_from_array(outer_leye_indices,
-                                                 close_loop=True)
+                                                close_loop=True)
     reye_connectivity = connectivity_from_array(outer_reye_indices,
-                                                 close_loop=True)
+                                                close_loop=True)
     lbrow_connectivity = connectivity_from_array(lbrow_indices,
-                                                  close_loop=True)
+                                                 close_loop=True)
     rbrow_connectivity = connectivity_from_array(rbrow_indices,
-                                                  close_loop=True)
+                                                 close_loop=True)
     mouth_connectivity = np.vstack([
         connectivity_from_array(outer_mouth_indices, close_loop=True),
         connectivity_from_array(inner_mouth_indices, close_loop=True)])

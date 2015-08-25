@@ -46,16 +46,16 @@ def face_bu3dfe_83_to_face_bu3dfe_83(pcloud):
     reye_connectivity = connectivity_from_array(reye_indices, close_loop=True)
     leye_connectivity = connectivity_from_array(leye_indices, close_loop=True)
     rbrow_connectivity = connectivity_from_array(rbrow_indices,
-                                                  close_loop=True)
+                                                 close_loop=True)
     lbrow_connectivity = connectivity_from_array(lbrow_indices,
-                                                  close_loop=True)
+                                                 close_loop=True)
     rnose_connectivity = connectivity_from_array(rnose_indices)
     nostril_connectivity = connectivity_from_array(nostril_indices)
     lnose_connectivity = connectivity_from_array(lnose_indices)
     outermouth_connectivity = connectivity_from_array(outermouth_indices,
-                                                       close_loop=True)
+                                                      close_loop=True)
     innermouth_connectivity = connectivity_from_array(innermouth_indices,
-                                                       close_loop=True)
+                                                      close_loop=True)
     jaw_connectivity = connectivity_from_array(jaw_indices)
 
     all_connectivity = np.vstack([
