@@ -13,7 +13,7 @@ from menpo.transform import (Translation, NonUniformScale,
                              rotate_ccw_about_centre)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
-from .extract_patches import extract_patches
+from .patches import extract_patches, set_patches
 
 
 # Cache the greyscale luminosity coefficients as they are invariant.
@@ -1203,10 +1203,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             patch from 1 pixel up the first axis away from the centre.
             If ``None``, then no offsets are applied.
         as_single_array : `bool`, optional
-            If ``True``, an ``(n_center * n_offset, self.shape...)``
+            If ``True``, an ``(n_center, n_offset, self.n_channels, patch_size)``
             `ndarray`, thus a single numpy array is returned containing each
-            patch. If ``False``, a `list` of :map:`Image` objects is returned
-            representing each patch.
+            patch. If ``False``, a `list` of ``n_center * n_offset``
+            :map:`Image` objects is returned representing each patch.
 
         Returns
         -------
@@ -1263,10 +1263,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             patch from 1 pixel up the first axis away from the centre.
             If ``None``, then no offsets are applied.
         as_single_array : `bool`, optional
-            If ``True``, an ``(n_center * n_offset, self.shape...)``
+            If ``True``, an ``(n_center, n_offset, self.n_channels, patch_size)``
             `ndarray`, thus a single numpy array is returned containing each
-            patch. If ``False``, a `list` of :map:`Image` objects is returned
-            representing each patch.
+            patch. If ``False``, a `list` of ``n_center * n_offset``
+            :map:`Image` objects is returned representing each patch.
 
         Returns
         -------
@@ -1284,6 +1284,120 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     patch_size=patch_size,
                                     sample_offsets=sample_offsets,
                                     as_single_array=as_single_array)
+
+    def set_patches(self, patches, patch_centers, offset=None,
+                    offset_index=None):
+        r"""
+        Set the values of a group of patches into the correct regions of the
+        image. Given an array of patches and a set of patch centers, the
+        patches' values are copied in the regions of the image that are centred
+        on the coordinates of the given centers.
+
+        The patches argument can have any of the two formats that are returned
+        from the `extract_patches()` and `extract_patches_around_landmarks()`
+        methods. Specifically it can be:
+
+            1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+            2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patches : `ndarray` or `list`
+            The values of the patches. It can have any of the two formats that
+            are returned from the `extract_patches()` and
+            `extract_patches_around_landmarks()` methods. Specifically, it can
+            either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+            `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
+            objects.
+        patch_centers : :map:`PointCloud`
+            The centers to set the patches around.
+        offset : `(``x``, ``y``)` or ``(1, 2)`` `ndarray` or ``None``, optional
+            The offset to apply on the patch centers within the image.
+            If ``None``, then (0, 0) is used.
+        offset_index : `int` or ``None``, optional
+            The offset index within the provided `patches` argument, thus the
+            index of the second dimension from which to sample. If ``None``,
+            then ``0`` is used.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        ValueError
+            If offset does not have shape (1, 2)
+        """
+        # parse arguments
+        if self.n_dims != 2:
+            raise ValueError('Only two dimensional patch insertion is '
+                             'currently supported.')
+        if offset is None:
+            offset = np.zeros([1, 2], dtype=np.intp)
+        else:
+            offset = np.require(offset, dtype=np.intp)
+        if not offset.shape == (1, 2):
+            raise ValueError('The offset must be a numpy.array with shape '
+                             '(1, 2).')
+        if offset_index is None:
+            offset_index = 0
+
+        # if patches is a list, convert it to array
+        if isinstance(patches, list):
+            patches = convert_patches_list_to_single_array(
+                patches, patch_centers.n_points)
+
+        # set patches
+        set_patches(patches, self.pixels, patch_centers.points, offset,
+                    offset_index)
+
+    def set_patches_around_landmarks(self, patches, group=None, label=None,
+                                     offset=None, offset_index=None):
+        r"""
+        Set the values of a group of patches around the landmarks existing in
+        the image. Given an array of patches, a group and a label, the patches'
+        values are copied in the regions of the image that are centred on the
+        coordinates of corresponding landmarks.
+
+        The patches argument can have any of the two formats that are returned
+        from the `extract_patches()` and `extract_patches_around_landmarks()`
+        methods. Specifically it can be:
+
+            1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+            2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patches : `ndarray` or `list`
+            The values of the patches. It can have any of the two formats that
+            are returned from the `extract_patches()` and
+            `extract_patches_around_landmarks()` methods. Specifically, it can
+            either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+            `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
+            objects.
+        group : `str` or ``None`` optional
+            The landmark group to use as patch centres.
+        label : `str` or ``None`` optional
+            The landmark label within the group to use as centres.
+        offset : `(``x``, ``y``)` or ``(1, 2)`` `ndarray` or ``None``, optional
+            The offset to apply on the patch centers within the image.
+            If ``None``, then (0, 0) is used.
+        offset_index : `int` or ``None``, optional
+            The offset index within the provided `patches` argument, thus the
+            index of the second dimension from which to sample. If ``None``,
+            then ``0`` is used.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        ValueError
+            If offset does not have shape (1, 2)
+        """
+        return self.set_patches(patches, self.landmarks[group][label],
+                                offset=offset, offset_index=offset_index)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
                      order=1, mode='constant', cval=0.0, batch_size=None):
@@ -2119,3 +2233,37 @@ def round_image_shape(shape, round):
         raise ValueError('round must be either ceil, round or floor')
     # Ensure that the '+' operator means concatenate tuples
     return tuple(getattr(np, round)(shape).astype(np.int))
+
+
+def convert_patches_list_to_single_array(patches_list, n_center):
+    r"""
+    Converts patches from a `list` of :map:`Image` objects to a single `ndarray`
+    with shape ``(n_center, n_offset, self.n_channels, patch_size)``.
+
+    Note that these two are the formats returned by the `extract_patches()`
+    and `extract_patches_around_landmarks()` methods of :map:`Image` class.
+
+    Parameters
+    ----------
+    patches_list : `list` of `n_center * n_offset` :map:`Image` objects
+        A `list` that contains all the patches as :map:`Image` objects.
+    n_center : `int`
+        The number of centers from which the patches are extracted.
+
+    Returns
+    -------
+    patches_array : `ndarray` ``(n_center, n_offset, self.n_channels, patch_size)``
+        The numpy array that contains all the patches.
+    """
+    n_offsets = np.int(len(patches_list) / n_center)
+    n_channels = patches_list[0].n_channels
+    height = patches_list[0].height
+    width = patches_list[0].width
+    patches_array = np.empty((n_center, n_offsets, n_channels, height, width),
+                             dtype=patches_list[0].pixels.dtype)
+    total_index = 0
+    for p in range(n_center):
+        for o in range(n_offsets):
+            patches_array[p, o, ...] = patches_list[total_index].pixels
+            total_index += 1
+    return patches_array

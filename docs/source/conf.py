@@ -41,7 +41,7 @@ if on_rtd:
                      'menpo.shape.mesh.normals',
                      'menpo.feature.gradient',
                      'menpo.external.skimage._warps_cy',
-                     'menpo.image.extract_patches']
+                     'menpo.image.patches']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = Mock()
 
