@@ -1339,6 +1339,8 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
                                  'length': n_centers},
                      'offset_index': 0,
                      'n_offsets': n_offsets,
+                     'render_patches': True,
+                     'render_centers': True,
                      'bboxes': {'render_lines': False, 'line_colour': ['b'],
                                 'line_style': '-', 'line_width': 1}}
     index = {'min': 0, 'max': n_patches-1, 'step': 1, 'index': 0}
@@ -1391,6 +1393,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
             patch_options_wid.selected_values['patches']['indices'],
             patch_options_wid.selected_values['offset_index'],
             save_figure_wid.renderer,
+            patch_options_wid.selected_values['render_patches'],
             channel_options_wid.selected_values['channels'],
             channel_options_wid.selected_values['glyph_enabled'],
             channel_options_wid.selected_values['glyph_block_size'],
@@ -1401,16 +1404,16 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
             patch_options_wid.selected_values['bboxes']['line_colour'][0],
             patch_options_wid.selected_values['bboxes']['line_style'],
             patch_options_wid.selected_values['bboxes']['line_width'],
-            True, tmp1['render_lines'], tmp1['line_colour'][0],
-            tmp1['line_style'], tmp1['line_width'], tmp2['render_markers'],
-            tmp2['marker_style'], tmp2['marker_size'],
-            tmp2['marker_face_colour'], tmp2['marker_edge_colour'],
-            tmp2['marker_edge_width'], tmp3['render_numbering'],
-            tmp3['numbers_horizontal_align'], tmp3['numbers_vertical_align'],
-            tmp3['numbers_font_name'], tmp3['numbers_font_size'],
-            tmp3['numbers_font_style'], tmp3['numbers_font_weight'],
-            tmp3['numbers_font_colour'][0], tmp4['render_axes'],
-            tmp4['axes_font_name'], tmp4['axes_font_size'],
+            patch_options_wid.selected_values['render_centers'],
+            tmp1['render_lines'], tmp1['line_colour'][0], tmp1['line_style'],
+            tmp1['line_width'], tmp2['render_markers'], tmp2['marker_style'],
+            tmp2['marker_size'], tmp2['marker_face_colour'],
+            tmp2['marker_edge_colour'], tmp2['marker_edge_width'],
+            tmp3['render_numbering'], tmp3['numbers_horizontal_align'],
+            tmp3['numbers_vertical_align'], tmp3['numbers_font_name'],
+            tmp3['numbers_font_size'], tmp3['numbers_font_style'],
+            tmp3['numbers_font_weight'], tmp3['numbers_font_colour'][0],
+            tmp4['render_axes'], tmp4['axes_font_name'], tmp4['axes_font_size'],
             tmp4['axes_font_style'], tmp4['axes_font_weight'],
             tmp4['axes_x_limits'], tmp4['axes_y_limits'], new_figure_size)
 
@@ -1838,100 +1841,6 @@ def features_selection(style='coloured'):
     return output
 
 
-def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
-                       renderer, channels, glyph_enabled, glyph_block_size,
-                       glyph_use_negative, sum_enabled, interpolation,
-                       cmap_name, alpha, render_patches_bboxes,
-                       bboxes_line_colour, bboxes_line_style, bboxes_line_width,
-                       render_centers, render_lines, line_colour, line_style,
-                       line_width, render_markers, marker_style, marker_size,
-                       marker_face_colour, marker_edge_colour,
-                       marker_edge_width, render_numbering,
-                       numbers_horizontal_align, numbers_vertical_align,
-                       numbers_font_name, numbers_font_size, numbers_font_style,
-                       numbers_font_weight, numbers_font_colour, render_axes,
-                       axes_font_name, axes_font_size, axes_font_style,
-                       axes_font_weight, axes_x_limits, axes_y_limits,
-                       figure_size):
-    global glyph
-    if glyph is None:
-        from menpo.feature.visualize import glyph
-    global sum_channels
-    if sum_channels is None:
-        from menpo.feature.visualize import sum_channels
-    from menpo.image import view_patches
-
-    if glyph_enabled:
-        print 'ERROR'
-    elif sum_enabled:
-        # compute sum of each patch
-        sum_patches = np.zeros((patches.shape[0], 1, 1, patches.shape[3],
-                                patches.shape[4]))
-        for i in patches_indices:
-            sum_patches[i, 0, ...] = sum_channels(patches[i, offset_index, ...],
-                                                  channels=channels)
-        # visualize sum patches
-        renderer = view_patches(
-            sum_patches, patch_centers, patches_indices=patches_indices,
-            offset_index=0, figure_id=renderer.figure_id, new_figure=False,
-            channels=0, interpolation=interpolation, cmap_name=cmap_name,
-            alpha=alpha, render_patches_bboxes=render_patches_bboxes,
-            bboxes_line_colour=bboxes_line_colour,
-            bboxes_line_style=bboxes_line_style,
-            bboxes_line_width=bboxes_line_width, render_centers=True,
-            render_lines=render_lines, line_colour=line_colour,
-            line_style=line_style, line_width=line_width,
-            render_markers=render_markers, marker_style=marker_style,
-            marker_size=marker_size, marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width,
-            render_numbering=render_numbering,
-            numbers_horizontal_align=numbers_horizontal_align,
-            numbers_vertical_align=numbers_vertical_align,
-            numbers_font_name=numbers_font_name,
-            numbers_font_size=numbers_font_size,
-            numbers_font_style=numbers_font_style,
-            numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            figure_size=figure_size)
-    else:
-        renderer = view_patches(
-            patches, patch_centers, patches_indices=patches_indices,
-            offset_index=offset_index, figure_id=renderer.figure_id,
-            new_figure=False, channels=channels, interpolation=interpolation,
-            cmap_name=cmap_name, alpha=alpha,
-            render_patches_bboxes=render_patches_bboxes,
-            bboxes_line_colour=bboxes_line_colour,
-            bboxes_line_style=bboxes_line_style,
-            bboxes_line_width=bboxes_line_width, render_centers=True,
-            render_lines=render_lines, line_colour=line_colour,
-            line_style=line_style, line_width=line_width,
-            render_markers=render_markers, marker_style=marker_style,
-            marker_size=marker_size, marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width,
-            render_numbering=render_numbering,
-            numbers_horizontal_align=numbers_horizontal_align,
-            numbers_vertical_align=numbers_vertical_align,
-            numbers_font_name=numbers_font_name,
-            numbers_font_size=numbers_font_size,
-            numbers_font_style=numbers_font_style,
-            numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            figure_size=figure_size)
-
-    # show plot
-    pltshow()
-
-    return renderer
-
-
 def _visualize(image, renderer, render_landmarks, image_is_masked,
                masked_enabled, channels, glyph_enabled, glyph_block_size,
                glyph_use_negative, sum_enabled, group, with_labels,
@@ -2123,6 +2032,139 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
                 axes_y_limits=axes_y_limits, figure_size=figure_size,
                 interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
                 **mask_arguments)
+
+    # show plot
+    pltshow()
+
+    return renderer
+
+
+def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
+                       renderer, render_patches, channels, glyph_enabled,
+                       glyph_block_size, glyph_use_negative, sum_enabled,
+                       interpolation, cmap_name, alpha, render_patches_bboxes,
+                       bboxes_line_colour, bboxes_line_style, bboxes_line_width,
+                       render_centers, render_lines, line_colour, line_style,
+                       line_width, render_markers, marker_style, marker_size,
+                       marker_face_colour, marker_edge_colour,
+                       marker_edge_width, render_numbering,
+                       numbers_horizontal_align, numbers_vertical_align,
+                       numbers_font_name, numbers_font_size, numbers_font_style,
+                       numbers_font_weight, numbers_font_colour, render_axes,
+                       axes_font_name, axes_font_size, axes_font_style,
+                       axes_font_weight, axes_x_limits, axes_y_limits,
+                       figure_size):
+    global glyph
+    if glyph is None:
+        from menpo.feature.visualize import glyph
+    global sum_channels
+    if sum_channels is None:
+        from menpo.feature.visualize import sum_channels
+    from menpo.image import view_patches
+
+    if render_patches:
+        if glyph_enabled:
+            print 'ERROR'
+        elif sum_enabled:
+            # compute sum of each patch
+            sum_patches = np.zeros((patches.shape[0], 1, 1, patches.shape[3],
+                                    patches.shape[4]))
+            for i in patches_indices:
+                sum_patches[i, 0, ...] = sum_channels(
+                    patches[i, offset_index, ...], channels=channels)
+            # visualize sum patches
+            renderer = view_patches(
+                sum_patches, patch_centers, patches_indices=patches_indices,
+                offset_index=0, figure_id=renderer.figure_id, new_figure=False,
+                channels=0, interpolation=interpolation, cmap_name=cmap_name,
+                alpha=alpha, render_patches_bboxes=render_patches_bboxes,
+                bboxes_line_colour=bboxes_line_colour,
+                bboxes_line_style=bboxes_line_style,
+                bboxes_line_width=bboxes_line_width,
+                render_centers=render_centers, render_lines=render_lines,
+                line_colour=line_colour, line_style=line_style,
+                line_width=line_width, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
+                marker_edge_width=marker_edge_width,
+                render_numbering=render_numbering,
+                numbers_horizontal_align=numbers_horizontal_align,
+                numbers_vertical_align=numbers_vertical_align,
+                numbers_font_name=numbers_font_name,
+                numbers_font_size=numbers_font_size,
+                numbers_font_style=numbers_font_style,
+                numbers_font_weight=numbers_font_weight,
+                numbers_font_colour=numbers_font_colour,
+                render_axes=render_axes, axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size,
+                axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight,
+                axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                figure_size=figure_size)
+        else:
+            renderer = view_patches(
+                patches, patch_centers, patches_indices=patches_indices,
+                offset_index=offset_index, figure_id=renderer.figure_id,
+                new_figure=False, channels=channels,
+                interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
+                render_patches_bboxes=render_patches_bboxes,
+                bboxes_line_colour=bboxes_line_colour,
+                bboxes_line_style=bboxes_line_style,
+                bboxes_line_width=bboxes_line_width,
+                render_centers=render_centers, render_lines=render_lines,
+                line_colour=line_colour, line_style=line_style,
+                line_width=line_width, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
+                marker_edge_width=marker_edge_width,
+                render_numbering=render_numbering,
+                numbers_horizontal_align=numbers_horizontal_align,
+                numbers_vertical_align=numbers_vertical_align,
+                numbers_font_name=numbers_font_name,
+                numbers_font_size=numbers_font_size,
+                numbers_font_style=numbers_font_style,
+                numbers_font_weight=numbers_font_weight,
+                numbers_font_colour=numbers_font_colour,
+                render_axes=render_axes, axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size,
+                axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight,
+                axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                figure_size=figure_size)
+    else:
+        tmp_patches = np.zeros(patches.shape)
+        renderer = view_patches(
+            tmp_patches, patch_centers, patches_indices=patches_indices,
+            offset_index=offset_index, figure_id=renderer.figure_id,
+            new_figure=False, channels=channels,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
+            render_patches_bboxes=render_patches_bboxes,
+            bboxes_line_colour=bboxes_line_colour,
+            bboxes_line_style=bboxes_line_style,
+            bboxes_line_width=bboxes_line_width,
+            render_centers=render_centers, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size)
 
     # show plot
     pltshow()

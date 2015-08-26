@@ -4303,6 +4303,7 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
                                           'length' : 68},
                              'offset_index' : 0,
                              'n_offsets' : 5,
+                             'render_centers' : True,
                              'bboxes' : {'render_lines' : True,
                                          'line_colour' : ['r'],
                                          'line_style' : '-',
@@ -4366,6 +4367,8 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         >>>                               'length' : 68},
         >>>                  'offset_index' : 0,
         >>>                  'n_offsets' : 5,
+        >>>                  'render_centers' : True,
+        >>>                  'render_patches' : True,
         >>>                  'bboxes' : {'render_lines' : True,
         >>>                              'line_colour' : ['r'],
         >>>                              'line_style' : '-',
@@ -4384,6 +4387,8 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         >>>                             'length' : 68},
         >>>                'offset_index' : 0,
         >>>                'n_offsets' : 5,
+        >>>                'render_centers' : False,
+        >>>                'render_patches' : False,
         >>>                'bboxes' : {'render_lines' : True,
         >>>                            'line_colour' : ['r'],
         >>>                            'line_style' : '-',
@@ -4398,7 +4403,13 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         for i in range(patch_options['n_offsets']):
             offsets_dict[str(i)] = i
         self.offset_dropdown = ipywidgets.Dropdown(
-            options=offsets_dict, value=0, description='Offset:')
+            options=offsets_dict, value=0, description='Offset:', width='2cm')
+        self.render_centers_checkbox = ipywidgets.Checkbox(
+            description='Render centres', value=patch_options[
+                'render_centers'], margin='0.1cm')
+        self.render_patches_checkbox = ipywidgets.Checkbox(
+            description='Render patches', value=patch_options['render_patches'],
+            margin='0.1cm')
         self.slicing_wid = SlicingCommandWidget(patch_options['patches'],
                                                 description='Patches:')
         self.bboxes_line_options_wid = LineOptionsWidget(
@@ -4406,8 +4417,10 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
             render_checkbox_title='Render bounding boxes')
 
         # Group widgets
+        self.render_box = ipywidgets.HBox(children=[
+            self.render_patches_checkbox, self.render_centers_checkbox])
         self.offset_patches_box = ipywidgets.VBox(
-            children=[self.offset_dropdown, self.slicing_wid])
+            children=[self.slicing_wid, self.offset_dropdown, self.render_box])
         super(PatchOptionsWidget, self).__init__(
             children=[self.offset_patches_box, self.bboxes_line_options_wid])
         self.align = 'start'
@@ -4423,6 +4436,16 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         def get_offset(name, value):
             patch_options['offset_index'] = int(value)
         self.offset_dropdown.on_trait_change(get_offset, 'value')
+
+        def get_render_patches(name, value):
+            patch_options['render_patches'] = value
+        self.render_patches_checkbox.on_trait_change(get_render_patches,
+                                                     'value')
+
+        def get_render_centers(name, value):
+            patch_options['render_centers'] = value
+        self.render_centers_checkbox.on_trait_change(get_render_centers,
+                                                     'value')
 
         # Set render function
         self._render_function = None
@@ -4442,6 +4465,10 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         self._render_function = render_function
         if self._render_function is not None:
             self.offset_dropdown.on_trait_change(self._render_function, 'value')
+            self.render_patches_checkbox.on_trait_change(self._render_function,
+                                                         'value')
+            self.render_centers_checkbox.on_trait_change(self._render_function,
+                                                         'value')
             self.slicing_wid.add_render_function(self._render_function)
             self.bboxes_line_options_wid.add_render_function(
                 self._render_function)
@@ -4453,6 +4480,10 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         """
         self.offset_dropdown.on_trait_change(self._render_function, 'value',
                                              remove=True)
+        self.render_patches_checkbox.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+        self.render_centers_checkbox.on_trait_change(self._render_function,
+                                                     'value', remove=True)
         self.slicing_wid.remove_render_function()
         self.bboxes_line_options_wid.remove_render_function()
         self._render_function = None
@@ -4602,6 +4633,10 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         _format_font(self, font_family, font_size, font_style, font_weight)
         _format_font(self.offset_dropdown, font_family, font_size, font_style,
                      font_weight)
+        _format_font(self.render_patches_checkbox, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.render_centers_checkbox, font_family, font_size,
+                     font_style, font_weight)
         self.bboxes_line_options_wid.style(
             box_style=bboxes_box_style, border_visible=bboxes_border_visible,
             border_color=bboxes_border_color, border_style=bboxes_border_style,
@@ -4676,7 +4711,6 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
             bboxes_border_color = 'black'
             bboxes_border_radius = 0
             patches_box_style = None
-            patches_border_visible = False
             patches_border_color = 'black'
             patches_border_radius = 0
         elif (subwidgets_style == 'info' or subwidgets_style == 'success' or
@@ -4685,7 +4719,6 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
             bboxes_border_color = _map_styles_to_hex_colours(subwidgets_style)
             bboxes_border_radius = 10
             patches_box_style = subwidgets_style
-            patches_border_visible = True
             patches_border_color = _map_styles_to_hex_colours(subwidgets_style)
             patches_border_radius = 10
         else:
@@ -4701,7 +4734,7 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
             bboxes_border_color=bboxes_border_color,
             bboxes_border_style='solid', bboxes_border_width=1,
             bboxes_border_radius=bboxes_border_radius, bboxes_padding='0.2cm',
-            bboxes_margin='0.1cm', patches_box_style=subwidgets_style,
+            bboxes_margin='0.1cm', patches_box_style=patches_box_style,
             patches_border_visible=True,
             patches_border_color=patches_border_color,
             patches_border_style='solid', patches_border_width=1,
@@ -4723,6 +4756,8 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
                                               'length' : 68},
                                  'offset_index' : 0,
                                  'n_offsets' : 5,
+                                 'render_patches' : True,
+                                 'render_centers' : True,
                                  'bboxes' : {'render_lines' : True,
                                              'line_colour' : ['r'],
                                              'line_style' : '-',
@@ -4751,6 +4786,16 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         if 'offset_index' in patch_options.keys():
             self.offset_dropdown.value = patch_options['offset_index']
             self.selected_values['offset_index'] = patch_options['offset_index']
+
+        if 'render_patches' in patch_options.keys():
+            self.render_patches_checkbox.value = patch_options['render_patches']
+            self.selected_values['render_patches'] = \
+                patch_options['render_patches']
+
+        if 'render_centers' in patch_options.keys():
+            self.render_centers_checkbox.value = patch_options['render_centers']
+            self.selected_values['render_centers'] = \
+                patch_options['render_centers']
 
         if 'patches' in patch_options.keys():
             self.slicing_wid.set_widget_state(patch_options['patches'],
