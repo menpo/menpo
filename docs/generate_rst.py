@@ -79,7 +79,6 @@ if __name__ == '__main__':
 
     path = Path(__file__).parent / 'source' / 'api'
 
-
     # Flip generate_index to True to make index.rst files too!
     write_docs_for_module(menpo, path, generate_index=False,
                           modules_to_skip={'_version'})

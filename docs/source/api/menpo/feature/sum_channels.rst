@@ -1,6 +1,6 @@
-.. _menpo-feature-visualize-sum_channels:
+.. _menpo-feature-sum_channels:
 
-.. currentmodule:: menpo.feature.visualize
+.. currentmodule:: menpo.feature
 
 sum_channels
 ============

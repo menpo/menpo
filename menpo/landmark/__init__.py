@@ -1,2 +1,3 @@
-from menpo.landmark.base import LandmarkManager, Landmarkable
-from menpo.landmark.labels import *
+from .base import LandmarkGroup, LandmarkManager, Landmarkable
+from .exceptions import LabellingError
+from .labels import *
