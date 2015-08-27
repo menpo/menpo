@@ -11,7 +11,7 @@ from .face import (
     face_ibug_68_to_face_ibug_68, face_ibug_68_to_face_ibug_68_trimesh,
     face_imm_58_to_face_imm_58, face_lfpw_29_to_face_lfpw_29)
 from .hand import hand_ibug_39_to_hand_ibug_39
-from .mesh import face_bu3dfe_83_to_face_bu3dfe_83
+from .face_3d import face_bu3dfe_83_to_face_bu3dfe_83
 from .pose import (pose_flic_11_to_pose_flic_11,
                    pose_human36M_17_to_pose_human36M_17,
                    pose_human36M_32_to_pose_human36M_32,
