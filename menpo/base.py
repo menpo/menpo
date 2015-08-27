@@ -1,3 +1,4 @@
+from functools import partial
 import os.path
 
 # To debug the Copyable interface, simply uncomment lines 11-23 below and the
@@ -317,3 +318,31 @@ class MenpoDeprecationWarning(Warning):
     release.
     """
     pass
+
+
+def name_of_callable(c):
+    r"""
+    Return the name of a callable (function or callable class) as a string.
+    Recurses on partial function to attempt to find the wrapped
+    methods actual name.
+
+    Parameters
+    ----------
+    c : `callable`
+        A callable class or function, or any valid Python object that can
+        be wrapped with partial.
+
+    Returns
+    -------
+    name : `str`
+        The name of the passed object.
+    """
+    try:
+        if isinstance(c, partial):  # partial
+            # Recursively call as partial may be wrapping either a callable
+            # or a function (or another partial for some reason!)
+            return name_of_callable(c.func)
+        else:
+            return c.__name__  # function
+    except AttributeError:
+        return c.__class__.__name__  # callable class

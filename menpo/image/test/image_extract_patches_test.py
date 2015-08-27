@@ -2,7 +2,7 @@ import numpy as np
 from nose.tools import assert_equals
 
 import menpo.io as mio
-from menpo.landmark import labeller, ibug_face_68
+from menpo.landmark import labeller, face_ibug_68_to_face_ibug_68
 
 
 def test_double_type():
@@ -89,9 +89,9 @@ def test_squared_even_patches_landmarks():
 
 def test_squared_even_patches_landmarks_label():
     image = mio.import_builtin_asset('breakingbad.jpg')
-    image = labeller(image, 'PTS', ibug_face_68)
+    image = labeller(image, 'PTS', face_ibug_68_to_face_ibug_68)
     patch_shape = (16, 16)
-    patches = image.extract_patches_around_landmarks('ibug_face_68',
+    patches = image.extract_patches_around_landmarks('face_ibug_68',
                                                      label='nose',
                                                      patch_size=patch_shape)
     assert_equals(len(patches), 9)
@@ -99,7 +99,6 @@ def test_squared_even_patches_landmarks_label():
 
 def test_squared_even_patches_single_array():
     image = mio.import_builtin_asset('breakingbad.jpg')
-    image = labeller(image, 'PTS', ibug_face_68)
     patch_shape = (16, 16)
     patches = image.extract_patches(image.landmarks['PTS'].lms,
                                     as_single_array=True,
@@ -109,7 +108,6 @@ def test_squared_even_patches_single_array():
 
 def test_squared_even_patches_sample_offsets():
     image = mio.import_builtin_asset('breakingbad.jpg')
-    image = labeller(image, 'PTS', ibug_face_68)
     sample_offsets = np.array([[0, 0], [1, 0]])
     patches = image.extract_patches(image.landmarks['PTS'].lms,
                                     sample_offsets=sample_offsets)

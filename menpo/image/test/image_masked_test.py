@@ -94,3 +94,15 @@ def test_init_from_rolled_channels():
     assert im.n_channels == 3
     assert im.height == 50
     assert im.width == 60
+
+
+def test_init_from_rolled_channels_masked():
+    p = np.empty([50, 60, 3])
+    example_mask = BooleanImage.init_blank((50, 60), fill=False)
+    example_mask.pixels[0, :6, :6] = True
+
+    im = MaskedImage.init_from_rolled_channels(p, mask=example_mask)
+    assert im.n_channels == 3
+    assert im.height == 50
+    assert im.width == 60
+    assert im.mask.n_true() == 36

@@ -1,7 +1,7 @@
-.. _menpo-math-ipca:
+.. _menpo-math-pca:
 
 .. currentmodule:: menpo.math
 
-ipca
-====
-.. autofunction:: ipca
+pca
+===
+.. autofunction:: pca

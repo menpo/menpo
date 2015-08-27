@@ -3,6 +3,17 @@
 :mod:`menpo.transform`
 ======================
 
+
+Composite Transforms
+--------------------
+
+.. toctree::
+  :maxdepth: 1
+
+  rotate_ccw_about_centre
+  scale_about_centre
+
+
 Homogeneous Transforms
 ----------------------
 
