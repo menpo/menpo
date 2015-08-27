@@ -1313,9 +1313,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             objects.
         patch_centers : :map:`PointCloud`
             The centers to set the patches around.
-        offset : `(``x``, ``y``)` or ``(1, 2)`` `ndarray` or ``None``, optional
+        offset : `list` or `tuple` or ``(1, 2)`` `ndarray` or ``None``, optional
             The offset to apply on the patch centers within the image.
-            If ``None``, then (0, 0) is used.
+            If ``None``, then ``(0, 0)`` is used.
         offset_index : `int` or ``None``, optional
             The offset index within the provided `patches` argument, thus the
             index of the second dimension from which to sample. If ``None``,
@@ -1334,11 +1334,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                              'currently supported.')
         if offset is None:
             offset = np.zeros([1, 2], dtype=np.intp)
-        else:
-            offset = np.require(offset, dtype=np.intp)
+        elif isinstance(offset, tuple) or isinstance(offset, list):
+            offset = np.asarray([offset])
+        offset = np.require(offset, dtype=np.intp)
         if not offset.shape == (1, 2):
-            raise ValueError('The offset must be a numpy.array with shape '
-                             '(1, 2).')
+            raise ValueError('The offset must be a tuple, a list or a '
+                             'numpy.array with shape (1, 2).')
         if offset_index is None:
             offset_index = 0
 
@@ -1381,9 +1382,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The landmark group to use as patch centres.
         label : `str` or ``None`` optional
             The landmark label within the group to use as centres.
-        offset : `(``x``, ``y``)` or ``(1, 2)`` `ndarray` or ``None``, optional
+        offset : `list` or `tuple` or ``(1, 2)`` `ndarray` or ``None``, optional
             The offset to apply on the patch centers within the image.
-            If ``None``, then (0, 0) is used.
+            If ``None``, then ``(0, 0)`` is used.
         offset_index : `int` or ``None``, optional
             The offset index within the provided `patches` argument, thus the
             index of the second dimension from which to sample. If ``None``,
