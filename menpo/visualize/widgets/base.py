@@ -2061,84 +2061,99 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
     if sum_channels is None:
         from menpo.feature.visualize import sum_channels
     from menpo.image import view_patches
+    from menpo.transform import UniformScale
 
-    if render_patches:
-        if glyph_enabled:
-            print 'ERROR'
-        elif sum_enabled:
-            # compute sum of each patch
-            sum_patches = np.zeros((patches.shape[0], 1, 1, patches.shape[3],
-                                    patches.shape[4]))
-            for i in patches_indices:
-                sum_patches[i, 0, ...] = sum_channels(
-                    patches[i, offset_index, ...], channels=channels)
-            # visualize sum patches
-            renderer = view_patches(
-                sum_patches, patch_centers, patches_indices=patches_indices,
-                offset_index=0, figure_id=renderer.figure_id, new_figure=False,
-                channels=0, interpolation=interpolation, cmap_name=cmap_name,
-                alpha=alpha, render_patches_bboxes=render_patches_bboxes,
-                bboxes_line_colour=bboxes_line_colour,
-                bboxes_line_style=bboxes_line_style,
-                bboxes_line_width=bboxes_line_width,
-                render_centers=render_centers, render_lines=render_lines,
-                line_colour=line_colour, line_style=line_style,
-                line_width=line_width, render_markers=render_markers,
-                marker_style=marker_style, marker_size=marker_size,
-                marker_face_colour=marker_face_colour,
-                marker_edge_colour=marker_edge_colour,
-                marker_edge_width=marker_edge_width,
-                render_numbering=render_numbering,
-                numbers_horizontal_align=numbers_horizontal_align,
-                numbers_vertical_align=numbers_vertical_align,
-                numbers_font_name=numbers_font_name,
-                numbers_font_size=numbers_font_size,
-                numbers_font_style=numbers_font_style,
-                numbers_font_weight=numbers_font_weight,
-                numbers_font_colour=numbers_font_colour,
-                render_axes=render_axes, axes_font_name=axes_font_name,
-                axes_font_size=axes_font_size,
-                axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight,
-                axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-                figure_size=figure_size)
-        else:
-            renderer = view_patches(
-                patches, patch_centers, patches_indices=patches_indices,
-                offset_index=offset_index, figure_id=renderer.figure_id,
-                new_figure=False, channels=channels,
-                interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
-                render_patches_bboxes=render_patches_bboxes,
-                bboxes_line_colour=bboxes_line_colour,
-                bboxes_line_style=bboxes_line_style,
-                bboxes_line_width=bboxes_line_width,
-                render_centers=render_centers, render_lines=render_lines,
-                line_colour=line_colour, line_style=line_style,
-                line_width=line_width, render_markers=render_markers,
-                marker_style=marker_style, marker_size=marker_size,
-                marker_face_colour=marker_face_colour,
-                marker_edge_colour=marker_edge_colour,
-                marker_edge_width=marker_edge_width,
-                render_numbering=render_numbering,
-                numbers_horizontal_align=numbers_horizontal_align,
-                numbers_vertical_align=numbers_vertical_align,
-                numbers_font_name=numbers_font_name,
-                numbers_font_size=numbers_font_size,
-                numbers_font_style=numbers_font_style,
-                numbers_font_weight=numbers_font_weight,
-                numbers_font_colour=numbers_font_colour,
-                render_axes=render_axes, axes_font_name=axes_font_name,
-                axes_font_size=axes_font_size,
-                axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight,
-                axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-                figure_size=figure_size)
-    else:
-        tmp_patches = np.zeros(patches.shape)
+    if glyph_enabled:
+        # compute glyph size
+        glyph_patch0 = glyph(patches[0, offset_index, ...],
+                             vectors_block_size=glyph_block_size,
+                             use_negative=glyph_use_negative)
+        # compute glyph of each patch
+        glyph_patches = np.zeros((patches.shape[0], 1, 1, glyph_patch0.shape[1],
+                                  glyph_patch0.shape[2]))
+        glyph_patches[0, 0, ...] = glyph_patch0
+        for i in range(1, patches.shape[0]):
+            glyph_patches[i, 0, ...] = glyph(
+                patches[i, offset_index, ...],
+                vectors_block_size=glyph_block_size,
+                use_negative=glyph_use_negative)
+        # correct patch centers
+        glyph_patch_centers = UniformScale(glyph_block_size, 2).apply(
+            patch_centers)
+        # visualize glyph patches
         renderer = view_patches(
-            tmp_patches, patch_centers, patches_indices=patches_indices,
+            glyph_patches, glyph_patch_centers, patches_indices=patches_indices,
+            offset_index=0, figure_id=renderer.figure_id, new_figure=False,
+            render_patches=render_patches, channels=0,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
+            render_patches_bboxes=render_patches_bboxes,
+            bboxes_line_colour=bboxes_line_colour,
+            bboxes_line_style=bboxes_line_style,
+            bboxes_line_width=bboxes_line_width,
+            render_centers=render_centers, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size)
+    elif sum_enabled:
+        # compute sum of each patch
+        sum_patches = np.zeros((patches.shape[0], 1, 1, patches.shape[3],
+                                patches.shape[4]))
+        for i in patches_indices:
+            sum_patches[i, 0, ...] = sum_channels(
+                patches[i, offset_index, ...], channels=channels)
+        # visualize sum patches
+        renderer = view_patches(
+            sum_patches, patch_centers, patches_indices=patches_indices,
+            offset_index=0, figure_id=renderer.figure_id, new_figure=False,
+            render_patches=render_patches, channels=0,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
+            render_patches_bboxes=render_patches_bboxes,
+            bboxes_line_colour=bboxes_line_colour,
+            bboxes_line_style=bboxes_line_style,
+            bboxes_line_width=bboxes_line_width,
+            render_centers=render_centers, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size)
+    else:
+        renderer = view_patches(
+            patches, patch_centers, patches_indices=patches_indices,
             offset_index=offset_index, figure_id=renderer.figure_id,
-            new_figure=False, channels=channels,
+            new_figure=False, render_patches=render_patches, channels=channels,
             interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
             render_patches_bboxes=render_patches_bboxes,
             bboxes_line_colour=bboxes_line_colour,

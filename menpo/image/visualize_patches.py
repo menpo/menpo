@@ -180,14 +180,15 @@ def render_rectangles_around_patches(centers, patch_shape, axes=None,
 
 def view_patches(patches, patch_centers, patches_indices=None,
                  offset_index=None, figure_id=None, new_figure=False,
-                 channels=None, interpolation='none', cmap_name=None, alpha=1.,
-                 render_patches_bboxes=True, bboxes_line_colour='r',
-                 bboxes_line_style='-', bboxes_line_width=1,
-                 render_centers=True, render_lines=True, line_colour=None,
-                 line_style='-', line_width=1, render_markers=True,
-                 marker_style='o', marker_size=20, marker_face_colour=None,
-                 marker_edge_colour=None, marker_edge_width=1.,
-                 render_numbering=False, numbers_horizontal_align='center',
+                 render_patches=True, channels=None, interpolation='none',
+                 cmap_name=None, alpha=1., render_patches_bboxes=True,
+                 bboxes_line_colour='r', bboxes_line_style='-',
+                 bboxes_line_width=1, render_centers=True, render_lines=True,
+                 line_colour=None, line_style='-', line_width=1,
+                 render_markers=True, marker_style='o', marker_size=20,
+                 marker_face_colour=None, marker_edge_colour=None,
+                 marker_edge_width=1., render_numbering=False,
+                 numbers_horizontal_align='center',
                  numbers_vertical_align='bottom',
                  numbers_font_name='sans-serif', numbers_font_size=10,
                  numbers_font_style='normal', numbers_font_weight='normal',
@@ -228,6 +229,8 @@ def view_patches(patches, patch_centers, patches_indices=None,
         The id of the figure to be used.
     new_figure : `bool`, optional
         If ``True``, a new figure is created.
+    render_patches : `bool`, optional
+        Flag that determines whether to render the patch values.
     channels : `int` or `list` of `int` or ``all`` or ``None``, optional
         If `int` or `list` of `int`, the specified channel(s) will be
         rendered. If ``all``, all the channels will be rendered in subplots.
@@ -370,9 +373,15 @@ def view_patches(patches, patch_centers, patches_indices=None,
                                                        patch_centers.n_points)
 
     # Create patches image
-    patches_image = create_patches_image(patches, patch_centers,
-                                         patches_indices=patches_indices,
-                                         offset_index=offset_index)
+    if render_patches:
+        patches_image = create_patches_image(patches, patch_centers,
+                                             patches_indices=patches_indices,
+                                             offset_index=offset_index)
+    else:
+        tmp_patches = np.zeros(patches.shape)
+        patches_image = create_patches_image(tmp_patches, patch_centers,
+                                             patches_indices=patches_indices,
+                                             offset_index=offset_index)
 
     # Render patches image
     if render_centers:
