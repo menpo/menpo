@@ -675,9 +675,9 @@ def _build_upper_eyelid():
     middle_indices = np.arange(12, 17)
     upper_eyelid_indices = np.hstack((top_indices, middle_indices))
 
-    upper_eyelid_connectivity = zip(top_indices, top_indices[1:])
+    upper_eyelid_connectivity = list(zip(top_indices, top_indices[1:]))
     upper_eyelid_connectivity += [(0, 12)]
-    upper_eyelid_connectivity += zip(middle_indices, middle_indices[1:])
+    upper_eyelid_connectivity += list(zip(middle_indices, middle_indices[1:]))
     upper_eyelid_connectivity += [(16, 6)]
 
     return upper_eyelid_indices, upper_eyelid_connectivity
