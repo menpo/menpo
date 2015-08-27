@@ -715,14 +715,14 @@ def eye_ibug_open_38_to_eye_ibug_open_38(pcloud):
     iris_connectivity = connectivity_from_range(iris_range, close_loop=True)
     pupil_connectivity = connectivity_from_range(pupil_range, close_loop=True)
 
-    sclera_connectivity = zip(sclera_top, sclera_top[1:])
+    sclera_connectivity = list(zip(sclera_top, sclera_top[1:]))
     sclera_connectivity += [(0, 21)]
-    sclera_connectivity += zip(sclera_bottom, sclera_bottom[1:])
+    sclera_connectivity += list(zip(sclera_bottom, sclera_bottom[1:]))
     sclera_connectivity += [(6, 17)]
 
-    lower_el_connectivity = zip(lower_el_top, lower_el_top[1:])
+    lower_el_connectivity = list(zip(lower_el_top, lower_el_top[1:]))
     lower_el_connectivity += [(6, 7)]
-    lower_el_connectivity += zip(lower_el_bottom, lower_el_bottom[1:])
+    lower_el_connectivity += list(zip(lower_el_bottom, lower_el_bottom[1:]))
     lower_el_connectivity += [(11, 0)]
 
     all_connectivity = np.asarray(upper_el_connectivity +
@@ -763,9 +763,9 @@ def eye_ibug_close_17_to_eye_ibug_close_17(pcloud):
     middle_indices = np.arange(12, 17)
     bottom_indices = np.arange(6, 12)
     lower_indices = np.hstack((bottom_indices, 0, middle_indices))
-    lower_connectivity = zip(bottom_indices, bottom_indices[1:])
+    lower_connectivity = list(zip(bottom_indices, bottom_indices[1:]))
     lower_connectivity += [(0, 12)]
-    lower_connectivity += zip(middle_indices, middle_indices[1:])
+    lower_connectivity += list(zip(middle_indices, middle_indices[1:]))
     lower_connectivity += [(11, 0)]
 
     all_connectivity = np.asarray(upper_connectivity + lower_connectivity)
