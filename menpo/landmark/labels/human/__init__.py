@@ -13,7 +13,7 @@ from .face import (
 from .hand import hand_ibug_39_to_hand_ibug_39
 from .face_3d import face_bu3dfe_83_to_face_bu3dfe_83
 from .pose import (pose_flic_11_to_pose_flic_11,
-                   pose_human36M_17_to_pose_human36M_17,
+                   pose_human36M_32_to_pose_human36M_17,
                    pose_human36M_32_to_pose_human36M_32,
                    pose_lsp_14_to_pose_lsp_14,
                    pose_stickmen_12_to_pose_stickmen_12)

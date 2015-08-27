@@ -93,7 +93,7 @@ def pose_lsp_14_to_pose_lsp_14(pcloud):
 @labeller_func(group_label='pose_flic_11')
 def pose_flic_11_to_pose_flic_11(pcloud):
     r"""
-    Apply the flic  11-point semantic labels.
+    Apply the flic 11-point semantic labels.
 
     The semantic labels applied are as follows:
 
@@ -194,11 +194,11 @@ def pose_human36M_32_to_pose_human36M_32(pcloud):
 
 
 @labeller_func(group_label='pose_human36M_17')
-def pose_human36M_17_to_pose_human36M_17(pcloud):
+def pose_human36M_32_to_pose_human36M_17(pcloud):
     r"""
     Apply the human3.6M 17-point semantic labels (based on the
     original semantic labels of Human3.6 but removing the annotations
-    corresponding to duplicate points, soles and palms).
+    corresponding to duplicate points, soles and palms), originally 32-points.
 
     The semantic labels applied are as follows:
 
@@ -217,7 +217,7 @@ def pose_human36M_17_to_pose_human36M_17(pcloud):
     """
     from menpo.shape import PointUndirectedGraph
 
-    n_expected_points = 17
+    n_expected_points = 32
     validate_input(pcloud, n_expected_points)
 
     pelvis_indices = np.array([1, 0, 4])
