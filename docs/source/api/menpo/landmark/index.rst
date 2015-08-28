@@ -83,7 +83,7 @@ Pose Labels
   :maxdepth: 1
 
   pose_flic_11_to_pose_flic_11
-  pose_human36M_17_to_pose_human36M_17
+  pose_human36M_32_to_pose_human36M_17
   pose_human36M_32_to_pose_human36M_32
   pose_lsp_14_to_pose_lsp_14
   pose_stickmen_12_to_pose_stickmen_12
