@@ -13,6 +13,15 @@ Image Types
   BooleanImage
   MaskedImage
 
+Patches
+-------
+
+.. toctree::
+  :maxdepth: 1
+
+  view_patches
+  create_patches_image
+
 Exceptions
 ----------
 

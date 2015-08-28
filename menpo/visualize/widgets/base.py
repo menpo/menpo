@@ -1260,7 +1260,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         `list` of ``n_center * n_offset`` :map:`Image` objects.
     patch_centers : `list` of :map:`PointCloud`
         The centers to set the patches around. If the `list` has only one
-        :map:`PointCLoud` then this will be used for all patches members.
+        :map:`PointCloud` then this will be used for all patches members.
         Otherwise, it needs to have the same length as patches.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.

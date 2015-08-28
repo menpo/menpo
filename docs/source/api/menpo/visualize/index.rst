@@ -26,6 +26,7 @@ Widgets
   :maxdepth: 1
 
   visualize_images
+  visualize_patches
   visualize_landmarks
   visualize_landmarkgroups
   visualize_pointclouds
