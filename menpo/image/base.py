@@ -1175,7 +1175,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         bounded_points[over_image] = shape[over_image]
         return bounded_points
 
-    def extract_patches(self, patch_centers, patch_size=(16, 16),
+    def extract_patches(self, patch_centers, patch_shape=(16, 16),
                         sample_offsets=None, as_single_array=True):
         r"""
         Extract a set of patches from an image. Given a set of patch centers
@@ -1195,7 +1195,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ----------
         patch_centers : :map:`PointCloud`
             The centers to extract patches around.
-        patch_size : ``(1, n_dims)`` `tuple` or `ndarray`, optional
+        patch_shape : ``(1, n_dims)`` `tuple` or `ndarray`, optional
             The size of the patch to extract
         sample_offsets : ``(n_offsets, n_dims)`` `ndarray` or ``None``, optional
             The offsets to sample from within a patch. So ``(0, 0)`` is the
@@ -1230,7 +1230,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             sample_offsets = np.require(sample_offsets, dtype=np.intp)
 
         single_array = extract_patches(self.pixels, patch_centers.points,
-                                       np.asarray(patch_size, dtype=np.intp),
+                                       np.asarray(patch_shape, dtype=np.intp),
                                        sample_offsets)
 
         if as_single_array:
@@ -1239,7 +1239,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             return [Image(o, copy=False) for p in single_array for o in p]
 
     def extract_patches_around_landmarks(
-            self, group=None, label=None, patch_size=(16, 16),
+            self, group=None, label=None, patch_shape=(16, 16),
             sample_offsets=None, as_single_array=True):
         r"""
         Extract patches around landmarks existing on this image. Provided the
@@ -1255,7 +1255,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The landmark group to use as patch centres.
         label : `str` or ``None``, optional
             The landmark label within the group to use as centres.
-        patch_size : `tuple` or `ndarray`, optional
+        patch_shape : `tuple` or `ndarray`, optional
             The size of the patch to extract
         sample_offsets : ``(n_offsets, n_dims)`` `ndarray` or ``None``, optional
             The offsets to sample from within a patch. So ``(0, 0)`` is the
@@ -1281,7 +1281,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If image is not 2D
         """
         return self.extract_patches(self.landmarks[group][label],
-                                    patch_size=patch_size,
+                                    patch_shape=patch_shape,
                                     sample_offsets=sample_offsets,
                                     as_single_array=as_single_array)
 

@@ -472,7 +472,7 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
                        border_width=1, border_radius=0, padding='0.2cm',
                        margin='0.3cm', font_family='', font_size=None,
                        font_style='', font_weight='', slider_width='5cm',
-                       slider_colour='')
+                       slider_colour=None)
             _format_box(self.glyph_options_box, box_style='',
                         border_visible=False, border_color='',
                         border_style='solid', border_width=1, border_radius=0,
