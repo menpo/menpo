@@ -1176,7 +1176,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return bounded_points
 
     def extract_patches(self, patch_centers, patch_size=(16, 16),
-                        sample_offsets=None, as_single_array=False):
+                        sample_offsets=None, as_single_array=True):
         r"""
         Extract a set of patches from an image. Given a set of patch centers
         and a patch size, patches are extracted from within the image, centred
@@ -1240,7 +1240,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def extract_patches_around_landmarks(
             self, group=None, label=None, patch_size=(16, 16),
-            sample_offsets=None, as_single_array=False):
+            sample_offsets=None, as_single_array=True):
         r"""
         Extract patches around landmarks existing on this image. Provided the
         group label and optionally the landmark label extract a set of patches.
