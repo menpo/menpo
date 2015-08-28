@@ -4279,7 +4279,14 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
     1  Dropdown             `offset_dropdown`         Offset index selection
     2  SlicingCommandWidget `slicing_wid`             Patch index selection
     3  LineOptionsWidget    `bboxes_line_options_wid` Bboxes options
-    4  VBox                 `offset_patches_box`      Contains 1, 2
+    4  Checkbox             `render_centers`          Render centers flag
+    5  Checkbox             `render_patches`          Render patches flag
+    6  ToggleButton         `background_toggle`       Background colour button
+    7  Latex                `background_title`        Background colour title
+    8  HBox                 `background_box`          Contains 7, 6
+    9  VBox                 `render_checkboxes_box`   Contains 4, 5
+    10 HBox                 `render_box`              Contains 8, 9
+    11 VBox                 `offset_patches_box`      Contains 1, 2, 10
     == ==================== ========================= ======================
 
     Note that:
@@ -4298,16 +4305,18 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         The dictionary with the initial options. For example
         ::
 
-            patch_options = {'patches' : {'command' : '',
-                                          'indices' : [],
-                                          'length' : 68},
-                             'offset_index' : 0,
-                             'n_offsets' : 5,
-                             'render_centers' : True,
-                             'bboxes' : {'render_lines' : True,
-                                         'line_colour' : ['r'],
-                                         'line_style' : '-',
-                                         'line_width' : 1}
+            patch_options = {'patches': {'command': '',
+                                         'indices': [],
+                                         'length': 68},
+                             'offset_index': 0,
+                             'n_offsets': 5,
+                             'render_centers': True,
+                             'render_centers': True,
+                             'background': 'white',
+                             'bboxes': {'render_lines': True,
+                                        'line_colour': ['r'],
+                                        'line_style': '-',
+                                        'line_width': 1}
                             }
 
     render_function : `function` or ``None``, optional
@@ -4362,17 +4371,18 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
 
     Create the widget with some initial options and display it:
 
-        >>> patch_options = {'patches' : {'command' : '',
-        >>>                               'indices' : [],
-        >>>                               'length' : 68},
-        >>>                  'offset_index' : 0,
-        >>>                  'n_offsets' : 5,
-        >>>                  'render_centers' : True,
-        >>>                  'render_patches' : True,
-        >>>                  'bboxes' : {'render_lines' : True,
-        >>>                              'line_colour' : ['r'],
-        >>>                              'line_style' : '-',
-        >>>                              'line_width' : 1}
+        >>> patch_options = {'patches': {'command': '',
+        >>>                              'indices': [],
+        >>>                              'length': 68},
+        >>>                  'offset_index': 0,
+        >>>                  'n_offsets': 5,
+        >>>                  'render_centers': True,
+        >>>                  'render_patches': True,
+        >>>                  'background': 'white',
+        >>>                  'bboxes': {'render_lines': True,
+        >>>                             'line_colour': ['r'],
+        >>>                             'line_style': '-',
+        >>>                             'line_width': 1}
         >>>                 }
         >>> wid = PatchOptionsWidget(patch_options,
         >>>                          render_function=render_function,
@@ -4382,34 +4392,56 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
     By playing around with the widget, printed message gets updated. Finally,
     let's change the widget status with a new dictionary of options:
 
-        >>> new_options = {'patches' : {'command' : '',
-        >>>                             'indices' : [],
-        >>>                             'length' : 68},
-        >>>                'offset_index' : 0,
-        >>>                'n_offsets' : 5,
-        >>>                'render_centers' : False,
-        >>>                'render_patches' : False,
-        >>>                'bboxes' : {'render_lines' : True,
-        >>>                            'line_colour' : ['r'],
-        >>>                            'line_style' : '-',
-        >>>                            'line_width' : 1}
+        >>> new_options = {'patches': {'command': '',
+        >>>                            'indices': [],
+        >>>                            'length':  68},
+        >>>                'offset_index': 0,
+        >>>                'n_offsets': 5,
+        >>>                'render_centers': False,
+        >>>                'render_patches': False,
+        >>>                'background': 'black',
+        >>>                'bboxes': {'render_lines': True,
+        >>>                           'line_colour': ['r'],
+        >>>                           'line_style': '-',
+        >>>                           'line_width': 1}
         >>>                }
         >>> wid.set_widget_state(new_options, allow_callback=False)
     """
     def __init__(self, patch_options, render_function=None, style='minimal',
                  subwidgets_style='minimal'):
-        # Create widgets
+        # Create basic widgets
         offsets_dict = OrderedDict()
         for i in range(patch_options['n_offsets']):
             offsets_dict[str(i)] = i
         self.offset_dropdown = ipywidgets.Dropdown(
             options=offsets_dict, value=0, description='Offset:', width='2cm')
         self.render_centers_checkbox = ipywidgets.Checkbox(
-            description='Render centres', value=patch_options[
-                'render_centers'], margin='0.1cm')
+            description='Render centres', value=patch_options['render_centers'])
         self.render_patches_checkbox = ipywidgets.Checkbox(
-            description='Render patches', value=patch_options['render_patches'],
-            margin='0.1cm')
+            description='Render patches', value=patch_options['render_patches'])
+
+        # Create background colour toggle
+        background_color, color, value = \
+            self._background_args_wrt_description(patch_options['background'])
+        self.background_toggle = ipywidgets.ToggleButton(
+            description=patch_options['background'], color=color, value=value,
+            background_color=background_color)
+
+        def change_toggle_description(name, value):
+            if value:
+                self.background_toggle.description = 'white'
+                self.background_toggle.background_color = '#FFFFFF'
+                self.background_toggle.color = '#000000'
+            else:
+                self.background_toggle.description = 'black'
+                self.background_toggle.background_color = '#000000'
+                self.background_toggle.color = '#FFFFFF'
+        self.background_toggle.on_trait_change(change_toggle_description,
+                                               'value')
+
+        self.background_title = ipywidgets.Latex(value='Background:',
+                                                 margin='0.1cm')
+
         self.slicing_wid = SlicingCommandWidget(patch_options['patches'],
                                                 description='Patches:')
         self.bboxes_line_options_wid = LineOptionsWidget(
@@ -4417,8 +4449,14 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
             render_checkbox_title='Render bounding boxes')
 
         # Group widgets
+        self.background_box = ipywidgets.HBox(children=[
+            self.background_title, self.background_toggle], align='center',
+            margin='0.5cm')
+        self.render_checkboxes_box = ipywidgets.Box(children=[
+            self.render_patches_checkbox, self.render_centers_checkbox],
+            margin='0.2cm')
         self.render_box = ipywidgets.HBox(children=[
-            self.render_patches_checkbox, self.render_centers_checkbox])
+            self.background_box, self.render_checkboxes_box], align='center')
         self.offset_patches_box = ipywidgets.VBox(
             children=[self.slicing_wid, self.offset_dropdown, self.render_box])
         super(PatchOptionsWidget, self).__init__(
@@ -4433,6 +4471,14 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         self.predefined_style(style, subwidgets_style)
 
         # Set functionality
+        def get_background(name, value):
+            bc, c, description = self._background_args_wrt_value(value)
+            self.background_toggle.background_color = bc
+            self.background_toggle.color = c
+            self.background_toggle.description = description
+            patch_options['background'] = description
+        self.background_toggle.on_trait_change(get_background, 'value')
+
         def get_offset(name, value):
             patch_options['offset_index'] = int(value)
         self.offset_dropdown.on_trait_change(get_offset, 'value')
@@ -4450,6 +4496,26 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
         # Set render function
         self._render_function = None
         self.add_render_function(render_function)
+
+    def _background_args_wrt_description(self, description):
+        background_color = '#FFFFFF'
+        color = '#000000'
+        value = True
+        if description == 'black':
+            background_color = '#000000'
+            color = '#FFFFFF'
+            value = False
+        return background_color, color, value
+
+    def _background_args_wrt_value(self, value):
+        background_color = '#FFFFFF'
+        color = '#000000'
+        description = 'white'
+        if not value:
+            background_color = '#000000'
+            color = '#FFFFFF'
+            description = 'black'
+        return background_color, color, description
 
     def add_render_function(self, render_function):
         r"""
@@ -4469,6 +4535,8 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
                                                          'value')
             self.render_centers_checkbox.on_trait_change(self._render_function,
                                                          'value')
+            self.background_toggle.on_trait_change(self._render_function,
+                                                   'value')
             self.slicing_wid.add_render_function(self._render_function)
             self.bboxes_line_options_wid.add_render_function(
                 self._render_function)
@@ -4484,6 +4552,8 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
                                                      'value', remove=True)
         self.render_centers_checkbox.on_trait_change(self._render_function,
                                                      'value', remove=True)
+        self.background_toggle.on_trait_change(self._render_function,
+                                               'value', remove=True)
         self.slicing_wid.remove_render_function()
         self.bboxes_line_options_wid.remove_render_function()
         self._render_function = None
@@ -4637,6 +4707,10 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
                      font_style, font_weight)
         _format_font(self.render_centers_checkbox, font_family, font_size,
                      font_style, font_weight)
+        _format_font(self.background_toggle, font_family, font_size,
+                     font_style, font_weight)
+        _format_font(self.background_title, font_family, font_size,
+                     font_style, font_weight)
         self.bboxes_line_options_wid.style(
             box_style=bboxes_box_style, border_visible=bboxes_border_visible,
             border_color=bboxes_border_color, border_style=bboxes_border_style,
@@ -4751,17 +4825,18 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
             The dictionary with the new options to be used. For example
             ::
 
-                patch_options = {'patches' : {'command' : '',
-                                              'indices' : [],
-                                              'length' : 68},
-                                 'offset_index' : 0,
-                                 'n_offsets' : 5,
-                                 'render_patches' : True,
-                                 'render_centers' : True,
-                                 'bboxes' : {'render_lines' : True,
-                                             'line_colour' : ['r'],
-                                             'line_style' : '-',
-                                             'line_width' : 1}
+                patch_options = {'patches': {'command': '',
+                                             'indices': [],
+                                             'length': 68},
+                                 'offset_index': 0,
+                                 'n_offsets': 5,
+                                 'render_centers': True,
+                                 'render_centers': True,
+                                 'background': 'white',
+                                 'bboxes': {'render_lines': True,
+                                            'line_colour': ['r'],
+                                            'line_style': '-',
+                                            'line_width': 1}
                                 }
 
         allow_callback : `bool`, optional
@@ -4796,6 +4871,20 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
             self.render_centers_checkbox.value = patch_options['render_centers']
             self.selected_values['render_centers'] = \
                 patch_options['render_centers']
+
+        if 'background' in patch_options.keys():
+            background_color = '#FFFFFF'
+            color = '#000000'
+            value = True
+            if patch_options['background'] == 'black':
+                background_color = '#000000'
+                color = '#FFFFFF'
+                value = False
+            self.background_toggle.description = patch_options['background']
+            self.background_toggle.color = color
+            self.background_toggle.background_color = background_color
+            self.background_toggle.value = value
+            self.selected_values['background'] = patch_options['background']
 
         if 'patches' in patch_options.keys():
             self.slicing_wid.set_widget_state(patch_options['patches'],

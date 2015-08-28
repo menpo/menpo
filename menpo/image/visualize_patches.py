@@ -7,7 +7,7 @@ from .base import Image, convert_patches_list_to_single_array
 
 
 def create_patches_image(patches, patch_centers, patches_indices=None,
-                         offset_index=None):
+                         offset_index=None, background='black'):
     r"""
     Creates an :map:`Image` object in which the patches are located on the
     correct regions based on the centers. Thus, the image is a block-sparse
@@ -40,11 +40,20 @@ def create_patches_image(patches, patch_centers, patches_indices=None,
         The offset index within the provided `patches` argument, thus the index
         of the second dimension from which to sample. If ``None``, then ``0`` is
         used.
+    background : ``{'black', 'white'}``, optional
+        If ``'black'``, then the background is set equal to the minimum value
+        of `patches`. If ``'white'``, then the background is set equal to the
+        maximum value of `patches`.
 
     Returns
     -------
     patches_image : :map:`Image`
         The output patches image object.
+
+    Raises
+    ------
+    ValueError
+        Background must be either ''black'' or ''white''.
     """
     # If patches is a list, convert it to array
     if isinstance(patches, list):
@@ -79,8 +88,19 @@ def create_patches_image(patches, patch_centers, patches_indices=None,
     # Create temporary pointcloud with the selected patch centers
     tmp_centers = PointCloud(new_patch_centers.points[patches_indices])
 
-    # Create black new image and attach the corrected patch centers
-    patches_image = Image.init_blank((height, width), n_channels)
+    # Create new image with the correct background values
+    if background == 'black':
+        patches_image = Image.init_blank(
+            (height, width), n_channels,
+            fill=np.min(patches[patches_indices]))
+    elif background == 'white':
+        patches_image = Image.init_blank(
+            (height, width), n_channels,
+            fill=np.max(patches[patches_indices]))
+    else:
+        raise ValueError('Background must be either ''black'' or ''white''.')
+
+    # Attach the corrected patch centers
     patches_image.landmarks['all_patch_centers'] = new_patch_centers
     patches_image.landmarks['selected_patch_centers'] = tmp_centers
 
@@ -180,15 +200,15 @@ def render_rectangles_around_patches(centers, patch_shape, axes=None,
 
 def view_patches(patches, patch_centers, patches_indices=None,
                  offset_index=None, figure_id=None, new_figure=False,
-                 render_patches=True, channels=None, interpolation='none',
-                 cmap_name=None, alpha=1., render_patches_bboxes=True,
-                 bboxes_line_colour='r', bboxes_line_style='-',
-                 bboxes_line_width=1, render_centers=True, render_lines=True,
-                 line_colour=None, line_style='-', line_width=1,
-                 render_markers=True, marker_style='o', marker_size=20,
-                 marker_face_colour=None, marker_edge_colour=None,
-                 marker_edge_width=1., render_numbering=False,
-                 numbers_horizontal_align='center',
+                 background='white', render_patches=True, channels=None,
+                 interpolation='none', cmap_name=None, alpha=1.,
+                 render_patches_bboxes=True, bboxes_line_colour='r',
+                 bboxes_line_style='-', bboxes_line_width=1,
+                 render_centers=True, render_lines=True, line_colour=None,
+                 line_style='-', line_width=1, render_markers=True,
+                 marker_style='o', marker_size=20, marker_face_colour=None,
+                 marker_edge_colour=None, marker_edge_width=1.,
+                 render_numbering=False, numbers_horizontal_align='center',
                  numbers_vertical_align='bottom',
                  numbers_font_name='sans-serif', numbers_font_size=10,
                  numbers_font_style='normal', numbers_font_weight='normal',
@@ -229,6 +249,10 @@ def view_patches(patches, patch_centers, patches_indices=None,
         The id of the figure to be used.
     new_figure : `bool`, optional
         If ``True``, a new figure is created.
+    background : ``{'black', 'white'}``, optional
+        If ``'black'``, then the background is set equal to the minimum value
+        of `patches`. If ``'white'``, then the background is set equal to the
+        maximum value of `patches`.
     render_patches : `bool`, optional
         Flag that determines whether to render the patch values.
     channels : `int` or `list` of `int` or ``all`` or ``None``, optional
@@ -374,14 +398,20 @@ def view_patches(patches, patch_centers, patches_indices=None,
 
     # Create patches image
     if render_patches:
-        patches_image = create_patches_image(patches, patch_centers,
-                                             patches_indices=patches_indices,
-                                             offset_index=offset_index)
+        patches_image = create_patches_image(
+            patches, patch_centers, patches_indices=patches_indices,
+            offset_index=offset_index, background=background)
     else:
-        tmp_patches = np.zeros(patches.shape)
-        patches_image = create_patches_image(tmp_patches, patch_centers,
-                                             patches_indices=patches_indices,
-                                             offset_index=offset_index)
+        if background == 'black':
+            tmp_patches = np.zeros((patches.shape[0], patches.shape[1], 3,
+                                    patches.shape[3], patches.shape[4]))
+        elif background == 'white':
+            tmp_patches = np.ones((patches.shape[0], patches.shape[1], 3,
+                                   patches.shape[3], patches.shape[4]))
+        patches_image = create_patches_image(
+            tmp_patches, patch_centers, patches_indices=patches_indices,
+            offset_index=offset_index, background=background)
+        channels = None
 
     # Render patches image
     if render_centers:
