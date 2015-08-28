@@ -1027,7 +1027,7 @@ class MaskedImage(Image):
             self.landmarks[group][label], trilist=trilist,
             batch_size=batch_size, point_in_pointcloud=point_in_pointcloud)
 
-    def build_mask_around_landmarks(self, patch_size, group=None, label=None):
+    def build_mask_around_landmarks(self, patch_shape, group=None, label=None):
         r"""
         Restricts this images mask to be patches around each landmark in
         the chosen landmark group. This is useful for visualizing patch
@@ -1036,8 +1036,7 @@ class MaskedImage(Image):
         Parameters
         ----------
         patch_shape : `tuple`
-            The size of the patch. Any floating point values are rounded up
-            to the nearest integer.
+            The size of the patch.
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
@@ -1045,25 +1044,14 @@ class MaskedImage(Image):
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
         """
+        # get the selected pointcloud
         pc = self.landmarks[group][label]
-        patch_size = np.ceil(patch_size)
-        patch_half_size = patch_size / 2
-        mask = np.zeros(self.shape, dtype=np.bool)
-        max_x = self.shape[0] - 1
-        max_y = self.shape[1] - 1
-
-        for i, point in enumerate(pc.points):
-            start = np.floor(point - patch_half_size).astype(int)
-            finish = np.floor(point + patch_half_size).astype(int)
-            x, y = np.mgrid[start[0]:finish[0], start[1]:finish[1]]
-            # deal with boundary cases
-            x[x > max_x] = max_x
-            y[y > max_y] = max_y
-            x[x < 0] = 0
-            y[y < 0] = 0
-            mask[x.flatten(), y.flatten()] = True
-
-        self.mask = BooleanImage(mask)
+        # temporarily set all mask values to False
+        self.mask.pixels[:] = False
+        # create a patches array of the correct size, full of True values
+        patches = np.ones((pc.n_points, 1, 1) + patch_shape, dtype=np.bool)
+        # set Truepatches around pointcloud centers
+        self.mask.set_patches(patches, pc)
 
     def set_boundary_pixels(self, value=0.0, n_pixels=1):
         r"""
