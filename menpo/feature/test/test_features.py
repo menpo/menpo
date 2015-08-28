@@ -18,10 +18,10 @@ def test_imagewindowiterator_hog_padding():
     for i in range(n_cases):
         image = MaskedImage(np.random.randn(1, image_height[i, 0],
                                             image_width[i, 0]))
-        hog_im = hog(image,
-            mode='dense', window_step_vertical=window_step_vertical[i, 0],
-            window_step_horizontal=window_step_horizontal[i, 0],
-            window_step_unit='pixels', padding=True)
+        hog_im = hog(image, mode='dense',
+                     window_step_vertical=window_step_vertical[i, 0],
+                     window_step_horizontal=window_step_horizontal[i, 0],
+                     window_step_unit='pixels', padding=True)
         n_windows_horizontal = len(range(0, image_width[i, 0],
                                          window_step_horizontal[i, 0]))
         n_windows_vertical = len(range(0, image_height[i, 0],
@@ -41,13 +41,12 @@ def test_windowiterator_hog_no_padding():
     for i in range(n_cases):
         image = MaskedImage(np.random.randn(1, image_height[i, 0],
                                             image_width[i, 0]))
-        hog_img = hog(image,
-            mode='dense', cell_size=3, block_size=1,
-            window_height=window_height[i, 0], window_width=window_width[i, 0],
-            window_unit='pixels',
-            window_step_vertical=window_step_vertical[i, 0],
-            window_step_horizontal=window_step_horizontal[i, 0],
-            window_step_unit='pixels', padding=False)
+        hog_img = hog(image, mode='dense', cell_size=3, block_size=1,
+                      window_height=window_height[i, 0],
+                      window_width=window_width[i, 0], window_unit='pixels',
+                      window_step_vertical=window_step_vertical[i, 0],
+                      window_step_horizontal=window_step_horizontal[i, 0],
+                      window_step_unit='pixels', padding=False)
         n_windows_horizontal = len(range(window_width[i, 0] - 1,
                                          image_width[i, 0],
                                          window_step_horizontal[i, 0]))
@@ -67,16 +66,15 @@ def test_windowiterator_lbp_padding():
     for i in range(n_cases):
         image = MaskedImage(np.random.randn(1, image_height[i, 0],
                                             image_width[i, 0]))
-        lbp_img = lbp(image,
-            window_step_vertical=window_step_vertical[i, 0],
-            window_step_horizontal=window_step_horizontal[i, 0],
-            window_step_unit='pixels', padding=True)
+        lbp_img = lbp(image, window_step_vertical=window_step_vertical[i, 0],
+                      window_step_horizontal=window_step_horizontal[i, 0],
+                      window_step_unit='pixels', padding=True)
         n_windows_horizontal = len(range(0, image_width[i, 0],
                                          window_step_horizontal[i, 0]))
         n_windows_vertical = len(range(0, image_height[i, 0],
                                        window_step_vertical[i, 0]))
         assert_allclose(lbp_img.shape, (n_windows_vertical,
-                                          n_windows_horizontal))
+                                        n_windows_horizontal))
 
 
 def test_windowiterator_lbp_no_padding():
@@ -89,11 +87,10 @@ def test_windowiterator_lbp_no_padding():
     for i in range(n_cases):
         image = Image(np.random.randn(1, image_height[i, 0],
                                       image_width[i, 0]))
-        lbp_img = lbp(image,
-            radius=radius[i, 0], samples=8,
-            window_step_vertical=window_step_vertical[i, 0],
-            window_step_horizontal=window_step_horizontal[i, 0],
-            window_step_unit='pixels', padding=False)
+        lbp_img = lbp(image, radius=radius[i, 0], samples=8,
+                      window_step_vertical=window_step_vertical[i, 0],
+                      window_step_horizontal=window_step_horizontal[i, 0],
+                      window_step_unit='pixels', padding=False)
         window_size = 2 * radius[i, 0] + 1
         n_windows_horizontal = len(range(window_size - 1, image_width[i, 0],
                                          window_step_horizontal[i, 0]))
