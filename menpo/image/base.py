@@ -1792,6 +1792,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         r"""
         Return a rotation of this image counter-clockwise about its centre.
 
+        Note that the shape of the returned image will be the same as the one
+        of current image, so some regions will probably be cropped. In case you
+        do not want this, then have a look at `rotate_ccw()` method.
+
         Parameters
         ----------
         theta : `float`
