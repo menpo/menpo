@@ -6,11 +6,11 @@ import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
 from menpo.base import Vectorizable, MenpoDeprecationWarning
-from menpo.shape import PointCloud
+from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
                              AlignmentUniformScale, Affine, scale_about_centre,
-                             rotate_ccw_about_centre)
+                             rotate_ccw_about_centre, Similarity, Rotation)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .extract_patches import extract_patches
@@ -1790,14 +1790,14 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def rotate_ccw_about_centre(self, theta, degrees=True, cval=0.0):
         r"""
-        Return a rotation of this image clockwise about its centre.
+        Return a rotation of this image counter-clockwise about its centre.
 
         Parameters
         ----------
         theta : `float`
-            The angle of rotation about the origin.
+            The angle of rotation about the centre.
         degrees : `bool`, optional
-            If ``True``, `theta` is interpreted as a degree. If ``False``,
+            If ``True``, `theta` is interpreted in degrees. If ``False``,
             ``theta`` is interpreted as radians.
         cval : ``float``, optional
             The value to be set outside the rotated image boundaries.
@@ -1813,6 +1813,51 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         r_about_centre = rotate_ccw_about_centre(self, theta, degrees=degrees)
         return self.warp_to_shape(self.shape, r_about_centre.pseudoinverse(),
+                                  warp_landmarks=True, cval=cval)
+
+    def rotate_ccw(self, theta, degrees=True, cval=0.0):
+        r"""
+        Return a counter-clockwise rotation of this image. The returned image
+        has the correct size so that the whole area of the original image is
+        included.
+
+        Parameters
+        ----------
+        theta : `float`
+            The angle of rotation about the origin.
+        degrees : `bool`, optional
+            If ``True``, `theta` is interpreted in degrees. If ``False``,
+            ``theta`` is interpreted as radians.
+        cval : ``float``, optional
+            The value to be set outside the rotated image boundaries.
+
+        Returns
+        -------
+        rotated_image : ``type(self)``
+            The rotated image.
+        """
+        if self.n_dims != 2:
+            raise ValueError('Image rotation is presently only supported on '
+                             '2D images')
+
+        # Get image's bounding box coordinates
+        bbox = bounding_box((0, 0), self.shape)
+
+        # Translate to origin and rotate counter-clockwise
+        trans = Similarity.init_identity(self.n_dims)
+        r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
+        t = Translation(-self.centre())
+        trans.compose_before_inplace(t)
+        trans.compose_before_inplace(r)
+        rotated_bbox = trans.apply(bbox)
+
+        # Create new translation so that min bbox values go to 0
+        t2 = Translation(-rotated_bbox.bounds()[0])
+        trans.compose_before_inplace(t2)
+        rotated_bbox = trans.apply(bbox)
+
+        # Warp image
+        return self.warp_to_shape(rotated_bbox.range(), trans.pseudoinverse(),
                                   warp_landmarks=True, cval=cval)
 
     def pyramid(self, n_levels=3, downscale=2):
