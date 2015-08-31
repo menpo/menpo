@@ -1788,13 +1788,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         t = scale_about_centre(self, 1.0 / scale)
         return self.warp_to_shape(self.shape, t, cval=cval)
 
-    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0.0):
+    def rotate_ccw(self, theta, degrees=True, cval=0.0, retain_shape=False):
         r"""
-        Return a rotation of this image counter-clockwise about its centre.
+        Return a counter-clockwise rotation of this image.
 
-        Note that the shape of the returned image will be the same as the one
-        of current image, so some regions will probably be cropped. In case you
-        do not want this, then have a look at `rotate_ccw()` method.
+        Note that the `retain_shape` argument defines the shape of the rotated
+        image. If ``retain_shape=True``, then the shape of the rotated image
+        will be the same as the one of current image, so some regions will
+        probably be cropped. If ``retain_shape=False``, then the returned image
+        has the correct size so that the whole area of the current image is
+        included.
 
         Parameters
         ----------
@@ -1803,8 +1806,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         degrees : `bool`, optional
             If ``True``, `theta` is interpreted in degrees. If ``False``,
             ``theta`` is interpreted as radians.
-        cval : ``float``, optional
+        cval : `float`, optional
             The value to be set outside the rotated image boundaries.
+        retain_shape : `bool`, optional
+            If ``True``, then the shape of the rotated image will be the same as
+            the one of current image, so some regions will probably be cropped.
+            If ``False``, then the returned image has the correct size so that
+            the whole area of the current image is included.
 
         Returns
         -------
@@ -1815,53 +1823,30 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             raise ValueError('Image rotation is presently only supported on '
                              '2D images')
 
-        r_about_centre = rotate_ccw_about_centre(self, theta, degrees=degrees)
-        return self.warp_to_shape(self.shape, r_about_centre.pseudoinverse(),
-                                  warp_landmarks=True, cval=cval)
-
-    def rotate_ccw(self, theta, degrees=True, cval=0.0):
-        r"""
-        Return a counter-clockwise rotation of this image. The returned image
-        has the correct size so that the whole area of the original image is
-        included.
-
-        Parameters
-        ----------
-        theta : `float`
-            The angle of rotation about the origin.
-        degrees : `bool`, optional
-            If ``True``, `theta` is interpreted in degrees. If ``False``,
-            ``theta`` is interpreted as radians.
-        cval : ``float``, optional
-            The value to be set outside the rotated image boundaries.
-
-        Returns
-        -------
-        rotated_image : ``type(self)``
-            The rotated image.
-        """
-        if self.n_dims != 2:
-            raise ValueError('Image rotation is presently only supported on '
-                             '2D images')
-
-        # Get image's bounding box coordinates
-        bbox = bounding_box((0, 0), self.shape)
-
-        # Translate to origin and rotate counter-clockwise
-        trans = Similarity.init_identity(self.n_dims)
-        r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
-        t = Translation(-self.centre())
-        trans.compose_before_inplace(t)
-        trans.compose_before_inplace(r)
-        rotated_bbox = trans.apply(bbox)
-
-        # Create new translation so that min bbox values go to 0
-        t2 = Translation(-rotated_bbox.bounds()[0])
-        trans.compose_before_inplace(t2)
-        rotated_bbox = trans.apply(bbox)
+        if retain_shape:
+            # Rotate the image about its centre
+            trans = rotate_ccw_about_centre(self, theta, degrees=degrees)
+            # Output image's shape must be the same as the original one
+            shape = self.shape
+        else:
+            # Get image's bounding box coordinates
+            bbox = bounding_box((0, 0), self.shape)
+            # Translate to origin and rotate counter-clockwise
+            trans = Similarity.init_identity(self.n_dims)
+            r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
+            t = Translation(-self.centre())
+            trans.compose_before_inplace(t)
+            trans.compose_before_inplace(r)
+            rotated_bbox = trans.apply(bbox)
+            # Create new translation so that min bbox values go to 0
+            t2 = Translation(-rotated_bbox.bounds()[0])
+            trans.compose_before_inplace(t2)
+            rotated_bbox = trans.apply(bbox)
+            # Output image's shape is the range of the rotated bounding box
+            shape = rotated_bbox.range()
 
         # Warp image
-        return self.warp_to_shape(rotated_bbox.range(), trans.pseudoinverse(),
+        return self.warp_to_shape(shape, trans.pseudoinverse(),
                                   warp_landmarks=True, cval=cval)
 
     def pyramid(self, n_levels=3, downscale=2):
