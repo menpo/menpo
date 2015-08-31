@@ -8,7 +8,7 @@ from menpo.compatibility import basestring
 from menpo.base import Vectorizable, MenpoDeprecationWarning
 from menpo.shape import PointCloud
 from menpo.landmark import Landmarkable
-from menpo.transform import (Translation, NonUniformScale,
+from menpo.transform import (Translation, NonUniformScale, Rotation,
                              AlignmentUniformScale, Affine, scale_about_centre,
                              rotate_ccw_about_centre)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
@@ -1814,6 +1814,55 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         r_about_centre = rotate_ccw_about_centre(self, theta, degrees=degrees)
         return self.warp_to_shape(self.shape, r_about_centre.pseudoinverse(),
                                   warp_landmarks=True, cval=cval)
+
+    def mirror(self, axis=1, mirror_landmarks=True):
+        r"""
+        Return the mirrored/flipped version of this image about a certain axis.
+
+        Parameters
+        ----------
+        axis : `int`, optional
+            The axis about which to mirror the image.
+        mirror_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as self, but with each landmark updated to the mirrored position.
+
+        Returns
+        -------
+        mirrored_image : ``type(self)``
+            The mirrored image.
+
+        Raises
+        ------
+        ValueError
+            axis cannot be negative
+        ValueError
+            axis={} but the image has {} dimensions
+        """
+        # Check axis argument
+        if axis < 0:
+            raise ValueError('axis cannot be negative')
+        elif axis >= self.n_dims:
+            raise ValueError("axis={} but the image has {} "
+                             "dimensions".format(axis, self.n_dims))
+        # Flip pixels
+        if axis == 0:
+            pixels = self.pixels[:, ::-1, ...].copy()
+        elif axis == 1:
+            pixels = self.pixels[:, :, ::-1, ...].copy()
+        else:
+            pixels = self.pixels[:, :, ::-1, ...].copy()
+        # Create transform for landmarks that includes ...
+        # ... flipping about the selected axis ...
+        rot_matrix = np.eye(self.n_dims)
+        rot_matrix[axis, axis] = -1
+        # ... and translating back to the image's bbox
+        tr_matrix = np.zeros(self.n_dims)
+        tr_matrix[axis] = self.shape[axis]
+        # Create transform object
+        trans = Rotation(rot_matrix, skip_checks=True).compose_before(
+            Translation(tr_matrix, skip_checks=True))
+        return self._build_warp_to_shape(pixels, trans, mirror_landmarks)
 
     def pyramid(self, n_levels=3, downscale=2):
         r"""
