@@ -1829,7 +1829,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         Returns
         -------
-        mirrored_image : ``type(self)``
+        mirrored_image : :map:`Image`
             The mirrored image.
 
         Raises
