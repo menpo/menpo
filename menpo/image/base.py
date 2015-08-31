@@ -1788,7 +1788,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         t = scale_about_centre(self, 1.0 / scale)
         return self.warp_to_shape(self.shape, t, cval=cval)
 
-    def rotate_ccw(self, theta, degrees=True, cval=0.0, retain_shape=False):
+    def rotate_ccw(self, theta, degrees=True, cval=0.0, retain_shape=False,
+                   rotate_landmarks=True):
         r"""
         Return a counter-clockwise rotation of this image.
 
@@ -1813,6 +1814,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             the one of current image, so some regions will probably be cropped.
             If ``False``, then the returned image has the correct size so that
             the whole area of the current image is included.
+        rotate_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as `self`, but with each landmark updated to the rotated position.
 
         Returns
         -------
@@ -1847,7 +1851,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         # Warp image
         return self.warp_to_shape(shape, trans.pseudoinverse(),
-                                  warp_landmarks=True, cval=cval)
+                                  warp_landmarks=rotate_landmarks, cval=cval)
 
     def pyramid(self, n_levels=3, downscale=2):
         r"""
