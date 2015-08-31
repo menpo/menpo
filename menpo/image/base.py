@@ -1825,11 +1825,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The axis about which to mirror the image.
         mirror_landmarks : `bool`, optional
             If ``True``, result will have the same landmark dictionary
-            as self, but with each landmark updated to the mirrored position.
+            as `self`, but with each landmark updated to the mirrored position.
 
         Returns
         -------
-        mirrored_image : :map:`Image`
+        mirrored_image : ``type(self)``
             The mirrored image.
 
         Raises
@@ -1845,24 +1845,22 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         elif axis >= self.n_dims:
             raise ValueError("axis={} but the image has {} "
                              "dimensions".format(axis, self.n_dims))
-        # Flip pixels
-        if axis == 0:
-            pixels = self.pixels[:, ::-1, ...].copy()
-        elif axis == 1:
-            pixels = self.pixels[:, :, ::-1, ...].copy()
-        else:
-            pixels = self.pixels[:, :, ::-1, ...].copy()
-        # Create transform for landmarks that includes ...
+
+        # Create transform that includes ...
         # ... flipping about the selected axis ...
         rot_matrix = np.eye(self.n_dims)
         rot_matrix[axis, axis] = -1
         # ... and translating back to the image's bbox
         tr_matrix = np.zeros(self.n_dims)
-        tr_matrix[axis] = self.shape[axis]
+        tr_matrix[axis] = self.shape[axis] - 1
+
         # Create transform object
         trans = Rotation(rot_matrix, skip_checks=True).compose_before(
             Translation(tr_matrix, skip_checks=True))
-        return self._build_warp_to_shape(pixels, trans, mirror_landmarks)
+
+        # Warp image
+        return self.warp_to_shape(self.shape, trans.pseudoinverse(),
+                                  warp_landmarks=mirror_landmarks)
 
     def pyramid(self, n_levels=3, downscale=2):
         r"""
