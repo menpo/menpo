@@ -1241,7 +1241,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
     the `extract_patches()` and `extract_patches_around_landmarks()` methods.
     Specifically it can be:
 
-        1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+        1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
         2. `list` of ``n_center * n_offset`` :map:`Image` objects
 
     The patches can have a combination of different attributes, e.g. number of
@@ -1256,7 +1256,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         objects with any of the two formats that are returned from the
         `extract_patches()` and `extract_patches_around_landmarks()` methods.
         Specifically, it can either be an
-        ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray` or a
+        ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray` or a
         `list` of ``n_center * n_offset`` :map:`Image` objects.
     patch_centers : `list` of :map:`PointCloud`
         The centers to set the patches around. If the `list` has only one

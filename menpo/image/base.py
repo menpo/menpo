@@ -1203,7 +1203,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             patch from 1 pixel up the first axis away from the centre.
             If ``None``, then no offsets are applied.
         as_single_array : `bool`, optional
-            If ``True``, an ``(n_center, n_offset, self.n_channels, patch_size)``
+            If ``True``, an ``(n_center, n_offset, n_channels, patch_shape)``
             `ndarray`, thus a single numpy array is returned containing each
             patch. If ``False``, a `list` of ``n_center * n_offset``
             :map:`Image` objects is returned representing each patch.
@@ -1263,7 +1263,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             patch from 1 pixel up the first axis away from the centre.
             If ``None``, then no offsets are applied.
         as_single_array : `bool`, optional
-            If ``True``, an ``(n_center, n_offset, self.n_channels, patch_size)``
+            If ``True``, an ``(n_center, n_offset, n_channels, patch_shape)``
             `ndarray`, thus a single numpy array is returned containing each
             patch. If ``False``, a `list` of ``n_center * n_offset``
             :map:`Image` objects is returned representing each patch.
@@ -1297,7 +1297,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from the `extract_patches()` and `extract_patches_around_landmarks()`
         methods. Specifically it can be:
 
-            1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+            1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
             2. `list` of ``n_center * n_offset`` :map:`Image` objects
 
         Currently only 2D images are supported.
@@ -1308,7 +1308,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The values of the patches. It can have any of the two formats that
             are returned from the `extract_patches()` and
             `extract_patches_around_landmarks()` methods. Specifically, it can
-            either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+            either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
             `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
             objects.
         patch_centers : :map:`PointCloud`
@@ -1364,7 +1364,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from the `extract_patches()` and `extract_patches_around_landmarks()`
         methods. Specifically it can be:
 
-            1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+            1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
             2. `list` of ``n_center * n_offset`` :map:`Image` objects
 
         Currently only 2D images are supported.
@@ -1375,7 +1375,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The values of the patches. It can have any of the two formats that
             are returned from the `extract_patches()` and
             `extract_patches_around_landmarks()` methods. Specifically, it can
-            either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+            either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
             `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
             objects.
         group : `str` or ``None`` optional
@@ -2239,7 +2239,7 @@ def round_image_shape(shape, round):
 def convert_patches_list_to_single_array(patches_list, n_center):
     r"""
     Converts patches from a `list` of :map:`Image` objects to a single `ndarray`
-    with shape ``(n_center, n_offset, self.n_channels, patch_size)``.
+    with shape ``(n_center, n_offset, self.n_channels, patch_shape)``.
 
     Note that these two are the formats returned by the `extract_patches()`
     and `extract_patches_around_landmarks()` methods of :map:`Image` class.
@@ -2253,7 +2253,7 @@ def convert_patches_list_to_single_array(patches_list, n_center):
 
     Returns
     -------
-    patches_array : `ndarray` ``(n_center, n_offset, self.n_channels, patch_size)``
+    patches_array : `ndarray` ``(n_center, n_offset, n_channels, patch_shape)``
         The numpy array that contains all the patches.
     """
     n_offsets = np.int(len(patches_list) / n_center)

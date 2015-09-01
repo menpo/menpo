@@ -627,7 +627,7 @@ class BooleanImage(Image):
         from the `extract_patches()` and `extract_patches_around_landmarks()`
         methods. Specifically it can be:
 
-            1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+            1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
             2. `list` of ``n_center * n_offset`` :map:`Image` objects
 
         Currently only 2D images are supported.
@@ -638,7 +638,7 @@ class BooleanImage(Image):
             The values of the patches. It can have any of the two formats that
             are returned from the `extract_patches()` and
             `extract_patches_around_landmarks()` methods. Specifically, it can
-            either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+            either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
             `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
             objects.
         patch_centers : :map:`PointCloud`

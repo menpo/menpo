@@ -20,7 +20,7 @@ def create_patches_image(patches, patch_centers, patches_indices=None,
     from the `extract_patches()` and `extract_patches_around_landmarks()`
     methods of the :map:`Image` class. Specifically it can be:
 
-        1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+        1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
         2. `list` of ``n_center * n_offset`` :map:`Image` objects
 
     Parameters
@@ -29,7 +29,7 @@ def create_patches_image(patches, patch_centers, patches_indices=None,
         The values of the patches. It can have any of the two formats that are
         returned from the `extract_patches()` and
         `extract_patches_around_landmarks()` methods. Specifically, it can
-        either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+        either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
         `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image` objects.
     patch_centers : :map:`PointCloud`
         The centers to set the patches around.
@@ -225,7 +225,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
     from the `extract_patches()` and `extract_patches_around_landmarks()`
     methods of the :map:`Image` class. Specifically it can be:
 
-        1. ``(n_center, n_offset, self.n_channels, patch_size)`` `ndarray`
+        1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
         2. `list` of ``n_center * n_offset`` :map:`Image` objects
 
     Parameters
@@ -234,7 +234,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
         The values of the patches. It can have any of the two formats that are
         returned from the `extract_patches()` and
         `extract_patches_around_landmarks()` methods. Specifically, it can
-        either be an ``(n_center, n_offset, self.n_channels, patch_size)``
+        either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
         `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image` objects.
     patch_centers : :map:`PointCloud`
         The centers around which to visualize the patches.
