@@ -1789,7 +1789,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return self.warp_to_shape(self.shape, t, cval=cval)
 
     def rotate_ccw_about_centre(self, theta, degrees=True, retain_shape=False,
-                                cval=0.0, round='ceil', order=1):
+                                cval=0.0, round='round', order=1):
         r"""
         Return a rotation of this image counter-clockwise about its centre.
 
@@ -1836,6 +1836,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         -------
         rotated_image : ``type(self)``
             The rotated image.
+
+        Raises
+        ------
+        ValueError
+            Image rotation is presently only supported on 2D images
         """
         if self.n_dims != 2:
             raise ValueError('Image rotation is presently only supported on '
