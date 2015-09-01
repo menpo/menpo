@@ -1285,7 +1285,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     sample_offsets=sample_offsets,
                                     as_single_array=as_single_array)
 
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
                      order=1, mode='constant', cval=0.0, batch_size=None):
         r"""
         Return a copy of this image warped into a different reference space.
@@ -1416,7 +1416,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return scipy_interpolation(self.pixels, points_to_sample,
                                    order=order,  mode=mode, cval=cval)
 
-    def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
+    def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
                       order=1, mode='constant', cval=0.0, batch_size=None):
         """
         Return a copy of this image warped into a different reference space.
@@ -1866,7 +1866,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return self.warp_to_shape(shape, trans.pseudoinverse(), order=order,
                                   warp_landmarks=True, cval=cval)
 
-    def mirror(self, axis=1, mirror_landmarks=True):
+    def mirror(self, axis=1):
         r"""
         Return the mirrored/flipped version of this image about a certain axis.
 
@@ -1874,9 +1874,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ----------
         axis : `int`, optional
             The axis about which to mirror the image.
-        mirror_landmarks : `bool`, optional
-            If ``True``, result will have the same landmark dictionary
-            as `self`, but with each landmark updated to the mirrored position.
 
         Returns
         -------
@@ -1911,7 +1908,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         # Warp image
         return self.warp_to_shape(self.shape, trans.pseudoinverse(),
-                                  warp_landmarks=mirror_landmarks)
+                                  warp_landmarks=True)
 
     def pyramid(self, n_levels=3, downscale=2):
         r"""
