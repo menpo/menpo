@@ -199,3 +199,44 @@ def test_zoom_booleanimage():
 
     zim = im.zoom(1.2)
     assert np.all(zim.pixels)
+
+
+def test_mirror_horizontal_image():
+    image = Image(np.array([[1., 2., 3., 4.],
+                            [5., 6., 7., 8.],
+                            [9., 10., 11., 12.]]))
+    image.landmarks['temp'] = PointCloud(np.array([[1., 1.], [1., 2.],
+                                                   [2., 1.], [2., 2.]]))
+    mirrored_img = image.mirror(axis=0)
+    assert_allclose(mirrored_img.pixels,
+                    np.array([[[9., 10., 11., 12.],
+                               [5., 6., 7., 8.],
+                               [1., 2., 3., 4.]]]))
+    assert_allclose(mirrored_img.landmarks['temp'].lms.points,
+                    np.array([[1., 1.], [1., 2.], [0., 1.], [0., 2.]]))
+
+
+def test_mirror_vertical_image():
+    image = Image(np.array([[1., 2., 3., 4.],
+                            [5., 6., 7., 8.],
+                            [9., 10., 11., 12.]]))
+    image.landmarks['temp'] = PointCloud(np.array([[1., 0.], [1., 1.],
+                                                   [2., 1.], [2., 2.]]))
+    mirrored_img = image.mirror()
+    assert_allclose(mirrored_img.pixels,
+                    np.array([[[4., 3., 2., 1.],
+                               [8., 7., 6., 5.],
+                               [12., 11., 10., 9.]]]))
+    assert_allclose(mirrored_img.landmarks['temp'].lms.points,
+                    np.array([[1., 3.], [1., 2.], [2., 2.], [2., 1.]]))
+
+
+@raises(ValueError)
+def test_mirror_image_axis_error():
+    Image(np.array([[1., 2., 3., 4.], [5., 6., 7., 8.]])).mirror(axis=2)
+
+
+def test_mirror_masked_image():
+    image = MaskedImage(np.array([[1., 2., 3., 4.], [5., 6., 7., 8.]]))
+    mirrored_img = image.mirror()
+    assert(type(mirrored_img) == MaskedImage)
