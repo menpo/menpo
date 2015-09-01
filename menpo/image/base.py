@@ -1788,8 +1788,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         t = scale_about_centre(self, 1.0 / scale)
         return self.warp_to_shape(self.shape, t, cval=cval)
 
-    def rotate_ccw(self, theta, degrees=True, cval=0.0, retain_shape=False,
-                   rotate_landmarks=True):
+    def rotate_ccw_about_centre(self, theta, degrees=True, retain_shape=False,
+                                cval=0.0, round='ceil', order=1):
         r"""
         Return a rotation of this image counter-clockwise about its centre.
 
@@ -1807,16 +1807,30 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         degrees : `bool`, optional
             If ``True``, `theta` is interpreted in degrees. If ``False``,
             ``theta`` is interpreted as radians.
-        cval : `float`, optional
-            The value to be set outside the rotated image boundaries.
         retain_shape : `bool`, optional
             If ``True``, then the shape of the rotated image will be the same as
             the one of current image, so some regions will probably be cropped.
             If ``False``, then the returned image has the correct size so that
             the whole area of the current image is included.
-        rotate_landmarks : `bool`, optional
-            If ``True``, result will have the same landmark dictionary
-            as `self`, but with each landmark updated to the rotated position.
+        cval : `float`, optional
+            The value to be set outside the rotated image boundaries.
+        round : ``{'ceil', 'floor', 'round'}``, optional
+            Rounding function to be applied to floating point shapes. This is
+            only used in case ``retain_shape=True``.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range
+            ``[0,5]``. This is only used in case ``retain_shape=True``.
+
+            ========= ====================
+            Order     Interpolation
+            ========= ====================
+            0         Nearest-neighbor
+            1         Bi-linear *(default)*
+            2         Bi-quadratic
+            3         Bi-cubic
+            4         Bi-quartic
+            5         Bi-quintic
+            ========= ====================
 
         Returns
         -------
@@ -1834,24 +1848,23 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             shape = self.shape
         else:
             # Get image's bounding box coordinates
-            bbox = bounding_box((0, 0), self.shape)
+            bbox = bounding_box((0, 0), [self.shape[0] - 1, self.shape[1] - 1])
             # Translate to origin and rotate counter-clockwise
-            trans = Similarity.init_identity(self.n_dims)
-            r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
-            t = Translation(-self.centre())
-            trans.compose_before_inplace(t)
-            trans.compose_before_inplace(r)
+            trans = Translation(-self.centre(),
+                                skip_checks=True).compose_before(
+                Rotation.init_from_2d_ccw_angle(theta, degrees=degrees))
             rotated_bbox = trans.apply(bbox)
             # Create new translation so that min bbox values go to 0
-            t2 = Translation(-rotated_bbox.bounds()[0])
-            trans.compose_before_inplace(t2)
+            t = Translation(-rotated_bbox.bounds()[0])
+            trans.compose_before_inplace(t)
             rotated_bbox = trans.apply(bbox)
             # Output image's shape is the range of the rotated bounding box
-            shape = rotated_bbox.range()
+            # while respecting the users rounding preference.
+            shape = round_image_shape(rotated_bbox.range() + 1, round)
 
         # Warp image
-        return self.warp_to_shape(shape, trans.pseudoinverse(),
-                                  warp_landmarks=rotate_landmarks, cval=cval)
+        return self.warp_to_shape(shape, trans.pseudoinverse(), order=order,
+                                  warp_landmarks=True, cval=cval)
 
     def mirror(self, axis=1, mirror_landmarks=True):
         r"""
