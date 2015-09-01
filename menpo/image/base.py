@@ -1791,7 +1791,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def rotate_ccw(self, theta, degrees=True, cval=0.0, retain_shape=False,
                    rotate_landmarks=True):
         r"""
-        Return a counter-clockwise rotation of this image.
+        Return a rotation of this image counter-clockwise about its centre.
 
         Note that the `retain_shape` argument defines the shape of the rotated
         image. If ``retain_shape=True``, then the shape of the rotated image
