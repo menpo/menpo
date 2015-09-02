@@ -1,7 +1,7 @@
 import numpy as np
 import menpo
 from nose.tools import raises
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_almost_equal
 from menpo.image import BooleanImage, Image, MaskedImage, OutOfMaskSampleError
 from menpo.shape import PointCloud
 from menpo.transform import Affine
@@ -199,3 +199,97 @@ def test_zoom_booleanimage():
 
     zim = im.zoom(1.2)
     assert np.all(zim.pixels)
+
+
+def test_mirror_horizontal_image():
+    image = Image(np.array([[1., 2., 3., 4.],
+                            [5., 6., 7., 8.],
+                            [9., 10., 11., 12.]]))
+    image.landmarks['temp'] = PointCloud(np.array([[1., 1.], [1., 2.],
+                                                   [2., 1.], [2., 2.]]))
+    mirrored_img = image.mirror(axis=0)
+    assert_allclose(mirrored_img.pixels,
+                    np.array([[[9., 10., 11., 12.],
+                               [5., 6., 7., 8.],
+                               [1., 2., 3., 4.]]]))
+    assert_allclose(mirrored_img.landmarks['temp'].lms.points,
+                    np.array([[1., 1.], [1., 2.], [0., 1.], [0., 2.]]))
+
+
+def test_mirror_vertical_image():
+    image = Image(np.array([[1., 2., 3., 4.],
+                            [5., 6., 7., 8.],
+                            [9., 10., 11., 12.]]))
+    image.landmarks['temp'] = PointCloud(np.array([[1., 0.], [1., 1.],
+                                                   [2., 1.], [2., 2.]]))
+    mirrored_img = image.mirror()
+    assert_allclose(mirrored_img.pixels,
+                    np.array([[[4., 3., 2., 1.],
+                               [8., 7., 6., 5.],
+                               [12., 11., 10., 9.]]]))
+    assert_allclose(mirrored_img.landmarks['temp'].lms.points,
+                    np.array([[1., 3.], [1., 2.], [2., 2.], [2., 1.]]))
+
+
+@raises(ValueError)
+def test_mirror_image_axis_error():
+    Image(np.array([[1., 2., 3., 4.], [5., 6., 7., 8.]])).mirror(axis=2)
+
+
+def test_mirror_masked_image():
+    image = MaskedImage(np.array([[1., 2., 3., 4.], [5., 6., 7., 8.]]))
+    mirrored_img = image.mirror()
+    assert(type(mirrored_img) == MaskedImage)
+
+
+def test_rotate_image_90_180():
+    image = Image(np.array([[1., 2., 3., 4.],
+                            [5., 6., 7., 8.],
+                            [9., 10., 11., 12.]]))
+    image.landmarks['temp'] = PointCloud(np.array([[1., 1.], [1., 2.],
+                                                   [2., 1.], [2., 2.]]))
+    # rotate 90 degrees
+    rotated_img = image.rotate_ccw_about_centre(theta=90, order=0)
+    rotated_img.constrain_landmarks_to_bounds()
+    assert_allclose(rotated_img.pixels, np.array([[[4., 8., 12.],
+                                                   [3., 7., 11.],
+                                                   [2., 6., 10.],
+                                                   [1., 5., 9.]]]))
+    assert_almost_equal(rotated_img.landmarks['temp'].lms.points,
+                        np.array([[2., 1.], [1., 1.], [2., 2.], [1., 2.]]))
+
+    # rotate 180 degrees
+    rotated_img = image.rotate_ccw_about_centre(theta=180, order=0)
+    rotated_img.constrain_landmarks_to_bounds()
+    assert_allclose(rotated_img.pixels, np.array([[[12., 11., 10., 9.],
+                                                   [8., 7., 6., 5.],
+                                                   [4., 3., 2., 1.]]]))
+    assert_almost_equal(rotated_img.landmarks['temp'].lms.points,
+                        np.array([[1., 2.], [1., 1.], [0., 2.], [0., 1.]]))
+
+
+def test_rotate_image_45():
+    image = Image(np.array([[1., 2., 3., 4.],
+                            [5., 6., 7., 8.],
+                            [9., 10., 11., 12.],
+                            [13., 14., 15., 16.]]))
+    image.landmarks['temp'] = PointCloud(np.array([[1., 1.], [1., 2.],
+                                                   [2., 1.], [2., 2.]]))
+    rotated_img = image.rotate_ccw_about_centre(theta=45, order=0)
+    assert_allclose(rotated_img.pixels,
+                    np.array([[[0., 0., 4., 0., 0.],
+                               [0., 3., 7., 8., 0.],
+                               [1., 6., 7., 11., 16.],
+                               [0., 5., 10., 15., 15.],
+                               [0., 0., 13., 14., 0.]]]))
+    assert_almost_equal(rotated_img.landmarks['temp'].lms.points,
+                        np.array([[2.121, 1.414], [1.414, 2.121],
+                                  [2.828, 2.121], [2.121, 2.828]]), decimal=3)
+
+
+def test_maskedimage_retain_shape():
+    image = mio.import_builtin_asset('takeo.ppm')
+    image = image.as_masked()
+    rotated_img = image.rotate_ccw_about_centre(theta=77, retain_shape=True)
+    assert(image.shape == rotated_img.shape)
+    assert(type(rotated_img) == MaskedImage)

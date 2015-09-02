@@ -7,11 +7,11 @@ import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
 from menpo.base import Vectorizable, MenpoDeprecationWarning
-from menpo.shape import PointCloud
+from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
-from menpo.transform import (Translation, NonUniformScale,
+from menpo.transform import (Translation, NonUniformScale, Rotation,
                              AlignmentUniformScale, Affine, scale_about_centre,
-                             rotate_ccw_about_centre)
+                             rotate_ccw_about_centre, Similarity, Rotation)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .patches import extract_patches, set_patches
@@ -1401,7 +1401,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return self.set_patches(patches, self.landmarks[group][label],
                                 offset=offset, offset_index=offset_index)
 
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
                      order=1, mode='constant', cval=0.0, batch_size=None):
         r"""
         Return a copy of this image warped into a different reference space.
@@ -1532,7 +1532,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return scipy_interpolation(self.pixels, points_to_sample,
                                    order=order,  mode=mode, cval=cval)
 
-    def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
+    def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
                       order=1, mode='constant', cval=0.0, batch_size=None):
         """
         Return a copy of this image warped into a different reference space.
@@ -1904,32 +1904,132 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         t = scale_about_centre(self, 1.0 / scale)
         return self.warp_to_shape(self.shape, t, cval=cval)
 
-    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0.0):
+    def rotate_ccw_about_centre(self, theta, degrees=True, retain_shape=False,
+                                cval=0.0, round='round', order=1):
         r"""
-        Return a rotation of this image clockwise about its centre.
+        Return a rotation of this image counter-clockwise about its centre.
+
+        Note that the `retain_shape` argument defines the shape of the rotated
+        image. If ``retain_shape=True``, then the shape of the rotated image
+        will be the same as the one of current image, so some regions will
+        probably be cropped. If ``retain_shape=False``, then the returned image
+        has the correct size so that the whole area of the current image is
+        included.
 
         Parameters
         ----------
         theta : `float`
-            The angle of rotation about the origin.
+            The angle of rotation about the centre.
         degrees : `bool`, optional
-            If ``True``, `theta` is interpreted as a degree. If ``False``,
+            If ``True``, `theta` is interpreted in degrees. If ``False``,
             ``theta`` is interpreted as radians.
-        cval : ``float``, optional
+        retain_shape : `bool`, optional
+            If ``True``, then the shape of the rotated image will be the same as
+            the one of current image, so some regions will probably be cropped.
+            If ``False``, then the returned image has the correct size so that
+            the whole area of the current image is included.
+        cval : `float`, optional
             The value to be set outside the rotated image boundaries.
+        round : ``{'ceil', 'floor', 'round'}``, optional
+            Rounding function to be applied to floating point shapes. This is
+            only used in case ``retain_shape=True``.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range
+            ``[0,5]``. This is only used in case ``retain_shape=True``.
+
+            ========= ====================
+            Order     Interpolation
+            ========= ====================
+            0         Nearest-neighbor
+            1         Bi-linear *(default)*
+            2         Bi-quadratic
+            3         Bi-cubic
+            4         Bi-quartic
+            5         Bi-quintic
+            ========= ====================
 
         Returns
         -------
         rotated_image : ``type(self)``
             The rotated image.
+
+        Raises
+        ------
+        ValueError
+            Image rotation is presently only supported on 2D images
         """
         if self.n_dims != 2:
             raise ValueError('Image rotation is presently only supported on '
                              '2D images')
 
-        r_about_centre = rotate_ccw_about_centre(self, theta, degrees=degrees)
-        return self.warp_to_shape(self.shape, r_about_centre.pseudoinverse(),
+        if retain_shape:
+            # Rotate the image about its centre
+            trans = rotate_ccw_about_centre(self, theta, degrees=degrees)
+            # Output image's shape must be the same as the original one
+            shape = self.shape
+        else:
+            # Get image's bounding box coordinates
+            bbox = bounding_box((0, 0), [self.shape[0] - 1, self.shape[1] - 1])
+            # Translate to origin and rotate counter-clockwise
+            trans = Translation(-self.centre(),
+                                skip_checks=True).compose_before(
+                Rotation.init_from_2d_ccw_angle(theta, degrees=degrees))
+            rotated_bbox = trans.apply(bbox)
+            # Create new translation so that min bbox values go to 0
+            t = Translation(-rotated_bbox.bounds()[0])
+            trans.compose_before_inplace(t)
+            rotated_bbox = trans.apply(bbox)
+            # Output image's shape is the range of the rotated bounding box
+            # while respecting the users rounding preference.
+            shape = round_image_shape(rotated_bbox.range() + 1, round)
+
+        # Warp image
+        return self.warp_to_shape(shape, trans.pseudoinverse(), order=order,
                                   warp_landmarks=True, cval=cval)
+
+    def mirror(self, axis=1):
+        r"""
+        Return the mirrored/flipped version of this image about a certain axis.
+
+        Parameters
+        ----------
+        axis : `int`, optional
+            The axis about which to mirror the image.
+
+        Returns
+        -------
+        mirrored_image : ``type(self)``
+            The mirrored image.
+
+        Raises
+        ------
+        ValueError
+            axis cannot be negative
+        ValueError
+            axis={} but the image has {} dimensions
+        """
+        # Check axis argument
+        if axis < 0:
+            raise ValueError('axis cannot be negative')
+        elif axis >= self.n_dims:
+            raise ValueError("axis={} but the image has {} "
+                             "dimensions".format(axis, self.n_dims))
+
+        # Create transform that includes ...
+        # ... flipping about the selected axis ...
+        rot_matrix = np.eye(self.n_dims)
+        rot_matrix[axis, axis] = -1
+        # ... and translating back to the image's bbox
+        tr_matrix = np.zeros(self.n_dims)
+        tr_matrix[axis] = self.shape[axis] - 1
+
+        # Create transform object
+        trans = Rotation(rot_matrix, skip_checks=True).compose_before(
+            Translation(tr_matrix, skip_checks=True))
+
+        # Warp image
+        return self.warp_to_shape(self.shape, trans.pseudoinverse(),
+                                  warp_landmarks=True)
 
     def pyramid(self, n_levels=3, downscale=2):
         r"""
