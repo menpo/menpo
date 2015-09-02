@@ -6,7 +6,7 @@ from menpo.shape import PointCloud
 from .base import Image, convert_patches_list_to_single_array
 
 
-def create_patches_image(patches, patch_centers, patches_indices=None,
+def _create_patches_image(patches, patch_centers, patches_indices=None,
                          offset_index=None, background='black'):
     r"""
     Creates an :map:`Image` object in which the patches are located on the
@@ -398,7 +398,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
 
     # Create patches image
     if render_patches:
-        patches_image = create_patches_image(
+        patches_image = _create_patches_image(
             patches, patch_centers, patches_indices=patches_indices,
             offset_index=offset_index, background=background)
     else:
@@ -408,7 +408,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
         elif background == 'white':
             tmp_patches = np.ones((patches.shape[0], patches.shape[1], 3,
                                    patches.shape[3], patches.shape[4]))
-        patches_image = create_patches_image(
+        patches_image = _create_patches_image(
             tmp_patches, patch_centers, patches_indices=patches_indices,
             offset_index=offset_index, background=background)
         channels = None

@@ -5,7 +5,7 @@ from nose.tools import assert_equals
 import menpo.io as mio
 from menpo.landmark import labeller, face_ibug_68_to_face_ibug_68
 from menpo.image import (Image, convert_patches_list_to_single_array,
-                         create_patches_image)
+                         _create_patches_image)
 from menpo.shape import PointCloud
 
 #######################
@@ -216,7 +216,7 @@ def test_create_patches_image():
     patches = image.extract_patches_around_landmarks(
         patch_shape=patch_shape, as_single_array=True)
     pc = image.landmarks['LJSON'].lms
-    patches_image = create_patches_image(patches, pc, patches_indices=range(17))
+    patches_image = _create_patches_image(patches, pc, patches_indices=range(17))
     assert(patches_image.n_channels == patches.shape[2])
     assert(patches_image.landmarks.n_groups == 2)
     assert(patches_image.landmarks['selected_patch_centers'].lms.n_points == 17)

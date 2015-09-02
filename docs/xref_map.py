@@ -9,7 +9,6 @@ xref_map = {
 'ChannelOptionsWidget': ('class', 'menpo.visualize.widgets.ChannelOptionsWidget'),
 'Copyable': ('class', 'menpo.base.Copyable'),
 'ComposableTransform': ('class', 'menpo.transform.ComposableTransform'),
-'create_patches_image': ('function', 'menpo.image.create_patches_image'),
 'DiscreteAffine': ('class', 'menpo.transform.DiscreteAffine'),
 'from_vector_inplace': ('function', 'menpo.base.Vectorizable.from_vector_inplace'),
 'from_vector': ('function', 'menpo.base.Vectorizable.from_vector'),
