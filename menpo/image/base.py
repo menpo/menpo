@@ -1,5 +1,6 @@
 from __future__ import division
 from warnings import warn
+from collections import Iterable
 
 import numpy as np
 import PIL.Image as PILImage
@@ -2268,3 +2269,109 @@ def convert_patches_list_to_single_array(patches_list, n_center):
             patches_array[p, o, ...] = patches_list[total_index].pixels
             total_index += 1
     return patches_array
+
+
+def _create_patches_image(patches, patch_centers, patches_indices=None,
+                          offset_index=None, background='black'):
+    r"""
+    Creates an :map:`Image` object in which the patches are located on the
+    correct regions based on the centers. Thus, the image is a block-sparse
+    matrix. It has also two attached :map:`LandmarkGroup` objects. The
+    `all_patch_centers` one contains all the patch centers, while the
+    `selected_patch_centers` one contains only the centers that correspond to
+    the patches that the user selected to set.
+
+    The patches argument can have any of the two formats that are returned
+    from the `extract_patches()` and `extract_patches_around_landmarks()`
+    methods of the :map:`Image` class. Specifically it can be:
+
+        1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
+        2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+    Parameters
+    ----------
+    patches : `ndarray` or `list`
+        The values of the patches. It can have any of the two formats that are
+        returned from the `extract_patches()` and
+        `extract_patches_around_landmarks()` methods. Specifically, it can
+        either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
+        `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image` objects.
+    patch_centers : :map:`PointCloud`
+        The centers to set the patches around.
+    patches_indices : `int` or `list` of `int` or ``None``, optional
+        Defines the patches that will be set (copied) to the image. If ``None``,
+        then all the patches are copied.
+    offset_index : `int` or ``None``, optional
+        The offset index within the provided `patches` argument, thus the index
+        of the second dimension from which to sample. If ``None``, then ``0`` is
+        used.
+    background : ``{'black', 'white'}``, optional
+        If ``'black'``, then the background is set equal to the minimum value
+        of `patches`. If ``'white'``, then the background is set equal to the
+        maximum value of `patches`.
+
+    Returns
+    -------
+    patches_image : :map:`Image`
+        The output patches image object.
+
+    Raises
+    ------
+    ValueError
+        Background must be either ''black'' or ''white''.
+    """
+    # If patches is a list, convert it to array
+    if isinstance(patches, list):
+        patches = convert_patches_list_to_single_array(patches,
+                                                       patch_centers.n_points)
+
+    # Parse inputs
+    if offset_index is None:
+        offset_index = 0
+    if patches_indices is None:
+        patches_indices = np.arange(patches.shape[0])
+    elif not isinstance(patches_indices, Iterable):
+        patches_indices = [patches_indices]
+
+    # Compute patches image's shape
+    n_channels = patches.shape[2]
+    patch_shape0 = patches.shape[3]
+    patch_shape1 = patches.shape[4]
+    top, left = np.min(patch_centers.points, 0)
+    bottom, right = np.max(patch_centers.points, 0)
+    min_0 = np.floor(top - patch_shape0)
+    min_1 = np.floor(left - patch_shape1)
+    max_0 = np.ceil(bottom + patch_shape0)
+    max_1 = np.ceil(right + patch_shape1)
+    height = max_0 - min_0 + 1
+    width = max_1 - min_1 + 1
+
+    # Translate the patch centers to fit in the new image
+    new_patch_centers = patch_centers.copy()
+    new_patch_centers.points = patch_centers.points - np.array([[min_0, min_1]])
+
+    # Create temporary pointcloud with the selected patch centers
+    tmp_centers = PointCloud(new_patch_centers.points[patches_indices])
+
+    # Create new image with the correct background values
+    if background == 'black':
+        patches_image = Image.init_blank(
+            (height, width), n_channels,
+            fill=np.min(patches[patches_indices]))
+    elif background == 'white':
+        patches_image = Image.init_blank(
+            (height, width), n_channels,
+            fill=np.max(patches[patches_indices]))
+    else:
+        raise ValueError('Background must be either ''black'' or ''white''.')
+
+    # Attach the corrected patch centers
+    patches_image.landmarks['all_patch_centers'] = new_patch_centers
+    patches_image.landmarks['selected_patch_centers'] = tmp_centers
+
+    # Set the patches
+    patches_image.set_patches_around_landmarks(patches[patches_indices],
+                                               group='selected_patch_centers',
+                                               offset_index=offset_index)
+
+    return patches_image

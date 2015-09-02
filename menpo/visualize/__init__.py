@@ -1,7 +1,8 @@
 from .base import (
     Renderer, Viewable, LandmarkableViewable, viewwrapper, Menpo3dErrorMessage,
     PointGraphViewer2d, LandmarkViewer2d, ImageViewer2d, ImageViewer,
-    AlignmentViewer2d, GraphPlotter, view_image_landmarks)
+    AlignmentViewer2d, GraphPlotter, view_image_landmarks,
+    view_patches_nowidget)
 from .textutils import (print_progress, progress_bar_str, print_dynamic,
                         bytes_str)
 # If IPython is not installed, then access to the widgets should be blocked.

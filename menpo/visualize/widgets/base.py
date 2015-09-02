@@ -2063,7 +2063,7 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
     global sum_channels
     if sum_channels is None:
         from menpo.feature.visualize import sum_channels
-    from menpo.image import view_patches
+    from menpo.visualize import view_patches_nowidget
     from menpo.transform import UniformScale
 
     if glyph_enabled and render_patches:
@@ -2084,7 +2084,7 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
         glyph_patch_centers = UniformScale(glyph_block_size, 2).apply(
             patch_centers)
         # visualize glyph patches
-        renderer = view_patches(
+        renderer = view_patches_nowidget(
             glyph_patches, glyph_patch_centers, patches_indices=patches_indices,
             offset_index=0, figure_id=renderer.figure_id, new_figure=False,
             background=background, render_patches=render_patches, channels=0,
@@ -2122,7 +2122,7 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
             sum_patches[i, 0, ...] = sum_channels(
                 patches[i, offset_index, ...], channels=channels)
         # visualize sum patches
-        renderer = view_patches(
+        renderer = view_patches_nowidget(
             sum_patches, patch_centers, patches_indices=patches_indices,
             offset_index=0, figure_id=renderer.figure_id, new_figure=False,
             background=background, render_patches=render_patches, channels=0,
@@ -2153,7 +2153,7 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
             axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
             figure_size=figure_size)
     else:
-        renderer = view_patches(
+        renderer = view_patches_nowidget(
             patches, patch_centers, patches_indices=patches_indices,
             offset_index=offset_index, figure_id=renderer.figure_id,
             new_figure=False, background=background,

@@ -66,7 +66,7 @@ xref_map = {
 'UniformScale': ('class', 'menpo.shape.UniformScale'),
 'Vectorizable': ('class', 'menpo.base.Vectorizable'),
 'Viewable': ('class', 'menpo.visualize.Viewable'),
-'view_patches': ('function', 'menpo.image.view_patches'),
+'view_patches_nowidget': ('function', 'menpo.visualize.view_patches_nowidget'),
 'visualize_images': ('function', 'menpo.visualize.visualize_images'),
 'visualize_patches': ('function', 'menpo.visualize.visualize_patches'),
 'visualize_pointclouds': ('function', 'menpo.visualize.visualize_pointclouds'),

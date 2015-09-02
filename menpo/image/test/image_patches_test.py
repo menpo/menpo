@@ -4,8 +4,8 @@ from nose.tools import assert_equals
 
 import menpo.io as mio
 from menpo.landmark import labeller, face_ibug_68_to_face_ibug_68
-from menpo.image import (Image, convert_patches_list_to_single_array,
-                         _create_patches_image)
+from menpo.image.base import (Image, convert_patches_list_to_single_array,
+                              _create_patches_image)
 from menpo.shape import PointCloud
 
 #######################

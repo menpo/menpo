@@ -27,6 +27,7 @@ Widgets
 
   visualize_images
   visualize_patches
+  view_patches_nowidget
   visualize_landmarks
   visualize_landmarkgroups
   visualize_pointclouds
