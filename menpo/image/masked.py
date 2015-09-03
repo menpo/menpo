@@ -783,7 +783,7 @@ class MaskedImage(Image):
     # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
                      order=1, mode='constant', cval=0., batch_size=None,
-                     return_transform=False):
+                     return_inverse_transform=False):
         r"""
         Warps this image into a different reference space.
 
@@ -825,35 +825,36 @@ class MaskedImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
-        return_transform : `bool`, optional
-            If ``True``, then the :map:`Transform` object is also returned.
+        return_inverse_transform : `bool`, optional
+            If ``True``, then the pseudoinverse of the :map:`Transform`
+            object is also returned.
 
         Returns
         -------
         warped_image : ``type(self)``
             A copy of this image, warped.
-        transform : :map:`Transform`
-            The transform that was used. It only applies if
-            `return_transform` is ``True``.
+        inverse_transform : :map:`Transform`
+            The pseudoinverse of the transform that was used. It only applies if
+            `return_inverse_transform` is ``True``.
         """
         # call the super variant and get ourselves a MaskedImage back
         # with a blank mask
-        warped_image = Image.warp_to_mask(self, template_mask, transform,
-                                          warp_landmarks=warp_landmarks,
-                                          order=order, mode=mode, cval=cval,
-                                          batch_size=batch_size)
+        warped_image, inv_transform = Image.warp_to_mask(
+            self, template_mask, transform, warp_landmarks=warp_landmarks,
+            order=order, mode=mode, cval=cval, batch_size=batch_size,
+            return_inverse_transform=True)
         # Set the template mask as our mask
         warped_image.mask = template_mask
-        # optionally return the transform
-        if return_transform:
-            return warped_image, transform
+        # optionally return the pseudoinverse transform
+        if return_inverse_transform:
+            return warped_image, inv_transform
         else:
             return warped_image
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
                       order=1, mode='constant', cval=0., batch_size=None,
-                      return_transform=False):
+                      return_inverse_transform=False):
         """
         Return a copy of this :map:`MaskedImage` warped into a different
         reference space.
@@ -897,22 +898,23 @@ class MaskedImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
-        return_transform : `bool`, optional
-            If ``True``, then the :map:`Transform` object is also returned.
+        return_inverse_transform : `bool`, optional
+            If ``True``, then the pseudoinverse of the :map:`Transform`
+            object is also returned.
 
         Returns
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
-        transform : :map:`Transform`
-            The transform that was used. It only applies if
-            `return_transform` is ``True``.
+        inverse_transform : :map:`Transform`
+            The pseudoinverse of the transform that was used. It only applies if
+            `return_inverse_transform` is ``True``.
         """
         # call the super variant and get ourselves an Image back
-        warped_image = Image.warp_to_shape(self, template_shape, transform,
-                                           warp_landmarks=warp_landmarks,
-                                           order=order, mode=mode, cval=cval,
-                                           batch_size=batch_size)
+        warped_image, inv_transform = Image.warp_to_shape(
+            self, template_shape, transform, warp_landmarks=warp_landmarks,
+            order=order, mode=mode, cval=cval, batch_size=batch_size,
+            return_inverse_transform=True)
         # warp the mask separately and reattach.
         mask = self.mask.warp_to_shape(template_shape, transform,
                                        warp_landmarks=warp_landmarks,
@@ -922,9 +924,9 @@ class MaskedImage(Image):
         masked_warped_image = warped_image.as_masked(mask=mask, copy=False)
         if hasattr(warped_image, 'path'):
             masked_warped_image.path = warped_image.path
-        # optionally return the transform
-        if return_transform:
-            return masked_warped_image, transform
+        # optionally return the pseudoinverse transform
+        if return_inverse_transform:
+            return masked_warped_image, inv_transform
         else:
             return masked_warped_image
 

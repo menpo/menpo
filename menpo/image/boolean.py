@@ -379,7 +379,7 @@ class BooleanImage(Image):
     # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
                      mode='constant', cval=False, batch_size=None,
-                     return_transform=False):
+                     return_inverse_transform=False):
         r"""
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -412,25 +412,28 @@ class BooleanImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
-        return_transform : `bool`, optional
-            If ``True``, then the :map:`Transform` object is also returned.
+        return_inverse_transform : `bool`, optional
+            If ``True``, then the pseudoinverse of the :map:`Transform`
+            object is also returned.
 
         Returns
         -------
         warped_image : :map:`BooleanImage`
             A copy of this image, warped.
+        inverse_transform : :map:`Transform`
+            The pseudoinverse of the transform that was used. It only applies if
+            `return_inverse_transform` is ``True``.
         """
         # enforce the order as 0, as this is boolean data, then call super
-        return Image.warp_to_mask(self, template_mask, transform,
-                                  warp_landmarks=warp_landmarks,
-                                  order=0, mode=mode, cval=cval,
-                                  batch_size=batch_size,
-                                  return_transform=return_transform)
+        return Image.warp_to_mask(
+            self, template_mask, transform, warp_landmarks=warp_landmarks,
+            order=0, mode=mode, cval=cval, batch_size=batch_size,
+            return_inverse_transform=return_inverse_transform)
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
                       mode='constant', cval=False, order=None,
-                      batch_size=None, return_transform=False):
+                      batch_size=None, return_inverse_transform=False):
         """
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -464,23 +467,24 @@ class BooleanImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
-        return_transform : `bool`, optional
-            If ``True``, then the :map:`Transform` object is also returned.
+        return_inverse_transform : `bool`, optional
+            If ``True``, then the pseudoinverse of the :map:`Transform`
+            object is also returned.
 
         Returns
         -------
         warped_image : :map:`BooleanImage`
             A copy of this image, warped.
-        transform : :map:`Transform`
-            The transform that was used. It only applies if
-            `return_transform` is ``True``.
+        inverse_transform : :map:`Transform`
+            The pseudoinverse of the transform that was used. It only applies if
+            `return_inverse_transform` is ``True``.
         """
         # call the super variant and get ourselves an Image back
         # note that we force the use of order=0 for BooleanImages.
-        warped = Image.warp_to_shape(self, template_shape, transform,
-                                     warp_landmarks=warp_landmarks,
-                                     order=0, mode=mode, cval=cval,
-                                     batch_size=batch_size)
+        warped, inv_transform = Image.warp_to_shape(
+            self, template_shape, transform, warp_landmarks=warp_landmarks,
+            order=0, mode=mode, cval=cval, batch_size=batch_size,
+            return_inverse_transform=True)
         # unfortunately we can't escape copying here, let BooleanImage
         # convert us to np.bool
         boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
@@ -488,14 +492,14 @@ class BooleanImage(Image):
             boolean_image.landmarks = warped.landmarks
         if hasattr(warped, 'path'):
             boolean_image.path = warped.path
-        # optionally return the transform
-        if return_transform:
-            return boolean_image, transform
+        # optionally return the inverse transform
+        if return_inverse_transform:
+            return boolean_image, inv_transform
         else:
             return boolean_image
 
-    def _build_warped_to_mask(self, template_mask, sampled_pixel_values,
-                              **kwargs):
+    def _build_warp_to_mask(self, template_mask, sampled_pixel_values,
+                            **kwargs):
         r"""
         Builds the warped image from the template mask and sampled pixel values.
         """

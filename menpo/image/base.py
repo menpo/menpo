@@ -898,8 +898,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.feature import gradient as grad_feature
         return grad_feature(self)
 
-    def crop(self, min_indices, max_indices,
-             constrain_to_boundary=False):
+    def crop(self, min_indices, max_indices, constrain_to_boundary=False,
+             return_inverse_transform=False):
         r"""
         Return a cropped copy of this image using the given minimum and
         maximum indices. Landmarks are correctly adjusted so they maintain
@@ -915,11 +915,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True`` the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_inverse_transform : `bool`, optional
+            If ``True``, then the pseudoinverse of the :map:`Transform`
+            object that was used to perform the cropping is also returned.
 
         Returns
         -------
         cropped_image : `type(self)`
             A new instance of self, but cropped.
+        inverse_transform : :map:`Transform`
+            The pseudoinverse of the transform that was used. It only applies if
+            `return_inverse_transform` is ``True``.
 
         Raises
         ------
@@ -950,8 +956,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                      min_bounded, max_bounded)
 
         new_shape = max_bounded - min_bounded
-        return self.warp_to_shape(new_shape, Translation(min_bounded),
-                                  order=0, warp_landmarks=True)
+        return self.warp_to_shape(
+            new_shape, Translation(min_bounded), order=0, warp_landmarks=True,
+            return_inverse_transform=return_inverse_transform)
 
     def crop_to_pointcloud(self, pointcloud, boundary=0,
                            constrain_to_boundary=True):
@@ -1403,7 +1410,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
                      order=1, mode='constant', cval=0.0, batch_size=None,
-                     return_transform=False):
+                     return_inverse_transform=False):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -1449,16 +1456,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
-        return_transform : `bool`, optional
-            If ``True``, then the :map:`Transform` object is also returned.
+        return_inverse_transform : `bool`, optional
+            If ``True``, then the pseudoinverse of the :map:`Transform`
+            object is also returned.
 
         Returns
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
-        transform : :map:`Transform`
-            The transform that was used. It only applies if
-            `return_transform` is ``True``.
+        inverse_transform : :map:`Transform`
+            The pseudoinverse of the transform that was used. It only applies if
+            `return_inverse_transform` is ``True``.
         """
         if self.n_dims != transform.n_dims:
             raise ValueError(
@@ -1473,19 +1481,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_image = self._build_warped_to_mask(template_mask, sampled)
+        inv_transform = transform.pseudoinverse()
+        warped_image = self._build_warp_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+            inv_transform.apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
-        # optionally return the transform
-        if return_transform:
-            return warped_image, transform
+        # optionally return the pseudoinverse transform
+        if return_inverse_transform:
+            return warped_image, inv_transform
         else:
             return warped_image
 
-    def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
+    def _build_warp_to_mask(self, template_mask, sampled_pixel_values):
         r"""
         Builds the warped image from the template mask and sampled pixel values.
         Overridden for :map:`BooleanImage` as we can't use the usual
@@ -1544,7 +1553,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
                       order=1, mode='constant', cval=0.0, batch_size=None,
-                      return_transform=False):
+                      return_inverse_transform=False):
         """
         Return a copy of this image warped into a different reference space.
 
@@ -1587,16 +1596,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
-        return_transform : `bool`, optional
-            If ``True``, then the :map:`Transform` object is also returned.
+        return_inverse_transform : `bool`, optional
+            If ``True``, then the pseudoinverse of the :map:`Transform`
+            object is also returned.
 
         Returns
         -------
         warped_image : `type(self)`
             A copy of this image, warped.
-        transform : :map:`Transform`
-            The transform that was used. It only applies if
-            `return_transform` is ``True``.
+        inverse_transform : :map:`Transform`
+            The pseudoinverse of the transform that was used. It only applies if
+            `return_inverse_transform` is ``True``.
         """
         template_shape = np.array(template_shape, dtype=np.int)
         if (isinstance(transform, Affine) and order in range(4) and
@@ -1622,7 +1632,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                     int(min_[1]):int(max_[1])].copy()
                     return self._build_warp_to_shape(
                         warped_pixels, transform, warp_landmarks,
-                        return_transform)
+                        return_inverse_transform)
             # we couldn't do the crop, but skimage has an optimised Cython
             # interpolation for 2D affine warps - let's use that
             sampled = cython_interpolation(self.pixels, template_shape,
@@ -1641,26 +1651,27 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_pixels = sampled.reshape(
             (self.n_channels,) + tuple(template_shape))
 
-        return self._build_warp_to_shape(warped_pixels, transform,
-                                         warp_landmarks, return_transform)
+        return self._build_warp_to_shape(
+            warped_pixels, transform, warp_landmarks, return_inverse_transform)
 
     def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks,
-                             return_transform):
+                             return_inverse_transform):
         # factored out common logic from the different paths we can take in
         # warp_to_shape. Rebuilds an image post-warp, adjusting landmarks
         # as necessary.
         warped_image = Image(warped_pixels, copy=False)
 
         # warp landmarks if requested.
+        inv_transform = transform.pseudoinverse()
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+            inv_transform.apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
 
-        # optionally return the transform
-        if return_transform:
-            return warped_image, transform
+        # optionally return the inverse transform
+        if return_inverse_transform:
+            return warped_image, inv_transform
         else:
             return warped_image
 
