@@ -1271,7 +1271,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
-    from menpo.image import Image, convert_patches_list_to_single_array
+    from menpo.image.base import Image, _convert_patches_list_to_single_array
     print('Initializing...')
 
     # Make sure that patches is a list even with one patches member
@@ -1288,7 +1288,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
     # Make sure all patch-based images are in the single array format
     for i in range(len(patches)):
         if isinstance(patches[i], list):
-            patches[i] = convert_patches_list_to_single_array(
+            patches[i] = _convert_patches_list_to_single_array(
                 patches[i], patch_centers[i].n_points)
 
     # Get the number of patch_based images

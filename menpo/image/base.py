@@ -1289,10 +1289,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def set_patches(self, patches, patch_centers, offset=None,
                     offset_index=None):
         r"""
-        Set the values of a group of patches into the correct regions of the
-        image. Given an array of patches and a set of patch centers, the
-        patches' values are copied in the regions of the image that are centred
-        on the coordinates of the given centers.
+        Set the values of a group of patches into the correct regions of
+        **this** image. Given an array of patches and a set of patch centers,
+        the patches' values are copied in the regions of the image that are
+        centred on the coordinates of the given centers.
 
         The patches argument can have any of the two formats that are returned
         from the `extract_patches()` and `extract_patches_around_landmarks()`
@@ -1346,7 +1346,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         # if patches is a list, convert it to array
         if isinstance(patches, list):
-            patches = convert_patches_list_to_single_array(
+            patches = _convert_patches_list_to_single_array(
                 patches, patch_centers.n_points)
 
         # set patches
@@ -1357,9 +1357,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                      offset=None, offset_index=None):
         r"""
         Set the values of a group of patches around the landmarks existing in
-        the image. Given an array of patches, a group and a label, the patches'
-        values are copied in the regions of the image that are centred on the
-        coordinates of corresponding landmarks.
+        **this** image. Given an array of patches, a group and a label, the
+        patches' values are copied in the regions of the image that are
+        centred on the coordinates of corresponding landmarks.
 
         The patches argument can have any of the two formats that are returned
         from the `extract_patches()` and `extract_patches_around_landmarks()`
@@ -2337,7 +2337,7 @@ def round_image_shape(shape, round):
     return tuple(getattr(np, round)(shape).astype(np.int))
 
 
-def convert_patches_list_to_single_array(patches_list, n_center):
+def _convert_patches_list_to_single_array(patches_list, n_center):
     r"""
     Converts patches from a `list` of :map:`Image` objects to a single `ndarray`
     with shape ``(n_center, n_offset, self.n_channels, patch_shape)``.
@@ -2422,8 +2422,8 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     """
     # If patches is a list, convert it to array
     if isinstance(patches, list):
-        patches = convert_patches_list_to_single_array(patches,
-                                                       patch_centers.n_points)
+        patches = _convert_patches_list_to_single_array(patches,
+                                                        patch_centers.n_points)
 
     # Parse inputs
     if offset_index is None:

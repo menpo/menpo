@@ -3,7 +3,7 @@ from warnings import warn
 import warnings
 import numpy as np
 
-from .base import Image, convert_patches_list_to_single_array
+from .base import Image, _convert_patches_list_to_single_array
 from .patches import set_patches
 from menpo.base import MenpoDeprecationWarning
 
@@ -618,10 +618,10 @@ class BooleanImage(Image):
     def set_patches(self, patches, patch_centers, offset=None,
                     offset_index=None):
         r"""
-        Set the values of a group of patches into the correct regions of the
-        image. Given an array of patches and a set of patch centers, the
-        patches' values are copied in the regions of the image that are centred
-        on the coordinates of the given centers.
+        Set the values of a group of patches into the correct regions of
+        **this** image. Given an array of patches and a set of patch centers,
+        the patches' values are copied in the regions of the image that are
+        centred on the coordinates of the given centers.
 
         The patches argument can have any of the two formats that are returned
         from the `extract_patches()` and `extract_patches_around_landmarks()`
@@ -675,7 +675,7 @@ class BooleanImage(Image):
 
         # if patches is a list, convert it to array
         if isinstance(patches, list):
-            patches = convert_patches_list_to_single_array(
+            patches = _convert_patches_list_to_single_array(
                 patches, patch_centers.n_points)
 
         # convert pixels to uint8 so that they get recognized by cython

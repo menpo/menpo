@@ -747,13 +747,13 @@ def view_patches_nowidget(patches, patch_centers, patches_indices=None,
     viewer : `ImageViewer`
         The image viewing object.
     """
-    from menpo.image.base import (convert_patches_list_to_single_array,
+    from menpo.image.base import (_convert_patches_list_to_single_array,
                                   _create_patches_image)
 
     # If patches is a list, convert it to an array
     if isinstance(patches, list):
-        patches = convert_patches_list_to_single_array(patches,
-                                                       patch_centers.n_points)
+        patches = _convert_patches_list_to_single_array(patches,
+                                                        patch_centers.n_points)
 
     # Create patches image
     if render_patches:
