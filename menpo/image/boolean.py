@@ -3,7 +3,8 @@ from warnings import warn
 import warnings
 import numpy as np
 
-from .base import Image
+from .base import Image, _convert_patches_list_to_single_array
+from .patches import set_patches
 from menpo.base import MenpoDeprecationWarning
 
 
@@ -613,3 +614,74 @@ class BooleanImage(Image):
         slices = all_channels + [slice(bounds[0][k], bounds[1][k] + 1)
                                  for k in range(self.n_dims)]
         self.pixels[slices].flat = point_in_pointcloud(pointcloud, indices)
+
+    def set_patches(self, patches, patch_centers, offset=None,
+                    offset_index=None):
+        r"""
+        Set the values of a group of patches into the correct regions of
+        **this** image. Given an array of patches and a set of patch centers,
+        the patches' values are copied in the regions of the image that are
+        centred on the coordinates of the given centers.
+
+        The patches argument can have any of the two formats that are returned
+        from the `extract_patches()` and `extract_patches_around_landmarks()`
+        methods. Specifically it can be:
+
+            1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
+            2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patches : `ndarray` or `list`
+            The values of the patches. It can have any of the two formats that
+            are returned from the `extract_patches()` and
+            `extract_patches_around_landmarks()` methods. Specifically, it can
+            either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
+            `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
+            objects.
+        patch_centers : :map:`PointCloud`
+            The centers to set the patches around.
+        offset : `list` or `tuple` or ``(1, 2)`` `ndarray` or ``None``, optional
+            The offset to apply on the patch centers within the image.
+            If ``None``, then ``(0, 0)`` is used.
+        offset_index : `int` or ``None``, optional
+            The offset index within the provided `patches` argument, thus the
+            index of the second dimension from which to sample. If ``None``,
+            then ``0`` is used.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        ValueError
+            If offset does not have shape (1, 2)
+        """
+        # parse arguments
+        if self.n_dims != 2:
+            raise ValueError('Only two dimensional patch insertion is '
+                             'currently supported.')
+        if offset is None:
+            offset = np.zeros([1, 2], dtype=np.intp)
+        elif isinstance(offset, tuple) or isinstance(offset, list):
+            offset = np.asarray([offset])
+        offset = np.require(offset, dtype=np.intp)
+        if not offset.shape == (1, 2):
+            raise ValueError('The offset must be a tuple, a list or a '
+                             'numpy.array with shape (1, 2).')
+        if offset_index is None:
+            offset_index = 0
+
+        # if patches is a list, convert it to array
+        if isinstance(patches, list):
+            patches = _convert_patches_list_to_single_array(
+                patches, patch_centers.n_points)
+
+        # convert pixels to uint8 so that they get recognized by cython
+        tmp_pixels = self.pixels.astype(np.uint8)
+        # convert patches to uint8 as well and set them to pixels
+        set_patches(patches.astype(np.uint8), tmp_pixels, patch_centers.points,
+                    offset, offset_index)
+        # convert pixels back to bool
+        self.pixels = tmp_pixels.astype(np.bool)

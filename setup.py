@@ -22,7 +22,7 @@ else:
                       'menpo/feature/windowiterator.pyx',
                       'menpo/feature/gradient.pyx',
                       'menpo/external/skimage/_warps_cy.pyx',
-                      'menpo/image/extract_patches.pyx']
+                      'menpo/image/patches.pyx']
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]

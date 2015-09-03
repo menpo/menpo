@@ -47,7 +47,7 @@ def _map_styles_to_hex_colours(style, background=False):
         elif style == 'primary':
             return '#337ab7'
         else:
-            return ''
+            return None
     else:
         if style == 'info':
             return '#31708f'
@@ -60,7 +60,7 @@ def _map_styles_to_hex_colours(style, background=False):
         elif style == 'primary':
             return '#337ab7'
         else:
-            return ''
+            return None
 
 
 def _format_box(box, box_style, border_visible, border_color, border_style,
@@ -547,7 +547,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
     def __init__(self, index, render_function=None, update_function=None,
                  description='Index: ', minus_description='-',
                  plus_description='+', loop_enabled=True, text_editable=True):
-        self.title = ipywidgets.Latex(value=description, padding=6)
+        self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
         self.button_minus = ipywidgets.Button(description=minus_description,
                                               width='1cm')
         self.button_plus = ipywidgets.Button(description=plus_description,
@@ -5989,3 +5989,700 @@ class IGOOptionsWidget(ipywidgets.FlexBox):
 
         # add new function
         self.add_render_function(render_function)
+
+
+def _str_is_int(s):
+    r"""
+    Function that returns ``True`` if a given `str` is a positive or negative
+    integer.
+
+    Parameters
+    ----------
+    s : `str`
+        The command string.
+    """
+    return s.isdigit() or (s.startswith('-') and s[1:].isdigit())
+
+
+def _parse_command_with_comma(cmd, length):
+    r"""
+    Function that parses a command for slicing which contains at least one comma
+    (``,``). The function returns a `list` with the integer values that are
+    included in the command. It also ignores any redundant whitespaces that may
+    exist in the command. For example ::
+
+        _parse_command_with_comma([1, 2,-3 ], 10)
+
+    returns ::
+
+        '[1, 2, -3]'
+
+    Parameters
+    ----------
+    cmd : `str`
+        The command string.
+    length : `int`
+        The length of the variable that will get sliced.
+
+    Returns
+    -------
+    cmd_list : `list`
+        The list that can be used for slicing after interpreting and evaluating
+        the provided command.
+
+    Raises
+    ------
+    ValueError
+        Command cannot start or end with ','.
+    ValueError
+        Command cannot contain a pattern of the form ',,'.
+    ValueError
+        Command cannot contain numbers greater than {length}.
+    ValueError
+        Command must contain positive or negative integers.
+    """
+    if cmd.startswith(',') or cmd.endswith(','):
+        # if cmd starts or ends with ',', raise an error
+        raise ValueError("Command cannot start or end with ','.")
+    else:
+        # get the parts in between commas
+        tmp_cmd = cmd.split(',')
+        # for each part
+        final_cmd = []
+        for i in tmp_cmd:
+            if len(i) == 0:
+                # this means that there was the ',,' pattern
+                raise ValueError("Command cannot contain a pattern of the "
+                                 "form ',,'.")
+            elif _str_is_int(i):
+                # if it is a positive or negative integer convert it to int
+                n = int(i)
+                if n >= length:
+                    raise ValueError("Command cannot contain numbers greater "
+                                     "than {}.".format(length))
+                else:
+                    final_cmd.append(n)
+            else:
+                # else raise an error
+                raise ValueError("Command must contain positive or negative "
+                                 "integers.")
+        return final_cmd
+
+
+def _parse_command_with_one_colon(cmd, length):
+    r"""
+    Function that parses a command for slicing which contains exactly one colon
+    (``:``). The function returns a `list` with the integer indices, after
+    interpreting the slicing command. It also ignores any redundant whitespaces
+    that may exist in the command. For example ::
+
+        _parse_command_with_one_colon(:3, 10)
+
+    returns ::
+
+        '[0, 1, 2]'
+
+    Parameters
+    ----------
+    cmd : `str`
+        The command string.
+    length : `int`
+        The length of the variable that will get sliced.
+
+    Returns
+    -------
+    cmd_list : `list`
+        The list that can be used for slicing after interpreting and evaluating
+        the provided command.
+
+    Raises
+    ------
+    ValueError
+        Command cannot contain numbers greater than {length}.
+    ValueError
+        Command must contain positive or negative integers.
+    """
+    # this is necessary in order to return ranges with negative slices
+    tmp_list = range(length)
+
+    if cmd.startswith(':'):
+        # cmd has the form ":3" or ":"
+        if len(cmd) > 1:
+            # cmd has the form ":3"
+            i = cmd[1:]
+            if _str_is_int(i):
+                n = int(i)
+                if n > length:
+                    raise ValueError("Command cannot contain numbers greater "
+                                     "than {}.".format(length))
+                else:
+                    return tmp_list[:n]
+            else:
+                raise ValueError("Command must contain positive or negative "
+                                 "integers.")
+        else:
+            # cmd is ":"
+            return tmp_list
+    elif cmd.endswith(':'):
+        # cmd has the form "3:" or ":"
+        if len(cmd) > 1:
+            # cmd has the form "3:"
+            i = cmd[:-1]
+            if _str_is_int(i):
+                n = int(i)
+                if n >= length:
+                    raise ValueError("Command cannot contain numbers greater "
+                                     "than {}.".format(length))
+                else:
+                    return tmp_list[n:]
+            else:
+                raise ValueError("Command must contain positive or negative "
+                                 "integers.")
+        else:
+            # cmd is ":"
+            return tmp_list
+    else:
+        # cmd has the form "3:10"
+        # get the parts before and after colon
+        tmp_cmd = cmd.split(':')
+        start = tmp_cmd[0]
+        end = tmp_cmd[1]
+
+        if _str_is_int(start) and _str_is_int(end):
+            start = int(start)
+            end = int(end)
+            if start >= length or end > length:
+                raise ValueError("Command cannot contain numbers greater "
+                                 "than {}.".format(length))
+            else:
+                return tmp_list[start:end]
+        else:
+            raise ValueError("Command must contain positive or negative "
+                             "integers.")
+
+
+def _parse_command_with_two_colon(cmd, length):
+    r"""
+    Function that parses a command for slicing which contains exactly two colons
+    (``:``). The function returns a `list` with the integer indices, after
+    interpreting the slicing command. It also ignores any redundant whitespaces
+    that may exist in the command. For example ::
+
+        _parse_command_with_two_colon(::3, 10)
+
+    returns ::
+
+        '[0, 3, 6, 9]'
+
+    Parameters
+    ----------
+    cmd : `str`
+        The command string.
+    length : `int`
+        The length of the variable that will get sliced.
+
+    Returns
+    -------
+    cmd_list : `list`
+        The list that can be used for slicing after interpreting and evaluating
+        the provided command.
+
+    Raises
+    ------
+    ValueError
+        Command cannot contain numbers greater than {length}.
+    ValueError
+        Command must contain positive or negative integers.
+    """
+    # this is necessary in order to return ranges with negative slices
+    tmp_list = range(length)
+
+    if cmd.startswith('::'):
+        # cmd has the form "::3" or "::"
+        if len(cmd) > 2:
+            # cmd has the form "::3"
+            i = cmd[2:]
+            if _str_is_int(i):
+                n = int(i)
+                return tmp_list[::n]
+            else:
+                raise ValueError("Command must contain positive or negative "
+                                 "integers.")
+        else:
+            # cmd is "::"
+            return tmp_list
+    elif cmd.endswith('::'):
+        # cmd has the form "3::" or "::"
+        if len(cmd) > 2:
+            # cmd has the form "3::"
+            i = cmd[:-2]
+            if _str_is_int(i):
+                n = int(i)
+                if n >= length:
+                    raise ValueError("Command cannot contain numbers greater "
+                                     "than {}.".format(length))
+                else:
+                    return tmp_list[n::]
+            else:
+                raise ValueError("Command must contain positive or negative "
+                                 "integers.")
+        else:
+            # cmd is "::"
+            return tmp_list
+    else:
+        # cmd has the form "1:8:2"
+        # get the parts in between colons
+        tmp_cmd = cmd.split(':')
+
+        start = tmp_cmd[0]
+        end = tmp_cmd[1]
+        step = tmp_cmd[2]
+
+        if _str_is_int(start) and _str_is_int(end) and _str_is_int(step):
+            start = int(start)
+            end = int(end)
+            step = int(step)
+            if start >= length or end > length:
+                raise ValueError("Command cannot contain numbers greater "
+                                 "than {}.".format(length))
+            else:
+                return tmp_list[start:end:step]
+        else:
+            raise ValueError("Command must contain positive or negative "
+                             "integers.")
+
+
+def _parse_command(cmd, length):
+    r"""
+    Function that parses a command for slicing. It is able to recognize any
+    slicing pattern of Python and detect pattern errors. Some characteristic
+    examples are ":3", ":-2", "3:", "::3", "3::", "1:8", "1:8:2", "1, 5, -3",
+    "range(10)", "range("1, 10, 2)" etc. The function returns a `list` with the
+    integer indices, after interpreting the slicing command. It also ignores any
+    redundant whitespaces that may exist in the command.
+
+    Parameters
+    ----------
+    cmd : `str`
+        The command string.
+    length : `int`
+        The length of the variable that will get sliced.
+
+    Returns
+    -------
+    cmd_list : `list`
+        The list that can be used for slicing after interpreting and evaluating
+        the provided command.
+
+    Raises
+    ------
+    ValueError
+        Command cannot contain numbers greater than {length}.
+    ValueError
+        Command must contain positive or negative integers.
+    """
+    # remove all redundant spaces from cmd
+    cmd = cmd.replace(" ", "")
+
+    # remove all brackets from cmd
+    cmd = cmd.replace("[", "")
+    cmd = cmd.replace("]", "")
+
+    # cmd has the form of "range(1, 10, 2)" or "range(10)"
+    if cmd.startswith("range("):
+        if cmd.endswith(")"):
+            cmd = cmd[6:-1]
+            if cmd.count(",") > 0:
+                cmd = cmd.replace(",", ":")
+            else:
+                cmd = "0:" + cmd
+        else:
+            raise ValueError("Wrong command.")
+
+    # empty command
+    if cmd == "":
+        return []
+
+    # get number of ':' and number of ','
+    n_colon = cmd.count(":")
+    n_comma = cmd.count(",")
+
+    if n_comma > 0 and n_colon == 0:
+        # parse cmd given that it contains only ','
+        return _parse_command_with_comma(cmd, length)
+    elif n_comma == 0 and n_colon > 0:
+        # parse cmd given that it contains only ':'
+        if n_colon == 1:
+            return _parse_command_with_one_colon(cmd, length)
+        elif n_colon == 2:
+            return _parse_command_with_two_colon(cmd, length)
+        else:
+            raise ValueError("Command contains more than two ':'.")
+    elif n_comma == 0 and n_colon == 0:
+        # cmd has the form of "10"
+        if _str_is_int(cmd):
+            n = int(cmd)
+            if n >= length:
+                raise ValueError("Command cannot contain numbers greater "
+                                 "than {}.".format(length))
+            else:
+                return [n]
+        else:
+            raise ValueError("Wrong command.")
+    else:
+        raise ValueError("Wrong command.")
+
+
+def list_has_constant_step(l):
+    r"""
+    Function that checks if a list of integers has a constant step between them
+    and returns the step.
+
+    Parameters
+    ----------
+    l : `list`
+        The list to check.
+
+    Returns
+    -------
+    has_constant_step : `bool`
+        ``True`` if the `list` elements have a constant step between them.
+    step : `int`
+        The step value. ``None`` if `has_constant_step` is ``False``.
+    """
+    if len(l) <= 1:
+        return False, None
+    step = l[1] - l[0]
+    s = step
+    i = 2
+    while s == step and i < len(l):
+        s = l[i] - l[i - 1]
+        i += 1
+    if i == len(l) and s == step:
+        return True, step
+    else:
+        return False, None
+
+
+class SlicingCommandWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting a slicing command. Specifically, it consists
+    of:
+
+        1) Text [`self.cmd_text`]: the command text
+        2) Latex [`self.example`]: explains what kind of commands are accepted
+        3) Latex [`self.error_msg`]: error message text
+        4) IntSlider [`self.single_slider`]: slider for selecting single indices
+        5) IntRangeSlider [`self.multiple_slider`]: slider for index range
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and function of the widget, please refer to the `set_widget_state()`
+    and `replace_render_function()` methods.
+
+    Parameters
+    ----------
+    slice_cmd : `dict`
+        The initial slicing options. Example ::
+
+            slice_cmd = {'indices': [0, 1, 2],
+                         'command': ':3',
+                         'length': 68}
+
+    description : `str`, optional
+        The description of the command text box.
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    """
+    def __init__(self, slice_cmd, description='Command:', render_function=None):
+        # Create command text widget
+        slice_cmd['indices'] = _parse_command(slice_cmd['command'],
+                                              slice_cmd['length'])
+        self.cmd_text = ipywidgets.Text(value=slice_cmd['command'],
+                                        description=description)
+
+        # Assign output
+        self.selected_values = slice_cmd
+
+        # Create the rest of the widgets
+        self.example = ipywidgets.Latex(
+            value="e.g. ':3', '-3:', '1:{}:2', '3::', '0, {}', '7', "
+                  "'range({})' etc.".format(slice_cmd['length'],
+                                            slice_cmd['length'],
+                                            slice_cmd['length']),
+            font_size=11, font_style='italic')
+        self.error_msg = ipywidgets.Latex(value='', font_style='italic',
+                                          color='#FF0000')
+        self.single_slider = ipywidgets.IntSlider(
+            min=0, max=slice_cmd['length']-1, value=0, width='6.8cm',
+            visible=self._single_slider_visible())
+        self.multiple_slider = ipywidgets.IntRangeSlider(
+            min=0, max=slice_cmd['length']-1,
+            value=(slice_cmd['indices'][0], slice_cmd['indices'][-1]),
+            width='6.8cm', visible=self._multiple_slider_visible()[0])
+        super(SlicingCommandWidget, self).__init__(
+            children=[self.cmd_text, self.example, self.error_msg,
+                      self.single_slider, self.multiple_slider])
+        self.orientation = 'vertical'
+        self.align = 'end'
+
+        # Set functionality
+        def save_cmd(name):
+            self.error_msg.value = ''
+            try:
+                self.selected_values['command'] = str(self.cmd_text.value)
+                self.selected_values['indices'] = _parse_command(
+                    str(self.cmd_text.value), self.selected_values['length'])
+            except ValueError as e:
+                if e.message == "Command contains more than two ':'.":
+                    self.error_msg.value = "Error! More than 2 ':'"
+                elif e.message == "Wrong command.":
+                    self.error_msg.value = "Error! Wrong command"
+                elif e.message == "Command must contain positive or " \
+                                  "negative integers.":
+                    self.error_msg.value = "Error! Only positive or negative " \
+                                           "integers"
+                elif e.message == "Command cannot start or end with ','.":
+                    self.error_msg.value = "Error! ',' at start or end"
+                elif e.message == "Command cannot contain numbers greater " \
+                                  "than {}.".format(
+                        self.selected_values['length']):
+                    self.error_msg.value = "Error! Number > {}".format(
+                        self.selected_values['length'])
+                else:
+                    self.error_latex.value = e.message
+
+            # set single slider visibility and value
+            self.single_slider.visible = self._single_slider_visible()
+            if self._single_slider_visible():
+                self.single_slider.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+                self.single_slider.value = self.selected_values['indices'][0]
+                self.single_slider.on_trait_change(self._render_function,
+                                                   'value')
+
+            # set multiple slider visibility and value
+            vis, step = self._multiple_slider_visible()
+            self.multiple_slider.visible = vis
+            if vis:
+                self.multiple_slider.step = step
+                self.multiple_slider.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+                self.multiple_slider.value = (
+                    self.selected_values['indices'][0],
+                    self.selected_values['indices'][-1])
+                self.multiple_slider.on_trait_change(self._render_function,
+                                                     'value')
+        self.cmd_text.on_submit(save_cmd)
+
+        def single_slider_value(name, value):
+            self.selected_values['indices'] = [value]
+            self.cmd_text.value = str(value)
+            self.selected_values['command'] = str(value)
+        self.single_slider.on_trait_change(single_slider_value, 'value')
+
+        def multiple_slider_value(name, value):
+            self.selected_values['indices'] = range(value[0], value[1]+1,
+                                                    self.multiple_slider.step)
+            self.cmd_text.value = "{}:{}:{}".format(value[0], value[1]+1,
+                                                    self.multiple_slider.step)
+            self.selected_values['command'] = str(self.cmd_text.value)
+        self.multiple_slider.on_trait_change(multiple_slider_value, 'value')
+
+        # Set render function
+        self._render_function = None
+        self._render_function_2 = None
+        self.add_render_function(render_function)
+
+    def _single_slider_visible(self):
+        return len(self.selected_values['indices']) == 1
+
+    def _multiple_slider_visible(self):
+        return list_has_constant_step(self.selected_values['indices'])
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            def render_function_2(name):
+                self._render_function(name, '')
+
+            self._render_function_2 = render_function_2
+
+            self.cmd_text.on_submit(self._render_function_2)
+            self.single_slider.on_trait_change(self._render_function, 'value')
+            self.multiple_slider.on_trait_change(self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.cmd_text.on_submit(self._render_function_2, remove=True)
+        self.single_slider.on_trait_change(self._render_function, 'value',
+                                           remove=True)
+        self.multiple_slider.on_trait_change(self._render_function, 'value',
+                                             remove=True)
+        self._render_function = None
+        self._render_function_2 = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def set_widget_state(self, slice_cmd, allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+
+        Parameters
+        ----------
+        slice_cmd : `dict`
+            The initial slicing options. Example ::
+
+                slice_cmd = {'indices': [10],
+                             'command': '10',
+                             'length': 30}
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Assign new options dict to selected_values
+        slice_cmd['indices'] = _parse_command(slice_cmd['command'],
+                                              slice_cmd['length'])
+        self.selected_values = slice_cmd
+
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # update single slider
+        self.single_slider.visible = self._single_slider_visible()
+        self.single_slider.max = self.selected_values['length'] - 1
+        if self._single_slider_visible():
+            self.single_slider.value = self.selected_values['indices'][0]
+
+        # update multiple slider
+        vis, step = self._multiple_slider_visible()
+        self.multiple_slider.visible = vis
+        self.multiple_slider.max = slice_cmd['length'] - 1
+        if vis:
+            self.multiple_slider.step = step
+            self.multiple_slider.value = (slice_cmd['indices'][0],
+                                          slice_cmd['indices'][-1])
+
+        # update command text
+        self.cmd_text.value = self.selected_values['command']
+
+        # re-assign render callback
+        self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', 0)
+
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, text_box_style=None, text_box_background_color=None,
+              text_box_width=None, font_family='', font_size=None,
+              font_style='', font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        text_box_style : `str` or ``None`` (see below), optional
+            Command text box style options ::
+
+                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                or
+                ``None``
+
+        text_box_background_color : `str`, optional
+            The background color of the command text box.
+        text_box_width : `str`, optional
+            The width of the command text box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
+                 ``'monospace'``, ``'helvetica'``}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
+                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
+                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
+                 ``'extra bold'``, ``'black'``}
+
+        """
+        _format_box(self, box_style, border_visible, border_color, border_style,
+                    border_width, border_radius, padding, margin)
+        _format_font(self, font_family, font_size, font_style, font_weight)
+        _format_font(self.cmd_text, font_family, font_size, font_style,
+                     font_weight)
+        self.cmd_text.color = _map_styles_to_hex_colours(text_box_style)
+        self.cmd_text.background_color = _map_styles_to_hex_colours(
+            text_box_background_color, background=True)
+        self.cmd_text.border_color = _map_styles_to_hex_colours(text_box_style)
+        self.cmd_text.font_family = 'monospace'
+        self.cmd_text.border_width = 1
+        self.cmd_text.width = text_box_width
+        self.single_slider.slider_color = _map_styles_to_hex_colours(
+            box_style, background=False)
+        self.single_slider.background_color = _map_styles_to_hex_colours(
+            box_style, background=False)
+        self.multiple_slider.slider_color = _map_styles_to_hex_colours(
+            box_style, background=False)
+        self.multiple_slider.background_color = _map_styles_to_hex_colours(
+            box_style, background=False)
