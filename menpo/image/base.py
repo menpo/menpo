@@ -1402,7 +1402,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                 offset=offset, offset_index=offset_index)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     order=1, mode='constant', cval=0.0, batch_size=None):
+                     order=1, mode='constant', cval=0.0, batch_size=None,
+                     return_transform=False):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -1448,11 +1449,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         if self.n_dims != transform.n_dims:
             raise ValueError(
@@ -1473,7 +1479,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
-        return warped_image
+        # optionally return the transform
+        if return_transform:
+            return warped_image, transform
+        else:
+            return warped_image
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
         r"""
@@ -1533,7 +1543,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                    order=order,  mode=mode, cval=cval)
 
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      order=1, mode='constant', cval=0.0, batch_size=None):
+                      order=1, mode='constant', cval=0.0, batch_size=None,
+                      return_transform=False):
         """
         Return a copy of this image warped into a different reference space.
 
@@ -1576,11 +1587,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : `type(self)`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         template_shape = np.array(template_shape, dtype=np.int)
         if (isinstance(transform, Affine) and order in range(4) and
@@ -1604,9 +1620,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                     warped_pixels = self.pixels[:,
                                     int(min_[0]):int(max_[0]),
                                     int(min_[1]):int(max_[1])].copy()
-                    return self._build_warp_to_shape(warped_pixels,
-                                                     transform,
-                                                     warp_landmarks)
+                    return self._build_warp_to_shape(
+                        warped_pixels, transform, warp_landmarks,
+                        return_transform)
             # we couldn't do the crop, but skimage has an optimised Cython
             # interpolation for 2D affine warps - let's use that
             sampled = cython_interpolation(self.pixels, template_shape,
@@ -1626,9 +1642,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             (self.n_channels,) + tuple(template_shape))
 
         return self._build_warp_to_shape(warped_pixels, transform,
-                                         warp_landmarks)
+                                         warp_landmarks, return_transform)
 
-    def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks):
+    def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks,
+                             return_transform):
         # factored out common logic from the different paths we can take in
         # warp_to_shape. Rebuilds an image post-warp, adjusting landmarks
         # as necessary.
@@ -1640,7 +1657,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
-        return warped_image
+
+        # optionally return the transform
+        if return_transform:
+            return warped_image, transform
+        else:
+            return warped_image
 
     def rescale(self, scale, round='ceil', order=1):
         r"""
