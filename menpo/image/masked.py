@@ -700,25 +700,31 @@ class MaskedImage(Image):
             axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
             axes_y_limits, figure_size)
 
-    def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True):
+    def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True,
+                          return_inverse_transform=False):
         r"""
         Crop this image to be bounded just the `True` values of it's mask.
 
         Parameters
         ----------
-
-        boundary: `int`, optional
+        boundary : `int`, optional
             An extra padding to be added all around the true mask region.
         constrain_to_boundary : `bool`, optional
             If ``True`` the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image. Note that
             is only possible if ``boundary != 0``.
+        return_inverse_transform : `bool`, optional
+            If ``True``, then the pseudoinverse of the :map:`Transform`
+            object that was used to perform the cropping is also returned.
 
         Returns
         -------
         cropped_image : ``type(self)``
             A copy of this image, cropped to the true mask.
+        inverse_transform : :map:`Transform`
+            The pseudoinverse of the transform that was used. It only applies if
+            `return_inverse_transform` is ``True``.
 
         Raises
         ------
@@ -730,7 +736,8 @@ class MaskedImage(Image):
             boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
         return self.crop(min_indices, max_indices,
-                         constrain_to_boundary=constrain_to_boundary)
+                         constrain_to_boundary=constrain_to_boundary,
+                         return_inverse_transform=return_inverse_transform)
 
     def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
         r"""
@@ -1073,7 +1080,7 @@ class MaskedImage(Image):
         # create a patches array of the correct size, full of True values
         patches = np.ones((pc.n_points, 1, 1, int(patch_shape[0]),
                            int(patch_shape[1])), dtype=np.bool)
-        # set Truepatches around pointcloud centers
+        # set True patches around pointcloud centers
         self.mask.set_patches(patches, pc)
 
     def set_boundary_pixels(self, value=0.0, n_pixels=1):

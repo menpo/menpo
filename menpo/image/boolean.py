@@ -541,7 +541,7 @@ class BooleanImage(Image):
             points are checked at once.
         """
         self.constrain_to_pointcloud(self.landmarks[group][label],
-                                     trilist=trilist)
+                                     trilist=trilist, batch_size=batch_size)
 
     def constrain_to_pointcloud(self, pointcloud, batch_size=None,
                                 point_in_pointcloud='pwa', trilist=None,):
