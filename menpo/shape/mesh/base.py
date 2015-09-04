@@ -527,8 +527,7 @@ class TriMesh(PointCloud):
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
         r"""
-        Visualization of the TriMesh using the :map:`visualize_pointclouds`
-        widget.
+        Visualization of the TriMesh using an interactive widget.
 
         Parameters
         ----------
@@ -541,6 +540,10 @@ class TriMesh(PointCloud):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_pointclouds
+        try:
+            from menpowidgets import visualize_pointclouds
+        except:
+            from menpo.visualize.base import MenpowidgetsError
+            raise MenpowidgetsError()
         visualize_pointclouds(self, figure_size=figure_size, style=style,
                               browser_style=browser_style)

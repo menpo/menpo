@@ -816,3 +816,14 @@ def view_patches_nowidget(patches, patch_centers, patches_indices=None,
             interpolation=interpolation)
 
     return patch_view
+
+# Error in case menpowidgets cannot be imported
+class MenpowidgetsError(Exception):
+    r"""
+    Exception that is thrown when an attempt is made to import a widget, but
+    menpowidgets is not installed.
+    """
+    def __init__(self):
+        super(MenpowidgetsError, self).__init__()
+        self.message = "You need to install 'menpowidgets' package in order " \
+                       "to use widgets."

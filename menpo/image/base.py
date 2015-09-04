@@ -9,9 +9,9 @@ from menpo.compatibility import basestring
 from menpo.base import Vectorizable, MenpoDeprecationWarning
 from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
-from menpo.transform import (Translation, NonUniformScale, Rotation,
+from menpo.transform import (Translation, NonUniformScale,
                              AlignmentUniformScale, Affine, scale_about_centre,
-                             rotate_ccw_about_centre, Similarity, Rotation)
+                             rotate_ccw_about_centre, Rotation)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
 from .patches import extract_patches, set_patches
@@ -605,8 +605,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
         r"""
-        Visualizes the image object using the :map:`visualize_images` widget.
-        Currently only supports the rendering of 2D images.
+        Visualizes the image object using an interactive widget. Currently
+        only supports the rendering of 2D images.
 
         Parameters
         ----------
@@ -619,7 +619,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_images
+        try:
+            from menpowidgets import visualize_images
+        except:
+            from menpo.visualize.base import MenpowidgetsError
+            raise MenpowidgetsError()
         visualize_images(self, figure_size=figure_size, style=style,
                          browser_style=browser_style)
 

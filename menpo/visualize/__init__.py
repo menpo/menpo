@@ -5,12 +5,4 @@ from .base import (
     view_patches_nowidget)
 from .textutils import (print_progress, progress_bar_str, print_dynamic,
                         bytes_str)
-# If IPython is not installed, then access to the widgets should be blocked.
-try:
-    from .widgets import (visualize_pointclouds, visualize_landmarkgroups,
-                          visualize_landmarks, visualize_images,
-                          visualize_patches, plot_graph,
-                          save_matplotlib_figure, features_selection)
-except ImportError:
-    pass
 from .viewmatplotlib import MatplotlibRenderer

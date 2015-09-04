@@ -291,8 +291,7 @@ class LandmarkManager(MutableMapping, Transformable):
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
         r"""
-        Visualizes the landmark manager object using the
-        :map:`visualize_landmarks` widget.
+        Visualizes the landmark manager object using an interactive widget.
 
         Parameters
         ----------
@@ -305,7 +304,11 @@ class LandmarkManager(MutableMapping, Transformable):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_landmarks
+        try:
+            from menpowidgets import visualize_landmarks
+        except:
+            from menpo.visualize.base import MenpowidgetsError
+            raise MenpowidgetsError()
         visualize_landmarks(self, figure_size=figure_size, style=style,
                             browser_style=browser_style)
 
@@ -928,8 +931,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
         r"""
-        Visualizes the landmark group object using the
-        :map:`visualize_landmarkgroups` widget.
+        Visualizes the landmark group object using an interactive widget.
 
         Parameters
         ----------
@@ -942,7 +944,11 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_landmarkgroups
+        try:
+            from menpowidgets import visualize_landmarkgroups
+        except:
+            from menpo.visualize.base import MenpowidgetsError
+            raise MenpowidgetsError()
         visualize_landmarkgroups(self, figure_size=figure_size, style=style,
                                  browser_style=browser_style)
 
