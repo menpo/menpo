@@ -28,12 +28,11 @@ def test_rescale_to_pointcloud():
     assert_allclose(img_rescaled.shape, (250, 250))
 
 
-def test_rescale_to_diagonal_return_inverse_transform():
+def test_rescale_to_diagonal_return_transform():
     img = Image.init_blank((100, 100), n_channels=1)
     img.landmarks['test'] = bounding_box([40, 40], [80, 80])
-    cropped_img, inv_transform = img.rescale_to_diagonal(
-        100, return_inverse_transform=True)
-    img_back = cropped_img.warp_to_shape(img.shape, inv_transform)
+    cropped_img, transform = img.rescale_to_diagonal(100, return_transform=True)
+    img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
     assert_allclose(img_back.landmarks['test'].lms.points,
@@ -72,12 +71,12 @@ def test_crop_to_landmarks_proportion():
     assert_allclose(img_cropped.shape, (11, 11))
 
 
-def test_crop_to_landmarks_return_inverse_transform():
+def test_crop_to_landmarks_return_transform():
     img = Image.init_blank((100, 100), n_channels=1)
     img.landmarks['test'] = bounding_box([40, 40], [80, 80])
-    cropped_img, inv_transform = img.crop(
-        np.array([20, 30]), np.array([90, 95]), return_inverse_transform=True)
-    img_back = cropped_img.warp_to_shape(img.shape, inv_transform)
+    cropped_img, transform = img.crop(np.array([20, 30]), np.array([90, 95]),
+                                      return_transform=True)
+    img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
     assert_allclose(img_back.landmarks['test'].lms.points,

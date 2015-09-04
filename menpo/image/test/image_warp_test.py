@@ -131,11 +131,11 @@ def test_rescale_boolean():
     mask.resize((10, 10))
 
 
-def test_rescale_return_inverse_transform():
+def test_rescale_return_transform():
     img = Image.init_blank((100, 100), n_channels=1)
     img.landmarks['test'] = bounding_box([40, 40], [80, 80])
-    cropped_img, inv_transform = img.rescale(1.5, return_inverse_transform=True)
-    img_back = cropped_img.warp_to_shape(img.shape, inv_transform)
+    cropped_img, transform = img.rescale(1.5, return_transform=True)
+    img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
     assert_allclose(img_back.landmarks['test'].lms.points,
@@ -253,11 +253,11 @@ def test_mirror_masked_image():
     assert(type(mirrored_img) == MaskedImage)
 
 
-def test_mirror_return_inverse_transform():
+def test_mirror_return_transform():
     img = Image.init_blank((100, 100), n_channels=1)
     img.landmarks['test'] = bounding_box([40, 40], [80, 80])
-    cropped_img, inv_transform = img.mirror(return_inverse_transform=True)
-    img_back = cropped_img.warp_to_shape(img.shape, inv_transform)
+    cropped_img, transform = img.mirror(return_transform=True)
+    img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
     assert_allclose(img_back.landmarks['test'].lms.points,
@@ -309,12 +309,12 @@ def test_rotate_image_45():
                                   [2.828, 2.121], [2.121, 2.828]]), decimal=3)
 
 
-def test_rotate_return_inverse_transform():
+def test_rotate_return_transform():
     img = Image.init_blank((100, 100), n_channels=1)
     img.landmarks['test'] = bounding_box([40, 40], [80, 80])
-    cropped_img, inv_transform = img.rotate_ccw_about_centre(
-        60, return_inverse_transform=True)
-    img_back = cropped_img.warp_to_shape(img.shape, inv_transform)
+    cropped_img, transform = img.rotate_ccw_about_centre(60,
+                                                         return_transform=True)
+    img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
     assert_allclose(img_back.landmarks['test'].lms.points,
