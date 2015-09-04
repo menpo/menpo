@@ -1,7 +1,7 @@
-.. _menpo-visualize-view_patches_nowidget:
+.. _menpo-visualize-view_patches:
 
 .. currentmodule:: menpo.visualize
 
-view_patches_nowidget
+view_patches
 =====================
-.. autofunction:: view_patches_nowidget
+.. autofunction:: view_patches
