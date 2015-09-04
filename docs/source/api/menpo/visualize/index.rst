@@ -19,21 +19,13 @@ Abstract Classes
   MatplotlibRenderer
 
 
-Widgets
+Patches
 -------
 
 .. toctree::
   :maxdepth: 1
 
-  visualize_images
-  visualize_patches
   view_patches
-  visualize_landmarks
-  visualize_landmarkgroups
-  visualize_pointclouds
-  features_selection
-  save_matplotlib_figure
-  plot_graph
 
 
 Print Utilities
@@ -46,21 +38,3 @@ Print Utilities
   print_dynamic
   progress_bar_str
   bytes_str
-
-
-Create Custom Widgets
----------------------
-
-Collection of widgets that can be used as the main ingredients for creating
-other custom widgets.
-
-.. toctree::
-  :maxdepth: 1
-
-  AnimationOptionsWidget
-  ChannelOptionsWidget
-  LandmarkOptionsWidget
-  RendererOptionsWidget
-  GraphOptionsWidget
-  SaveFigureOptionsWidget
-  TextPrintWidget

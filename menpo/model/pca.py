@@ -678,7 +678,7 @@ class PCAModel(MeanInstanceLinearModel):
 
     def plot_eigenvalues_widget(self, figure_size=(10, 6), style='coloured'):
         r"""
-        Plot of the eigenvalues using :map:`plot_graph` widget.
+        Plot of the eigenvalues using an interactive widget.
 
         Parameters
         ----------
@@ -688,7 +688,11 @@ class PCAModel(MeanInstanceLinearModel):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import plot_graph
+        try:
+            from menpowidgets import plot_graph
+        except:
+            from menpo.visualize.base import MenpowidgetsError
+            raise MenpowidgetsError()
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues], legend_entries=['Eigenvalues'],
                    title='Eigenvalues', x_label='Component Number',
@@ -826,8 +830,8 @@ class PCAModel(MeanInstanceLinearModel):
     def plot_eigenvalues_ratio_widget(self, figure_size=(10, 6),
                                       style='coloured'):
         r"""
-        Plot of the variance ratio captured by the eigenvalues using
-        :map:`plot_graph` widget.
+        Plot of the variance ratio captured by the eigenvalues using an
+        interactive widget.
 
         Parameters
         ----------
@@ -837,7 +841,11 @@ class PCAModel(MeanInstanceLinearModel):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import plot_graph
+        try:
+            from menpowidgets import plot_graph
+        except:
+            from menpo.visualize.base import MenpowidgetsError
+            raise MenpowidgetsError()
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues_ratio()],
                    legend_entries=['Eigenvalues ratio'],
@@ -982,7 +990,7 @@ class PCAModel(MeanInstanceLinearModel):
                                                  style='coloured'):
         r"""
         Plot of the cumulative variance ratio captured by the eigenvalues using
-        :map:`plot_graph` widget.
+        an interactive widget.
 
         Parameters
         ----------
@@ -992,7 +1000,11 @@ class PCAModel(MeanInstanceLinearModel):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import plot_graph
+        try:
+            from menpowidgets import plot_graph
+        except:
+            from menpo.visualize.base import MenpowidgetsError
+            raise MenpowidgetsError()
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues_cumulative_ratio()],
                    legend_entries=['Eigenvalues cumulative ratio'],

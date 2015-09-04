@@ -3,5 +3,5 @@
 .. currentmodule:: menpo.visualize
 
 view_patches
-=====================
+============
 .. autofunction:: view_patches
