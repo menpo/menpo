@@ -700,25 +700,31 @@ class MaskedImage(Image):
             axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
             axes_y_limits, figure_size)
 
-    def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True):
+    def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True,
+                          return_transform=False):
         r"""
         Crop this image to be bounded just the `True` values of it's mask.
 
         Parameters
         ----------
-
-        boundary: `int`, optional
+        boundary : `int`, optional
             An extra padding to be added all around the true mask region.
         constrain_to_boundary : `bool`, optional
             If ``True`` the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image. Note that
             is only possible if ``boundary != 0``.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
         cropped_image : ``type(self)``
             A copy of this image, cropped to the true mask.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -730,7 +736,8 @@ class MaskedImage(Image):
             boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
         return self.crop(min_indices, max_indices,
-                         constrain_to_boundary=constrain_to_boundary)
+                         constrain_to_boundary=constrain_to_boundary,
+                         return_transform=return_transform)
 
     def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
         r"""
@@ -782,7 +789,8 @@ class MaskedImage(Image):
 
     # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0., batch_size=None):
+                     order=1, mode='constant', cval=0., batch_size=None,
+                     return_transform=False):
         r"""
         Warps this image into a different reference space.
 
@@ -824,11 +832,17 @@ class MaskedImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : ``type(self)``
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         # call the super variant and get ourselves a MaskedImage back
         # with a blank mask
@@ -838,11 +852,16 @@ class MaskedImage(Image):
                                           batch_size=batch_size)
         # Set the template mask as our mask
         warped_image.mask = template_mask
-        return warped_image
+        # optionally return the transform
+        if return_transform:
+            return warped_image, transform
+        else:
+            return warped_image
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0., batch_size=None):
+                      order=1, mode='constant', cval=0., batch_size=None,
+                      return_transform=False):
         """
         Return a copy of this :map:`MaskedImage` warped into a different
         reference space.
@@ -886,11 +905,17 @@ class MaskedImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         # call the super variant and get ourselves an Image back
         warped_image = Image.warp_to_shape(self, template_shape, transform,
@@ -906,7 +931,11 @@ class MaskedImage(Image):
         masked_warped_image = warped_image.as_masked(mask=mask, copy=False)
         if hasattr(warped_image, 'path'):
             masked_warped_image.path = warped_image.path
-        return masked_warped_image
+        # optionally return the transform
+        if return_transform:
+            return masked_warped_image, transform
+        else:
+            return masked_warped_image
 
     def normalize_std_inplace(self, mode='all', limit_to_mask=True):
         r"""
@@ -1051,7 +1080,7 @@ class MaskedImage(Image):
         # create a patches array of the correct size, full of True values
         patches = np.ones((pc.n_points, 1, 1, int(patch_shape[0]),
                            int(patch_shape[1])), dtype=np.bool)
-        # set Truepatches around pointcloud centers
+        # set True patches around pointcloud centers
         self.mask.set_patches(patches, pc)
 
     def set_boundary_pixels(self, value=0.0, n_pixels=1):

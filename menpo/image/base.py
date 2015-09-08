@@ -898,8 +898,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.feature import gradient as grad_feature
         return grad_feature(self)
 
-    def crop(self, min_indices, max_indices,
-             constrain_to_boundary=False):
+    def crop(self, min_indices, max_indices, constrain_to_boundary=False,
+             return_transform=False):
         r"""
         Return a cropped copy of this image using the given minimum and
         maximum indices. Landmarks are correctly adjusted so they maintain
@@ -915,11 +915,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True`` the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
         cropped_image : `type(self)`
             A new instance of self, but cropped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -950,11 +956,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                      min_bounded, max_bounded)
 
         new_shape = max_bounded - min_bounded
-        return self.warp_to_shape(new_shape, Translation(min_bounded),
-                                  order=0, warp_landmarks=True)
+        return self.warp_to_shape(new_shape, Translation(min_bounded), order=0,
+                                  warp_landmarks=True,
+                                  return_transform=return_transform)
 
     def crop_to_pointcloud(self, pointcloud, boundary=0,
-                           constrain_to_boundary=True):
+                           constrain_to_boundary=True,
+                           return_transform=False):
         r"""
         Return a copy of this image cropped so that it is bounded around a
         pointcloud with an optional ``n_pixel`` boundary.
@@ -969,11 +977,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True`` the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
         image : :map:`Image`
             A copy of this image cropped to the bounds of the pointcloud.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -983,10 +997,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         min_indices, max_indices = pointcloud.bounds(boundary=boundary)
         return self.crop(min_indices, max_indices,
-                         constrain_to_boundary=constrain_to_boundary)
+                         constrain_to_boundary=constrain_to_boundary,
+                         return_transform=return_transform)
 
     def crop_to_landmarks(self, group=None, label=None, boundary=0,
-                          constrain_to_boundary=True):
+                          constrain_to_boundary=True,
+                          return_transform=False):
         r"""
         Return a copy of this image cropped so that it is bounded around a set
         of landmarks with an optional ``n_pixel`` boundary
@@ -1005,11 +1021,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True`` the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
         image : :map:`Image`
             A copy of this image cropped to its landmarks.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -1019,11 +1041,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         pc = self.landmarks[group][label]
         return self.crop_to_pointcloud(
-            pc, boundary=boundary, constrain_to_boundary=constrain_to_boundary)
+            pc, boundary=boundary, constrain_to_boundary=constrain_to_boundary,
+            return_transform=return_transform)
 
     def crop_to_pointcloud_proportion(self, pointcloud, boundary_proportion,
                                       minimum=True,
-                                      constrain_to_boundary=True):
+                                      constrain_to_boundary=True,
+                                      return_transform=False):
         r"""
         Return a copy of this image cropped so that it is bounded around a
         pointcloud with an optional ``n_pixel`` boundary.
@@ -1045,12 +1069,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True``, the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
         image : :map:`Image`
             A copy of this image cropped to the border proportional to
             the pointcloud spread or range.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -1064,11 +1094,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             boundary = boundary_proportion * np.max(pointcloud.range())
         return self.crop_to_pointcloud(
             pointcloud, boundary=boundary,
-            constrain_to_boundary=constrain_to_boundary)
+            constrain_to_boundary=constrain_to_boundary,
+            return_transform=return_transform)
 
     def crop_to_landmarks_proportion(self, boundary_proportion,
                                      group=None, label=None, minimum=True,
-                                     constrain_to_boundary=True):
+                                     constrain_to_boundary=True,
+                                     return_transform=False):
         r"""
         Crop this image to be bounded around a set of landmarks with a
         border proportional to the landmark spread or range.
@@ -1094,12 +1126,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True``, the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
         image : :map:`Image`
             This image, cropped to its landmarks with a border proportional to
             the landmark spread or range.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -1110,7 +1148,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         pc = self.landmarks[group][label]
         return self.crop_to_pointcloud_proportion(
             pc, boundary_proportion, minimum=minimum,
-            constrain_to_boundary=constrain_to_boundary)
+            constrain_to_boundary=constrain_to_boundary,
+            return_transform=return_transform)
 
     def _propagate_crop_to_inplace(self, cropped):
         # helper method that sets self's state to the result of a crop call.
@@ -1402,7 +1441,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                 offset=offset, offset_index=offset_index)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     order=1, mode='constant', cval=0.0, batch_size=None):
+                     order=1, mode='constant', cval=0.0, batch_size=None,
+                     return_transform=False):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -1448,11 +1488,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         if self.n_dims != transform.n_dims:
             raise ValueError(
@@ -1467,15 +1513,19 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_image = self._build_warped_to_mask(template_mask, sampled)
+        warped_image = self._build_warp_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
-        return warped_image
+        # optionally return the transform
+        if return_transform:
+            return warped_image, transform
+        else:
+            return warped_image
 
-    def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
+    def _build_warp_to_mask(self, template_mask, sampled_pixel_values):
         r"""
         Builds the warped image from the template mask and sampled pixel values.
         Overridden for :map:`BooleanImage` as we can't use the usual
@@ -1533,7 +1583,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                    order=order,  mode=mode, cval=cval)
 
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      order=1, mode='constant', cval=0.0, batch_size=None):
+                      order=1, mode='constant', cval=0.0, batch_size=None,
+                      return_transform=False):
         """
         Return a copy of this image warped into a different reference space.
 
@@ -1576,11 +1627,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : `type(self)`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         template_shape = np.array(template_shape, dtype=np.int)
         if (isinstance(transform, Affine) and order in range(4) and
@@ -1604,9 +1661,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                     warped_pixels = self.pixels[:,
                                     int(min_[0]):int(max_[0]),
                                     int(min_[1]):int(max_[1])].copy()
-                    return self._build_warp_to_shape(warped_pixels,
-                                                     transform,
-                                                     warp_landmarks)
+                    return self._build_warp_to_shape(warped_pixels, transform,
+                                                     warp_landmarks,
+                                                     return_transform)
             # we couldn't do the crop, but skimage has an optimised Cython
             # interpolation for 2D affine warps - let's use that
             sampled = cython_interpolation(self.pixels, template_shape,
@@ -1626,9 +1683,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             (self.n_channels,) + tuple(template_shape))
 
         return self._build_warp_to_shape(warped_pixels, transform,
-                                         warp_landmarks)
+                                         warp_landmarks, return_transform)
 
-    def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks):
+    def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks,
+                             return_transform):
         # factored out common logic from the different paths we can take in
         # warp_to_shape. Rebuilds an image post-warp, adjusting landmarks
         # as necessary.
@@ -1640,9 +1698,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
-        return warped_image
 
-    def rescale(self, scale, round='ceil', order=1):
+        # optionally return the transform
+        if return_transform:
+            return warped_image, transform
+        else:
+            return warped_image
+
+    def rescale(self, scale, round='ceil', order=1,
+                return_transform=False):
         r"""
         Return a copy of this image, rescaled by a given factor.
         Landmarks are rescaled appropriately.
@@ -1669,10 +1733,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rescale is also returned.
+
         Returns
         -------
         rescaled_image : ``type(self)``
             A copy of this image, rescaled.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -1717,9 +1788,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # for rescaling we enforce that mode is nearest to avoid num. errors
         return self.warp_to_shape(template_shape, inverse_transform,
                                   warp_landmarks=True, order=order,
-                                  mode='nearest')
+                                  mode='nearest',
+                                  return_transform=return_transform)
 
-    def rescale_to_diagonal(self, diagonal, round='ceil'):
+    def rescale_to_diagonal(self, diagonal, round='ceil',
+                            return_transform=False):
         r"""
         Return a copy of this image, rescaled so that the it's diagonal is a
         new size.
@@ -1730,13 +1803,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The diagonal size of the new image.
         round: ``{ceil, floor, round}``, optional
             Rounding function to be applied to floating point shapes.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rescale is also returned.
 
         Returns
         -------
         rescaled_image : type(self)
             A copy of this image, rescaled.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
-        return self.rescale(diagonal / self.diagonal(), round=round)
+        return self.rescale(diagonal / self.diagonal(), round=round,
+                            return_transform=return_transform)
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
                                    label=None, round='ceil', order=1):
@@ -1750,8 +1830,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return self.rescale_to_pointcloud(reference_shape, group=group,
                                           label=label, round=round, order=order)
 
-    def rescale_to_pointcloud(self, pointcloud, group=None,
-                              label=None, round='ceil', order=1):
+    def rescale_to_pointcloud(self, pointcloud, group=None, label=None,
+                              round='ceil', order=1,
+                              return_transform=False):
         r"""
         Return a copy of this image, rescaled so that the scale of a
         particular group of landmarks matches the scale of the passed
@@ -1784,17 +1865,26 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rescale is also returned.
+
         Returns
         -------
         rescaled_image : ``type(self)``
             A copy of this image, rescaled.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         pc = self.landmarks[group][label]
         scale = AlignmentUniformScale(pc, pointcloud).as_vector().copy()
-        return self.rescale(scale, round=round, order=order)
+        return self.rescale(scale, round=round, order=order,
+                            return_transform=return_transform)
 
     def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
-                                            label=None, round='ceil', order=1):
+                                            label=None, round='ceil', order=1,
+                                            return_transform=False):
         r"""
         Return a copy of this image, rescaled so that the ``diagonal_range`` of
         the bounding box containing its landmarks matches the specified
@@ -1827,16 +1917,24 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= =====================
 
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rescale is also returned.
+
         Returns
         -------
         rescaled_image : ``type(self)``
             A copy of this image, rescaled.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         x, y = self.landmarks[group][label].range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
-        return self.rescale(scale, round=round, order=order)
+        return self.rescale(scale, round=round, order=order,
+                            return_transform=return_transform)
 
-    def resize(self, shape, order=1):
+    def resize(self, shape, order=1, return_transform=False):
         r"""
         Return a copy of this image, resized to a particular shape.
         All image information (landmarks, and mask in the case of
@@ -1860,10 +1958,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= =====================
 
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the resize is also returned.
+
         Returns
         -------
         resized_image : ``type(self)``
             A copy of this image, resized.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -1882,14 +1987,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # errors. For example, if we want (250, 250), we need to ensure that
         # we get (250, 250) even if the number we obtain is 250 to some
         # floating point inaccuracy.
-        return self.rescale(scales, round='round', order=order)
+        return self.rescale(scales, round='round', order=order,
+                            return_transform=return_transform)
 
-    def zoom(self, scale, cval=0.0):
+    def zoom(self, scale, cval=0.0, return_transform=False):
         r"""
-        Zoom this image about the centre point. ``scale`` values greater
-        than 1.0 denote zooming **in** to the image and values less than
-        1.0 denote zooming **out** of the image. The size of the image will not
-        change, if you wish to scale an image, please see :meth:`rescale`.
+        Return a copy of this image, zoomed about the centre point. ``scale``
+        values greater than 1.0 denote zooming **in** to the image and values
+        less than 1.0 denote zooming **out** of the image. The size of the
+        image will not change, if you wish to scale an image, please see
+        :meth:`rescale`.
 
         Parameters
         ----------
@@ -1900,14 +2007,27 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             by the value of ``cval``.
         cval : ``float``, optional
             The value to be set outside the rotated image boundaries.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the zooming is also returned.
+
+        Returns
+        -------
+        zoomed_image : ``type(self)``
+            A copy of this image, zoomed.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         t = scale_about_centre(self, 1.0 / scale)
-        return self.warp_to_shape(self.shape, t, cval=cval)
+        return self.warp_to_shape(self.shape, t, cval=cval,
+                                  return_transform=return_transform)
 
     def rotate_ccw_about_centre(self, theta, degrees=True, retain_shape=False,
-                                cval=0.0, round='round', order=1):
+                                cval=0.0, round='round', order=1,
+                                return_transform=False):
         r"""
-        Return a rotation of this image counter-clockwise about its centre.
+        Return a copy of this image, rotated counter-clockwise about its centre.
 
         Note that the `retain_shape` argument defines the shape of the rotated
         image. If ``retain_shape=True``, then the shape of the rotated image
@@ -1948,10 +2068,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rotation is also returned.
+
         Returns
         -------
         rotated_image : ``type(self)``
             The rotated image.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -1984,22 +2111,29 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             shape = round_image_shape(rotated_bbox.range() + 1, round)
 
         # Warp image
-        return self.warp_to_shape(shape, trans.pseudoinverse(), order=order,
-                                  warp_landmarks=True, cval=cval)
+        return self.warp_to_shape(
+            shape, trans.pseudoinverse(), order=order, warp_landmarks=True,
+            cval=cval, return_transform=return_transform)
 
-    def mirror(self, axis=1):
+    def mirror(self, axis=1, return_transform=False):
         r"""
-        Return the mirrored/flipped version of this image about a certain axis.
+        Return a copy of this image, mirrored/flipped about a certain axis.
 
         Parameters
         ----------
         axis : `int`, optional
             The axis about which to mirror the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the mirroring is also returned.
 
         Returns
         -------
         mirrored_image : ``type(self)``
             The mirrored image.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -2029,7 +2163,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         # Warp image
         return self.warp_to_shape(self.shape, trans.pseudoinverse(),
-                                  warp_landmarks=True)
+                                  warp_landmarks=True,
+                                  return_transform=return_transform)
 
     def pyramid(self, n_levels=3, downscale=2):
         r"""
