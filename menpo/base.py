@@ -331,7 +331,10 @@ class MenpoMissingDependencyError(Exception):
                        "to use this functionality. We recommend that you " \
                        "use conda to achieve this - try the command " \
                        "'conda install -c menpo {pname}' " \
-                       "in your terminal".format(pname=package_name)
+                       "in your terminal.".format(pname=package_name)
+
+    def __str__(self):
+        return self.message
 
 def name_of_callable(c):
     r"""
