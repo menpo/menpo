@@ -542,8 +542,8 @@ class TriMesh(PointCloud):
         """
         try:
             from menpowidgets import visualize_pointclouds
-        except:
+            visualize_pointclouds(self, figure_size=figure_size, style=style,
+                                  browser_style=browser_style)
+        except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
-        visualize_pointclouds(self, figure_size=figure_size, style=style,
-                              browser_style=browser_style)

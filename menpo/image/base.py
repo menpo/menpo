@@ -621,11 +621,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         try:
             from menpowidgets import visualize_images
-        except:
+            visualize_images(self, figure_size=figure_size, style=style,
+                             browser_style=browser_style)
+        except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
-        visualize_images(self, figure_size=figure_size, style=style,
-                         browser_style=browser_style)
 
     def _view_landmarks_2d(self, channels=None, group=None,
                            with_labels=None, without_labels=None,

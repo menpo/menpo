@@ -306,11 +306,11 @@ class LandmarkManager(MutableMapping, Transformable):
         """
         try:
             from menpowidgets import visualize_landmarks
-        except:
+            visualize_landmarks(self, figure_size=figure_size, style=style,
+                                browser_style=browser_style)
+        except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
-        visualize_landmarks(self, figure_size=figure_size, style=style,
-                            browser_style=browser_style)
 
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
@@ -946,11 +946,11 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         """
         try:
             from menpowidgets import visualize_landmarkgroups
-        except:
+            visualize_landmarkgroups(self, figure_size=figure_size, style=style,
+                                     browser_style=browser_style)
+        except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
-        visualize_landmarkgroups(self, figure_size=figure_size, style=style,
-                                 browser_style=browser_style)
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(
