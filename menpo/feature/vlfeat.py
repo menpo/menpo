@@ -1,6 +1,11 @@
 import numpy as np
-from cyvlfeat.sift.dsift import dsift as cyvlfeat_dsift
+from menpo.base import MenpoMissingDependencyError
 from .base import winitfeature
+
+try:
+    from cyvlfeat.sift.dsift import dsift as cyvlfeat_dsift
+except ImportError:
+    raise MenpoMissingDependencyError('cyvlfeat')
 
 
 @winitfeature

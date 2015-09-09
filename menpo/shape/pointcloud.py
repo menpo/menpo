@@ -657,8 +657,8 @@ class PointCloud(Shape):
             return PointCloudViewer3d(figure_id, new_figure,
                                       self.points).render()
         except ImportError:
-            from menpo.visualize import Menpo3dErrorMessage
-            raise ImportError(Menpo3dErrorMessage)
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError()
 
     def _view_landmarks_3d(self, figure_id=None, new_figure=False,
                            group=None):
@@ -687,8 +687,8 @@ class PointCloud(Shape):
             return LandmarkViewer3d(self_renderer.figure, False,  self,
                                     self.landmarks[group]).render()
         except ImportError:
-            from menpo.visualize import Menpo3dErrorMessage
-            raise ImportError(Menpo3dErrorMessage)
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError()
 
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
@@ -709,8 +709,8 @@ class PointCloud(Shape):
         try:
             from menpowidgets import visualize_pointclouds
         except:
-            from menpo.visualize.base import MenpowidgetsError
-            raise MenpowidgetsError()
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
         visualize_pointclouds(self, figure_size=figure_size, style=style,
                               browser_style=browser_style)
 

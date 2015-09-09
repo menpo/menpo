@@ -320,6 +320,19 @@ class MenpoDeprecationWarning(Warning):
     pass
 
 
+class MenpoMissingDependencyError(Exception):
+    r"""
+    An exception that a dependency required for the requested functionality
+    was not detected.
+    """
+    def __init__(self, package_name):
+        super(MenpoMissingDependencyError, self).__init__()
+        self.message = "You need to install the '{pname}' package in order " \
+                       "to use this functionality. We recommend that you " \
+                       "use conda to achieve this - try the command " \
+                       "'conda install -c menpo {pname}' " \
+                       "in your terminal".format(pname=package_name)
+
 def name_of_callable(c):
     r"""
     Return the name of a callable (function or callable class) as a string.

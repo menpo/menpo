@@ -622,8 +622,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         try:
             from menpowidgets import visualize_images
         except:
-            from menpo.visualize.base import MenpowidgetsError
-            raise MenpowidgetsError()
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
         visualize_images(self, figure_size=figure_size, style=style,
                          browser_style=browser_style)
 

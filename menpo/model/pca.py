@@ -691,8 +691,8 @@ class PCAModel(MeanInstanceLinearModel):
         try:
             from menpowidgets import plot_graph
         except:
-            from menpo.visualize.base import MenpowidgetsError
-            raise MenpowidgetsError()
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues], legend_entries=['Eigenvalues'],
                    title='Eigenvalues', x_label='Component Number',
@@ -844,8 +844,8 @@ class PCAModel(MeanInstanceLinearModel):
         try:
             from menpowidgets import plot_graph
         except:
-            from menpo.visualize.base import MenpowidgetsError
-            raise MenpowidgetsError()
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues_ratio()],
                    legend_entries=['Eigenvalues ratio'],
@@ -1003,8 +1003,8 @@ class PCAModel(MeanInstanceLinearModel):
         try:
             from menpowidgets import plot_graph
         except:
-            from menpo.visualize.base import MenpowidgetsError
-            raise MenpowidgetsError()
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues_cumulative_ratio()],
                    legend_entries=['Eigenvalues cumulative ratio'],

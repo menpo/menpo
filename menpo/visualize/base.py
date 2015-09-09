@@ -1,20 +1,25 @@
 from collections import Iterable
 
 import numpy as np
+from menpo.base import MenpoMissingDependencyError
 
-Menpo3dErrorMessage = ("In order to keep menpo's dependencies simple, menpo "
-                       "does not contain 3D importing and visualization code. "
-                       "Please install menpo3d to view 3D meshes.")
 
-class MenpowidgetsError(Exception):
+class Menpo3dMissingError(MenpoMissingDependencyError):
     r"""
-    Exception that is thrown when an attempt is made to import a widget, but
-    menpowidgets is not installed.
+    Exception that is thrown when an attempt is made to import a 3D
+    visualisation method, but 'menpo3d' is not installed.
     """
     def __init__(self):
-        super(MenpowidgetsError, self).__init__()
-        self.message = "You need to install 'menpowidgets' package in order " \
-                       "to use widgets."
+        super(Menpo3dMissingError, self).__init__('menpo3d')
+
+
+class MenpowidgetsMissingError(MenpoMissingDependencyError):
+    r"""
+    Exception that is thrown when an attempt is made to import a widget, but
+    'menpowidgets' is not installed.
+    """
+    def __init__(self):
+        super(MenpowidgetsMissingError, self).__init__('menpowidgets')
 
 
 class Renderer(object):
