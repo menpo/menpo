@@ -3,7 +3,7 @@ import menpo
 from nose.tools import raises
 from numpy.testing import assert_allclose, assert_almost_equal
 from menpo.image import BooleanImage, Image, MaskedImage, OutOfMaskSampleError
-from menpo.shape import PointCloud
+from menpo.shape import PointCloud, bounding_box
 from menpo.transform import Affine
 import menpo.io as mio
 
@@ -131,6 +131,17 @@ def test_rescale_boolean():
     mask.resize((10, 10))
 
 
+def test_rescale_return_transform():
+    img = Image.init_blank((100, 100), n_channels=1)
+    img.landmarks['test'] = bounding_box([40, 40], [80, 80])
+    cropped_img, transform = img.rescale(1.5, return_transform=True)
+    img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
+    assert_allclose(img_back.shape, img.shape)
+    assert_allclose(img_back.pixels, img.pixels)
+    assert_allclose(img_back.landmarks['test'].lms.points,
+                    img.landmarks['test'].lms.points)
+
+
 def test_sample_image():
     im = Image.init_blank((100, 100), fill=2)
     p = PointCloud(np.array([[0, 0], [1, 0]]))
@@ -242,6 +253,17 @@ def test_mirror_masked_image():
     assert(type(mirrored_img) == MaskedImage)
 
 
+def test_mirror_return_transform():
+    img = Image.init_blank((100, 100), n_channels=1)
+    img.landmarks['test'] = bounding_box([40, 40], [80, 80])
+    cropped_img, transform = img.mirror(return_transform=True)
+    img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
+    assert_allclose(img_back.shape, img.shape)
+    assert_allclose(img_back.pixels, img.pixels)
+    assert_allclose(img_back.landmarks['test'].lms.points,
+                    img.landmarks['test'].lms.points)
+
+
 def test_rotate_image_90_180():
     image = Image(np.array([[1., 2., 3., 4.],
                             [5., 6., 7., 8.],
@@ -285,6 +307,18 @@ def test_rotate_image_45():
     assert_almost_equal(rotated_img.landmarks['temp'].lms.points,
                         np.array([[2.121, 1.414], [1.414, 2.121],
                                   [2.828, 2.121], [2.121, 2.828]]), decimal=3)
+
+
+def test_rotate_return_transform():
+    img = Image.init_blank((100, 100), n_channels=1)
+    img.landmarks['test'] = bounding_box([40, 40], [80, 80])
+    cropped_img, transform = img.rotate_ccw_about_centre(60,
+                                                         return_transform=True)
+    img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
+    assert_allclose(img_back.shape, img.shape)
+    assert_allclose(img_back.pixels, img.pixels)
+    assert_allclose(img_back.landmarks['test'].lms.points,
+                    img.landmarks['test'].lms.points)
 
 
 def test_maskedimage_retain_shape():
