@@ -291,8 +291,7 @@ class LandmarkManager(MutableMapping, Transformable):
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
         r"""
-        Visualizes the landmark manager object using the
-        :map:`visualize_landmarks` widget.
+        Visualizes the landmark manager object using an interactive widget.
 
         Parameters
         ----------
@@ -305,9 +304,13 @@ class LandmarkManager(MutableMapping, Transformable):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_landmarks
-        visualize_landmarks(self, figure_size=figure_size, style=style,
-                            browser_style=browser_style)
+        try:
+            from menpowidgets import visualize_landmarks
+            visualize_landmarks(self, figure_size=figure_size, style=style,
+                                browser_style=browser_style)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
 
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
@@ -922,14 +925,13 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             return LandmarkViewer3d(figure_id, new_figure,
                                     self._pointcloud, self).render(**kwargs)
         except ImportError:
-            from menpo.visualize import Menpo3dErrorMessage
-            raise ImportError(Menpo3dErrorMessage)
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError()
 
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
         r"""
-        Visualizes the landmark group object using the
-        :map:`visualize_landmarkgroups` widget.
+        Visualizes the landmark group object using an interactive widget.
 
         Parameters
         ----------
@@ -942,9 +944,13 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_landmarkgroups
-        visualize_landmarkgroups(self, figure_size=figure_size, style=style,
-                                 browser_style=browser_style)
+        try:
+            from menpowidgets import visualize_landmarkgroups
+            visualize_landmarkgroups(self, figure_size=figure_size, style=style,
+                                     browser_style=browser_style)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(

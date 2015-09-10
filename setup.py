@@ -27,17 +27,14 @@ else:
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
     install_requires = ['numpy>=1.9.1,<1.10',
-                        'scipy>=0.15,<0.16',
+                        'scipy>=0.16,<0.17',
                         'matplotlib>=1.4,<1.5',
-                        'pillow>=2.8,<2.9',
-                        'Cython>=0.22,<0.23']
+                        'pillow>=2.9,<2.10',
+                        'menpowidgets>=0.1,<0.2',
+                        'Cython>=0.23,<0.24']
 
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')
-
-# Explicitly specify the image/landmark data in the data folder
-builtin_data = filter(lambda x: os.path.isfile(x), glob.glob('menpo/data/*'))
-builtin_data = [os.path.relpath(x, start='menpo') for x in builtin_data]
 
 setup(name='menpo',
       version=versioneer.get_version(),
@@ -49,12 +46,11 @@ setup(name='menpo',
       ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=install_requires,
-      package_data={'menpo': builtin_data + [
-                             'data/logos/*',
-                             'feature/cpp/*.cpp',
-                             'feature/cpp/*.h',
-                             'transform/piecewiseaffine/fastpwa/*.c',
-                             'transform/piecewiseaffine/fastpwa/*.h'],
+      package_data={'menpo': ['data/*',
+                              'feature/cpp/*.cpp',
+                              'feature/cpp/*.h',
+                              'transform/piecewiseaffine/fastpwa/*.c',
+                              'transform/piecewiseaffine/fastpwa/*.h'],
                     '': ['*.pxd', '*.pyx']},
       tests_require=['nose', 'mock==1.0.1']
 )

@@ -657,8 +657,8 @@ class PointCloud(Shape):
             return PointCloudViewer3d(figure_id, new_figure,
                                       self.points).render()
         except ImportError:
-            from menpo.visualize import Menpo3dErrorMessage
-            raise ImportError(Menpo3dErrorMessage)
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError()
 
     def _view_landmarks_3d(self, figure_id=None, new_figure=False,
                            group=None):
@@ -687,14 +687,13 @@ class PointCloud(Shape):
             return LandmarkViewer3d(self_renderer.figure, False,  self,
                                     self.landmarks[group]).render()
         except ImportError:
-            from menpo.visualize import Menpo3dErrorMessage
-            raise ImportError(Menpo3dErrorMessage)
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError()
 
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
         r"""
-        Visualization of the PointCloud using the :map:`visualize_pointclouds`
-        widget.
+        Visualization of the PointCloud using an interactive widget.
 
         Parameters
         ----------
@@ -707,9 +706,14 @@ class PointCloud(Shape):
             If ``'coloured'``, then the style of the widget will be coloured. If
             ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_pointclouds
-        visualize_pointclouds(self, figure_size=figure_size, style=style,
-                              browser_style=browser_style)
+        try:
+            from menpowidgets import visualize_pointclouds
+
+            visualize_pointclouds(self, figure_size=figure_size, style=style,
+                                  browser_style=browser_style)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
 
     def _transform_self_inplace(self, transform):
         self.points = transform(self.points)

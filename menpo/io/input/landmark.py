@@ -252,9 +252,9 @@ class LM2Importer(LandmarkImporter):
         # The next set of lines defines the labels
         labels_str = landmark_text.pop(0)
         if not labels_str == 'Labels:':
-            raise ImportError("LM2 landmarks are incorrectly formatted. "
-                              "Expected a list of labels beginning with "
-                              "'Labels:' but found '{0}'".format(labels_str))
+            raise ValueError("LM2 landmarks are incorrectly formatted. "
+                             "Expected a list of labels beginning with "
+                             "'Labels:' but found '{0}'".format(labels_str))
         for i in range(num_points):
             # Lowercase, remove spaces and replace with underscores
             l = landmark_text.pop(0)
@@ -264,10 +264,10 @@ class LM2Importer(LandmarkImporter):
         # The next set of lines defines the coordinates
         coords_str = landmark_text.pop(0)
         if not coords_str == '2D Image coordinates:':
-            raise ImportError("LM2 landmarks are incorrectly formatted. "
-                              "Expected a list of coordinates beginning with "
-                              "'2D Image coordinates:' "
-                              "but found '{0}'".format(coords_str))
+            raise ValueError("LM2 landmarks are incorrectly formatted. "
+                             "Expected a list of coordinates beginning with "
+                             "'2D Image coordinates:' "
+                             "but found '{0}'".format(coords_str))
         xs = []
         ys = []
         for i in range(num_points):

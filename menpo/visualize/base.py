@@ -1,10 +1,25 @@
 from collections import Iterable
 
 import numpy as np
+from menpo.base import MenpoMissingDependencyError
 
-Menpo3dErrorMessage = ("In order to keep menpo's dependencies simple, menpo "
-                       "does not contain 3D importing and visualization code. "
-                       "Please install menpo3d to view 3D meshes.")
+
+class Menpo3dMissingError(MenpoMissingDependencyError):
+    r"""
+    Exception that is thrown when an attempt is made to import a 3D
+    visualisation method, but 'menpo3d' is not installed.
+    """
+    def __init__(self):
+        super(Menpo3dMissingError, self).__init__('menpo3d')
+
+
+class MenpowidgetsMissingError(MenpoMissingDependencyError):
+    r"""
+    Exception that is thrown when an attempt is made to import a widget, but
+    'menpowidgets' is not installed.
+    """
+    def __init__(self):
+        super(MenpowidgetsMissingError, self).__init__('menpowidgets')
 
 
 class Renderer(object):
@@ -549,29 +564,24 @@ def render_rectangles_around_patches(centers, patch_shape, axes=None,
                                  linestyle=line_style_dict[line_style]))
 
 
-def view_patches_nowidget(patches, patch_centers, patches_indices=None,
-                          offset_index=None, figure_id=None,
-                          new_figure=False, background='white',
-                          render_patches=True, channels=None,
-                          interpolation='none', cmap_name=None, alpha=1.,
-                          render_patches_bboxes=True, bboxes_line_colour='r',
-                          bboxes_line_style='-', bboxes_line_width=1,
-                          render_centers=True, render_lines=True,
-                          line_colour=None, line_style='-', line_width=1,
-                          render_markers=True, marker_style='o',
-                          marker_size=20, marker_face_colour=None,
-                          marker_edge_colour=None, marker_edge_width=1.,
-                          render_numbering=False,
-                          numbers_horizontal_align='center',
-                          numbers_vertical_align='bottom',
-                          numbers_font_name='sans-serif',
-                          numbers_font_size=10, numbers_font_style='normal',
-                          numbers_font_weight='normal',
-                          numbers_font_colour='k', render_axes=False,
-                          axes_font_name='sans-serif', axes_font_size=10,
-                          axes_font_style='normal',
-                          axes_font_weight='normal', axes_x_limits=None,
-                          axes_y_limits=None, figure_size=(10, 8)):
+def view_patches(patches, patch_centers, patches_indices=None,
+                 offset_index=None, figure_id=None, new_figure=False,
+                 background='white', render_patches=True, channels=None,
+                 interpolation='none', cmap_name=None, alpha=1.,
+                 render_patches_bboxes=True, bboxes_line_colour='r',
+                 bboxes_line_style='-', bboxes_line_width=1,
+                 render_centers=True, render_lines=True, line_colour=None,
+                 line_style='-', line_width=1, render_markers=True,
+                 marker_style='o', marker_size=20, marker_face_colour=None,
+                 marker_edge_colour=None, marker_edge_width=1.,
+                 render_numbering=False, numbers_horizontal_align='center',
+                 numbers_vertical_align='bottom',
+                 numbers_font_name='sans-serif', numbers_font_size=10,
+                 numbers_font_style='normal', numbers_font_weight='normal',
+                 numbers_font_colour='k', render_axes=False,
+                 axes_font_name='sans-serif', axes_font_size=10,
+                 axes_font_style='normal', axes_font_weight='normal',
+                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
     r"""
     Method that renders the provided `patches` on a black canvas. The user can
     choose whether to render the patch centers (`render_centers`) as well as

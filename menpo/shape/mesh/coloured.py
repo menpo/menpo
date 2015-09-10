@@ -106,8 +106,8 @@ class ColouredTriMesh(TriMesh):
                     figure_id, new_figure, self.points,
                     self.trilist, self.colours).render(**kwargs)
             except ImportError:
-                from menpo.visualize import Menpo3dErrorMessage
-                raise ImportError(Menpo3dErrorMessage)
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError()
         else:
             return super(ColouredTriMesh, self).view(figure_id=figure_id,
                                                      new_figure=new_figure,
