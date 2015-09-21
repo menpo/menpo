@@ -336,7 +336,8 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):
-        r = optimal_rotation_matrix(self.source, self.target, self.allow_mirror)
+        r = optimal_rotation_matrix(self.source, self.target,
+                                    allow_mirror=self.allow_mirror)
         Rotation.set_rotation_matrix(self, r, skip_checks=True)
 
     def as_non_alignment(self):
