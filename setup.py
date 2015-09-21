@@ -2,6 +2,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 import versioneer
+import glob
 
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
@@ -21,31 +22,24 @@ else:
                       'menpo/feature/windowiterator.pyx',
                       'menpo/feature/gradient.pyx',
                       'menpo/external/skimage/_warps_cy.pyx',
-                      'menpo/image/extract_patches.pyx']
+                      'menpo/image/patches.pyx']
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
     install_requires = ['numpy>=1.9.1,<1.10',
-                        'scipy>=0.15,<0.16',
+                        'scipy>=0.16,<0.17',
                         'matplotlib>=1.4,<1.5',
-                        'pillow==2.7.0',
-                        'Cython>=0.21,<0.22']
+                        'pillow>=2.9,<2.10',
+                        'menpowidgets>=0.1,<0.2',
+                        'Cython>=0.23,<0.24']
 
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')
 
-# Versioneer allows us to automatically generate versioning from
-# our git tagging system which makes releases simpler.
-versioneer.VCS = 'git'
-versioneer.versionfile_source = 'menpo/_version.py'
-versioneer.versionfile_build = 'menpo/_version.py'
-versioneer.tag_prefix = 'v'  # tags are like v1.2.0
-versioneer.parentdir_prefix = 'menpo-'  # dirname like 'menpo-v1.2.0'
-
 setup(name='menpo',
       version=versioneer.get_version(),
       cmdclass=versioneer.get_cmdclass(),
-      description='iBUG Facial Modelling Toolkit',
+      description='A Python toolkit for handling annotated data',
       author='James Booth',
       author_email='james.booth08@imperial.ac.uk',
       include_dirs=include_dirs,
@@ -58,5 +52,5 @@ setup(name='menpo',
                               'transform/piecewiseaffine/fastpwa/*.c',
                               'transform/piecewiseaffine/fastpwa/*.h'],
                     '': ['*.pxd', '*.pyx']},
-      tests_require=['nose', 'mock']
+      tests_require=['nose', 'mock==1.0.1']
 )

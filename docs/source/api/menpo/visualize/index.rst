@@ -19,18 +19,13 @@ Abstract Classes
   MatplotlibRenderer
 
 
-Widgets
+Patches
 -------
 
 .. toctree::
   :maxdepth: 1
 
-  visualize_images
-  visualize_landmarks
-  visualize_landmarkgroups
-  visualize_pointclouds
-  features_selection
-  save_matplotlib_figure
+  view_patches
 
 
 Print Utilities

@@ -3,7 +3,8 @@ from warnings import warn
 import warnings
 import numpy as np
 
-from .base import Image
+from .base import Image, _convert_patches_list_to_single_array
+from .patches import set_patches
 from menpo.base import MenpoDeprecationWarning
 
 
@@ -223,7 +224,7 @@ class BooleanImage(Image):
 
     def __str__(self):
         return ('{} {}D mask, {:.1%} '
-                'of which is True'.format(self._str_shape, self.n_dims,
+                'of which is True'.format(self._str_shape(), self.n_dims,
                                           self.proportion_true()))
 
     def from_vector(self, vector, copy=True):
@@ -377,7 +378,8 @@ class BooleanImage(Image):
 
     # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     mode='constant', cval=False, batch_size=None):
+                     mode='constant', cval=False, batch_size=None,
+                     return_transform=False):
         r"""
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -410,21 +412,28 @@ class BooleanImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : :map:`BooleanImage`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         # enforce the order as 0, as this is boolean data, then call super
-        return Image.warp_to_mask(self, template_mask, transform,
-                                  warp_landmarks=warp_landmarks,
-                                  order=0, mode=mode, cval=cval,
-                                  batch_size=batch_size)
+        return Image.warp_to_mask(
+            self, template_mask, transform, warp_landmarks=warp_landmarks,
+            order=0, mode=mode, cval=cval, batch_size=batch_size,
+            return_transform=return_transform)
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      mode='constant', cval=False, order=None, batch_size=None):
+                      mode='constant', cval=False, order=None,
+                      batch_size=None, return_transform=False):
         """
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -458,17 +467,23 @@ class BooleanImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : :map:`BooleanImage`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         # call the super variant and get ourselves an Image back
         # note that we force the use of order=0 for BooleanImages.
         warped = Image.warp_to_shape(self, template_shape, transform,
-                                     warp_landmarks=warp_landmarks,
-                                     order=0, mode=mode, cval=cval,
+                                     warp_landmarks=warp_landmarks, order=0,
+                                     mode=mode, cval=cval,
                                      batch_size=batch_size)
         # unfortunately we can't escape copying here, let BooleanImage
         # convert us to np.bool
@@ -477,10 +492,14 @@ class BooleanImage(Image):
             boolean_image.landmarks = warped.landmarks
         if hasattr(warped, 'path'):
             boolean_image.path = warped.path
-        return boolean_image
+        # optionally return the transform
+        if return_transform:
+            return boolean_image, transform
+        else:
+            return boolean_image
 
-    def _build_warped_to_mask(self, template_mask, sampled_pixel_values,
-                              **kwargs):
+    def _build_warp_to_mask(self, template_mask, sampled_pixel_values,
+                            **kwargs):
         r"""
         Builds the warped image from the template mask and sampled pixel values.
         """
@@ -522,7 +541,7 @@ class BooleanImage(Image):
             points are checked at once.
         """
         self.constrain_to_pointcloud(self.landmarks[group][label],
-                                     trilist=trilist)
+                                     trilist=trilist, batch_size=batch_size)
 
     def constrain_to_pointcloud(self, pointcloud, batch_size=None,
                                 point_in_pointcloud='pwa', trilist=None,):
@@ -613,3 +632,74 @@ class BooleanImage(Image):
         slices = all_channels + [slice(bounds[0][k], bounds[1][k] + 1)
                                  for k in range(self.n_dims)]
         self.pixels[slices].flat = point_in_pointcloud(pointcloud, indices)
+
+    def set_patches(self, patches, patch_centers, offset=None,
+                    offset_index=None):
+        r"""
+        Set the values of a group of patches into the correct regions of
+        **this** image. Given an array of patches and a set of patch centers,
+        the patches' values are copied in the regions of the image that are
+        centred on the coordinates of the given centers.
+
+        The patches argument can have any of the two formats that are returned
+        from the `extract_patches()` and `extract_patches_around_landmarks()`
+        methods. Specifically it can be:
+
+            1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
+            2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patches : `ndarray` or `list`
+            The values of the patches. It can have any of the two formats that
+            are returned from the `extract_patches()` and
+            `extract_patches_around_landmarks()` methods. Specifically, it can
+            either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
+            `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
+            objects.
+        patch_centers : :map:`PointCloud`
+            The centers to set the patches around.
+        offset : `list` or `tuple` or ``(1, 2)`` `ndarray` or ``None``, optional
+            The offset to apply on the patch centers within the image.
+            If ``None``, then ``(0, 0)`` is used.
+        offset_index : `int` or ``None``, optional
+            The offset index within the provided `patches` argument, thus the
+            index of the second dimension from which to sample. If ``None``,
+            then ``0`` is used.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        ValueError
+            If offset does not have shape (1, 2)
+        """
+        # parse arguments
+        if self.n_dims != 2:
+            raise ValueError('Only two dimensional patch insertion is '
+                             'currently supported.')
+        if offset is None:
+            offset = np.zeros([1, 2], dtype=np.intp)
+        elif isinstance(offset, tuple) or isinstance(offset, list):
+            offset = np.asarray([offset])
+        offset = np.require(offset, dtype=np.intp)
+        if not offset.shape == (1, 2):
+            raise ValueError('The offset must be a tuple, a list or a '
+                             'numpy.array with shape (1, 2).')
+        if offset_index is None:
+            offset_index = 0
+
+        # if patches is a list, convert it to array
+        if isinstance(patches, list):
+            patches = _convert_patches_list_to_single_array(
+                patches, patch_centers.n_points)
+
+        # convert pixels to uint8 so that they get recognized by cython
+        tmp_pixels = self.pixels.astype(np.uint8)
+        # convert patches to uint8 as well and set them to pixels
+        set_patches(patches.astype(np.uint8), tmp_pixels, patch_centers.points,
+                    offset, offset_index)
+        # convert pixels back to bool
+        self.pixels = tmp_pixels.astype(np.bool)

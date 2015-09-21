@@ -1,8 +1,65 @@
 import numpy as np
 from warnings import warn
+from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
 from menpo.shape.base import Shape
+
+
+def bounding_box(closest_to_origin, opposite_corner):
+    r"""
+    Return a bounding box from two corner points as a directed graph.
+    The the first point (0) should be nearest the origin.
+    In the case of an image, this ordering would appear as:
+
+    ::
+
+        0<--3
+        |   ^
+        |   |
+        v   |
+        1-->2
+
+    In the case of a pointcloud, the ordering will appear as:
+
+    ::
+
+        3<--2
+        |   ^
+        |   |
+        v   |
+        0-->1
+
+
+    Parameters
+    ----------
+    closest_to_origin : (`float`, `float`)
+        Two floats representing the coordinates closest to the origin.
+        Represented by (0) in the graph above. For an image, this will
+        be the top left. For a pointcloud, this will be the bottom left.
+    opposite_corner  : (`float`, `float`)
+        Two floats representing the coordinates opposite the corner closest
+        to the origin.
+        Represented by (2) in the graph above. For an image, this will
+        be the bottom right. For a pointcloud, this will be the top right.
+
+    Returns
+    -------
+    bounding_box : :map:`PointDirectedGraph`
+        The axis aligned bounding box from the two given corners.
+    """
+    from .graph import PointDirectedGraph
+
+    if len(closest_to_origin) != 2 or len(opposite_corner) != 2:
+        raise ValueError('Only 2D bounding boxes can be created.')
+
+    adjacency_matrix = csr_matrix(([1] * 4, ([0, 1, 2, 3], [1, 2, 3, 0])),
+                                  shape=(4, 4))
+    box = np.array([closest_to_origin,
+                    [opposite_corner[0], closest_to_origin[1]],
+                    opposite_corner,
+                    [closest_to_origin[0], opposite_corner[1]]], dtype=np.float)
+    return PointDirectedGraph(box, adjacency_matrix, copy=False)
 
 
 class PointCloud(Shape):
@@ -61,7 +118,9 @@ class PointCloud(Shape):
 
         :type: ``type(self)``
         """
-        return np.concatenate((self.points.T, np.ones(self.n_points)[None, :]))
+        return np.concatenate((self.points.T,
+                               np.ones(self.n_points,
+                                       dtype=self.points.dtype)[None, :]))
 
     def centre(self):
         r"""
@@ -176,9 +235,8 @@ class PointCloud(Shape):
 
     def bounding_box(self):
         r"""
-        Return the bounding box of this PointCloud as a directed graph.
-        The the first point (0) will be nearest the origin for an axis aligned
-        Pointcloud.
+        Return a bounding box from two corner points as a directed graph.
+        The the first point (0) should be nearest the origin.
         In the case of an image, this ordering would appear as:
 
         ::
@@ -189,19 +247,26 @@ class PointCloud(Shape):
             v   |
             1-->2
 
+        In the case of a pointcloud, the ordering will appear as:
+
+        ::
+
+            3<--2
+            |   ^
+            |   |
+            v   |
+            0-->1
+
         Returns
         -------
         bounding_box : :map:`PointDirectedGraph`
             The axis aligned bounding box of the PointCloud.
         """
-        from .graph import PointDirectedGraph
-        from scipy.sparse import csr_matrix
+        if self.n_dims != 2:
+            raise ValueError('Bounding boxes are only supported for 2D '
+                             'pointclouds.')
         min_p, max_p = self.bounds()
-        adjacency_matrix = csr_matrix(([1] * 4, ([0, 1, 2, 3], [1, 2, 3, 0])),
-                                      shape=(4, 4))
-        return PointDirectedGraph(np.array([min_p, [max_p[0], min_p[1]],
-                                            max_p, [min_p[0], max_p[1]]]),
-                                  adjacency_matrix, copy=False)
+        return bounding_box(min_p, max_p)
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_markers=True, marker_style='o', marker_size=20,
@@ -592,8 +657,8 @@ class PointCloud(Shape):
             return PointCloudViewer3d(figure_id, new_figure,
                                       self.points).render()
         except ImportError:
-            from menpo.visualize import Menpo3dErrorMessage
-            raise ImportError(Menpo3dErrorMessage)
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError()
 
     def _view_landmarks_3d(self, figure_id=None, new_figure=False,
                            group=None):
@@ -622,25 +687,33 @@ class PointCloud(Shape):
             return LandmarkViewer3d(self_renderer.figure, False,  self,
                                     self.landmarks[group]).render()
         except ImportError:
-            from menpo.visualize import Menpo3dErrorMessage
-            raise ImportError(Menpo3dErrorMessage)
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError()
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+                    style='coloured'):
         r"""
-        Visualization of the PointCloud using the :map:`visualize_pointclouds`
-        widget.
+        Visualization of the PointCloud using an interactive widget.
 
         Parameters
         ----------
-        browser_style : ``{buttons, slider}``, optional
-            It defines whether the selector of the PointCloud objects will have
-            the form of plus/minus buttons or a slider.
+        browser_style : {``'buttons'``, ``'slider'``}, optional
+            It defines whether the selector of the objects will have the form of
+            plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_pointclouds
-        visualize_pointclouds(self, figure_size=figure_size,
-                              browser_style=browser_style)
+        try:
+            from menpowidgets import visualize_pointclouds
+
+            visualize_pointclouds(self, figure_size=figure_size, style=style,
+                                  browser_style=browser_style)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
 
     def _transform_self_inplace(self, transform):
         self.points = transform(self.points)

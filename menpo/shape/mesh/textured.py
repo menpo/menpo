@@ -155,8 +155,8 @@ class TexturedTriMesh(TriMesh):
                     self.trilist, self.texture,
                     self.tcoords.points).render(**kwargs)
             except ImportError:
-                from menpo.visualize import Menpo3dErrorMessage
-                raise ImportError(Menpo3dErrorMessage)
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError()
         else:
             return super(TexturedTriMesh, self).view(figure_id=figure_id,
                                                      new_figure=new_figure,

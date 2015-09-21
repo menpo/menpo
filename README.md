@@ -106,3 +106,25 @@ After installing `nose`, running
     >> nosetests .
 
 from the top of the repository will run all of the unit tests.
+
+
+Some small parts of Menpo are only available if the user has some optional
+dependency installed. These are:
+
+- 3D viewing methods, only available if `menpo3d` is installed
+- `menpo.feature.dsift` only available if `cyvlfeat` is installed
+
+If you are running the test suite in an environment **without** `cyvlfeat`,
+call
+
+    >> nosetests -a '!cyvlfeat' .
+
+to avoid testing features dependent on `cyvlfeat`.
+
+If you are running the test suite in an environment that **contains**
+`menpo3d`, call
+
+    >> nosetests -a '!viewing' .
+
+to avoid testing the behavior of `menpo` in the absence of `menpo3d`.
+

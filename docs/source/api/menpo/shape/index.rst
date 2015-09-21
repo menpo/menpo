@@ -64,3 +64,12 @@ Group Operations
   :maxdepth: 1
 
   mean_pointcloud
+
+
+Shape Building
+--------------
+
+.. toctree::
+  :maxdepth: 1
+
+  bounding_box

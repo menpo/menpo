@@ -1,11 +1,179 @@
 Changelog
 #########
 
+0.5.0 (2015/06/25)
+------------------
+This release of Menpo makes a number of very important **BREAKING** changes
+to the format of Menpo's core data types. Most importantly is `#524`_ which
+swaps the position of the channels on an image from the last axis to the first.
+This is to maintain row-major ordering and make iterating over the pixels
+of a channel efficient. This made a huge improvement in speed in other packages
+such as MenpoFit. It also makes common operations such as iterating over
+the pixels in an image much simpler:
+
+.. code-block:: python
+
+    for channels in image.pixels:
+        print(channels.shape)  # This will be a (height x width) ndarray
+
+Other important changes include:
+
+  - Updating all widgets to work with IPython 3
+  - Incremental PCA was added.
+  - non-inplace cropping methods
+  - Dense SIFT features provided by vlfeat
+  - The implementation of graphs was changed to use sparse matrices by default.
+    **This may cause breaking changes.**
+  - Many other improvements detailed in the pull requests below!
+
+If you have serialized data using Menpo, you will likely find you have trouble
+reimporting it. If this is the case, please visit the user group for advice.
+
+Github Pull Requests
+....................
+- `#598`_  Visualize sum of channels in widgets (@nontas, @patricksnape)
+- `#597`_  test new dev tag behavior on condaci (@jabooth)
+- `#591`_  Scale around centre (@patricksnape)
+- `#596`_  Update to versioneer v0.15 (@jabooth, @patricksnape)
+- `#495`_  SIFT features (@nontas, @patricksnape, @jabooth, @jalabort)
+- `#595`_  Update mean_pointcloud (@patricksnape, @jalabort)
+- `#541`_  Add triangulation labels for ibug_face_(66/51/49) (@jalabort)
+- `#590`_  Fix centre and diagonal being properties on Images (@patricksnape)
+- `#592`_  Refactor out bounding_box method (@patricksnape)
+- `#566`_  TriMesh utilities (@jabooth)
+- `#593`_  Minor bugfix on AnimationOptionsWidget (@nontas)
+- `#587`_  promote non-inplace crop methods, crop performance improvements (@jabooth, @patricksnape)
+- `#586`_  fix as_matrix where the iterator finished early (@jabooth)
+- `#574`_  Widgets for IPython3 (@nontas, @patricksnape, @jabooth)
+- `#588`_  test condaci 0.2.1, less noisy slack notifications (@jabooth)
+- `#568`_  rescale_pixels() for rescaling the range of pixels (@jabooth)
+- `#585`_  Hotfix: suffix change led to double path resolution. (@patricksnape)
+- `#581`_  Fix the landmark importer in case the landmark file has a '.' in its filename. (@grigorisg9gr)
+- `#584`_  new print_progress visualization function (@jabooth)
+- `#580`_  export_pickle now ensures pathlib.Path save as PurePath (@jabooth)
+- `#582`_  New readers for Middlebury FLO and FRGC ABS files (@patricksnape)
+- `#579`_  Fix the image importer in case of upper case letters in the suffix (@grigorisg9gr)
+- `#575`_  Allowing expanding user paths in exporting pickle (@patricksnape)
+- `#577`_  Change to using run_test.py (@patricksnape)
+- `#570`_  Zoom (@jabooth, @patricksnape)
+- `#569`_  Add new point_in_pointcloud kwarg to constrain (@patricksnape)
+- `#563`_  TPS Updates (@patricksnape)
+- `#567`_  Optional cmaps (@jalabort)
+- `#559`_  Graphs with isolated vertices (@nontas)
+- `#564`_  Bugfix: PCAModel print (@nontas)
+- `#565`_  fixed minor typo in introduction.rst (@evanjbowling)
+- `#562`_  IPython3 widgets (@patricksnape, @jalabort)
+- `#558`_  Channel roll (@patricksnape)
+- `#524`_  BREAKING CHANGE: Channels flip (@patricksnape, @jabooth, @jalabort)
+- `#512`_  WIP: remove_all_landmarks convienience method, quick lm filter (@jabooth)
+- `#554`_  Bugfix:visualize_images (@nontas)
+- `#553`_  Transform docs fixes (@nontas)
+- `#533`_  LandmarkGroup.init_with_all_label, init_* convenience constructors (@jabooth, @patricksnape)
+- `#552`_  Many fixes for Python 3 support (@patricksnape)
+- `#532`_  Incremental PCA (@patricksnape, @jabooth, @jalabort)
+- `#528`_  New as_matrix and from_matrix methods (@patricksnape)
+
+.. _#598: https://github.com/menpo/menpo/pull/598
+.. _#597: https://github.com/menpo/menpo/pull/597
+.. _#591: https://github.com/menpo/menpo/pull/591
+.. _#596: https://github.com/menpo/menpo/pull/596
+.. _#495: https://github.com/menpo/menpo/pull/495
+.. _#595: https://github.com/menpo/menpo/pull/595
+.. _#541: https://github.com/menpo/menpo/pull/541
+.. _#590: https://github.com/menpo/menpo/pull/590
+.. _#592: https://github.com/menpo/menpo/pull/592
+.. _#566: https://github.com/menpo/menpo/pull/566
+.. _#593: https://github.com/menpo/menpo/pull/593
+.. _#587: https://github.com/menpo/menpo/pull/587
+.. _#586: https://github.com/menpo/menpo/pull/586
+.. _#574: https://github.com/menpo/menpo/pull/574
+.. _#588: https://github.com/menpo/menpo/pull/588
+.. _#568: https://github.com/menpo/menpo/pull/568
+.. _#585: https://github.com/menpo/menpo/pull/585
+.. _#581: https://github.com/menpo/menpo/pull/581
+.. _#584: https://github.com/menpo/menpo/pull/584
+.. _#580: https://github.com/menpo/menpo/pull/580
+.. _#582: https://github.com/menpo/menpo/pull/582
+.. _#579: https://github.com/menpo/menpo/pull/579
+.. _#575: https://github.com/menpo/menpo/pull/575
+.. _#577: https://github.com/menpo/menpo/pull/577
+.. _#570: https://github.com/menpo/menpo/pull/570
+.. _#569: https://github.com/menpo/menpo/pull/569
+.. _#563: https://github.com/menpo/menpo/pull/563
+.. _#567: https://github.com/menpo/menpo/pull/567
+.. _#559: https://github.com/menpo/menpo/pull/559
+.. _#564: https://github.com/menpo/menpo/pull/564
+.. _#565: https://github.com/menpo/menpo/pull/565
+.. _#562: https://github.com/menpo/menpo/pull/562
+.. _#524: https://github.com/menpo/menpo/pull/524
+.. _#512: https://github.com/menpo/menpo/pull/512
+.. _#554: https://github.com/menpo/menpo/pull/554
+.. _#553: https://github.com/menpo/menpo/pull/553
+.. _#533: https://github.com/menpo/menpo/pull/533
+.. _#552: https://github.com/menpo/menpo/pull/552
+.. _#532: https://github.com/menpo/menpo/pull/532
+.. _#528: https://github.com/menpo/menpo/pull/528
+.. _#558: https://github.com/menpo/menpo/pull/558
+
+
+0.4.4 (2015/03/05)
+------------------
+A hotfix release for properly handling nan values in the landmark formats. Also,
+a few other bug fixes crept in:
+
+ - Fix 3D Ljson importing
+ - Fix trim_components on PCA
+ - Fix setting None key on the landmark manager
+ - Making mean_pointcloud faster
+
+Also makes an important change to the build configuration that syncs this
+version of Menpo to IPython 2.x.
+
+Github Pull Requests
+....................
+- `#560`_  Assorted fixes (@patricksnape)
+- `#557`_  Ljson nan fix (@patricksnape)
+
+.. _#560: https://github.com/menpo/menpo/pull/560
+.. _#557: https://github.com/menpo/menpo/pull/557
+
+
+0.4.3 (2015/02/19)
+------------------
+Adds the concept of nan values to the landmarker format for labelling missing
+landmarks.
+
+Github Pull Requests
+....................
+- `#556`_  [0.4.x] Ljson nan/null fixes (@patricksnape)
+
+.. _#556: https://github.com/menpo/menpo/pull/556
+
+0.4.2 (2015/02/19)
+------------------
+A hotfix release for landmark groups that have no connectivity.
+
+Github Pull Requests
+....................
+- `#555`_  don't try and build a Graph with no connectivity (@jabooth)
+
+.. _#555: https://github.com/menpo/menpo/pull/555
+
+0.4.1 (2015/02/07)
+------------------
+A hotfix release to enable compatibility with landmarker.io.
+
+Github Pull Requests
+....................
+- `#551`_  HOTFIX: remove incorrect tojson() methods (@jabooth)
+
+.. _#551: https://github.com/menpo/menpo/pull/551
+
 0.4.0 (2015/02/04)
 ------------------
 The 0.4.0 release (pending any currently unknown bugs), represents a very
 significant overhaul of Menpo from v0.3.0. In particular, Menpo has been
-broken into four distinct packages: Menpo, MenpoFit, Menpo3D and MenpotDetect.
+broken into four distinct packages: Menpo, MenpoFit, Menpo3D and MenpoDetect.
 
 Visualization has had major improvements for 2D viewing, in particular
 through the use of IPython widgets and explicit options on the viewing methods

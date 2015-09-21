@@ -1,6 +1,8 @@
+sudo: false
+
 os:
 - linux
-- osx
+#- osx  for now our own build bot is much faster
 
 git:
   depth: 200
@@ -13,20 +15,16 @@ env:
     - PYTHON_VERSION: 3.4
 
 install:
-- wget https://raw.githubusercontent.com/jabooth/condaci/v0.2.0/condaci.py -O condaci.py
-- python condaci.py setup $PYTHON_VERSION --channel $BINSTAR_USER
-- export PATH=$HOME/miniconda/bin:$PATH
-- conda config --add channels $BINSTAR_USER/channel/master
+- wget https://raw.githubusercontent.com/menpo/condaci/v0.4.6/condaci.py -O condaci.py
+- python condaci.py setup
 
 script:
-- python condaci.py auto ./conda --binstaruser $BINSTAR_USER --binstarkey $BINSTAR_KEY
+- ~/miniconda/bin/python condaci.py build ./conda
 
 notifications:
-  slack: menpo:19gyWImMkOfCj0iDAgTbDlDA
+  slack:
+    rooms:
+      - menpo:19gyWImMkOfCj0iDAgTbDlDA
+    on_success: :change
+    on_failure: :change
   email: false
-  webhooks:
-    urls:
-    - https://webhooks.gitter.im/e/7599ff4870c99ba51310
-    on_success: always
-    on_failure: always
-    on_start: never

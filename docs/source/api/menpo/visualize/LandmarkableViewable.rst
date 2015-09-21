@@ -6,5 +6,5 @@ LandmarkableViewable
 ====================
 .. autoclass:: LandmarkableViewable
   :members:
-  :inherited-members:
+  :no-inherited-members:
   :show-inheritance:

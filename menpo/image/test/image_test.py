@@ -47,19 +47,19 @@ def test_image_blank_n_channels():
 def test_image_centre():
     pixels = np.ones((1, 10, 20))
     image = Image(pixels)
-    assert(np.all(image.centre == np.array([5, 10])))
+    assert(np.all(image.centre() == np.array([5, 10])))
 
 
 def test_image_str_shape_4d():
     pixels = np.ones((1, 10, 20, 11, 12))
     image = Image(pixels)
-    assert(image._str_shape == '10 x 20 x 11 x 12')
+    assert(image._str_shape() == '10 x 20 x 11 x 12')
 
 
 def test_image_str_shape_2d():
     pixels = np.ones((1, 10, 20))
     image = Image(pixels)
-    assert(image._str_shape == '20W x 10H')
+    assert(image._str_shape() == '20W x 10H')
 
 
 def test_image_as_vector():
@@ -585,11 +585,13 @@ def test_as_greyscale_luminosity():
     assert (new_image.n_channels == 1)
     assert_allclose(new_image.pixels[0], ones[0] * 0.850532)
 
+
 def test_rolled_channels():
     ones = np.ones([3, 120, 120])
     image = MaskedImage(ones)
     rolled_channels = image.rolled_channels()
     assert rolled_channels.shape == (120, 120, 3)
+
 
 def test_as_greyscale_average():
     ones = np.ones([3, 120, 120])
@@ -680,27 +682,27 @@ def test_image_extract_channels_multiple_reversed():
 
 def test_diagonal_greyscale():
     image = Image.init_blank((100, 250), n_channels=1)
-    assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
+    assert image.diagonal() == (100 ** 2 + 250 ** 2) ** 0.5
 
 
 def test_diagonal_color():
     image = Image.init_blank((100, 250), n_channels=3)
-    assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
+    assert image.diagonal() == (100 ** 2 + 250 ** 2) ** 0.5
 
 
 def test_diagonal_greyscale_ndim():
     image = Image.init_blank((100, 250, 50), n_channels=1)
-    assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
+    assert image.diagonal() == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
 
 
 def test_diagonal_kchannel_ndim():
     image = Image.init_blank((100, 250, 50), n_channels=5)
-    assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
+    assert image.diagonal() == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
 
 
 def test_rescale_to_diagonal():
     image = Image.init_blank((8, 6), n_channels=2)
-    assert image.diagonal == 10
+    assert image.diagonal() == 10
     rescaled = image.rescale_to_diagonal(5)
     assert rescaled.shape == (4, 3)
     assert rescaled.n_channels == 2

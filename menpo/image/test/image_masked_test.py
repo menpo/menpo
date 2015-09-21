@@ -69,3 +69,40 @@ def test_constrain_mask_to_landmarks_unknown_key():
     img = MaskedImage.init_blank((10, 10))
     img.landmarks['box'] = PointCloud(np.array([[0., 0., 0.]]))
     img.constrain_mask_to_landmarks(point_in_pointcloud='unknown')
+
+
+def test_erode():
+    img = MaskedImage.init_blank((10, 10))
+    img2 = img.erode()
+    assert(img2.mask.n_true() == 64)
+    img3 = img.erode(n_pixels=3)
+    assert(img3.mask.n_true() == 16)
+
+
+def test_dilate():
+    img = MaskedImage.init_blank((10, 10))
+    img = img.erode(n_pixels=3)
+    img2 = img.dilate()
+    assert(img2.mask.n_true() == 32)
+    img3 = img.dilate(n_pixels=3)
+    assert(img3.mask.n_true() == 76)
+
+
+def test_init_from_rolled_channels():
+    p = np.empty([50, 60, 3])
+    im = MaskedImage.init_from_rolled_channels(p)
+    assert im.n_channels == 3
+    assert im.height == 50
+    assert im.width == 60
+
+
+def test_init_from_rolled_channels_masked():
+    p = np.empty([50, 60, 3])
+    example_mask = BooleanImage.init_blank((50, 60), fill=False)
+    example_mask.pixels[0, :6, :6] = True
+
+    im = MaskedImage.init_from_rolled_channels(p, mask=example_mask)
+    assert im.n_channels == 3
+    assert im.height == 50
+    assert im.width == 60
+    assert im.mask.n_true() == 36

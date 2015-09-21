@@ -27,11 +27,22 @@ def LJSONExporter(landmark_group, file_handle):
     # Convert nan values to None so that json correctly maps them to 'null'
     points = lg_json['landmarks']['points']
     # Flatten list
+    try:
+        ndim = len(points[0])
+    except IndexError:
+        ndim = 0
     filtered_points = [None if np.isnan(x) else x
                        for x in itertools.chain(*points)]
     # Recreate tuples
-    lg_json['landmarks']['points'] = list(zip(filtered_points[::2],
+    if ndim == 2:
+        lg_json['landmarks']['points'] = list(zip(filtered_points[::2],
                                               filtered_points[1::2]))
+    elif ndim == 3:
+        lg_json['landmarks']['points'] = list(zip(filtered_points[::3],
+                                              filtered_points[1::3],
+                                              filtered_points[2::3]))
+    else:
+        lg_json['landmarks']['points'] = []
 
     return json.dump(lg_json, file_handle, indent=4, separators=(',', ': '),
                      sort_keys=True, allow_nan=False)

@@ -2,6 +2,7 @@ from __future__ import division
 from warnings import warn
 import numpy as np
 binary_erosion = None  # expensive, from scipy.ndimage
+binary_dilation = None  # expensive, from scipy.ndimage
 
 from menpo.visualize.base import ImageViewer
 
@@ -119,6 +120,33 @@ class MaskedImage(Image):
         else:
             pixels = np.ones((n_channels,) + shape, dtype=dtype) * fill
         return cls(pixels, copy=False, mask=mask)
+
+    @classmethod
+    def init_from_rolled_channels(cls, pixels, mask=None):
+        r"""
+        Create an Image from a set of pixels where the channels axis is on
+        the last axis (the back). This is common in other frameworks, and
+        therefore this method provides a convenient means of creating a menpo
+        Image from such data. Note that a copy is always created due to the
+        need to rearrange the data.
+
+        Parameters
+        ----------
+        pixels : ``(M, N ..., Q, C)`` `ndarray`
+            Array representing the image pixels, with the last axis being
+            channels.
+        mask : ``(M, N)`` `bool ndarray` or :map:`BooleanImage`, optional
+            A binary array representing the mask. Must be the same
+            shape as the image. Only one mask is supported for an image (so the
+            mask is applied to every channel equally).
+
+        Returns
+        -------
+        image : :map:`Image`
+            A new image from the given pixels, with the FIRST axis as the
+            channels.
+        """
+        return cls(np.rollaxis(pixels, -1), mask=mask)
 
     def as_unmasked(self, copy=True, fill=None):
         r"""
@@ -245,7 +273,7 @@ class MaskedImage(Image):
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '
                 'Attached mask {:.1%} true'.format(
-            self._str_shape, self.n_dims, self.n_channels,
+            self._str_shape(), self.n_dims, self.n_channels,
             self.mask.proportion_true()))
 
     def _as_vector(self, keep_channels=False):
@@ -310,7 +338,8 @@ class MaskedImage(Image):
             # we can just reshape the array!
             image_data = vector.reshape(((n_channels,) + self.shape))
         else:
-            image_data = np.zeros((n_channels,) + self.shape)
+            image_data = np.zeros((n_channels,) + self.shape,
+                                  dtype=vector.dtype)
             pixels_per_channel = vector.reshape((n_channels, -1))
             image_data[..., self.mask.mask] = pixels_per_channel
         new_image = MaskedImage(image_data, mask=self.mask)
@@ -671,62 +700,31 @@ class MaskedImage(Image):
             axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
             axes_y_limits, figure_size)
 
-    def crop_inplace(self, min_indices, max_indices,
-                     constrain_to_boundary=True):
-        r"""
-        Crops this image using the given minimum and maximum indices.
-        Landmarks are correctly adjusted so they maintain their position
-        relative to the newly cropped image.
-
-        Parameters
-        ----------
-        min_indices: ``(n_dims, )`` `ndarray`
-            The minimum index over each dimension.
-        max_indices: ``(n_dims, )`` `ndarray`
-            The maximum index over each dimension.
-        constrain_to_boundary : `bool`, optional
-            If ``True`` the crop will be snapped to not go beyond this images
-            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
-            if an attempt is made to go beyond the edge of the image.
-
-        Returns
-        -------
-        cropped_image : `type(self)`
-            This image, but cropped.
-
-        Raises
-        ------
-        ValueError
-            ``min_indices`` and ``max_indices`` both have to be of length
-            ``n_dims``. All ``max_indices`` must be greater than
-            ``min_indices``.
-        :map`ImageBoundaryError`
-            Raised if ``constrain_to_boundary=False``, and an attempt is made
-            to crop the image in a way that violates the image bounds.
-        """
-        # crop our image
-        super(MaskedImage, self).crop_inplace(
-            min_indices, max_indices,
-            constrain_to_boundary=constrain_to_boundary)
-        # crop our mask
-        self.mask.crop_inplace(min_indices, max_indices,
-                               constrain_to_boundary=constrain_to_boundary)
-        return self
-
-    def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True):
+    def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True,
+                          return_transform=False):
         r"""
         Crop this image to be bounded just the `True` values of it's mask.
 
         Parameters
         ----------
-
-        boundary: `int`, optional
+        boundary : `int`, optional
             An extra padding to be added all around the true mask region.
         constrain_to_boundary : `bool`, optional
             If ``True`` the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image. Note that
             is only possible if ``boundary != 0``.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
+
+        Returns
+        -------
+        cropped_image : ``type(self)``
+            A copy of this image, cropped to the true mask.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -737,8 +735,9 @@ class MaskedImage(Image):
         min_indices, max_indices = self.mask.bounds_true(
             boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
-        self.crop_inplace(min_indices, max_indices,
-                          constrain_to_boundary=constrain_to_boundary)
+        return self.crop(min_indices, max_indices,
+                         constrain_to_boundary=constrain_to_boundary,
+                         return_transform=return_transform)
 
     def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
         r"""
@@ -790,7 +789,8 @@ class MaskedImage(Image):
 
     # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0., batch_size=None):
+                     order=1, mode='constant', cval=0., batch_size=None,
+                     return_transform=False):
         r"""
         Warps this image into a different reference space.
 
@@ -832,11 +832,17 @@ class MaskedImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : ``type(self)``
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         # call the super variant and get ourselves a MaskedImage back
         # with a blank mask
@@ -846,11 +852,16 @@ class MaskedImage(Image):
                                           batch_size=batch_size)
         # Set the template mask as our mask
         warped_image.mask = template_mask
-        return warped_image
+        # optionally return the transform
+        if return_transform:
+            return warped_image, transform
+        else:
+            return warped_image
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0., batch_size=None):
+                      order=1, mode='constant', cval=0., batch_size=None,
+                      return_transform=False):
         """
         Return a copy of this :map:`MaskedImage` warped into a different
         reference space.
@@ -894,11 +905,17 @@ class MaskedImage(Image):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         # call the super variant and get ourselves an Image back
         warped_image = Image.warp_to_shape(self, template_shape, transform,
@@ -911,13 +928,14 @@ class MaskedImage(Image):
                                        mode=mode, cval=cval)
         # efficiently turn the Image into a MaskedImage, attaching the
         # landmarks
-        masked_warped_image = MaskedImage(warped_image.pixels, mask=mask,
-                                          copy=False)
-        if warped_image.has_landmarks:
-            masked_warped_image.landmarks = warped_image.landmarks
+        masked_warped_image = warped_image.as_masked(mask=mask, copy=False)
         if hasattr(warped_image, 'path'):
             masked_warped_image.path = warped_image.path
-        return masked_warped_image
+        # optionally return the transform
+        if return_transform:
+            return masked_warped_image, transform
+        else:
+            return masked_warped_image
 
     def normalize_std_inplace(self, mode='all', limit_to_mask=True):
         r"""
@@ -1038,7 +1056,7 @@ class MaskedImage(Image):
             self.landmarks[group][label], trilist=trilist,
             batch_size=batch_size, point_in_pointcloud=point_in_pointcloud)
 
-    def build_mask_around_landmarks(self, patch_size, group=None, label=None):
+    def build_mask_around_landmarks(self, patch_shape, group=None, label=None):
         r"""
         Restricts this images mask to be patches around each landmark in
         the chosen landmark group. This is useful for visualizing patch
@@ -1047,8 +1065,7 @@ class MaskedImage(Image):
         Parameters
         ----------
         patch_shape : `tuple`
-            The size of the patch. Any floating point values are rounded up
-            to the nearest integer.
+            The size of the patch.
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
@@ -1056,25 +1073,15 @@ class MaskedImage(Image):
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
         """
+        # get the selected pointcloud
         pc = self.landmarks[group][label]
-        patch_size = np.ceil(patch_size)
-        patch_half_size = patch_size / 2
-        mask = np.zeros(self.shape)
-        max_x = self.shape[0] - 1
-        max_y = self.shape[1] - 1
-
-        for i, point in enumerate(pc.points):
-            start = np.floor(point - patch_half_size).astype(int)
-            finish = np.floor(point + patch_half_size).astype(int)
-            x, y = np.mgrid[start[0]:finish[0], start[1]:finish[1]]
-            # deal with boundary cases
-            x[x > max_x] = max_x
-            y[y > max_y] = max_y
-            x[x < 0] = 0
-            y[y < 0] = 0
-            mask[x.flatten(), y.flatten()] = True
-
-        self.mask = BooleanImage(mask)
+        # temporarily set all mask values to False
+        self.mask.pixels[:] = False
+        # create a patches array of the correct size, full of True values
+        patches = np.ones((pc.n_points, 1, 1, int(patch_shape[0]),
+                           int(patch_shape[1])), dtype=np.bool)
+        # set True patches around pointcloud centers
+        self.mask.set_patches(patches, pc)
 
     def set_boundary_pixels(self, value=0.0, n_pixels=1):
         r"""
@@ -1106,3 +1113,57 @@ class MaskedImage(Image):
         np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
         # set all the boundary pixels to a particular value
         self.pixels[..., eroded_mask] = value
+
+    def erode(self, n_pixels=1):
+        r"""
+        Returns a copy of this :map:`MaskedImage` in which the mask has been
+        shrunk by n pixels along its boundary.
+
+        Parameters
+        ----------
+        n_pixels : int, optional
+            The number of pixels by which we want to shrink the mask along
+            its own boundary.
+
+        Returns
+        -------
+         : :map:`MaskedImage`
+            The copy of the masked image in which the mask has been shrunk
+            by n pixels along its boundary.
+        """
+        global binary_erosion
+        if binary_erosion is None:
+            from scipy.ndimage import binary_erosion  # expensive
+        # Erode the edge of the mask in by one pixel
+        eroded_mask = binary_erosion(self.mask.mask, iterations=n_pixels)
+
+        image = self.copy()
+        image.mask = BooleanImage(eroded_mask)
+        return image
+
+    def dilate(self, n_pixels=1):
+        r"""
+        Returns a copy of this :map:`MaskedImage` in which its mask has
+        been expanded by n pixels along its boundary.
+
+        Parameters
+        ----------
+        n_pixels : int, optional
+            The number of pixels by which we want to expand the mask along
+            its own boundary.
+
+        Returns
+        -------
+         : :map:`MaskedImage`
+            The copy of the masked image in which the mask has been expanded
+            by n pixels along its boundary.
+        """
+        global binary_dilation
+        if binary_dilation is None:
+            from scipy.ndimage import binary_dilation  # expensive
+        # Erode the edge of the mask in by one pixel
+        dilated_mask = binary_dilation(self.mask.mask, iterations=n_pixels)
+
+        image = self.copy()
+        image.mask = BooleanImage(dilated_mask)
+        return image

@@ -31,15 +31,15 @@ if on_rtd:
     MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn',
                     'scipy.linalg', 'numpy.stats', 'scipy.misc', 'PIL.Image',
                     'matplotlib', 'matplotlib.pyplot', 'scipy.spatial',
-                    'scipy.spatial.distance', 'IPython', 'IPython.display',
-                    'IPython.html', 'IPython.html.widgets',
-                    'numpy.dtype', 'scipy.ndimage', 'scipy.linalg.blas']
+                    'scipy.spatial.distance', 'numpy.dtype', 'scipy.ndimage',
+                    'scipy.linalg.blas', 'scipy.sparse']
     # Masking our Cython modules
     MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
                      'menpo.feature.windowiterator',
                      'menpo.shape.mesh.normals',
+                     'menpo.feature.gradient',
                      'menpo.external.skimage._warps_cy',
-                     'menpo.image.extract_patches']
+                     'menpo.image.patches']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = Mock()
 
@@ -90,7 +90,7 @@ napoleon_use_admonition_for_notes = True
 napoleon_use_admonition_for_references = True
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+#source_suffix = '.rst'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -240,6 +240,10 @@ htmlhelp_basename = 'Menpodoc'
 
 # -- Options for LaTeX output --------------------------------------------------
 
+latex_preamble = """
+\usepackage{enumitem}
+\setlistdepth{999}
+"""
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #'papersize': 'letterpaper',
@@ -248,7 +252,7 @@ latex_elements = {
     #'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+    'preamble': latex_preamble
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

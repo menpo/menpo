@@ -288,23 +288,29 @@ class LandmarkManager(MutableMapping, Transformable):
             group.lms._transform_inplace(transform)
         return self
 
-    def view_widget(self, browser_style='buttons',
-                    figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+                    style='coloured'):
         r"""
-        Visualizes the landmark manager object using the
-        :map:`visualize_landmarks` widget.
+        Visualizes the landmark manager object using an interactive widget.
 
         Parameters
         ----------
-        browser_style : {``buttons``, ``slider``}, optional
+        browser_style : {``'buttons'``, ``'slider'``}, optional
             It defines whether the selector of the landmark managers will have
             the form of plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_landmarks
-        visualize_landmarks(self, figure_size=figure_size,
-                            browser_style=browser_style)
+        try:
+            from menpowidgets import visualize_landmarks
+            visualize_landmarks(self, figure_size=figure_size, style=style,
+                                browser_style=browser_style)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
 
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
@@ -359,7 +365,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         if np.vstack(labels_to_masks.values()).shape[1] != pointcloud.n_points:
             raise ValueError('Each mask must have the same number of points '
                              'as the landmark pointcloud.')
-        if type(labels_to_masks) is dict:
+        if not isinstance(labels_to_masks, OrderedDict):
             raise ValueError('Must provide an OrderedDict to maintain the '
                              'semantic meaning of the labels.')
 
@@ -396,6 +402,43 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         """
         labels_to_masks = OrderedDict(
             [('all', np.ones(pointcloud.n_points, dtype=np.bool))])
+        return LandmarkGroup(pointcloud, labels_to_masks, copy=copy)
+
+    @classmethod
+    def init_from_indices_mapping(cls, pointcloud, labels_to_indices,
+                                  copy=True):
+        r"""
+        Static constructor to create a :map:`LandmarkGroup` from an ordered
+        dictionary that maps a set of indices .
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            The pointcloud representing the landmarks.
+        labels_to_indices : `ordereddict` {`str` -> `int ndarray`}
+            For each label, the indices in to the pointcloud that belong to the
+            label.
+        copy : `boolean`, optional
+            If ``True``, a copy of the :map:`PointCloud` is stored on the group.
+
+        Returns
+        -------
+        lmark_group : :map:`LandmarkGroup`
+            Landmark group wrapping the given pointcloud with the given
+            semantic labels applied.
+
+        Raises
+        ------
+        ValueError
+            If `dict` passed instead of `OrderedDict`
+        ValueError
+            If any of the label masks differs in size to the pointcloud.
+        ValueError
+            If there exists any point in the pointcloud that is not covered
+            by a label.
+        """
+        labels_to_masks = indices_to_masks(labels_to_indices,
+                                           pointcloud.n_points)
         return LandmarkGroup(pointcloud, labels_to_masks, copy=copy)
 
     def copy(self):
@@ -882,26 +925,60 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             return LandmarkViewer3d(figure_id, new_figure,
                                     self._pointcloud, self).render(**kwargs)
         except ImportError:
-            from menpo.visualize import Menpo3dErrorMessage
-            raise ImportError(Menpo3dErrorMessage)
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError()
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+                    style='coloured'):
         r"""
-        Visualizes the landmark group object using the
-        :map:`visualize_landmarkgroups` widget.
+        Visualizes the landmark group object using an interactive widget.
 
         Parameters
         ----------
-        browser_style : {``buttons``, ``slider``}, optional
+        browser_style : {``'buttons'``, ``'slider'``}, optional
             It defines whether the selector of the landmark managers will have
             the form of plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_landmarkgroups
-        visualize_landmarkgroups(self, figure_size=figure_size,
-                                 browser_style=browser_style)
+        try:
+            from menpowidgets import visualize_landmarkgroups
+            visualize_landmarkgroups(self, figure_size=figure_size, style=style,
+                                     browser_style=browser_style)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(
             type(self).__name__, self.n_labels, self.n_landmarks)
+
+
+def indices_to_masks(labels_to_indices, n_points):
+    r"""
+    Take a dictionary of labels to indices and convert it to a dictionary
+    that maps labels to masks. This dictionary is the correct format for
+    constructing a :map:`LandmarkGroup`.
+
+    Parameters
+    ----------
+    labels_to_indices : `ordereddict` {`str` -> `int ndarray`}
+        For each label, the indices in to the pointcloud that belong to the
+        label.
+    n_points : `int`
+        Number of points in the pointcloud that is being masked.
+    """
+    if not isinstance(labels_to_indices, OrderedDict):
+        raise ValueError('Must provide an OrderedDict to maintain the '
+                         'semantic meaning of the labels.')
+
+    masks = OrderedDict()
+    for label in labels_to_indices:
+        indices = labels_to_indices[label]
+        mask = np.zeros(n_points, dtype=np.bool)
+        mask[indices] = True
+        masks[label] = mask
+    return masks

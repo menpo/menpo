@@ -1,19 +1,20 @@
 from __future__ import division
 from warnings import warn
+from collections import Iterable
 
 import numpy as np
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
-from menpo.base import Vectorizable
-from menpo.shape import PointCloud
+from menpo.base import Vectorizable, MenpoDeprecationWarning
+from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
-                             AlignmentUniformScale, Affine, Rotation,
-                             UniformScale)
+                             AlignmentUniformScale, Affine, scale_about_centre,
+                             rotate_ccw_about_centre, Rotation)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 from .interpolation import scipy_interpolation, cython_interpolation
-from .extract_patches import extract_patches
+from .patches import extract_patches, set_patches
 
 
 # Cache the greyscale luminosity coefficients as they are invariant.
@@ -88,7 +89,8 @@ def channels_to_back(image):
     else:
         pixels = image.pixels
 
-    return np.ascontiguousarray(np.rollaxis(pixels, 0, pixels.ndim))
+    return np.require(np.rollaxis(pixels, 0, pixels.ndim), dtype=pixels.dtype,
+                      requirements=['C'])
 
 
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
@@ -174,6 +176,29 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # We know there is no need to copy...
         return cls(pixels, copy=False)
 
+    @classmethod
+    def init_from_rolled_channels(cls, pixels):
+        r"""
+        Create an Image from a set of pixels where the channels axis is on
+        the last axis (the back). This is common in other frameworks, and
+        therefore this method provides a convenient means of creating a menpo
+        Image from such data. Note that a copy is always created due to the
+        need to rearrange the data.
+
+        Parameters
+        ----------
+        pixels : ``(M, N ..., Q, C)`` `ndarray`
+            Array representing the image pixels, with the last axis being
+            channels.
+
+        Returns
+        -------
+        image : :map:`Image`
+            A new image from the given pixels, with the FIRST axis as the
+            channels.
+        """
+        return cls(np.rollaxis(pixels, -1))
+
     def as_masked(self, mask=None, copy=True):
         r"""
         Return a copy of this image with an attached mask behavior.
@@ -198,6 +223,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.image import MaskedImage
         img = MaskedImage(self.pixels, mask=mask, copy=copy)
         img.landmarks = self.landmarks
+        if hasattr(self, 'path'):
+            img.path = self.path
         return img
 
     @property
@@ -272,7 +299,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return self.pixels.shape[1:]
 
-    @property
     def diagonal(self):
         r"""
         The diagonal size of this image
@@ -281,7 +307,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return np.sqrt(np.sum(np.array(self.shape) ** 2))
 
-    @property
     def centre(self):
         r"""
         The geometric centre of the Image - the subpixel that is in the
@@ -294,7 +319,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # noinspection PyUnresolvedReferences
         return np.array(self.shape, dtype=np.double) / 2
 
-    @property
     def _str_shape(self):
         if self.n_dims > 2:
             return ' x '.join(str(dim) for dim in self.shape)
@@ -407,9 +431,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             if not image_data.flags.c_contiguous:
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
                      'Please ensure the data you pass is C-contiguous.')
-                image_data = np.array(image_data, copy=True, order='C')
+                image_data = np.array(image_data, copy=True, order='C',
+                                      dtype=image_data.dtype)
         else:
-            image_data = np.array(image_data, copy=True, order='C')
+            image_data = np.array(image_data, copy=True, order='C',
+                                  dtype=image_data.dtype)
         self.pixels = image_data
 
     def extract_channels(self, channels):
@@ -576,22 +602,30 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
             axes_y_limits=axes_y_limits, figure_size=figure_size)
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8)):
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+                    style='coloured'):
         r"""
-        Visualizes the image object using the :map:`visualize_images` widget.
-        Currently only supports the rendering of 2D images.
+        Visualizes the image object using an interactive widget. Currently
+        only supports the rendering of 2D images.
 
         Parameters
         ----------
-        browser_style : ``{buttons, slider}``, optional
+        browser_style : {``'buttons'``, ``'slider'``}, optional
             It defines whether the selector of the images will have the form of
             plus/minus buttons or a slider.
-        figure_size : (`int`, `int`) `tuple`, optional
+        figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
+        style : {``'coloured'``, ``'minimal'``}, optional
+            If ``'coloured'``, then the style of the widget will be coloured. If
+            ``minimal``, then the style is simple using black and white colours.
         """
-        from menpo.visualize import visualize_images
-        visualize_images(self, figure_size=figure_size,
-                         browser_style=browser_style)
+        try:
+            from menpowidgets import visualize_images
+            visualize_images(self, figure_size=figure_size, style=style,
+                             browser_style=browser_style)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
 
     def _view_landmarks_2d(self, channels=None, group=None,
                            with_labels=None, without_labels=None,
@@ -860,15 +894,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             gradient of a 2D, single channel image, will have length `2`.
             The length of a 2D, 3-channel image, will have length `6`.
         """
+        warn('gradient() is deprecated and will be removed in'
+             ' the next major version of menpo. '
+             'Please use menpo.feature.gradient instead.',
+             MenpoDeprecationWarning)
+
         from menpo.feature import gradient as grad_feature
         return grad_feature(self)
 
-    def crop_inplace(self, min_indices, max_indices,
-                     constrain_to_boundary=True):
+    def crop(self, min_indices, max_indices, constrain_to_boundary=False,
+             return_transform=False):
         r"""
-        Crops this image using the given minimum and maximum indices.
-        Landmarks are correctly adjusted so they maintain their position
-        relative to the newly cropped image.
+        Return a cropped copy of this image using the given minimum and
+        maximum indices. Landmarks are correctly adjusted so they maintain
+        their position relative to the newly cropped image.
 
         Parameters
         ----------
@@ -880,11 +919,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True`` the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
         cropped_image : `type(self)`
-            This image, cropped.
+            A new instance of self, but cropped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -892,7 +937,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             ``min_indices`` and ``max_indices`` both have to be of length
             ``n_dims``. All ``max_indices`` must be greater than
             ``min_indices``.
-        :map:`ImageBoundaryError`
+        ImageBoundaryError
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
@@ -913,59 +958,58 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
-        slices = [slice(int(min_i), int(max_i))
-                  for min_i, max_i in
-                  zip(list(min_bounded), list(max_bounded))]
-        self.pixels = self.pixels[
-            [slice(0, self.n_channels, None)] + slices].copy()
-        # update all our landmarks
-        lm_translation = Translation(-min_bounded)
-        lm_translation.apply_inplace(self.landmarks)
-        return self
 
-    def crop(self, min_indices, max_indices,
-             constrain_to_boundary=False):
+        new_shape = max_bounded - min_bounded
+        return self.warp_to_shape(new_shape, Translation(min_bounded), order=0,
+                                  warp_landmarks=True,
+                                  return_transform=return_transform)
+
+    def crop_to_pointcloud(self, pointcloud, boundary=0,
+                           constrain_to_boundary=True,
+                           return_transform=False):
         r"""
-        Return a cropped copy of this image using the given minimum and
-        maximum indices. Landmarks are correctly adjusted so they maintain
-        their position relative to the newly cropped image.
+        Return a copy of this image cropped so that it is bounded around a
+        pointcloud with an optional ``n_pixel`` boundary.
 
         Parameters
         ----------
-        min_indices : ``(n_dims,)`` `ndarray`
-            The minimum index over each dimension.
-        max_indices : ``(n_dims,)`` `ndarray`
-            The maximum index over each dimension.
+        pointcloud : :map:`PointCloud`
+            The pointcloud to crop around.
+        boundary : `int`, optional
+            An extra padding to be added all around the landmarks bounds.
         constrain_to_boundary : `bool`, optional
             If ``True`` the crop will be snapped to not go beyond this images
-            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
+            boundary. If ``False``, an :map`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
-        cropped_image : `type(self)`
-            A new instance of self, but cropped.
+        image : :map:`Image`
+            A copy of this image cropped to the bounds of the pointcloud.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
-        ValueError
-            ``min_indices`` and ``max_indices`` both have to be of length
-            ``n_dims``. All ``max_indices`` must be greater than
-            ``min_indices``.
         ImageBoundaryError
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        cropped_image = self.copy()
-        return cropped_image.crop_inplace(
-            min_indices, max_indices,
-            constrain_to_boundary=constrain_to_boundary)
+        min_indices, max_indices = pointcloud.bounds(boundary=boundary)
+        return self.crop(min_indices, max_indices,
+                         constrain_to_boundary=constrain_to_boundary,
+                         return_transform=return_transform)
 
-    def crop_to_landmarks_inplace(self, group=None, label=None, boundary=0,
-                                  constrain_to_boundary=True):
+    def crop_to_landmarks(self, group=None, label=None, boundary=0,
+                          constrain_to_boundary=True,
+                          return_transform=False):
         r"""
-        Crop this image to be bounded around a set of landmarks with an
-        optional ``n_pixel`` boundary
+        Return a copy of this image cropped so that it is bounded around a set
+        of landmarks with an optional ``n_pixel`` boundary
 
         Parameters
         ----------
@@ -981,11 +1025,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True`` the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
         image : :map:`Image`
-            This image, cropped to its landmarks.
+            A copy of this image cropped to its landmarks.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -994,14 +1044,67 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label]
-        min_indices, max_indices = pc.bounds(boundary=boundary)
-        return self.crop_inplace(min_indices, max_indices,
-                                 constrain_to_boundary=constrain_to_boundary)
+        return self.crop_to_pointcloud(
+            pc, boundary=boundary, constrain_to_boundary=constrain_to_boundary,
+            return_transform=return_transform)
 
-    def crop_to_landmarks_proportion_inplace(self, boundary_proportion,
-                                             group=None, label=None,
-                                             minimum=True,
-                                             constrain_to_boundary=True):
+    def crop_to_pointcloud_proportion(self, pointcloud, boundary_proportion,
+                                      minimum=True,
+                                      constrain_to_boundary=True,
+                                      return_transform=False):
+        r"""
+        Return a copy of this image cropped so that it is bounded around a
+        pointcloud with an optional ``n_pixel`` boundary.
+
+        Parameters
+        ----------
+        boundary_proportion : `float`
+            Additional padding to be added all around the landmarks
+            bounds defined as a proportion of the landmarks range. See
+            the minimum parameter for a definition of how the range is
+            calculated.
+        pointcloud : :map:`PointCloud`
+            The pointcloud to crop around.
+        minimum : `bool`, optional
+            If ``True`` the specified proportion is relative to the minimum
+            value of the pointclouds' per-dimension range; if ``False`` w.r.t.
+            the maximum value of the pointclouds' per-dimension range.
+        constrain_to_boundary : `bool`, optional
+            If ``True``, the crop will be snapped to not go beyond this images
+            boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
+            if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
+
+        Returns
+        -------
+        image : :map:`Image`
+            A copy of this image cropped to the border proportional to
+            the pointcloud spread or range.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
+
+        Raises
+        ------
+        ImageBoundaryError
+            Raised if ``constrain_to_boundary=False``, and an attempt is made
+            to crop the image in a way that violates the image bounds.
+        """
+        if minimum:
+            boundary = boundary_proportion * np.min(pointcloud.range())
+        else:
+            boundary = boundary_proportion * np.max(pointcloud.range())
+        return self.crop_to_pointcloud(
+            pointcloud, boundary=boundary,
+            constrain_to_boundary=constrain_to_boundary,
+            return_transform=return_transform)
+
+    def crop_to_landmarks_proportion(self, boundary_proportion,
+                                     group=None, label=None, minimum=True,
+                                     constrain_to_boundary=True,
+                                     return_transform=False):
         r"""
         Crop this image to be bounded around a set of landmarks with a
         border proportional to the landmark spread or range.
@@ -1027,12 +1130,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True``, the crop will be snapped to not go beyond this images
             boundary. If ``False``, an :map:`ImageBoundaryError` will be raised
             if an attempt is made to go beyond the edge of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the cropping is also returned.
 
         Returns
         -------
         image : :map:`Image`
             This image, cropped to its landmarks with a border proportional to
             the landmark spread or range.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -1041,13 +1150,51 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label]
-        if minimum:
-            boundary = boundary_proportion * np.min(pc.range())
-        else:
-            boundary = boundary_proportion * np.max(pc.range())
-        return self.crop_to_landmarks_inplace(
-            group=group, label=label, boundary=boundary,
-            constrain_to_boundary=constrain_to_boundary)
+        return self.crop_to_pointcloud_proportion(
+            pc, boundary_proportion, minimum=minimum,
+            constrain_to_boundary=constrain_to_boundary,
+            return_transform=return_transform)
+
+    def _propagate_crop_to_inplace(self, cropped):
+        # helper method that sets self's state to the result of a crop call.
+        # only needed for the deprecation period of the inplace crop methods.
+        self.pixels = cropped.pixels
+        self.landmarks = cropped.landmarks
+        if hasattr(self, 'mask'):
+            self.mask = cropped.mask
+        return self
+
+    def crop_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated: please use :meth:`crop` instead.
+        """
+        warn('crop_inplace() is deprecated and will be removed in the next '
+             'major version of menpo. '
+             'Please use crop() instead.', MenpoDeprecationWarning)
+        cropped = self.crop(*args, **kwargs)
+        return self._propagate_crop_to_inplace(cropped)
+
+    def crop_to_landmarks_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated: please use :meth:`crop_to_landmarks` instead.
+        """
+        warn('crop_to_landmarks_inplace() is deprecated and will be removed in'
+             ' the next major version of menpo. '
+             'Please use crop_to_landmarks() instead.',
+             MenpoDeprecationWarning)
+        cropped = self.crop_to_landmarks(*args, **kwargs)
+        return self._propagate_crop_to_inplace(cropped)
+
+    def crop_to_landmarks_proportion_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated: please use :meth:`crop_to_landmarks_proportion` instead.
+        """
+        warn('crop_to_landmarks_proportion_inplace() is deprecated and will be'
+             ' removed in the next major version of menpo. Please use '
+             'crop_to_landmarks_proportion() instead.',
+             MenpoDeprecationWarning)
+        cropped = self.crop_to_landmarks_proportion(*args, **kwargs)
+        return self._propagate_crop_to_inplace(cropped)
 
     def constrain_points_to_bounds(self, points):
         r"""
@@ -1072,8 +1219,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         bounded_points[over_image] = shape[over_image]
         return bounded_points
 
-    def extract_patches(self, patch_centers, patch_size=(16, 16),
-                        sample_offsets=None, as_single_array=False):
+    def extract_patches(self, patch_centers, patch_shape=(16, 16),
+                        sample_offsets=None, as_single_array=True):
         r"""
         Extract a set of patches from an image. Given a set of patch centers
         and a patch size, patches are extracted from within the image, centred
@@ -1083,7 +1230,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         same grid of patches around the landmarks.
 
         If sample offsets are used, to access the offsets for each patch you
-        need to slice the resulting list. So for 2 offsets, the first centers
+        need to slice the resulting `list`. So for 2 offsets, the first centers
         offset patches would be ``patches[:2]``.
 
         Currently only 2D images are supported.
@@ -1092,17 +1239,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ----------
         patch_centers : :map:`PointCloud`
             The centers to extract patches around.
-        patch_size : `tuple` or `ndarray`, optional
+        patch_shape : ``(1, n_dims)`` `tuple` or `ndarray`, optional
             The size of the patch to extract
-        sample_offsets : :map:`PointCloud`, optional
-            The offsets to sample from within a patch. So (0, 0) is the centre
-            of the patch (no offset) and (1, 0) would be sampling the patch
-            from 1 pixel up the first axis away from the centre.
+        sample_offsets : ``(n_offsets, n_dims)`` `ndarray` or ``None``, optional
+            The offsets to sample from within a patch. So ``(0, 0)`` is the
+            centre of the patch (no offset) and ``(1, 0)`` would be sampling the
+            patch from 1 pixel up the first axis away from the centre.
+            If ``None``, then no offsets are applied.
         as_single_array : `bool`, optional
-            If ``True``, an ``(n_center * n_offset, self.shape...)``
+            If ``True``, an ``(n_center, n_offset, n_channels, patch_shape)``
             `ndarray`, thus a single numpy array is returned containing each
-            patch. If ``False``, a `list` of :map:`Image` objects is returned
-            representing each patch.
+            patch. If ``False``, a `list` of ``n_center * n_offset``
+            :map:`Image` objects is returned representing each patch.
 
         Returns
         -------
@@ -1121,14 +1269,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                              'currently supported.')
 
         if sample_offsets is None:
-            sample_offsets_arr = np.zeros([1, 2], dtype=np.intp)
+            sample_offsets = np.zeros([1, 2], dtype=np.intp)
         else:
-            sample_offsets_arr = np.require(sample_offsets.points,
-                                            dtype=np.intp)
+            sample_offsets = np.require(sample_offsets, dtype=np.intp)
 
         single_array = extract_patches(self.pixels, patch_centers.points,
-                                       np.asarray(patch_size, dtype=np.intp),
-                                       sample_offsets_arr)
+                                       np.asarray(patch_shape, dtype=np.intp),
+                                       sample_offsets)
 
         if as_single_array:
             return single_array
@@ -1136,8 +1283,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             return [Image(o, copy=False) for p in single_array for o in p]
 
     def extract_patches_around_landmarks(
-            self, group=None, label=None, patch_size=(16, 16),
-            sample_offsets=None, as_single_array=False):
+            self, group=None, label=None, patch_shape=(16, 16),
+            sample_offsets=None, as_single_array=True):
         r"""
         Extract patches around landmarks existing on this image. Provided the
         group label and optionally the landmark label extract a set of patches.
@@ -1148,21 +1295,22 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         Parameters
         ----------
-        group : `str` or ``None`` optional
+        group : `str` or ``None``, optional
             The landmark group to use as patch centres.
-        label : `str` or ``None`` optional
+        label : `str` or ``None``, optional
             The landmark label within the group to use as centres.
-        patch_size : `tuple` or `ndarray`, optional
+        patch_shape : `tuple` or `ndarray`, optional
             The size of the patch to extract
-        sample_offsets : :map:`PointCloud`, optional
-            The offsets to sample from within a patch. So (0,0) is the centre
-            of the patch (no offset) and (1, 0) would be sampling the patch
-            from 1 pixel up the first axis away from the centre.
+        sample_offsets : ``(n_offsets, n_dims)`` `ndarray` or ``None``, optional
+            The offsets to sample from within a patch. So ``(0, 0)`` is the
+            centre of the patch (no offset) and ``(1, 0)`` would be sampling the
+            patch from 1 pixel up the first axis away from the centre.
+            If ``None``, then no offsets are applied.
         as_single_array : `bool`, optional
-            If ``True``, an ``(n_center * n_offset, self.shape...)``
+            If ``True``, an ``(n_center, n_offset, n_channels, patch_shape)``
             `ndarray`, thus a single numpy array is returned containing each
-            patch. If ``False``, a `list` of :map:`Image` objects is returned
-            representing each patch.
+            patch. If ``False``, a `list` of ``n_center * n_offset``
+            :map:`Image` objects is returned representing each patch.
 
         Returns
         -------
@@ -1177,12 +1325,128 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If image is not 2D
         """
         return self.extract_patches(self.landmarks[group][label],
-                                    patch_size=patch_size,
+                                    patch_shape=patch_shape,
                                     sample_offsets=sample_offsets,
                                     as_single_array=as_single_array)
 
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0.0, batch_size=None):
+    def set_patches(self, patches, patch_centers, offset=None,
+                    offset_index=None):
+        r"""
+        Set the values of a group of patches into the correct regions of
+        **this** image. Given an array of patches and a set of patch centers,
+        the patches' values are copied in the regions of the image that are
+        centred on the coordinates of the given centers.
+
+        The patches argument can have any of the two formats that are returned
+        from the `extract_patches()` and `extract_patches_around_landmarks()`
+        methods. Specifically it can be:
+
+            1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
+            2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patches : `ndarray` or `list`
+            The values of the patches. It can have any of the two formats that
+            are returned from the `extract_patches()` and
+            `extract_patches_around_landmarks()` methods. Specifically, it can
+            either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
+            `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
+            objects.
+        patch_centers : :map:`PointCloud`
+            The centers to set the patches around.
+        offset : `list` or `tuple` or ``(1, 2)`` `ndarray` or ``None``, optional
+            The offset to apply on the patch centers within the image.
+            If ``None``, then ``(0, 0)`` is used.
+        offset_index : `int` or ``None``, optional
+            The offset index within the provided `patches` argument, thus the
+            index of the second dimension from which to sample. If ``None``,
+            then ``0`` is used.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        ValueError
+            If offset does not have shape (1, 2)
+        """
+        # parse arguments
+        if self.n_dims != 2:
+            raise ValueError('Only two dimensional patch insertion is '
+                             'currently supported.')
+        if offset is None:
+            offset = np.zeros([1, 2], dtype=np.intp)
+        elif isinstance(offset, tuple) or isinstance(offset, list):
+            offset = np.asarray([offset])
+        offset = np.require(offset, dtype=np.intp)
+        if not offset.shape == (1, 2):
+            raise ValueError('The offset must be a tuple, a list or a '
+                             'numpy.array with shape (1, 2).')
+        if offset_index is None:
+            offset_index = 0
+
+        # if patches is a list, convert it to array
+        if isinstance(patches, list):
+            patches = _convert_patches_list_to_single_array(
+                patches, patch_centers.n_points)
+
+        # set patches
+        set_patches(patches, self.pixels, patch_centers.points, offset,
+                    offset_index)
+
+    def set_patches_around_landmarks(self, patches, group=None, label=None,
+                                     offset=None, offset_index=None):
+        r"""
+        Set the values of a group of patches around the landmarks existing in
+        **this** image. Given an array of patches, a group and a label, the
+        patches' values are copied in the regions of the image that are
+        centred on the coordinates of corresponding landmarks.
+
+        The patches argument can have any of the two formats that are returned
+        from the `extract_patches()` and `extract_patches_around_landmarks()`
+        methods. Specifically it can be:
+
+            1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
+            2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patches : `ndarray` or `list`
+            The values of the patches. It can have any of the two formats that
+            are returned from the `extract_patches()` and
+            `extract_patches_around_landmarks()` methods. Specifically, it can
+            either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
+            `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image`
+            objects.
+        group : `str` or ``None`` optional
+            The landmark group to use as patch centres.
+        label : `str` or ``None`` optional
+            The landmark label within the group to use as centres.
+        offset : `list` or `tuple` or ``(1, 2)`` `ndarray` or ``None``, optional
+            The offset to apply on the patch centers within the image.
+            If ``None``, then ``(0, 0)`` is used.
+        offset_index : `int` or ``None``, optional
+            The offset index within the provided `patches` argument, thus the
+            index of the second dimension from which to sample. If ``None``,
+            then ``0`` is used.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        ValueError
+            If offset does not have shape (1, 2)
+        """
+        return self.set_patches(patches, self.landmarks[group][label],
+                                offset=offset, offset_index=offset_index)
+
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
+                     order=1, mode='constant', cval=0.0, batch_size=None,
+                     return_transform=False):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -1228,11 +1492,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         if self.n_dims != transform.n_dims:
             raise ValueError(
@@ -1247,15 +1517,19 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_image = self._build_warped_to_mask(template_mask, sampled)
+        warped_image = self._build_warp_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
-        return warped_image
+        # optionally return the transform
+        if return_transform:
+            return warped_image, transform
+        else:
+            return warped_image
 
-    def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
+    def _build_warp_to_mask(self, template_mask, sampled_pixel_values):
         r"""
         Builds the warped image from the template mask and sampled pixel values.
         Overridden for :map:`BooleanImage` as we can't use the usual
@@ -1312,8 +1586,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return scipy_interpolation(self.pixels, points_to_sample,
                                    order=order,  mode=mode, cval=cval)
 
-    def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0.0, batch_size=None):
+    def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
+                      order=1, mode='constant', cval=0.0, batch_size=None,
+                      return_transform=False):
         """
         Return a copy of this image warped into a different reference space.
 
@@ -1356,16 +1631,45 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             how many points in the image should be warped at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are warped at once.
+        return_transform : `bool`, optional
+            This argument is for internal use only. If ``True``, then the
+            :map:`Transform` object is also returned.
 
         Returns
         -------
         warped_image : `type(self)`
             A copy of this image, warped.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
+        template_shape = np.array(template_shape, dtype=np.int)
         if (isinstance(transform, Affine) and order in range(4) and
             self.n_dims == 2):
-            # skimage has an optimised Cython interpolation for 2D affine
-            # warps
+
+            # we are going to be able to go fast.
+
+            if isinstance(transform, Translation) and order == 0:
+                # an integer translation (e.g. a crop) If this lies entirely
+                # in the bounds then we can just do a copy. We need to match
+                # the behavior of cython_interpolation exactly, which means
+                # matching its rounding behavior too:
+                t = transform.translation_component.copy()
+                pos_t = t > 0.0
+                t[pos_t] += 0.5
+                t[~pos_t] -= 0.5
+                min_ = t.astype(np.int)
+                max_ = template_shape + min_
+                if np.all(max_ <= np.array(self.shape)) and np.all(min_ >= 0):
+                    # we have a crop - slice the pixels.
+                    warped_pixels = self.pixels[:,
+                                    int(min_[0]):int(max_[0]),
+                                    int(min_[1]):int(max_[1])].copy()
+                    return self._build_warp_to_shape(warped_pixels, transform,
+                                                     warp_landmarks,
+                                                     return_transform)
+            # we couldn't do the crop, but skimage has an optimised Cython
+            # interpolation for 2D affine warps - let's use that
             sampled = cython_interpolation(self.pixels, template_shape,
                                            transform, order=order,
                                            mode=mode, cval=cval)
@@ -1379,7 +1683,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
         # build a warped version of the image
-        warped_pixels = sampled.reshape((self.n_channels,) + template_shape)
+        warped_pixels = sampled.reshape(
+            (self.n_channels,) + tuple(template_shape))
+
+        return self._build_warp_to_shape(warped_pixels, transform,
+                                         warp_landmarks, return_transform)
+
+    def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks,
+                             return_transform):
+        # factored out common logic from the different paths we can take in
+        # warp_to_shape. Rebuilds an image post-warp, adjusting landmarks
+        # as necessary.
         warped_image = Image(warped_pixels, copy=False)
 
         # warp landmarks if requested.
@@ -1388,9 +1702,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
-        return warped_image
 
-    def rescale(self, scale, round='ceil', order=1):
+        # optionally return the transform
+        if return_transform:
+            return warped_image, transform
+        else:
+            return warped_image
+
+    def rescale(self, scale, round='ceil', order=1,
+                return_transform=False):
         r"""
         Return a copy of this image, rescaled by a given factor.
         Landmarks are rescaled appropriately.
@@ -1417,10 +1737,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rescale is also returned.
+
         Returns
         -------
         rescaled_image : ``type(self)``
             A copy of this image, rescaled.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -1465,9 +1792,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # for rescaling we enforce that mode is nearest to avoid num. errors
         return self.warp_to_shape(template_shape, inverse_transform,
                                   warp_landmarks=True, order=order,
-                                  mode='nearest')
+                                  mode='nearest',
+                                  return_transform=return_transform)
 
-    def rescale_to_diagonal(self, diagonal, round='ceil'):
+    def rescale_to_diagonal(self, diagonal, round='ceil',
+                            return_transform=False):
         r"""
         Return a copy of this image, rescaled so that the it's diagonal is a
         new size.
@@ -1478,26 +1807,46 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The diagonal size of the new image.
         round: ``{ceil, floor, round}``, optional
             Rounding function to be applied to floating point shapes.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rescale is also returned.
 
         Returns
         -------
         rescaled_image : type(self)
             A copy of this image, rescaled.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
-        return self.rescale(diagonal / self.diagonal, round=round)
+        return self.rescale(diagonal / self.diagonal(), round=round,
+                            return_transform=return_transform)
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
                                    label=None, round='ceil', order=1):
         r"""
+        Deprecated: please use :meth:`rescale_to_pointcloud` instead.
+        """
+        warn('rescale_to_reference_shape() is deprecated and will be removed '
+             'in the next major version of menpo. '
+             'Please use rescale_to_pointcloud() instead.',
+             MenpoDeprecationWarning)
+        return self.rescale_to_pointcloud(reference_shape, group=group,
+                                          label=label, round=round, order=order)
+
+    def rescale_to_pointcloud(self, pointcloud, group=None, label=None,
+                              round='ceil', order=1,
+                              return_transform=False):
+        r"""
         Return a copy of this image, rescaled so that the scale of a
         particular group of landmarks matches the scale of the passed
-        reference landmarks.
+        reference pointcloud.
 
         Parameters
         ----------
-        reference_shape: :map:`PointCloud`
-            The reference shape to which the landmarks scale will be matched
-            against.
+        pointcloud: :map:`PointCloud`
+            The reference pointcloud to which the landmarks specified by
+            ``group`` will be scaled to match.
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
@@ -1520,21 +1869,30 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rescale is also returned.
+
         Returns
         -------
         rescaled_image : ``type(self)``
             A copy of this image, rescaled.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         pc = self.landmarks[group][label]
-        scale = AlignmentUniformScale(pc, reference_shape).as_vector().copy()
-        return self.rescale(scale, round=round, order=order)
+        scale = AlignmentUniformScale(pc, pointcloud).as_vector().copy()
+        return self.rescale(scale, round=round, order=order,
+                            return_transform=return_transform)
 
     def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
-                                            label=None, round='ceil', order=1):
+                                            label=None, round='ceil', order=1,
+                                            return_transform=False):
         r"""
-        Return a copy of this image, rescaled so that the diagonal_range of the
-        bounding box containing its landmarks matches the specified
-        diagonal_range range.
+        Return a copy of this image, rescaled so that the ``diagonal_range`` of
+        the bounding box containing its landmarks matches the specified
+        ``diagonal_range`` range.
 
         Parameters
         ----------
@@ -1563,16 +1921,24 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= =====================
 
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rescale is also returned.
+
         Returns
         -------
         rescaled_image : ``type(self)``
             A copy of this image, rescaled.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
         x, y = self.landmarks[group][label].range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
-        return self.rescale(scale, round=round, order=order)
+        return self.rescale(scale, round=round, order=order,
+                            return_transform=return_transform)
 
-    def resize(self, shape, order=1):
+    def resize(self, shape, order=1, return_transform=False):
         r"""
         Return a copy of this image, resized to a particular shape.
         All image information (landmarks, and mask in the case of
@@ -1596,10 +1962,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= =====================
 
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the resize is also returned.
+
         Returns
         -------
         resized_image : ``type(self)``
             A copy of this image, resized.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
 
         Raises
         ------
@@ -1618,14 +1991,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # errors. For example, if we want (250, 250), we need to ensure that
         # we get (250, 250) even if the number we obtain is 250 to some
         # floating point inaccuracy.
-        return self.rescale(scales, round='round', order=order)
+        return self.rescale(scales, round='round', order=order,
+                            return_transform=return_transform)
 
-    def zoom(self, scale, cval=0.0):
+    def zoom(self, scale, cval=0.0, return_transform=False):
         r"""
-        Zoom this image about the centre point. ``scale`` values greater
-        than 1.0 denote zooming **in** to the image and values less than
-        1.0 denote zooming **out** of the image. The size of the image will not
-        change, if you wish to scale an image, please see :meth:`rescale`.
+        Return a copy of this image, zoomed about the centre point. ``scale``
+        values greater than 1.0 denote zooming **in** to the image and values
+        less than 1.0 denote zooming **out** of the image. The size of the
+        image will not change, if you wish to scale an image, please see
+        :meth:`rescale`.
 
         Parameters
         ----------
@@ -1636,41 +2011,164 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             by the value of ``cval``.
         cval : ``float``, optional
             The value to be set outside the rotated image boundaries.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the zooming is also returned.
+
+        Returns
+        -------
+        zoomed_image : ``type(self)``
+            A copy of this image, zoomed.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
         """
-        centre = Translation(-self.centre)
-        t = (centre.compose_before(UniformScale(1.0 / scale, self.n_dims))
-                   .compose_before(centre.pseudoinverse()))
+        t = scale_about_centre(self, 1.0 / scale)
+        return self.warp_to_shape(self.shape, t, cval=cval,
+                                  return_transform=return_transform)
 
-        return self.warp_to_shape(self.shape, t, cval=cval)
-
-    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0.0):
+    def rotate_ccw_about_centre(self, theta, degrees=True, retain_shape=False,
+                                cval=0.0, round='round', order=1,
+                                return_transform=False):
         r"""
-        Return a rotation of this image clockwise about its centre.
+        Return a copy of this image, rotated counter-clockwise about its centre.
+
+        Note that the `retain_shape` argument defines the shape of the rotated
+        image. If ``retain_shape=True``, then the shape of the rotated image
+        will be the same as the one of current image, so some regions will
+        probably be cropped. If ``retain_shape=False``, then the returned image
+        has the correct size so that the whole area of the current image is
+        included.
 
         Parameters
         ----------
         theta : `float`
-            The angle of rotation about the origin.
+            The angle of rotation about the centre.
         degrees : `bool`, optional
-            If ``True``, `theta` is interpreted as a degree. If ``False``,
+            If ``True``, `theta` is interpreted in degrees. If ``False``,
             ``theta`` is interpreted as radians.
-        cval : ``float``, optional
+        retain_shape : `bool`, optional
+            If ``True``, then the shape of the rotated image will be the same as
+            the one of current image, so some regions will probably be cropped.
+            If ``False``, then the returned image has the correct size so that
+            the whole area of the current image is included.
+        cval : `float`, optional
             The value to be set outside the rotated image boundaries.
+        round : ``{'ceil', 'floor', 'round'}``, optional
+            Rounding function to be applied to floating point shapes. This is
+            only used in case ``retain_shape=True``.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range
+            ``[0,5]``. This is only used in case ``retain_shape=True``.
+
+            ========= ====================
+            Order     Interpolation
+            ========= ====================
+            0         Nearest-neighbor
+            1         Bi-linear *(default)*
+            2         Bi-quadratic
+            3         Bi-cubic
+            4         Bi-quartic
+            5         Bi-quintic
+            ========= ====================
+
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the rotation is also returned.
 
         Returns
         -------
         rotated_image : ``type(self)``
             The rotated image.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
+
+        Raises
+        ------
+        ValueError
+            Image rotation is presently only supported on 2D images
         """
         if self.n_dims != 2:
             raise ValueError('Image rotation is presently only supported on '
                              '2D images')
-        # create a translation that moves the centre of the image to the origin
-        t = Translation(self.centre)
-        r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
-        r_about_centre = t.pseudoinverse().compose_before(r).compose_before(t)
-        return self.warp_to_shape(self.shape, r_about_centre.pseudoinverse(),
-                                  warp_landmarks=True, cval=cval)
+
+        if retain_shape:
+            # Rotate the image about its centre
+            trans = rotate_ccw_about_centre(self, theta, degrees=degrees)
+            # Output image's shape must be the same as the original one
+            shape = self.shape
+        else:
+            # Get image's bounding box coordinates
+            bbox = bounding_box((0, 0), [self.shape[0] - 1, self.shape[1] - 1])
+            # Translate to origin and rotate counter-clockwise
+            trans = Translation(-self.centre(),
+                                skip_checks=True).compose_before(
+                Rotation.init_from_2d_ccw_angle(theta, degrees=degrees))
+            rotated_bbox = trans.apply(bbox)
+            # Create new translation so that min bbox values go to 0
+            t = Translation(-rotated_bbox.bounds()[0])
+            trans.compose_before_inplace(t)
+            rotated_bbox = trans.apply(bbox)
+            # Output image's shape is the range of the rotated bounding box
+            # while respecting the users rounding preference.
+            shape = round_image_shape(rotated_bbox.range() + 1, round)
+
+        # Warp image
+        return self.warp_to_shape(
+            shape, trans.pseudoinverse(), order=order, warp_landmarks=True,
+            cval=cval, return_transform=return_transform)
+
+    def mirror(self, axis=1, return_transform=False):
+        r"""
+        Return a copy of this image, mirrored/flipped about a certain axis.
+
+        Parameters
+        ----------
+        axis : `int`, optional
+            The axis about which to mirror the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            perform the mirroring is also returned.
+
+        Returns
+        -------
+        mirrored_image : ``type(self)``
+            The mirrored image.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
+
+        Raises
+        ------
+        ValueError
+            axis cannot be negative
+        ValueError
+            axis={} but the image has {} dimensions
+        """
+        # Check axis argument
+        if axis < 0:
+            raise ValueError('axis cannot be negative')
+        elif axis >= self.n_dims:
+            raise ValueError("axis={} but the image has {} "
+                             "dimensions".format(axis, self.n_dims))
+
+        # Create transform that includes ...
+        # ... flipping about the selected axis ...
+        rot_matrix = np.eye(self.n_dims)
+        rot_matrix[axis, axis] = -1
+        # ... and translating back to the image's bbox
+        tr_matrix = np.zeros(self.n_dims)
+        tr_matrix[axis] = self.shape[axis] - 1
+
+        # Create transform object
+        trans = Rotation(rot_matrix, skip_checks=True).compose_before(
+            Translation(tr_matrix, skip_checks=True))
+
+        # Warp image
+        return self.warp_to_shape(self.shape, trans.pseudoinverse(),
+                                  warp_landmarks=True,
+                                  return_transform=return_transform)
 
     def pyramid(self, n_levels=3, downscale=2):
         r"""
@@ -1856,7 +2354,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(
-            self._str_shape, self.n_dims, self.n_channels,
+            self._str_shape(), self.n_dims, self.n_channels,
             's' * (self.n_channels > 1)))
 
     @property
@@ -1976,3 +2474,143 @@ def round_image_shape(shape, round):
         raise ValueError('round must be either ceil, round or floor')
     # Ensure that the '+' operator means concatenate tuples
     return tuple(getattr(np, round)(shape).astype(np.int))
+
+
+def _convert_patches_list_to_single_array(patches_list, n_center):
+    r"""
+    Converts patches from a `list` of :map:`Image` objects to a single `ndarray`
+    with shape ``(n_center, n_offset, self.n_channels, patch_shape)``.
+
+    Note that these two are the formats returned by the `extract_patches()`
+    and `extract_patches_around_landmarks()` methods of :map:`Image` class.
+
+    Parameters
+    ----------
+    patches_list : `list` of `n_center * n_offset` :map:`Image` objects
+        A `list` that contains all the patches as :map:`Image` objects.
+    n_center : `int`
+        The number of centers from which the patches are extracted.
+
+    Returns
+    -------
+    patches_array : `ndarray` ``(n_center, n_offset, n_channels, patch_shape)``
+        The numpy array that contains all the patches.
+    """
+    n_offsets = np.int(len(patches_list) / n_center)
+    n_channels = patches_list[0].n_channels
+    height = patches_list[0].height
+    width = patches_list[0].width
+    patches_array = np.empty((n_center, n_offsets, n_channels, height, width),
+                             dtype=patches_list[0].pixels.dtype)
+    total_index = 0
+    for p in range(n_center):
+        for o in range(n_offsets):
+            patches_array[p, o, ...] = patches_list[total_index].pixels
+            total_index += 1
+    return patches_array
+
+
+def _create_patches_image(patches, patch_centers, patches_indices=None,
+                          offset_index=None, background='black'):
+    r"""
+    Creates an :map:`Image` object in which the patches are located on the
+    correct regions based on the centers. Thus, the image is a block-sparse
+    matrix. It has also two attached :map:`LandmarkGroup` objects. The
+    `all_patch_centers` one contains all the patch centers, while the
+    `selected_patch_centers` one contains only the centers that correspond to
+    the patches that the user selected to set.
+
+    The patches argument can have any of the two formats that are returned
+    from the `extract_patches()` and `extract_patches_around_landmarks()`
+    methods of the :map:`Image` class. Specifically it can be:
+
+        1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
+        2. `list` of ``n_center * n_offset`` :map:`Image` objects
+
+    Parameters
+    ----------
+    patches : `ndarray` or `list`
+        The values of the patches. It can have any of the two formats that are
+        returned from the `extract_patches()` and
+        `extract_patches_around_landmarks()` methods. Specifically, it can
+        either be an ``(n_center, n_offset, self.n_channels, patch_shape)``
+        `ndarray` or a `list` of ``n_center * n_offset`` :map:`Image` objects.
+    patch_centers : :map:`PointCloud`
+        The centers to set the patches around.
+    patches_indices : `int` or `list` of `int` or ``None``, optional
+        Defines the patches that will be set (copied) to the image. If ``None``,
+        then all the patches are copied.
+    offset_index : `int` or ``None``, optional
+        The offset index within the provided `patches` argument, thus the index
+        of the second dimension from which to sample. If ``None``, then ``0`` is
+        used.
+    background : ``{'black', 'white'}``, optional
+        If ``'black'``, then the background is set equal to the minimum value
+        of `patches`. If ``'white'``, then the background is set equal to the
+        maximum value of `patches`.
+
+    Returns
+    -------
+    patches_image : :map:`Image`
+        The output patches image object.
+
+    Raises
+    ------
+    ValueError
+        Background must be either ''black'' or ''white''.
+    """
+    # If patches is a list, convert it to array
+    if isinstance(patches, list):
+        patches = _convert_patches_list_to_single_array(patches,
+                                                        patch_centers.n_points)
+
+    # Parse inputs
+    if offset_index is None:
+        offset_index = 0
+    if patches_indices is None:
+        patches_indices = np.arange(patches.shape[0])
+    elif not isinstance(patches_indices, Iterable):
+        patches_indices = [patches_indices]
+
+    # Compute patches image's shape
+    n_channels = patches.shape[2]
+    patch_shape0 = patches.shape[3]
+    patch_shape1 = patches.shape[4]
+    top, left = np.min(patch_centers.points, 0)
+    bottom, right = np.max(patch_centers.points, 0)
+    min_0 = np.floor(top - patch_shape0)
+    min_1 = np.floor(left - patch_shape1)
+    max_0 = np.ceil(bottom + patch_shape0)
+    max_1 = np.ceil(right + patch_shape1)
+    height = max_0 - min_0 + 1
+    width = max_1 - min_1 + 1
+
+    # Translate the patch centers to fit in the new image
+    new_patch_centers = patch_centers.copy()
+    new_patch_centers.points = patch_centers.points - np.array([[min_0, min_1]])
+
+    # Create temporary pointcloud with the selected patch centers
+    tmp_centers = PointCloud(new_patch_centers.points[patches_indices])
+
+    # Create new image with the correct background values
+    if background == 'black':
+        patches_image = Image.init_blank(
+            (height, width), n_channels,
+            fill=np.min(patches[patches_indices]))
+    elif background == 'white':
+        patches_image = Image.init_blank(
+            (height, width), n_channels,
+            fill=np.max(patches[patches_indices]))
+    else:
+        raise ValueError('Background must be either ''black'' or ''white''.')
+
+    # Attach the corrected patch centers
+    patches_image.landmarks['all_patch_centers'] = new_patch_centers
+    patches_image.landmarks['selected_patch_centers'] = tmp_centers
+
+    # Set the patches
+    patches_image.set_patches_around_landmarks(patches[patches_indices],
+                                               group='selected_patch_centers',
+                                               offset_index=offset_index)
+
+    return patches_image

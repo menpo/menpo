@@ -86,12 +86,25 @@ def cython_interpolation(pixels, template_shape, h_transform, mode='constant',
     # unfortunately they consider xy -> yx
     matrix = xy_yx.compose_before(h_transform).compose_before(xy_yx).h_matrix
     warped_channels = []
+    # Unfortunately, Cython does not seem to support the boolean numpy type,
+    # so I think we need to do the cast here. If we don't we lose support
+    # for warping BooleanImage.
+    # TODO: Can Cython support bool types? If so, skip this
+    if pixels.dtype == np.bool:
+        in_pixels = pixels.astype(np.uint8)
+    else:
+        in_pixels = pixels
     # Loop over every channel in image - we know last axis is always channels
     # Note that map_coordinates uses the opposite (dims, points) convention
     # to us so we transpose
     for i in range(pixels.shape[0]):
-        warped_channels.append(_warp_fast(pixels[i], matrix,
+        warped_channels.append(_warp_fast(in_pixels[i], matrix,
                                           output_shape=template_shape,
                                           mode=mode, order=order, cval=cval))
     warped_channels = [v.reshape([1, -1]) for v in warped_channels]
-    return np.concatenate(warped_channels, axis=0)
+
+    result = np.concatenate(warped_channels, axis=0)
+    # As above, we need to convert the uint8 back to bool
+    if pixels.dtype == np.bool:
+        result = result.astype(np.bool)
+    return result

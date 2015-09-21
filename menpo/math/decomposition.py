@@ -85,7 +85,7 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
         # m (mean vector): d
         m = np.mean(X, axis=0)
     else:
-        m = np.zeros(d)
+        m = np.zeros(d, dtype=X.dtype)
 
     # This is required if the data matrix is very large!
     if inplace:
@@ -199,7 +199,7 @@ def ipca(B, U_a, l_a, n_a, m_a=None, f=1.0, eps=1e-10):
         # augment centred data with extra sample
         B = np.vstack((B, np.sqrt((n_a * n_b) / n) * (m_b - m_a)))
     else:
-        m = np.zeros(d)
+        m = np.zeros(d, dtype=B.dtype)
 
     # project out current eigenspace out of data matrix
     PB = B - B.dot(U_a.T).dot(U_a)
@@ -209,7 +209,8 @@ def ipca(B, U_a, l_a, n_a, m_a=None, f=1.0, eps=1e-10):
     # form R matrix
     S_a = np.diag(s_a)
     R = np.hstack((np.vstack((f * S_a, B.dot(U_a.T))),
-                   np.vstack((np.zeros((S_a.shape[0], B_tilde.shape[0])),
+                   np.vstack((np.zeros((S_a.shape[0], B_tilde.shape[0]),
+                                       dtype=B.dtype),
                               PB.dot(B_tilde.T)))))
 
     # compute SVD of R

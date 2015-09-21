@@ -22,6 +22,11 @@ def test_breaking_bad_import():
     assert(img.landmarks['PTS'].n_landmarks == 68)
 
 
+def test_breaking_bad_import_kwargs():
+    img = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
+    assert(img.pixels.dtype == np.uint8)
+
+
 def test_takeo_import():
     img = mio.import_builtin_asset('takeo.ppm')
     assert(img.shape == (225, 150))
@@ -379,3 +384,9 @@ def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
     assert nan_points[0, 0]  # y-coord None point is nan
     assert not nan_points[0, 1]  # x-coord point is not nan
     assert np.all(nan_points[1, :]) # all of leye label is nan
+
+
+@patch('random.shuffle')
+def test_shuffle_kwarg_true_calls_shuffle(mock):
+    list(mio.import_images(mio.data_dir_path(), shuffle=True))
+    assert mock.called

@@ -7,7 +7,7 @@ requirements:
     - python
     - setuptools
     - numpy >=1.9.1,<1.10
-    - cython 0.21*
+    - cython 0.23.*
 
   run:
     - python
@@ -15,22 +15,26 @@ requirements:
 
     # Scientific Python Stack
     - numpy >=1.9.1,<1.10
-    - scipy 0.15.*
-    - matplotlib 1.4.*
-    - pillow  2.7.0
+    - scipy 0.16.*
+    - pillow  2.9.*
 
-    # Convienience dependences (not strictly required)
-    - mock
+    # Features
+    - cyvlfeat 0.4.*
+
+    # Visualization
+    - matplotlib 1.4.*
+    - menpowidgets 0.1.*
+
+    # Test dependencies
+    - mock 1.0.1
     - nose
-    - pip
-    - ipython-notebook
 
 test:
   requires:
-  - coverage
+    - coverage
 
   imports:
-  - menpo
+    - menpo
 
 about:
   home: https://github.com/menpo/menpo/
