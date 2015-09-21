@@ -237,7 +237,7 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         self._sync_target_from_state()
 
 
-def procrustes_alignment(source, target, rotation=True):
+def procrustes_alignment(source, target, rotation=True, allow_mirror=False):
     r"""
     Returns the similarity transform that aligns the `source` to the `target`.
 
@@ -251,6 +251,9 @@ def procrustes_alignment(source, target, rotation=True):
         If ``True``, rotation is allowed in the Procrustes calculation. If
         ``False``, only scale and translation effects are allowed in the
         returned transform.
+    allow_mirror : `bool`, optional
+        If ``True``, the Kabsch algorithm check is not performed, and mirroring
+        of the Rotation matrix is permitted.
 
     Returns
     -------
@@ -279,7 +282,8 @@ def procrustes_alignment(source, target, rotation=True):
         # centre and of the correct size. Use the current p to do this
         aligned_src = p.apply(source)
         aligned_tgt = tgt_t.apply(target)
-        r = Rotation(optimal_rotation_matrix(aligned_src, aligned_tgt),
+        r = Rotation(optimal_rotation_matrix(aligned_src, aligned_tgt,
+                                             allow_mirror=allow_mirror),
                      skip_checks=True)
         p.compose_before_inplace(r)
     # finally, translate the target back

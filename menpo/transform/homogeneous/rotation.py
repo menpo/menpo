@@ -308,11 +308,16 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         The source pointcloud instance used in the alignment
     target : :map:`PointCloud`
         The target pointcloud instance used in the alignment
+    allow_mirror : `bool`, optional
+        If ``True``, the Kabsch algorithm check is not performed, and mirroring
+        of the Rotation matrix is permitted.
     """
 
-    def __init__(self, source, target):
+    def __init__(self, source, target, allow_mirror=False):
         HomogFamilyAlignment.__init__(self, source, target)
-        Rotation.__init__(self, optimal_rotation_matrix(source, target))
+        Rotation.__init__(self, optimal_rotation_matrix(
+            source, target, allow_mirror=allow_mirror))
+        self.allow_mirror = allow_mirror
 
     def set_rotation_matrix(self, value, skip_checks=False):
         r"""
@@ -329,7 +334,7 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):
-        r = optimal_rotation_matrix(self.source, self.target)
+        r = optimal_rotation_matrix(self.source, self.target, self.allow_mirror)
         Rotation.set_rotation_matrix(self, r, skip_checks=True)
 
     def as_non_alignment(self):
