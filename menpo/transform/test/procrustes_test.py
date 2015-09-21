@@ -15,7 +15,8 @@ def test_procrustes_no_target():
     # trapezoid
     src_3 = PointCloud(np.array([[-0.5, -1.5], [2.5, -1.5],
                                  [2.8, -2.5], [-0.2, -2.5]]))
-    gpa = GeneralizedProcrustesAnalysis([src_1, src_2, src_3])
+    gpa = GeneralizedProcrustesAnalysis([src_1, src_2, src_3],
+                                        allow_mirror=True)
     aligned_1 = gpa.transforms[0].apply(gpa.sources[0])
     aligned_2 = gpa.transforms[1].apply(gpa.sources[1])
     aligned_3 = gpa.transforms[2].apply(gpa.sources[2])
@@ -41,7 +42,8 @@ def test_procrustes_with_target():
     # rhombus as target
     src_trg = PointCloud(np.array([[2.0, 0.0], [4.0, 2.0],
                                    [6.0, 0.0], [4.0, -2.0]]))
-    gpa = GeneralizedProcrustesAnalysis([src_1, src_2], target=src_trg)
+    gpa = GeneralizedProcrustesAnalysis([src_1, src_2], target=src_trg,
+                                        allow_mirror=True)
     aligned_1 = gpa.transforms[0].apply(gpa.sources[0])
     aligned_2 = gpa.transforms[1].apply(gpa.sources[1])
     assert(gpa.converged is True)

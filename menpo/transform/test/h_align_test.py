@@ -134,7 +134,7 @@ def test_align_2d_similarity_set_target():
                                   [3, -5]]))
     target = similarity.apply(source)
     # estimate the transform from source to source
-    estimate = AlignmentSimilarity(source, source)
+    estimate = AlignmentSimilarity(source, source, allow_mirror=True)
     # and set the target
     estimate.set_target(target)
     # check the estimates is correct

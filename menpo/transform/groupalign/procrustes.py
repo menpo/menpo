@@ -24,17 +24,21 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     target : :map:`PointCloud`, optional
         The target :map:`PointCloud` to align each source to.
         If ``None``, then the mean of the sources is used.
+    allow_mirror : `bool`, optional
+        If ``True``, the Kabsch algorithm check is not performed, and mirroring
+        of the Rotation matrix is permitted.
 
     Raises
     ------
     ValueError
         Need at least two sources to align
     """
-    def __init__(self, sources, target=None):
+    def __init__(self, sources, target=None, allow_mirror=False):
         super(GeneralizedProcrustesAnalysis, self).__init__(sources,
                                                             target=target)
         initial_target = self.target
-        self.transforms = [AlignmentSimilarity(source, self.target)
+        self.transforms = [AlignmentSimilarity(source, self.target,
+                                               allow_mirror=allow_mirror)
                            for source in self.sources]
         self.initial_target_scale = self.target.norm()
         self.n_iterations = 1

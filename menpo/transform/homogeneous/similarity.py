@@ -190,14 +190,20 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     rotation: `bool`, optional
         If ``False``, the rotation component of the similarity transform is not
         inferred.
+    allow_mirror : `bool`, optional
+        If ``True``, the Kabsch algorithm check is not performed, and mirroring
+        of the Rotation matrix is permitted.
     """
-    def __init__(self, source, target, rotation=True):
+    def __init__(self, source, target, rotation=True, allow_mirror=False):
         HomogFamilyAlignment.__init__(self, source, target)
-        x = procrustes_alignment(source, target, rotation=rotation)
+        x = procrustes_alignment(source, target, rotation=rotation,
+                                 allow_mirror=allow_mirror)
         Similarity.__init__(self, x.h_matrix, copy=False, skip_checks=True)
+        self.allow_mirror = allow_mirror
 
     def _sync_state_from_target(self):
-        similarity = procrustes_alignment(self.source, self.target)
+        similarity = procrustes_alignment(self.source, self.target,
+                                          self.allow_mirror)
         self._set_h_matrix(similarity.h_matrix, copy=False, skip_checks=True)
 
     def as_non_alignment(self):
