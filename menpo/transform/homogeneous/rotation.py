@@ -5,7 +5,7 @@ from .affine import DiscreteAffine
 from .similarity import Similarity
 
 
-def optimal_rotation_matrix(source, target):
+def optimal_rotation_matrix(source, target, allow_mirror=False):
     r"""
     Performs an SVD on the correlation matrix to find an optimal rotation
     between `source` and `target`.
@@ -16,6 +16,9 @@ def optimal_rotation_matrix(source, target):
         The source points to be aligned
     target: :map:`PointCloud`
         The target points to be aligned
+    allow_mirror : `bool`, optional
+        If ``True``, the Kabsch algorithm check is not performed, and mirroring
+        of the Rotation matrix is permitted.
 
     Returns
     -------
@@ -24,7 +27,16 @@ def optimal_rotation_matrix(source, target):
     """
     correlation = np.dot(target.points.T, source.points)
     U, D, Vt = np.linalg.svd(correlation)
-    return np.dot(U, Vt)
+
+    if not allow_mirror:
+        # d = sgn(det(V * Ut))
+        d = np.sign(np.linalg.det(Vt.T.dot(U.T)))
+        E = np.eye(U.shape[0])
+        E[-1, -1] = d
+        # R = U * E * Vt, E = [[1, 0, 0], [0, 1, 0], [0, 0, d]] for 2D
+        return np.dot(U, np.dot(E, Vt))
+    else:
+        return np.dot(U, Vt)
 
 
 # TODO build rotations about axis, euler angles etc
@@ -296,11 +308,16 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         The source pointcloud instance used in the alignment
     target : :map:`PointCloud`
         The target pointcloud instance used in the alignment
+    allow_mirror : `bool`, optional
+        If ``True``, the Kabsch algorithm check is not performed, and mirroring
+        of the Rotation matrix is permitted.
     """
 
-    def __init__(self, source, target):
+    def __init__(self, source, target, allow_mirror=False):
         HomogFamilyAlignment.__init__(self, source, target)
-        Rotation.__init__(self, optimal_rotation_matrix(source, target))
+        Rotation.__init__(self, optimal_rotation_matrix(
+            source, target, allow_mirror=allow_mirror))
+        self.allow_mirror = allow_mirror
 
     def set_rotation_matrix(self, value, skip_checks=False):
         r"""
@@ -317,7 +334,7 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):
-        r = optimal_rotation_matrix(self.source, self.target)
+        r = optimal_rotation_matrix(self.source, self.target, self.allow_mirror)
         Rotation.set_rotation_matrix(self, r, skip_checks=True)
 
     def as_non_alignment(self):

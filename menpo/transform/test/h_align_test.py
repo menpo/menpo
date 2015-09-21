@@ -134,7 +134,7 @@ def test_align_2d_similarity_set_target():
                                   [3, -5]]))
     target = similarity.apply(source)
     # estimate the transform from source to source
-    estimate = AlignmentSimilarity(source, source)
+    estimate = AlignmentSimilarity(source, source, allow_mirror=True)
     # and set the target
     estimate.set_target(target)
     # check the estimates is correct
@@ -178,6 +178,20 @@ def test_align_2d_rotation():
     # check the estimates is correct
     assert_allclose(rotation.h_matrix,
                     estimate.h_matrix, atol=1e-14)
+
+
+def test_align_2d_rotation_allow_mirror():
+    s_init = PointCloud(np.array([[-1., 1.], [1., 1.], [1., -1.], [-1., -1.]]))
+    s_trg = PointCloud(np.array([[1., -1.], [1., 1.], [-1., 1.], [-1., -1.]]))
+    # estimate the transform from source and target with mirroring allowed
+    tr = AlignmentRotation(s_init, s_trg, allow_mirror=True)
+    s_final = tr.apply(s_init)
+    assert_allclose(s_final.points, s_trg.points, atol=1e-14)
+    # estimate the transform from source and target with mirroring allowed
+    tr = AlignmentRotation(s_init, s_trg, allow_mirror=False)
+    s_final = tr.apply(s_init)
+    assert_allclose(s_final.points, np.array([[-1., -1.], [-1., 1.], [1., 1.],
+                                              [1., -1.]]), atol=1e-14)
 
 
 def test_align_2d_rotation_set_target():
