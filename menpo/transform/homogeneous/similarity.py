@@ -203,7 +203,7 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
 
     def _sync_state_from_target(self):
         similarity = procrustes_alignment(self.source, self.target,
-                                          self.allow_mirror)
+                                          allow_mirror=self.allow_mirror)
         self._set_h_matrix(similarity.h_matrix, copy=False, skip_checks=True)
 
     def as_non_alignment(self):

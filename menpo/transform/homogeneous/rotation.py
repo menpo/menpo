@@ -27,16 +27,18 @@ def optimal_rotation_matrix(source, target, allow_mirror=False):
     """
     correlation = np.dot(target.points.T, source.points)
     U, D, Vt = np.linalg.svd(correlation)
+    R = np.dot(U, Vt)
 
     if not allow_mirror:
         # d = sgn(det(V * Ut))
-        d = np.sign(np.linalg.det(Vt.T.dot(U.T)))
-        E = np.eye(U.shape[0])
-        E[-1, -1] = d
-        # R = U * E * Vt, E = [[1, 0, 0], [0, 1, 0], [0, 0, d]] for 2D
-        return np.dot(U, np.dot(E, Vt))
-    else:
-        return np.dot(U, Vt)
+        d = np.sign(np.linalg.det(R))
+        if d < 0:
+            print('Flipping {}'.format(d))
+            E = np.eye(U.shape[0])
+            E[-1, -1] = d
+            # R = U * E * Vt, E = [[1, 0, 0], [0, 1, 0], [0, 0, d]] for 2D
+            R = np.dot(U, np.dot(E, Vt))
+    return R
 
 
 # TODO build rotations about axis, euler angles etc
@@ -334,7 +336,8 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):
-        r = optimal_rotation_matrix(self.source, self.target, self.allow_mirror)
+        r = optimal_rotation_matrix(self.source, self.target,
+                                    allow_mirror=self.allow_mirror)
         Rotation.set_rotation_matrix(self, r, skip_checks=True)
 
     def as_non_alignment(self):
