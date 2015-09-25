@@ -33,7 +33,6 @@ def optimal_rotation_matrix(source, target, allow_mirror=False):
         # d = sgn(det(V * Ut))
         d = np.sign(np.linalg.det(R))
         if d < 0:
-            print('Flipping {}'.format(d))
             E = np.eye(U.shape[0])
             E[-1, -1] = d
             # R = U * E * Vt, E = [[1, 0, 0], [0, 1, 0], [0, 0, d]] for 2D
