@@ -2,7 +2,7 @@ from menpo.base import MenpoMissingDependencyError
 
 
 try:
-    from .vlfeat import dsift
+    from .vlfeat import dsift, fast_dsift
 except MenpoMissingDependencyError:
     pass
 
