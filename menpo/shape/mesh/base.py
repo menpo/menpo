@@ -213,6 +213,30 @@ class TriMesh(PointCloud):
             tm.points = tm.points[isolated_mask, :]
             return tm
 
+    def from_tri_mask(self, tri_mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        triangles in the TriMesh. This is then broadcast across the dimensions
+        of the mesh and returns a new mesh containing only those
+        triangles that were ``True`` in the mask.
+
+        Parameters
+        ----------
+        mask : ``(n_tris,)`` `ndarray`
+            1D array of booleans
+
+        Returns
+        -------
+        mesh : :map:`TriMesh`
+            A new mesh that has been masked by triangles.
+        """
+        # start with an all False point mask.
+        point_mask = np.zeros(self.n_points, dtype=np.bool)
+        # find all points that are involved in the triangles we wish to
+        # retain and set their mask to True.
+        point_mask[np.unique(self.trilist[tri_mask].ravel())] = True
+        return self.from_mask(point_mask)
+
     def _isolated_mask(self, mask):
         # Find the triangles we need to keep
         masked_adj = mask_adjacency_array(mask, self.trilist)
