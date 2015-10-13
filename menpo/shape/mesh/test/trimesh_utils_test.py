@@ -64,6 +64,13 @@ def test_tri_areas():
     assert np.allclose(utils_mesh().tri_areas(), gt_tri_areas)
 
 
+def test_2d_trimesh_2d_positive_areas():
+    t = TriMesh(np.array([[0, 0], [0, 1],
+                          [1, 1], [1, 0]], dtype=np.float),
+                trilist=np.array([[0, 2, 3], [0, 2, 1]]))
+    assert np.all(t.tri_areas() > 0)
+
+
 def test_mean_tri_area():
     assert utils_mesh().mean_tri_area() == 0.5
 
