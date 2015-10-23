@@ -4,7 +4,7 @@ environment:
   global:
     BINSTAR_USER: menpo
     BINSTAR_KEY:
-      secure: mw1Fz5a5C0lT4CXzsOCADoo/Xa9YymZI3yjVZNR8f5GwYrVAOC2YXxyEG6NaSWZY
+      secure: tsajM8eklrwmWI6OdAEKi3FMqIUXUCHS45rPJZ3bwO25PRWi5onvLdsNMk+8vYRS
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.4
