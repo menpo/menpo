@@ -6,7 +6,7 @@ requirements:
   build:
     - python
     - setuptools
-    - numpy >=1.9.1,<1.10
+    - numpy >=1.10,<1.11
     - cython 0.23.*
 
   run:
@@ -14,7 +14,7 @@ requirements:
     - pathlib 1.0  # [py2k]
 
     # Scientific Python Stack
-    - numpy >=1.9.1,<1.10
+    - numpy >=1.10,<1.11
     - scipy 0.16.*
     - pillow  2.9.*
 
