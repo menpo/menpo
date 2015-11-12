@@ -8,6 +8,7 @@ environment:
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.4
+    - PYTHON_VERSION: 3.5
 
 matrix:
   fast_finish: true
@@ -17,7 +18,7 @@ platform:
 - x64
 
 init:
-- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/v0.4.6/condaci.py' C:\\condaci.py; echo "Done"
+- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/v0.4.8/condaci.py' C:\\condaci.py; echo "Done"
 - cmd: python C:\\condaci.py setup
 
 install:

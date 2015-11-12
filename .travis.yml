@@ -13,9 +13,10 @@ env:
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.4
+    - PYTHON_VERSION: 3.5
 
 install:
-- wget https://raw.githubusercontent.com/menpo/condaci/v0.4.6/condaci.py -O condaci.py
+- wget https://raw.githubusercontent.com/menpo/condaci/v0.4.8/condaci.py -O condaci.py
 - python condaci.py setup
 
 script:
