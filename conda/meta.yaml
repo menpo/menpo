@@ -26,7 +26,7 @@ requirements:
     - menpowidgets 0.1.*
 
     # Test dependencies
-    - mock 1.0.1
+    - mock 1.3.*
     - nose
 
 test:
