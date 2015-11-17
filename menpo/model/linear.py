@@ -241,7 +241,7 @@ class LinearModel(Copyable):
             A copy of `vectors` with all basis of the model projected out.
         """
         weights = self.project_vectors(vectors)
-        return vectors - np.dot(weights, self.components)
+        return vectors - self._instance_vectors_for_full_weights(weights)
 
     def orthonormalize_inplace(self):
         r"""
@@ -350,6 +350,27 @@ class MeanLinearModel(LinearModel):
         """
         X = vectors - self.mean_vector
         return np.dot(X, self.components.T)
+
+    def project_out_vectors(self, vectors):
+        """
+        Returns a version of `vectors` where all the bases of the model have
+        been projected out.
+
+        Parameters
+        ----------
+        vectors : ``(n_vectors, n_features)`` `ndarray`
+            A matrix of novel vectors.
+
+        Returns
+        -------
+        projected_out : ``(n_vectors, n_features)`` `ndarray`
+            A copy of `vectors` with all bases of the model projected out.
+        """
+        weights = self.project_vectors(vectors)
+        # We don't add the mean back, in fact the residual is defined as
+        # the mean subtracted.
+        return ((vectors - self.mean_vector[None, ...]) -
+                LinearModel._instance_vectors_for_full_weights(self, weights))
 
     def _instance_vectors_for_full_weights(self, full_weights):
         x = LinearModel._instance_vectors_for_full_weights(self, full_weights)
