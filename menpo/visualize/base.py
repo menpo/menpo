@@ -826,3 +826,231 @@ def view_patches(patches, patch_centers, patches_indices=None,
             interpolation=interpolation)
 
     return patch_view
+
+
+def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
+                           colour_bar_label='Normalized Standard Deviation',
+                           colour_map='jet', figure_id=None, new_figure=False,
+                           image_view=True, line_colour='r', line_style='-',
+                           line_width=1., render_markers=True,
+                           marker_edge_colour='k', marker_face_colour='k',
+                           marker_edge_width=1., marker_size=20,
+                           marker_style='o', render_axes=False,
+                           axes_font_name='sans-serif', axes_font_size=10,
+                           axes_font_style='normal', axes_font_weight='normal',
+                           crop_proportion=0.1, figure_size=(10, 8)):
+    r"""
+    Method that renders the Gaussian ellipses that correspond to a set of
+    covariance matrices and mean vectors. Naturally, this only works for
+    2-dimensional random variables.
+
+    Parameters
+    ----------
+    covariances : `list` of ``(2, 2)`` `ndarray`
+        The covariance matrices that correspond to each ellipse.
+    means : `list` of ``(2, )`` `ndarray`
+        The mean vectors that correspond to each ellipse.
+    n_std : `float`, optional
+        This defines the size of the ellipses in terms of number of standard
+        deviations.
+    render_colour_bar : `bool`, optional
+        If ``True``, then the ellipses will be coloured based on their
+        normalized standard deviations and a colour bar will also appear on
+        the side. If ``False``, then all the ellipses will have the same colour.
+    colour_bar_label : `str`, optional
+        The title of the colour bar. It only applies if `render_colour_bar`
+        is ``True``.
+    colour_map : `str`, optional
+        A valid Matplotlib colour map. For more info, please refer to
+        `matplotlib.cm`.
+    figure_id : `object`, optional
+        The id of the figure to be used.
+    new_figure : `bool`, optional
+        If ``True``, a new figure is created.
+    image_view : `bool`, optional
+        If ``True`` the ellipses will be rendered in the image coordinates
+        system.
+    line_colour : See Below, optional
+        The colour of the lines of the ellipses.
+        Example options::
+
+            {r, g, b, c, m, k, w}
+            or
+            (3, ) ndarray
+
+    line_style : ``{-, --, -., :}``, optional
+        The style of the lines of the ellipses.
+    line_width : `float`, optional
+        The width of the lines of the ellipses.
+    render_markers : `bool`, optional
+        If ``True``, the centers of the ellipses will be rendered.
+    marker_style : See Below, optional
+        The style of the centers of the ellipses. Example options ::
+
+            {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
+    marker_size : `int`, optional
+        The size of the centers of the ellipses in points^2.
+    marker_face_colour : See Below, optional
+        The face (filling) colour of the centers of the ellipses.
+        Example options ::
+
+            {r, g, b, c, m, k, w}
+            or
+            (3, ) ndarray
+
+    marker_edge_colour : See Below, optional
+        The edge colour of the centers of the ellipses.
+        Example options ::
+
+            {r, g, b, c, m, k, w}
+            or
+            (3, ) ndarray
+
+    marker_edge_width : `float`, optional
+        The edge width of the centers of the ellipses.
+    render_axes : `bool`, optional
+        If ``True``, the axes will be rendered.
+    axes_font_name : See Below, optional
+        The font of the axes. Example options ::
+
+            {serif, sans-serif, cursive, fantasy, monospace}
+
+    axes_font_size : `int`, optional
+        The font size of the axes.
+    axes_font_style : ``{normal, italic, oblique}``, optional
+        The font style of the axes.
+    axes_font_weight : See Below, optional
+        The font weight of the axes.
+        Example options ::
+
+            {ultralight, light, normal, regular, book, medium, roman,
+            semibold,demibold, demi, bold, heavy, extra bold, black}
+
+    crop_proportion : `float`, optional
+        The proportion to be left around the centers' pointcloud.
+    figure_size : (`float`, `float`) `tuple` or ``None`` optional
+        The size of the figure in inches.
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Ellipse
+    import matplotlib.colors as colors
+    import matplotlib.cm as cmx
+    from matplotlib.font_manager import FontProperties
+    from menpo.shape import PointCloud
+
+    def eigh_sorted(cov):
+        vals, vecs = np.linalg.eigh(cov)
+        order = vals.argsort()[::-1]
+        return vals[order], vecs[:, order]
+
+    # get correct line style
+    if line_style == '-':
+        line_style = 'solid'
+    elif line_style == '--':
+        line_style = 'dashed'
+    elif line_style == '-.':
+        line_style = 'dashdot'
+    elif line_style == ':':
+        line_style = 'dotted'
+    else:
+        raise ValueError("line_style must be selected from "
+                         "['-', '--', '-.', ':'].")
+
+    # create pointcloud
+    pc = PointCloud(np.array(means))
+
+    # compute axes limits
+    bounds = pc.bounds()
+    r = pc.range()
+    x_rr = r[0] * crop_proportion
+    y_rr = r[1] * crop_proportion
+    axes_x_limits=[bounds[0][1] - x_rr, bounds[1][1] + x_rr]
+    axes_y_limits=[bounds[0][0] - y_rr, bounds[1][0] + y_rr]
+    normalizer = np.sum(r) / 2.
+
+    # compute height, width, theta and std
+    stds = []
+    heights = []
+    widths = []
+    thetas = []
+    for cov in covariances:
+        vals, vecs = eigh_sorted(cov)
+        width, height = np.sqrt(vals)
+        theta = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
+        stds.append(np.mean([height, width]) / normalizer)
+        heights.append(height)
+        widths.append(width)
+        thetas.append(theta)
+
+    if render_colour_bar:
+        # set colormap values
+        cmap = plt.get_cmap(colour_map)
+        cNorm = colors.Normalize(vmin=np.min(stds), vmax=np.max(stds))
+        scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cmap)
+
+    # visualize pointcloud
+    if render_colour_bar:
+        renderer = pc.view(
+            figure_id=figure_id, new_figure=new_figure, image_view=image_view,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=figure_size,
+            render_markers=False)
+    else:
+        renderer = pc.view(
+            figure_id=figure_id, new_figure=new_figure, image_view=image_view,
+            marker_edge_colour=marker_edge_colour,
+            marker_face_colour=marker_face_colour,
+            marker_edge_width=marker_edge_width, marker_size=marker_size,
+            marker_style=marker_style, render_axes=render_axes,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size, render_markers=render_markers)
+
+    # plot ellipses
+    ax = plt.gca()
+    for i in range(len(covariances)):
+        # Width and height are "full" widths, not radius
+        width = 2 * n_std * widths[i]
+        height = 2 * n_std * heights[i]
+
+        if image_view:
+            colour = line_colour
+            if render_colour_bar:
+                colour = scalarMap.to_rgba(stds[i])
+                if render_markers:
+                    plt.scatter(means[i][1], means[i][0], facecolor=colour,
+                                edgecolor=colour)
+            ellip = Ellipse(xy=means[i][-1::-1], width=height, height=width,
+                            angle=thetas[i], linestyle=line_style,
+                            linewidth=line_width, edgecolor=colour,
+                            facecolor='none')
+        else:
+            colour = line_colour
+            if render_colour_bar:
+                colour = scalarMap.to_rgba(stds[i])
+                if render_markers:
+                    plt.scatter(means[i][0], means[i][1], facecolor=colour,
+                                edgecolor=colour)
+            ellip = Ellipse(xy=means[i], width=width, height=height,
+                            angle=thetas[i], linestyle=line_style,
+                            linewidth=line_width, edgecolor=colour,
+                            facecolor='none')
+        ax.add_artist(ellip)
+
+    # show colour bar
+    if render_colour_bar:
+        scalarMap.set_array(stds)
+        cb = plt.colorbar(scalarMap, label=colour_bar_label)
+
+        # change colour bar's font properties
+        ax = cb.ax
+        text = ax.yaxis.label
+        font = FontProperties(size=axes_font_size, weight=axes_font_weight,
+                              style=axes_font_style, family=axes_font_name)
+        text.set_font_properties(font)
+
+    return renderer

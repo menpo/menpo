@@ -15,6 +15,7 @@ Decomposition
 
   eigenvalue_decomposition
   pca
+  pcacov
   ipca
 
 

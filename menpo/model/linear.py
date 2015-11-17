@@ -137,7 +137,6 @@ class LinearModel(Copyable):
                 "components = {}".format(self.n_components))
         return self._instance_vectors_for_full_weights(weights)
 
-    # TODO check this is right
     def _instance_vectors_for_full_weights(self, full_weights):
         return np.dot(full_weights, self.components)
 
