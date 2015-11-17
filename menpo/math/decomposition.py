@@ -4,7 +4,6 @@ from scipy.sparse import issparse
 from .linalg import dot_inplace_right
 
 
-# TODO: document me!
 def cca(X, Y, inplace=False):
     """
     Calculate Canonical Correlation Analysis (CCA) on the two given matrices.
