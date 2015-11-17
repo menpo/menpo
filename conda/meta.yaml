@@ -22,7 +22,7 @@ requirements:
     - cyvlfeat >=0.4.2,<0.5
 
     # Visualization
-    - matplotlib 1.5.*
+    - matplotlib 1.4.*
 
     # Test dependencies
     - mock 1.3.*
