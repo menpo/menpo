@@ -240,7 +240,7 @@ class LinearModel(Copyable):
         projected_out : ``(n_vectors, n_features)`` `ndarray`
             A copy of `vectors` with all basis of the model projected out.
         """
-        weights = np.dot(vectors, self.components.T)
+        weights = self.project_vectors(vectors)
         return vectors - np.dot(weights, self.components)
 
     def orthonormalize_inplace(self):
