@@ -210,9 +210,15 @@ class Targetable(Copyable):
         ----------
         new_target : :map:`PointCloud`
             The new target that this object should try and regenerate.
+
+        Returns
+        -------
+        self : :map:`Targetable`
+            A reference to this instance.
         """
         self._target_setter_with_verification(new_target)  # trigger the update
         self._sync_state_from_target()  # and a sync
+        return self
 
     def _target_setter_with_verification(self, new_target):
         r"""Updates the target, checking it is sensible, without triggering a
