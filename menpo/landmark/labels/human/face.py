@@ -276,6 +276,70 @@ def face_ibug_68_to_face_ibug_49(pcloud):
     return new_pcloud, mapping
 
 
+@labeller_func(group_label='face_ibug_49')
+def face_ibug_49_to_face_ibug_49(pcloud):
+    r"""
+    Apply the IBUG 49-point semantic labels.
+
+    The semantic labels applied are as follows:
+
+      - left_eyebrow
+      - right_eyebrow
+      - nose
+      - left_eye
+      - right_eye
+      - mouth
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
+    .. [2] http://ibug.doc.ic.ac.uk/resources/300-W/
+    """
+    from menpo.shape import PointUndirectedGraph
+
+    n_expected_points = 49
+    validate_input(pcloud, n_expected_points)
+
+    lbrow_indices = np.arange(0, 5)
+    rbrow_indices = np.arange(5, 10)
+    upper_nose_indices = np.arange(10, 14)
+    lower_nose_indices = np.arange(14, 19)
+    leye_indices = np.arange(19, 25)
+    reye_indices = np.arange(25, 31)
+    outer_mouth_indices = np.arange(31, 43)
+    inner_mouth_indices = np.hstack((31, np.arange(43, 46),
+                                     37, np.arange(46, 49)))
+
+    lbrow_connectivity = connectivity_from_array(lbrow_indices)
+    rbrow_connectivity = connectivity_from_array(rbrow_indices)
+    nose_connectivity = np.vstack([
+        connectivity_from_array(upper_nose_indices),
+        connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = connectivity_from_array(reye_indices, close_loop=True)
+    mouth_connectivity = np.vstack([
+        connectivity_from_array(outer_mouth_indices, close_loop=True),
+        connectivity_from_array(inner_mouth_indices, close_loop=True)])
+
+    all_connectivity = np.vstack([
+        lbrow_connectivity, rbrow_connectivity, nose_connectivity,
+        leye_connectivity, reye_connectivity, mouth_connectivity])
+
+    # Ignore the two inner mouth points
+    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points,
+                                                      all_connectivity)
+
+    mapping = OrderedDict()
+    mapping['left_eyebrow'] = lbrow_indices
+    mapping['right_eyebrow'] = rbrow_indices
+    mapping['nose'] = np.hstack([upper_nose_indices, lower_nose_indices])
+    mapping['left_eye'] = leye_indices
+    mapping['right_eye'] = reye_indices
+    mapping['mouth'] = np.hstack([outer_mouth_indices, inner_mouth_indices])
+
+    return new_pcloud, mapping
+
+
 @labeller_func(group_label='face_ibug_68_trimesh')
 def face_ibug_68_to_face_ibug_68_trimesh(pcloud):
     r"""
