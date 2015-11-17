@@ -15,7 +15,7 @@ env:
     - PYTHON_VERSION: 3.4
 
 install:
-- wget https://raw.githubusercontent.com/menpo/condaci/v0.4.6/condaci.py -O condaci.py
+- wget https://raw.githubusercontent.com/menpo/condaci/v0.4.8/condaci.py -O condaci.py
 - python condaci.py setup
 
 script:
