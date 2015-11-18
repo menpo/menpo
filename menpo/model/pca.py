@@ -1214,7 +1214,8 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
         C : ``(n_features, n_features)`` `ndarray`
             The Covariance/Scatter matrix, where `N` is the number of features.
         mean : :map:`Vectorizable`
-            The mean vector.
+            The mean instance. It must be a :map:`Vectorizable` and *not* an
+            `ndarray`.
         n_samples : `int`
             The number of samples used to generate the covariance matrix.
         centred : `bool`, optional
@@ -1233,7 +1234,8 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
 
         # The call to __init__ of MeanLinearModel is done in here
         self_model._constructor_helper(eigenvalues=e_values,
-                                       eigenvectors=e_vectors, mean=mean.as_vector(),
+                                       eigenvectors=e_vectors,
+                                       mean=mean.as_vector(),
                                        centred=centred,
                                        max_n_components=max_n_components)
         VectorizableBackedModel.__init__(self_model, mean)
@@ -1253,7 +1255,8 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
         eigenvalues : ``(n_components, )`` `ndarray`
             The corresponding eigenvalues.
         mean : :map:`Vectorizable`
-            The mean vector.
+            The mean instance. It must be a :map:`Vectorizable` and *not* an
+            `ndarray`.
         n_samples : `int`
             The number of samples used to generate the eigenvectors.
         centred : `bool`, optional
@@ -1272,6 +1275,7 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
             eigenvalues=eigenvalues, eigenvectors=components,
             mean=mean.as_vector(), centred=centred,
             max_n_components=max_n_components)
+        VectorizableBackedModel.__init__(model, mean)
         return model
 
     def mean(self):
