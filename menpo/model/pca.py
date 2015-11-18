@@ -1,12 +1,13 @@
 from __future__ import division
 import numpy as np
 
+from menpo.base import doc_inherit
 from menpo.math import pca, pcacov, ipca, as_matrix
 from menpo.model import MeanLinearModel
-from menpo.model.instancebacked import InstanceBackedModel
+from menpo.model.vectorizable import VectorizableBackedModel
 
 
-class PCAModel(MeanLinearModel):
+class PCAVectorModel(MeanLinearModel):
     r"""
     A :map:`MeanLinearModel` where components are Principal Components.
 
@@ -143,41 +144,6 @@ class PCAModel(MeanLinearModel):
             # samples
             data = np.array(data)[:n_samples]
         return data, n_samples
-
-    def mean(self):
-        r"""
-        Return the mean of the model. For this model, returns the same result
-        as ``mean_vector``.
-
-        :type: `ndarray`
-        """
-        return self.mean_vector
-
-    def component(self, index, with_mean=True, scale=1.0):
-        r"""
-        Return a particular component of the linear model. For this model,
-        returns the same result as ``component_vector``.
-
-        Parameters
-        ----------
-        index : `int`
-            The component that is to be returned
-        with_mean: `bool`, optional
-            If ``True``, the component will be blended with the mean vector
-            before being returned. If not, the component is returned on it's
-            own.
-        scale : `float`, optional
-            A scale factor that should be applied to the component. Only
-            valid in the case where ``with_mean == True``. See
-            :meth:`component_vector` for how this scale factor is interpreted.
-
-        Returns
-        -------
-        component : `type(self.template_instance)`
-            The requested component.
-        """
-        return self.component_vector(index=index, with_mean=with_mean,
-                                     scale=scale)
 
     @property
     def n_active_components(self):
@@ -441,7 +407,7 @@ class PCAModel(MeanLinearModel):
             raise ValueError("noise variance is 0 - cannot take the inverse")
         return 1.0 / noise_variance
 
-    def component_vector(self, index, with_mean=True, scale=1.0):
+    def component(self, index, with_mean=True, scale=1.0):
         r"""
         A particular component of the model, in vectorized form.
 
@@ -468,7 +434,7 @@ class PCAModel(MeanLinearModel):
         if with_mean:
             # on PCA, scale is in units of std. deviations...
             scaled_eigval = scale * np.sqrt(self.eigenvalues[index])
-            return (scaled_eigval * self.components[index]) + self.mean_vector
+            return (scaled_eigval * self.components[index]) + self._mean
         else:
             return self.components[index]
 
@@ -522,7 +488,7 @@ class PCAModel(MeanLinearModel):
             weights *= self.eigenvalues ** 0.5
         return self._instance_vectors_for_full_weights(weights)
 
-    def instance_vector(self, weights, normalized_weights=False):
+    def instance(self, weights, normalized_weights=False):
         r"""
         Creates a new vector instance of the model by weighting together the
         components.
@@ -548,35 +514,6 @@ class PCAModel(MeanLinearModel):
         weights = np.asarray(weights)
         return self.instance_vectors(
             weights[None, :], normalized_weights=normalized_weights).flatten()
-
-    def instance(self, weights, normalized_weights=False):
-        """
-        Creates a new instance of the model using the first ``len(weights)``
-        components. For this model, calling this method returns the same result
-        as ``instance_vector``.
-
-        Parameters
-        ----------
-        weights : ``(n_weights,)`` `ndarray` or `list`
-            ``weights[i]`` is the linear contribution of the i'th component
-            to the instance vector.
-        normalized_weights : `bool`, optional
-            If ``True``, the weights are assumed to be normalized w.r.t the
-            eigenvalues. This can be easier to create unique instances by
-            making the weights more interpretable.
-
-        Raises
-        ------
-        ValueError
-            If n_weights > n_components
-
-        Returns
-        -------
-        instance : `ndarray`
-            An instance of the model.
-        """
-        return self.instance_vector(weights,
-                                    normalized_weights=normalized_weights)
 
     def trim_components(self, n_components=None):
         r"""
@@ -621,25 +558,7 @@ class PCAModel(MeanLinearModel):
             # make sure that the eigenvalues are trimmed too
             self._eigenvalues = self._eigenvalues[:nac].copy()
 
-    def project_whitened(self, instance):
-        """
-        Projects the `instance` onto the whitened components, retrieving the
-        whitened linear weightings. For this model, returns the same result
-        as `project_whitened_vector`
-
-        Parameters
-        ----------
-        instance : `ndarray`
-            A novel instance.
-
-        Returns
-        -------
-        projected : (n_components,)
-            A vector of whitened linear weightings
-        """
-        return self.project_whitened_vector(instance)
-
-    def project_whitened_vector(self, vector_instance):
+    def project_whitened(self, vector_instance):
         """
         Projects the `vector_instance` onto the whitened components,
         retrieving the whitened linear weightings.
@@ -735,14 +654,14 @@ class PCAModel(MeanLinearModel):
         # compute incremental pca
         e_vectors, e_values, m_vector = ipca(
             data, self._components, self._eigenvalues, self.n_samples,
-            m_a=self.mean_vector, f=forgetting_factor)
+            m_a=self._mean, f=forgetting_factor)
 
         # if the number of active components is the same as the total number
         # of components so it will be after this method is executed
         reset = (self.n_active_components == self.n_components)
 
         # update mean, components, eigenvalues and number of samples
-        self.mean_vector = m_vector
+        self._mean = m_vector
         self._components = e_vectors
         self._eigenvalues = e_values
         self.n_samples += n_new_samples
@@ -1240,7 +1159,7 @@ class PCAModel(MeanLinearModel):
         return str_out
 
 
-class PCAInstanceModel(PCAModel, InstanceBackedModel):
+class PCAModel(PCAVectorModel, VectorizableBackedModel):
     r"""
     A :map:`MeanInstanceLinearModel` where components are Principal Components.
 
@@ -1269,6 +1188,7 @@ class PCAInstanceModel(PCAModel, InstanceBackedModel):
     verbose : `bool`, optional
         Whether to print building information or not.
      """
+
     def __init__(self, samples, centre=True, n_samples=None,
                  max_n_components=None, inplace=True, verbose=False):
         # build a data matrix from all the samples
@@ -1276,10 +1196,10 @@ class PCAInstanceModel(PCAModel, InstanceBackedModel):
                                    return_template=True, verbose=verbose)
         n_samples = data.shape[0]
 
-        PCAModel.__init__(self, data, centre=centre,
-                          max_n_components=max_n_components,
-                          n_samples=n_samples, inplace=inplace)
-        InstanceBackedModel.__init__(self, template)
+        PCAVectorModel.__init__(self, data, centre=centre,
+                                max_n_components=max_n_components,
+                                n_samples=n_samples, inplace=inplace)
+        VectorizableBackedModel.__init__(self, template)
 
     @classmethod
     def init_from_covariance_matrix(cls, C, mean, n_samples, centred=True,
@@ -1305,19 +1225,19 @@ class PCAInstanceModel(PCAModel, InstanceBackedModel):
             components above and beyond this one are discarded.
         """
         # Create new pca instance
-        model = PCAInstanceModel.__new__(cls)
-        model.n_samples = n_samples
+        self_model = PCAVectorModel.__new__(cls)
+        self_model.n_samples = n_samples
 
         # Compute pca on covariance
         e_vectors, e_values = pcacov(C)
 
         # The call to __init__ of MeanLinearModel is done in here
-        model._constructor_helper(eigenvalues=e_values,
-                                  eigenvectors=e_vectors, mean=mean.as_vector(),
-                                  centred=centred,
-                                  max_n_components=max_n_components)
-        InstanceBackedModel.__init__(model, mean)
-        return model
+        self_model._constructor_helper(eigenvalues=e_values,
+                                       eigenvectors=e_vectors, mean=mean.as_vector(),
+                                       centred=centred,
+                                       max_n_components=max_n_components)
+        VectorizableBackedModel.__init__(self_model, mean)
+        return self_model
 
     @classmethod
     def init_from_components(cls, components, eigenvalues, mean, n_samples,
@@ -1344,7 +1264,7 @@ class PCAInstanceModel(PCAModel, InstanceBackedModel):
             components above and beyond this one are discarded.
         """
         # Create new pca instance
-        model = PCAModel.__new__(cls)
+        model = PCAVectorModel.__new__(cls)
         model.n_samples = n_samples
 
         # The call to __init__ of MeanLinearModel is done in here
@@ -1360,7 +1280,33 @@ class PCAInstanceModel(PCAModel, InstanceBackedModel):
 
         :type: :map:`Vectorizable`
         """
-        return self.template_instance.from_vector(self.mean_vector)
+        return self.template_instance.from_vector(self._mean)
+
+    @property
+    def mean_vector(self):
+        r"""
+        Return the mean of the model as a 1D vector.
+
+        :type: `ndarray`
+        """
+        return self._mean
+
+    @doc_inherit(name='project_out')
+    def project_out_vector(self, instance_vector):
+        return PCAVectorModel.project_out(self, instance_vector)
+
+    def reconstruct_vector(self, instance_vector):
+        return PCAVectorModel.reconstruct(self, instance_vector)
+
+    def project_vector(self, instance_vector):
+        return PCAVectorModel.project(self, instance_vector)
+
+    def instance_vector(self, weights, normalized_weights=False):
+        return PCAVectorModel.instance(self, weights,
+                                       normalized_weights=normalized_weights)
+
+    def component_vector(self, index, with_mean=True, scale=1.0):
+        return PCAVectorModel.component(self, index, with_mean=with_mean, scale=scale)
 
     def component(self, index, with_mean=True, scale=1.0):
         r"""
@@ -1460,8 +1406,9 @@ class PCAInstanceModel(PCAModel, InstanceBackedModel):
         # build a data matrix from the new samples
         data = as_matrix(samples, length=n_samples, verbose=verbose)
         n_new_samples = data.shape[0]
-        PCAModel.increment(self, data, n_samples=n_new_samples,
-                           forgetting_factor=forgetting_factor, verbose=verbose)
+        PCAVectorModel.increment(self, data, n_samples=n_new_samples,
+                                 forgetting_factor=forgetting_factor,
+                                 verbose=verbose)
 
     def __str__(self):
         str_out = 'PCA Instance Model \n'                    \

@@ -1,24 +1,5 @@
-from functools import partial
+from functools import partial, wraps
 import os.path
-
-# To debug the Copyable interface, simply uncomment lines 11-23 below and the
-# four lines in the copy() method.
-# Then you can call print_copyable_log() to see exactly what types have been
-# skipped in copying and why.
-
-# from collections import defaultdict
-# alien_copies = defaultdict(set)
-# non_copies = defaultdict(set)
-#
-#
-# def print_copyable_log():
-#     print('Has .copy() but not Copyable:')
-#     for k, v in alien_copies.items():
-#         print('  {:15}|  {}'.format(k, ', '.join(v)))
-#
-#     print('\nNo .copy() (shallow copied):')
-#     for k, v in non_copies.items():
-#         print('  {:15}|  {}'.format(k, ', '.join(v)))
 
 
 class Copyable(object):
@@ -342,6 +323,7 @@ class MenpoMissingDependencyError(Exception):
     def __str__(self):
         return self.message
 
+
 def name_of_callable(c):
     r"""
     Return the name of a callable (function or callable class) as a string.
@@ -368,3 +350,57 @@ def name_of_callable(c):
             return c.__name__  # function
     except AttributeError:
         return c.__class__.__name__  # callable class
+
+
+class doc_inherit(object):
+    """
+    Docstring inheriting method descriptor.
+
+    This uses some Python magic in order to create a decorator that implements
+    the descriptor protocol that allows functions to inherit documentation.
+    This is particularly useful for methods that directly override
+    """
+
+    def __init__(self, name=None):
+        self.name = name
+
+    def __call__(self, mthd):
+        self.mthd = mthd
+        if self.name is None:
+            self.name = self.mthd.__name__
+        return self
+
+    def __get__(self, obj, cls):
+        if obj:
+            return self.get_with_inst(obj, cls)
+        else:
+            return self.get_no_inst(cls)
+
+    def get_with_inst(self, obj, cls):
+
+        overridden = getattr(super(cls, obj), self.name, None)
+
+        @wraps(self.mthd, assigned=('__name__', '__module__'))
+        def f(*args, **kwargs):
+            return self.mthd(obj, *args, **kwargs)
+
+        return self.use_parent_doc(f, overridden)
+
+    def get_no_inst(self, cls):
+
+        for parent in cls.__mro__[1:]:
+            overridden = getattr(parent, self.name, None)
+            if overridden:
+                break
+
+        @wraps(self.mthd, assigned=('__name__', '__module__'))
+        def f(*args, **kwargs):
+            return self.mthd(*args, **kwargs)
+
+        return self.use_parent_doc(f, overridden)
+
+    def use_parent_doc(self, func, source):
+        if source is None:
+            raise NameError("Can't find '{}' in parents".format(self.name))
+        func.__doc__ = source.__doc__
+        return func

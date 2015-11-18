@@ -331,6 +331,7 @@ def _create_sparse_diagonal_precision(X, graph, n_features,
         return bsr_matrix((all_blocks, columns, indptr),
                           shape=(n_features, n_features), dtype=dtype)
 
+
 def _create_dense_diagonal_precision(X, graph, n_features,
                                      n_features_per_vertex,
                                      single_precision=True, n_components=None,

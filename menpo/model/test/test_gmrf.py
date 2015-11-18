@@ -6,6 +6,7 @@ from menpo.math import as_matrix
 
 from .. import GMRFModel, GMRFInstanceModel
 
+
 def _compute_sum_cost_block_sparse(samples, test_sample, graph,
                                    n_features_per_vertex, subtract_mean, mode):
     # create ndarray with data
@@ -112,6 +113,7 @@ def test_mahalanobis_distance():
                             cost2 = gmrf.mahalanobis_distance(
                                 test_sample, subtract_mean=subtract_mean)
                             assert_almost_equal(cost1, cost2)
+
 
 def test_increment():
     # arguments values
