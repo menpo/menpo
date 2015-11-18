@@ -103,10 +103,10 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
     if d < n:
         # compute covariance matrix
         # C (covariance): d x d
-        C = np.dot(X.conj().T, X) / (n - 1)
+        C = np.dot(X.T, X) / (n - 1)
         # C should be perfectly symmetrical, but numerical error can creep
         # in. Enforce symmetry here to avoid creating complex eigenvectors
-        C = (C + C.conj().T) / 2.0
+        C = (C + C.T) / 2.0
 
         # perform eigenvalue decomposition
         # U (eigenvectors): d x n
@@ -121,10 +121,10 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
         # d > n
         # compute small covariance matrix
         # C (covariance): n x n
-        C = np.dot(X, X.conj().T) / (n - 1)
+        C = np.dot(X, X.T) / (n - 1)
         # C should be perfectly symmetrical, but numerical error can creep
         # in. Enforce symmetry here to avoid creating complex eigenvectors
-        C = (C + C.conj().T) / 2.0
+        C = (C + C.T) / 2.0
 
         # perform eigenvalue decomposition
         # V (eigenvectors): n x n
@@ -135,7 +135,7 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
         # U: n x d
         w = np.sqrt(1.0 / ((n - 1) * l))
         dot = dot_inplace_right if inplace else np.dot
-        U = dot(V.conj().T, X)
+        U = dot(V.T, X)
         U *= w[:, None]
 
     return U, l, m

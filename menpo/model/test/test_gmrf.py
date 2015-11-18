@@ -4,7 +4,8 @@ from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from menpo.shape import PointCloud, DirectedGraph, UndirectedGraph
 from menpo.math import as_matrix
 
-from .. import GMRFModel, GMRFInstanceModel
+from .. import GMRFModel, GMRFVectorModel
+
 
 def _compute_sum_cost_block_sparse(samples, test_sample, graph,
                                    n_features_per_vertex, subtract_mean, mode):
@@ -95,7 +96,7 @@ def test_mahalanobis_distance():
                 for sparse in sparse_values:
                     for n_components in n_components_values:
                         # train GMRF
-                        gmrf = GMRFInstanceModel(
+                        gmrf = GMRFModel(
                             samples, graph, mode=mode, sparse=sparse,
                             n_components=n_components, single_precision=False)
 
@@ -112,6 +113,7 @@ def test_mahalanobis_distance():
                             cost2 = gmrf.mahalanobis_distance(
                                 test_sample, subtract_mean=subtract_mean)
                             assert_almost_equal(cost1, cost2)
+
 
 def test_increment():
     # arguments values
@@ -138,14 +140,14 @@ def test_increment():
                 for sparse in sparse_values:
                     for n_components in n_components_values:
                         # Incremental GMRF
-                        gmrf1 = GMRFModel(
+                        gmrf1 = GMRFVectorModel(
                             samples[:50], graph, mode=mode, sparse=sparse,
                             n_components=n_components, single_precision=False,
                             incremental=True)
                         gmrf1.increment(samples[50::])
 
                         # Non incremental GMRF
-                        gmrf2 = GMRFModel(
+                        gmrf2 = GMRFVectorModel(
                             samples, graph, mode=mode, sparse=sparse,
                             n_components=n_components, single_precision=False)
 

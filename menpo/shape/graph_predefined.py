@@ -2,6 +2,7 @@ from menpo.landmark import LandmarkGroup
 from . import (PointCloud, UndirectedGraph, DirectedGraph, Tree, TriMesh,
                PointUndirectedGraph, PointDirectedGraph, PointTree)
 
+
 def _get_points_and_number_of_vertices(shape):
     if isinstance(shape, LandmarkGroup):
         return shape.lms.points, shape.n_landmarks
@@ -11,12 +12,14 @@ def _get_points_and_number_of_vertices(shape):
         raise ValueError("shape must be either a LandmarkGroup or a "
                          "PointCloud instance.")
 
+
 def _get_star_graph_edges(vertices_list, root_vertex):
     edges = []
     for v in vertices_list:
         if v != root_vertex:
             edges.append([root_vertex, v])
     return edges
+
 
 def _get_complete_graph_edges(vertices_list):
     n_vertices = len(vertices_list)
@@ -28,6 +31,7 @@ def _get_complete_graph_edges(vertices_list):
             v2 = vertices_list[j]
             edges.append([v1, v2])
     return edges
+
 
 def _get_chain_graph_edges(vertices_list, closed):
     n_vertices = len(vertices_list)
@@ -42,6 +46,7 @@ def _get_chain_graph_edges(vertices_list, closed):
         v2 = vertices_list[0]
         edges.append([v1, v2])
     return edges
+
 
 def empty_graph(shape, return_pointgraph=True):
     r"""
@@ -76,6 +81,7 @@ def empty_graph(shape, return_pointgraph=True):
     else:
         return UndirectedGraph.init_from_edges(edges, n_vertices,
                                                skip_checks=True)
+
 
 def star_graph(shape, root_vertex, graph_cls=PointTree):
     r"""
@@ -133,6 +139,7 @@ def star_graph(shape, root_vertex, graph_cls=PointTree):
                          "Tree, PointUndirectedGraph, PointDirectedGraph or "
                          "PointTree.")
 
+
 def complete_graph(shape, graph_cls=PointUndirectedGraph):
     r"""
     Returns a complete graph given the landmarks configuration of a shape
@@ -177,6 +184,7 @@ def complete_graph(shape, graph_cls=PointUndirectedGraph):
     else:
         raise ValueError("graph_cls must be UndirectedGraph, DirectedGraph, "
                          "PointUndirectedGraph or PointDirectedGraph.")
+
 
 def chain_graph(shape, graph_cls=PointDirectedGraph, closed=False):
     r"""
@@ -243,6 +251,7 @@ def chain_graph(shape, graph_cls=PointDirectedGraph, closed=False):
         raise ValueError("graph_cls must be UndirectedGraph, DirectedGraph, "
                          "Tree, PointUndirectedGraph, PointDirectedGraph or "
                          "PointTree.")
+
 
 def delaunay_graph(shape, return_pointgraph=True):
     r"""

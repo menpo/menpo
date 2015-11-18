@@ -35,4 +35,4 @@ Gaussian Markov Random Field
   :maxdepth: 1
 
   GMRFModel
-  GMRFInstanceModel
+  GMRFVectorModel

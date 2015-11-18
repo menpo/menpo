@@ -331,6 +331,7 @@ def _create_sparse_diagonal_precision(X, graph, n_features,
         return bsr_matrix((all_blocks, columns, indptr),
                           shape=(n_features, n_features), dtype=dtype)
 
+
 def _create_dense_diagonal_precision(X, graph, n_features,
                                      n_features_per_vertex,
                                      single_precision=True, n_components=None,
@@ -760,7 +761,7 @@ def _increment_multivariate_gaussian_cov(X, m, S, n, bias=0):
     return new_m, new_S
 
 
-class GMRFModel(object):
+class GMRFVectorModel(object):
     r"""
     Trains a Gaussian Markov Random Field (GMRF).
 
@@ -845,7 +846,7 @@ class GMRFModel(object):
        applications," CRC Press, 2005.
     .. [2] E. Antonakos, J. Alabort-i-Medina, and S. Zafeiriou. "Active
        Pictorial Structures", IEEE International Conference on Computer Vision
-       & Pattern Recognition (CVPR), Boston, MA, USA, June 2015.
+       & Pattern Recognition (CVPR), Boston, MA, USA, pp. 5435-5444, June 2015.
     """
     def __init__(self, samples, graph, n_samples=None, mode='concatenation',
                  n_components=None, single_precision=False, sparse=True,
@@ -979,42 +980,58 @@ class GMRFModel(object):
             data, self.mean_vector, self.n_samples)
         self.n_samples += data.shape[0]
 
-    def mahalanobis_distance(self, sample, subtract_mean=True,
+    def mahalanobis_distance(self, samples, subtract_mean=True,
                              square_root=False):
         r"""
-        Compute the mahalanobis distance given a new sample :math:`\mathbf{x}`,
-        i.e.
+        Compute the mahalanobis distance given a sample :math:`\mathbf{x}` or an
+        array of samples :math:`\mathbf{X}`, i.e.
 
         .. math::
            \sqrt{(\mathbf{x}-\boldsymbol{\mu})^T \mathbf{Q} (\mathbf{x}-\boldsymbol{\mu})}
+           \text{ or }
+           \sqrt{(\mathbf{X}-\boldsymbol{\mu})^T \mathbf{Q} (\mathbf{X}-\boldsymbol{\mu})}
 
         Parameters
         ----------
-        sample : `ndarray`
-            The new data vector.
+        samples : `ndarray`
+            A single data vector or an array of multiple data vectors.
         subtract_mean : `bool`, optional
             When ``True``, the mean vector is subtracted from the data vector.
         square_root : `bool`, optional
             If ``False``, the mahalanobis distance gets squared.
         """
-        return self._mahalanobis_distance(
-            sample=sample, subtract_mean=subtract_mean, square_root=square_root)
+        samples, _ = self._data_to_matrix(samples, None)
+        if len(samples.shape) == 1:
+            samples = samples[..., None].T
+        return self._mahalanobis_distance(samples=samples,
+                                          subtract_mean=subtract_mean,
+                                          square_root=square_root)
 
-    def _mahalanobis_distance(self, sample, subtract_mean, square_root):
-        # create data vector
+    def _mahalanobis_distance(self, samples, subtract_mean, square_root):
+        # we assume that samples is an ndarray of n_samples x n_features
+
+        # create data matrix
         if subtract_mean:
-            sample = sample - self.mean_vector
+            n_samples = samples.shape[0]
+            samples = samples - np.tile(self.mean_vector[..., None],
+                                        n_samples).T
 
         # make sure we have the correct data type
         if self.sparse:
-            sample = bsr_matrix(sample)
+            samples = bsr_matrix(samples)
 
-        # compute mahalanobis
-        d = sample.dot(self.precision).dot(sample.T)
-
-        # if scipy.sparse, get the scalar value from the (1, 1) matrix
+        # compute mahalanobis per sample
         if self.sparse:
-            d = d.todense()[0, 0]
+            # if sparse, unfortunately the einstein sum is not implemented
+            d = samples.dot(self.precision).dot(samples.T)
+            d = np.diag(d.todense())
+        else:
+            # if dense, then the einstein sum is much faster
+            d = np.einsum('ij,ij->i', np.dot(samples, self.precision), samples)
+
+        # if only one sample, then return a scalar
+        if d.shape[0] == 1:
+            d = d[0]
 
         # square root
         if square_root:
@@ -1109,7 +1126,7 @@ class GMRFModel(object):
         return str_out
 
 
-class GMRFInstanceModel(GMRFModel):
+class GMRFModel(GMRFVectorModel):
     r"""
     Trains a Gaussian Markov Random Field (GMRF).
 
@@ -1193,7 +1210,7 @@ class GMRFInstanceModel(GMRFModel):
        applications," CRC Press, 2005.
     .. [2] E. Antonakos, J. Alabort-i-Medina, and S. Zafeiriou. "Active
        Pictorial Structures", IEEE International Conference on Computer Vision
-       & Pattern Recognition (CVPR), Boston, MA, USA, June 2015.
+       & Pattern Recognition (CVPR), Boston, MA, USA, pp. 5435-5444, June 2015.
     """
     def __init__(self, samples, graph, mode='concatenation', n_components=None,
                  single_precision=False, sparse=True, n_samples=None, bias=0,
@@ -1203,11 +1220,11 @@ class GMRFInstanceModel(GMRFModel):
             samples, length=n_samples, return_template=True, verbose=verbose)
         n_samples = data.shape[0]
 
-        GMRFModel.__init__(self, data, graph, mode=mode,
-                           n_components=n_components,
-                           single_precision=single_precision, sparse=sparse,
-                           n_samples=n_samples, bias=bias,
-                           incremental=incremental, verbose=verbose)
+        GMRFVectorModel.__init__(self, data, graph, mode=mode,
+                                 n_components=n_components,
+                                 single_precision=single_precision,
+                                 sparse=sparse, n_samples=n_samples, bias=bias,
+                                 incremental=incremental, verbose=verbose)
 
     def mean(self):
         r"""
@@ -1244,32 +1261,39 @@ class GMRFInstanceModel(GMRFModel):
         # Increment the model
         self._increment(data=data, verbose=verbose)
 
-    def mahalanobis_distance(self, instance, subtract_mean=True,
+    def mahalanobis_distance(self, samples, subtract_mean=True,
                              square_root=False):
         r"""
-        Compute the mahalanobis distance given a new sample :math:`\mathbf{x}`,
-        i.e.
+        Compute the mahalanobis distance given a sample :math:`\mathbf{x}` or an
+        array of samples :math:`\mathbf{X}`, i.e.
 
         .. math::
            \sqrt{(\mathbf{x}-\boldsymbol{\mu})^T \mathbf{Q} (\mathbf{x}-\boldsymbol{\mu})}
+           \text{ or }
+           \sqrt{(\mathbf{X}-\boldsymbol{\mu})^T \mathbf{Q} (\mathbf{X}-\boldsymbol{\mu})}
 
         Parameters
         ----------
-        sample : `ndarray`
-            The new data vector.
+        samples : :map:`Vectorizable` or `list` of :map:`Vectorizable`
+            The new data sample or a list of samples.
         subtract_mean : `bool`, optional
             When ``True``, the mean vector is subtracted from the data vector.
         square_root : `bool`, optional
             If ``False``, the mahalanobis distance gets squared.
         """
-        return self._mahalanobis_distance(
-            sample=instance.as_vector(), subtract_mean=subtract_mean,
-            square_root=square_root)
+        if isinstance(samples, list):
+            samples = as_matrix(samples, length=None,
+                                return_template=False, verbose=False)
+        else:
+            samples = samples.as_vector()[..., None].T
+        return self._mahalanobis_distance(samples=samples,
+                                          subtract_mean=subtract_mean,
+                                          square_root=square_root)
 
     def principal_components_analysis(self, apply_on_precision=False,
                                       max_n_components=None):
         r"""
-        Returns a :map:`PCAInstanceModel` with the Principal Components. The
+        Returns a :map:`PCAModel` with the Principal Components. The
         eigenvalue decomposition can be applied either on the precision or
         the covariance of the GMRF.
 
@@ -1285,16 +1309,16 @@ class GMRFInstanceModel(GMRFModel):
 
         Returns
         -------
-        pca : :map:`PCAInstanceModel`
+        pca : :map:`PCAModel`
             The PCA model.
         """
-        from .pca import PCAInstanceModel
+        from .pca import PCAModel
         if apply_on_precision:
-            return PCAInstanceModel.init_from_covariance_matrix(
+            return PCAModel.init_from_covariance_matrix(
                 C=self.precision, mean=self.mean(), n_samples=self.n_samples,
                 centred=True, max_n_components=max_n_components)
         else:
-            return PCAInstanceModel.init_from_covariance_matrix(
+            return PCAModel.init_from_covariance_matrix(
                 C=self.covariance(), mean=self.mean(),
                 n_samples=self.n_samples, centred=True,
                 max_n_components=max_n_components)
