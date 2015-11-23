@@ -1039,32 +1039,15 @@ class GMRFVectorModel(object):
         else:
             return d
 
-    def covariance(self):
+    def principal_components_analysis(self, max_n_components=None):
         r"""
-        Returns covariance matrix of the GMRF. This includes computing
-        the **inverse of the precision matrix**, which can be expensive
-        time-wise and memory-wise.
+        Returns a :map:`PCAVectorModel` with the Principal Components.
 
-        :type: `ndarray` or `scipy.sparse`
-        """
-        if self.sparse:
-            return scipy_inv(self.precision)
-        else:
-            return np.linalg(self.precision)
-
-    def principal_components_analysis(self, apply_on_precision=False,
-                                      max_n_components=None):
-        r"""
-        Returns a :map:`PCAVectorModel` with the Principal Components. The
-        eigenvalue decomposition can be applied either on the precision or
-        the covariance of the GMRF.
+        Note that the eigenvalue decomposition is applied directly on the
+        precision matrix and then the eigenvalues are inverted.
 
         Parameters
         ----------
-        apply_on_precision : `bool`, optional
-            If ``True``, the eigenvalue decomposition is performed on the
-            precision matrix. If ``False``, it is performed on the covariance
-            matrix.
         max_n_components : `int` or ``None``, optional
             The maximum number of principal components. If ``None``, all the
             components are returned.
@@ -1075,16 +1058,9 @@ class GMRFVectorModel(object):
             The PCA model.
         """
         from .pca import PCAVectorModel
-        if apply_on_precision:
-            return PCAVectorModel.init_from_covariance_matrix(
-                C=self.precision, mean=self.mean_vector,
-                n_samples=self.n_samples, centred=True,
-                max_n_components=max_n_components)
-        else:
-            return PCAVectorModel.init_from_covariance_matrix(
-                C=self.covariance(), mean=self.mean_vector,
-                n_samples=self.n_samples, centred=True,
-                max_n_components=max_n_components)
+        return PCAVectorModel.init_from_covariance_matrix(
+            C=self.precision, mean=self.mean_vector, n_samples=self.n_samples,
+            centred=True, is_inverse=True, max_n_components=max_n_components)
 
     @property
     def _str_title(self):
@@ -1290,19 +1266,15 @@ class GMRFModel(GMRFVectorModel):
                                           subtract_mean=subtract_mean,
                                           square_root=square_root)
 
-    def principal_components_analysis(self, apply_on_precision=False,
-                                      max_n_components=None):
+    def principal_components_analysis(self, max_n_components=None):
         r"""
-        Returns a :map:`PCAModel` with the Principal Components. The
-        eigenvalue decomposition can be applied either on the precision or
-        the covariance of the GMRF.
+        Returns a :map:`PCAModel` with the Principal Components.
+
+        Note that the eigenvalue decomposition is applied directly on the
+        precision matrix and then the eigenvalues are inverted.
 
         Parameters
         ----------
-        apply_on_precision : `bool`, optional
-            If ``True``, the eigenvalue decomposition is performed on the
-            precision matrix. If ``False``, it is performed on the covariance
-            matrix.
         max_n_components : `int` or ``None``, optional
             The maximum number of principal components. If ``None``, all the
             components are returned.
@@ -1313,12 +1285,6 @@ class GMRFModel(GMRFVectorModel):
             The PCA model.
         """
         from .pca import PCAModel
-        if apply_on_precision:
-            return PCAModel.init_from_covariance_matrix(
-                C=self.precision, mean=self.mean(), n_samples=self.n_samples,
-                centred=True, max_n_components=max_n_components)
-        else:
-            return PCAModel.init_from_covariance_matrix(
-                C=self.covariance(), mean=self.mean(),
-                n_samples=self.n_samples, centred=True,
-                max_n_components=max_n_components)
+        return PCAModel.init_from_covariance_matrix(
+            C=self.precision, mean=self.mean(), n_samples=self.n_samples,
+            centred=True, is_inverse=True, max_n_components=max_n_components)
