@@ -102,17 +102,6 @@ def test_squared_even_patches_landmarks():
     assert_equals(len(patches), 68)
 
 
-def test_squared_even_patches_landmarks_label():
-    image = mio.import_builtin_asset('breakingbad.jpg')
-    image = labeller(image, 'PTS', face_ibug_68_to_face_ibug_68)
-    patch_shape = (16, 16)
-    patches = image.extract_patches_around_landmarks('face_ibug_68',
-                                                     label='nose',
-                                                     patch_shape=patch_shape,
-                                                     as_single_array=False)
-    assert_equals(len(patches), 9)
-
-
 def test_squared_even_patches_single_array():
     image = mio.import_builtin_asset('breakingbad.jpg')
     patch_shape = (16, 16)

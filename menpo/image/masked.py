@@ -1009,7 +1009,7 @@ class MaskedImage(Image):
             Image.from_vector_inplace(self,
                                       normalized_pixels.flatten())
 
-    def constrain_mask_to_landmarks(self, group=None, label=None,
+    def constrain_mask_to_landmarks(self, group=None,
                                     batch_size=None, point_in_pointcloud='pwa',
                                     trilist=None):
         r"""
@@ -1029,9 +1029,6 @@ class MaskedImage(Image):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        label: `str`, optional
-            The label of of the landmark manager that you wish to use. If no
-            label is passed, the convex hull of all landmarks is used.
         batch_size : `int` or ``None``, optional
             This should only be considered for large images. Setting this value
             will cause constraining to become much slower. This size indicates
@@ -1053,10 +1050,10 @@ class MaskedImage(Image):
             parameter.
         """
         self.mask.constrain_to_pointcloud(
-            self.landmarks[group][label], trilist=trilist,
+            self.landmarks[group].lms, trilist=trilist,
             batch_size=batch_size, point_in_pointcloud=point_in_pointcloud)
 
-    def build_mask_around_landmarks(self, patch_shape, group=None, label=None):
+    def build_mask_around_landmarks(self, patch_shape, group=None):
         r"""
         Restricts this images mask to be patches around each landmark in
         the chosen landmark group. This is useful for visualizing patch
@@ -1069,12 +1066,9 @@ class MaskedImage(Image):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        label: `str`, optional
-            The label of of the landmark manager that you wish to use. If no
-            label is passed, the convex hull of all landmarks is used.
         """
         # get the selected pointcloud
-        pc = self.landmarks[group][label]
+        pc = self.landmarks[group].lms
         # temporarily set all mask values to False
         self.mask.pixels[:] = False
         # create a patches array of the correct size, full of True values

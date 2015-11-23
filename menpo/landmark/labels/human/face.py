@@ -546,7 +546,7 @@ def face_ibug_68_to_face_ibug_65(pcloud):
 
     # Apply face_ibug_68_to_face_ibug_68
     new_pcloud, mapping = face_ibug_68_to_face_ibug_68(pcloud,
-                                                       include_mapping=True)
+                                                       return_mapping=True)
 
     # The coincident points are considered the final 3 landmarks (bottom of
     # the inner mouth points). We remove all the edges for the inner mouth

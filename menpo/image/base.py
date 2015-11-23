@@ -1004,7 +1004,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                          constrain_to_boundary=constrain_to_boundary,
                          return_transform=return_transform)
 
-    def crop_to_landmarks(self, group=None, label=None, boundary=0,
+    def crop_to_landmarks(self, group=None, boundary=0,
                           constrain_to_boundary=True,
                           return_transform=False):
         r"""
@@ -1016,9 +1016,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``
             and if there is only one set of landmarks, this set will be used.
-        label : `str`, optional
-            The label of of the landmark manager that you wish to use. If
-            ``None`` all landmarks in the group are used.
         boundary : `int`, optional
             An extra padding to be added all around the landmarks bounds.
         constrain_to_boundary : `bool`, optional
@@ -1043,7 +1040,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group][label]
+        pc = self.landmarks[group].lms
         return self.crop_to_pointcloud(
             pc, boundary=boundary, constrain_to_boundary=constrain_to_boundary,
             return_transform=return_transform)
@@ -1102,7 +1099,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             return_transform=return_transform)
 
     def crop_to_landmarks_proportion(self, boundary_proportion,
-                                     group=None, label=None, minimum=True,
+                                     group=None, minimum=True,
                                      constrain_to_boundary=True,
                                      return_transform=False):
         r"""
@@ -1119,9 +1116,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``
             and if there is only one set of landmarks, this set will be used.
-        label : `str`, optional
-            The label of of the landmark manager that you wish to use. If
-           ``None`` all landmarks in the group are used.
         minimum : `bool`, optional
             If ``True`` the specified proportion is relative to the minimum
             value of the landmarks' per-dimension range; if ``False`` w.r.t. the
@@ -1149,7 +1143,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group][label]
+        pc = self.landmarks[group].lms
         return self.crop_to_pointcloud_proportion(
             pc, boundary_proportion, minimum=minimum,
             constrain_to_boundary=constrain_to_boundary,
@@ -1283,7 +1277,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             return [Image(o, copy=False) for p in single_array for o in p]
 
     def extract_patches_around_landmarks(
-            self, group=None, label=None, patch_shape=(16, 16),
+            self, group=None, patch_shape=(16, 16),
             sample_offsets=None, as_single_array=True):
         r"""
         Extract patches around landmarks existing on this image. Provided the
@@ -1297,8 +1291,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ----------
         group : `str` or ``None``, optional
             The landmark group to use as patch centres.
-        label : `str` or ``None``, optional
-            The landmark label within the group to use as centres.
         patch_shape : `tuple` or `ndarray`, optional
             The size of the patch to extract
         sample_offsets : ``(n_offsets, n_dims)`` `ndarray` or ``None``, optional
@@ -1324,7 +1316,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ValueError
             If image is not 2D
         """
-        return self.extract_patches(self.landmarks[group][label],
+        return self.extract_patches(self.landmarks[group].lms,
                                     patch_shape=patch_shape,
                                     sample_offsets=sample_offsets,
                                     as_single_array=as_single_array)
@@ -1396,7 +1388,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         set_patches(patches, self.pixels, patch_centers.points, offset,
                     offset_index)
 
-    def set_patches_around_landmarks(self, patches, group=None, label=None,
+    def set_patches_around_landmarks(self, patches, group=None,
                                      offset=None, offset_index=None):
         r"""
         Set the values of a group of patches around the landmarks existing in
@@ -1424,8 +1416,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             objects.
         group : `str` or ``None`` optional
             The landmark group to use as patch centres.
-        label : `str` or ``None`` optional
-            The landmark label within the group to use as centres.
         offset : `list` or `tuple` or ``(1, 2)`` `ndarray` or ``None``, optional
             The offset to apply on the patch centers within the image.
             If ``None``, then ``(0, 0)`` is used.
@@ -1441,7 +1431,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ValueError
             If offset does not have shape (1, 2)
         """
-        return self.set_patches(patches, self.landmarks[group][label],
+        return self.set_patches(patches, self.landmarks[group].lms,
                                 offset=offset, offset_index=offset_index)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
@@ -1823,7 +1813,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                             return_transform=return_transform)
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
-                                   label=None, round='ceil', order=1):
+                                   round='ceil', order=1):
         r"""
         Deprecated: please use :meth:`rescale_to_pointcloud` instead.
         """
@@ -1832,9 +1822,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
              'Please use rescale_to_pointcloud() instead.',
              MenpoDeprecationWarning)
         return self.rescale_to_pointcloud(reference_shape, group=group,
-                                          label=label, round=round, order=order)
+                                          round=round, order=order)
 
-    def rescale_to_pointcloud(self, pointcloud, group=None, label=None,
+    def rescale_to_pointcloud(self, pointcloud, group=None,
                               round='ceil', order=1,
                               return_transform=False):
         r"""
@@ -1850,9 +1840,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        label : `str`, optional
-            The label of of the landmark manager that you wish to use. If
-            ``None`` all landmarks in the group are used.
         round: ``{ceil, floor, round}``, optional
             Rounding function to be applied to floating point shapes.
         order : `int`, optional
@@ -1881,13 +1868,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The transform that was used. It only applies if
             `return_transform` is ``True``.
         """
-        pc = self.landmarks[group][label]
+        pc = self.landmarks[group].lms
         scale = AlignmentUniformScale(pc, pointcloud).as_vector().copy()
         return self.rescale(scale, round=round, order=order,
                             return_transform=return_transform)
 
     def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
-                                            label=None, round='ceil', order=1,
+                                            round='ceil', order=1,
                                             return_transform=False):
         r"""
         Return a copy of this image, rescaled so that the ``diagonal_range`` of
@@ -1902,9 +1889,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``
             and if there is only one set of landmarks, this set will be used.
-        label: `str`, optional
-            The label of of the landmark manager that you wish to use. If
-           ``None`` all landmarks in the group are used.
         round : ``{ceil, floor, round}``, optional
             Rounding function to be applied to floating point shapes.
         order : `int`, optional
@@ -1933,7 +1917,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The transform that was used. It only applies if
             `return_transform` is ``True``.
         """
-        x, y = self.landmarks[group][label].range()
+        x, y = self.landmarks[group].lms.range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
         return self.rescale(scale, round=round, order=order,
                             return_transform=return_transform)
