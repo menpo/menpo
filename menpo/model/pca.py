@@ -1267,16 +1267,16 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
             components above and beyond this one are discarded.
         """
         # Create new pca instance
-        model = PCAVectorModel.__new__(cls)
-        model.n_samples = n_samples
+        self_model = PCAVectorModel.__new__(cls)
+        self_model.n_samples = n_samples
 
         # The call to __init__ of MeanLinearModel is done in here
-        model._constructor_helper(
+        self_model._constructor_helper(
             eigenvalues=eigenvalues, eigenvectors=components,
             mean=mean.as_vector(), centred=centred,
             max_n_components=max_n_components)
-        VectorizableBackedModel.__init__(model, mean)
-        return model
+        VectorizableBackedModel.__init__(self_model, mean)
+        return self_model
 
     def mean(self):
         r"""
