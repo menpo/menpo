@@ -514,7 +514,7 @@ class BooleanImage(Image):
             warped_img.pixels[:, warped_img.mask] = sampled_pixel_values
         return warped_img
 
-    def constrain_to_landmarks(self, group=None, label=None, trilist=None,
+    def constrain_to_landmarks(self, group=None, trilist=None,
                                batch_size=None):
         r"""
         Restricts this mask to be equal to the convex hull around the
@@ -526,9 +526,6 @@ class BooleanImage(Image):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        label: `str`, optional
-            The label of of the landmark manager that you wish to use. If no
-            label is passed, the convex hull of all landmarks is used.
         trilist: ``(t, 3)`` `ndarray`, optional
             Triangle list to be used on the landmarked points in selecting
             the mask region. If ``None``, defaults to performing Delaunay
@@ -540,7 +537,7 @@ class BooleanImage(Image):
             keeps memory usage low. If ``None``, no batching is used and all
             points are checked at once.
         """
-        self.constrain_to_pointcloud(self.landmarks[group][label],
+        self.constrain_to_pointcloud(self.landmarks[group].lms,
                                      trilist=trilist, batch_size=batch_size)
 
     def constrain_to_pointcloud(self, pointcloud, batch_size=None,

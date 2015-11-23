@@ -66,9 +66,9 @@ class LinearModel(Copyable):
         else:
             np.copyto(self._components, value, casting='safe')
 
-    def component_vector(self, index):
+    def component(self, index):
         r"""
-        A particular component of the model, in vectorized form.
+        A particular component of the model.
 
         Parameters
         ----------
@@ -82,7 +82,7 @@ class LinearModel(Copyable):
         """
         return self.components[index]
 
-    def instance_vector(self, weights):
+    def instance(self, weights):
         r"""
         Creates a new vector instance of the model by weighting together the
         components.
@@ -140,7 +140,7 @@ class LinearModel(Copyable):
     def _instance_vectors_for_full_weights(self, full_weights):
         return np.dot(full_weights, self.components)
 
-    def project_vector(self, vector):
+    def project(self, vector):
         """
         Projects the `vector` onto the model, retrieving the optimal
         linear reconstruction weights.
@@ -174,7 +174,7 @@ class LinearModel(Copyable):
         """
         return np.dot(vectors, self.components.T)
 
-    def reconstruct_vector(self, vector):
+    def reconstruct(self, vector):
         """
         Project a `vector` onto the linear space and rebuild from the weights
         found.
@@ -208,7 +208,7 @@ class LinearModel(Copyable):
         """
         return self.instance_vectors(self.project_vectors(vectors))
 
-    def project_out_vector(self, vector):
+    def project_out(self, vector):
         """
         Returns a version of `vector` where all the basis of the model have
         been projected out.
@@ -241,7 +241,7 @@ class LinearModel(Copyable):
             A copy of `vectors` with all basis of the model projected out.
         """
         weights = self.project_vectors(vectors)
-        return vectors - np.dot(weights, self.components)
+        return vectors - self._instance_vectors_for_full_weights(weights)
 
     def orthonormalize_inplace(self):
         r"""
@@ -300,14 +300,22 @@ class MeanLinearModel(LinearModel):
     ----------
     components : ``(n_components, n_features)`` `ndarray`
         The components array.
-    mean_vector : ``(n_features,)`` `ndarray`
+    mean : ``(n_features,)`` `ndarray`
         The mean vector.
     """
-    def __init__(self, components, mean_vector):
+    def __init__(self, components, mean):
         super(MeanLinearModel, self).__init__(components)
-        self.mean_vector = mean_vector
+        self._mean = mean
 
-    def component_vector(self, index, with_mean=True, scale=1.0):
+    def mean(self):
+        r"""
+        Return the mean of the model.
+
+        :type: `ndarray`
+        """
+        return self._mean
+
+    def component(self, index, with_mean=True, scale=1.0):
         r"""
         A particular component of the model, in vectorized form.
 
@@ -329,7 +337,7 @@ class MeanLinearModel(LinearModel):
             The component vector.
         """
         if with_mean:
-            return (scale * self.components[index]) + self.mean_vector
+            return (scale * self.components[index]) + self._mean
         else:
             return self.components[index]
 
@@ -348,9 +356,30 @@ class MeanLinearModel(LinearModel):
         projected : ``(n_samples, n_components)`` `ndarray`
             The matrix of optimal linear weights.
         """
-        X = vectors - self.mean_vector
+        X = vectors - self._mean
         return np.dot(X, self.components.T)
+
+    def project_out_vectors(self, vectors):
+        """
+        Returns a version of `vectors` where all the bases of the model have
+        been projected out.
+
+        Parameters
+        ----------
+        vectors : ``(n_vectors, n_features)`` `ndarray`
+            A matrix of novel vectors.
+
+        Returns
+        -------
+        projected_out : ``(n_vectors, n_features)`` `ndarray`
+            A copy of `vectors` with all bases of the model projected out.
+        """
+        weights = self.project_vectors(vectors)
+        # We don't add the mean back, in fact the residual is defined as
+        # the mean subtracted.
+        return ((vectors - self._mean[None, ...]) -
+                LinearModel._instance_vectors_for_full_weights(self, weights))
 
     def _instance_vectors_for_full_weights(self, full_weights):
         x = LinearModel._instance_vectors_for_full_weights(self, full_weights)
-        return x + self.mean_vector
+        return x + self._mean

@@ -1,4 +1,3 @@
-from .base import MeanInstanceLinearModel, InstanceLinearModel
 from .linear import LinearModel, MeanLinearModel
-from .pca import PCAModel
+from .pca import PCAModel, PCAVectorModel
 from .gmrf import GMRFModel, GMRFVectorModel

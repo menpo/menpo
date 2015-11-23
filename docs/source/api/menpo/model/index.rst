@@ -14,9 +14,7 @@ Abstract Classes
   :maxdepth: 1
 
   LinearModel
-  InstanceLinearModel
   MeanLinearModel
-  MeanInstanceLinearModel
 
 
 Principal Component Analysis
@@ -26,6 +24,7 @@ Principal Component Analysis
   :maxdepth: 1
 
   PCAModel
+  PCAVectorModel
 
 
 Gaussian Markov Random Field

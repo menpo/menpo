@@ -123,7 +123,7 @@ _labeller_docs = r"""
         The input landmark group, pointcloud or array to label. If a pointcloud
         is passed, then only the connectivity information is propagated to
         the pointcloud (a subclass of :map:`PointCloud` may be returned).
-    include_mapping : `bool`, optional
+    return_mapping : `bool`, optional
         Only applicable if a :map:`PointCloud` or `ndarray` is passed. Returns
         the mapping dictionary which maps labels to indices into the resulting
         :map:`PointCloud` (which is then used to for building a
@@ -142,7 +142,7 @@ _labeller_docs = r"""
         the connectivity information is propagated to the pointcloud
         (a subclass of :map:`PointCloud` may be returned).
     mapping_dict : `ordereddict` {`str` -> `int ndarray`}, optional
-        Only returned if ``include_mapping==True``. Used for building
+        Only returned if ``return_mapping==True``. Used for building
         :map:`LandmarkGroup`.
 
     Raises
@@ -177,7 +177,7 @@ def labeller_func(group_label=None):
         labelling_method.__doc__ += _labeller_docs
 
         @wraps(labelling_method)
-        def wrapper(x, include_mapping=False):
+        def wrapper(x, return_mapping=False):
             from menpo.shape import PointCloud
             # Accepts LandmarkGroup, PointCloud or ndarray
             if isinstance(x, np.ndarray):
@@ -187,7 +187,7 @@ def labeller_func(group_label=None):
                 new_pcloud, mapping = labelling_method(x)
                 # This parameter is only provided for internal use so that
                 # other labellers can piggyback off one another
-                if include_mapping:
+                if return_mapping:
                     return new_pcloud, mapping
                 else:
                     return new_pcloud
