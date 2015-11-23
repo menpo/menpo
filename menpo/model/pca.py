@@ -373,10 +373,11 @@ class PCAVectorModel(MeanLinearModel):
         noise_variance : `float`
             The mean variance of the inactive components.
         """
-        noise_variance = 0.0
-        if (self.n_active_components == self.n_components and
-            self._trimmed_eigenvalues.size != 0):
-                noise_variance += self._trimmed_eigenvalues.mean()
+        if self.n_active_components == self.n_components:
+            if self._trimmed_eigenvalues.size != 0:
+                noise_variance = self._trimmed_eigenvalues.mean()
+            else:
+                noise_variance = 0.0
         else:
             noise_variance = np.hstack(
                 (self._eigenvalues[self.n_active_components:],
