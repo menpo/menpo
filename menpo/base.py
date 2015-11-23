@@ -1,24 +1,5 @@
-from functools import partial
+from functools import partial, wraps
 import os.path
-
-# To debug the Copyable interface, simply uncomment lines 11-23 below and the
-# four lines in the copy() method.
-# Then you can call print_copyable_log() to see exactly what types have been
-# skipped in copying and why.
-
-# from collections import defaultdict
-# alien_copies = defaultdict(set)
-# non_copies = defaultdict(set)
-#
-#
-# def print_copyable_log():
-#     print('Has .copy() but not Copyable:')
-#     for k, v in alien_copies.items():
-#         print('  {:15}|  {}'.format(k, ', '.join(v)))
-#
-#     print('\nNo .copy() (shallow copied):')
-#     for k, v in non_copies.items():
-#         print('  {:15}|  {}'.format(k, ', '.join(v)))
 
 
 class Copyable(object):
@@ -336,6 +317,7 @@ class MenpoMissingDependencyError(Exception):
     def __str__(self):
         return self.message
 
+
 def name_of_callable(c):
     r"""
     Return the name of a callable (function or callable class) as a string.
@@ -362,3 +344,94 @@ def name_of_callable(c):
             return c.__name__  # function
     except AttributeError:
         return c.__class__.__name__  # callable class
+
+
+class doc_inherit(object):
+    """
+    Docstring inheriting method descriptor.
+
+    This uses some Python magic in order to create a decorator that implements
+    the descriptor protocol that allows functions to inherit documentation.
+    This is particularly useful for methods that directly override methods
+    on their base class and simply alter the implementation but not the
+    effective behaviour. Usage of this decorator is as follows:
+
+        @doc_inherit()
+        def foo():
+            # Do something, but inherit the documentation from the method
+            # called 'foo' found on the super() chain.
+
+        @doc_inherit(name="foo2")
+        def foo():
+            # Do something, but inherit the documentation from the method
+            # called 'foo2' found on the super() chain.
+
+    When no argument is passed the name of the method being decorated is
+    looked up on the ``super`` call chain.
+
+    Parameters
+    ----------
+    name : `str`
+        The name of the method to copy documentation from that exists somewhere
+        on the ``super`` inheritance hierarchy.
+    """
+
+    def __init__(self, name=None):
+        self.name = name
+
+    def __call__(self, mthd):
+        # Implementing the call method on a decorator allows the decorator
+        # to recieve arguments in the constructor (__init__). Therefore,
+        # the argument to the call method is always the method being wrapped.
+        self.mthd = mthd
+        # If name is None then default to the name of the method being wrapped.
+        if self.name is None:
+            self.name = self.mthd.__name__
+        return self
+
+    def __get__(self, obj, cls):
+        # Implement the descriptor protocol. There are two different calling
+        # strategies that involve whether the wrapped method has been passed
+        # an instance or not.
+        if obj:
+            return self._get_with_instance(obj, cls)
+        else:
+            return self._get_with_no_instance(cls)
+
+    def _get_with_instance(self, obj, cls):
+        # An instance was passed, so lookup the name on the super chain
+        overridden = getattr(super(cls, obj), self.name, None)
+
+        # Return the wrapped method, passing through the arguments and the
+        # object instance.
+        @wraps(self.mthd, assigned=('__name__', '__module__'))
+        def f(*args, **kwargs):
+            return self.mthd(obj, *args, **kwargs)
+
+        return self._use_parent_doc(f, overridden)
+
+    def _get_with_no_instance(self, cls):
+
+        # This case is more complicated (than when an instance is passed). Here
+        # we use reflection to try and lookup the method. When found, we drop
+        # out the loop.
+        for parent in cls.__mro__[1:]:
+            overridden = getattr(parent, self.name, None)
+            if overridden:
+                break
+
+        # Return the wrapped method, passing through the arguments and the
+        # object instance.
+        @wraps(self.mthd, assigned=('__name__', '__module__'))
+        def f(*args, **kwargs):
+            return self.mthd(*args, **kwargs)
+
+        return self._use_parent_doc(f, overridden)
+
+    def _use_parent_doc(self, func, source):
+        # Attach the documentation (unless the method was not found on the
+        # super chain).
+        if source is None:
+            raise NameError("Can't find '{}' in parents".format(self.name))
+        func.__doc__ = source.__doc__
+        return func
