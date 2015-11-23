@@ -108,7 +108,9 @@ class PCAVectorModel(MeanLinearModel):
             The maximum number of components to keep in the model. Any
             components above and beyond this one are discarded.
         """
-        # Create new pca instance
+        # This is a bit of a filthy trick that by rights should not be done,
+        # but we want to have these nice static constructors so we are living
+        # with the shame (create an empty object instance which we fill in).
         model = PCAModel.__new__(cls)
         model.n_samples = n_samples
 
@@ -157,7 +159,12 @@ class PCAVectorModel(MeanLinearModel):
     @n_active_components.setter
     def n_active_components(self, value):
         r"""
-        Sets an updated number of active components on this model.
+        Sets an updated number of active components on this model. The number
+        of active components represents the number of principal components
+        that will be used for generative purposes. Note that this therefore
+        makes the model stateful. Also note that setting the number of
+        components will not affect memory unless :meth:`trim_components`
+        is called.
 
         Parameters
         ----------
@@ -218,8 +225,9 @@ class PCAVectorModel(MeanLinearModel):
     @property
     def eigenvalues(self):
         r"""
-        Returns the eigenvalues associated to the active components of the
-        model, i.e. the amount of variance captured by each active component.
+        Returns the eigenvalues associated with the active components of the
+        model, i.e. the amount of variance captured by each active component,
+        sorted form largest to smallest.
 
         :type: ``(n_active_components,)`` `ndarray`
         """
@@ -227,7 +235,7 @@ class PCAVectorModel(MeanLinearModel):
 
     def whitened_components(self):
         r"""
-        Returns the active components of the model whitened.
+        Returns the active components of the model, whitened.
 
         Returns
         -------
@@ -1133,18 +1141,8 @@ class PCAVectorModel(MeanLinearModel):
                    x_axis_limits=(0, self.n_active_components - 1),
                    y_axis_limits=None, figure_size=figure_size, style=style)
 
-    @property
-    def _str_title(self):
-        r"""
-        Returns a string containing the name of the model.
-
-        :type: `str`
-        """
-        return "PCA model with {} active components.".format(
-            self.n_active_components)
-
     def __str__(self):
-        str_out = 'PCA Model \n'                             \
+        str_out = 'PCA Vector Model \n'                      \
                   ' - centred:              {}\n'            \
                   ' - # features:           {}\n'            \
                   ' - # active components:  {}\n'            \
@@ -1161,7 +1159,8 @@ class PCAVectorModel(MeanLinearModel):
 
 class PCAModel(PCAVectorModel, VectorizableBackedModel):
     r"""
-    A :map:`MeanInstanceLinearModel` where components are Principal Components.
+    A :map:`MeanInstanceLinearModel` where components are Principal Components
+    and the components are vectorized instances.
 
     Principal Component Analysis (PCA) by eigenvalue decomposition of the
     data's scatter matrix. For details of the implementation of PCA, see
@@ -1332,7 +1331,7 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
         Returns
         -------
         component : `type(self.template_instance)`
-            The requested component.
+            The requested component instance.
         """
         return self.template_instance.from_vector(self.component_vector(
             index, with_mean=with_mean, scale=scale))
@@ -1415,7 +1414,7 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
                                  verbose=verbose)
 
     def __str__(self):
-        str_out = 'PCA Instance Model \n'                    \
+        str_out = 'PCA Model \n'                             \
                   ' - instance class:       {}\n'            \
                   ' - centred:              {}\n'            \
                   ' - # features:           {}\n'            \
