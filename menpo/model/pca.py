@@ -1299,18 +1299,27 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
     def project_out_vector(self, instance_vector):
         return PCAVectorModel.project_out(self, instance_vector)
 
+    @doc_inherit(name='reconstruct')
     def reconstruct_vector(self, instance_vector):
         return PCAVectorModel.reconstruct(self, instance_vector)
 
+    @doc_inherit(name='project')
     def project_vector(self, instance_vector):
         return PCAVectorModel.project(self, instance_vector)
 
+    @doc_inherit(name='instance')
     def instance_vector(self, weights, normalized_weights=False):
         return PCAVectorModel.instance(self, weights,
                                        normalized_weights=normalized_weights)
 
+    @doc_inherit(name='component')
     def component_vector(self, index, with_mean=True, scale=1.0):
-        return PCAVectorModel.component(self, index, with_mean=with_mean, scale=scale)
+        return PCAVectorModel.component(self, index, with_mean=with_mean,
+                                        scale=scale)
+
+    @doc_inherit(name='project_whitened')
+    def project_whitened_vector(self, vector_instance):
+        return PCAVectorModel.project_whitened(self, vector_instance)
 
     def component(self, index, with_mean=True, scale=1.0):
         r"""
