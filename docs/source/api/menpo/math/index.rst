@@ -16,6 +16,7 @@ Decomposition
   eigenvalue_decomposition
   pca
   ipca
+  cca
 
 
 Linear Algebra
