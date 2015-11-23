@@ -37,7 +37,7 @@ def eigenvalue_decomposition(C, is_inverse=False, eps=1e-10):
     # compute eigenvalue decomposition
     if issparse(C):
         from scipy.sparse.linalg import eigsh
-        eigenvalues, eigenvectors = eigsh(C)
+        eigenvalues, eigenvectors = eigsh(C, k=C.shape[0] - 1)
     else:
         eigenvalues, eigenvectors = np.linalg.eigh(C)
 
