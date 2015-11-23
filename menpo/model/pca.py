@@ -3,8 +3,8 @@ import numpy as np
 
 from menpo.base import doc_inherit
 from menpo.math import pca, pcacov, ipca, as_matrix
-from menpo.model import MeanLinearModel
-from menpo.model.vectorizable import VectorizableBackedModel
+from .linear import MeanLinearModel
+from .vectorizable import VectorizableBackedModel
 
 
 class PCAVectorModel(MeanLinearModel):
