@@ -1160,7 +1160,7 @@ class PCAVectorModel(MeanLinearModel):
 
 class PCAModel(PCAVectorModel, VectorizableBackedModel):
     r"""
-    A :map:`MeanInstanceLinearModel` where components are Principal Components
+    A :map:`MeanLinearModel` where components are Principal Components
     and the components are vectorized instances.
 
     Principal Component Analysis (PCA) by eigenvalue decomposition of the
