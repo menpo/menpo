@@ -411,8 +411,9 @@ class PCAVectorModel(MeanLinearModel):
             If ``noise_variance() == 0``
         """
         noise_variance = self.noise_variance()
-        if noise_variance == 0:
-            raise ValueError("noise variance is 0 - cannot take the inverse")
+        if np.allclose(noise_variance, 0):
+            raise ValueError("noise variance is effectively 0 - "
+                             "cannot take the inverse")
         return 1.0 / noise_variance
 
     def component(self, index, with_mean=True, scale=1.0):
