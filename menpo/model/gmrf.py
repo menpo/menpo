@@ -1050,12 +1050,12 @@ class GMRFVectorModel(object):
         if self.sparse:
             return scipy_inv(self.precision)
         else:
-            return np.linalg.inv(self.precision)
+            return np.linalg(self.precision)
 
     def principal_components_analysis(self, apply_on_precision=False,
                                       max_n_components=None):
         r"""
-        Returns a :map:`PCAModel` with the Principal Components. The
+        Returns a :map:`PCAVectorModel` with the Principal Components. The
         eigenvalue decomposition can be applied either on the precision or
         the covariance of the GMRF.
 
@@ -1071,17 +1071,17 @@ class GMRFVectorModel(object):
 
         Returns
         -------
-        pca : :map:`PCAModel`
+        pca : :map:`PCAVectorModel`
             The PCA model.
         """
-        from .pca import PCAModel
+        from .pca import PCAVectorModel
         if apply_on_precision:
-            return PCAModel.init_from_covariance_matrix(
+            return PCAVectorModel.init_from_covariance_matrix(
                 C=self.precision, mean=self.mean_vector,
                 n_samples=self.n_samples, centred=True,
                 max_n_components=max_n_components)
         else:
-            return PCAModel.init_from_covariance_matrix(
+            return PCAVectorModel.init_from_covariance_matrix(
                 C=self.covariance(), mean=self.mean_vector,
                 n_samples=self.n_samples, centred=True,
                 max_n_components=max_n_components)
