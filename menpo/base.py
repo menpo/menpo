@@ -358,48 +358,85 @@ class doc_inherit(object):
 
     This uses some Python magic in order to create a decorator that implements
     the descriptor protocol that allows functions to inherit documentation.
-    This is particularly useful for methods that directly override
+    This is particularly useful for methods that directly override methods
+    on their base class and simply alter the implementation but not the
+    effective behaviour. Usage of this decorator is as follows:
+
+        @doc_inherit()
+        def foo():
+            # Do something, but inherit the documentation from the method
+            # called 'foo' found on the super() chain.
+
+        @doc_inherit(name="foo2")
+        def foo():
+            # Do something, but inherit the documentation from the method
+            # called 'foo2' found on the super() chain.
+
+    When no argument is passed the name of the method being decorated is
+    looked up on the ``super`` call chain.
+
+    Parameters
+    ----------
+    name : `str`
+        The name of the method to copy documentation from that exists somewhere
+        on the ``super`` inheritance hierarchy.
     """
 
     def __init__(self, name=None):
         self.name = name
 
     def __call__(self, mthd):
+        # Implementing the call method on a decorator allows the decorator
+        # to recieve arguments in the constructor (__init__). Therefore,
+        # the argument to the call method is always the method being wrapped.
         self.mthd = mthd
+        # If name is None then default to the name of the method being wrapped.
         if self.name is None:
             self.name = self.mthd.__name__
         return self
 
     def __get__(self, obj, cls):
+        # Implement the descriptor protocol. There are two different calling
+        # strategies that involve whether the wrapped method has been passed
+        # an instance or not.
         if obj:
-            return self.get_with_inst(obj, cls)
+            return self._get_with_instance(obj, cls)
         else:
-            return self.get_no_inst(cls)
+            return self._get_with_no_instance(cls)
 
-    def get_with_inst(self, obj, cls):
-
+    def _get_with_instance(self, obj, cls):
+        # An instance was passed, so lookup the name on the super chain
         overridden = getattr(super(cls, obj), self.name, None)
 
+        # Return the wrapped method, passing through the arguments and the
+        # object instance.
         @wraps(self.mthd, assigned=('__name__', '__module__'))
         def f(*args, **kwargs):
             return self.mthd(obj, *args, **kwargs)
 
-        return self.use_parent_doc(f, overridden)
+        return self._use_parent_doc(f, overridden)
 
-    def get_no_inst(self, cls):
+    def _get_with_no_instance(self, cls):
 
+        # This case is more complicated (than when an instance is passed). Here
+        # we use reflection to try and lookup the method. When found, we drop
+        # out the loop.
         for parent in cls.__mro__[1:]:
             overridden = getattr(parent, self.name, None)
             if overridden:
                 break
 
+        # Return the wrapped method, passing through the arguments and the
+        # object instance.
         @wraps(self.mthd, assigned=('__name__', '__module__'))
         def f(*args, **kwargs):
             return self.mthd(*args, **kwargs)
 
-        return self.use_parent_doc(f, overridden)
+        return self._use_parent_doc(f, overridden)
 
-    def use_parent_doc(self, func, source):
+    def _use_parent_doc(self, func, source):
+        # Attach the documentation (unless the method was not found on the
+        # super chain).
         if source is None:
             raise NameError("Can't find '{}' in parents".format(self.name))
         func.__doc__ = source.__doc__
