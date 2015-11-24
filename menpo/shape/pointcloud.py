@@ -1,4 +1,6 @@
 import numpy as np
+import numbers
+import collections
 from warnings import warn
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
@@ -93,6 +95,52 @@ class PointCloud(Shape):
         else:
             points = np.array(points, copy=True, order='C')
         self.points = points
+
+    @classmethod
+    def init_2d_grid(cls, shape, spacing=None):
+        r"""
+        Create a pointcloud that exists on a regular 2D grid. The first
+        dimension is the number of rows in the grid and the second dimension
+        of the shape is the number of columns. ``spacing`` optionally allows
+        the definition of the distance between points (uniform over points).
+        The spacing may be different for rows and columns.
+
+        Parameters
+        ----------
+        shape : `tuple` of 2 `int`
+            The size of the grid to create, this defines the number of points
+            across each dimension in the grid. The first element is the number
+            of rows and the second is the number of columns.
+        spacing : `int` or `tuple` of 2 `int`
+            The spacing between points. If a single `int` is provided, this
+            is applied uniformly across each dimension. If a `tuple` is
+            provided, the spacing is applied non-uniformly as defined e.g.
+            ``(2, 3)`` gives a spacing of 2 for the rows and 3 for the
+            columns.
+        Returns
+        -------
+        shape_cls : `type(cls)`
+            A PointCloud or subclass arrange in a grid.
+        """
+        if len(shape) != 2:
+            raise ValueError('shape must be 2D.')
+
+        grid = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]),
+                           indexing='ij')
+        points = np.require(np.concatenate(grid).reshape([2, -1]).T,
+                            dtype=np.float64, requirements=['C'])
+
+        if spacing is not None:
+            if not (isinstance(spacing, numbers.Number) or
+                    isinstance(spacing, collections.Sequence)):
+                raise ValueError('spacing must be either a single number '
+                                 'to be applied over each dimension, or a 2D '
+                                 'sequence of numbers.')
+            if isinstance(spacing, collections.Sequence) and len(spacing) != 2:
+                raise ValueError('spacing must be 2D.')
+
+            points *= np.asarray(spacing, dtype=np.float64)
+        return cls(points, copy=False)
 
     @property
     def n_points(self):

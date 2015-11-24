@@ -12,6 +12,42 @@ def test_pointcloud_creation():
     PointCloud(points)
 
 
+def test_pointcloud_init_2d_grid():
+    pc = PointCloud.init_2d_grid([10, 10])
+    assert pc.n_points == 100
+    assert pc.n_dims == 2
+    assert_allclose(pc.range(), [9, 9])
+
+
+def test_pointcloud_init_2d_grid_single_spacing():
+    pc = PointCloud.init_2d_grid([10, 10], spacing=2)
+    assert pc.n_points == 100
+    assert pc.n_dims == 2
+    assert_allclose(pc.range(), [18, 18])
+
+
+def test_pointcloud_init_2d_grid_unequal_spacing():
+    pc = PointCloud.init_2d_grid([10, 10], spacing=(2., 3))
+    assert pc.n_points == 100
+    assert pc.n_dims == 2
+    assert_allclose(pc.range(), [18, 27])
+
+
+@raises(ValueError)
+def test_pointcloud_init_2d_grid_3d_raises():
+    PointCloud.init_2d_grid([10, 10, 10])
+
+
+@raises(ValueError)
+def test_pointcloud_init_2d_grid_3d_spacing_raises():
+    PointCloud.init_2d_grid([10, 10], spacing=[1, 1, 1])
+
+
+@raises(ValueError)
+def test_pointcloud_init_2d_grid_incorrect_type_spacing_raises():
+    PointCloud.init_2d_grid([10, 10], spacing={})
+
+
 def test_pointcloud_has_nan_values():
     pcloud = PointCloud(np.random.rand(3, 2), copy=False)
     pcloud.points[0, 0] = np.nan
