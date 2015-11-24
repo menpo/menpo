@@ -121,6 +121,25 @@ def test_pointcloud_flatten_rebuild():
     assert (np.all(pc.points == new_pc.points))
 
 
+def test_pointcloud_centre():
+    points = np.array([[0, 0],
+                       [1, 1],
+                       [0, 2]])
+    pc = PointCloud(points)
+    c = pc.centre()
+    assert_allclose(c, [1. / 3., 1.])
+
+
+def test_pointcloud_centre_of_bounds():
+    points = np.array([[0, 0],
+                       [1, 1],
+                       [0, 2]])
+    pc = PointCloud(points)
+    cb = pc.centre_of_bounds()
+    assert_allclose(cb, [0., 1.])
+    assert 1
+
+
 def test_pointcloud_bounding_box():
     points = np.array([[0, 0],
                        [1, 1],
