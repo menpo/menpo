@@ -193,7 +193,7 @@ class PointCloud(Shape):
             The centre of the bounds of this PointCloud.
         """
         min_b, max_b = self.bounds()
-        return (min_b + max_b) / 2
+        return (min_b + max_b) / 2.0
 
     def _as_vector(self):
         r"""

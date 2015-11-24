@@ -123,7 +123,7 @@ def test_pointcloud_flatten_rebuild():
 
 def test_pointcloud_centre():
     points = np.array([[0, 0],
-                       [1, 1],
+                       [1., 1],
                        [0, 2]])
     pc = PointCloud(points)
     c = pc.centre()
@@ -132,17 +132,17 @@ def test_pointcloud_centre():
 
 def test_pointcloud_centre_of_bounds():
     points = np.array([[0, 0],
-                       [1, 1],
+                       [1., 1],
                        [0, 2]])
     pc = PointCloud(points)
     cb = pc.centre_of_bounds()
-    assert_allclose(cb, [0., 1.])
+    assert_allclose(cb, [0.5, 1.])
     assert 1
 
 
 def test_pointcloud_bounding_box():
     points = np.array([[0, 0],
-                       [1, 1],
+                       [1., 1],
                        [0, 2]])
     pc = PointCloud(points)
     bb = pc.bounding_box()
