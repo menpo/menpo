@@ -111,16 +111,17 @@ class PointCloud(Shape):
             The size of the grid to create, this defines the number of points
             across each dimension in the grid. The first element is the number
             of rows and the second is the number of columns.
-        spacing : `int` or `tuple` of 2 `int`
+        spacing : `int` or `tuple` of 2 `int`, optional
             The spacing between points. If a single `int` is provided, this
             is applied uniformly across each dimension. If a `tuple` is
             provided, the spacing is applied non-uniformly as defined e.g.
             ``(2, 3)`` gives a spacing of 2 for the rows and 3 for the
             columns.
+
         Returns
         -------
         shape_cls : `type(cls)`
-            A PointCloud or subclass arrange in a grid.
+            A PointCloud or subclass arranged in a grid.
         """
         if len(shape) != 2:
             raise ValueError('shape must be 2D.')
