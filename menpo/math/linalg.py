@@ -1,6 +1,6 @@
 from itertools import islice
 import numpy as np
-from menpo.visualize import print_progress, bytes_str
+from menpo.visualize import print_progress, bytes_str, print_dynamic
 
 
 def dot_inplace_left(a, b, block_size=1000):
@@ -132,8 +132,8 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
 
     data = np.zeros((length, n_features), dtype=template_vector.dtype)
     if verbose:
-        print('Allocated data matrix of size {} '
-              '({} samples)'.format(bytes_str(data.nbytes), length))
+        print_dynamic('Allocated data matrix of size {} '
+                      '({} samples)'.format(bytes_str(data.nbytes), length))
 
     # now we can fill in the first element from the template
     data[0] = template_vector
@@ -144,7 +144,8 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
 
     if verbose:
         vectorizables = print_progress(vectorizables, n_items=length, offset=1,
-                                       prefix='Building data matrix')
+                                       prefix='Building data matrix',
+                                       end_with_newline=False)
 
     # 1-based as we have the template vector set already
     i = 0

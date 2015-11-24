@@ -51,6 +51,7 @@ Face Labels
   face_ibug_68_to_face_ibug_66_trimesh
   face_ibug_68_to_face_ibug_68
   face_ibug_68_to_face_ibug_68_trimesh
+  face_ibug_49_to_face_ibug_49
   face_imm_58_to_face_imm_58
   face_lfpw_29_to_face_lfpw_29
   face_bu3dfe_83_to_face_bu3dfe_83

@@ -477,6 +477,7 @@ class MultipleImageViewer(ImageViewer):
         else:
             raise ValueError("Only 2D images are currently supported")
 
+
 # Patches visualization methods
 def render_rectangles_around_patches(centers, patch_shape, axes=None,
                                      image_view=True, line_colour='r',
