@@ -35,6 +35,14 @@ Landmarks & Labeller
   LandmarkGroup
   labeller
 
+Bounding Box Labels
+-------------------
+
+.. toctree::
+  :maxdepth: 2
+
+  bounding_box_mirrored_to_bounding_box
+  bounding_box_to_bounding_box
 
 Face Labels
 -----------
@@ -51,6 +59,7 @@ Face Labels
   face_ibug_68_to_face_ibug_66_trimesh
   face_ibug_68_to_face_ibug_68
   face_ibug_68_to_face_ibug_68_trimesh
+  face_ibug_68_mirrored_to_face_ibug_68
   face_ibug_49_to_face_ibug_49
   face_imm_58_to_face_imm_58
   face_lfpw_29_to_face_lfpw_29

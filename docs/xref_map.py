@@ -5,6 +5,7 @@ xref_map = {
 'AlignmentAffine': ('class', 'menpo.transform.AlignmentAffine'),
 'AlignmentSimilarity': ('class', 'menpo.transform.AlignmentSimilarity'),
 'BooleanImage': ('class', 'menpo.image.BooleanImage'),
+'bounding_box': ('function', 'menpo.shape.pointcloud.bounding_box'),
 'Copyable': ('class', 'menpo.base.Copyable'),
 'ComposableTransform': ('class', 'menpo.transform.ComposableTransform'),
 'DirectedGraph': ('class', 'menpo.shape.DirectedGraph'),
