@@ -132,7 +132,7 @@ class viewwrapper(object):
         elif instance.n_dims == 3:
             return getattr(instance, self._3d_fname)
         else:
-            def raise_not_supported(self):
+            def raise_not_supported(*args, **kwargs):
                 r"""
                 Viewing of objects with greater than 3 dimensions is not
                 currently possible.

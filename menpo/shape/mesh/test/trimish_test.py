@@ -16,6 +16,15 @@ def test_trimesh_creation():
     TriMesh(points, trilist)
 
 
+def test_trimesh__init_2d_grid():
+    tm = TriMesh.init_2d_grid([10, 10])
+    assert tm.n_points == 100
+    assert tm.n_dims == 2
+    # 162 = 9 * 9 * 2
+    assert_allclose(tm.trilist.shape, (162, 3))
+    assert_allclose(tm.range(), [9, 9])
+
+
 def test_trimesh_creation_copy_true():
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
