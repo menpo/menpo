@@ -32,7 +32,8 @@ if on_rtd:
                     'scipy.linalg', 'numpy.stats', 'scipy.misc', 'PIL.Image',
                     'matplotlib', 'matplotlib.pyplot', 'scipy.spatial',
                     'scipy.spatial.distance', 'numpy.dtype', 'scipy.ndimage',
-                    'scipy.linalg.blas', 'scipy.sparse']
+                    'scipy.linalg.blas', 'scipy.sparse', 'cyvlfeat',
+                    'cyvlfeat.sift', 'cyvlfeat.sift.dsift']
     # Masking our Cython modules
     MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
                      'menpo.feature.windowiterator',
