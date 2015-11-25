@@ -228,6 +228,7 @@ class ComposableTransform(Transform):
         """
         raise NotImplementedError()
 
+
 class VComposable(object):
     r"""
     Mix-in for :map:`Vectorizable` :map:`ComposableTransform` s.
@@ -251,6 +252,7 @@ class VComposable(object):
             Vector to update the transform state with.
         """
         raise NotImplementedError()
+
 
 class TransformChain(ComposableTransform):
     r"""

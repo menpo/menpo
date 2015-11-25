@@ -1510,7 +1510,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image = self._build_warp_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse()._apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
         # optionally return the transform
@@ -1689,7 +1689,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # warp landmarks if requested.
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse()._apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
 
