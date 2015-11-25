@@ -401,7 +401,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         new_image.landmarks = self.landmarks
         return new_image
 
-    def from_vector_inplace(self, vector, copy=True):
+    def _from_vector_inplace(self, vector, copy=True):
         r"""
         Takes a flattened vector and update this image by
         reshaping the vector to the correct dimensions.
@@ -1537,7 +1537,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image = MaskedImage.init_blank(template_mask.shape,
                                               n_channels=self.n_channels,
                                               mask=template_mask)
-        warped_image.from_vector_inplace(sampled_pixel_values.ravel())
+        warped_image._from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
     def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
@@ -2417,7 +2417,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             raise ValueError("Image has 0 variance - can't be "
                              "normalized")
         else:
-            self.from_vector_inplace(centered_pixels / scale_factor)
+            self._from_vector_inplace(centered_pixels / scale_factor)
 
     def rescale_pixels(self, minimum, maximum, per_channel=True):
         r"""A copy of this image with pixels linearly rescaled to fit a range.

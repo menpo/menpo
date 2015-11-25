@@ -154,7 +154,7 @@ class NonUniformScale(DiscreteAffine, Affine):
         """
         return self.scale
 
-    def from_vector_inplace(self, vector):
+    def _from_vector_inplace(self, vector):
         r"""
         Updates the :class:`NonUniformScale` inplace.
 
@@ -268,7 +268,7 @@ class UniformScale(DiscreteAffine, Similarity):
         """
         return np.asarray(self.scale)
 
-    def from_vector_inplace(self, p):
+    def _from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
         expected to be in Fortran ordering.
@@ -316,7 +316,7 @@ class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
         UniformScale.__init__(self, target.norm() / source.norm(),
                               source.n_dims)
 
-    def from_vector_inplace(self, p):
+    def _from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
         expected to be in Fortran ordering.
@@ -326,7 +326,7 @@ class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
         p : `float`
             The parameter
         """
-        UniformScale.from_vector_inplace(self, p)
+        UniformScale._from_vector_inplace(self, p)
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):

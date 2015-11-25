@@ -258,7 +258,7 @@ class Rotation(DiscreteAffine, Similarity):
         # TODO vectorizable rotations
         raise NotImplementedError("Rotations are not yet vectorizable")
 
-    def from_vector_inplace(self, p):
+    def _from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
         expected to be in Fortran ordering.

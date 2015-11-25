@@ -76,7 +76,7 @@ class Translation(DiscreteAffine, Similarity):
         """
         return self.h_matrix[:-1, -1]
 
-    def from_vector_inplace(self, p):
+    def _from_vector_inplace(self, p):
         r"""
         Updates the :class:`Translation` inplace.
 
@@ -113,7 +113,7 @@ class AlignmentTranslation(HomogFamilyAlignment, Translation):
         HomogFamilyAlignment.__init__(self, source, target)
         Translation.__init__(self, target.centre() - source.centre())
 
-    def from_vector_inplace(self, p):
+    def _from_vector_inplace(self, p):
         r"""
         Updates the :class:`Translation` inplace.
 
@@ -122,7 +122,7 @@ class AlignmentTranslation(HomogFamilyAlignment, Translation):
         vector : ``(n_dims,)`` `ndarray`
             The array of parameters.
         """
-        Translation.from_vector_inplace(self, p)
+        Translation._from_vector_inplace(self, p)
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):

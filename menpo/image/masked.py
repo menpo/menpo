@@ -346,7 +346,7 @@ class MaskedImage(Image):
         new_image.landmarks = self.landmarks
         return new_image
 
-    def from_vector_inplace(self, vector, copy=True):
+    def _from_vector_inplace(self, vector, copy=True):
         r"""
         Takes a flattened vector and updates this image by reshaping
         the vector to the correct pixels and channels. Note that the only
@@ -1004,10 +1004,10 @@ class MaskedImage(Image):
             normalized_pixels = centered_pixels / scale_factor
 
         if limit_to_mask:
-            self.from_vector_inplace(normalized_pixels.flatten())
+            self._from_vector_inplace(normalized_pixels.flatten())
         else:
-            Image.from_vector_inplace(self,
-                                      normalized_pixels.flatten())
+            Image._from_vector_inplace(self,
+                                       normalized_pixels.flatten())
 
     def constrain_mask_to_landmarks(self, group=None,
                                     batch_size=None, point_in_pointcloud='pwa',

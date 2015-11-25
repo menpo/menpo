@@ -103,7 +103,7 @@ def test_image_from_vector_inplace_no_copy():
     pixels = np.random.rand(2, 10, 20)
     pixels2 = np.random.rand(2, 10, 20)
     image = Image(pixels)
-    image.from_vector_inplace(pixels2.ravel(), copy=False)
+    image._from_vector_inplace(pixels2.ravel(), copy=False)
     assert(is_same_array(image.pixels, pixels2))
 
 
@@ -113,7 +113,7 @@ def test_image_from_vector_inplace_no_copy_warning():
         image = Image(pixels)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            image.from_vector_inplace(pixels2.ravel()[::-1], copy=False)
+            image._from_vector_inplace(pixels2.ravel()[::-1], copy=False)
             assert len(w) == 1
 
 
@@ -121,7 +121,7 @@ def test_image_from_vector_inplace_copy_default():
     pixels = np.random.rand(2, 10, 20)
     pixels2 = np.random.rand(2, 10, 20)
     image = Image(pixels)
-    image.from_vector_inplace(pixels2.ravel())
+    image._from_vector_inplace(pixels2.ravel())
     assert(not is_same_array(image.pixels, pixels2))
 
 
@@ -129,7 +129,7 @@ def test_image_from_vector_inplace_copy_explicit():
     pixels = np.random.rand(2, 10, 20)
     pixels2 = np.random.rand(2, 10, 20)
     image = Image(pixels)
-    image.from_vector_inplace(pixels2.ravel(), copy=True)
+    image._from_vector_inplace(pixels2.ravel(), copy=True)
     assert(not is_same_array(image.pixels, pixels2))
 
 

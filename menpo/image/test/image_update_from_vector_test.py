@@ -4,7 +4,7 @@ from menpo.image import *
 
 def update_im_from_vector(im):
     new_values = np.random.random(im.pixels.shape)
-    im.from_vector_inplace(new_values.flatten())
+    im._from_vector_inplace(new_values.flatten())
     assert im.pixels.shape == new_values.shape
     return new_values
 

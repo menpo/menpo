@@ -206,7 +206,7 @@ class Affine(Homogeneous):
         params = self.h_matrix - np.eye(self.n_dims + 1)
         return params[:self.n_dims, :].ravel(order='F')
 
-    def from_vector_inplace(self, p):
+    def _from_vector_inplace(self, p):
         r"""
         Updates this Affine in-place from the new parameters. See
         from_vector for details of the parameter format
