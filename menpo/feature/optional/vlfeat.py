@@ -1,3 +1,4 @@
+from __future__ import division
 from functools import partial
 import numpy as np
 from menpo.base import MenpoMissingDependencyError
@@ -21,7 +22,7 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+    pixels : :map:`Image` or subclass or ``(C, Y, X)`` `ndarray`
         Either the image object itself or an array with the pixels. The first
         dimension is interpreted as channels.
     window_step_horizontal : `int`, optional
@@ -82,7 +83,7 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
     if verbose:
         info_str = "Dense SIFT features:\n" \
                    "  - Input image is {}W x {}H with {} channels.\n" \
-                   "  - Sampling step of ({}W,{}H).\n" \
+                   "  - Sampling step of ({}W, {}H).\n" \
                    "  - {}W x {}H spatial bins and {} orientation bins.\n" \
                    "  - Cell size of {}W x {}H pixels.\n".format(
                    pixels.shape[2], pixels.shape[1], pixels.shape[0],
@@ -109,3 +110,79 @@ fast_dsift = partial(dsift, fast=True, cell_size_vertical=5,
                      num_bins_vertical=1, num_or_bins=8)
 fast_dsift.__name__ = 'fast_dsift'
 fast_dsift.__doc__ = dsift.__doc__
+
+
+# Predefined dsift that returns a 128d vector
+def vector_128_dsift(x, dtype=np.float32):
+    r"""
+    Computes a SIFT feature vector from a square patch (or image). Patch
+    **must** be square and the output vector will *always* have be a ``(128,)``
+    vector. Please see :func:`dsift` for more information.
+
+    Parameters
+    ----------
+    x : :map:`Image` or subclass or ``(C, Y, Y)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels. Must be square i.e.
+        ``height == width``.
+    dtype : ``np.dtype``, optional
+        The dtype of the returned vector.
+
+    Raises
+    ------
+    ValueError
+        Only square images are supported.
+    """
+    if not isinstance(x, np.ndarray):
+        x = x.pixels
+    if x.shape[-1] != x.shape[-2]:
+        raise ValueError('This feature only works with square images '
+                         'i.e. width == height')
+    patch_shape = x.shape[-1]
+    n_bins = 4
+    c_size = patch_shape // n_bins
+    if x.dtype == np.uint8:
+        x *= (1.0 / 255.0)
+    return dsift(x,
+                 window_step_horizontal=patch_shape,
+                 window_step_vertical=patch_shape,
+                 num_bins_horizontal=n_bins, num_bins_vertical=n_bins,
+                 cell_size_horizontal=c_size, cell_size_vertical=c_size,
+                 num_or_bins=8, fast=True).astype(dtype)
+
+
+# Predefined dsift that returns a 128d vector normalized by the hellinger norm
+def hellinger_vector_128_dsift(x):
+    r"""
+    Computes a SIFT feature vector from a square patch (or image). Patch
+    **must** be square and the output vector will *always* have be a ``(128,)``
+    vector. Please see :func:`dsift` for more information.
+
+    The output of :func:`vector_128_dsift` is normalised using the hellinger
+    norm (also called the Bhattacharyya distance) which is a measure
+    designed to quantify the similarity between two probability distributions.
+    Since SIFT is a histogram based feature, this has been shown to improve
+    performance. Please see _[1] for more information.
+
+    Parameters
+    ----------
+    x : :map:`Image` or subclass or ``(C, Y, Y)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels. Must be square i.e.
+        ``height == width``.
+    dtype : ``np.dtype``, optional
+        The dtype of the returned vector.
+
+    Raises
+    ------
+    ValueError
+        Only square images are supported.
+
+    References
+    ----------
+    .. [1] Arandjelovic, Relja, and Andrew Zisserman. "Three things everyone
+           should know to improve object retrieval.", CVPR, 2012.
+    """
+    h = vector_128_dsift(x)
+    h /= (h.sum(axis=0) + 1e-15)
+    return np.sqrt(h)
