@@ -29,16 +29,12 @@ class Copyable(object):
             A copy of this object
 
         """
-        # print('copy called on {}'.format(type(self).__name__))
         new = self.__class__.__new__(self.__class__)
         for k, v in self.__dict__.items():
             try:
                 new.__dict__[k] = v.copy()
-                # if not isinstance(v, Copyable):
-                #     alien_copies[type(v).__name__].add(type(self).__name__)
             except AttributeError:
                 new.__dict__[k] = v
-                # non_copies[type(v).__name__].add(type(self).__name__)
         return new
 
 
