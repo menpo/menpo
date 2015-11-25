@@ -200,17 +200,9 @@ def test_boolean_image_from_vector_no_copy_raises():
         assert len(w) == 1
 
 
-def test_boolean_image_invert_inplace():
+def test_boolean_image_invert_double_noop():
     image = BooleanImage.init_blank((4, 4))
-    image.invert_inplace()
-    assert(np.all(~image.pixels))
-
-
-def test_boolean_image_invert_inplace_double_noop():
-    image = BooleanImage.init_blank((4, 4))
-    image.invert_inplace()
-    image.invert_inplace()
-    assert(np.all(image.pixels))
+    assert(np.all(image.invert().invert().pixels))
 
 
 def test_boolean_image_invert():

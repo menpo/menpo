@@ -259,12 +259,6 @@ class BooleanImage(Image):
             mask.path = self.path
         return mask
 
-    def invert_inplace(self):
-        r"""
-        Inverts this Boolean Image inplace.
-        """
-        self.pixels = ~self.pixels
-
     def invert(self):
         r"""
         Returns a copy of this boolean image, which is inverted.
@@ -276,7 +270,7 @@ class BooleanImage(Image):
             and all ``False`` values are ``True``.
         """
         inverse = self.copy()
-        inverse.invert_inplace()
+        inverse.pixels = ~self.pixels
         return inverse
 
     def bounds_true(self, boundary=0, constrain_to_bounds=True):
