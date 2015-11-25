@@ -1,6 +1,7 @@
+import warnings
 import numpy as np
 
-from menpo.base import Copyable
+from menpo.base import Copyable, MenpoDeprecationWarning
 
 
 class Transform(Copyable):
@@ -103,6 +104,9 @@ class Transform(Copyable):
         For internal performance-specific uses, see `_apply_inplace()`.
 
         """
+        warnings.warn('the public API for inplace operations is deprecated '
+                      'and will be removed in a future version of Menpo. '
+                      'Use .apply() instead.', MenpoDeprecationWarning)
         return self._apply_inplace(x, **args)
 
     def _apply_inplace(self, x, **kwargs):
