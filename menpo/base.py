@@ -1,5 +1,6 @@
 from functools import partial, wraps
 import os.path
+import warnings
 
 
 class Copyable(object):
@@ -28,16 +29,12 @@ class Copyable(object):
             A copy of this object
 
         """
-        # print('copy called on {}'.format(type(self).__name__))
         new = self.__class__.__new__(self.__class__)
         for k, v in self.__dict__.items():
             try:
                 new.__dict__[k] = v.copy()
-                # if not isinstance(v, Copyable):
-                #     alien_copies[type(v).__name__].add(type(self).__name__)
             except AttributeError:
                 new.__dict__[k] = v
-                # non_copies[type(v).__name__].add(type(self).__name__)
         return new
 
 
@@ -90,6 +87,23 @@ class Vectorizable(Copyable):
 
     def from_vector_inplace(self, vector):
         """
+        Deprecated. Use the non-mutating API, :map:`from_vector`.
+
+        For internal usage in performance-sensitive spots,
+        see `_from_vector_inplace()`
+
+        Parameters
+        ----------
+        vector : ``(n_parameters,)`` `ndarray`
+            Flattened representation of this object
+        """
+        warnings.warn('the public API for inplace operations is deprecated '
+                      'and will be removed in a future version of Menpo. '
+                      'Use .from_vector() instead.', MenpoDeprecationWarning)
+        return self._from_vector_inplace(vector)
+
+    def _from_vector_inplace(self, vector):
+        """
         Update the state of this object from a vector form.
 
         Parameters
@@ -120,7 +134,7 @@ class Vectorizable(Copyable):
             An new instance of this class.
         """
         new = self.copy()
-        new.from_vector_inplace(vector)
+        new._from_vector_inplace(vector)
         return new
 
     def has_nan_values(self):

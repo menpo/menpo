@@ -227,7 +227,7 @@ def test_uniformscale2d_update_from_vector():
                      [0, new_scale, 0],
                      [0, 0, 1]])
 
-    uniform_scale.from_vector_inplace(new_scale)
+    uniform_scale._from_vector_inplace(new_scale)
     assert_equal(uniform_scale.h_matrix, homo)
 
 
@@ -254,7 +254,7 @@ def test_nonuniformscale2d_update_from_vector():
                      [0, scale[1], 0],
                      [0, 0, 1]])
     tr = NonUniformScale(np.array([1, 2]))
-    tr.from_vector_inplace(scale)
+    tr._from_vector_inplace(scale)
     assert_equal(tr.h_matrix, homo)
 
 
@@ -540,5 +540,5 @@ def test_homogeneous_from_vector_inplace():
     h = Homogeneous(np.eye(3))
     e = np.eye(3) * 2
     e[2, 2] = 1
-    h.from_vector_inplace(e.ravel())
+    h._from_vector_inplace(e.ravel())
     assert_allclose(h.h_matrix, e)

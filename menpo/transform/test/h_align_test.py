@@ -350,7 +350,7 @@ def test_align_2d_translation_from_vector_inplace():
     # estimate the transform from source to source..
     estimate = AlignmentTranslation(source, source)
     # and update from_vector
-    estimate.from_vector_inplace(t_vec)
+    estimate._from_vector_inplace(t_vec)
     # check the estimates is correct
     assert_allclose(target.points,
                     estimate.target.points)

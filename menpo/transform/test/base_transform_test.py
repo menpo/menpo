@@ -48,7 +48,7 @@ def transform_apply_inplace_x_transformable_test():
     mocked = Mock()
     mocked._transform_inplace.return_value = mocked
     tr = MockTransform()
-    no_return = tr.apply_inplace(mocked)
+    no_return = tr._apply_inplace(mocked)
 
     assert (no_return is None)
     assert mocked._transform_inplace.called
@@ -57,7 +57,7 @@ def transform_apply_inplace_x_transformable_test():
 @raises(ValueError)
 def transform_apply_inplace_x_not_transformable_test():
     tr = MockTransform()
-    tr.apply_inplace(x)
+    tr._apply_inplace(x)
 
 
 def transform_compose_before_test():

@@ -137,7 +137,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         """
         # avoid the deepcopy with an efficient copy
         self_copy = self.copy()
-        self_copy.from_vector_inplace(vector)
+        self_copy._from_vector_inplace(vector)
         return self_copy
 
     def __str__(self):
@@ -250,7 +250,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     def _as_vector(self):
         return self.h_matrix.ravel()
 
-    def from_vector_inplace(self, vector):
+    def _from_vector_inplace(self, vector):
         """
         Update the state of this object from a vector form.
 

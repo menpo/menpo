@@ -6,7 +6,7 @@ import numpy as np
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
-from menpo.base import Vectorizable
+from menpo.base import Vectorizable, MenpoDeprecationWarning
 from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
@@ -401,7 +401,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         new_image.landmarks = self.landmarks
         return new_image
 
-    def from_vector_inplace(self, vector, copy=True):
+    def _from_vector_inplace(self, vector, copy=True):
         r"""
         Takes a flattened vector and update this image by
         reshaping the vector to the correct dimensions.
@@ -1449,7 +1449,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image = self._build_warp_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse()._apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
         # optionally return the transform
@@ -1476,7 +1476,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image = MaskedImage.init_blank(template_mask.shape,
                                               n_channels=self.n_channels,
                                               mask=template_mask)
-        warped_image.from_vector_inplace(sampled_pixel_values.ravel())
+        warped_image._from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
     def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
@@ -1628,7 +1628,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # warp landmarks if requested.
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse()._apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
 
@@ -2298,8 +2298,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def normalize_std_inplace(self, mode='all', **kwargs):
         r"""
-        Normalizes this image such that its pixel values have zero mean and
-        unit variance.
+        Deprecated. See the non-mutating API, `normalize_std()`.
+        """
+        warn('the public API for inplace operations is deprecated '
+             'and will be removed in a future version of Menpo. '
+             'Use .normalize_std() instead.', MenpoDeprecationWarning)
+        self._normalize_inplace(np.std, mode=mode)
+
+    def normalize_std(self, mode='all', **kwargs):
+        r"""
+        Returns a copy of this image normalized such that its
+        pixel values have zero mean and unit variance.
 
         Parameters
         ----------
@@ -2308,24 +2317,47 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             ``per_channel``, each channel individually is mean centred and
             normalized in variance.
         """
-        self._normalize_inplace(np.std, mode=mode)
+        return self._normalize(np.std, mode=mode)
 
     def normalize_norm_inplace(self, mode='all', **kwargs):
         r"""
-        Normalizes this image such that its pixel values have zero mean and
-        its norm equals 1.
-
-        Parameters
-        ----------
-        mode : ``{all, per_channel}``, optional
-            If ``all``, the normalization is over all channels. If
-            ``per_channel``, each channel individually is mean centred and
-            normalized in variance.
+        Deprecated. See the non-mutating API, `normalize_norm()`.
         """
+        warn('the public API for inplace operations is deprecated '
+             'and will be removed in a future version of Menpo. '
+             'Use .normalize_norm() instead.', MenpoDeprecationWarning)
+
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
         self._normalize_inplace(scale_func, mode=mode)
+
+    def normalize_norm(self, mode='all', **kwargs):
+        r"""
+        Returns a copy of this image normalized such that its pixel values
+        have zero mean and its norm equals 1.
+
+        Parameters
+        ----------
+        mode : ``{all, per_channel}``, optional
+            If ``all``, the normalization is over all channels. If
+            ``per_channel``, each channel individually is mean centred and
+            normalized in variance.
+
+        Returns
+        -------
+        image : ``type(self)``
+            A copy of this image, normalized.
+        """
+        def scale_func(pixels, axis=None):
+            return np.linalg.norm(pixels, axis=axis, **kwargs)
+
+        return self._normalize(scale_func, mode=mode)
+
+    def _normalize(self, scale_func, mode='all'):
+        new = self.copy()
+        new._normalize_inplace(scale_func, mode=mode)
+        return new
 
     def _normalize_inplace(self, scale_func, mode='all'):
         pixels = self.as_vector(keep_channels=True)
@@ -2344,7 +2376,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             raise ValueError("Image has 0 variance - can't be "
                              "normalized")
         else:
-            self.from_vector_inplace(centered_pixels / scale_factor)
+            self._from_vector_inplace(centered_pixels / scale_factor)
 
     def rescale_pixels(self, minimum, maximum, per_channel=True):
         r"""A copy of this image with pixels linearly rescaled to fit a range.

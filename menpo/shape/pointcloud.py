@@ -220,7 +220,7 @@ class PointCloud(Shape):
         """
         return {'points': self.points.tolist()}
 
-    def from_vector_inplace(self, vector):
+    def _from_vector_inplace(self, vector):
         r"""
         Updates the points of this PointCloud in-place with the reshaped points
         from the provided vector. Note that the vector should have the form
