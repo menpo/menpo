@@ -6,7 +6,7 @@ import numpy as np
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
-from menpo.base import Vectorizable, MenpoDeprecationWarning
+from menpo.base import Vectorizable
 from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
@@ -873,35 +873,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
             axes_y_limits, figure_size)
 
-    def gradient(self, **kwargs):
-        r"""
-        Returns an :map:`Image` which is the gradient of this one. In the case
-        of multiple channels, it returns the gradient over each axis over
-        each channel as a flat `list`. Take care to note the ordering of
-        the returned gradient (the gradient over each spatial dimension
-        is taken over each channel).
-
-        The first axis of the gradient of a 2D, 3-channel image,
-        will have length `6`, the ordering being
-        ``I[:, 0, 0] = [R0_y, G0_y, B0_y, R0_x, G0_x, B0_x]``. To be clear,
-        all the ``y``-gradients are returned over each channel, then all
-        the ``x``-gradients.
-
-        Returns
-        -------
-        gradient : :map:`Image`
-            The gradient over each axis over each channel. Therefore, the
-            gradient of a 2D, single channel image, will have length `2`.
-            The length of a 2D, 3-channel image, will have length `6`.
-        """
-        warn('gradient() is deprecated and will be removed in'
-             ' the next major version of menpo. '
-             'Please use menpo.feature.gradient instead.',
-             MenpoDeprecationWarning)
-
-        from menpo.feature import gradient as grad_feature
-        return grad_feature(self)
-
     def crop(self, min_indices, max_indices, constrain_to_boundary=False,
              return_transform=False):
         r"""
@@ -1157,38 +1128,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if hasattr(self, 'mask'):
             self.mask = cropped.mask
         return self
-
-    def crop_inplace(self, *args, **kwargs):
-        r"""
-        Deprecated: please use :meth:`crop` instead.
-        """
-        warn('crop_inplace() is deprecated and will be removed in the next '
-             'major version of menpo. '
-             'Please use crop() instead.', MenpoDeprecationWarning)
-        cropped = self.crop(*args, **kwargs)
-        return self._propagate_crop_to_inplace(cropped)
-
-    def crop_to_landmarks_inplace(self, *args, **kwargs):
-        r"""
-        Deprecated: please use :meth:`crop_to_landmarks` instead.
-        """
-        warn('crop_to_landmarks_inplace() is deprecated and will be removed in'
-             ' the next major version of menpo. '
-             'Please use crop_to_landmarks() instead.',
-             MenpoDeprecationWarning)
-        cropped = self.crop_to_landmarks(*args, **kwargs)
-        return self._propagate_crop_to_inplace(cropped)
-
-    def crop_to_landmarks_proportion_inplace(self, *args, **kwargs):
-        r"""
-        Deprecated: please use :meth:`crop_to_landmarks_proportion` instead.
-        """
-        warn('crop_to_landmarks_proportion_inplace() is deprecated and will be'
-             ' removed in the next major version of menpo. Please use '
-             'crop_to_landmarks_proportion() instead.',
-             MenpoDeprecationWarning)
-        cropped = self.crop_to_landmarks_proportion(*args, **kwargs)
-        return self._propagate_crop_to_inplace(cropped)
 
     def constrain_points_to_bounds(self, points):
         r"""
@@ -1811,18 +1750,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return self.rescale(diagonal / self.diagonal(), round=round,
                             return_transform=return_transform)
-
-    def rescale_to_reference_shape(self, reference_shape, group=None,
-                                   round='ceil', order=1):
-        r"""
-        Deprecated: please use :meth:`rescale_to_pointcloud` instead.
-        """
-        warn('rescale_to_reference_shape() is deprecated and will be removed '
-             'in the next major version of menpo. '
-             'Please use rescale_to_pointcloud() instead.',
-             MenpoDeprecationWarning)
-        return self.rescale_to_pointcloud(reference_shape, group=group,
-                                          round=round, order=order)
 
     def rescale_to_pointcloud(self, pointcloud, group=None,
                               round='ceil', order=1,

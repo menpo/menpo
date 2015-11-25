@@ -1010,8 +1010,8 @@ class MaskedImage(Image):
                                       normalized_pixels.flatten())
 
     def constrain_mask_to_landmarks(self, group=None,
-                                    batch_size=None, point_in_pointcloud='pwa',
-                                    trilist=None):
+                                    batch_size=None,
+                                    point_in_pointcloud='pwa'):
         r"""
         Restricts this mask to be equal to the convex hull around the chosen
         landmarks.
@@ -1029,6 +1029,11 @@ class MaskedImage(Image):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
+            If the landmarks in question are an instance of :map:`TriMesh`,
+            the triangulation of the landmarks will be used in the convex
+            hull caculation. If the landmarks are an instance of
+            :map:`PointCloud`, Delaunay triangulation will be used to
+            create a triangulation.
         batch_size : `int` or ``None``, optional
             This should only be considered for large images. Setting this value
             will cause constraining to become much slower. This size indicates
@@ -1045,13 +1050,10 @@ class MaskedImage(Image):
             ((d, n_dims) ndarray) to test and should return a (d, 1) boolean
             ndarray of whether the pixels were inside (True) or outside (False)
             of the :map:`PointCloud`.
-        trilist: ``(t, 3)`` `ndarray`, optional
-            Deprecated. Please provide a Trimesh instead of relying on this
-            parameter.
         """
         self.mask.constrain_to_pointcloud(
-            self.landmarks[group].lms, trilist=trilist,
-            batch_size=batch_size, point_in_pointcloud=point_in_pointcloud)
+            self.landmarks[group].lms, batch_size=batch_size,
+            point_in_pointcloud=point_in_pointcloud)
 
     def build_mask_around_landmarks(self, patch_shape, group=None):
         r"""
