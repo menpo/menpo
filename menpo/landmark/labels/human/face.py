@@ -251,13 +251,16 @@ def face_ibug_68_to_face_ibug_51(pcloud):
 def face_ibug_49_to_face_ibug_49(pcloud):
     r"""
     Apply the IBUG 49-point semantic labels.
+
     The semantic labels applied are as follows:
+
       - left_eyebrow
       - right_eyebrow
       - nose
       - left_eye
       - right_eye
       - mouth
+
     References
     ----------
     .. [1] http://www.multipie.org/

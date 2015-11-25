@@ -18,7 +18,8 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
     r"""
     Computes a 2-dimensional dense SIFT features image with ``C`` number of
     channels, where
-    ``C = num_bins_horizontal * num_bins_vertical * num_or_bins``.
+    ``C = num_bins_horizontal * num_bins_vertical * num_or_bins``. The dense
+    SIFT [2]_ implementation is taken from Vlfeat [1]_.
 
     Parameters
     ----------
@@ -62,6 +63,14 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
         Window size must be a positive integer.
     ValueError
         Geometry must only contain positive integers.
+
+    References
+    ----------
+    .. [1] Vedaldi, Andrea, and Brian Fulkerson. "VLFeat: An open and portable
+       library of computer vision algorithms." Proceedings of the international
+       conference on Multimedia. ACM, 2010.
+    .. [2] Lowe, David G. "Distinctive image features from scale-invariant
+       keypoints." International journal of computer vision 60.2 (2004): 91-110.
     """
     # If norm is set to True, then the centers array will have a third column
     # with descriptor norm, or energy, before contrast normalization.
@@ -116,7 +125,7 @@ fast_dsift.__doc__ = dsift.__doc__
 def vector_128_dsift(x, dtype=np.float32):
     r"""
     Computes a SIFT feature vector from a square patch (or image). Patch
-    **must** be square and the output vector will *always* have be a ``(128,)``
+    **must** be square and the output vector will *always* be a ``(128,)``
     vector. Please see :func:`dsift` for more information.
 
     Parameters
@@ -155,14 +164,14 @@ def vector_128_dsift(x, dtype=np.float32):
 def hellinger_vector_128_dsift(x):
     r"""
     Computes a SIFT feature vector from a square patch (or image). Patch
-    **must** be square and the output vector will *always* have be a ``(128,)``
+    **must** be square and the output vector will *always* be a ``(128,)``
     vector. Please see :func:`dsift` for more information.
 
     The output of :func:`vector_128_dsift` is normalised using the hellinger
     norm (also called the Bhattacharyya distance) which is a measure
     designed to quantify the similarity between two probability distributions.
     Since SIFT is a histogram based feature, this has been shown to improve
-    performance. Please see _[1] for more information.
+    performance. Please see [1]_ for more information.
 
     Parameters
     ----------
