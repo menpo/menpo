@@ -7,26 +7,7 @@ import os
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 if on_rtd:
-    class Mock(object):
-
-        __all__ = []
-
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def __call__(self, *args, **kwargs):
-            return Mock()
-
-        @classmethod
-        def __getattr__(cls, name):
-            if name in ('__file__', '__path__'):
-                return '/dev/null'
-            elif name[0] == name[0].upper():
-                mockType = type(name, (), {})
-                mockType.__module__ = __name__
-                return mockType
-            else:
-                return Mock()
+    from mock import MagicMock
 
     MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn',
                     'scipy.linalg', 'numpy.stats', 'scipy.misc', 'PIL.Image',
@@ -42,7 +23,7 @@ if on_rtd:
                      'menpo.external.skimage._warps_cy',
                      'menpo.image.patches']
     for mod_name in MOCK_MODULES:
-        sys.modules[mod_name] = Mock()
+        sys.modules[mod_name] = MagicMock()
 
 # Add the folder above so we can grab the sphinx extensions
 sys.path.insert(0, os.path.abspath('..'))
