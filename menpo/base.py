@@ -87,10 +87,10 @@ class Vectorizable(Copyable):
 
     def from_vector_inplace(self, vector):
         """
-        Deprecated. Use hte non-mutating API, :map:`from_vector`.
+        Deprecated. Use the non-mutating API, :map:`from_vector`.
 
         For internal usage in performance-sensitive spots,
-        use, see `_from_vector_inplace()`
+        see `_from_vector_inplace()`
 
         Parameters
         ----------
