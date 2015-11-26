@@ -721,7 +721,8 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                  legend_rounded_corners=False, render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
+                 axes_y_ticks=None, figure_size=(10, 8)):
         """
         Visualize the landmark group.
 
@@ -861,6 +862,10 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             The limits of the x axis.
         axes_y_limits : (`float`, `float`) or `None`, optional
             The limits of the y axis.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) or `None`, optional
             The size of the figure in inches.
 
@@ -917,7 +922,8 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, figure_size=figure_size)
+            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
     def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
         try:

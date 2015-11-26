@@ -363,7 +363,8 @@ def view_image_landmarks(image, channels, masked, group,
                          legend_border, legend_border_padding, legend_shadow,
                          legend_rounded_corners, render_axes, axes_font_name,
                          axes_font_size, axes_font_style, axes_font_weight,
-                         axes_x_limits, axes_y_limits, figure_size):
+                         axes_x_limits, axes_y_limits, axes_x_ticks,
+                         axes_y_ticks, figure_size):
     r"""
     This is a helper method that abstracts away the fact that viewing
     images and masked images is identical apart from the mask. Therefore,
@@ -384,15 +385,13 @@ def view_image_landmarks(image, channels, masked, group,
     if isinstance(image, MaskedImage):
         self_view = image.view(figure_id=figure_id, new_figure=new_figure,
                                channels=channels, masked=masked,
-                               interpolation=interpolation,
-                               cmap_name=cmap_name,
-                               alpha=alpha)
+                               interpolation=interpolation, cmap_name=cmap_name,
+                               alpha=alpha, render_axes=render_axes)
     else:
         self_view = image.view(figure_id=figure_id, new_figure=new_figure,
-                               channels=channels,
-                               interpolation=interpolation,
-                               cmap_name=cmap_name,
-                               alpha=alpha)
+                               channels=channels, interpolation=interpolation,
+                               cmap_name=cmap_name, alpha=alpha,
+                               render_axes=render_axes)
 
     # Make sure axes are constrained to the image size
     if axes_x_limits is None:
@@ -401,6 +400,9 @@ def view_image_landmarks(image, channels, masked, group,
         axes_y_limits = [0, image.height - 1]
 
     # Render landmarks
+    # correct group label in legend
+    if group is None and image.landmarks.n_groups == 1:
+        group = image.landmarks.group_labels[0]
     landmark_view = None  # initialize viewer object
     # useful in order to visualize the legend only for the last axis object
     render_legend_tmp = False
@@ -414,7 +416,7 @@ def view_image_landmarks(image, channels, masked, group,
         # viewer
         landmark_view = image.landmarks[group].view(
             with_labels=with_labels, without_labels=without_labels,
-            figure_id=self_view.figure_id, new_figure=False,
+            group=group, figure_id=self_view.figure_id, new_figure=False,
             image_view=True, render_lines=render_lines,
             line_colour=line_colour, line_style=line_style,
             line_width=line_width, render_markers=render_markers,
@@ -449,7 +451,8 @@ def view_image_landmarks(image, channels, masked, group,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, figure_size=figure_size)
+            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
     return landmark_view
 
