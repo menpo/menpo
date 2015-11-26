@@ -25,3 +25,13 @@ Principal Component Analysis
 
   PCAModel
   PCAVectorModel
+
+
+Gaussian Markov Random Field
+----------------------------
+
+.. toctree::
+  :maxdepth: 1
+
+  GMRFModel
+  GMRFVectorModel
