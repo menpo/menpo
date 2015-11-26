@@ -1,6 +1,171 @@
 Changelog
 #########
 
+0.6.0 (2015/11/26)
+------------------
+This release is another set of breaking changes for Menpo. All ``in_place`` 
+methods have been deprecated to make the API clearer (always copy). The largest
+change is the removal of all widgets into a subpackage called `menpowidgets`_.
+To continue using widgets within the Jupyter notebook, you should install
+menpowidgets. 
+
+Breaking Changes
+................
+
+  - Procrustes analysis now checks for mirroring and disables it by default.
+    This is a change in behaviour.
+  - The ``sample_offsets`` argument of 
+    :func:`menpo.image.Image.extract_patches` now expects a
+    numpy array rather than a :map:`PointCloud`.
+  - All widgets are removed and now exist as part of the `menpowidgets`_ 
+    project. The widgets are now only compatible with Jupyter 4.0 and above.
+  - Landmark labellers have been totalled refactored and renamed. They have
+    not been deprecated due to the changes. However, the new changes mean
+    that the naming scheme of labels is now much more intuitive. Practically,
+    the usage of labelling has only changed in that now it is possible to label
+    not only :map:`LandmarkGroup` but also :map:`PointCloud` and numpy arrays
+    directly.
+  - Landmarks are now warped by default, where previously they were not.
+  - All vlfeat features have now become optional and will not appear if
+    cyvlfeat is not installed.
+  - All ``label`` keyword arguments have been removed. They were not found
+    to be useful. For the same effect, you can always create a new landmark 
+    group that only contains that label and use that as the ``group`` key.
+
+New Features
+............
+
+  - New SIFT type features that return vectors rather than dense features.
+    (:func:`menpo.feature.vector_128_dsift`, 
+    :func:`menpo.feature.hellinger_vector_128_dsift`)
+  - :func:`menpo.shape.PointCloud.init_2d_grid` static constructor for 
+    :map:`PointCloud` and subclasses.
+  - Add :map:`PCAVectorModel` class that allows performing PCA directly on 
+    arrays.
+  - New static constructors on PCA models for building PCA directly from
+    covariance matrices or components 
+    (:func:`menpo.model.PCAVectorModel.init_from_components` and 
+    :func:`menpo.model.PCAVectorModel.init_from_covariance_matrix`).
+  - New :func:`menpo.image.Image.mirror` method on images.
+  - New :func:`menpo.image.Image.set_patches` methods on images.
+  - New :func:`menpo.image.Image.rotate_ccw_about_centre` method on images.
+  - When performing operations on images, you can now add the 
+    ``return_transform`` kwarg that will return both the new image **and** the
+    transform that created the image. This can be very useful for processing
+    landmarks after images have been cropped and rescaled for example.
+
+.. _menpowidgets: https://github.com/menpo/menpowidgets
+
+Github Pull Requests
+....................
+- `#652`_ Deprecate a number of inplace methods (@jabooth)
+- `#653`_ New features (vector dsift) (@patricksnape)
+- `#651`_ remove deprecations from 0.5.0 (@jabooth)
+- `#650`_ PointCloud init_2d_grid (@patricksnape)
+- `#646`_ Add ibug_49 -> ibug_49 labelling (@patricksnape)
+- `#645`_ Add new PCAVectorModel class, refactor model package (@patricksnape, @nontas)
+- `#644`_ Remove label kwarg (@patricksnape)
+- `#643`_ Build fixes (@patricksnape)
+- `#638`_ bugfix 2D triangle areas sign was ambiguous (@jabooth)
+- `#634`_ Fixing @patricksnape and @nontas foolish errors (@yuxiang-zhou)
+- `#542`_ Add mirroring check to procrustes (@nontas, @patricksnape)
+- `#632`_ Widgets Migration (@patricksnape, @nontas)
+- `#631`_ Optional transform return on Image methods (@nontas)
+- `#628`_ Patches Visualization (@nontas)
+- `#629`_ Image counter-clockwise rotation (@nontas)
+- `#630`_ Mirror image (@nontas)
+- `#625`_ Labellers Refactoring (@patricksnape)
+- `#623`_ Fix widgets for new Jupyter/IPython 4 release (@patricksnape)
+- `#620`_ Define patches offsets as ndarray (@nontas)
+
+.. _#652: https://github.com/menpo/menpo/pull/652
+.. _#653: https://github.com/menpo/menpo/pull/653
+.. _#651: https://github.com/menpo/menpo/pull/651
+.. _#650: https://github.com/menpo/menpo/pull/650
+.. _#646: https://github.com/menpo/menpo/pull/646
+.. _#645: https://github.com/menpo/menpo/pull/645
+.. _#644: https://github.com/menpo/menpo/pull/644
+.. _#643: https://github.com/menpo/menpo/pull/643
+.. _#638: https://github.com/menpo/menpo/pull/638
+.. _#634: https://github.com/menpo/menpo/pull/634
+.. _#542: https://github.com/menpo/menpo/pull/542
+.. _#632: https://github.com/menpo/menpo/pull/632
+.. _#631: https://github.com/menpo/menpo/pull/631
+.. _#628: https://github.com/menpo/menpo/pull/628
+.. _#629: https://github.com/menpo/menpo/pull/629
+.. _#630: https://github.com/menpo/menpo/pull/630
+.. _#625: https://github.com/menpo/menpo/pull/625
+.. _#623: https://github.com/menpo/menpo/pull/623
+.. _#620: https://github.com/menpo/menpo/pull/620
+
+
+0.5.3 (2015/08/12)
+------------------
+Tiny point release just fixing a typo in the ``unique_edge_indices`` method.
+
+0.5.2 (2015/08/04)
+------------------
+Minor bug fixes and impovements including:
+
+  - Menpo is now better at preserving dtypes other than np.float through common 
+    operations
+  - Image has a new convenience constructor ``init_from_rolled_channels()`` to 
+    handle building images that have the channels at the back of the array.
+  - There are also new ``crop_to_pointcloud()`` and 
+    ``crop_to_pointcloud_proportion()`` methods to round out the Image API, 
+    and a deprecation of ``rescale_to_reference_shape()`` in favour of 
+    ``rescale_to_pointcloud()`` to make things more consistent.
+  - The ``gradient()`` method is deprecated (use ``menpo.feature.gradient`` 
+    instead)
+  - Propagation of the ``.path`` property when using ``as_masked()`` was fixed
+  - Fix for exporting 3D LJSON landmark files
+  - A new ``shuffle`` kwarg (default ``False``) is present on all multi 
+    importers.
+
+Github Pull Requests
+....................
+- `#617`_ add shuffle kwarg to multi import generators (@jabooth)
+- `#619`_ Ensure that LJSON landmarks are read in as floats (@jabooth)
+- `#618`_ Small image fix (@patricksnape)
+- `#613`_ Balance out rescale/crop methods (@patricksnape)
+- `#615`_ Allow exporting of 3D landmarks. (@mmcauliffe)
+- `#612`_ Type maintain (@patricksnape)
+- `#602`_ Extract patches types (@patricksnape)
+- `#608`_ Slider for selecting landmark group on widgets (@nontas)
+- `#605`_ tmp move to master condaci (@jabooth)
+
+.. _#617: https://github.com/menpo/menpo/pull/617
+.. _#619: https://github.com/menpo/menpo/pull/619
+.. _#618: https://github.com/menpo/menpo/pull/618
+.. _#613: https://github.com/menpo/menpo/pull/613
+.. _#615: https://github.com/menpo/menpo/pull/615
+.. _#612: https://github.com/menpo/menpo/pull/612
+.. _#602: https://github.com/menpo/menpo/pull/602
+.. _#608: https://github.com/menpo/menpo/pull/608
+.. _#605: https://github.com/menpo/menpo/pull/605
+
+0.5.1 (2015/07/16)
+------------------
+A small point release that improves the Cython code (particularly
+extracting patches) compatibility with different data types. In particular,
+more floating point data types are now supported. ``print_progress``
+was added and widgets were fixed after the Jupyter 4.0 release. Also,
+upgrade cyvlfeat requirement to 0.4.0.
+
+Github Pull Requests
+....................
+- `#604`_ print_progress enhancements (@jabooth)
+- `#603`_ Fixes for new cyvlfeat (@patricksnape)
+- `#599`_ Add erode and dilate methods to MaskedImage (@jalabort)
+- `#601`_ Add sudo: false to turn on container builds (@patricksnape)
+- `#600`_ Human3.6M labels (@nontas)
+
+.. _#604: https://github.com/menpo/menpo/pull/604
+.. _#603: https://github.com/menpo/menpo/pull/603
+.. _#599: https://github.com/menpo/menpo/pull/599
+.. _#601: https://github.com/menpo/menpo/pull/601
+.. _#600: https://github.com/menpo/menpo/pull/600
+
 0.5.0 (2015/06/25)
 ------------------
 This release of Menpo makes a number of very important **BREAKING** changes
