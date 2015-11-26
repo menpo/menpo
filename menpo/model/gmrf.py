@@ -1,8 +1,8 @@
 from functools import partial
 import numpy as np
 from scipy.sparse import bsr_matrix
-from scipy.sparse.linalg import inv as scipy_inv
 
+from menpo.base import name_of_callable
 from menpo.math import as_matrix
 from menpo.shape import UndirectedGraph
 from menpo.visualize import print_progress, bytes_str, print_dynamic
@@ -23,19 +23,13 @@ def _covariance_matrix_inverse(cov_mat, n_components):
 
 
 def _create_sparse_precision(X, graph, n_features, n_features_per_vertex,
-                             mode='concatenation', single_precision=True,
+                             mode='concatenation', dtype=np.float32,
                              n_components=None, bias=0,
                              return_covariances=False, verbose=False):
     # check mode argument
     if mode not in ['concatenation', 'subtraction']:
         raise ValueError("mode must be either ''concatenation'' "
                          "or ''subtraction''; {} is given.".format(mode))
-
-    # select data type
-    if single_precision:
-        dtype = np.float32
-    else:
-        dtype = np.float64
 
     # Initialize arrays
     all_blocks = np.zeros((graph.n_edges * 4,
@@ -164,19 +158,13 @@ def _create_sparse_precision(X, graph, n_features, n_features_per_vertex,
 
 
 def _create_dense_precision(X, graph, n_features, n_features_per_vertex,
-                            mode='concatenation', single_precision=True,
+                            mode='concatenation', dtype=np.float32,
                             n_components=None, bias=0,
                             return_covariances=False, verbose=False):
     # check mode argument
     if mode not in ['concatenation', 'subtraction']:
         raise ValueError("mode must be either ''concatenation'' "
                          "or ''subtraction''; {} is given.".format(mode))
-
-    # select data type
-    if single_precision:
-        dtype = np.float32
-    else:
-        dtype = np.float64
 
     # Initialize precision
     precision = np.zeros((n_features, n_features), dtype=dtype)
@@ -259,15 +247,9 @@ def _create_dense_precision(X, graph, n_features, n_features_per_vertex,
 
 def _create_sparse_diagonal_precision(X, graph, n_features,
                                       n_features_per_vertex,
-                                      single_precision=True, n_components=None,
+                                      dtype=np.float32, n_components=None,
                                       bias=0, return_covariances=False,
                                       verbose=False):
-    # select data type
-    if single_precision:
-        dtype = np.float32
-    else:
-        dtype = np.float64
-
     # initialize covariances matrix
     all_blocks = np.zeros((graph.n_vertices,
                            n_features_per_vertex, n_features_per_vertex),
@@ -334,15 +316,9 @@ def _create_sparse_diagonal_precision(X, graph, n_features,
 
 def _create_dense_diagonal_precision(X, graph, n_features,
                                      n_features_per_vertex,
-                                     single_precision=True, n_components=None,
+                                     dtype=np.float32, n_components=None,
                                      bias=0, return_covariances=False,
                                      verbose=False):
-    # select data type
-    if single_precision:
-        dtype = np.float32
-    else:
-        dtype = np.float64
-
     # Initialize precision
     precision = np.zeros((n_features, n_features), dtype=dtype)
     if return_covariances:
@@ -387,18 +363,12 @@ def _create_dense_diagonal_precision(X, graph, n_features,
 
 def _increment_sparse_precision(X, mean_vector, covariances, n, graph,
                                 n_features, n_features_per_vertex,
-                                mode='concatenation', single_precision=True,
+                                mode='concatenation', dtype=np.float32,
                                 n_components=None, bias=0, verbose=False):
     # check mode argument
     if mode not in ['concatenation', 'subtraction']:
         raise ValueError("mode must be either ''concatenation'' "
                          "or ''subtraction''; {} is given.".format(mode))
-
-    # select data type
-    if single_precision:
-        dtype = np.float32
-    else:
-        dtype = np.float64
 
     # Initialize arrays
     all_blocks = np.zeros((graph.n_edges * 4,
@@ -518,18 +488,12 @@ def _increment_sparse_precision(X, mean_vector, covariances, n, graph,
 
 def _increment_dense_precision(X, mean_vector, covariances, n, graph,
                                n_features, n_features_per_vertex,
-                               mode='concatenation', single_precision=True,
+                               mode='concatenation', dtype=np.float32,
                                n_components=None, bias=0, verbose=False):
     # check mode argument
     if mode not in ['concatenation', 'subtraction']:
         raise ValueError("mode must be either ''concatenation'' "
                          "or ''subtraction''; {} is given.".format(mode))
-
-    # select data type
-    if single_precision:
-        dtype = np.float32
-    else:
-        dtype = np.float64
 
     # Initialize precision
     precision = np.zeros((n_features, n_features), dtype=dtype)
@@ -603,15 +567,8 @@ def _increment_dense_precision(X, mean_vector, covariances, n, graph,
 
 def _increment_sparse_diagonal_precision(X, mean_vector, covariances, n, graph,
                                          n_features, n_features_per_vertex,
-                                         single_precision=True,
-                                         n_components=None, bias=0,
-                                         verbose=False):
-    # select data type
-    if single_precision:
-        dtype = np.float32
-    else:
-        dtype = np.float64
-
+                                         dtype=np.float32, n_components=None,
+                                         bias=0, verbose=False):
     # initialize covariances matrix
     all_blocks = np.zeros((graph.n_vertices,
                            n_features_per_vertex, n_features_per_vertex),
@@ -673,15 +630,8 @@ def _increment_sparse_diagonal_precision(X, mean_vector, covariances, n, graph,
 
 def _increment_dense_diagonal_precision(X, mean_vector, covariances, n, graph,
                                         n_features, n_features_per_vertex,
-                                        single_precision=True,
-                                        n_components=None, bias=0,
-                                        verbose=False):
-    # select data type
-    if single_precision:
-        dtype = np.float32
-    else:
-        dtype = np.float64
-
+                                        dtype=np.float32, n_components=None,
+                                        bias=0, verbose=False):
     # Initialize precision
     precision = np.zeros((n_features, n_features), dtype=dtype)
 
@@ -794,9 +744,11 @@ class GMRFVectorModel(object):
         When ``None`` (default), the covariance matrix of each edge is inverted
         using `np.linalg.inv`. If `int`, it is inverted using truncated SVD
         using the specified number of compnents.
-    single_precision : `bool`, optional
-        When ``True``, the GMRF's precision matrix will have `np.float32`
-        precision, else it will be `np.float64`.
+    dtype : `numpy.dtype`, optional
+        The data type of the GMRF's precision matrix. For example, it can be set
+        to `numpy.float32` for single precision or to `numpy.float64` for double
+        precision. Depending on the size of the precision matrix, this option can
+        you a lot of memory.
     sparse : `bool`, optional
         When ``True``, the GMRF's precision matrix has type
         `scipy.sparse.bsr_matrix`, otherwise it is a `numpy.array`.
@@ -849,8 +801,8 @@ class GMRFVectorModel(object):
        & Pattern Recognition (CVPR), Boston, MA, USA, pp. 5435-5444, June 2015.
     """
     def __init__(self, samples, graph, n_samples=None, mode='concatenation',
-                 n_components=None, single_precision=False, sparse=True,
-                 bias=0, incremental=False, verbose=False):
+                 n_components=None, dtype=np.float64, sparse=True, bias=0,
+                 incremental=False, verbose=False):
         # Generate data matrix
         # (n_samples, n_features)
         data, self.n_samples = self._data_to_matrix(samples, n_samples)
@@ -864,7 +816,7 @@ class GMRFVectorModel(object):
         self.mode = mode
         self.n_components = n_components
         self.sparse = sparse
-        self.single_precision = single_precision
+        self.dtype = dtype
         self.bias = bias
         self.is_incremental = incremental
 
@@ -889,15 +841,13 @@ class GMRFVectorModel(object):
         if self.is_incremental:
             self.precision, self._covariance_matrices = constructor(
                 data, self.graph, self.n_features, self.n_features_per_vertex,
-                single_precision=self.single_precision,
-                n_components=self.n_components, bias=self.bias,
+                dtype=self.dtype, n_components=self.n_components, bias=self.bias,
                 return_covariances=self.is_incremental, verbose=verbose)
         else:
             self._covariance_matrices = None
             self.precision = constructor(
                 data, self.graph, self.n_features, self.n_features_per_vertex,
-                single_precision=self.single_precision,
-                n_components=self.n_components, bias=self.bias,
+                dtype=self.dtype, n_components=self.n_components, bias=self.bias,
                 return_covariances=self.is_incremental, verbose=verbose)
 
     def _data_to_matrix(self, data, n_samples):
@@ -972,8 +922,8 @@ class GMRFVectorModel(object):
         self.precision, self._covariance_matrices = constructor(
             data, self.mean_vector, self._covariance_matrices, self.n_samples,
             self.graph, self.n_features, self.n_features_per_vertex,
-            single_precision=self.single_precision,
-            n_components=self.n_components, bias=self.bias, verbose=verbose)
+            dtype=self.dtype, n_components=self.n_components, bias=self.bias,
+            verbose=verbose)
 
         # Update mean and number of samples
         self.mean_vector = _increment_multivariate_gaussian_mean(
@@ -1081,9 +1031,8 @@ class GMRFVectorModel(object):
         svd_str = (' - # SVD components:        {}'.format(self.n_components)
                    if self.n_components is not None else ' - No ' 'SVD used.')
         _Q_sparse = 'scipy.sparse' if self.sparse else 'numpy.array'
-        _Q_precision = 'single' if self.single_precision else 'double'
-        Q_str = ' - Q is stored as {} with {} precision'.format(_Q_sparse,
-                                                                _Q_precision)
+        q_str = ' - Q is stored as {} with {} precision'.format(
+            _Q_sparse, name_of_callable(self.dtype))
         mode_str = ('concatenated' if self.mode == 'concatenation' else
                     'subtracted')
         str_out = 'Gaussian MRF Model \n' \
@@ -1096,7 +1045,7 @@ class GMRFVectorModel(object):
                   '{}\n' \
                   ' - # samples:               {}\n' \
                   '{}\n'.format(
-            self.graph.__str__(), mode_str, Q_str, self.graph.n_vertices,
+            self.graph.__str__(), mode_str, q_str, self.graph.n_vertices,
             self.n_features_per_vertex, self.n_features, svd_str,
             self.n_samples, incremental_str)
         return str_out
@@ -1134,9 +1083,11 @@ class GMRFModel(GMRFVectorModel):
         When ``None`` (default), the covariance matrix of each edge is inverted
         using `np.linalg.inv`. If `int`, it is inverted using truncated SVD
         using the specified number of compnents.
-    single_precision : `bool`, optional
-        When ``True``, the GMRF's precision matrix will have `np.float32`
-        precision, else it will be `np.float64`.
+    dtype : `numpy.dtype`, optional
+        The data type of the GMRF's precision matrix. For example, it can be set
+        to `numpy.float32` for single precision or to `numpy.float64` for double
+        precision. Depending on the size of the precision matrix, this option can
+        you a lot of memory.
     sparse : `bool`, optional
         When ``True``, the GMRF's precision matrix has type
         `scipy.sparse.bsr_matrix`, otherwise it is a `numpy.array`.
@@ -1189,7 +1140,7 @@ class GMRFModel(GMRFVectorModel):
        & Pattern Recognition (CVPR), Boston, MA, USA, pp. 5435-5444, June 2015.
     """
     def __init__(self, samples, graph, mode='concatenation', n_components=None,
-                 single_precision=False, sparse=True, n_samples=None, bias=0,
+                 dtype=np.float64, sparse=True, n_samples=None, bias=0,
                  incremental=False, verbose=False):
         # Build a data matrix from all the samples
         data, self.template_instance = as_matrix(
@@ -1197,8 +1148,7 @@ class GMRFModel(GMRFVectorModel):
         n_samples = data.shape[0]
 
         GMRFVectorModel.__init__(self, data, graph, mode=mode,
-                                 n_components=n_components,
-                                 single_precision=single_precision,
+                                 n_components=n_components, dtype=dtype,
                                  sparse=sparse, n_samples=n_samples, bias=bias,
                                  incremental=incremental, verbose=verbose)
 

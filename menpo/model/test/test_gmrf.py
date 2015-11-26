@@ -98,7 +98,7 @@ def test_mahalanobis_distance():
                         # train GMRF
                         gmrf = GMRFModel(
                             samples, graph, mode=mode, sparse=sparse,
-                            n_components=n_components, single_precision=False)
+                            n_components=n_components, dtype=np.float64)
 
                         for subtract_mean in subtract_mean_values:
                             # compute costs
@@ -142,14 +142,14 @@ def test_increment():
                         # Incremental GMRF
                         gmrf1 = GMRFVectorModel(
                             samples[:50], graph, mode=mode, sparse=sparse,
-                            n_components=n_components, single_precision=False,
+                            n_components=n_components, dtype=np.float64,
                             incremental=True)
                         gmrf1.increment(samples[50::])
 
                         # Non incremental GMRF
                         gmrf2 = GMRFVectorModel(
                             samples, graph, mode=mode, sparse=sparse,
-                            n_components=n_components, single_precision=False)
+                            n_components=n_components, dtype=np.float64)
 
                         # Compare
                         if sparse:

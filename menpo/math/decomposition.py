@@ -153,7 +153,13 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
     return U, l, m
 
 
-def pcacov(C, is_inverse=False, eps=1e-10):
+# The default value of eps tolerance is set to 1e-5 (instead of 1e-10 that used
+# to be). This is done in order for pcacov to work for inverse single precision C
+# i.e. is_inverse=True and dtype=np.float32. 1e-10 works perfectly when the
+# covariance matrix has double precision (np.float64). However, if C has single
+# precision (np.float32) and is inverse, then the first two eigenvectors end up
+# having noise.
+def pcacov(C, is_inverse=False, eps=1e-5):
     r"""
     Apply Principal Component Analysis (PCA) given a covariance/scatter matrix
     `C`. In the case where the data matrix is very large, it is advisable to set
