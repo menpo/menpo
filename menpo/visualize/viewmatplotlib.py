@@ -414,16 +414,16 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         import matplotlib.pyplot as plt
 
         # check axes limits
-        axes_x_limits, axes_y_limits = _correct_axes_limits(
-            self.points, axes_x_limits, axes_y_limits)
+        # axes_x_limits, axes_y_limits = _correct_axes_limits(
+        #     self.points, axes_x_limits, axes_y_limits)
 
         # Flip x and y for viewing if points are tied to an image
         if image_view:
             points = self.points[:, ::-1]
-            axes_x_limits, axes_y_limits = axes_y_limits, axes_x_limits
-            axes_x_ticks, axes_y_ticks = axes_y_ticks, axes_x_ticks
         else:
             points = self.points
+            axes_x_limits, axes_y_limits = axes_y_limits, axes_x_limits
+            axes_x_ticks, axes_y_ticks = axes_y_ticks, axes_x_ticks
 
         # get current axes object
         ax = plt.gca()
@@ -537,8 +537,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             'a single marker edge colour for all labels.')
 
         # check axes limits
-        axes_x_limits, axes_y_limits = _correct_axes_limits(
-            self.pointcloud.points, axes_x_limits, axes_y_limits)
+        # axes_x_limits, axes_y_limits = _correct_axes_limits(
+        #     self.pointcloud.points, axes_x_limits, axes_y_limits)
 
         # get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
