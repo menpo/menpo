@@ -2,7 +2,7 @@ import numpy as np
 
 from menpo.visualize.base import Renderer
 
-# GLOBAL_CMAP
+# The colour map used for all lines and markers
 GLOBAL_CMAP = 'jet'
 
 
@@ -205,16 +205,13 @@ def _parse_cmap(cmap_name=None, image_shape_len=3):
             return None
 
 
-def _correct_axes_limits(points, axes_x_limits, axes_y_limits, percentage=0.1):
-    if axes_x_limits is None:
-        min_x = np.min(points[:, 0])
-        max_x = np.max(points[:, 0])
-        pad = (max_x - min_x) * percentage
+def _parse_axes_limits(min_x, max_x, min_y, max_y, axes_x_limits,
+                       axes_y_limits):
+    if isinstance(axes_x_limits, float):
+        pad = (max_x - min_x) * axes_x_limits
         axes_x_limits = [min_x - pad, max_x + pad]
-    if axes_y_limits is None:
-        min_y = np.min(points[:, 1])
-        max_y = np.max(points[:, 1])
-        pad = (max_y - min_y) * percentage
+    if isinstance(axes_y_limits, float):
+        pad = (max_y - min_y) * axes_y_limits
         axes_y_limits = [min_y - pad, max_y + pad]
     return axes_x_limits, axes_y_limits
 
@@ -323,6 +320,11 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         cmap = _parse_cmap(cmap_name=cmap_name,
                            image_shape_len=len(self.image.shape))
 
+        # parse axes limits
+        axes_x_limits, axes_y_limits = _parse_axes_limits(
+            0., self.image.shape[1], 0., self.image.shape[0], axes_x_limits,
+            axes_y_limits)
+
         # render image
         plt.imshow(self.image, cmap=cmap, interpolation=interpolation,
                    alpha=alpha)
@@ -364,6 +366,11 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
 
         # parse colour map argument
         cmap = _parse_cmap(cmap_name=cmap_name, image_shape_len=2)
+
+        # parse axes limits
+        axes_x_limits, axes_y_limits = _parse_axes_limits(
+            0., self.image.shape[1], 0., self.image.shape[0], axes_x_limits,
+            axes_y_limits)
 
         p = self.plot_layout
         for i in range(self.image.shape[2]):
@@ -413,9 +420,11 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         from matplotlib import collections as mc
         import matplotlib.pyplot as plt
 
-        # check axes limits
-        # axes_x_limits, axes_y_limits = _correct_axes_limits(
-        #     self.points, axes_x_limits, axes_y_limits)
+        # parse axes limits
+        min_x, min_y = np.min(self.points, axis=0)
+        max_x, max_y = np.max(self.points, axis=0)
+        axes_x_limits, axes_y_limits = _parse_axes_limits(
+            min_x, max_x, min_y, max_y, axes_x_limits, axes_y_limits)
 
         # Flip x and y for viewing if points are tied to an image
         if image_view:
