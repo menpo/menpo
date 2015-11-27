@@ -50,7 +50,7 @@ class PCAVectorModel(MeanLinearModel):
 
     @classmethod
     def init_from_covariance_matrix(cls, C, mean, n_samples, centred=True,
-                                    max_n_components=None):
+                                    is_inverse=False, max_n_components=None):
         r"""
         Build the Principal Component Analysis (PCA) by eigenvalue
         decomposition of the provided covariance/scatter matrix. For details
@@ -58,8 +58,9 @@ class PCAVectorModel(MeanLinearModel):
 
         Parameters
         ----------
-        C : ``(n_features, n_features)`` `ndarray`
-            The Covariance/Scatter matrix.
+        C : ``(n_features, n_features)`` `ndarray` or `scipy.sparse`
+            The Covariance/Scatter matrix. If it is a precision matrix (inverse
+            covariance), then set `is_inverse=True`.
         mean : ``(n_features, )`` `ndarray`
             The mean vector.
         n_samples : `int`
@@ -67,12 +68,16 @@ class PCAVectorModel(MeanLinearModel):
         centred : `bool`, optional
             When ``True`` we assume that the data were centered before
             computing the covariance matrix.
+        is_inverse : `bool`, optional
+            It ``True``, then it is assumed that `C` is a precision matrix (
+            inverse covariance). Thus, the eigenvalues will be inverted. If
+            ``False``, then it is assumed that `C` is a covariance matrix.
         max_n_components : `int`, optional
             The maximum number of components to keep in the model. Any
             components above and beyond this one are discarded.
         """
         # Compute pca on covariance
-        e_vectors, e_values = pcacov(C)
+        e_vectors, e_values = pcacov(C, is_inverse=is_inverse)
 
         # Create new pca instance
         model = PCAModel.__new__(cls)
@@ -1204,7 +1209,7 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
 
     @classmethod
     def init_from_covariance_matrix(cls, C, mean, n_samples, centred=True,
-                                    max_n_components=None):
+                                    is_inverse=False, max_n_components=None):
         r"""
         Build the Principal Component Analysis (PCA) by eigenvalue
         decomposition of the provided covariance/scatter matrix. For details
@@ -1212,8 +1217,9 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
 
         Parameters
         ----------
-        C : ``(n_features, n_features)`` `ndarray`
-            The Covariance/Scatter matrix, where `N` is the number of features.
+        C : ``(n_features, n_features)`` `ndarray` or `scipy.sparse`
+            The Covariance/Scatter matrix. If it is a precision matrix (inverse
+            covariance), then set `is_inverse=True`.
         mean : :map:`Vectorizable`
             The mean instance. It must be a :map:`Vectorizable` and *not* an
             `ndarray`.
@@ -1222,6 +1228,10 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
         centred : `bool`, optional
             When ``True`` we assume that the data were centered before
             computing the covariance matrix.
+        is_inverse : `bool`, optional
+            It ``True``, then it is assumed that `C` is a precision matrix (
+            inverse covariance). Thus, the eigenvalues will be inverted. If
+            ``False``, then it is assumed that `C` is a covariance matrix.
         max_n_components : `int`, optional
             The maximum number of components to keep in the model. Any
             components above and beyond this one are discarded.
@@ -1231,7 +1241,7 @@ class PCAModel(PCAVectorModel, VectorizableBackedModel):
         self_model.n_samples = n_samples
 
         # Compute pca on covariance
-        e_vectors, e_values = pcacov(C)
+        e_vectors, e_values = pcacov(C, is_inverse=is_inverse)
 
         # The call to __init__ of MeanLinearModel is done in here
         self_model._constructor_helper(eigenvalues=e_values,

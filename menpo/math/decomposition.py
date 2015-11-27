@@ -4,7 +4,7 @@ from scipy.sparse import issparse
 from .linalg import dot_inplace_right
 
 
-def eigenvalue_decomposition(C, eps=1e-10):
+def eigenvalue_decomposition(C, is_inverse=False, eps=1e-10):
     r"""
     Eigenvalue decomposition of a given covariance (or scatter) matrix.
 
@@ -13,7 +13,12 @@ def eigenvalue_decomposition(C, eps=1e-10):
     C : ``(N, N)`` `ndarray` or `scipy.sparse`
         The Covariance/Scatter matrix. If it is a `numpy.array`, then
         `numpy.linalg.eigh` is used. If it is an instance of `scipy.sparse`,
-        then `scipy.sparse.linalg.eigsh` is used.
+        then `scipy.sparse.linalg.eigsh` is used. If it is a precision matrix
+        (inverse covariance), then set `is_inverse=True`.
+    is_inverse : `bool`, optional
+        It ``True``, then it is assumed that `C` is a precision matrix (
+        inverse covariance). Thus, the eigenvalues will be inverted. If
+        ``False``, then it is assumed that `C` is a covariance matrix.
     eps : `float`, optional
         Tolerance value for positive eigenvalue. Those eigenvalues smaller
         than the specified eps value, together with their corresponding
@@ -32,9 +37,10 @@ def eigenvalue_decomposition(C, eps=1e-10):
     # compute eigenvalue decomposition
     if issparse(C):
         from scipy.sparse.linalg import eigsh
-        eigenvalues, eigenvectors = eigsh(C)
+        eigenvalues, eigenvectors = eigsh(C, k=C.shape[0] - 1)
     else:
         eigenvalues, eigenvectors = np.linalg.eigh(C)
+
     # sort eigenvalues from largest to smallest
     index = np.argsort(eigenvalues)[::-1]
     eigenvalues = eigenvalues[index]
@@ -51,6 +57,12 @@ def eigenvalue_decomposition(C, eps=1e-10):
     index = pos_eigenvalues > limit
     pos_eigenvalues = pos_eigenvalues[index]
     pos_eigenvectors = pos_eigenvectors[:, index]
+
+    # if C was a precision matrix (inverse covariance), then invert and re-sort
+    # the eigenvalues
+    if is_inverse:
+        pos_eigenvalues = pos_eigenvalues[::-1] ** -1
+        pos_eigenvectors = pos_eigenvectors[:, ::-1]
 
     return pos_eigenvectors, pos_eigenvalues
 
@@ -111,7 +123,7 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
         # perform eigenvalue decomposition
         # U (eigenvectors): d x n
         # s (eigenvalues):  n
-        U, l = eigenvalue_decomposition(C, eps=eps)
+        U, l = eigenvalue_decomposition(C, is_inverse=False, eps=eps)
 
         # transpose U
         # U: n x d
@@ -129,7 +141,7 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
         # perform eigenvalue decomposition
         # V (eigenvectors): n x n
         # s (eigenvalues):  n
-        V, l = eigenvalue_decomposition(C, eps=eps)
+        V, l = eigenvalue_decomposition(C, is_inverse=False, eps=eps)
 
         # compute final eigenvectors
         # U: n x d
@@ -141,7 +153,13 @@ def pca(X, centre=True, inplace=False, eps=1e-10):
     return U, l, m
 
 
-def pcacov(C, eps=1e-10):
+# The default value of eps tolerance is set to 1e-5 (instead of 1e-10 that used
+# to be). This is done in order for pcacov to work for inverse single precision C
+# i.e. is_inverse=True and dtype=np.float32. 1e-10 works perfectly when the
+# covariance matrix has double precision (np.float64). However, if C has single
+# precision (np.float32) and is inverse, then the first two eigenvectors end up
+# having noise.
+def pcacov(C, is_inverse=False, eps=1e-5):
     r"""
     Apply Principal Component Analysis (PCA) given a covariance/scatter matrix
     `C`. In the case where the data matrix is very large, it is advisable to set
@@ -151,7 +169,12 @@ def pcacov(C, eps=1e-10):
     Parameters
     ----------
     C : ``(N, N)`` `ndarray` or `scipy.sparse`
-        Covariance/Scatter matrix
+        The Covariance/Scatter matrix. If it is a precision matrix (inverse
+        covariance), then set `is_inverse=True`.
+    is_inverse : `bool`, optional
+        It ``True``, then it is assumed that `C` is a precision matrix (
+        inverse covariance). Thus, the eigenvalues will be inverted. If
+        ``False``, then it is assumed that `C` is a covariance matrix.
     eps : `float`, optional
         Tolerance value for positive eigenvalue. Those eigenvalues smaller
         than the specified eps value, together with their corresponding
@@ -169,17 +192,17 @@ def pcacov(C, eps=1e-10):
 
     # C should be perfectly symmetrical, but numerical error can creep in.
     # Enforce symmetry here to avoid creating complex eigenvectors
-    C = (C + C.T) / 2.0
+    C = (C + C.conj().T) / 2.0
 
     # C (covariance): d x d
     # perform eigenvalue decomposition
     # U (eigenvectors): d x n
     # s (eigenvalues):  n
-    U, l = eigenvalue_decomposition(C, eps=eps)
+    U, l = eigenvalue_decomposition(C, is_inverse=is_inverse, eps=eps)
 
     # transpose U
     # U: n x d
-    U = U.T
+    U = U.conj().T
 
     return U, l
 
