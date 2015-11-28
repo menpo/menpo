@@ -207,6 +207,10 @@ def _parse_cmap(cmap_name=None, image_shape_len=3):
 
 def _parse_axes_limits(min_x, max_x, min_y, max_y, axes_x_limits,
                        axes_y_limits):
+    if isinstance(axes_x_limits, int):
+        axes_x_limits = float(axes_x_limits)
+    if isinstance(axes_y_limits, int):
+        axes_y_limits = float(axes_y_limits)
     if isinstance(axes_x_limits, float):
         pad = (max_x - min_x) * axes_x_limits
         axes_x_limits = [min_x - pad, max_x + pad]
@@ -420,19 +424,14 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         from matplotlib import collections as mc
         import matplotlib.pyplot as plt
 
+        # Flip x and y for viewing if points are tied to an image
+        points = self.points[:, ::-1] if image_view else self.points
+
         # parse axes limits
-        min_x, min_y = np.min(self.points, axis=0)
-        max_x, max_y = np.max(self.points, axis=0)
+        min_x, min_y = np.min(points, axis=0)
+        max_x, max_y = np.max(points, axis=0)
         axes_x_limits, axes_y_limits = _parse_axes_limits(
             min_x, max_x, min_y, max_y, axes_x_limits, axes_y_limits)
-
-        # Flip x and y for viewing if points are tied to an image
-        if image_view:
-            points = self.points[:, ::-1]
-        else:
-            points = self.points
-            axes_x_limits, axes_y_limits = axes_y_limits, axes_x_limits
-            axes_x_ticks, axes_y_ticks = axes_y_ticks, axes_x_ticks
 
         # get current axes object
         ax = plt.gca()
@@ -504,9 +503,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                marker_style='o', marker_size=20, marker_face_colour='r',
                marker_edge_colour='k', marker_edge_width=1.,
                render_numbering=False, numbers_horizontal_align='center',
-               numbers_vertical_align='bottom',
-               numbers_font_name='sans-serif', numbers_font_size=10,
-               numbers_font_style='normal',
+               numbers_vertical_align='bottom', numbers_font_name='sans-serif',
+               numbers_font_size=10, numbers_font_style='normal',
                numbers_font_weight='normal', numbers_font_colour='k',
                render_legend=True, legend_title='',
                legend_font_name='sans-serif',
@@ -546,8 +544,14 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             'a single marker edge colour for all labels.')
 
         # check axes limits
-        # axes_x_limits, axes_y_limits = _correct_axes_limits(
-        #     self.pointcloud.points, axes_x_limits, axes_y_limits)
+        if image_view:
+            min_y, min_x = np.min(self.pointcloud.points, axis=0)
+            max_y, max_x = np.max(self.pointcloud.points, axis=0)
+        else:
+            min_x, min_y = np.min(self.pointcloud.points, axis=0)
+            max_x, max_y = np.max(self.pointcloud.points, axis=0)
+        axes_x_limits, axes_y_limits = _parse_axes_limits(
+            min_x, max_x, min_y, max_y, axes_x_limits, axes_y_limits)
 
         # get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()

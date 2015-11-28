@@ -858,10 +858,16 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                             ``demibold``, ``demi``, ``bold``, ``heavy``,
                             ``extra bold``, ``black``}, optional
             The font weight of the axes.
-        axes_x_limits : (`float`, `float`) or `None`, optional
-            The limits of the x axis.
-        axes_y_limits : (`float`, `float`) or `None`, optional
-            The limits of the y axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the LandmarkGroup as a percentage of the
+            LandmarkGroup's width. If `tuple` or `list`, then it defines the axis
+            limits. If ``None``, then the limits are set automatically.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the LandmarkGroup as a percentage of the
+            LandmarkGroup's height. If `tuple` or `list`, then it defines the
+            axis limits. If ``None``, then the limits are set automatically.
         axes_x_ticks : `list` or `tuple` or ``None``, optional
             The ticks of the x axis.
         axes_y_ticks : `list` or `tuple` or ``None``, optional

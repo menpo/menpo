@@ -1794,10 +1794,16 @@ class PointGraph(Graph, PointCloud):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the x axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the PointGraph as a percentage of the PointGraph's
+            width. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
         axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the y axis.
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the PointGraph as a percentage of the PointGraph's
+            height. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
         axes_x_ticks : `list` or `tuple` or ``None``, optional
             The ticks of the x axis.
         axes_y_ticks : `list` or `tuple` or ``None``, optional

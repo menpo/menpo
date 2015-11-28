@@ -380,24 +380,32 @@ def view_image_landmarks(image, channels, masked, group,
         raise ValueError('Image does not have landmarks attached, unable '
                          'to view landmarks.')
 
-    # Render self
+    # Parse axes limits
+    image_axes_x_limits = None
+    landmarks_axes_x_limits = axes_x_limits
+    if axes_x_limits is None:
+        image_axes_x_limits = landmarks_axes_x_limits = [0, image.width - 1]
+    image_axes_y_limits = None
+    landmarks_axes_y_limits = axes_y_limits
+    if axes_y_limits is None:
+        image_axes_y_limits = landmarks_axes_y_limits = [0, image.height - 1]
+
+    # Render image
     from menpo.image import MaskedImage
     if isinstance(image, MaskedImage):
         self_view = image.view(figure_id=figure_id, new_figure=new_figure,
                                channels=channels, masked=masked,
                                interpolation=interpolation, cmap_name=cmap_name,
-                               alpha=alpha, render_axes=render_axes)
+                               alpha=alpha, render_axes=render_axes,
+                               axes_x_limits=image_axes_x_limits,
+                               axes_y_limits=image_axes_y_limits)
     else:
         self_view = image.view(figure_id=figure_id, new_figure=new_figure,
                                channels=channels, interpolation=interpolation,
                                cmap_name=cmap_name, alpha=alpha,
-                               render_axes=render_axes)
-
-    # Make sure axes are constrained to the image size
-    if axes_x_limits is None:
-        axes_x_limits = [0, image.width - 1]
-    if axes_y_limits is None:
-        axes_y_limits = [0, image.height - 1]
+                               render_axes=render_axes,
+                               axes_x_limits=image_axes_x_limits,
+                               axes_y_limits=image_axes_y_limits)
 
     # Render landmarks
     # correct group label in legend
@@ -450,8 +458,9 @@ def view_image_landmarks(image, channels, masked, group,
             legend_rounded_corners=legend_rounded_corners,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=landmarks_axes_x_limits,
+            axes_y_limits=landmarks_axes_y_limits, axes_x_ticks=axes_x_ticks,
             axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
     return landmark_view
@@ -479,6 +488,7 @@ class MultipleImageViewer(ImageViewer):
                                           self.pixels_list).render(**kwargs)
         else:
             raise ValueError("Only 2D images are currently supported")
+
 
 # Patches visualization methods
 def render_rectangles_around_patches(centers, patch_shape, axes=None,
@@ -748,10 +758,16 @@ def view_patches(patches, patch_centers, patches_indices=None,
             {ultralight, light, normal, regular, book, medium, roman,
             semibold,demibold, demi, bold, heavy, extra bold, black}
 
-    axes_x_limits : (`float`, `float`) `tuple` or ``None`` optional
-        The limits of the x axis.
-    axes_y_limits : (`float`, `float`) `tuple` or ``None`` optional
-        The limits of the y axis.
+    axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+        The limits of the x axis. If `float`, then it sets padding on the
+        right and left of the shape as a percentage of the shape's width. If
+        `tuple` or `list`, then it defines the axis limits. If ``None``, then the
+        limits are set automatically.
+    axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+        The limits of the y axis. If `float`, then it sets padding on the
+        top and bottom of the shape as a percentage of the shape's height. If
+        `tuple` or `list`, then it defines the axis limits. If ``None``, then the
+        limits are set automatically.
     figure_size : (`float`, `float`) `tuple` or ``None`` optional
         The size of the figure in inches.
 
