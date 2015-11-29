@@ -1714,7 +1714,7 @@ class PointGraph(Graph, PointCloud):
                 or
                 (3, ) ndarray
 
-        line_style : ``{-, --, -., :}``, optional
+        line_style : ``{'-', '--', '-.', ':'}``, optional
             The style of the lines.
         line_width : `float`, optional
             The width of the lines.
