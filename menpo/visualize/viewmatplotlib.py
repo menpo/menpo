@@ -224,7 +224,8 @@ def _set_axes_options(ax, render_axes=True, inverted_y_axis=False,
                       axes_font_name='sans-serif', axes_font_size=10,
                       axes_font_style='normal', axes_font_weight='normal',
                       axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                      axes_y_ticks=None):
+                      axes_y_ticks=None, axes_x_label=None, axes_y_label=None,
+                      title=None):
     if render_axes:
         # render axes
         ax.set_axis_on()
@@ -239,6 +240,22 @@ def _set_axes_options(ax, render_axes=True, inverted_y_axis=False,
             ax.set_xticks(axes_x_ticks)
         if axes_y_ticks is not None:
             ax.set_yticks(axes_y_ticks)
+        # set labels and title
+        if axes_x_label is None:
+            axes_x_label = ''
+        if axes_y_label is None:
+            axes_y_label = ''
+        if title is None:
+            title = ''
+        ax.set_xlabel(
+            axes_x_label, fontsize=axes_font_size, fontname=axes_font_name,
+            fontstyle=axes_font_style, fontweight=axes_font_weight)
+        ax.set_ylabel(
+            axes_y_label, fontsize=axes_font_size, fontname=axes_font_name,
+            fontstyle=axes_font_style, fontweight=axes_font_weight)
+        ax.set_title(
+            title, fontsize=axes_font_size, fontname=axes_font_name,
+            fontstyle=axes_font_style, fontweight=axes_font_weight)
     else:
         # do not render axes
         ax.set_axis_off()
@@ -255,6 +272,14 @@ def _set_axes_options(ax, render_axes=True, inverted_y_axis=False,
         ax.set_ylim(np.sort(axes_y_limits)[::-1])
     else:
         ax.set_ylim(np.sort(axes_y_limits))
+
+
+def _set_grid_options(render_grid=True, grid_line_style='--', grid_line_width=2):
+    import matplotlib.pyplot as plt
+    if render_grid:
+        plt.grid('on', linestyle=grid_line_style, linewidth=grid_line_width)
+    else:
+        plt.grid('off')
 
 
 def _set_figure_size(fig, figure_size=(10, 8)):
@@ -292,8 +317,7 @@ def _set_legend(ax, legend_handles, render_legend=True, legend_title='',
     if render_legend:
         # Options related to legend's font
         prop = {'family': legend_font_name, 'size': legend_font_size,
-                'style': legend_font_style,
-                'weight': legend_font_weight}
+                'style': legend_font_style, 'weight': legend_font_weight}
 
         # Render legend
         ax.legend(
@@ -700,7 +724,8 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
 
     def __init__(self, figure_id, new_figure, x_axis, y_axis, title=None,
                  legend_entries=None, x_label=None, y_label=None,
-                 x_axis_limits=None, y_axis_limits=None):
+                 x_axis_limits=None, y_axis_limits=None, x_axis_ticks=None,
+                 y_axis_ticks=None):
         super(MatplotlibGraphPlotter, self).__init__(figure_id, new_figure)
         self.x_axis = x_axis
         self.y_axis = y_axis
@@ -710,8 +735,15 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         self.title = title
         self.x_label = x_label
         self.y_label = y_label
-        self.x_axis_limits = x_axis_limits
-        self.y_axis_limits = y_axis_limits
+        self.x_axis_ticks = x_axis_ticks
+        self.y_axis_ticks = y_axis_ticks
+        # parse axes limits
+        min_x = np.min(x_axis)
+        max_x = np.max(x_axis)
+        min_y = np.min([np.min(l) for l in y_axis])
+        max_y = np.max([np.max(l) for l in y_axis])
+        self.x_axis_limits, self.y_axis_limits = _parse_axes_limits(
+            min_x, max_x, min_y, max_y, x_axis_limits, y_axis_limits)
 
     def render(self, render_lines=True, line_colour='r',
                line_style='-', line_width=1, render_markers=True,
@@ -777,7 +809,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
             'Must pass a list of marker edge widths with length n_curves or a '
             'single marker edge width for all curves.')
 
-        # plot
+        # plot all curves
         ax = plt.gca()
         for i, y in enumerate(self.y_axis):
             linestyle = line_style[i]
@@ -794,63 +826,41 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
                      markeredgewidth=marker_edge_width[i],
                      markersize=marker_size[i], label=self.legend_entries[i])
 
-        if render_legend:
-            # Options related to legend's font
-            prop = {'family': legend_font_name, 'size': legend_font_size,
-                    'style': legend_font_style,
-                    'weight': legend_font_weight}
+        # set legend
+        _set_legend(ax, legend_handles=None, render_legend=render_legend,
+                    legend_title=legend_title, legend_font_name=legend_font_name,
+                    legend_font_style=legend_font_style,
+                    legend_font_size=legend_font_size,
+                    legend_font_weight=legend_font_weight,
+                    legend_marker_scale=legend_marker_scale,
+                    legend_location=legend_location,
+                    legend_bbox_to_anchor=legend_bbox_to_anchor,
+                    legend_border_axes_pad=legend_border_axes_pad,
+                    legend_n_columns=legend_n_columns,
+                    legend_horizontal_spacing=legend_horizontal_spacing,
+                    legend_vertical_spacing=legend_vertical_spacing,
+                    legend_border=legend_border,
+                    legend_border_padding=legend_border_padding,
+                    legend_shadow=legend_shadow,
+                    legend_rounded_corners=legend_rounded_corners)
 
-            # Render legend
-            ax.legend(title=legend_title, prop=prop,
-                      loc=legend_location,
-                      bbox_to_anchor=legend_bbox_to_anchor,
-                      borderaxespad=legend_border_axes_pad,
-                      ncol=legend_n_columns,
-                      columnspacing=legend_horizontal_spacing,
-                      labelspacing=legend_vertical_spacing,
-                      frameon=legend_border, borderpad=legend_border_padding,
-                      shadow=legend_shadow, fancybox=legend_rounded_corners,
-                      markerscale=legend_marker_scale)
+        # set axes options
+        _set_axes_options(
+            ax, render_axes=render_axes, inverted_y_axis=False,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
+            axes_x_limits=self.x_axis_limits, axes_y_limits=self.y_axis_limits,
+            axes_x_ticks=self.x_axis_ticks, axes_y_ticks=self.y_axis_ticks,
+            axes_x_label=self.x_label, axes_y_label=self.y_label,
+            title=self.title)
 
-        # Apply axes options
-        if render_axes:
-            plt.axis('on')
-            ax.set_xlabel(self.x_label, fontsize=axes_font_size,
-                          fontname=axes_font_name, fontstyle=axes_font_style,
-                          fontweight=axes_font_weight)
-            ax.set_ylabel(self.y_label, fontsize=axes_font_size,
-                          fontname=axes_font_name, fontstyle=axes_font_style,
-                          fontweight=axes_font_weight)
-            plt.title(self.title, fontsize=axes_font_size,
-                      fontname=axes_font_name, fontstyle=axes_font_style,
-                      fontweight=axes_font_weight)
-            # set font options
-            for l in (plt.gca().get_xticklabels() +
-                      plt.gca().get_yticklabels()):
-                l.set_fontsize(axes_font_size)
-                l.set_fontname(axes_font_name)
-                l.set_fontstyle(axes_font_style)
-                l.set_fontweight(axes_font_weight)
-        else:
-            plt.axis('off')
-            plt.xticks([])
-            plt.yticks([])
+        # set grid options
+        _set_grid_options(render_grid=render_grid,
+                          grid_line_style=grid_line_style,
+                          grid_line_width=grid_line_width)
 
-        # turn grid on/off
-        if render_grid:
-            plt.grid('on', linestyle=grid_line_style, linewidth=grid_line_width)
-        else:
-            plt.grid('off')
-
-        # Set axes limits
-        if self.x_axis_limits is not None:
-            plt.xlim(self.x_axis_limits)
-        if self.y_axis_limits is not None:
-            plt.ylim(self.y_axis_limits)
-
-        # Set figure size
-        if figure_size is not None:
-            self.figure.set_size_inches(np.asarray(figure_size))
+        # set figure size
+        _set_figure_size(self.figure, figure_size)
 
         return self
 
