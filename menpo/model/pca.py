@@ -791,13 +791,14 @@ class PCAVectorModel(MeanLinearModel):
         viewer : :map:`MatplotlibRenderer`
             The viewer object.
         """
-        from menpo.visualize import GraphPlotter
-        return GraphPlotter(figure_id=figure_id, new_figure=new_figure,
-                            x_axis=range(self.n_active_components),
-                            y_axis=[self.eigenvalues], title='Eigenvalues',
-                            x_label='Component Number', y_label='Eigenvalue',
-                            x_axis_limits=(0, self.n_active_components - 1),
-                            y_axis_limits=None).render(
+        from menpo.visualize import plot_curve
+        return plot_curve(
+            range(self.n_active_components), [self.eigenvalues],
+            figure_id=figure_id, new_figure=new_figure, legend_entries=None,
+            title='Eigenvalues', x_label='Component Number',
+            y_label='Eigenvalue',
+            axes_x_limits=[0, self.n_active_components - 1],
+            axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
             render_lines=render_lines, line_colour=line_colour,
             line_style=line_style, line_width=line_width,
             render_markers=render_markers, marker_style=marker_style,
@@ -806,9 +807,9 @@ class PCAVectorModel(MeanLinearModel):
             marker_edge_width=marker_edge_width, render_legend=False,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, render_grid=render_grid,
-            grid_line_style=grid_line_style, grid_line_width=grid_line_width,
-            figure_size=figure_size)
+            axes_font_weight=axes_font_weight, figure_size=figure_size,
+            render_grid=render_grid, grid_line_style=grid_line_style,
+            grid_line_width=grid_line_width)
 
     def plot_eigenvalues_widget(self, figure_size=(10, 6), style='coloured'):
         r"""
@@ -940,15 +941,14 @@ class PCAVectorModel(MeanLinearModel):
         viewer : :map:`MatplotlibRenderer`
             The viewer object.
         """
-        from menpo.visualize import GraphPlotter
-        return GraphPlotter(figure_id=figure_id, new_figure=new_figure,
-                            x_axis=range(self.n_active_components),
-                            y_axis=[self.eigenvalues_ratio()],
-                            title='Variance Ratio of Eigenvalues',
-                            x_label='Component Number',
-                            y_label='Variance Ratio',
-                            x_axis_limits=(0, self.n_active_components - 1),
-                            y_axis_limits=None).render(
+        from menpo.visualize import plot_curve
+        return plot_curve(
+            range(self.n_active_components), [self.eigenvalues_ratio()],
+            figure_id=figure_id, new_figure=new_figure, legend_entries=None,
+            title='Variance Ratio of Eigenvalues', x_label='Component Number',
+            y_label='Variance Ratio',
+            axes_x_limits=[0, self.n_active_components - 1],
+            axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
             render_lines=render_lines, line_colour=line_colour,
             line_style=line_style, line_width=line_width,
             render_markers=render_markers, marker_style=marker_style,
@@ -957,9 +957,9 @@ class PCAVectorModel(MeanLinearModel):
             marker_edge_width=marker_edge_width, render_legend=False,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, render_grid=render_grid,
-            grid_line_style=grid_line_style, grid_line_width=grid_line_width,
-            figure_size=figure_size)
+            axes_font_weight=axes_font_weight, figure_size=figure_size,
+            render_grid=render_grid, grid_line_style=grid_line_style,
+            grid_line_width=grid_line_width)
 
     def plot_eigenvalues_ratio_widget(self, figure_size=(10, 6),
                                       style='coloured'):
@@ -1099,15 +1099,15 @@ class PCAVectorModel(MeanLinearModel):
         viewer : :map:`MatplotlibRenderer`
             The viewer object.
         """
-        from menpo.visualize import GraphPlotter
-        return GraphPlotter(figure_id=figure_id, new_figure=new_figure,
-                            x_axis=range(self.n_active_components),
-                            y_axis=[self.eigenvalues_cumulative_ratio()],
-                            title='Cumulative Variance Ratio of Eigenvalues',
-                            x_label='Component Number',
-                            y_label='Cumulative Variance Ratio',
-                            x_axis_limits=(0, self.n_active_components - 1),
-                            y_axis_limits=None).render(
+        from menpo.visualize import plot_curve
+        return plot_curve(
+            range(self.n_active_components),
+            [self.eigenvalues_cumulative_ratio()], figure_id=figure_id,
+            new_figure=new_figure, legend_entries=None,
+            title='Cumulative Variance Ratio of Eigenvalues',
+            x_label='Component Number', y_label='Cumulative Variance Ratio',
+            axes_x_limits=[0, self.n_active_components - 1],
+            axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
             render_lines=render_lines, line_colour=line_colour,
             line_style=line_style, line_width=line_width,
             render_markers=render_markers, marker_style=marker_style,
@@ -1116,9 +1116,9 @@ class PCAVectorModel(MeanLinearModel):
             marker_edge_width=marker_edge_width, render_legend=False,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, render_grid=render_grid,
-            grid_line_style=grid_line_style, grid_line_width=grid_line_width,
-            figure_size=figure_size)
+            axes_font_weight=axes_font_weight, figure_size=figure_size,
+            render_grid=render_grid, grid_line_style=grid_line_style,
+            grid_line_width=grid_line_width)
 
     def plot_eigenvalues_cumulative_ratio_widget(self, figure_size=(10, 6),
                                                  style='coloured'):
