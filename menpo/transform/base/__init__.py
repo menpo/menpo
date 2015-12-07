@@ -107,7 +107,7 @@ class Transform(Copyable):
         warnings.warn('the public API for inplace operations is deprecated '
                       'and will be removed in a future version of Menpo. '
                       'Use .apply() instead.', MenpoDeprecationWarning)
-        return self._apply_inplace(x, **args)
+        return self._apply_inplace(*args, **kwargs)
 
     def _apply_inplace(self, x, **kwargs):
         r"""
