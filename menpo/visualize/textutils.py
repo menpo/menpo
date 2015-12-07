@@ -81,13 +81,8 @@ def print_dynamic(str_to_print):
     str_to_print : `str`
         The string to print.
     """
-    # here we use the print function, so we need the __future__ import for Py2
-    print("{}".format(str_to_print.ljust(80)), end='\r')
-    # If we are in a terminal then we can flush the output and it will display
-    # smoothly. However, in a notebook, this call seems to prevent anything
-    # from being displayed at all, so we skip it.
-    if sys.stdout.isatty():
-        sys.stdout.flush()
+    sys.stdout.write("\r{}".format(str_to_print.ljust(80)))
+    sys.stdout.flush()
 
 
 def bytes_str(num):
@@ -195,9 +190,11 @@ def print_progress(iterable, prefix='', n_items=None, offset=0,
         remaining = n - i
         duration = datetime.utcfromtimestamp(sum(timings) / len(timings) *
                                              remaining)
-        bar_str = progress_bar_str(i / n, bar_length=bar_length, show_bar=show_bar)
+        bar_str = progress_bar_str(i / n, bar_length=bar_length,
+                                   show_bar=show_bar)
         count_str = ' ({}/{})'.format(i, n) if show_count else ''
-        eta_str = " - {} remaining".format(duration.strftime('%H:%M:%S')) if show_eta else ''
+        eta_str = " - {} remaining".format(duration.strftime('%H:%M:%S')) \
+            if show_eta else ''
         print_dynamic('{}{}{}{}'.format(prefix, bar_str, count_str, eta_str))
 
     # the iterable has now finished - to make it clear redraw the progress with
