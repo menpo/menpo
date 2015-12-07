@@ -28,7 +28,7 @@ else:
     include_dirs = [np.get_include()]
     install_requires = ['numpy>=1.10,<1.11',
                         'scipy>=0.16,<0.17',
-                        'matplotlib>=1.5,<1.6',
+                        'matplotlib>=1.4,<1.6',
                         'pillow>=2.9,<2.10',
                         'Cython>=0.23,<0.24']
 
