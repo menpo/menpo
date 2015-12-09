@@ -3,18 +3,18 @@ from nose.tools import raises
 from numpy.testing import (assert_allclose, assert_equal, assert_almost_equal,
                            assert_array_almost_equal)
 from menpo.shape import PointCloud
-from menpo.model import LinearModel, PCAModel, PCAVectorModel
+from menpo.model import LinearVectorModel, PCAModel, PCAVectorModel
 from menpo.math import as_matrix
 
 
 def test_linear_model_creation():
     data = np.zeros((3, 120))
-    LinearModel(data)
+    LinearVectorModel(data)
 
 
 def test_linear_model_basics():
     data = np.random.random((3, 120))
-    linear_model = LinearModel(data)
+    linear_model = LinearVectorModel(data)
     assert(linear_model.n_components == 3)
     assert(linear_model.n_components == 3)
     assert(linear_model.n_features == 120)
@@ -25,7 +25,7 @@ def test_linear_model_project_vector():
     data[0, 0] = 1
     data[1, 1] = 1
     data[2, 2] = 1
-    linear_model = LinearModel(data)
+    linear_model = LinearVectorModel(data)
     sample = np.random.random(120)
     weights = linear_model.project(sample)
     assert_allclose(weights, sample[:3])
@@ -33,7 +33,7 @@ def test_linear_model_project_vector():
 
 def test_linear_model_component():
     data = np.random.random((3, 120))
-    linear_model = LinearModel(data)
+    linear_model = LinearVectorModel(data)
     assert_equal(linear_model.component(2), data[2])
 
 
@@ -42,7 +42,7 @@ def test_linear_model_instance_vector():
     data[0, 0] = 1
     data[1, 1] = 1
     data[2, 2] = 1
-    linear_model = LinearModel(data)
+    linear_model = LinearVectorModel(data)
     weights = np.array([0.263, 7, 41.2])
     projected = linear_model.instance(weights)
     # only the first 3 features are non zero...
@@ -180,7 +180,7 @@ def test_pca_orthogonalize_against():
     pca_samples = np.random.randn(10, 10)
     pca_model = PCAVectorModel(pca_samples)
     lm_samples = np.asarray([np.random.randn(10) for _ in range(4)])
-    lm_model = LinearModel(np.asarray(lm_samples))
+    lm_model = LinearVectorModel(np.asarray(lm_samples))
     # orthogonalize
     pca_model.orthonormalize_against_inplace(lm_model)
     # number of active components must remain the same
@@ -191,7 +191,7 @@ def test_pca_orthogonalize_against_with_less_active_components():
     pca_samples = np.random.randn(10, 10)
     pca_model = PCAVectorModel(pca_samples)
     lm_samples = np.asarray([np.random.randn(10) for _ in range(4)])
-    lm_model = LinearModel(np.asarray(lm_samples))
+    lm_model = LinearVectorModel(np.asarray(lm_samples))
     # set number of active components
     pca_model.n_active_components = 5
     # orthogonalize

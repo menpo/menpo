@@ -3,11 +3,11 @@ import numpy as np
 
 from menpo.base import doc_inherit
 from menpo.math import pca, pcacov, ipca, as_matrix
-from .linear import MeanLinearModel
+from .linear import MeanLinearVectorModel
 from .vectorizable import VectorizableBackedModel
 
 
-class PCAVectorModel(MeanLinearModel):
+class PCAVectorModel(MeanLinearVectorModel):
     r"""
     A :map:`MeanLinearModel` where components are Principal Components.
 
@@ -129,10 +129,10 @@ class PCAVectorModel(MeanLinearModel):
                             max_n_components):
         # if covariance is not centred, mean must be zeros.
         if centred:
-            MeanLinearModel.__init__(self, eigenvectors, mean)
+            MeanLinearVectorModel.__init__(self, eigenvectors, mean)
         else:
-            MeanLinearModel.__init__(self, eigenvectors,
-                                     np.zeros(mean.shape, dtype=mean.dtype))
+            MeanLinearVectorModel.__init__(self, eigenvectors,
+                                           np.zeros(mean.shape, dtype=mean.dtype))
         self.centred = centred
         self._eigenvalues = eigenvalues
         # start the active components as all the components
@@ -218,7 +218,7 @@ class PCAVectorModel(MeanLinearModel):
         else:
             raise ValueError(err_str)
 
-    @MeanLinearModel.components.getter
+    @MeanLinearVectorModel.components.getter
     def components(self):
         r"""
         Returns the active components of the model.
