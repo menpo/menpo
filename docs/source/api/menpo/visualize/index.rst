@@ -46,4 +46,5 @@ Various
 .. toctree::
   :maxdepth: 1
 
+  plot_curve
   plot_gaussian_ellipses

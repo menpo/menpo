@@ -166,10 +166,16 @@ class TexturedTriMesh(TriMesh):
                  render_lines=True, line_colour='r', line_style='-',
                  line_width=1., render_markers=True, marker_style='o',
                  marker_size=20, marker_face_colour='k', marker_edge_colour='k',
-                 marker_edge_width=1., render_axes=True,
+                 marker_edge_width=1., render_numbering=False,
+                 numbers_horizontal_align='center',
+                 numbers_vertical_align='bottom',
+                 numbers_font_name='sans-serif', numbers_font_size=10,
+                 numbers_font_style='normal', numbers_font_weight='normal',
+                 numbers_font_colour='k', render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
+                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
+                 axes_y_ticks=None, figure_size=(10, 8),
                  label=None):
         r"""
         Visualization of the TriMesh in 2D. Currently, explicit textured TriMesh
@@ -226,6 +232,36 @@ class TexturedTriMesh(TriMesh):
 
         marker_edge_width : `float`, optional
             The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : ``{center, right, left}``, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : ``{center, top, bottom, baseline}``, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : See Below, optional
+            The font of the numbers. Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : ``{normal, italic, oblique}``, optional
+            The font style of the numbers.
+        numbers_font_weight : See Below, optional
+            The font weight of the numbers.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        numbers_font_colour : See Below, optional
+            The font colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
         axes_font_name : See Below, optional
@@ -245,10 +281,20 @@ class TexturedTriMesh(TriMesh):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the x axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the TriMesh as a percentage of the TriMesh's
+            width. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
         axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the y axis.
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the TriMesh as a percentage of the TriMesh's
+            height. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) `tuple` or ``None``, optional
             The size of the figure in inches.
         label : `str`, optional
@@ -276,10 +322,19 @@ class TexturedTriMesh(TriMesh):
             marker_style=marker_style, marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, render_axes=render_axes,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
             axes_font_name=axes_font_name, axes_font_size=axes_font_size,
             axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
             axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
             figure_size=figure_size, label=label)
 
     def __str__(self):
