@@ -328,3 +328,10 @@ def test_pca_init_from_covariance():
         assert_almost_equal(pca1.variance_ratio(), pca2.variance_ratio())
         assert_array_almost_equal(pca1.whitened_components(),
                                   pca2.whitened_components())
+
+
+def test_pca_project():
+    pca_samples = [PointCloud(np.random.randn(10, 2)) for _ in range(10)]
+    pca_model = PCAModel(pca_samples)
+    projected = pca_model.project(pca_samples[0])
+    assert projected.shape[0] == 9
