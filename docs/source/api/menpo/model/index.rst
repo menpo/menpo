@@ -13,8 +13,8 @@ Abstract Classes
 .. toctree::
   :maxdepth: 1
 
-  LinearModel
-  MeanLinearModel
+  LinearVectorModel
+  MeanLinearVectorModel
 
 
 Principal Component Analysis
