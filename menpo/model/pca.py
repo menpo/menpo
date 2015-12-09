@@ -1164,7 +1164,7 @@ class PCAVectorModel(MeanLinearModel):
         return str_out
 
 
-class PCAModel(PCAVectorModel, VectorizableBackedModel):
+class PCAModel(VectorizableBackedModel, PCAVectorModel):
     r"""
     A :map:`MeanLinearModel` where components are Principal Components
     and the components are vectorized instances.
