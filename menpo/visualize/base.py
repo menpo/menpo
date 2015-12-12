@@ -858,7 +858,8 @@ def view_patches(patches, patch_centers, patches_indices=None,
                  numbers_font_colour='k', render_axes=False,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
+                 axes_y_ticks=None, figure_size=(10, 8)):
     r"""
     Method that renders the provided `patches` on a black canvas. The user can
     choose whether to render the patch centers (`render_centers`) as well as
@@ -1032,6 +1033,10 @@ def view_patches(patches, patch_centers, patches_indices=None,
         top and bottom of the shape as a percentage of the shape's height. If
         `tuple` or `list`, then it defines the axis limits. If ``None``, then the
         limits are set automatically.
+    axes_x_ticks : `list` or `tuple` or ``None``, optional
+        The ticks of the x axis.
+    axes_y_ticks : `list` or `tuple` or ``None``, optional
+        The ticks of the y axis.
     figure_size : (`float`, `float`) `tuple` or ``None`` optional
         The size of the figure in inches.
 
@@ -1089,6 +1094,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
             axes_font_name=axes_font_name, axes_font_size=axes_font_size,
             axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
             axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
             figure_size=figure_size)
     else:
         patch_view = patches_image.view(
@@ -1097,7 +1103,8 @@ def view_patches(patches, patch_centers, patches_indices=None,
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, figure_size=figure_size)
+            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
     # Render rectangles around patches
     if render_patches_bboxes:
