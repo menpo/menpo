@@ -1,6 +1,5 @@
 [![Stories in Ready][waffle_shield]][waffle]
 [![Build Status][travis_shield]][travis]
-[![Coverage Status][coveralls_shield]][coveralls]
 [![PyPI Release][pypi_shield]][pypi]
 [![BSD License][bsd_shield]][bsd]
 
@@ -54,13 +53,13 @@ installation instructions for all major platforms.
 
 Usage
 -----
-Menpo makes extensive use of IPython Notebooks to explain functionality of the 
+Menpo makes extensive use of Jupyter Notebooks to explain functionality of the 
 package. These Notebooks are hosted in the 
 [menpo/menpo-notebooks](https://github.com/menpo/menpo-notebooks) repository. 
 We strongly suggest that after installation you:
 
   1. Download the [latest version of the notebooks][notebooks_gh]
-  2. Run `ipython notebook`
+  2. Run `jupyter notebook`
   3. Play around with the notebooks.
 
   
@@ -86,10 +85,15 @@ a number of more specific libraries that rely on the core components of Menpo:
     are wrapped, they may not be compatible with this BSD license. Therefore, 
     we urge caution be taken when interacting with this library for 
     non-academic purposes.
+  - [menpowidgets][mw_gh]: This package provides high level object
+    viewing classes using Matplotlib and Jupyter. Jupyter notebooks
+    are therefore required to this package - and Menpo also
+    implicitly relies on menpowidgets for any widget functionality.
   
 [mf_gh]: https://github.com/menpo/menpofit
 [m3d_gh]: https://github.com/menpo/menpo3d
 [md_gh]: https://github.com/menpo/menpodetect
+[mw_gh]: https://github.com/menpo/menpowidgets
 
 Documentation
 -------------
@@ -98,21 +102,19 @@ See our documentation on [ReadTheDocs](http://menpo.readthedocs.org)
 Testing
 -------
 We use [nose](https://nose.readthedocs.org/en/latest/) for unit tests. 
-You can check our current coverage on 
-[coveralls](https://coveralls.io/r/menpo/menpo).
 
-After installing `nose`, running
+After installing `nose` and `mock`, running
 
     >> nosetests .
 
 from the top of the repository will run all of the unit tests.
-
 
 Some small parts of Menpo are only available if the user has some optional
 dependency installed. These are:
 
 - 3D viewing methods, only available if `menpo3d` is installed
 - `menpo.feature.dsift` only available if `cyvlfeat` is installed
+- Widgets are only available if `menpowidgets` is installed
 
 If you are running the test suite in an environment **without** `cyvlfeat`,
 call
@@ -121,10 +123,9 @@ call
 
 to avoid testing features dependent on `cyvlfeat`.
 
-If you are running the test suite in an environment that **contains**
+If you are running the test suite in an environment **with**
 `menpo3d`, call
 
     >> nosetests -a '!viewing' .
 
 to avoid testing the behavior of `menpo` in the absence of `menpo3d`.
-
