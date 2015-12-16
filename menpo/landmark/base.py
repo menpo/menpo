@@ -540,7 +540,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         :type: `list` of `str`
         """
-        return self._labels_to_masks.keys()
+        # Convert to list so that we can index immediately, as keys()
+        # is a generator in Python 3
+        return list(self._labels_to_masks.keys())
 
     @property
     def n_labels(self):
