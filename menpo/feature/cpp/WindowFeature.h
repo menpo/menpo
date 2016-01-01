@@ -1,6 +1,6 @@
 #pragma once
 
-#if _MSC_VER < 1900
+#if defined(_MSC_VER) && _MSC_VER < 1900
     #define round(x) (x >= 0 ? (x + 0.5) : (x - 0.5))
 #endif
 
