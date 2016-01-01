@@ -29,7 +29,7 @@ else:
     install_requires = ['numpy>=1.10,<1.11',
                         'scipy>=0.16,<0.17',
                         'matplotlib>=1.4,<1.6',
-                        'pillow>=2.9,<2.10',
+                        'pillow>=3.0,<4.0',
                         'Cython>=0.23,<0.24']
 
     if sys.version_info.major == 2:
@@ -51,5 +51,5 @@ setup(name='menpo',
                               'transform/piecewiseaffine/fastpwa/*.c',
                               'transform/piecewiseaffine/fastpwa/*.h'],
                     '': ['*.pxd', '*.pyx']},
-      tests_require=['nose', 'mock==1.0.1']
+      tests_require=['nose', 'mock']
 )
