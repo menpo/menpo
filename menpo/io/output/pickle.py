@@ -50,6 +50,6 @@ def pickle_paths_as_pure():
         Path.__reduce__ = default_reduce
 
 
-def pickle_export(obj, file_handle):
+def pickle_export(obj, file_handle, protocol=2):
     with pickle_paths_as_pure():
-        pickle.dump(obj, file_handle, protocol=2)
+        pickle.dump(obj, file_handle, protocol=protocol)

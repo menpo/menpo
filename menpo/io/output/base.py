@@ -90,7 +90,7 @@ def export_image(image, fp, extension=None, overwrite=False):
     _export(image, fp, image_types, extension, overwrite)
 
 
-def export_pickle(obj, fp, overwrite=False):
+def export_pickle(obj, fp, overwrite=False, protocol=2):
     r"""
     Exports a given collection of Python objects with Pickle.
 
@@ -113,6 +113,8 @@ def export_pickle(obj, fp, overwrite=False):
         The string path or file-like object to save the object at/into.
     overwrite : `bool`, optional
         Whether or not to overwrite a file if it already exists.
+    protocol : `int`, optional
+        Save with a different pickle protocol the file. Mostly for python 3.
 
     Raises
     ------
@@ -133,10 +135,9 @@ def export_pickle(obj, fp, overwrite=False):
         o = gzip_open if path_filepath.suffix == '.gz' else open
         with o(str(path_filepath), 'wb') as f:
             # force overwrite as True we've already done the check above
-            _export(obj, f, pickle_types, '.pkl', True)
+            _export(obj, f, pickle_types, '.pkl', True, protocol=protocol)
     else:
-        _export(obj, fp, pickle_types, '.pkl', overwrite)
-
+        _export(obj, fp, pickle_types, '.pkl', overwrite, protocol=protocol)
 
 def _normalise_extension(extension):
     # Account for the fact the user may only have passed the extension
@@ -175,7 +176,7 @@ def _validate_filepath(fp, extension, overwrite):
     return path_filepath
 
 
-def _export(obj, fp, extensions_map, extension, overwrite):
+def _export(obj, fp, extensions_map, extension, overwrite, protocol=None):
     if isinstance(fp, Path):
         fp = str(fp)  # cheeky conversion to string to reuse existing code
     if isinstance(fp, basestring):
@@ -185,7 +186,10 @@ def _export(obj, fp, extensions_map, extension, overwrite):
             path_filepath.suffix, extensions_map)
 
         with path_filepath.open('wb') as file_handle:
-            export_function(obj, file_handle)
+            if protocol is not None:
+                export_function(obj, file_handle, protocol)
+            else:
+                export_function(obj, file_handle)
     else:
         # You MUST provide an extension if a file handle is given
         if extension is None:
@@ -204,4 +208,7 @@ def _export(obj, fp, extensions_map, extension, overwrite):
             pass
         export_function = _extension_to_export_function(
             _normalise_extension(extension), extensions_map)
-        export_function(obj, fp)
+        if protocol is not None:
+            export_function(obj, fp, protocol)
+        else:
+            export_function(obj, fp)
