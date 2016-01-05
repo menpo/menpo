@@ -161,7 +161,7 @@ def vector_128_dsift(x, dtype=np.float32):
 
 
 # Predefined dsift that returns a 128d vector normalized by the hellinger norm
-def hellinger_vector_128_dsift(x):
+def hellinger_vector_128_dsift(x, dtype=np.float32):
     r"""
     Computes a SIFT feature vector from a square patch (or image). Patch
     **must** be square and the output vector will *always* be a ``(128,)``
@@ -192,6 +192,6 @@ def hellinger_vector_128_dsift(x):
     .. [1] Arandjelovic, Relja, and Andrew Zisserman. "Three things everyone
            should know to improve object retrieval.", CVPR, 2012.
     """
-    h = vector_128_dsift(x)
+    h = vector_128_dsift(x, dtype=dtype)
     h /= (h.sum(axis=0) + 1e-15)
     return np.sqrt(h)
