@@ -2562,11 +2562,13 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     if background == 'black':
         patches_image = Image.init_blank(
             (height, width), n_channels,
-            fill=np.min(patches[patches_indices]))
+            fill=np.min(patches[patches_indices]),
+            dtype=patches.dtype)
     elif background == 'white':
         patches_image = Image.init_blank(
             (height, width), n_channels,
-            fill=np.max(patches[patches_indices]))
+            fill=np.max(patches[patches_indices]),
+            dtype=patches.dtype)
     else:
         raise ValueError('Background must be either ''black'' or ''white''.')
 
