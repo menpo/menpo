@@ -538,7 +538,7 @@ def plot_curve(x_axis, y_axis, figure_id=None, new_figure=True,
         right and left of the graph as a percentage of the curves' width. If
         `tuple` or `list`, then it defines the axis limits. If ``None``, then the
         limits are set automatically.
-    axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+    axes_y_limits : `float` or (`float`, `float`) or ``None``, optional
         The limits of the y axis. If `float`, then it sets padding on the
         top and bottom of the graph as a percentage of the curves' height. If
         `tuple` or `list`, then it defines the axis limits. If ``None``, then the
@@ -1028,7 +1028,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
         right and left of the shape as a percentage of the shape's width. If
         `tuple` or `list`, then it defines the axis limits. If ``None``, then the
         limits are set automatically.
-    axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+    axes_y_limits : `float` or (`float`, `float`) or ``None``, optional
         The limits of the y axis. If `float`, then it sets padding on the
         top and bottom of the shape as a percentage of the shape's height. If
         `tuple` or `list`, then it defines the axis limits. If ``None``, then the
