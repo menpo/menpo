@@ -114,8 +114,21 @@ def export_pickle(obj, fp, overwrite=False, protocol=2):
     overwrite : `bool`, optional
         Whether or not to overwrite a file if it already exists.
     protocol : `int`, optional
-        Save with a different pickle protocol the file. Mostly for python 3.
+        Save with a different pickle protocol the file.
+        The protocols were introduced in different versions of python, thus
+        it is recommended to save with the highest protocol version that
+        your python distribution can support.
+        The protocol refers to:
 
+        ========= ========================================================
+        Protocol                       Functionality
+        ========= ========================================================
+        0         Simplest protocol for text mode, backwards compatible.
+        1         Protocol for binary mode, backwards compatible.
+        2         Wider support for classes, compatible with python >= 2.3.
+        3         Support for byte objects, compatible with python >= 3.0.
+        4         Support for large objects, compatible with python >= 3.4.
+        ========= =========================================================
     Raises
     ------
     ValueError
