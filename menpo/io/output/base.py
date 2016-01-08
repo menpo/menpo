@@ -114,7 +114,7 @@ def export_pickle(obj, fp, overwrite=False, protocol=2):
     overwrite : `bool`, optional
         Whether or not to overwrite a file if it already exists.
     protocol : `int`, optional
-        Save with a different pickle protocol the file.
+        The Pickle protocol used to serialize the file.
         The protocols were introduced in different versions of python, thus
         it is recommended to save with the highest protocol version that
         your python distribution can support.
