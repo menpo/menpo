@@ -23,7 +23,7 @@ areas within the bounding boxes using Menpo:
     for image in mio.import_images('./images_folder'):
         images.append(image.crop_to_landmarks())
 
-Where :map:`import_images` yields a generator to keep memory usage low.
+Where :map:`import_images` returns a :map:`LazyList` to keep memory usage low.
 
 Although the above is a very simple example, we believe that being able
 to easily manipulate and couple landmarks with images *and* meshes, is an

@@ -39,7 +39,7 @@ Notebooks
 ---------
 `Explore the Menpo Notebooks <http://www.menpo.org/notebooks.html>`_
 
-For a more thorough set of examples, we provide a set of IPython notebooks
+For a more thorough set of examples, we provide a set of Jupyter notebooks
 that demonstrate common use cases of Menpo. This concentrates on an overview
 of the functionality of the major classes and ideas behind Menpo.
 
