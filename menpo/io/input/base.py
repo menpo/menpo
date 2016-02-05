@@ -225,7 +225,7 @@ def import_images(pattern, max_images=None, shuffle=False,
 
 def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
                           as_generator=False, verbose=False):
-    r"""Multiple landmark file import generator.
+    r"""Import Multiple landmark files.
 
     For each landmark file found returns an importer than
     returns a :map:`LandmarkGroup`.
