@@ -151,7 +151,8 @@ def vector_128_dsift(x, dtype=np.float32):
     n_bins = 4
     c_size = patch_shape // n_bins
     if x.dtype == np.uint8:
-        x *= (1.0 / 255.0)
+        # Can't be augmented assignment due to numpy 1.10 casting rules
+        x = x * (1.0 / 255.0)
     return dsift(x,
                  window_step_horizontal=patch_shape,
                  window_step_vertical=patch_shape,

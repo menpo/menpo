@@ -2201,20 +2201,25 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                     np.array([[1.0, 0.956, 0.621],
                               [1.0, -0.272, -0.647],
                               [1.0, -1.106, 1.703]]))[0, :]
-            pixels = np.einsum('i,ikl->kl', _greyscale_luminosity_coef,
-                               greyscale.pixels)
+            # Compute greyscale via dot product
+            pixels = np.dot(_greyscale_luminosity_coef,
+                            greyscale.pixels.reshape(3, -1))
+            # Reshape image back to original shape (with 1 channel)
+            pixels = pixels.reshape(greyscale.shape)
         elif mode == 'average':
             pixels = np.mean(greyscale.pixels, axis=0)
         elif mode == 'channel':
             if channel is None:
                 raise ValueError("For the 'channel' mode you have to provide"
                                  " a channel index")
-            pixels = greyscale.pixels[channel, ...]
+            pixels = greyscale.pixels[channel]
         else:
             raise ValueError("Unknown mode {} - expected 'luminosity', "
                              "'average' or 'channel'.".format(mode))
 
-        greyscale.pixels = pixels[None, ...]
+        # Set new pixels - ensure channel axis and maintain
+        greyscale.pixels = pixels[None, ...].astype(greyscale.pixels.dtype,
+                                                    copy=False)
         return greyscale
 
     def as_PILImage(self):
