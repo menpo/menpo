@@ -137,7 +137,7 @@ class ABSImporter(Importer):
     Parameters
     ----------
     filepath : string
-        Absolute filepath of the mesh.
+        Absolute filepath of the ABS file.
     """
 
     def __init__(self, filepath, **kwargs):
@@ -178,7 +178,7 @@ class FLOImporter(Importer):
     Parameters
     ----------
     filepath : string
-        Absolute filepath of the mesh.
+        Absolute filepath of the FLO file.
     """
 
     def __init__(self, filepath, **kwargs):

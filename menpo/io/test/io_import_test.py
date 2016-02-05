@@ -390,3 +390,70 @@ def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
 def test_shuffle_kwarg_true_calls_shuffle(mock):
     list(mio.import_images(mio.data_dir_path(), shuffle=True))
     assert mock.called
+
+
+def test_import_as_generator():
+    import types
+    gen = mio.import_images(mio.data_dir_path(), as_generator=True)
+    assert isinstance(gen, types.GeneratorType)
+    gen = mio.import_landmark_files(mio.data_dir_path(), as_generator=True)
+    assert isinstance(gen, types.GeneratorType)
+
+
+def test_import_lazy_list():
+    from menpo.base import LazyList
+    data_path = mio.data_dir_path()
+    ll = mio.import_images(data_path)
+    assert isinstance(ll, LazyList)
+    ll = mio.import_landmark_files(data_path)
+    assert isinstance(ll, LazyList)
+
+
+@patch('menpo.io.input.pickle.pickle.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_pickle(is_file, mock_open, mock_pickle):
+    mock_pickle.return_value = {'test': 1}
+    is_file.return_value = True
+
+    objs = mio.import_pickle('mocked.pkl')
+    assert isinstance(objs, dict)
+    assert 'test' in objs
+    assert objs['test'] == 1
+
+
+@patch('menpo.io.input.pickle.pickle.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.glob')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_pickles(is_file, glob, mock_open, mock_pickle):
+    from pathlib import Path
+    from menpo.base import LazyList
+    mock_pickle.return_value = {'test': 1}
+    is_file.return_value = True
+    glob.return_value = [Path('mocked1.pkl'), Path('mocked2.pkl')]
+
+    objs = mio.import_pickles('*')
+    assert isinstance(objs, LazyList)
+    assert len(objs) == 2
+    assert objs[0]['test'] == 1
+    assert objs[1]['test'] == 1
+
+
+@patch('menpo.io.input.pickle.pickle.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.glob')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_pickles_as_generator(is_file, glob, mock_open, mock_pickle):
+    from pathlib import Path
+    import types
+    mock_pickle.return_value = {'test': 1}
+    is_file.return_value = True
+    glob.return_value = [Path('mocked1.pkl'), Path('mocked2.pkl')]
+
+    objs = mio.import_pickles('*', as_generator=True)
+    assert isinstance(objs, types.GeneratorType)
+    objs = list(objs)
+    assert len(objs) == 2
+    assert objs[0]['test'] == 1
+    assert objs[1]['test'] == 1

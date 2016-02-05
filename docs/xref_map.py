@@ -30,6 +30,7 @@ xref_map = {
 'LandmarkGroup': ('class', 'menpo.landmark.LandmarkGroup'),
 'LandmarkManager': ('class', 'menpo.landmark.LandmarkManager'),
 'LabellingError': ('class', 'menpo.landmark.LabellingError'),
+'LazyList': ('class', 'menpo.base.LazyList'),
 'LinearModel': ('class', 'menpo.model.linear.LinearModel'),
 'MaskedImage': ('class', 'menpo.image.MaskedImage'),
 'MatplotlibRenderer': ('class', 'menpo.visualize.MatplotlibRenderer'),

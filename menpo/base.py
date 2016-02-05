@@ -1,3 +1,4 @@
+import collections
 from functools import partial, wraps
 import os.path
 import warnings
@@ -449,3 +450,79 @@ class doc_inherit(object):
             raise NameError("Can't find '{}' in parents".format(self.name))
         func.__doc__ = source.__doc__
         return func
+
+
+class LazyList(collections.Sequence):
+    r"""
+    An immutable sequence that provides the ability to lazily access objects.
+    In truth, this sequence simply wraps a list of callables which are then
+    indexed and invoked. However, if the callable represents a function that
+    lazily access memory, then this list simply implements a lazy list
+    paradigm.
+
+    When slicing, another `LazyList` is returned, containing the subset
+    of callables.
+
+    Parameters
+    ----------
+    callables : list of `callable`
+        A list of `callable` objects that will be invoked if directly indexed.
+    """
+
+    def __init__(self, callables):
+        self._callables = callables
+
+    def __getitem__(self, slice_):
+        if isinstance(slice_, int) or hasattr(slice_, '__index__'):
+            # PEP 357 and single integer index access - returns element
+            return self._callables[slice_]()
+        elif isinstance(slice_, collections.Iterable):
+            # An iterable object is passed - return a new LazyList
+            return LazyList([self._callables[s] for s in slice_])
+        else:
+            # A slice or unknown type is passed - let List handle it
+            return LazyList(self._callables[slice_])
+
+    def __len__(self):
+        return len(self._callables)
+
+    @classmethod
+    def init_from_index_callable(cls, f, n_elements):
+        r"""
+        Create a lazy list from a `callable` that expects a single parameter,
+        the index into an underlying sequence. This allows for simply
+        creating a `LazyList` from a `callable` that likely wraps
+        another list in a closure.
+
+        Parameters
+        ----------
+        f : `callable`
+            Callable expecting a single integer parameter, index. This is an
+            index into (presumably) an underlying sequence.
+        n_elements : `int`
+            The number of elements in the underlying sequence.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A LazyList where each element returns the underlying indexable
+            object wrapped by ``f``.
+        """
+        return LazyList([partial(f, i) for i in range(n_elements)])
+
+    def map(self, f):
+        r"""
+        Create a new LazyList where the passed callable ``f`` wraps
+        each element.
+
+        Parameters
+        ----------
+        f : `callable`
+            Callable to wrap each element with.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A new LazyList where each element is wrapped by ``f``.
+        """
+        return LazyList([partial(f, x) for x in self])
