@@ -150,7 +150,12 @@ def _rasterize_pillow(image, pclouds, render_lines=True, line_style='-',
                           fill=marker_face_colour[k], outline=outline)
 
     del draw
-    return Image.init_from_rolled_channels(np.asarray(pil_im))
+
+    pixels = np.asarray(pil_im)
+    if image.n_channels == 3:
+        return Image.init_from_rolled_channels(pixels)
+    else:
+        return Image(pixels)
 
 
 _RASTERIZE_BACKENDS = {'matplotlib': _rasterize_matplotlib,
