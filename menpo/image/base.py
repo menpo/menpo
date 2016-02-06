@@ -2231,6 +2231,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         dtype     Processing
         ========= ===========================================
         uint8     No processing, directly converted to PIL
+        uint16    No processing, directly converted to PIL
         bool      Scale by 255, convert to uint8
         float32   Scale by 255, convert to uint8
         float64   Scale by 255, convert to uint8
@@ -2238,7 +2239,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ========= ===========================================
 
         Image must only have 1 or 3 channels and be 2 dimensional.
-        Non `uint8` images must be in the rage ``[0, 1]`` to be converted.
+        Non `uint8` or `uint16` images must be in the range ``[0, 1]`` to be
+        converted.
 
         Returns
         -------
@@ -2255,7 +2257,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If pixels data type is `float32` or `float64` and the pixel
             range is outside of ``[0, 1]``
         """
-        if self.n_dims != 2 or self.n_channels not in [1, 3]:
+        if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
             raise ValueError(
                 'Can only convert greyscale or RGB 2D images. '
                 'Received a {} channel {}D image.'.format(self.n_channels,
@@ -2273,7 +2275,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                                              self.pixels.max()))
             else:
                 pixels = (pixels * 255).astype(np.uint8)
-        if pixels.dtype != np.uint8:
+        if pixels.dtype != np.uint8 and pixels.dtype != np.uint16:
             raise ValueError('Unexpected data type - {}.'.format(pixels.dtype))
         return PILImage.fromarray(pixels)
 
