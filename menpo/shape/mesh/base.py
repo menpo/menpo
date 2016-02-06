@@ -488,7 +488,7 @@ class TriMesh(PointCloud):
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r', line_style='-',
                  line_width=1., render_markers=True, marker_style='o',
-                 marker_size=20, marker_face_colour='k', marker_edge_colour='k',
+                 marker_size=5, marker_face_colour='k', marker_edge_colour='k',
                  marker_edge_width=1., render_numbering=False,
                  numbers_horizontal_align='center',
                  numbers_vertical_align='bottom',
