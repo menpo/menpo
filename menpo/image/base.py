@@ -896,6 +896,82 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
             axes_y_limits, axes_x_ticks, axes_y_ticks, figure_size)
 
+    def rasterize_landmarks_2d(self, group=None, render_lines=True,
+                               line_style='-', line_colour='b', line_width=1,
+                               render_markers=True, marker_style='o',
+                               marker_size=1, marker_face_colour='b',
+                               marker_edge_colour='b', marker_edge_width=1,
+                               backend='matplotlib'):
+        r"""
+        This method provides the ability to rasterize 2D landmarks onto an
+        image.
+        The returned image has the specified landmark groups rasterized onto
+        the image - which is useful for things like creating result examples
+        or rendering videos with annotations.
+
+        Since multiple landmark groups can be specified, all arguments can
+        take lists of parameters that map to the provided groups list. Therefore,
+        the parameters must be lists of the correct length or a single parameter
+        to apply to every landmark group.
+
+        Multiple backends are provided, all with different strengths.
+        The 'pillow' backend is very fast, but not very flexible.
+        The `matplotlib` backend should be feature compatible with other Menpo
+        rendering methods, but is much slower due to the overhead of creating a
+        figure to render into.
+
+        Parameters
+        ----------
+        group : `str` or `list` of `str`, optional
+            The landmark group key, or a list of keys.
+        render_lines : `bool`, optional
+            If ``True``, and the provided landmark group is a :map:`PointGraph`,
+            the edges are rendered.
+        line_style : `str`, optional
+            The style of the edge line. Not all backends support this argument.
+        line_colour : `str` or `tuple`, optional
+            A Matplotlib style colour or a backend dependant colour.
+        line_width : `int`, optional
+            The width of the line to rasterize.
+        render_markers : `bool`, optional
+            If ``True``, render markers at the coordinates of each landmark.
+        marker_style : `str`, optional
+            A Matplotlib marker style. Not all backends support all marker
+            styles.
+        marker_size : `int`, optional
+            The size of the marker - different backends use different scale
+            spaces so consistent output may by difficult.
+        marker_face_colour : `str`, optional
+            A Matplotlib style colour or a backend dependant colour.
+        marker_edge_colour : `str`, optional
+            A Matplotlib style colour or a backend dependant colour.
+        marker_edge_width : `int`, optional
+            The width of the marker edge. Not all backends support this.
+        backend : {'matplotlib', 'pillow'}, optional
+            The backend to use.
+
+        Returns
+        -------
+        rasterized_image : :map:`Image`
+            The image with the landmarks rasterized directly into the pixels.
+
+        Raises
+        ------
+        ValueError
+            Only 2D images are supported.
+        ValueError
+            Only RGB (3-channel) or Greyscale (1-channel) images are supported.
+        """
+        from .rasterize import rasterize_landmarks_2d
+
+        return rasterize_landmarks_2d(
+            self, group=group, render_lines=render_lines, line_style=line_style,
+            line_colour=line_colour, line_width=line_width,
+            render_markers=render_markers, marker_style=marker_style,
+            marker_size=marker_size, marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width, backend=backend)
+
     def crop(self, min_indices, max_indices, constrain_to_boundary=False,
              return_transform=False):
         r"""
