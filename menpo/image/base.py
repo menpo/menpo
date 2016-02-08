@@ -66,7 +66,104 @@ def indices_for_image_of_shape(shape):
     return np.indices(shape).reshape([len(shape), -1]).T
 
 
-def channels_to_back(image):
+def normalise_pixels_range(pixels, error_on_unknown_type=True):
+    r"""
+    Normalise the given pixels to the Menpo valid floating point range, [0, 1].
+    This is a single place to handle normalising pixels ranges. At the moment
+    the supported types are uint8 and uint16.
+
+    Parameters
+    ----------
+    pixels : `ndarray`
+        The pixels to normalise in the floating point range.
+    error_on_unknown_type : `bool`, optional
+        If ``True``, this method throws a ``ValueError`` if the given pixels
+        array is an unknown type. If ``False``, this method performs no
+        operation.
+
+    Returns
+    -------
+    normalised_pixels : `ndarray`
+        The normalised pixels in the range [0, 1].
+
+    Raises
+    ------
+    ValueError
+        If ``pixels`` is an unknown type and ``error_on_unknown_type==True``
+    """
+    dtype = pixels.dtype
+    if dtype == np.uint8:
+        max_range = 255.0
+    elif dtype == np.uint16:
+        max_range = 65535.0
+    else:
+        if error_on_unknown_type:
+            raise ValueError('Unexpected dtype ({}) - normalisation range '
+                             'is unknown'.format(dtype))
+        else:
+            # Do nothing
+            return pixels
+    # This multiplication is quite a bit faster than just dividing - will
+    # automatically cast it up to float64
+    return pixels * (1.0 / max_range)
+
+
+def denormalise_pixels_range(pixels, out_dtype):
+    """
+    Denormalise the given pixels array into the range of the given out dtype.
+    If the given pixels are floating point or boolean then the values
+    are scaled appropriately and cast to the output dtype. If the pixels
+    are already the correct dtype they are immediately returned.
+    Floating point pixels must be in the range [0, 1].
+    Currently uint8 and uint16 output dtypes are supported.
+
+    Parameters
+    ----------
+    pixels : `ndarray`
+        The pixels to denormalise.
+    out_dtype : `np.dtype`
+        The numpy data type to output and scale the values into.
+
+    Returns
+    -------
+    out_pixels : `ndarray`
+        Will be in the correct range and will have type ``out_dtype``.
+
+    Raises
+    ------
+    ValueError
+        Pixels are floating point and range outside [0, 1]
+    ValueError
+        Input pixels dtype not in the set {float32, float64, bool}.
+    ValueError
+        Output dtype not in the set {uint8, uint16}
+    """
+    in_dtype = pixels.dtype
+    if in_dtype == out_dtype:
+        return pixels
+
+    if in_dtype == np.float64 or in_dtype == np.float32:
+        p_min = pixels.min()
+        p_max = pixels.max()
+        if p_min < 0.0 or p_max > 1.0:
+            raise ValueError('Unexpected input range [{}, {}] - pixels must be '
+                             'in the range [0, 1]'.format(p_min, p_max))
+    elif in_dtype != np.bool:
+        raise ValueError('Unexpected input dtype ({}) - only float32, float64 '
+                         'and bool supported'.format(in_dtype))
+
+    if out_dtype == np.uint8:
+        max_range = 255.0
+    elif out_dtype == np.uint16:
+        max_range = 65535.0
+    else:
+        raise ValueError('Unexpected output dtype ({}) - normalisation range '
+                         'is unknown'.format(out_dtype))
+
+    return (pixels * max_range).astype(out_dtype)
+
+
+def channels_to_back(pixels):
     r"""
     Roll the channels from the front to the back for an image. If the image
     that is passed is already a numpy array, then that is also fine.
@@ -76,7 +173,7 @@ def channels_to_back(image):
 
     Parameters
     ----------
-    image : `ndarray` or :map:`Image` subclass
+    image : `ndarray`
         The pixels or image to roll the channel back for.
 
     Returns
@@ -84,33 +181,32 @@ def channels_to_back(image):
     rolled_pixels : `ndarray`
         The numpy array of pixels with the channels on the last axis.
     """
-    if isinstance(image, np.ndarray):
-        pixels = image
-    else:
-        pixels = image.pixels
-
     return np.require(np.rollaxis(pixels, 0, pixels.ndim), dtype=pixels.dtype,
                       requirements=['C'])
 
 
-def normalise_rolled_pixels(pixels, normalise):
-    np_pixels = np.array(pixels)
-    if len(np_pixels.shape) is 3:
-        np_pixels = np.rollaxis(np_pixels, -1)
+def channels_to_front(pixels):
+    r"""
+    Convert the given pixels array (channels assumed to be at the last axis
+    as is common in other imaging packages) into a numpy array.
 
-    if not normalise:
-        return np_pixels
-    else:
-        dtype = np_pixels.dtype
-        if dtype == np.uint8:
-            max_range = 255.0
-        elif dtype == np.uint16:
-            max_range = 65535.0
-        else:
-            raise ValueError('Unexpected dtype ({}) - normalisation range '
-                             'is unknown'.format(dtype))
-        # This multiplication is quite a bit faster than just dividing
-        return np_pixels * (1.0 / max_range)
+    Parameters
+    ----------
+    pixels : ``(H, W, C)`` `buffer`
+        The pixels to convert to the Menpo channels at axis 0.
+
+    Returns
+    -------
+    pixels : ``(C, H, W)`` `ndarray`
+        Numpy array, channels as axis 0.
+    """
+    if not isinstance(pixels, np.ndarray):
+        pixels = np.array(pixels)
+    # Channels to axis 0
+    if pixels.ndim == 3:
+        pixels = np.require(np.rollaxis(pixels, -1), dtype=pixels.dtype,
+                            requirements=['C'])
+    return pixels
 
 
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
@@ -2311,7 +2407,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         rolled_channels : `ndarray`
             Pixels with channels as the back (last) axis.
         """
-        return channels_to_back(self)
+        return channels_to_back(self.pixels)
 
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(
