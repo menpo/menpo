@@ -23,11 +23,20 @@ def test_lazylist_multiple_calls():
 
 def test_lazylist_map():
     two_func = lambda: 2
-    double_func = lambda x: x * 2
+    double_func = lambda x: x() * 2
     ll = LazyList([two_func])
     ll_mapped = ll.map(double_func)
     assert id(ll) != id(ll_mapped)
     assert ll_mapped[0] == 4
+
+
+def test_lazylist_map_no_call():
+    mock_func = Mock()
+    double_func = lambda x: x * 2
+    ll = LazyList([mock_func])
+    ll_mapped = ll.map(double_func)
+    assert id(ll) != id(ll_mapped)
+    mock_func.assert_not_called()
 
 
 def test_lazylist_init_from_index_callable():

@@ -525,4 +525,4 @@ class LazyList(collections.Sequence):
         lazy : `LazyList`
             A new LazyList where each element is wrapped by ``f``.
         """
-        return self.__class__([partial(f, x) for x in self])
+        return self.__class__([partial(f, x) for x in self._callables])
