@@ -508,7 +508,7 @@ class LazyList(collections.Sequence):
             A LazyList where each element returns the underlying indexable
             object wrapped by ``f``.
         """
-        return LazyList([partial(f, i) for i in range(n_elements)])
+        return cls([partial(f, i) for i in range(n_elements)])
 
     def map(self, f):
         r"""
@@ -525,4 +525,4 @@ class LazyList(collections.Sequence):
         lazy : `LazyList`
             A new LazyList where each element is wrapped by ``f``.
         """
-        return LazyList([partial(f, x) for x in self])
+        return self.__class__([partial(f, x) for x in self])
