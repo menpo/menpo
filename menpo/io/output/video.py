@@ -35,7 +35,7 @@ def ImageioVideoExporter(images, out_path, fps=30, codec='libx264',
                                 pixelformat=pixelformat)
 
     for v in images:
-        v = np.array(v.as_PILImage())
+        v = v.as_imageio()
         writer.append_data(v)
     writer.close()
 
@@ -62,6 +62,6 @@ def ImageioGifExporter(images, out_path, fps=30, loop=0, duration=None):
                                 loop=loop, duration=duration)
 
     for v in images:
-        v = np.array(v.as_PILImage())
+        v = v.as_imageio()
         writer.append_data(v)
     writer.close()
