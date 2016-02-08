@@ -2340,23 +2340,14 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                                     copy=False)
         return greyscale
 
-    def as_PILImage(self):
+    def as_PILImage(self, out_dtype=np.uint8):
         r"""
-        Return a PIL copy of the image. Depending on the image data type,
-        different operations are performed:
-
-        ========= ===========================================
-        dtype     Processing
-        ========= ===========================================
-        uint8     No processing, directly converted to PIL
-        bool      Scale by 255, convert to uint8
-        float32   Scale by 255, convert to uint8
-        float64   Scale by 255, convert to uint8
-        OTHER     Raise ValueError
-        ========= ===========================================
+        Return a PIL copy of the image scaled and cast to the correct
+        values for the provided ``out_dtype``.
 
         Image must only have 1 or 3 channels and be 2 dimensional.
-        Non `uint8` images must be in the rage ``[0, 1]`` to be converted.
+        Non `uint8` floating point images must be in the range ``[0, 1]`` to be
+        converted.
 
         Returns
         -------
@@ -2366,12 +2357,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         Raises
         ------
         ValueError
-            If image is not 2D and 1 channel or 3 channels.
-        ValueError
-            If pixels data type is not `float32`, `float64`, `bool` or `uint8`
+            If image is not 2D and has 1 channel or 3 channels.
         ValueError
             If pixels data type is `float32` or `float64` and the pixel
             range is outside of ``[0, 1]``
+        ValueError
+            If the output dtype is unsupported. Currently uint8 and uint16
+            are supported.
         """
         if self.n_dims != 2 or self.n_channels not in [1, 3]:
             raise ValueError(
@@ -2384,15 +2376,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = self.pixels[0]
         else:
             pixels = channels_to_back(self.pixels)
-        if pixels.dtype in [np.float64, np.float32, np.bool]:  # Type check
-            if np.any((self.pixels < 0) | (self.pixels > 1)):  # Range check
-                raise ValueError('Pixel values are outside the range '
-                                 '[0, 1] - ({}, {}).'.format(self.pixels.min(),
-                                                             self.pixels.max()))
-            else:
-                pixels = (pixels * 255).astype(np.uint8)
-        if pixels.dtype != np.uint8:
-            raise ValueError('Unexpected data type - {}.'.format(pixels.dtype))
+        pixels = denormalise_pixels_range(pixels, out_dtype)
         return PILImage.fromarray(pixels)
 
     def rolled_channels(self):
