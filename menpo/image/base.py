@@ -2352,6 +2352,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         Non `uint8` floating point images must be in the range ``[0, 1]`` to be
         converted.
 
+        Parameters
+        ----------
+        out_dtype : `np.dtype`, optional
+            The dtype the output array should be.
+
         Returns
         -------
         pil_image : `PILImage`
@@ -2365,10 +2370,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If pixels data type is `float32` or `float64` and the pixel
             range is outside of ``[0, 1]``
         ValueError
-            If the output dtype is unsupported. Currently uint8 and uint16
-            are supported.
+            If the output dtype is unsupported. Currently uint8 is supported.
         """
-        if self.n_dims != 2 or self.n_channels not in [1, 3]:
+        if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
             raise ValueError(
                 'Can only convert greyscale or RGB 2D images. '
                 'Received a {} channel {}D image.'.format(self.n_channels,
@@ -2381,6 +2385,50 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = channels_to_back(self.pixels)
         pixels = denormalise_pixels_range(pixels, out_dtype)
         return PILImage.fromarray(pixels)
+
+    def as_imageio(self, out_dtype=np.uint8):
+        r"""
+        Return an Imageio copy of the image scaled and cast to the correct
+        values for the provided ``out_dtype``.
+
+        Image must only have 1 or 3 channels and be 2 dimensional.
+        Non `uint8` floating point images must be in the range ``[0, 1]`` to be
+        converted.
+
+        Parameters
+        ----------
+        out_dtype : `np.dtype`, optional
+            The dtype the output array should be.
+
+        Returns
+        -------
+        imageio_image : `ndarray`
+            Imageio image (which is just a numpy ndarray with the channels
+            as the last axis).
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D and has 1 channel or 3 channels.
+        ValueError
+            If pixels data type is `float32` or `float64` and the pixel
+            range is outside of ``[0, 1]``
+        ValueError
+            If the output dtype is unsupported. Currently uint8 and uint16
+            are supported.
+        """
+        if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
+            raise ValueError(
+                'Can only convert greyscale or RGB 2D images. '
+                'Received a {} channel {}D image.'.format(self.n_channels,
+                                                          self.n_dims))
+
+        # Slice off the channel for greyscale images
+        if self.n_channels == 1:
+            pixels = self.pixels[0]
+        else:
+            pixels = channels_to_back(self.pixels)
+        return denormalise_pixels_range(pixels, out_dtype)
 
     def pixels_range(self):
         r"""
