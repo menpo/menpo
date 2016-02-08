@@ -1,6 +1,6 @@
 from functools import partial
 
-from menpo.image.base import normalise_rolled_pixels
+from menpo.image.base import normalise_pixels_range, channels_to_front
 from menpo.image import Image
 from menpo.base import LazyList
 
@@ -10,7 +10,7 @@ from .base import Importer
 class ImageioFFMPEGImporter(Importer):
     r"""
     Imports videos using the FFMPEG plugin from the imageio library. Returns a
-    generator that yields on a per-frame basis.
+    :map:`LazyList` that gives lazy access to the video on a per-frame basis.
 
     Parameters
     ----------
@@ -43,11 +43,16 @@ class ImageioFFMPEGImporter(Importer):
         reader = imageio.get_reader(self.filepath, format='ffmpeg', mode='I')
 
         def imageio_to_menpo(imio_reader, index):
-            norm_pix = normalise_rolled_pixels(imio_reader.get_data(index),
-                                               self.normalise)
-            return Image(norm_pix)
+            pixels = imio_reader.get_data(index)
+            pixels = channels_to_front(pixels)
+
+            if self.normalise:
+                return Image(normalise_pixels_range(pixels), copy=False)
+            else:
+                return Image(pixels, copy=False)
 
         index_callable = partial(imageio_to_menpo, reader)
-        ll = LazyList.init_from_index_callable(index_callable, reader.get_length())
+        ll = LazyList.init_from_index_callable(index_callable,
+                                               reader.get_length())
         ll.fps = reader.get_meta_data()['fps']
         return ll
