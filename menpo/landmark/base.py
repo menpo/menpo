@@ -762,7 +762,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                         ``1``, ``2``, ``3``, ``4``, ``8``}, optional
             The style of the markers.
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                              or ``(3, )`` `ndarray`, optional
             The face (filling) colour of the markers.

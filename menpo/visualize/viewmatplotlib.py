@@ -479,7 +479,6 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
             label = None
             ax.autoscale()
 
-        # Scatter
         if render_markers:
             plt.plot(points[:, 0], points[:, 1], linewidth=0,
                      markersize=marker_size, marker=marker_style,
