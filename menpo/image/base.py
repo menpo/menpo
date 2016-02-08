@@ -2379,6 +2379,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         pixels = denormalise_pixels_range(pixels, out_dtype)
         return PILImage.fromarray(pixels)
 
+    def pixels_range(self):
+        r"""
+        The range of the pixel values (min and max pixel values).
+
+        Returns
+        -------
+        min_max : ``(dtype, dtype)``
+            The minimum and maximum value of the pixels array.
+        """
+        return self.pixels.min(), self.pixels.max()
+
     def rolled_channels(self):
         r"""
         Returns the pixels matrix, with the channels rolled to the back axis.
