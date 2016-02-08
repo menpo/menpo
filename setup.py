@@ -27,9 +27,10 @@ else:
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
     install_requires = ['numpy>=1.10,<1.11',
-                        'scipy>=0.16,<0.17',
+                        'scipy>=0.17,<0.18',
                         'matplotlib>=1.4,<1.6',
                         'pillow>=3.0,<4.0',
+                        'imageio>=1.5.0,<1.6.0',
                         'Cython>=0.23,<0.24']
 
     if sys.version_info.major == 2:

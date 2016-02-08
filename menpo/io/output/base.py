@@ -3,7 +3,7 @@ from functools import partial
 from pathlib import Path
 
 from menpo.compatibility import basestring, str
-from .extensions import landmark_types, image_types, pickle_types
+from .extensions import landmark_types, image_types, pickle_types, video_types
 from ..utils import _norm_path
 
 # an open file handle that uses a small fast level of compression
@@ -88,6 +88,50 @@ def export_image(image, fp, extension=None, overwrite=False):
         (the output type is not supported).
     """
     _export(image, fp, image_types, extension, overwrite)
+
+
+def export_video(images, filepath, overwrite=False, fps=30, **kwargs):
+    r"""
+    Exports a given list of images as a video. The ``filepath`` argument is
+    a `str` representing the path to save the video to. If a file is provided,
+    the ``extension`` kwarg **must** be provided. The export type is calculated
+    based on the filepath extension.
+
+    Due to the mix of string and file types, an explicit overwrite argument is
+    used which is ``False`` by default.
+
+    Note that exporting of GIF images is also supported.
+
+    Parameters
+    ----------
+    images : list of :map:`Image`
+        The images to export as a video.
+    filepath : `str`
+        The string path to save the video at.
+    overwrite : `bool`, optional
+        Whether or not to overwrite a file if it already exists.
+    fps : `int`, optional
+        The number of frames per second.
+    **kwargs : `dict`, optional
+        Extra parameters that are passed through directly to the exporter.
+        Please see the documentation in the ``menpo.io.output.video`` package
+        for information about the supported arguments.
+
+    Raises
+    ------
+    ValueError
+        File already exists and ``overwrite`` != ``True``
+    ValueError
+        The provided extension does not match to an existing exporter type
+        (the output type is not supported).
+    """
+    exporter_kwargs = {'fps': fps}
+    exporter_kwargs.update(kwargs)
+    path_filepath = _validate_filepath(str(filepath), None, overwrite)
+
+    export_function = _extension_to_export_function(
+        path_filepath.suffix, video_types)
+    export_function(images, path_filepath, **exporter_kwargs)
 
 
 def export_pickle(obj, fp, overwrite=False, protocol=2):

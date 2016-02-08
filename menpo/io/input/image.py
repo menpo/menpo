@@ -1,8 +1,9 @@
 import numpy as np
-
+from pathlib import Path
 from .base import Importer
 from menpo.image.base import normalise_rolled_pixels
 from menpo.image import Image, MaskedImage, BooleanImage
+from menpo.image.base import normalise_rolled_pixels
 
 
 class PILImporter(Importer):
@@ -45,9 +46,9 @@ class PILImporter(Importer):
         self._pil_image = PILImage.open(self.filepath)
         mode = self._pil_image.mode
         if mode == 'RGBA':
-            # RGB with Alpha Channel
-            # If we normalise it then we convert to floating point
-            # and set the alpha channel to the mask
+            # If normalise is False, then we return the alpha as an extra
+            # channel, which can be useful if the alpha channel has semantic
+            # meanings!
             if self.normalise:
                 alpha = np.array(self._pil_image)[..., 3].astype(np.bool)
                 image_pixels = self._pil_to_numpy(True,
@@ -202,3 +203,42 @@ class FLOImporter(Importer):
 
         return Image(uv, copy=False)
 
+
+class ImageioImporter(Importer):
+    r"""
+    Imports images using the imageio library - which is actually fairly similar
+    to our importing logic - but contains the necessary plugins to import lots
+    of interesting image types like RAW images.
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of the image.
+    normalise : `bool`, optional
+        If ``True``, normalise between 0.0 and 1.0 and convert to float. If
+        ``False`` just return whatever imageio imports.
+    """
+
+    def __init__(self, filepath, normalise=True):
+        super(ImageioImporter, self).__init__(filepath)
+        self._pil_image = None
+        self.normalise = normalise
+
+    def build(self):
+        import imageio
+
+        pixels = imageio.imread(self.filepath)
+
+        transparent_types = {'.png'}
+        filepath = Path(self.filepath)
+        if pixels.shape[-1] == 4 and filepath.suffix in transparent_types:
+            # If normalise is False, then we return the alpha as an extra
+            # channel, which can be useful if the alpha channel has semantic
+            # meanings!
+            if self.normalise:
+                p = normalise_rolled_pixels(pixels[..., :3], True)
+                return MaskedImage(p, mask=pixels[..., -1].astype(np.bool))
+            else:
+                return Image(normalise_rolled_pixels(pixels, False))
+        else:
+            return Image(normalise_rolled_pixels(pixels, self.normalise))
