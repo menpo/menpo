@@ -56,22 +56,22 @@ class PILImporter(Importer):
                 alpha = np.array(self._pil_image)[..., 3].astype(np.bool)
                 image_pixels = self._pil_to_numpy(True,
                                                   convert='RGB')
-                image = MaskedImage(image_pixels, mask=alpha)
+                image = MaskedImage(image_pixels, mask=alpha, copy=False)
             else:
                 # With no normalisation we just return the pixels
-                image = Image(self._pil_to_numpy(False))
+                image = Image(self._pil_to_numpy(False), copy=False)
         elif mode in ['L', 'I', 'RGB']:
             # Greyscale, Integer and RGB images
-            image = Image(self._pil_to_numpy(self.normalise))
+            image = Image(self._pil_to_numpy(self.normalise), copy=False)
         elif mode == '1':
             # Can't normalise a binary image
-            image = BooleanImage(self._pil_to_numpy(False))
+            image = BooleanImage(self._pil_to_numpy(False), copy=False)
         elif mode == 'P':
             # Convert pallete images to RGB
             image = Image(self._pil_to_numpy(self.normalise, convert='RGB'))
         elif mode == 'F':  # Floating point images
             # Don't normalise as we don't know the scale
-            image = Image(self._pil_to_numpy(False))
+            image = Image(self._pil_to_numpy(False), copy=False)
         else:
             raise ValueError('Unexpected mode for PIL: {}'.format(mode))
         return image
