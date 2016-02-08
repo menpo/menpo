@@ -1,6 +1,6 @@
 from .landmark import LM2Importer, LJSONImporter
-from .image import (PILImporter, PILGIFImporter, ImageioImporter, ABSImporter,
-                    FLOImporter)
+from .image import (PILImporter, ImageioImporter, ImageioGIFImporter,
+                    ABSImporter, FLOImporter)
 from .video import ImageioFFMPEGImporter
 from .landmark_image import ImageASFImporter, ImagePTSImporter
 from .pickle import PickleImporter, GZipPickleImporter
@@ -11,7 +11,7 @@ image_types = {'.bmp': ImageioImporter,
                '.dcx': PILImporter,
                '.eps': PILImporter,
                '.ps': PILImporter,
-               '.gif': PILGIFImporter,
+               '.gif': ImageioGIFImporter,
                '.im': PILImporter,
                '.jpg': ImageioImporter,
                '.jpg2': ImageioImporter,
