@@ -249,16 +249,19 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                      'Please ensure the data you pass is C-contiguous.')
         else:
             image_data = np.array(image_data, copy=True, order='C')
-            # Degenerate case whereby we can just put the extra axis
-            # on ourselves
-            if image_data.ndim == 2:
-                image_data = image_data[None, ...]
-            if image_data.ndim < 2:
-                raise ValueError(
-                    "Pixel array has to be 2D (implicitly 1 channel, "
-                    "2D shape) or 3D+ (n_channels, 2D+ shape) "
-                    " - a {}D array "
-                    "was provided".format(image_data.ndim))
+
+        # Degenerate case whereby we can just put the extra axis
+        # on ourselves
+        if image_data.ndim == 2:
+            # Ensures that the data STAYS C-contiguous
+            image_data = image_data.reshape((1,) + image_data.shape)
+
+        if image_data.ndim < 2:
+            raise ValueError(
+                "Pixel array has to be 2D (implicitly 1 channel, "
+                "2D shape) or 3D+ (n_channels, 2D+ shape) "
+                " - a {}D array "
+                "was provided".format(image_data.ndim))
         self.pixels = image_data
 
     @classmethod
