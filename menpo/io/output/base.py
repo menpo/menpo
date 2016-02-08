@@ -120,9 +120,9 @@ def export_pickle(obj, fp, overwrite=False, protocol=2):
         your python distribution can support.
         The protocol refers to:
 
-        ========= ========================================================
+        ========= =========================================================
         Protocol                       Functionality
-        ========= ========================================================
+        ========= =========================================================
         0         Simplest protocol for text mode, backwards compatible.
         1         Protocol for binary mode, backwards compatible.
         2         Wider support for classes, compatible with python >= 2.3.
@@ -178,9 +178,9 @@ def _validate_filepath(fp, extension, overwrite):
         # use .suffixes[0] to handle compression suffixes correctly (see below)
         filepath_suffix = path_filepath.suffixes[0]
         # we couldn't find an exporter for all the suffixes (e.g .foo.bar)
-        # maybe the file stem has '.' in it? -> try again but this time just use the
-        # final suffix (.bar). (Note we first try '.foo.bar' as we want to catch
-        # cases like 'pkl.gz')
+        # maybe the file stem has '.' in it? -> try again but this time just use
+        # the final suffix (.bar). (Note we first try '.foo.bar' as we want to
+        # catch cases like 'pkl.gz')
         if _normalise_extension(extension) != filepath_suffix and len(path_filepath.suffixes) > 1:
             filepath_suffix = path_filepath.suffix
         if _normalise_extension(extension) != filepath_suffix:

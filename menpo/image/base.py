@@ -93,6 +93,26 @@ def channels_to_back(image):
                       requirements=['C'])
 
 
+def normalise_rolled_pixels(pixels, normalise):
+    np_pixels = np.array(pixels)
+    if len(np_pixels.shape) is 3:
+        np_pixels = np.rollaxis(np_pixels, -1)
+
+    if not normalise:
+        return np_pixels
+    else:
+        dtype = np_pixels.dtype
+        if dtype == np.uint8:
+            max_range = 255.0
+        elif dtype == np.uint16:
+            max_range = 65535.0
+        else:
+            raise ValueError('Unexpected dtype ({}) - normalisation range '
+                             'is unknown'.format(dtype))
+        # This multiplication is quite a bit faster than just dividing
+        return np_pixels * (1.0 / max_range)
+
+
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     r"""
     An n-dimensional image.
@@ -1229,7 +1249,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         else:
             sample_offsets = np.require(sample_offsets, dtype=np.intp)
 
-        single_array = extract_patches(self.pixels, patch_centers.points,
+        patch_centers = np.require(patch_centers.points, dtype=np.float,
+                                   requirements=['C'])
+        single_array = extract_patches(self.pixels, patch_centers,
                                        np.asarray(patch_shape, dtype=np.intp),
                                        sample_offsets)
 

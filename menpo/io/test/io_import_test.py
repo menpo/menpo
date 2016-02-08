@@ -168,7 +168,7 @@ def test_import_landmark_files_wrong_path_raises_value_error():
     list(mio.import_landmark_files('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_RGBA_no_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('RGBA', (10, 10))
@@ -180,7 +180,7 @@ def test_importing_RGBA_no_normalise(is_file, mock_image):
     assert im.pixels.dtype == np.uint8
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_RGBA_normalise(is_file, mock_image):
     from menpo.image import MaskedImage
@@ -195,7 +195,7 @@ def test_importing_RGBA_normalise(is_file, mock_image):
     assert type(im) == MaskedImage
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_L_no_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('L', (10, 10))
@@ -207,7 +207,7 @@ def test_importing_L_no_normalise(is_file, mock_image):
     assert im.pixels.dtype == np.uint8
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_L_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('L', (10, 10))
@@ -219,19 +219,17 @@ def test_importing_L_normalise(is_file, mock_image):
     assert im.pixels.dtype == np.float
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
+@raises(ValueError)
 def test_importing_I_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('I', (10, 10))
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=True)
-    assert im.shape == (10, 10)
-    assert im.n_channels == 1
-    assert im.pixels.dtype == np.float
+    mio.import_image('fake_image_being_mocked.jpg', normalise=True)
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_I_no_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('I', (10, 10))
@@ -243,7 +241,7 @@ def test_importing_I_no_normalise(is_file, mock_image):
     assert im.pixels.dtype == np.int32
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_1_normalise(is_file, mock_image):
     from menpo.image import BooleanImage
@@ -258,7 +256,7 @@ def test_importing_1_normalise(is_file, mock_image):
     assert type(im) == BooleanImage
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_1_no_normalise(is_file, mock_image):
     from menpo.image import BooleanImage
@@ -273,7 +271,7 @@ def test_importing_1_no_normalise(is_file, mock_image):
     assert type(im) == BooleanImage
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_P_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('P', (10, 10))
@@ -285,7 +283,7 @@ def test_importing_P_normalise(is_file, mock_image):
     assert im.pixels.dtype == np.float
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_P_no_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('P', (10, 10))
@@ -297,7 +295,7 @@ def test_importing_P_no_normalise(is_file, mock_image):
     assert im.pixels.dtype == np.uint8
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_GIF_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('P', (10, 10))
@@ -309,7 +307,7 @@ def test_importing_GIF_normalise(is_file, mock_image):
     assert im.pixels.dtype == np.float
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_GIF_no_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('P', (10, 10))
@@ -321,7 +319,7 @@ def test_importing_GIF_no_normalise(is_file, mock_image):
     assert im.pixels.dtype == np.uint8
 
 
-@patch('menpo.io.input.image.PILImage.open')
+@patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 @raises(ValueError)
 def test_importing_GIF_non_pallete_exception(is_file, mock_image):
@@ -390,3 +388,70 @@ def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
 def test_shuffle_kwarg_true_calls_shuffle(mock):
     list(mio.import_images(mio.data_dir_path(), shuffle=True))
     assert mock.called
+
+
+def test_import_as_generator():
+    import types
+    gen = mio.import_images(mio.data_dir_path(), as_generator=True)
+    assert isinstance(gen, types.GeneratorType)
+    gen = mio.import_landmark_files(mio.data_dir_path(), as_generator=True)
+    assert isinstance(gen, types.GeneratorType)
+
+
+def test_import_lazy_list():
+    from menpo.base import LazyList
+    data_path = mio.data_dir_path()
+    ll = mio.import_images(data_path)
+    assert isinstance(ll, LazyList)
+    ll = mio.import_landmark_files(data_path)
+    assert isinstance(ll, LazyList)
+
+
+@patch('menpo.io.input.pickle.pickle.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_pickle(is_file, mock_open, mock_pickle):
+    mock_pickle.return_value = {'test': 1}
+    is_file.return_value = True
+
+    objs = mio.import_pickle('mocked.pkl')
+    assert isinstance(objs, dict)
+    assert 'test' in objs
+    assert objs['test'] == 1
+
+
+@patch('menpo.io.input.pickle.pickle.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.glob')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_pickles(is_file, glob, mock_open, mock_pickle):
+    from pathlib import Path
+    from menpo.base import LazyList
+    mock_pickle.return_value = {'test': 1}
+    is_file.return_value = True
+    glob.return_value = [Path('mocked1.pkl'), Path('mocked2.pkl')]
+
+    objs = mio.import_pickles('*')
+    assert isinstance(objs, LazyList)
+    assert len(objs) == 2
+    assert objs[0]['test'] == 1
+    assert objs[1]['test'] == 1
+
+
+@patch('menpo.io.input.pickle.pickle.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.glob')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_pickles_as_generator(is_file, glob, mock_open, mock_pickle):
+    from pathlib import Path
+    import types
+    mock_pickle.return_value = {'test': 1}
+    is_file.return_value = True
+    glob.return_value = [Path('mocked1.pkl'), Path('mocked2.pkl')]
+
+    objs = mio.import_pickles('*', as_generator=True)
+    assert isinstance(objs, types.GeneratorType)
+    objs = list(objs)
+    assert len(objs) == 2
+    assert objs[0]['test'] == 1
+    assert objs[1]['test'] == 1

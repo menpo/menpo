@@ -10,6 +10,7 @@ ctypedef fused IMAGE_TYPES:
     float
     double
     np.uint8_t
+    np.uint16_t
 
 
 ctypedef fused CENTRE_TYPES:
@@ -29,6 +30,7 @@ cdef void calc_augmented_centers(CENTRE_TYPES[:, :] centres,
             augmented_centers[total_index, 0] = <Py_ssize_t> (centres[i, 0] + offsets[j, 0])
             augmented_centers[total_index, 1] = <Py_ssize_t> (centres[i, 1] + offsets[j, 1])
             total_index += 1
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

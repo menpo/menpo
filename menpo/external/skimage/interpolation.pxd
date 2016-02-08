@@ -10,6 +10,7 @@ ctypedef fused IMAGE_TYPES:
     float
     double
     np.uint8_t
+    np.uint16_t
 
 
 cdef inline Py_ssize_t round(IMAGE_TYPES r):

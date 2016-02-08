@@ -39,6 +39,26 @@ def test_uint8_type():
     assert(patches[0].pixels.dtype == np.uint8)
 
 
+def test_uint16_type():
+    image = Image.init_blank([100, 100], dtype=np.uint16)
+    patch_shape = (16, 16)
+    landmarks = PointCloud(np.array([[50, 50.]]))
+    patches = image.extract_patches(landmarks,
+                                    patch_shape=patch_shape,
+                                    as_single_array=False)
+    assert(patches[0].pixels.dtype == np.uint16)
+
+
+def test_int_pointcloud():
+    image = Image.init_blank([100, 100])
+    patch_shape = (16, 16)
+    landmarks = PointCloud(np.array([[50, 50]]))
+    patches = image.extract_patches(landmarks,
+                                    patch_shape=patch_shape,
+                                    as_single_array=False)
+    assert(patches[0].pixels.dtype == np.float)
+
+
 def test_uint8_type_single_array():
     image = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
     patch_shape = (16, 16)

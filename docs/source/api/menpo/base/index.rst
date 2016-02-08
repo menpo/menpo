@@ -13,6 +13,8 @@ Core interfaces of Menpo.
   Copyable
   Vectorizable
   Targetable
+  LazyList
+
 
 Convenience
 -----------

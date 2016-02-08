@@ -1,6 +1,7 @@
 import numpy as np
-import PIL.Image as PILImage
+
 from .base import Importer
+from menpo.image.base import normalise_rolled_pixels
 from menpo.image import Image, MaskedImage, BooleanImage
 
 
@@ -39,6 +40,8 @@ class PILImporter(Importer):
         Read the image using PIL and then use the :map:`Image` constructor to
         create a class.
         """
+        import PIL.Image as PILImage
+
         self._pil_image = PILImage.open(self.filepath)
         mode = self._pil_image.mode
         if mode == 'RGBA':
@@ -70,14 +73,8 @@ class PILImporter(Importer):
         return image
 
     def _pil_to_numpy(self, normalise, convert=None):
-        dtype = np.float if normalise else None
         p = self._pil_image.convert(convert) if convert else self._pil_image
-        np_pixels = np.array(p, dtype=dtype, copy=True)
-        if len(np_pixels.shape) is 3:
-            np_pixels = np.rollaxis(np_pixels, -1)
-        # Somewhat surprisingly, this multiplication is quite a bit faster than
-        # just dividing by 255, presumably due to divide by zero checks.
-        return np_pixels * (1.0 / 255.0) if normalise else np_pixels
+        return normalise_rolled_pixels(p, normalise)
 
 
 class PILGIFImporter(PILImporter):
@@ -106,6 +103,8 @@ class PILGIFImporter(PILImporter):
         Read the image using PIL and then use the :map:`Image` constructor to
         create a class.
         """
+        import PIL.Image as PILImage
+
         self._pil_image = PILImage.open(self.filepath)
         # By default GIFs use a
         if self._pil_image.mode == 'P':
@@ -132,12 +131,12 @@ class ABSImporter(Importer):
     r"""
     Allows importing the ABS file format from the FRGC dataset.
 
-    The z-min value is stripped from the mesh to make it renderable.
+    The z-min value is stripped from the image to make it renderable.
 
     Parameters
     ----------
     filepath : string
-        Absolute filepath of the mesh.
+        Absolute filepath of the ABS file.
     """
 
     def __init__(self, filepath, **kwargs):
@@ -178,7 +177,7 @@ class FLOImporter(Importer):
     Parameters
     ----------
     filepath : string
-        Absolute filepath of the mesh.
+        Absolute filepath of the FLO file.
     """
 
     def __init__(self, filepath, **kwargs):
