@@ -4,3 +4,6 @@ formats:
 conda:
   file: docs/rtd_environment.yml
 
+python:
+   setup_py_install: true
+
