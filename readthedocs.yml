@@ -4,5 +4,3 @@ formats:
 conda:
   file: docs/rtd_environment.yml
 
-requirements_file: None
-
