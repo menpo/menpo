@@ -1,6 +1,12 @@
 import sys
 import os
 
+
+# on_rtd is whether we are on readthedocs.org,
+# this line of code grabbed from docs.readthedocs.org
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+
 # Add the folder above so we can grab the sphinx extensions
 sys.path.insert(0, os.path.abspath('..'))
 # Add the menpo root so we can grab the version
