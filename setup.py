@@ -3,37 +3,29 @@ import sys
 from setuptools import setup, find_packages
 import versioneer
 import glob
+from Cython.Build import cythonize
+import numpy as np
 
 
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+# ---- C/C++ EXTENSIONS ---- #
+cython_modules = ['menpo/shape/mesh/normals.pyx',
+                  'menpo/transform/piecewiseaffine/fastpwa.pyx',
+                  'menpo/feature/windowiterator.pyx',
+                  'menpo/feature/gradient.pyx',
+                  'menpo/external/skimage/_warps_cy.pyx',
+                  'menpo/image/patches.pyx']
 
-if on_rtd:
-    install_requires = []
-    ext_modules = []
-    include_dirs = []
-    cython_exts = []
-else:
-    from Cython.Build import cythonize
-    import numpy as np
+cython_exts = cythonize(cython_modules, quiet=True)
+include_dirs = [np.get_include()]
+install_requires = ['numpy>=1.10,<1.11',
+                    'scipy>=0.16,<0.17',
+                    'matplotlib>=1.4,<1.6',
+                    'pillow>=3.0,<4.0',
+                    'Cython>=0.23,<0.24']
 
-    # ---- C/C++ EXTENSIONS ---- #
-    cython_modules = ['menpo/shape/mesh/normals.pyx',
-                      'menpo/transform/piecewiseaffine/fastpwa.pyx',
-                      'menpo/feature/windowiterator.pyx',
-                      'menpo/feature/gradient.pyx',
-                      'menpo/external/skimage/_warps_cy.pyx',
-                      'menpo/image/patches.pyx']
+if sys.version_info.major == 2:
+    install_requires.append('pathlib==1.0')
 
-    cython_exts = cythonize(cython_modules, quiet=True)
-    include_dirs = [np.get_include()]
-    install_requires = ['numpy>=1.10,<1.11',
-                        'scipy>=0.16,<0.17',
-                        'matplotlib>=1.4,<1.6',
-                        'pillow>=3.0,<4.0',
-                        'Cython>=0.23,<0.24']
-
-    if sys.version_info.major == 2:
-        install_requires.append('pathlib==1.0')
 
 setup(name='menpo',
       version=versioneer.get_version(),
@@ -53,3 +45,4 @@ setup(name='menpo',
                     '': ['*.pxd', '*.pyx']},
       tests_require=['nose', 'mock']
 )
+

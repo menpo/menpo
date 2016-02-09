@@ -1,30 +1,6 @@
 import sys
 import os
 
-
-# on_rtd is whether we are on readthedocs.org,
-# this line of code grabbed from docs.readthedocs.org
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
-if on_rtd:
-    from mock import MagicMock
-
-    MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn',
-                    'scipy.linalg', 'numpy.stats', 'scipy.misc', 'PIL.Image',
-                    'matplotlib', 'matplotlib.pyplot', 'scipy.spatial',
-                    'scipy.spatial.distance', 'numpy.dtype', 'scipy.ndimage',
-                    'scipy.linalg.blas', 'scipy.sparse', 'cyvlfeat',
-                    'cyvlfeat.sift', 'cyvlfeat.sift.dsift']
-    # Masking our Cython modules
-    MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
-                     'menpo.feature.windowiterator',
-                     'menpo.shape.mesh.normals',
-                     'menpo.feature.gradient',
-                     'menpo.external.skimage._warps_cy',
-                     'menpo.image.patches']
-    for mod_name in MOCK_MODULES:
-        sys.modules[mod_name] = MagicMock()
-
 # Add the folder above so we can grab the sphinx extensions
 sys.path.insert(0, os.path.abspath('..'))
 # Add the menpo root so we can grab the version
