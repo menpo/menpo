@@ -282,7 +282,7 @@ def import_pickles(pattern, max_pickles=None, shuffle=False, as_generator=False,
 
     Note that this is a function returns a :map:`LazyList`. Therefore, the
     function will return immediately and indexing into the returned list
-    will load the landmarks at run time. If all landmarks should be loaded, then
+    will load the landmarks at run time. If all pickles should be loaded, then
     simply wrap the returned :map:`LazyList` in a Python `list`.
 
     Parameters
