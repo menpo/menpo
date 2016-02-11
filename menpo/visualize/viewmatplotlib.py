@@ -434,7 +434,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
     def render(self, image_view=False, render_lines=True, line_colour='r',
                line_style='-', line_width=1, render_markers=True,
-               marker_style='o', marker_size=20, marker_face_colour='r',
+               marker_style='o', marker_size=5, marker_face_colour='r',
                marker_edge_colour='k', marker_edge_width=1.,
                render_numbering=False, numbers_horizontal_align='center',
                numbers_vertical_align='bottom',
@@ -479,13 +479,12 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
             label = None
             ax.autoscale()
 
-        # Scatter
         if render_markers:
-            plt.scatter(points[:, 0], points[:, 1], cmap=GLOBAL_CMAP,
-                        c=marker_face_colour, s=marker_size,
-                        marker=marker_style, linewidths=marker_edge_width,
-                        edgecolors=marker_edge_colour,
-                        facecolors=marker_face_colour, label=label)
+            plt.plot(points[:, 0], points[:, 1], linewidth=0,
+                     markersize=marker_size, marker=marker_style,
+                     markeredgewidth=marker_edge_width,
+                     markeredgecolor=marker_edge_colour,
+                     markerfacecolor=marker_face_colour, label=label)
 
         # set numbering
         _set_numbering(ax, points, render_numbering=render_numbering,
