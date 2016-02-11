@@ -1691,7 +1691,7 @@ class PointGraph(Graph, PointCloud):
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8), label=None):
+                 axes_y_ticks=None, figure_size=(10, 8), label=None, **kwargs):
         r"""
         Visualization of the PointGraph in 2D.
 
@@ -2112,7 +2112,8 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
                              'PointUndirectedGraph.')
 
         if np.all(mask):  # Shortcut for all true masks
-            return self.copy()
+            return PointUndirectedGraph(self.points, self.adjacency_matrix,
+                                        copy=True, skip_checks=True)
         else:
             # Get new adjacency_matrix and points
             (adjacency_matrix, points) = _mask_adjacency_matrix_and_points(

@@ -27,7 +27,7 @@ def face_bu3dfe_83_to_face_bu3dfe_83(pcloud):
     ----------
     .. [1] http://www.cs.binghamton.edu/~lijun/Research/3DFE/3DFE_Analysis.html
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 83
     validate_input(pcloud, n_expected_points)
@@ -66,9 +66,6 @@ def face_bu3dfe_83_to_face_bu3dfe_83(pcloud):
         jaw_connectivity
     ])
 
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points,
-                                                      all_connectivity)
-
     mapping = OrderedDict()
     mapping['right_eye'] = reye_indices
     mapping['left_eye'] = leye_indices
@@ -80,5 +77,8 @@ def face_bu3dfe_83_to_face_bu3dfe_83(pcloud):
     mapping['outer_mouth'] = outermouth_indices
     mapping['inner_mouth'] = innermouth_indices
     mapping['jaw'] = jaw_indices
+
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping

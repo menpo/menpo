@@ -1,12 +1,9 @@
-from menpo.landmark import LandmarkGroup
 from . import (PointCloud, UndirectedGraph, DirectedGraph, Tree, TriMesh,
                PointUndirectedGraph, PointDirectedGraph, PointTree)
 
 
 def _get_points_and_number_of_vertices(shape):
-    if isinstance(shape, LandmarkGroup):
-        return shape.lms.points, shape.n_landmarks
-    elif isinstance(shape, PointCloud):
+    if isinstance(shape, PointCloud):
         return shape.points, shape.n_points
     else:
         raise ValueError("shape must be either a LandmarkGroup or a "
@@ -273,11 +270,7 @@ def delaunay_graph(shape, return_pointgraph=True):
         The generated graph.
     """
     # get TriMesh instance that estimates the Delaunay triangulation
-    if isinstance(shape, LandmarkGroup):
-        trimesh = TriMesh(shape.lms.points)
-        n_vertices = shape.n_landmarks
-        points = shape.lms.points
-    elif isinstance(shape, PointCloud):
+    if isinstance(shape, PointCloud):
         trimesh = TriMesh(shape.points)
         n_vertices = shape.n_points
         points = shape.points

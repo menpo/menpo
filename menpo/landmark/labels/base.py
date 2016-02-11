@@ -3,7 +3,6 @@ from functools import wraps
 import numpy as np
 
 from menpo.base import name_of_callable
-from menpo.landmark.base import LandmarkGroup
 from menpo.landmark.exceptions import LabellingError
 
 
@@ -96,7 +95,7 @@ def pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
         For each label, the indices in to the pointcloud that belong to the
         label.
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     mapping = OrderedDict()
     all_connectivity = []
@@ -110,8 +109,8 @@ def pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
         mapping[label] = np.arange(*range_tuple)
     all_connectivity = np.vstack(all_connectivity)
 
-    new_pcloud = PointUndirectedGraph.init_from_edges(pointcloud.points,
-                                                      all_connectivity)
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pointcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping
 
@@ -180,22 +179,15 @@ def labeller_func(group_label=None):
         @wraps(labelling_method)
         def wrapper(x, return_mapping=False):
             from menpo.shape import PointCloud
-            # Accepts LandmarkGroup, PointCloud or ndarray
+            # Accepts PointCloud subclass or ndarray
             if isinstance(x, np.ndarray):
                 x = PointCloud(x, copy=False)
 
-            if isinstance(x, PointCloud):
-                new_pcloud, mapping = labelling_method(x)
-                # This parameter is only provided for internal use so that
-                # other labellers can piggyback off one another
-                if return_mapping:
-                    return new_pcloud, mapping
-                else:
-                    return new_pcloud
-            if isinstance(x, LandmarkGroup):
-                new_pcloud, mapping = labelling_method(x.lms)
-                return LandmarkGroup.init_from_indices_mapping(new_pcloud, 
-                                                               mapping)
+            new_pcloud, mapping = labelling_method(x)
+            if return_mapping:
+                return new_pcloud, mapping
+            else:
+                return new_pcloud
         return wrapper
     return decorator
 

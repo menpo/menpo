@@ -18,7 +18,7 @@ def hand_ibug_39_to_hand_ibug_39(pcloud):
       - pinky
       - palm
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 39
     validate_input(pcloud, n_expected_points)
@@ -48,9 +48,6 @@ def hand_ibug_39_to_hand_ibug_39(pcloud):
                                   middle_connectivity, ring_connectivity,
                                   pinky_connectivity, palm_connectivity])
 
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points,
-                                                      all_connectivity)
-
     mapping = OrderedDict()
     mapping['thumb'] = thumb_indices
     mapping['index'] = index_indices
@@ -58,5 +55,8 @@ def hand_ibug_39_to_hand_ibug_39(pcloud):
     mapping['ring'] = ring_indices
     mapping['pinky'] = pinky_indices
     mapping['palm'] = palm_indices
+
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping

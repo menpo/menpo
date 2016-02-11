@@ -1,12 +1,12 @@
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 import json
 import warnings
-import itertools
+from itertools import groupby, chain
 
 import numpy as np
+from scipy.sparse import csr_matrix
 
-from menpo.landmark.base import LandmarkGroup
-from menpo.shape import PointCloud, PointUndirectedGraph
+from menpo.shape import PointCloud, PointUndirectedGraph, LandmarkGroup
 from menpo.transform import Scale
 from .base import Importer
 
@@ -24,52 +24,52 @@ class LandmarkImporter(Importer):
     def __init__(self, filepath):
         super(LandmarkImporter, self).__init__(filepath)
         self.pointcloud = None
-        self.labels_to_masks = None
 
     def build(self, asset=None):
         """
         Overrides the :meth:`build <menpo.io.base.Importer.build>` method.
 
-        Parse the landmark format and return the label and landmark dictionary.
+        Parse the landmark format and return the constructed :map:`PointCloud`
+        or subclass.
 
         Parameters
         ----------
-        asset : object, optional
+        asset : `object`, optional
             The asset that the landmarks are being built for. Can be used to
             adjust landmarks as necessary (e.g. rescaling image landmarks
             from 0-1 to image.shape)
 
         Returns
         -------
-        landmark_group : string
+        landmark_group : :map:`PointCloud` or subclass
             The landmark group parsed from the file.
             Every point will be labelled.
         """
         self._parse_format(asset=asset)
-        return LandmarkGroup(self.pointcloud,
-                             self.labels_to_masks)
+        return self.pointcloud
 
     def _parse_format(self, asset=None):
         r"""
         Read the landmarks file from disk, parse it in to semantic labels and
-        :class:`menpo.shape.base.PointCloud`.
+        :map:`PointCloud`.
 
-        Set the `self.label` and `self.pointcloud` attributes.
+        Set the `self.pointcloud` attribute.
         """
         raise NotImplementedError()
+
+
+ASFPath = namedtuple('ASFPath', ['path_num', 'path_type', 'xpos', 'ypos',
+                                 'point_num', 'connects_from', 'connects_to'])
 
 
 class ASFImporter(LandmarkImporter):
     r"""
     Abstract base class for an importer for the ASF file format.
-    Currently **does not support the connectivity specified in the format**.
 
-    Implementations of this class should override the :meth:`_build_points`
-    which determines the ordering of axes. For example, for images, the
-    `x` and `y` axes are flipped such that the first axis is `y` (height
-    in the image domain).
+    For images, the `x` and `y` axes are flipped such that the first axis is
+    `y` (height in the image domain).
 
-    Landmark set label: ASF
+    Currently only open and closed path types are supported.
 
     Landmark labels:
 
@@ -79,24 +79,12 @@ class ASFImporter(LandmarkImporter):
     | all     |
     +---------+
 
-    Parameters
-    ----------
-    filepath : string
-        Absolute filepath to landmark file.
-
     References
     ----------
     .. [1] http://www2.imm.dtu.dk/~aam/datasets/datasets.html
     """
     def __init__(self, filepath):
         super(ASFImporter, self).__init__(filepath)
-
-    def _build_points(self, xs, ys):
-        r"""
-        Determines the ordering of points within the landmarks. For meshes
-        `x` is the first axis, where as for images `y` is the first axis.
-        """
-        raise NotImplementedError()
 
     def _parse_format(self, asset=None):
         with open(self.filepath, 'r') as f:
@@ -113,28 +101,48 @@ class ASFImporter(LandmarkImporter):
 
         xs = np.empty([count, 1])
         ys = np.empty([count, 1])
-        connectivity = np.empty([count, 2], dtype=np.int)
-        for i in range(count):
-            # Though unpacked, they are still all strings
-            # Only unpack the first 7
-            (path_num, path_type, xpos, ypos,
-             point_num, connects_from, connects_to) = landmarks[i].split()[:7]
-            xs[i, ...] = float(xpos)
-            ys[i, ...] = float(ypos)
-            connectivity[i, ...] = [int(connects_from), int(connects_to)]
+        connectivity = []
 
-        points = self._build_points(xs, ys)
+        # Only unpack the first 7 (the last 3 are always 0)
+        split_landmarks = [ASFPath(*landmarks[i].split()[:7])
+                           for i in range(count)]
+        paths = [list(g) for k, g in groupby(split_landmarks, lambda x: x[0])]
+        vert_index = 0
+        for path in paths:
+            if path:
+                path_type = path[0].path_type
+            for vertex in path:
+                # Relative coordinates, will be scaled by the image size
+                xs[vert_index, ...] = float(vertex.xpos)
+                ys[vert_index, ...] = float(vertex.ypos)
+                vert_index += 1
+                # If True, isolated point
+                if not (vertex.connects_from == vertex.connects_to and
+                        vertex.connects_to == vertex.point_num):
+                    # Connectivity is defined by connects_from and connects_to
+                    # as well as the path_type:
+                    #   Bit 1: Outer edge point/Inside point
+                    #   Bit 2: Original annotated point/Artificial point
+                    #   Bit 3: Closed path point/Open path point
+                    #   Bit 4: Non-hole/Hole point
+                    # For now we only parse cases 0 and 4 (closed or open)
+                    connectivity.append((int(vertex.point_num),
+                                         int(vertex.connects_to)))
+            if path_type == '0':
+                connectivity.append((int(path[-1].point_num),
+                                     int(path[0].point_num)))
+
+        connectivity = np.vstack(connectivity)
+        points = np.hstack([ys, xs])
         if asset is not None:
             # we've been given an asset. As ASF files are normalized,
             # fix that here
             points = Scale(np.array(asset.shape)).apply(points)
 
-        # TODO: Use connectivity and create a graph type instead of PointCloud
-        # edges = scaled_points[connectivity]
-
-        self.pointcloud = PointCloud(points)
-        self.labels_to_masks = OrderedDict(
+        labels_to_masks = OrderedDict(
             [('all', np.ones(points.shape[0], dtype=np.bool))])
+        self.pointcloud = LandmarkGroup.init_from_edges(points, connectivity,
+                                                        labels_to_masks)
 
 
 class PTSImporter(LandmarkImporter):
@@ -192,9 +200,7 @@ class PTSImporter(LandmarkImporter):
         # PTS landmarks are 1-based, need to convert to 0-based (subtract 1)
         points = self._build_points(xs - 1, ys - 1)
 
-        self.pointcloud = PointCloud(points)
-        self.labels_to_masks = OrderedDict(
-            [('all', np.ones(points.shape[0], dtype=np.bool))])
+        self.pointcloud = PointCloud(points, copy=False)
 
 
 class LM2Importer(LandmarkImporter):
@@ -277,20 +283,23 @@ class LM2Importer(LandmarkImporter):
 
         xs = np.array(xs, dtype=np.float).reshape((-1, 1))
         ys = np.array(ys, dtype=np.float).reshape((-1, 1))
-
         # Flip the x and y
-        self.pointcloud = PointCloud(np.hstack([ys, xs]))
+        points = np.hstack([ys, xs])
+
         # Create the mask whereby there is one landmark per label
         # (identity matrix)
         masks = np.eye(num_points).astype(np.bool)
         masks = np.vsplit(masks, num_points)
         masks = [np.squeeze(m) for m in masks]
-        self.labels_to_masks = OrderedDict(zip(labels, masks))
+
+        empty_adj_matrix = csr_matrix((num_points, num_points))
+        self.pointcloud = LandmarkGroup(points, empty_adj_matrix,
+                                        OrderedDict(zip(labels, masks)))
 
 
 def _ljson_parse_null_values(points_list):
     filtered_points = [np.nan if x is None else x
-                       for x in itertools.chain(*points_list)]
+                       for x in chain(*points_list)]
     return np.array(filtered_points,
                     dtype=np.float).reshape([-1, len(points_list[0])])
 
@@ -320,39 +329,32 @@ def _parse_ljson_v1(lms_dict):
             all_points.append(p['point'])
         offset += len(lms)
 
-    # Don't create a PointUndirectedGraph with no connectivity
     points = _ljson_parse_null_values(all_points)
-    if len(connectivity) == 0:
-        pcloud = PointCloud(points)
-    else:
-        pcloud = PointUndirectedGraph.init_from_edges(points, connectivity)
+    n_points = points.shape[0]
+
     labels_to_masks = OrderedDict()
     # go through each label and build the appropriate boolean array
     for label, l_slice in zip(labels, labels_slices):
-        mask = np.zeros(pcloud.n_points, dtype=np.bool)
+        mask = np.zeros(n_points, dtype=np.bool)
         mask[l_slice] = True
         labels_to_masks[label] = mask
-    return pcloud, labels_to_masks
+
+    return LandmarkGroup.init_from_edges(points, connectivity, labels_to_masks)
 
 
 def _parse_ljson_v2(lms_dict):
     labels_to_mask = OrderedDict()  # masks into the full pointcloud per label
 
     points = _ljson_parse_null_values(lms_dict['landmarks']['points'])
+    n_points = points.shape[0]
     connectivity = lms_dict['landmarks'].get('connectivity')
 
-    # Don't create a PointUndirectedGraph with no connectivity
-    if connectivity is None or len(connectivity) == 0:
-        pcloud = PointCloud(points)
-    else:
-        pcloud = PointUndirectedGraph.init_from_edges(points, connectivity)
-
     for label in lms_dict['labels']:
-        mask = np.zeros(pcloud.n_points, dtype=np.bool)
+        mask = np.zeros(n_points, dtype=np.bool)
         mask[label['mask']] = True
         labels_to_mask[label['label']] = mask
 
-    return pcloud, labels_to_mask
+    return LandmarkGroup.init_from_edges(points, connectivity, labels_to_mask)
 
 
 _ljson_parser_for_version = {
@@ -370,8 +372,10 @@ class LJSONImporter(LandmarkImporter):
     Landmark set label: JSON
 
     Landmark labels: decided by file
-
     """
+    def __init__(self, filepath):
+        super(LJSONImporter, self).__init__(filepath)
+
     def _parse_format(self, asset=None):
         with open(self.filepath, 'r') as f:
             # lms_dict is now a dict rep of the JSON
@@ -382,4 +386,4 @@ class LJSONImporter(LandmarkImporter):
             raise ValueError("{} has unknown version {} must be "
                              "1, or 2".format(self.filepath, v))
         else:
-            self.pointcloud, self.labels_to_masks = parser(lms_dict)
+            self.pointcloud = parser(lms_dict)

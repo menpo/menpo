@@ -20,7 +20,7 @@ def car_streetscene_20_to_car_streetscene_view_0_8(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -39,14 +39,15 @@ def car_streetscene_20_to_car_streetscene_view_0_8(pcloud):
     all_connectivity = np.vstack([front_connectivity, bonnet_connectivity,
                                   windshield_connectivity])
 
-    ind = np.arange(8)
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
-                                                      all_connectivity)
-
     mapping = OrderedDict()
     mapping['front'] = front_indices
     mapping['bonnet'] = bonnet_indices
     mapping['windshield'] = windshield_indices
+
+    ind = np.arange(8)
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(pcloud.points[ind],
+                                                         all_connectivity,
+                                                         mapping)
 
     return new_pcloud, mapping
 
@@ -68,7 +69,7 @@ def car_streetscene_20_to_car_streetscene_view_1_14(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -92,15 +93,15 @@ def car_streetscene_20_to_car_streetscene_view_1_14(pcloud):
         left_side_connectivity
     ])
 
-    ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
-                                                      all_connectivity)
-
     mapping = OrderedDict()
     mapping['front'] = front_indices
     mapping['bonnet'] = bonnet_indices
     mapping['windshield'] = windshield_indices
     mapping['left_side'] = left_side_indices
+
+    ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
 
@@ -119,7 +120,7 @@ def car_streetscene_20_to_car_streetscene_view_2_10(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -131,12 +132,12 @@ def car_streetscene_20_to_car_streetscene_view_2_10(pcloud):
 
     all_connectivity = left_side_connectivity
 
-    ind = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
-                                                      all_connectivity)
-
     mapping = OrderedDict()
     mapping['left_side'] = left_side_indices
+
+    ind = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
 
@@ -158,7 +159,7 @@ def car_streetscene_20_to_car_streetscene_view_3_14(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -180,15 +181,15 @@ def car_streetscene_20_to_car_streetscene_view_3_14(pcloud):
         trunk_connectivity, rear_connectivity
     ])
 
-    ind = np.array([0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18])
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
-                                                      all_connectivity)
-
     mapping = OrderedDict()
     mapping['left_side'] = left_side_indices
     mapping['rear_windshield'] = rear_windshield_indices
     mapping['trunk'] = trunk_indices
     mapping['rear'] = rear_indices
+
+    ind = np.array([0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18])
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
 
@@ -210,7 +211,7 @@ def car_streetscene_20_to_car_streetscene_view_4_14(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -229,20 +230,20 @@ def car_streetscene_20_to_car_streetscene_view_4_14(pcloud):
     right_side_connectivity = connectivity_from_array(right_side_indices,
                                                       close_loop=True)
 
-    total_conn = np.vstack([
+    all_connectivity = np.vstack([
         front_connectivity, bonnet_connectivity, windshield_connectivity,
         right_side_connectivity
     ])
-
-    ind = np.hstack([np.arange(8), np.array([9, 11, 13, 15, 17, 19])])
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
-                                                      total_conn)
 
     mapping = OrderedDict()
     mapping['front'] = front_indices
     mapping['bonnet'] = bonnet_indices
     mapping['windshield'] = windshield_indices
     mapping['right_side'] = right_side_indices
+
+    ind = np.hstack([np.arange(8), np.array([9, 11, 13, 15, 17, 19])])
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
 
@@ -261,7 +262,7 @@ def car_streetscene_20_to_car_streetscene_view_5_10(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -273,12 +274,12 @@ def car_streetscene_20_to_car_streetscene_view_5_10(pcloud):
 
     all_connectivity = right_side_connectivity
 
-    ind = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19])
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
-                                                      all_connectivity)
-
     mapping = OrderedDict()
     mapping['right_side'] = right_side_indices
+
+    ind = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19])
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
 
@@ -300,7 +301,7 @@ def car_streetscene_20_to_car_streetscene_view_6_14(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -322,15 +323,15 @@ def car_streetscene_20_to_car_streetscene_view_6_14(pcloud):
         trunk_connectivity, rear_connectivity
     ])
 
-    ind = np.array([1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19])
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
-                                                      all_connectivity)
-
     mapping = OrderedDict()
     mapping['right_side'] = right_side_indices
     mapping['rear_windshield'] = rear_windshield_indices
     mapping['trunk'] = trunk_indices
     mapping['rear'] = rear_indices
+
+    ind = np.array([1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19])
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
 
@@ -351,7 +352,7 @@ def car_streetscene_20_to_car_streetscene_view_7_8(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import PointUndirectedGraph
+    from menpo.shape import LandmarkGroup
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -368,13 +369,13 @@ def car_streetscene_20_to_car_streetscene_view_7_8(pcloud):
     all_connectivity = np.vstack([rear_windshield_connectivity,
                                   trunk_connectivity, rear_connectivity])
 
-    ind = np.arange(8, 16)
-    new_pcloud = PointUndirectedGraph.init_from_edges(pcloud.points[ind],
-                                                      all_connectivity)
-
     mapping = OrderedDict()
     mapping['rear_windshield'] = rear_windshield_indices
     mapping['trunk'] = trunk_indices
     mapping['rear'] = rear_indices
+
+    ind = np.arange(8, 16)
+    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+        pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping

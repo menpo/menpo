@@ -1054,7 +1054,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group].lms
+        pc = self.landmarks[group]
         return self.crop_to_pointcloud(
             pc, boundary=boundary, constrain_to_boundary=constrain_to_boundary,
             return_transform=return_transform)
@@ -1157,7 +1157,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group].lms
+        pc = self.landmarks[group]
         return self.crop_to_pointcloud_proportion(
             pc, boundary_proportion, minimum=minimum,
             constrain_to_boundary=constrain_to_boundary,
@@ -1300,7 +1300,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ValueError
             If image is not 2D
         """
-        return self.extract_patches(self.landmarks[group].lms,
+        return self.extract_patches(self.landmarks[group],
                                     patch_shape=patch_shape,
                                     sample_offsets=sample_offsets,
                                     as_single_array=as_single_array)
@@ -1415,7 +1415,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ValueError
             If offset does not have shape (1, 2)
         """
-        return self.set_patches(patches, self.landmarks[group].lms,
+        return self.set_patches(patches, self.landmarks[group],
                                 offset=offset, offset_index=offset_index)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
@@ -1840,7 +1840,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The transform that was used. It only applies if
             `return_transform` is ``True``.
         """
-        pc = self.landmarks[group].lms
+        pc = self.landmarks[group]
         scale = AlignmentUniformScale(pc, pointcloud).as_vector().copy()
         return self.rescale(scale, round=round, order=order,
                             return_transform=return_transform)
@@ -1889,7 +1889,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The transform that was used. It only applies if
             `return_transform` is ``True``.
         """
-        x, y = self.landmarks[group].lms.range()
+        x, y = self.landmarks[group].range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
         return self.rescale(scale, round=round, order=order,
                             return_transform=return_transform)
@@ -2327,7 +2327,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         if self.landmarks.has_landmarks:
             for l_group in self.landmarks:
-                pc = self.landmarks[l_group].lms.points
+                pc = self.landmarks[l_group].points
                 if np.any(np.logical_or(self.shape - pc < 1, pc < 0)):
                     return True
         return False
@@ -2339,11 +2339,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if self.has_landmarks_outside_bounds:
             for l_group in self.landmarks:
                 l = self.landmarks[l_group]
-                for k in range(l.lms.points.shape[1]):
-                    tmp = l.lms.points[:, k]
+                for k in range(l.points.shape[1]):
+                    tmp = l.points[:, k]
                     tmp[tmp < 0] = 0
                     tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
-                    l.lms.points[:, k] = tmp
+                    l.points[:, k] = tmp
                 self.landmarks[l_group] = l
 
     def normalize_std_inplace(self, mode='all', **kwargs):

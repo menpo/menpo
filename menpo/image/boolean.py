@@ -528,7 +528,7 @@ class BooleanImage(Image):
             keeps memory usage low. If ``None``, no batching is used and all
             points are checked at once.
         """
-        self.constrain_to_pointcloud(self.landmarks[group].lms,
+        self.constrain_to_pointcloud(self.landmarks[group],
                                      batch_size=batch_size)
 
     def constrain_to_pointcloud(self, pointcloud, batch_size=None,

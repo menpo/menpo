@@ -1,7 +1,7 @@
 # A list of extensions that different importers support.
-from .landmark import LM2Importer, LJSONImporter
+from .landmark import LM2Importer, LJSONImporter, ASFImporter
 from .image import PILImporter, PILGIFImporter, ABSImporter, FLOImporter
-from .landmark_image import ImageASFImporter, ImagePTSImporter
+from .landmark_image import ImagePTSImporter
 from .pickle import PickleImporter, GZipPickleImporter
 
 image_types = {'.bmp': PILImporter,
@@ -31,7 +31,7 @@ image_types = {'.bmp': PILImporter,
                '.abs': ABSImporter,
                '.flo': FLOImporter}
 
-image_landmark_types = {'.asf': ImageASFImporter,
+image_landmark_types = {'.asf': ASFImporter,
                         '.lm2': LM2Importer,
                         '.pts': ImagePTSImporter,
                         '.ptsx': ImagePTSImporter,

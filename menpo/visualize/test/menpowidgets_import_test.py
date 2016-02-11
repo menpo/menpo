@@ -1,10 +1,12 @@
 import numpy as np
 from mock import patch, MagicMock
 from nose.tools import raises
+from scipy.sparse import csr_matrix
+
 from menpo.image import Image
 from menpo.visualize import MenpowidgetsMissingError
-from menpo.shape import PointCloud, TriMesh, PointDirectedGraph
-from menpo.landmark import LandmarkGroup, LandmarkManager
+from menpo.shape import PointCloud, TriMesh, PointDirectedGraph, LandmarkGroup
+from menpo.landmark import LandmarkManager
 from menpo.testing import surrogate
 
 pcloud2d = np.zeros([1, 2])
@@ -31,7 +33,8 @@ def pointcloud_view_widget_test():
 @patch('menpowidgets.visualize_landmarkgroups', menpowidgets_mock)
 @raises(MenpowidgetsMissingError)
 def landmarkgroup_view_widget_test():
-    LandmarkGroup.init_with_all_label(PointCloud(pcloud2d)).view_widget()
+    adj_matrix = csr_matrix((1, 1))
+    LandmarkGroup.init_with_all_label(pcloud2d, adj_matrix).view_widget()
 
 
 @surrogate('menpowidgets.visualize_landmarks')

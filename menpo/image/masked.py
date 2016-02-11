@@ -1127,7 +1127,7 @@ class MaskedImage(Image):
             of the :map:`PointCloud`.
         """
         self.mask.constrain_to_pointcloud(
-            self.landmarks[group].lms, batch_size=batch_size,
+            self.landmarks[group], batch_size=batch_size,
             point_in_pointcloud=point_in_pointcloud)
 
     def build_mask_around_landmarks(self, patch_shape, group=None):
@@ -1145,7 +1145,7 @@ class MaskedImage(Image):
             and if there is only one set of landmarks, this set will be used.
         """
         # get the selected pointcloud
-        pc = self.landmarks[group].lms
+        pc = self.landmarks[group]
         # temporarily set all mask values to False
         self.mask.pixels[:] = False
         # create a patches array of the correct size, full of True values

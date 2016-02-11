@@ -25,10 +25,8 @@ class Copyable(object):
 
         Returns
         -------
-
         ``type(self)``
             A copy of this object
-
         """
         new = self.__class__.__new__(self.__class__)
         for k, v in self.__dict__.items():

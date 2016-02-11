@@ -65,7 +65,7 @@ def PTSExporter(landmark_group, file_handle):
     file_handle : `file`-like object
         The file to write in to
     """
-    pts = landmark_group.lms.points
+    pts = landmark_group.points
     # Swap the x and y axis and add 1 to undo our processing
     # We are assuming (as on import) that the landmark file was created using
     # Matlab which is 1 based
