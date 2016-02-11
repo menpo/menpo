@@ -357,55 +357,59 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                                        (signedOrUnsignedGradients == 1) * pi;
 
             // trilinear interpolation
-            bin1 = (gradientOrientation / binsSize) - 1;
+            bin1 = floor((gradientOrientation / binsSize) - 1);
             bin2 = bin1 + 1;
             x1   = x / cellHeightAndWidthInPixels;
             x2   = x1 + 1;
             y1   = y / cellHeightAndWidthInPixels;
             y2   = y1 + 1;
 
-            Xc = (x1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
-            Yc = (y1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
-            Oc = (bin1 + 1 + 1 - 1.5) * binsSize;
-
-            if (bin2 == numberOfOrientationBins)
+            if (bin2 >= numberOfOrientationBins)
                 bin2 = 0;
 
             if (bin1 < 0)
                 bin1 = numberOfOrientationBins - 1;
 
+            float orientationFrac = (gradientOrientation / binsSize) - 1;
+            if (orientationFrac < 0)
+                orientationFrac += numberOfOrientationBins;
+
+            float xWeight = ((x / (float)cellHeightAndWidthInPixels)) - x1;
+            float yWeight = ((y / (float)cellHeightAndWidthInPixels)) - y1;
+            float oWeight = orientationFrac - bin1;
+
             h[y1][x1][bin1] = h[y1][x1][bin1] + gradientMagnitude *
-                              (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (1-((gradientOrientation-Oc)/binsSize));
+                              (1-xWeight) *
+                              (1-yWeight) *
+                              (1-oWeight);
             h[y1][x1][bin2] = h[y1][x1][bin2] + gradientMagnitude *
-                              (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (((gradientOrientation-Oc)/binsSize));
+                              (1-xWeight) *
+                              (1-yWeight) *
+                              (oWeight);
             h[y2][x1][bin1] = h[y2][x1][bin1] + gradientMagnitude *
-                              (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (1-((gradientOrientation-Oc)/binsSize));
+                              (1-xWeight) *
+                              (yWeight) *
+                              (1-oWeight);
             h[y2][x1][bin2] = h[y2][x1][bin2] + gradientMagnitude *
-                              (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (((gradientOrientation-Oc)/binsSize));
+                              (1-xWeight) *
+                              (yWeight) *
+                              (oWeight);
             h[y1][x2][bin1] = h[y1][x2][bin1] + gradientMagnitude *
-                              (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (1-((gradientOrientation-Oc)/binsSize));
+                              (xWeight) *
+                              (1-yWeight) *
+                              (1-oWeight);
             h[y1][x2][bin2] = h[y1][x2][bin2] + gradientMagnitude *
-                              (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (((gradientOrientation-Oc)/binsSize));
+                              (xWeight) *
+                              (1-yWeight) *
+                              (oWeight);
             h[y2][x2][bin1] = h[y2][x2][bin1] + gradientMagnitude *
-                              (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (1-((gradientOrientation-Oc)/binsSize));
+                              (xWeight) *
+                              (yWeight) *
+                              (1-oWeight);
             h[y2][x2][bin2] = h[y2][x2][bin2] + gradientMagnitude *
-                              (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (((gradientOrientation-Oc)/binsSize));
+                              (xWeight) *
+                              (yWeight) *
+                              (oWeight);
         }
     }
 
