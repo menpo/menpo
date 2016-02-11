@@ -57,8 +57,9 @@ Menpo makes extensive use of Jupyter Notebooks to explain functionality of the
 package. These Notebooks are hosted in the 
 [menpo/menpo-notebooks](https://github.com/menpo/menpo-notebooks) repository. 
 We strongly suggest that after installation you:
-
+  
   1. Download the [latest version of the notebooks][notebooks_gh]
+  2. Install jupyter `conda install jupyter`
   2. Run `jupyter notebook`
   3. Play around with the notebooks.
 
