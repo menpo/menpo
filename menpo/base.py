@@ -515,6 +515,11 @@ class LazyList(collections.Sequence):
         Create a new LazyList where the passed callable ``f`` wraps
         each element.
 
+        ``f`` should take a single parameter, ``x``, that is the result
+        of the underlying callable -  it must also return a value. Note that
+        mapping is lazy and thus calling this function should return
+        immediately.
+
         Parameters
         ----------
         f : `callable`
@@ -525,4 +530,8 @@ class LazyList(collections.Sequence):
         lazy : `LazyList`
             A new LazyList where each element is wrapped by ``f``.
         """
-        return self.__class__([partial(f, x) for x in self._callables])
+        # We need this delayed helper function in order to ensure that f
+        # is passed the actual instantiated object and not the callable itself.
+        def delayed(x2):
+            return f(x2())
+        return self.__class__([partial(delayed, x) for x in self._callables])
