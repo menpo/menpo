@@ -14,7 +14,7 @@ class LinearVectorModel(Copyable):
     """
 
     def __init__(self, components):
-        self._components = components  # getter/setter variable
+        self.components = components  # getter/setter variable
 
     @property
     def n_components(self):
@@ -23,7 +23,7 @@ class LinearVectorModel(Copyable):
 
         :type: `int`
         """
-        return self._components.shape[0]
+        return self.components.shape[0]
 
     @property
     def n_features(self):
@@ -33,38 +33,6 @@ class LinearVectorModel(Copyable):
         :type: `int`
         """
         return self.components.shape[-1]
-
-    @property
-    def components(self):
-        r"""
-        The components matrix of the linear model.
-
-        :type: ``(n_available_components, n_features)`` `ndarray`
-        """
-        return self._components
-
-    @components.setter
-    def components(self, value):
-        r"""
-        Updates the components of this linear model, ensuring that the shape
-        of the components is not changed.
-
-        Parameters
-        ----------
-        value : ``(n_components, n_features)`` `ndarray`
-            The new components array.
-
-        Raises
-        ------
-        ValueError
-            Trying to replace components of shape {} with some of shape {}
-        """
-        if value.shape != self._components.shape:
-            raise ValueError(
-                "Trying to replace components of shape {} with some of "
-                "shape {}".format(self.components.shape, value.shape))
-        else:
-            np.copyto(self._components, value, casting='safe')
 
     def component(self, index):
         r"""
@@ -383,9 +351,3 @@ class MeanLinearVectorModel(LinearVectorModel):
     def _instance_vectors_for_full_weights(self, full_weights):
         x = LinearVectorModel._instance_vectors_for_full_weights(self, full_weights)
         return x + self._mean
-
-
-# TODO: Deprecate in 0.7.0
-# These have been maintained for backwards compatibility
-LinearModel = LinearVectorModel
-MeanLinearModel = MeanLinearVectorModel
