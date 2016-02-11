@@ -764,7 +764,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                            interpolation='bilinear', cmap_name=None, alpha=1.,
                            render_lines=True, line_colour=None, line_style='-',
                            line_width=1, render_markers=True, marker_style='o',
-                           marker_size=20, marker_face_colour=None,
+                           marker_size=5, marker_face_colour=None,
                            marker_edge_colour=None, marker_edge_width=1.,
                            render_numbering=False,
                            numbers_horizontal_align='center',
@@ -848,7 +848,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
