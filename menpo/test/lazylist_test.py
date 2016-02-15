@@ -4,7 +4,7 @@ from nose.tools import raises
 from menpo.base import LazyList
 
 
-def test_lazylist():
+def test_lazylist_get():
     mock_func = Mock()
     mock_func.return_value = 1
     ll = LazyList([mock_func] * 10)
@@ -60,3 +60,26 @@ def test_lazylist_init_from_index_callable():
 def test_lazylist_immutable():
     ll = LazyList([])
     ll[0] = 1
+
+
+def test_lazylist_add_lazylist():
+    a = Mock()
+    b = Mock()
+    ll1 = LazyList([a])
+    ll2 = LazyList([b])
+    new_ll = ll1 + ll2
+    assert len(new_ll) == 2
+    assert new_ll._callables[0] is a
+    assert new_ll._callables[1] is b
+
+
+def test_lazylist_add_list():
+    a = Mock()
+    b = Mock()
+    ll1 = LazyList([a])
+    l2 = [b]
+    new_ll = ll1 + l2
+    assert len(new_ll) == 2
+    assert new_ll._callables[0] is a
+    assert new_ll._callables[1] is not b
+    assert new_ll[1] is b

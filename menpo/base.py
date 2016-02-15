@@ -535,3 +535,34 @@ class LazyList(collections.Sequence):
         def delayed(x2):
             return f(x2())
         return self.__class__([partial(delayed, x) for x in self._callables])
+
+    def __add__(self, other):
+        r"""
+        Create a new LazyList from this list and the given list. The passed list
+        items will be concatenated to the end of this list to give a new
+        LazyList that contains the concatenation of the two lists.
+
+        If a Python list is passed then the elements are wrapped in a function
+        that just returns their values to maintain the callable nature of
+        LazyList elements.
+
+        Parameters
+        ----------
+        other : `collections.Sequence`
+            Sequence to concatenate with this list.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A new LazyList formed of the concatenation of this list and
+            the ``other`` list.
+        """
+        # If the passed Sequence was not lazy then fake it being lazy by
+        # wrapping it in a function that just returns the value.
+        if not isinstance(other, LazyList):
+            def empty_f(a):
+                return a
+            new_callables = [partial(empty_f, x) for x in other]
+        else:
+            new_callables = list(other._callables)
+        return self.__class__(list(self._callables) + new_callables)
