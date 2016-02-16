@@ -54,15 +54,6 @@ class Similarity(Affine):
         return header + reduce(lambda x, y: x + '\n' + '  ' + y, list_str, '  ')
 
     @property
-    def h_matrix_is_mutable(self):
-        r"""
-        ``h_matrix`` is not mutable.
-
-        :type: ``False``
-        """
-        return False
-
-    @property
     def n_parameters(self):
         r"""
         2D Similarity: 4 parameters::

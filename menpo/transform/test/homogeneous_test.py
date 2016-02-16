@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from menpo.transform import (Affine, Similarity, Rotation, Scale,
@@ -448,36 +450,14 @@ def test_nonuniformscale_from_list():
     assert(np.all(u_a.h_matrix == u_b.h_matrix))
 
 
-# Test set_h_matrix is not allowed on similarity subclasses + uniformscale
+# Test set_h_matrix is deprecated (and disabled)
 
 @raises(NotImplementedError)
-def test_similarity_set_h_matrix_raises_notimplementederror():
-    s = Similarity(np.eye(3))
-    s.set_h_matrix(s.h_matrix)
-
-
-@raises(NotImplementedError)
-def test_translation_set_h_matrix_raises_notimplementederror():
-    t = Translation([3, 4])
-    t.set_h_matrix(t.h_matrix)
-
-
-@raises(NotImplementedError)
-def test_rotation_set_h_matrix_raises_notimplementederror():
-    r = Rotation(np.array([[1, 0], [0, 1]]))
-    r.set_h_matrix(r.h_matrix)
-
-
-@raises(NotImplementedError)
-def test_uniformscale_set_h_matrix_raises_notimplementederror():
-    s = UniformScale(2, 3)
-    s.set_h_matrix(s.h_matrix)
-
-
-@raises(NotImplementedError)
-def test_nonuniformscale_set_h_matrix_raises_notimplementederror():
-    s = NonUniformScale([2, 3, 4])
-    s.set_h_matrix(s.h_matrix)
+def test_homogenous_set_h_matrix_raises_notimplementederror():
+    s = Homogeneous(np.eye(4))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        s.set_h_matrix(s.h_matrix)
 
 
 def test_homogeneous_print():
