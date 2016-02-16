@@ -31,6 +31,24 @@ def test_align_2d_affine():
     assert_allclose(affine.h_matrix, estimate.h_matrix)
 
 
+def test_align_2d_affine_compose_target():
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = UniformScale(2.0, n_dims=2).apply(source)
+    original_estimate = AlignmentAffine(source, target)
+    new_estimate = original_estimate.copy()
+    new_estimate.compose_after_from_vector_inplace(
+        np.array([0, 0, 0, 0, 1, 1.]))
+    estimate_target = new_estimate.target
+
+    correct_target = original_estimate.compose_after(
+        Translation([1, 1.])).apply(source)
+
+    assert_allclose(estimate_target.points, correct_target.points)
+
+
 def test_align_2d_affine_set_target():
     linear_component = np.array([[1, -6],
                                  [-3, 2]])
