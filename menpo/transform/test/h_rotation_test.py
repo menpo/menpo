@@ -84,12 +84,6 @@ def test_rotation3d_n_parameters_raises_notimplementederror():
     t.n_parameters
 
 
-@raises(NotImplementedError)
-def test_rotation_set_h_matrix_raises_notimplementederror():
-    r = Rotation(np.array([[1, 0], [0, 1]]))
-    r.set_h_matrix(r.h_matrix)
-
-
 def test_rotation2d_identity():
     assert_allclose(Rotation.init_identity(2).h_matrix, np.eye(3))
 

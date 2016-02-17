@@ -97,15 +97,6 @@ class NonUniformScale(DiscreteAffine, Affine):
         return NonUniformScale(np.ones(n_dims))
 
     @property
-    def h_matrix_is_mutable(self):
-        r"""
-        ``h_matrix`` is not mutable.
-
-        :type: ``False``
-        """
-        return False
-
-    @property
     def scale(self):
         r"""
         The scale vector.
