@@ -5,18 +5,6 @@ from nose.tools import raises
 from menpo.transform import UniformScale, NonUniformScale, Scale
 
 
-@raises(NotImplementedError)
-def test_uniformscale_set_h_matrix_raises_notimplementederror():
-    s = UniformScale(2, 3)
-    s.set_h_matrix(s.h_matrix)
-
-
-@raises(NotImplementedError)
-def test_nonuniformscale_set_h_matrix_raises_notimplementederror():
-    s = NonUniformScale([2, 3, 4])
-    s.set_h_matrix(s.h_matrix)
-
-
 def test_nonuniformscale_from_list():
     u_a = NonUniformScale([3, 2, 3])
     u_b = NonUniformScale(np.array([3, 2, 3]))

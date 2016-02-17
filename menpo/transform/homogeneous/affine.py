@@ -221,7 +221,7 @@ class Affine(Homogeneous):
         else:
             ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
                        "homogeneous matrices are supported.")
-        self.set_h_matrix(h_matrix, copy=False, skip_checks=True)
+        self._set_h_matrix(h_matrix, copy=False, skip_checks=True)
 
     @property
     def composes_inplace_with(self):
@@ -284,7 +284,7 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         b = target.h_points()
         return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
 
-    def set_h_matrix(self, value, copy=True, skip_checks=False):
+    def _set_h_matrix(self, value, copy=True, skip_checks=False):
         r"""
         Updates ``h_matrix``, optionally performing sanity checks.
 
@@ -313,7 +313,7 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         NotImplementedError
             If :attr:`h_matrix_is_mutable` returns ``False``.
         """
-        Affine.set_h_matrix(self, value, copy=copy, skip_checks=skip_checks)
+        Affine._set_h_matrix(self, value, copy=copy, skip_checks=skip_checks)
         # now update the state
         self._sync_target_from_state()
 
@@ -321,7 +321,7 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         optimal_h = self._build_alignment_h_matrix(self.source, self.target)
         # Use the pure Affine setter (so we don't get syncing)
         # We know the resulting affine is correct so skip the checks
-        Affine.set_h_matrix(self, optimal_h, copy=False, skip_checks=True)
+        Affine._set_h_matrix(self, optimal_h, copy=False, skip_checks=True)
 
     def as_non_alignment(self):
         r"""
