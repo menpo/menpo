@@ -9,7 +9,7 @@ dependencies:
   - pathlib=1.0
 
   - numpy>=1.10,<1.11
-  - scipy=0.16.*
+  - scipy=0.17.*
   - pillow=3.0.*
   - cyvlfeat>=0.4.2,<0.5
   - imageio>=1.5.0,<1.6.0
