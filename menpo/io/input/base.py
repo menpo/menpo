@@ -57,6 +57,17 @@ def same_name(path):
     return {p.suffix[1:].upper(): p for p in landmark_file_paths(pattern)}
 
 
+def same_name_video(path, frame_number):
+    r"""
+    Menpo's default video landmark resolver. Returns all landmarks found to have
+    the same stem as the asset.
+    """
+    # pattern finding all landmarks with the same stem
+    pattern = path.with_name('{}_{}.*'.format(path.stem, frame_number))
+    # find all the landmarks we can with this name. Key is ext (without '.')
+    return {p.suffix[1:].upper(): p for p in landmark_file_paths(pattern)}
+
+
 def import_image(filepath, landmark_resolver=same_name, normalise=True):
     r"""Single image (and associated landmarks) importer.
 
@@ -95,6 +106,59 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
                    landmark_ext_map=image_landmark_types,
                    landmark_resolver=landmark_resolver,
                    landmark_attach_func=_import_object_attach_landmarks,
+                   importer_kwargs=kwargs)
+
+
+def import_video(filepath, landmark_resolver=same_name_video, normalise=True,
+                 importer_method='ffmpeg'):
+    r"""Single video (and associated landmarks) importer.
+
+    If a video file is found at `filepath`, returns an :map:`LazyList` wrapping
+    all the frames of the video. By default, landmark files sharing the same
+    filename stem will be imported and attached with a group name based on the
+    extension of the landmark file appended with the frame number, although this
+    behavior can be customised (see `landmark_resolver`).
+
+    Parameters
+    ----------
+    filepath : `pathlib.Path` or `str`
+        A relative or absolute filepath to a video file.
+    landmark_resolver : `function`, optional
+        This function will be used to find landmarks for the
+        video. The function should take two arguments (the path to the video and
+        the frame number) and return a dictionary of the form ``{'group_name':
+        'landmark_filepath'}`` Default finds landmarks with the same name as the
+        video file, appended with '_{frame_number}'.
+    normalise : `bool`, optional
+        If ``True``, normalise the frame pixels between 0 and 1 and convert
+        to floating point. If ``False``, the native datatype of the image will
+        be maintained (commonly `uint8`). Note that in general Menpo assumes
+        :map:`Image` instances contain floating point data - if you disable this
+        flag you will have to manually convert the farmes you import to floating
+        point before doing most Menpo operations. This however can be useful to
+        save on memory usage if you only wish to view or crop the frames.
+    importer_method : {'ffmpeg', 'avconv'}, optional
+        A string representing the type of importer to use, by default ffmpeg
+        is used.
+
+    Returns
+    -------
+    frames : :map:`LazyList`
+        An lazy list of :map:`Image` or subclass thereof which wraps the frames
+        of the video. This list can be treated as a normal list, but the frame
+        is only read when the video is indexed or iterated.
+    """
+    kwargs = {'normalise': normalise}
+
+    video_importer_methods = {'ffmpeg': ffmpeg_video_types}
+    if importer_method not in video_importer_methods:
+        raise ValueError('Unsupported importer method requested. Valid values '
+                         'are: {}'.format(video_importer_methods.keys()))
+
+    return _import(filepath, video_importer_methods[importer_method],
+                   landmark_ext_map=image_landmark_types,
+                   landmark_resolver=landmark_resolver,
+                   landmark_attach_func=_import_lazylist_attach_landmarks,
                    importer_kwargs=kwargs)
 
 
@@ -223,6 +287,99 @@ def import_images(pattern, max_images=None, shuffle=False,
     )
 
 
+def import_videos(pattern, max_videos=None, shuffle=False,
+                  landmark_resolver=same_name_video, normalise=True,
+                  importer_method='ffmpeg', as_generator=False, verbose=False):
+    r"""Multiple video (and associated landmarks) importer.
+
+    For each video found yields a :map:`LazyList`. By default, landmark files
+    sharing the same filename stem will be imported and attached with a group
+    name based on the extension of the landmark file appended with the frame
+    number, although this behavior can be customised (see `landmark_resolver`).
+
+    Note that this is a function returns a :map:`LazyList`. Therefore, the
+    function will return immediately and indexing into the returned list
+    will load an image at run time. If all images should be loaded, then simply
+    wrap the returned :map:`LazyList` in a Python `list`.
+
+    Parameters
+    ----------
+    pattern : `str`
+        A glob path pattern to search for videos. Every video found to match
+        the glob will be imported one by one. See :map:`video_paths` for more
+        details of what videos will be found.
+    max_videos : positive `int`, optional
+        If not ``None``, only import the first ``max_videos`` found. Else,
+        import all.
+    shuffle : `bool`, optional
+        If ``True``, the order of the returned videos will be randomised. If
+        ``False``, the order of the returned videos will be alphanumerically
+        ordered.
+    landmark_resolver : `function`, optional
+        This function will be used to find landmarks for the
+        video. The function should take two arguments (the path to the video and
+        the frame number) and return a dictionary of the form ``{'group_name':
+        'landmark_filepath'}`` Default finds landmarks with the same name as the
+        video file, appended with '_{frame_number}'.
+    normalise : `bool`, optional
+        If ``True``, normalise the frame pixels between 0 and 1 and convert
+        to floating point. If ``False``, the native datatype of the image will
+        be maintained (commonly `uint8`). Note that in general Menpo assumes
+        :map:`Image` instances contain floating point data - if you disable this
+        flag you will have to manually convert the farmes you import to floating
+        point before doing most Menpo operations. This however can be useful to
+        save on memory usage if you only wish to view or crop the frames.
+    importer_method : {'ffmpeg', 'avconv'}, optional
+        A string representing the type of importer to use, by default ffmpeg
+        is used.
+    as_generator : `bool`, optional
+        If ``True``, the function returns a generator and assets will be yielded
+        one after another when the generator is iterated over.
+    verbose : `bool`, optional
+        If ``True`` progress of the importing will be dynamically reported with
+        a progress bar.
+
+    Returns
+    -------
+    lazy_list : :map:`LazyList` or generator of :map:`LazyList`
+        A :map:`LazyList` or generator yielding :map:`LazyList` instances that
+        wrap the video object.
+
+    Raises
+    ------
+    ValueError
+        If no videos are found at the provided glob.
+
+    Examples
+    --------
+    Import videos at and rescale every frame of each video:
+
+    >>> videos = []
+    >>> for video in menpo.io.import_videos('./set_of_videos/*'):
+    >>>    frames = []
+    >>>    for frame in video:
+    >>>        # rescale to a sensible size as we go
+    >>>        frames.append(frame.rescale(0.2))
+    >>>    videos.append(frames)
+    """
+    kwargs = {'normalise': normalise}
+    video_importer_methods = {'ffmpeg': ffmpeg_video_types}
+    if importer_method not in video_importer_methods:
+        raise ValueError('Unsupported importer method requested. Valid values '
+                         'are: {}'.format(video_importer_methods.keys()))
+
+    return _import_glob_lazy_list(
+        pattern, video_importer_methods[importer_method],
+        max_assets=max_videos, shuffle=shuffle,
+        landmark_resolver=landmark_resolver,
+        landmark_ext_map=image_landmark_types,
+        landmark_attach_func=_import_lazylist_attach_landmarks,
+        as_generator=as_generator,
+        verbose=verbose,
+        importer_kwargs=kwargs
+    )
+
+
 def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
                           as_generator=False, verbose=False):
     r"""Import Multiple landmark files.
@@ -282,7 +439,7 @@ def import_pickles(pattern, max_pickles=None, shuffle=False, as_generator=False,
 
     Note that this is a function returns a :map:`LazyList`. Therefore, the
     function will return immediately and indexing into the returned list
-    will load the landmarks at run time. If all landmarks should be loaded, then
+    will load the landmarks at run time. If all pickles should be loaded, then
     simply wrap the returned :map:`LazyList` in a Python `list`.
 
     Parameters
@@ -387,6 +544,13 @@ def image_paths(pattern):
     return glob_with_suffix(pattern, image_types)
 
 
+def video_paths(pattern):
+    r"""
+    Return video filepaths that Menpo can import that match the glob pattern.
+    """
+    return glob_with_suffix(pattern, ffmpeg_video_types)
+
+
 def landmark_file_paths(pattern):
     r"""
     Return landmark file filepaths that Menpo can import that match the glob
@@ -446,6 +610,30 @@ def _import_object_attach_landmarks(built_objects, landmark_resolver,
                     x.landmarks[group_name] = lms
 
 
+def _import_lazylist_attach_landmarks(built_objects, landmark_resolver,
+                                      landmark_ext_map=None):
+    # handle landmarks
+    if landmark_ext_map is not None:
+        for k in range(len(built_objects)):
+            x = built_objects[k]
+            # Use the users function to find landmarks
+            lm_paths = partial(landmark_resolver, x.path)
+
+            # Do a little trick where we compose the landmark resolution onto
+            # the lazy list indexing - after the item has been indexed.
+            def wrap_landmarks(f, index):
+                obj = f()
+                for group_name, lm_path in lm_paths(index).items():
+                    lms = _import(lm_path, landmark_ext_map, asset=obj)
+                    if obj.n_dims == lms.n_dims:
+                        obj.landmarks[group_name] = lms
+                return obj
+
+            new_ll = LazyList([partial(wrap_landmarks, c, i)
+                               for i, c in enumerate(x._callables)])
+            built_objects[k] = new_ll
+
+
 def _import(filepath, extensions_map, landmark_resolver=same_name,
             landmark_ext_map=None, landmark_attach_func=None,
             asset=None, importer_kwargs=None):
@@ -495,7 +683,7 @@ def _import(filepath, extensions_map, landmark_resolver=same_name,
         built_objects = importer.build()
     # landmarks are iterable so check for list precisely
     # enforce a list to make processing consistent
-    if not isinstance(built_objects, Sequence):
+    if not isinstance(built_objects, list):
         built_objects = [built_objects]
 
     # attach path if there is no x.path already.
@@ -675,12 +863,13 @@ class Importer(object):
         object : object or list
             An instantiated class of the expected type. For example, for an
             `.obj` importer, this would be a
-            :class:`menpo.shape.mesh.base.Trimesh`. If multiple objects need
-            to be returned from one importer, a list must be returned.
+            :class:`menpo.shape.Trimesh`. If multiple objects need
+            to be returned from one importer, a list must be returned (and
+            not a subclass of list - explicitly a list).
         """
         raise NotImplementedError()
 
 
 # Avoid circular imports
 from menpo.io.input.extensions import (image_landmark_types, image_types,
-                                       pickle_types)
+                                       pickle_types, ffmpeg_video_types)

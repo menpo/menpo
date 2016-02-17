@@ -634,6 +634,33 @@ def test_as_pil_image_1channel():
                     (im.pixels * 255).astype(np.uint8))
 
 
+def test_as_imageio_1channel():
+    im = Image.init_blank((120, 120), n_channels=1, fill=1.0)
+    new_im = im.as_imageio()
+    assert new_im.dtype == np.uint8
+    assert_allclose(np.ones([120, 120]) * 255, new_im)
+
+
+@raises(ValueError)
+def test_as_imageio_float_out_range():
+    im = Image.init_blank((120, 120), n_channels=1, fill=2.0)
+    im.as_imageio()
+
+
+def test_as_imageio_3channels():
+    im = Image.init_blank((120, 120), n_channels=3, fill=1)
+    new_im = im.as_imageio()
+    assert new_im.dtype == np.uint8
+    assert_allclose(np.ones([120, 120, 3]) * 255, new_im)
+
+
+def test_as_imageio_1channel_uint16_out():
+    im = Image.init_blank((120, 120), n_channels=1, fill=1)
+    new_im = im.as_imageio(out_dtype=np.uint16)
+    assert new_im.dtype == np.uint16
+    assert_allclose(np.ones([120, 120]) * 65535, new_im)
+
+
 @raises(ValueError)
 def test_as_pil_image_bad_range():
     im = MaskedImage(np.random.randn(1, 120, 120), copy=False)
@@ -645,6 +672,12 @@ def test_as_pil_image_float32():
     new_im = im.as_PILImage()
     assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
                     (im.pixels * 255).astype(np.uint8))
+
+
+@raises(TypeError)
+def test_as_pil_image_float32_uint16_out():
+    im = Image(np.ones((1, 120, 120), dtype=np.float32), copy=False)
+    im.as_PILImage(out_dtype=np.uint16)
 
 
 def test_as_pil_image_bool():

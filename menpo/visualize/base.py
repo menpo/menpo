@@ -495,7 +495,7 @@ def plot_curve(x_axis, y_axis, figure_id=None, new_figure=True,
                axes_x_limits=0., axes_y_limits=None, axes_x_ticks=None,
                axes_y_ticks=None, render_lines=True, line_colour=None,
                line_style='-', line_width=1, render_markers=True,
-               marker_style='o', marker_size=6, marker_face_colour=None,
+               marker_style='o', marker_size=5, marker_face_colour=None,
                marker_edge_colour='k', marker_edge_width=1., render_legend=True,
                legend_title='', legend_font_name='sans-serif',
                legend_font_style='normal', legend_font_size=10,
@@ -584,7 +584,7 @@ def plot_curve(x_axis, y_axis, figure_id=None, new_figure=True,
                  'p', '*', 'h', 'H', '1', '2', '3', '4', '8'}
 
     marker_size : `int` or `list` of `int`, optional
-        The size of the markers in points^2. If `int`, this value will be used
+        The size of the markers in points. If `int`, this value will be used
         for all curves. If `list`, a value must be specified for each curve, thus
         it must have the same length as `y_axis`.
     marker_face_colour : `colour` or `list` of `colour` or ``None``, optional
@@ -849,7 +849,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
                  bboxes_line_style='-', bboxes_line_width=1,
                  render_centers=True, render_lines=True, line_colour=None,
                  line_style='-', line_width=1, render_markers=True,
-                 marker_style='o', marker_size=20, marker_face_colour=None,
+                 marker_style='o', marker_size=5, marker_face_colour=None,
                  marker_edge_colour=None, marker_edge_width=1.,
                  render_numbering=False, numbers_horizontal_align='center',
                  numbers_vertical_align='bottom',
@@ -956,7 +956,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
             {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
 
     marker_size : `int`, optional
-        The size of the markers in points^2.
+        The size of the markers in points.
     marker_face_colour : See Below, optional
         The face (filling) colour of the markers.
         Example options ::
@@ -1124,7 +1124,7 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
                            image_view=True, line_colour='r', line_style='-',
                            line_width=1., render_markers=True,
                            marker_edge_colour='k', marker_face_colour='k',
-                           marker_edge_width=1., marker_size=20,
+                           marker_edge_width=1., marker_size=5,
                            marker_style='o', render_axes=False,
                            axes_font_name='sans-serif', axes_font_size=10,
                            axes_font_style='normal', axes_font_weight='normal',
@@ -1180,7 +1180,7 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
             {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
 
     marker_size : `int`, optional
-        The size of the centers of the ellipses in points^2.
+        The size of the centers of the ellipses in points.
     marker_face_colour : See Below, optional
         The face (filling) colour of the centers of the ellipses.
         Example options ::
@@ -1312,8 +1312,8 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
             if render_colour_bar:
                 colour = scalarMap.to_rgba(stds[i])
                 if render_markers:
-                    plt.scatter(means[i][1], means[i][0], facecolor=colour,
-                                edgecolor=colour)
+                    plt.plot(means[i][1], means[i][0], facecolor=colour,
+                             edgecolor=colour, linewidth=0)
             ellip = Ellipse(xy=means[i][-1::-1], width=height, height=width,
                             angle=thetas[i], linestyle=line_style,
                             linewidth=line_width, edgecolor=colour,
@@ -1323,8 +1323,8 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
             if render_colour_bar:
                 colour = scalarMap.to_rgba(stds[i])
                 if render_markers:
-                    plt.scatter(means[i][0], means[i][1], facecolor=colour,
-                                edgecolor=colour)
+                    plt.plot(means[i][0], means[i][1], facecolor=colour,
+                             edgecolor=colour, linewidth=0)
             ellip = Ellipse(xy=means[i], width=width, height=height,
                             angle=thetas[i], linestyle=line_style,
                             linewidth=line_width, edgecolor=colour,

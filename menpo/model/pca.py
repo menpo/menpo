@@ -732,7 +732,7 @@ class PCAVectorModel(MeanLinearVectorModel):
                  ``1``, ``2``, ``3``, ``4``, ``8``}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
@@ -830,10 +830,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             raise MenpowidgetsMissingError()
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues], legend_entries=['Eigenvalues'],
-                   title='Eigenvalues', x_label='Component Number',
-                   y_label='Eigenvalue',
-                   x_axis_limits=(0, self.n_active_components - 1),
-                   y_axis_limits=None, figure_size=figure_size, style=style)
+                   figure_size=figure_size, style=style)
 
     def plot_eigenvalues_ratio(self, figure_id=None, new_figure=False,
                                render_lines=True, line_colour='b',
@@ -882,7 +879,7 @@ class PCAVectorModel(MeanLinearVectorModel):
                  ``1``, ``2``, ``3``, ``4``, ``8``}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
@@ -983,10 +980,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues_ratio()],
                    legend_entries=['Eigenvalues ratio'],
-                   title='Variance Ratio of Eigenvalues',
-                   x_label='Component Number', y_label='Variance Ratio',
-                   x_axis_limits=(0, self.n_active_components - 1),
-                   y_axis_limits=None, figure_size=figure_size, style=style)
+                   figure_size=figure_size, style=style)
 
     def plot_eigenvalues_cumulative_ratio(self, figure_id=None,
                                           new_figure=False, render_lines=True,
@@ -1040,7 +1034,7 @@ class PCAVectorModel(MeanLinearVectorModel):
                  ``1``, ``2``, ``3``, ``4``, ``8``}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
@@ -1142,11 +1136,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues_cumulative_ratio()],
                    legend_entries=['Eigenvalues cumulative ratio'],
-                   title='Cumulative Variance Ratio of Eigenvalues',
-                   x_label='Component Number',
-                   y_label='Cumulative Variance Ratio',
-                   x_axis_limits=(0, self.n_active_components - 1),
-                   y_axis_limits=None, figure_size=figure_size, style=style)
+                   figure_size=figure_size, style=style)
 
     def __str__(self):
         str_out = 'PCA Vector Model \n'                      \
