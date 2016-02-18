@@ -1,21 +1,23 @@
-# A list of extensions that different importers support.
 from .landmark import LM2Importer, LJSONImporter, ASFImporter
-from .image import PILImporter, PILGIFImporter, ABSImporter, FLOImporter
+from .image import (PILImporter, ImageioImporter, ImageioGIFImporter,
+                    ABSImporter, FLOImporter)
+from .video import ImageioFFMPEGImporter
 from .landmark_image import ImagePTSImporter
 from .pickle import PickleImporter, GZipPickleImporter
 
-image_types = {'.bmp': PILImporter,
+
+image_types = {'.bmp': ImageioImporter,
                '.dib': PILImporter,
                '.dcx': PILImporter,
                '.eps': PILImporter,
                '.ps': PILImporter,
-               '.gif': PILGIFImporter,
+               '.gif': ImageioGIFImporter,
                '.im': PILImporter,
-               '.jpg': PILImporter,
-               '.jpg2': PILImporter,
+               '.jpg': ImageioImporter,
+               '.jpg2': ImageioImporter,
                '.jpx': PILImporter,
-               '.jpe': PILImporter,
-               '.jpeg': PILImporter,
+               '.jpe': ImageioImporter,
+               '.jpeg': ImageioImporter,
                '.pcd': PILImporter,
                '.pcx': PILImporter,
                '.png': PILImporter,
@@ -26,10 +28,12 @@ image_types = {'.bmp': PILImporter,
                '.tif': PILImporter,
                '.tiff': PILImporter,
                '.xbm': PILImporter,
-               # '.pdf': PILImporter,
                '.xpm': PILImporter,
                '.abs': ABSImporter,
                '.flo': FLOImporter}
+
+
+ffmpeg_video_types = ImageioFFMPEGImporter.ffmpeg_types()
 
 image_landmark_types = {'.asf': ASFImporter,
                         '.lm2': LM2Importer,

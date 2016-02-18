@@ -2,6 +2,7 @@ from __future__ import division
 from functools import partial
 import numpy as np
 from menpo.base import MenpoMissingDependencyError
+from menpo.image.base import normalise_pixels_range
 from ..base import winitfeature
 
 try:
@@ -150,9 +151,7 @@ def vector_128_dsift(x, dtype=np.float32):
     patch_shape = x.shape[-1]
     n_bins = 4
     c_size = patch_shape // n_bins
-    if x.dtype == np.uint8:
-        # Can't be augmented assignment due to numpy 1.10 casting rules
-        x = x * (1.0 / 255.0)
+    x = normalise_pixels_range(x, error_on_unknown_type=False)
     return dsift(x,
                  window_step_horizontal=patch_shape,
                  window_step_vertical=patch_shape,

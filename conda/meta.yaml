@@ -15,8 +15,9 @@ requirements:
 
     # Scientific Python Stack
     - numpy >=1.10,<1.11
-    - scipy 0.16.*
+    - scipy 0.17.*
     - pillow  3.0.*
+    - imageio 1.5.*
 
     # Features
     - cyvlfeat >=0.4.2,<0.5
@@ -35,6 +36,10 @@ test:
   imports:
     - menpo
 
+  commands:
+    - nosetests menpo -v --with-coverage --cover-package=menpo
+
 about:
   home: https://github.com/menpo/menpo/
   license: BSD
+

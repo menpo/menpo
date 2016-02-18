@@ -51,6 +51,28 @@ as simple as possible, we suggest that you use conda too! To try and persuade
 you, go to the [Menpo website](http://www.menpo.io/installation/) to find 
 installation instructions for all major platforms.
 
+If you feel strongly about using Menpo with the most commonly used Python
+package management system, `pip`, then you should be able to install
+Menpo as follows:
+
+```
+> pip install cython numpy
+> pip install menpo
+```
+
+However, this may be difficult to achieve on platforms such as Windows where
+a compiler would need to be correctly configured. Therefore, we strongly
+advocate the use of [conda](http://conda.pydata.org/docs/) which does
+not require compilation for installing Menpo (or Numpy, SciPy or Matplotlib
+for that matter). Installation via `conda` is as simple as
+
+```
+> conda install -c menpo menpo
+```
+
+And has the added benefit of installing a number of commonly used scientific
+packages such as SciPy and Numpy as Menpo also makes use of these packages.
+
 Usage
 -----
 Menpo makes extensive use of Jupyter Notebooks to explain functionality of the 
@@ -59,9 +81,9 @@ package. These Notebooks are hosted in the
 We strongly suggest that after installation you:
 
   1. Download the [latest version of the notebooks][notebooks_gh]
-  2. Run `jupyter notebook`
-  3. Play around with the notebooks.
-
+  2. Conda install Jupyter notebook and IPython: `conda install jupyter ipython notebook`
+  3. Run `jupyter notebook`
+  4. Play around with the notebooks.
   
 [notebooks_gh]: https://github.com/menpo/menpo-notebooks/releases
 
@@ -115,17 +137,3 @@ dependency installed. These are:
 - 3D viewing methods, only available if `menpo3d` is installed
 - `menpo.feature.dsift` only available if `cyvlfeat` is installed
 - Widgets are only available if `menpowidgets` is installed
-
-If you are running the test suite in an environment **without** `cyvlfeat`,
-call
-
-    >> nosetests -a '!cyvlfeat' .
-
-to avoid testing features dependent on `cyvlfeat`.
-
-If you are running the test suite in an environment **with**
-`menpo3d`, call
-
-    >> nosetests -a '!viewing' .
-
-to avoid testing the behavior of `menpo` in the absence of `menpo3d`.

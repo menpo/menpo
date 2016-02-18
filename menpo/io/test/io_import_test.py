@@ -170,11 +170,11 @@ def test_import_landmark_files_wrong_path_raises_value_error():
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_RGBA_no_normalise(is_file, mock_image):
+def test_importing_PIL_no_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('RGBA', (10, 10))
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=False)
+    im = mio.import_image('fake_image_being_mocked.png', normalise=False)
     assert im.shape == (10, 10)
     assert im.n_channels == 4
     assert im.pixels.dtype == np.uint8
@@ -182,13 +182,54 @@ def test_importing_RGBA_no_normalise(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_RGBA_normalise(is_file, mock_image):
+def test_importing_imageio_RGBA_normalise(is_file, mock_image):
     from menpo.image import MaskedImage
 
     mock_image.return_value = PILImage.new('RGBA', (10, 10))
     is_file.return_value = True
 
+    im = mio.import_image('fake_image_being_mocked.png', normalise=True)
+    assert im.shape == (10, 10)
+    assert im.n_channels == 3
+    assert im.pixels.dtype == np.float
+    assert type(im) == MaskedImage
+
+
+@patch('imageio.imread')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_imageio_RGB_normalise(is_file, mock_image):
+
+    mock_image.return_value = np.zeros([10, 10, 3], dtype=np.uint8)
+    is_file.return_value = True
+
     im = mio.import_image('fake_image_being_mocked.jpg', normalise=True)
+    assert im.shape == (10, 10)
+    assert im.n_channels == 3
+    assert im.pixels.dtype == np.float
+
+
+@patch('imageio.imread')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_imageio_RGB_no_normalise(is_file, mock_image):
+
+    mock_image.return_value = np.zeros([10, 10, 3], dtype=np.uint8)
+    is_file.return_value = True
+
+    im = mio.import_image('fake_image_being_mocked.jpg', normalise=False)
+    assert im.shape == (10, 10)
+    assert im.n_channels == 3
+    assert im.pixels.dtype == np.uint8
+
+
+@patch('PIL.Image.open')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_PIL_RGBA_normalise(is_file, mock_image):
+    from menpo.image import MaskedImage
+
+    mock_image.return_value = PILImage.new('RGBA', (10, 10))
+    is_file.return_value = True
+
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=True)
     assert im.shape == (10, 10)
     assert im.n_channels == 3
     assert im.pixels.dtype == np.float
@@ -197,11 +238,24 @@ def test_importing_RGBA_normalise(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_L_no_normalise(is_file, mock_image):
+def test_importing_PIL_RGBA_no_normalise(is_file, mock_image):
+
+    mock_image.return_value = PILImage.new('RGBA', (10, 10))
+    is_file.return_value = True
+
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=False)
+    assert im.shape == (10, 10)
+    assert im.n_channels == 4
+    assert im.pixels.dtype == np.uint8
+
+
+@patch('PIL.Image.open')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_PIL_L_no_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('L', (10, 10))
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=False)
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=False)
     assert im.shape == (10, 10)
     assert im.n_channels == 1
     assert im.pixels.dtype == np.uint8
@@ -209,11 +263,11 @@ def test_importing_L_no_normalise(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_L_normalise(is_file, mock_image):
+def test_importing_PIL_L_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('L', (10, 10))
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=True)
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=True)
     assert im.shape == (10, 10)
     assert im.n_channels == 1
     assert im.pixels.dtype == np.float
@@ -221,21 +275,21 @@ def test_importing_L_normalise(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-@raises(ValueError)
-def test_importing_I_normalise(is_file, mock_image):
+@raises
+def test_importing_PIL_I_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('I', (10, 10))
     is_file.return_value = True
 
-    mio.import_image('fake_image_being_mocked.jpg', normalise=True)
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=True)
 
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_I_no_normalise(is_file, mock_image):
+def test_importing_PIL_I_no_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('I', (10, 10))
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=False)
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=False)
     assert im.shape == (10, 10)
     assert im.n_channels == 1
     assert im.pixels.dtype == np.int32
@@ -243,13 +297,13 @@ def test_importing_I_no_normalise(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_1_normalise(is_file, mock_image):
+def test_importing_PIL_1_normalise(is_file, mock_image):
     from menpo.image import BooleanImage
 
     mock_image.return_value = PILImage.new('1', (10, 10))
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=True)
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=True)
     assert im.shape == (10, 10)
     assert im.n_channels == 1
     assert im.pixels.dtype == np.bool
@@ -258,13 +312,13 @@ def test_importing_1_normalise(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_1_no_normalise(is_file, mock_image):
+def test_importing_PIL_1_no_normalise(is_file, mock_image):
     from menpo.image import BooleanImage
 
     mock_image.return_value = PILImage.new('1', (10, 10))
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=False)
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=False)
     assert im.shape == (10, 10)
     assert im.n_channels == 1
     assert im.pixels.dtype == np.bool
@@ -273,11 +327,11 @@ def test_importing_1_no_normalise(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_P_normalise(is_file, mock_image):
+def test_importing_PIL_P_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('P', (10, 10))
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=True)
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=True)
     assert im.shape == (10, 10)
     assert im.n_channels == 3
     assert im.pixels.dtype == np.float
@@ -285,48 +339,48 @@ def test_importing_P_normalise(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_P_no_normalise(is_file, mock_image):
+def test_importing_PIL_P_no_normalise(is_file, mock_image):
     mock_image.return_value = PILImage.new('P', (10, 10))
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=False)
+    im = mio.import_image('fake_image_being_mocked.ppm', normalise=False)
     assert im.shape == (10, 10)
     assert im.n_channels == 3
     assert im.pixels.dtype == np.uint8
 
 
-@patch('PIL.Image.open')
+@patch('imageio.get_reader')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_GIF_normalise(is_file, mock_image):
-    mock_image.return_value = PILImage.new('P', (10, 10))
+def test_importing_imageio_GIF_normalise(is_file, mock_image):
+    mock_image.return_value.get_data.return_value = np.ones((10, 10, 3),
+                                                            dtype=np.uint8)
+    mock_image.return_value.get_length.return_value = 1
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.gif', normalise=True)
+    ll = mio.import_image('fake_image_being_mocked.gif', normalise=True)
+    assert len(ll) == 1
+
+    im = ll[0]
     assert im.shape == (10, 10)
     assert im.n_channels == 3
     assert im.pixels.dtype == np.float
 
 
-@patch('PIL.Image.open')
+@patch('imageio.get_reader')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_GIF_no_normalise(is_file, mock_image):
-    mock_image.return_value = PILImage.new('P', (10, 10))
+def test_importing_imageio_GIF_no_normalise(is_file, mock_image):
+    mock_image.return_value.get_data.return_value = np.ones((10, 10, 3),
+                                                            dtype=np.uint8)
+    mock_image.return_value.get_length.return_value = 2
     is_file.return_value = True
 
-    im = mio.import_image('fake_image_being_mocked.gif', normalise=False)
+    ll = mio.import_image('fake_image_being_mocked.gif', normalise=False)
+    assert len(ll) == 2
+
+    im = ll[0]
     assert im.shape == (10, 10)
     assert im.n_channels == 3
     assert im.pixels.dtype == np.uint8
-
-
-@patch('PIL.Image.open')
-@patch('menpo.io.input.base.Path.is_file')
-@raises(ValueError)
-def test_importing_GIF_non_pallete_exception(is_file, mock_image):
-    mock_image.return_value = PILImage.new('RGB', (10, 10))
-    is_file.return_value = True
-
-    mio.import_image('fake_image_being_mocked.gif', normalise=False)
 
 
 @patch('menpo.io.input.landmark.json.load')
