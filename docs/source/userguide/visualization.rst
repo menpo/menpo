@@ -10,7 +10,7 @@ in order to view your data.
 
 We also took a strong step towards simple visualization of data collections
 by integrating some of our core types such as :map:`Image` with visualization
-widgets for the IPython notebook.
+widgets for the Jupyter notebook.
 
 Visualizing 2D Images
 ---------------------
@@ -47,13 +47,13 @@ Viewing the image with a native IPython widget:
 Visualizing A List Of 2D Images
 -------------------------------
 Visualizing lists of images is also incredibly simple if you are using
-the IPython notebook:
+the Jupyter notebook and have the MenpoWidgets package installed:
 
 .. code-block:: python
 
     %matplotlib inline
     import menpo.io as mio
-    from menpo.visualize import visualize_images
+    from menpowidgets import visualize_images
 
     # import_images is a generator, so we must exhaust the generator before
     # we can visualize the list. This is because the widget allows you to

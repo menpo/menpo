@@ -17,6 +17,7 @@ ctypedef fused IMAGE_TYPES:
     float
     double
     cnp.uint8_t
+    cnp.uint16_t
 
 
 cdef inline void _matrix_transform(double x, double y, double* H, double *x_,

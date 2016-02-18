@@ -1,10 +1,10 @@
-.. _menpo-model-MeanLinearModel:
+.. _menpo-model-GMRFVectorModel:
 
 .. currentmodule:: menpo.model
 
-MeanLinearModel
+GMRFVectorModel
 ===============
-.. autoclass:: MeanLinearModel
+.. autoclass:: GMRFVectorModel
   :members:
   :inherited-members:
   :show-inheritance:

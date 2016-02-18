@@ -54,15 +54,6 @@ class Similarity(Affine):
         return header + reduce(lambda x, y: x + '\n' + '  ' + y, list_str, '  ')
 
     @property
-    def h_matrix_is_mutable(self):
-        r"""
-        ``h_matrix`` is not mutable.
-
-        :type: ``False``
-        """
-        return False
-
-    @property
     def n_parameters(self):
         r"""
         2D Similarity: 4 parameters::
@@ -138,7 +129,7 @@ class Similarity(Affine):
             raise ValueError("Only 2D and 3D Similarity transforms "
                              "are currently supported.")
 
-    def from_vector_inplace(self, p):
+    def _from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
         expected to be in Fortran ordering.
@@ -218,7 +209,7 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         """
         return Similarity(self.h_matrix, skip_checks=True)
 
-    def from_vector_inplace(self, p):
+    def _from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
         expected to be in Fortran ordering.
@@ -239,7 +230,7 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
         """
-        Similarity.from_vector_inplace(self, p)
+        Similarity._from_vector_inplace(self, p)
         self._sync_target_from_state()
 
 

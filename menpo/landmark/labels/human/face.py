@@ -74,6 +74,44 @@ def face_ibug_68_to_face_ibug_68(pcloud):
     return new_pcloud, mapping
 
 
+@labeller_func(group_label='face_ibug_68')
+def face_ibug_68_mirrored_to_face_ibug_68(pcloud):
+    r"""
+    Apply the IBUG 68-point semantic labels, on a pointcloud that has been
+    mirrored around the vertical axis (flipped around the Y-axis). Thus, on
+    the flipped image the jaw etc would be the wrong way around. This
+    rectifies that and returns a new PointCloud whereby all the points
+    are oriented correctly.
+
+    The semantic labels applied are as follows:
+
+      - jaw
+      - left_eyebrow
+      - right_eyebrow
+      - nose
+      - left_eye
+      - right_eye
+      - mouth
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
+    .. [2] http://ibug.doc.ic.ac.uk/resources/300-W/
+    """
+    new_pcloud, old_map = face_ibug_68_to_face_ibug_68(pcloud,
+                                                       return_mapping=True)
+    lms_map = np.hstack([old_map['jaw'][::-1],
+                         old_map['right_eyebrow'][::-1],
+                         old_map['left_eyebrow'][::-1],
+                         old_map['nose'][:4],
+                         old_map['nose'][4:][::-1],
+                         np.roll(old_map['right_eye'][::-1], 4),
+                         np.roll(old_map['left_eye'][::-1], 4),
+                         np.roll(old_map['mouth'][:12][::-1], 7),
+                         np.roll(old_map['mouth'][12:][::-1], 5)])
+    return new_pcloud.from_vector(pcloud.points[lms_map]), old_map
+
+
 @labeller_func(group_label='face_ibug_66')
 def face_ibug_68_to_face_ibug_66(pcloud):
     r"""
@@ -213,13 +251,16 @@ def face_ibug_68_to_face_ibug_51(pcloud):
 def face_ibug_49_to_face_ibug_49(pcloud):
     r"""
     Apply the IBUG 49-point semantic labels.
+
     The semantic labels applied are as follows:
+
       - left_eyebrow
       - right_eyebrow
       - nose
       - left_eye
       - right_eye
       - mouth
+
     References
     ----------
     .. [1] http://www.multipie.org/

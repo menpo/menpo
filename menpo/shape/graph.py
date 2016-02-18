@@ -1194,6 +1194,58 @@ class Tree(DirectedGraph):
         self.root_vertex = root_vertex
         self.predecessors_list = self._get_predecessors_list()
 
+    @classmethod
+    def init_from_edges(cls, edges, n_vertices, root_vertex, copy=True,
+                        skip_checks=False):
+        r"""
+        Construct a :map:`Tree` from edges array.
+
+        Parameters
+        ----------
+        edges : ``(n_edges, 2, )`` `ndarray`
+            The `ndarray` of edges, i.e. all the pairs of vertices that are
+            connected with an edge.
+        n_vertices : `int`
+            The total number of vertices, assuming that the numbering of
+            vertices starts from ``0``. ``edges`` and ``n_vertices`` can be
+            defined in a way to set isolated vertices.
+        root_vertex : `int`
+            That vertex that will be set as root.
+        copy : `bool`, optional
+            If ``False``, the ``adjacency_matrix`` will not be copied on
+            assignment.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
+
+        Examples
+        --------
+        The following tree ::
+
+                   0
+                   |
+                ___|___
+               1       2
+               |       |
+              _|_      |
+             3   4     5
+             |   |     |
+             |   |     |
+             6   7     8
+
+        can be defined as ::
+
+            from menpo.shape import PointTree
+            import numpy as np
+            points = np.array([[30, 30], [10, 20], [50, 20], [0, 10], [20, 10],
+                               [50, 10], [0, 0], [20, 0], [50, 0]])
+            edges = np.array([[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [3, 6],
+                              [4, 7], [5, 8]])
+            tree = PointTree.init_from_edges(points, edges, root_vertex=0)
+        """
+        adjacency_matrix = _convert_edges_to_adjacency_matrix(edges, n_vertices)
+        return cls(adjacency_matrix, root_vertex=root_vertex, copy=copy,
+                   skip_checks=skip_checks)
+
     def _get_predecessors_list(self):
         r"""
         Returns the predecessors list of the tree, i.e. a `list` of length
@@ -1628,13 +1680,18 @@ class PointGraph(Graph, PointCloud):
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r',
                  line_style='-', line_width=1.,
-                 render_markers=True, marker_style='o', marker_size=20,
+                 render_markers=True, marker_style='o', marker_size=5,
                  marker_face_colour='k', marker_edge_colour='k',
-                 marker_edge_width=1., render_axes=True,
+                 marker_edge_width=1., render_numbering=False,
+                 numbers_horizontal_align='center',
+                 numbers_vertical_align='bottom',
+                 numbers_font_name='sans-serif', numbers_font_size=10,
+                 numbers_font_style='normal', numbers_font_weight='normal',
+                 numbers_font_colour='k', render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
-                 label=None):
+                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
+                 axes_y_ticks=None, figure_size=(10, 8), label=None):
         r"""
         Visualization of the PointGraph in 2D.
 
@@ -1657,7 +1714,7 @@ class PointGraph(Graph, PointCloud):
                 or
                 (3, ) ndarray
 
-        line_style : ``{-, --, -., :}``, optional
+        line_style : ``{'-', '--', '-.', ':'}``, optional
             The style of the lines.
         line_width : `float`, optional
             The width of the lines.
@@ -1669,7 +1726,7 @@ class PointGraph(Graph, PointCloud):
                 {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
@@ -1688,6 +1745,36 @@ class PointGraph(Graph, PointCloud):
 
         marker_edge_width : `float`, optional
             The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : ``{center, right, left}``, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : ``{center, top, bottom, baseline}``, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : See Below, optional
+            The font of the numbers. Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : ``{normal, italic, oblique}``, optional
+            The font style of the numbers.
+        numbers_font_weight : See Below, optional
+            The font weight of the numbers.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        numbers_font_colour : See Below, optional
+            The font colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
         axes_font_name : See Below, optional
@@ -1707,10 +1794,20 @@ class PointGraph(Graph, PointCloud):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the x axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the PointGraph as a percentage of the PointGraph's
+            width. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
         axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the y axis.
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the PointGraph as a percentage of the PointGraph's
+            height. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) `tuple` or ``None``, optional
             The size of the figure in inches.
         label : `str`, optional
@@ -1731,10 +1828,19 @@ class PointGraph(Graph, PointCloud):
             marker_style=marker_style, marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, render_axes=render_axes,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
             axes_font_name=axes_font_name, axes_font_size=axes_font_size,
             axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
             axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
             figure_size=figure_size, label=label)
         return renderer
 
@@ -2580,7 +2686,7 @@ def _convert_edges_to_adjacency_matrix(edges, n_vertices):
 
     Parameters
     ----------
-    edges : ``(n_edges, 2, )`` `ndarray`
+    edges : ``(n_edges, 2, )`` `ndarray` or ``None``
         The `ndarray` of edges, i.e. all the pairs of vertices that are
         connected with an edge.
     n_vertices : `int`
@@ -2596,9 +2702,9 @@ def _convert_edges_to_adjacency_matrix(edges, n_vertices):
     """
     if isinstance(edges, list):
         edges = np.array(edges)
-    if edges.shape[0] == 0:
-        # create adjacency with a single vertex and no edges
-        return np.array([[0]])
+    if edges is None or edges.shape[0] == 0:
+        # create adjacency with zeros
+        return csr_matrix((n_vertices, n_vertices), dtype=np.int)
     else:
         # create sparse adjacency
         return csr_matrix(([1] * edges.shape[0], (edges[:, 0], edges[:, 1])),
@@ -2611,7 +2717,7 @@ def _convert_edges_to_symmetric_adjacency_matrix(edges, n_vertices):
 
     Parameters
     ----------
-    edges : ``(n_edges, 2, )`` `ndarray`
+    edges : ``(n_edges, 2, )`` `ndarray` or ``None``
         The `ndarray` of edges, i.e. all the pairs of vertices that are
         connected with an edge.
     n_vertices : `int`
@@ -2627,9 +2733,13 @@ def _convert_edges_to_symmetric_adjacency_matrix(edges, n_vertices):
     """
     if isinstance(edges, list):
         edges = np.array(edges)
-    rows = np.hstack((edges[:, 0], edges[:, 1]))
-    cols = np.hstack((edges[:, 1], edges[:, 0]))
-    adjacency_matrix = csr_matrix(([1] * rows.shape[0], (rows, cols)),
-                                  shape=(n_vertices, n_vertices))
-    adjacency_matrix[adjacency_matrix.nonzero()] = 1
+    if edges is None or edges.shape[0] == 0:
+        # create adjacency with zeros
+        adjacency_matrix = csr_matrix((n_vertices, n_vertices), dtype=np.int)
+    else:
+        rows = np.hstack((edges[:, 0], edges[:, 1]))
+        cols = np.hstack((edges[:, 1], edges[:, 0]))
+        adjacency_matrix = csr_matrix(([1] * rows.shape[0], (rows, cols)),
+                                      shape=(n_vertices, n_vertices))
+        adjacency_matrix[adjacency_matrix.nonzero()] = 1
     return adjacency_matrix

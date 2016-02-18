@@ -6,47 +6,12 @@ import os
 # this line of code grabbed from docs.readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
-if on_rtd:
-    class Mock(object):
-
-        __all__ = []
-
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def __call__(self, *args, **kwargs):
-            return Mock()
-
-        @classmethod
-        def __getattr__(cls, name):
-            if name in ('__file__', '__path__'):
-                return '/dev/null'
-            elif name[0] == name[0].upper():
-                mockType = type(name, (), {})
-                mockType.__module__ = __name__
-                return mockType
-            else:
-                return Mock()
-
-    MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn',
-                    'scipy.linalg', 'numpy.stats', 'scipy.misc', 'PIL.Image',
-                    'matplotlib', 'matplotlib.pyplot', 'scipy.spatial',
-                    'scipy.spatial.distance', 'numpy.dtype', 'scipy.ndimage',
-                    'scipy.linalg.blas', 'scipy.sparse']
-    # Masking our Cython modules
-    MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
-                     'menpo.feature.windowiterator',
-                     'menpo.shape.mesh.normals',
-                     'menpo.feature.gradient',
-                     'menpo.external.skimage._warps_cy',
-                     'menpo.image.patches']
-    for mod_name in MOCK_MODULES:
-        sys.modules[mod_name] = Mock()
-
 # Add the folder above so we can grab the sphinx extensions
 sys.path.insert(0, os.path.abspath('..'))
-# Add the menpo root so we can grab the version
-sys.path.insert(0, os.path.abspath('../../'))
+
+if not on_rtd:
+  # Add the menpo root so we can grab the version
+  sys.path.insert(0, os.path.abspath('../../'))
 
 import menpo
 

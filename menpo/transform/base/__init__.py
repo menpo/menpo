@@ -1,6 +1,7 @@
+import warnings
 import numpy as np
 
-from menpo.base import Copyable
+from menpo.base import Copyable, MenpoDeprecationWarning
 
 
 class Transform(Copyable):
@@ -95,12 +96,29 @@ class Transform(Copyable):
         """
         raise NotImplementedError()
 
-    def apply_inplace(self, x, **kwargs):
+    def apply_inplace(self, *args, **kwargs):
+        r"""
+        Deprecated as public supported API, use the non-mutating `apply()`
+        instead.
+
+        For internal performance-specific uses, see `_apply_inplace()`.
+
+        """
+        warnings.warn('the public API for inplace operations is deprecated '
+                      'and will be removed in a future version of Menpo. '
+                      'Use .apply() instead.', MenpoDeprecationWarning)
+        return self._apply_inplace(*args, **kwargs)
+
+    def _apply_inplace(self, x, **kwargs):
         r"""
         Applies this transform to a :map:`Transformable` ``x`` destructively.
 
         Any ``kwargs`` will be passed to the specific transform :meth:`_apply`
         method.
+
+        Note that this is an inplace operation that should be used sparingly,
+        by internal API's where creating a copy of the transformed object is
+        expensive. It does not return anything, as the operation is inplace.
 
         Parameters
         ----------
@@ -108,11 +126,6 @@ class Transform(Copyable):
             The :map:`Transformable` object to be transformed.
         kwargs : `dict`
             Passed through to :meth:`_apply`.
-
-        Returns
-        -------
-        transformed : ``type(x)``
-            The transformed object
         """
 
         def transform(x_):

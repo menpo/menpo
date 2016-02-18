@@ -1,11 +1,9 @@
 from functools import partial
 from warnings import warn
-import warnings
 import numpy as np
 
 from .base import Image, _convert_patches_list_to_single_array
 from .patches import set_patches
-from menpo.base import MenpoDeprecationWarning
 
 
 def pwa_point_in_pointcloud(pcloud, indices, batch_size=None):
@@ -261,12 +259,6 @@ class BooleanImage(Image):
             mask.path = self.path
         return mask
 
-    def invert_inplace(self):
-        r"""
-        Inverts this Boolean Image inplace.
-        """
-        self.pixels = ~self.pixels
-
     def invert(self):
         r"""
         Returns a copy of this boolean image, which is inverted.
@@ -278,7 +270,7 @@ class BooleanImage(Image):
             and all ``False`` values are ``True``.
         """
         inverse = self.copy()
-        inverse.invert_inplace()
+        inverse.pixels = ~self.pixels
         return inverse
 
     def bounds_true(self, boundary=0, constrain_to_bounds=True):
@@ -514,22 +506,21 @@ class BooleanImage(Image):
             warped_img.pixels[:, warped_img.mask] = sampled_pixel_values
         return warped_img
 
-    def constrain_to_landmarks(self, group=None, trilist=None,
-                               batch_size=None):
+    def constrain_to_landmarks(self, group=None, batch_size=None):
         r"""
         Restricts this mask to be equal to the convex hull around the
         landmarks chosen. This is not a per-pixel convex hull, but instead
-        relies on a triangulated approximation.
+        relies on a triangulated approximation. If the landmarks in question
+        are an instance of :map:`TriMesh`, the triangulation of the landmarks
+        will be used in the convex hull caculation. If the landmarks are an
+        instance of :map:`PointCloud`, Delaunay triangulation will be used to
+        create a triangulation.
 
         Parameters
         ----------
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        trilist: ``(t, 3)`` `ndarray`, optional
-            Triangle list to be used on the landmarked points in selecting
-            the mask region. If ``None``, defaults to performing Delaunay
-            triangulation on the points.
         batch_size : `int` or ``None``, optional
             This should only be considered for large images. Setting this value
             will cause constraining to become much slower. This size indicates
@@ -538,24 +529,34 @@ class BooleanImage(Image):
             points are checked at once.
         """
         self.constrain_to_pointcloud(self.landmarks[group].lms,
-                                     trilist=trilist, batch_size=batch_size)
+                                     batch_size=batch_size)
 
     def constrain_to_pointcloud(self, pointcloud, batch_size=None,
-                                point_in_pointcloud='pwa', trilist=None,):
+                                point_in_pointcloud='pwa'):
         r"""
         Restricts this mask to be equal to the convex hull around a pointcloud.
         The choice of whether a pixel is inside or outside of the pointcloud
         is determined by the ``point_in_pointcloud`` parameter. By default
         a Piecewise Affine transform is used to test for containment, which
-        is useful when building efficiently aligning images. For large images,
-        a faster and pixel-accurate method can be used ('convex_hull').
-        Alternatively, a callable can be provided to override the test. By
-        default, the provided implementations are only valid for 2D images.
+        is useful when aligning images by their landmarks. Triangluation
+        will be decided by Delauny - if you wish to customise it,
+        a :map:`TriMesh` instance can be passed for the ``pointcloud``
+        argument. In this case, the triangulation of the Trimesh will be
+        used to define the retained region.
+
+        For large images, a faster and pixel-accurate method can be used (
+        'convex_hull'). Here, there is no specialization for
+        :map:`TriMesh` instances. Alternatively, a callable can be provided to
+        override the test. By default, the provided implementations are only
+        valid for 2D images.
+
 
         Parameters
         ----------
-        pointcloud : :map:`PointCloud`
-            The pointcloud of points that should be constrained to.
+        pointcloud : :map:`PointCloud` or :map:`TriMesh`
+            The pointcloud of points that should be constrained to. See
+            `point_in_pointcloud` for how in some cases a :map:`TriMesh` may be
+            used to control triangulation.
         batch_size : `int` or ``None``, optional
             This should only be considered for large images. Setting this value
             will cause constraining to become much slower. This size indicates
@@ -565,16 +566,16 @@ class BooleanImage(Image):
             the 'pwa' point_in_pointcloud choice.
         point_in_pointcloud : {'pwa', 'convex_hull'} or `callable`
             The method used to check if pixels in the image fall inside the
-            pointcloud or not. Can be accurate to a Piecewise Affine transform,
-            a pixel accurate convex hull or any arbitrary callable.
+            ``pointcloud`` or not. If 'pwa', Menpo's :map:`PiecewiseAffine`
+            transform will be used to test for containment. In this case
+            ``pointcloud`` should be a :map:`TriMesh`. If it isn't, Delauny
+            triangulation will be used to first triangulate ``pointcloud`` into
+            a  :map:`TriMesh` before testing for containment.
             If a callable is passed, it should take two parameters,
             the :map:`PointCloud` to constrain with and the pixel locations
             ((d, n_dims) ndarray) to test and should return a (d, 1) boolean
             ndarray of whether the pixels were inside (True) or outside (False)
             of the :map:`PointCloud`.
-        trilist: ``(t, 3)`` `ndarray`, optional
-            Deprecated. Please provide a Trimesh instead of relying on this
-            parameter.
 
         Raises
         ------
@@ -590,17 +591,12 @@ class BooleanImage(Image):
                              'the new mask in this '
                              '{}D image'.format(self.n_dims))
 
-        if trilist is not None:
-            warnings.warn('trilist parameter is deprecated and is being '
-                          'ignored. Please provide a Trimesh instead of '
-                          'relying on this parameter.', MenpoDeprecationWarning)
-
         if point_in_pointcloud == 'pwa':
             point_in_pointcloud = partial(pwa_point_in_pointcloud,
                                           batch_size=batch_size)
         elif point_in_pointcloud == 'convex_hull':
             point_in_pointcloud = convex_hull_point_in_pointcloud
-        elif not hasattr(point_in_pointcloud, '__call__'):
+        elif not callable(point_in_pointcloud):
             # Not a function, or a string, so we have an error!
             raise ValueError('point_in_pointcloud must be a callable that '
                              'take two arguments: the Menpo PointCloud as a '

@@ -1,11 +1,14 @@
 from .landmark import LJSONExporter, PTSExporter
 from .image import PILExporter
+from .video import ImageioVideoExporter, ImageioGifExporter
 from .pickle import pickle_export
+
 
 landmark_types = {
     '.ljson': LJSONExporter,
     '.pts': PTSExporter
 }
+
 
 image_types = {
     '.bmp': PILExporter,
@@ -31,6 +34,19 @@ image_types = {
     '.xpm': PILExporter
 }
 
+
 pickle_types = {
     '.pkl': pickle_export,
+}
+
+
+video_types = {
+    '.mov': ImageioVideoExporter,
+    '.avi': ImageioVideoExporter,
+    '.mpg': ImageioVideoExporter,
+    '.mpeg': ImageioVideoExporter,
+    '.mp4': ImageioVideoExporter,
+    '.mkv': ImageioVideoExporter,
+    '.wmv': ImageioVideoExporter,
+    '.gif': ImageioGifExporter
 }

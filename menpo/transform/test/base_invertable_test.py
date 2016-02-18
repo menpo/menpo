@@ -12,7 +12,7 @@ class MockedVInvertable(VInvertible, Vectorizable):
     def __init__(self):
         self.vector = ones_vector
 
-    def from_vector_inplace(self, vector):
+    def _from_vector_inplace(self, vector):
         self.vector = vector
 
     def _as_vector(self):

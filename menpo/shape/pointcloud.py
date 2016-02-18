@@ -1,4 +1,6 @@
 import numpy as np
+import numbers
+import collections
 from warnings import warn
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
@@ -94,6 +96,53 @@ class PointCloud(Shape):
             points = np.array(points, copy=True, order='C')
         self.points = points
 
+    @classmethod
+    def init_2d_grid(cls, shape, spacing=None):
+        r"""
+        Create a pointcloud that exists on a regular 2D grid. The first
+        dimension is the number of rows in the grid and the second dimension
+        of the shape is the number of columns. ``spacing`` optionally allows
+        the definition of the distance between points (uniform over points).
+        The spacing may be different for rows and columns.
+
+        Parameters
+        ----------
+        shape : `tuple` of 2 `int`
+            The size of the grid to create, this defines the number of points
+            across each dimension in the grid. The first element is the number
+            of rows and the second is the number of columns.
+        spacing : `int` or `tuple` of 2 `int`, optional
+            The spacing between points. If a single `int` is provided, this
+            is applied uniformly across each dimension. If a `tuple` is
+            provided, the spacing is applied non-uniformly as defined e.g.
+            ``(2, 3)`` gives a spacing of 2 for the rows and 3 for the
+            columns.
+
+        Returns
+        -------
+        shape_cls : `type(cls)`
+            A PointCloud or subclass arranged in a grid.
+        """
+        if len(shape) != 2:
+            raise ValueError('shape must be 2D.')
+
+        grid = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]),
+                           indexing='ij')
+        points = np.require(np.concatenate(grid).reshape([2, -1]).T,
+                            dtype=np.float64, requirements=['C'])
+
+        if spacing is not None:
+            if not (isinstance(spacing, numbers.Number) or
+                    isinstance(spacing, collections.Sequence)):
+                raise ValueError('spacing must be either a single number '
+                                 'to be applied over each dimension, or a 2D '
+                                 'sequence of numbers.')
+            if isinstance(spacing, collections.Sequence) and len(spacing) != 2:
+                raise ValueError('spacing must be 2D.')
+
+            points *= np.asarray(spacing, dtype=np.float64)
+        return cls(points, copy=False)
+
     @property
     def n_points(self):
         r"""
@@ -144,7 +193,7 @@ class PointCloud(Shape):
             The centre of the bounds of this PointCloud.
         """
         min_b, max_b = self.bounds()
-        return (min_b + max_b) / 2
+        return (min_b + max_b) / 2.0
 
     def _as_vector(self):
         r"""
@@ -171,7 +220,7 @@ class PointCloud(Shape):
         """
         return {'points': self.points.tolist()}
 
-    def from_vector_inplace(self, vector):
+    def _from_vector_inplace(self, vector):
         r"""
         Updates the points of this PointCloud in-place with the reshaped points
         from the provided vector. Note that the vector should have the form
@@ -269,13 +318,18 @@ class PointCloud(Shape):
         return bounding_box(min_p, max_p)
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
-                 render_markers=True, marker_style='o', marker_size=20,
+                 render_markers=True, marker_style='o', marker_size=5,
                  marker_face_colour='r', marker_edge_colour='k',
-                 marker_edge_width=1., render_axes=True,
+                 marker_edge_width=1., render_numbering=False,
+                 numbers_horizontal_align='center',
+                 numbers_vertical_align='bottom',
+                 numbers_font_name='sans-serif', numbers_font_size=10,
+                 numbers_font_style='normal', numbers_font_weight='normal',
+                 numbers_font_colour='k', render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
-                 label=None, **kwargs):
+                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
+                 axes_y_ticks=None, figure_size=(10, 8), label=None, **kwargs):
         r"""
         Visualization of the PointCloud in 2D.
 
@@ -288,20 +342,6 @@ class PointCloud(Shape):
         image_view : `bool`, optional
             If ``True`` the PointCloud will be viewed as if it is in the image
             coordinate system.
-        render_lines : `bool`, optional
-            If ``True``, the edges will be rendered.
-        line_colour : See Below, optional
-            The colour of the lines.
-            Example options::
-
-                {r, g, b, c, m, k, w}
-                or
-                (3, ) ndarray
-
-        line_style : ``{-, --, -., :}``, optional
-            The style of the lines.
-        line_width : `float`, optional
-            The width of the lines.
         render_markers : `bool`, optional
             If ``True``, the markers will be rendered.
         marker_style : See Below, optional
@@ -310,7 +350,7 @@ class PointCloud(Shape):
                 {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
@@ -329,6 +369,36 @@ class PointCloud(Shape):
 
         marker_edge_width : `float`, optional
             The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : ``{center, right, left}``, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : ``{center, top, bottom, baseline}``, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : See Below, optional
+            The font of the numbers. Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : ``{normal, italic, oblique}``, optional
+            The font style of the numbers.
+        numbers_font_weight : See Below, optional
+            The font weight of the numbers.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        numbers_font_colour : See Below, optional
+            The font colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
         axes_font_name : See Below, optional
@@ -348,10 +418,20 @@ class PointCloud(Shape):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the x axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the PointCloud as a percentage of the PointCloud's
+            width. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
         axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the y axis.
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the PointCloud as a percentage of the PointCloud's
+            height. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) `tuple` or ``None``, optional
             The size of the figure in inches.
         label : `str`, optional
@@ -373,10 +453,19 @@ class PointCloud(Shape):
             marker_style=marker_style, marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, render_axes=render_axes,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
             axes_font_name=axes_font_name, axes_font_size=axes_font_size,
             axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
             axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
             figure_size=figure_size, label=label)
         return renderer
 
@@ -385,7 +474,7 @@ class PointCloud(Shape):
                            new_figure=False, image_view=True, render_lines=True,
                            line_colour=None, line_style='-', line_width=1,
                            render_markers=True, marker_style='o',
-                           marker_size=20, marker_face_colour=None,
+                           marker_size=5, marker_face_colour=None,
                            marker_edge_colour=None, marker_edge_width=1.,
                            render_numbering=False,
                            numbers_horizontal_align='center',
@@ -407,6 +496,7 @@ class PointCloud(Shape):
                            axes_font_name='sans-serif', axes_font_size=10,
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
+                           axes_x_ticks=None, axes_y_ticks=None,
                            figure_size=(10, 8)):
         """
         Visualize the landmarks. This method will appear on the Image as
@@ -452,7 +542,7 @@ class PointCloud(Shape):
                 {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
@@ -576,10 +666,20 @@ class PointCloud(Shape):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold,demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None`` optional
-            The limits of the x axis.
-        axes_y_limits : (`float`, `float`) `tuple` or ``None`` optional
-            The limits of the y axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the PointCloud as a percentage of the PointCloud's
+            width. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the PointCloud as a percentage of the PointCloud's
+            height. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) `tuple` or ``None`` optional
             The size of the figure in inches.
 
@@ -632,7 +732,8 @@ class PointCloud(Shape):
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, figure_size=figure_size)
+            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
         return landmark_view
 

@@ -1,10 +1,10 @@
-.. _menpo-model-LinearModel:
+.. _menpo-model-GMRFModel:
 
 .. currentmodule:: menpo.model
 
-LinearModel
-===========
-.. autoclass:: LinearModel
+GMRFModel
+=========
+.. autoclass:: GMRFModel
   :members:
   :inherited-members:
   :show-inheritance:

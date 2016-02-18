@@ -1,6 +1,8 @@
+from warnings import warn
+
 import numpy as np
 
-from menpo.base import Vectorizable
+from menpo.base import Vectorizable, MenpoDeprecationWarning
 from menpo.transform.base import (Alignment, ComposableTransform,
                                   VComposable, VInvertible)
 
@@ -104,7 +106,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
     @property
     def h_matrix_is_mutable(self):
-        r"""
+        r"""Deprecated
         ``True`` iff :meth:`set_h_matrix` is permitted on this type of
         transform.
 
@@ -113,7 +115,10 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
         :type: `bool`
         """
-        return True
+        warn('the public API for mutable operations is deprecated '
+             'and will be removed in a future version of Menpo. '
+             'Create a new transform instead.', MenpoDeprecationWarning)
+        return False
 
     def from_vector(self, vector):
         """
@@ -137,7 +142,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         """
         # avoid the deepcopy with an efficient copy
         self_copy = self.copy()
-        self_copy.from_vector_inplace(vector)
+        self_copy._from_vector_inplace(vector)
         return self_copy
 
     def __str__(self):
@@ -167,7 +172,10 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return self._h_matrix
 
     def set_h_matrix(self, value, copy=True, skip_checks=False):
-        r"""
+        r"""Deprecated
+        Deprecated - do not use this method - you are better off just creating
+        a new transform!
+
         Updates ``h_matrix``, optionally performing sanity checks.
 
         Note that it won't always be possible to manually specify the
@@ -190,6 +198,9 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         NotImplementedError
             If :attr:`h_matrix_is_mutable` returns ``False``.
         """
+        warn('the public API for mutable operations is deprecated '
+             'and will be removed in a future version of Menpo. '
+             'Create a new transform instead.', MenpoDeprecationWarning)
         if self.h_matrix_is_mutable:
             self._set_h_matrix(value, copy=copy, skip_checks=skip_checks)
         else:
@@ -250,7 +261,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     def _as_vector(self):
         return self.h_matrix.ravel()
 
-    def from_vector_inplace(self, vector):
+    def _from_vector_inplace(self, vector):
         """
         Update the state of this object from a vector form.
 
@@ -259,8 +270,8 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         vector : ``(n_parameters,)`` `ndarray`
             Flattened representation of this object
         """
-        self.set_h_matrix(vector.reshape(self.h_matrix.shape),
-                          copy=True, skip_checks=True)
+        self._set_h_matrix(vector.reshape(self.h_matrix.shape),
+                           copy=True, skip_checks=True)
 
     @property
     def composes_inplace_with(self):

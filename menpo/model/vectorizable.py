@@ -3,17 +3,14 @@ class VectorizableBackedModel(object):
     r"""
     Mixin for models constructed from a set of :map:`Vectorizable` objects.
     Supports models for which visualizing the meaning of a set of components
-    is trivial. Requires that the following attributes to be present:
+    is trivial.
 
-    1. `n_components`
-    2. `components`
-
-    and the following methods implemented:
+    Requires that the following methods are implemented:
 
     1. `component_vector(index)`
-    2. `instance_vectors(weightings)`
+    2. `instance_vector(weights)`
     3. `project_vector(vector)`
-    4. `reconstruct_vectors(vectors, n_components)`
+    4. `reconstruct_vector(vectors)`
     5. `project_out_vector(vector)`
 
     The constructor takes an instance of :map:`Vectorizable`. This is used for

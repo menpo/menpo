@@ -66,7 +66,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         # it's centre
         rescale = scale_about_centre(new_tgt,
                                      self.initial_target_scale / new_tgt.norm())
-        rescale.apply_inplace(new_tgt)
+        rescale._apply_inplace(new_tgt)
         # check to see if we have converged yet
         delta_target = np.linalg.norm(self.target.points - new_tgt.points)
         if delta_target < 1e-6:

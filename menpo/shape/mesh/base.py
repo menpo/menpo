@@ -3,21 +3,84 @@ from collections import Counter
 import numpy as np
 from warnings import warn
 
-Delaunay = None  # expensive, from scipy.spatial
-
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-
 from .normals import compute_normals
 
 
+Delaunay = None  # expensive, from scipy.spatial
+
+
 def trilist_to_adjacency_array(trilist):
+    r"""
+    Turn an ``(M, 3)`` trilist into an adjacency array suitable for building
+    graphs.
+
+    Parameters
+    ----------
+    trilist : ``(M, 3)`` `ndarray`
+        The trilist to transform into an adjacency array
+
+    Returns
+    -------
+    adj_array : ``(M * 3, 2)`` `ndarray`
+        The adjacency array including the edges that complete the triangle
+        which are implicit in a trilist.
+    """
     wrap_around_adj = np.hstack([trilist[:, -1][..., None],
                                  trilist[:, 0][..., None]])
     # Build the array of all pairs
     return np.concatenate([trilist[:, :2],
                            trilist[:, 1:],
                            wrap_around_adj])
+
+
+def subsampled_grid_triangulation(shape, subsampling=1):
+    r"""
+    Create a triangulation based on a regular grid. This will be a right
+    handed triangulation with the separating triangle edge going from
+    the top left of a grid point to the bottom right.
+
+    Optionally, the triangulation can be subsampled which has the effect
+    of skipping points. This is useful for subsampling a dense pointcloud.
+
+    Parameters
+    ----------
+    shape : `tuple` of 2 `int`
+        The size of the grid to assume, this defines the number of points
+        across each dimension in the grid. The first element is the number
+        of rows and the second is the number of columns.
+    subsampling : `int`, optional
+        Will be used to index into the implicit grid and has the effect
+        of subsampling the grid (every subsampling'th vertex is chosen).
+
+    Returns
+    -------
+    trilist : ``(M, 3)`` `ndarray`
+        The triangle list created on an implicit regular grid.
+    """
+    # Quickly create the indices in a grid
+    indices_grid = np.zeros(shape)
+    flat_vals_grid = indices_grid.ravel()
+    flat_vals_grid[:] = np.arange(np.prod(shape))
+
+    # Subsample the grid if necessary - useful for making very dense grids
+    # much sparser
+    indices_grid = indices_grid[::subsampling, ::subsampling]
+
+    # Bottom-left triangles (right handed)
+    tri_down_left = np.concatenate(
+        [indices_grid[:-1, :-1].ravel()[..., None],
+         indices_grid[1:, :-1].ravel()[..., None],
+         indices_grid[1:, 1:].ravel()[..., None]], axis=-1)
+
+    # Top-right triangles (right handed)
+    tri_up_right = np.concatenate(
+        [indices_grid[:-1, :-1].ravel()[..., None],
+         indices_grid[1:, 1:].ravel()[..., None],
+         indices_grid[:-1, 1:].ravel()[..., None]], axis=-1)
+
+    return np.vstack([tri_down_left, tri_up_right]).astype(np.uint32)
 
 
 class TriMesh(PointCloud):
@@ -52,6 +115,41 @@ class TriMesh(PointCloud):
         else:
             trilist = np.array(trilist, copy=True, order='C')
         self.trilist = trilist
+
+    @classmethod
+    def init_2d_grid(cls, shape, spacing=None):
+        r"""
+        Create a TriMesh that exists on a regular 2D grid. The first
+        dimension is the number of rows in the grid and the second dimension
+        of the shape is the number of columns. ``spacing`` optionally allows
+        the definition of the distance between points (uniform over points).
+        The spacing may be different for rows and columns.
+
+        The triangulation will be right-handed and the diagonal will go from
+        the top left to the bottom right of a square on the grid.
+
+        Parameters
+        ----------
+        shape : `tuple` of 2 `int`
+            The size of the grid to create, this defines the number of points
+            across each dimension in the grid. The first element is the number
+            of rows and the second is the number of columns.
+        spacing : `int` or `tuple` of 2 `int`, optional
+            The spacing between points. If a single `int` is provided, this
+            is applied uniformly across each dimension. If a `tuple` is
+            provided, the spacing is applied non-uniformly as defined e.g.
+            ``(2, 3)`` gives a spacing of 2 for the rows and 3 for the
+            columns.
+
+        Returns
+        -------
+        trimesh : :map:`TriMesh`
+            A TriMesh arranged in a grid.
+        """
+        pc = PointCloud.init_2d_grid(shape, spacing=spacing)
+        points = pc.points
+        return cls(points, trilist=subsampled_grid_triangulation(
+            shape, subsampling=1), copy=False)
 
     def __str__(self):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),
@@ -390,12 +488,17 @@ class TriMesh(PointCloud):
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r', line_style='-',
                  line_width=1., render_markers=True, marker_style='o',
-                 marker_size=20, marker_face_colour='k', marker_edge_colour='k',
-                 marker_edge_width=1., render_axes=True,
+                 marker_size=5, marker_face_colour='k', marker_edge_colour='k',
+                 marker_edge_width=1., render_numbering=False,
+                 numbers_horizontal_align='center',
+                 numbers_vertical_align='bottom',
+                 numbers_font_name='sans-serif', numbers_font_size=10,
+                 numbers_font_style='normal', numbers_font_weight='normal',
+                 numbers_font_colour='k', render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8),
-                 label=None):
+                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
+                 axes_y_ticks=None, figure_size=(10, 8), label=None):
         r"""
         Visualization of the TriMesh in 2D.
 
@@ -430,7 +533,7 @@ class TriMesh(PointCloud):
                 {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
@@ -449,6 +552,36 @@ class TriMesh(PointCloud):
 
         marker_edge_width : `float`, optional
             The width of the markers' edge.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : ``{center, right, left}``, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : ``{center, top, bottom, baseline}``, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : See Below, optional
+            The font of the numbers. Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : ``{normal, italic, oblique}``, optional
+            The font style of the numbers.
+        numbers_font_weight : See Below, optional
+            The font weight of the numbers.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        numbers_font_colour : See Below, optional
+            The font colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
         axes_font_name : See Below, optional
@@ -468,10 +601,20 @@ class TriMesh(PointCloud):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the x axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the TriMesh as a percentage of the TriMesh's
+            width. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
         axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the y axis.
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the TriMesh as a percentage of the TriMesh's
+            height. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) `tuple` or ``None``, optional
             The size of the figure in inches.
         label : `str`, optional
@@ -493,12 +636,20 @@ class TriMesh(PointCloud):
                 marker_style=marker_style, marker_size=marker_size,
                 marker_face_colour=marker_face_colour,
                 marker_edge_colour=marker_edge_colour,
-                marker_edge_width=marker_edge_width, render_axes=render_axes,
+                marker_edge_width=marker_edge_width,
+                render_numbering=render_numbering,
+                numbers_horizontal_align=numbers_horizontal_align,
+                numbers_vertical_align=numbers_vertical_align,
+                numbers_font_name=numbers_font_name,
+                numbers_font_size=numbers_font_size,
+                numbers_font_style=numbers_font_style,
+                numbers_font_weight=numbers_font_weight,
+                numbers_font_colour=numbers_font_colour, render_axes=render_axes,
                 axes_font_name=axes_font_name, axes_font_size=axes_font_size,
                 axes_font_style=axes_font_style,
                 axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-                axes_y_limits=axes_y_limits, figure_size=figure_size,
-                label=label)
+                axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+                axes_y_ticks=axes_y_ticks, figure_size=figure_size, label=label)
 
     def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
         r"""

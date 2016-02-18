@@ -2,7 +2,7 @@ import numpy as np
 from menpo.base import Copyable
 
 
-class LinearModel(Copyable):
+class LinearVectorModel(Copyable):
     r"""
     A Linear Model contains a matrix of vector components, each component
     vector being made up of `features`.
@@ -263,7 +263,7 @@ class LinearModel(Copyable):
 
         Parameters
         ----------
-        linear_model : :class:`LinearModel`
+        linear_model : :class:`LinearVectorModel`
             A second linear model to orthonormalize this against.
 
         Raises
@@ -287,7 +287,7 @@ class LinearModel(Copyable):
         self.components = Q[linear_model.n_components:, :]
 
 
-class MeanLinearModel(LinearModel):
+class MeanLinearVectorModel(LinearVectorModel):
     r"""
     A Linear Model containing a matrix of vector components, each component
     vector being made up of `features`. The model additionally has a mean
@@ -304,7 +304,7 @@ class MeanLinearModel(LinearModel):
         The mean vector.
     """
     def __init__(self, components, mean):
-        super(MeanLinearModel, self).__init__(components)
+        super(MeanLinearVectorModel, self).__init__(components)
         self._mean = mean
 
     def mean(self):
@@ -378,8 +378,14 @@ class MeanLinearModel(LinearModel):
         # We don't add the mean back, in fact the residual is defined as
         # the mean subtracted.
         return ((vectors - self._mean[None, ...]) -
-                LinearModel._instance_vectors_for_full_weights(self, weights))
+                LinearVectorModel._instance_vectors_for_full_weights(self, weights))
 
     def _instance_vectors_for_full_weights(self, full_weights):
-        x = LinearModel._instance_vectors_for_full_weights(self, full_weights)
+        x = LinearVectorModel._instance_vectors_for_full_weights(self, full_weights)
         return x + self._mean
+
+
+# TODO: Deprecate in 0.7.0
+# These have been maintained for backwards compatibility
+LinearModel = LinearVectorModel
+MeanLinearModel = MeanLinearVectorModel

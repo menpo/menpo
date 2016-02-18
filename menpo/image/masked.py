@@ -4,6 +4,7 @@ import numpy as np
 binary_erosion = None  # expensive, from scipy.ndimage
 binary_dilation = None  # expensive, from scipy.ndimage
 
+from menpo.base import MenpoDeprecationWarning
 from menpo.visualize.base import ImageViewer
 
 from .base import Image
@@ -346,7 +347,7 @@ class MaskedImage(Image):
         new_image.landmarks = self.landmarks
         return new_image
 
-    def from_vector_inplace(self, vector, copy=True):
+    def _from_vector_inplace(self, vector, copy=True):
         r"""
         Takes a flattened vector and updates this image by reshaping
         the vector to the correct pixels and channels. Note that the only
@@ -374,7 +375,8 @@ class MaskedImage(Image):
                  alpha=1., render_axes=False, axes_font_name='sans-serif',
                  axes_font_size=10, axes_font_style='normal',
                  axes_font_weight='normal', axes_x_limits=None,
-                 axes_y_limits=None, figure_size=(10, 8)):
+                 axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
+                 figure_size=(10, 8)):
         r"""
         View the image using the default image viewer. This method will appear
         on the Image as ``view`` if the Image is 2D.
@@ -426,10 +428,20 @@ class MaskedImage(Image):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the x axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the Image as a percentage of the Image's width. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
         axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the y axis.
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the Image as a percentage of the Image's height. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) `tuple` or ``None``, optional
             The size of the figure in inches.
 
@@ -441,17 +453,13 @@ class MaskedImage(Image):
         mask = self.mask.mask if masked else None
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            self.pixels, channels=channels,
-                           mask=mask).render(render_axes=render_axes,
-                                             axes_font_name=axes_font_name,
-                                             axes_font_size=axes_font_size,
-                                             axes_font_style=axes_font_style,
-                                             axes_font_weight=axes_font_weight,
-                                             axes_x_limits=axes_x_limits,
-                                             axes_y_limits=axes_y_limits,
-                                             figure_size=figure_size,
-                                             interpolation=interpolation,
-                                             cmap_name=cmap_name,
-                                             alpha=alpha)
+                           mask=mask).render(
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
     def _view_landmarks_2d(self, channels=None, masked=True, group=None,
                            with_labels=None, without_labels=None,
@@ -459,7 +467,7 @@ class MaskedImage(Image):
                            interpolation='bilinear', cmap_name=None, alpha=1.,
                            render_lines=True, line_colour=None, line_style='-',
                            line_width=1, render_markers=True, marker_style='o',
-                           marker_size=20, marker_face_colour=None,
+                           marker_size=5, marker_face_colour=None,
                            marker_edge_colour=None, marker_edge_width=1.,
                            render_numbering=False,
                            numbers_horizontal_align='center',
@@ -481,6 +489,7 @@ class MaskedImage(Image):
                            axes_font_name='sans-serif', axes_font_size=10,
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
+                           axes_x_ticks=None, axes_y_ticks=None,
                            figure_size=(10, 8)):
         """
         Visualize the landmarks. This method will appear on the Image as
@@ -544,7 +553,7 @@ class MaskedImage(Image):
                 {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
@@ -668,10 +677,20 @@ class MaskedImage(Image):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold,demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None`` optional
-            The limits of the x axis.
-        axes_y_limits : (`float`, `float`) `tuple` or ``None`` optional
-            The limits of the y axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the Image as a percentage of the Image's width. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the Image as a percentage of the Image's height. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) `tuple` or ``None`` optional
             The size of the figure in inches.
 
@@ -698,7 +717,7 @@ class MaskedImage(Image):
             legend_vertical_spacing, legend_border, legend_border_padding,
             legend_shadow, legend_rounded_corners, render_axes, axes_font_name,
             axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
-            axes_y_limits, figure_size)
+            axes_y_limits, axes_x_ticks, axes_y_ticks, figure_size)
 
     def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True,
                           return_transform=False):
@@ -954,8 +973,31 @@ class MaskedImage(Image):
             If ``False``, the normalization is wrt all pixels, regardless of
             their masking value.
         """
+        warn('the public API for inplace operations is deprecated '
+             'and will be removed in a future version of Menpo. '
+             'Use .normalize_std() instead.', MenpoDeprecationWarning)
         self._normalize_inplace(np.std, mode=mode,
                                 limit_to_mask=limit_to_mask)
+
+    def normalize_std(self, mode='all', limit_to_mask=True):
+        r"""
+        Returns a copy of this image normalized such that it's pixel values
+        have zero mean and unit variance.
+
+        Parameters
+        ----------
+        mode : ``{all, per_channel}``, optional
+            If ``all``, the normalization is over all channels. If
+            ``per_channel``, each channel individually is mean centred and
+            normalized in variance.
+        limit_to_mask : `bool`, optional
+            If ``True``, the normalization is only performed wrt the masked
+            pixels.
+            If ``False``, the normalization is wrt all pixels, regardless of
+            their masking value.
+        """
+        return self._normalize(np.std, mode=mode,
+                               limit_to_mask=limit_to_mask)
 
     def normalize_norm_inplace(self, mode='all', limit_to_mask=True,
                                **kwargs):
@@ -975,12 +1017,45 @@ class MaskedImage(Image):
             If ``False``, the normalization is wrt all pixels, regardless of
             their masking value.
         """
+        warn('the public API for inplace operations is deprecated '
+             'and will be removed in a future version of Menpo. '
+             'Use .normalize_norm() instead.', MenpoDeprecationWarning)
 
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
         self._normalize_inplace(scale_func, mode=mode,
                                 limit_to_mask=limit_to_mask)
+
+    def normalize_norm(self, mode='all', limit_to_mask=True, **kwargs):
+        r"""
+        Returns a copy of this imaage normalized such that it's pixel values
+        have zero mean and its norm equals 1.
+
+        Parameters
+        ----------
+        mode : ``{all, per_channel}``, optional
+            If ``all``, the normalization is over all channels. If
+            ``per_channel``, each channel individually is mean centred and
+            normalized in variance.
+        limit_to_mask : `bool`, optional
+            If ``True``, the normalization is only performed wrt the masked
+            pixels.
+            If ``False``, the normalization is wrt all pixels, regardless of
+            their masking value.
+        """
+
+        def scale_func(pixels, axis=None):
+            return np.linalg.norm(pixels, axis=axis, **kwargs)
+
+        return self._normalize(scale_func, mode=mode,
+                               limit_to_mask=limit_to_mask)
+
+    def _normalize(self, scale_func, mode='all', limit_to_mask=True):
+        new = self.copy()
+        new._normalize_inplace(scale_func, mode=mode,
+                               limit_to_mask=limit_to_mask)
+        return new
 
     def _normalize_inplace(self, scale_func, mode='all', limit_to_mask=True):
         if limit_to_mask:
@@ -1004,14 +1079,14 @@ class MaskedImage(Image):
             normalized_pixels = centered_pixels / scale_factor
 
         if limit_to_mask:
-            self.from_vector_inplace(normalized_pixels.flatten())
+            self._from_vector_inplace(normalized_pixels.flatten())
         else:
-            Image.from_vector_inplace(self,
-                                      normalized_pixels.flatten())
+            Image._from_vector_inplace(self,
+                                       normalized_pixels.flatten())
 
     def constrain_mask_to_landmarks(self, group=None,
-                                    batch_size=None, point_in_pointcloud='pwa',
-                                    trilist=None):
+                                    batch_size=None,
+                                    point_in_pointcloud='pwa'):
         r"""
         Restricts this mask to be equal to the convex hull around the chosen
         landmarks.
@@ -1029,6 +1104,11 @@ class MaskedImage(Image):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
+            If the landmarks in question are an instance of :map:`TriMesh`,
+            the triangulation of the landmarks will be used in the convex
+            hull caculation. If the landmarks are an instance of
+            :map:`PointCloud`, Delaunay triangulation will be used to
+            create a triangulation.
         batch_size : `int` or ``None``, optional
             This should only be considered for large images. Setting this value
             will cause constraining to become much slower. This size indicates
@@ -1045,13 +1125,10 @@ class MaskedImage(Image):
             ((d, n_dims) ndarray) to test and should return a (d, 1) boolean
             ndarray of whether the pixels were inside (True) or outside (False)
             of the :map:`PointCloud`.
-        trilist: ``(t, 3)`` `ndarray`, optional
-            Deprecated. Please provide a Trimesh instead of relying on this
-            parameter.
         """
         self.mask.constrain_to_pointcloud(
-            self.landmarks[group].lms, trilist=trilist,
-            batch_size=batch_size, point_in_pointcloud=point_in_pointcloud)
+            self.landmarks[group].lms, batch_size=batch_size,
+            point_in_pointcloud=point_in_pointcloud)
 
     def build_mask_around_landmarks(self, patch_shape, group=None):
         r"""

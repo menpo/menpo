@@ -66,7 +66,104 @@ def indices_for_image_of_shape(shape):
     return np.indices(shape).reshape([len(shape), -1]).T
 
 
-def channels_to_back(image):
+def normalise_pixels_range(pixels, error_on_unknown_type=True):
+    r"""
+    Normalise the given pixels to the Menpo valid floating point range, [0, 1].
+    This is a single place to handle normalising pixels ranges. At the moment
+    the supported types are uint8 and uint16.
+
+    Parameters
+    ----------
+    pixels : `ndarray`
+        The pixels to normalise in the floating point range.
+    error_on_unknown_type : `bool`, optional
+        If ``True``, this method throws a ``ValueError`` if the given pixels
+        array is an unknown type. If ``False``, this method performs no
+        operation.
+
+    Returns
+    -------
+    normalised_pixels : `ndarray`
+        The normalised pixels in the range [0, 1].
+
+    Raises
+    ------
+    ValueError
+        If ``pixels`` is an unknown type and ``error_on_unknown_type==True``
+    """
+    dtype = pixels.dtype
+    if dtype == np.uint8:
+        max_range = 255.0
+    elif dtype == np.uint16:
+        max_range = 65535.0
+    else:
+        if error_on_unknown_type:
+            raise ValueError('Unexpected dtype ({}) - normalisation range '
+                             'is unknown'.format(dtype))
+        else:
+            # Do nothing
+            return pixels
+    # This multiplication is quite a bit faster than just dividing - will
+    # automatically cast it up to float64
+    return pixels * (1.0 / max_range)
+
+
+def denormalise_pixels_range(pixels, out_dtype):
+    """
+    Denormalise the given pixels array into the range of the given out dtype.
+    If the given pixels are floating point or boolean then the values
+    are scaled appropriately and cast to the output dtype. If the pixels
+    are already the correct dtype they are immediately returned.
+    Floating point pixels must be in the range [0, 1].
+    Currently uint8 and uint16 output dtypes are supported.
+
+    Parameters
+    ----------
+    pixels : `ndarray`
+        The pixels to denormalise.
+    out_dtype : `np.dtype`
+        The numpy data type to output and scale the values into.
+
+    Returns
+    -------
+    out_pixels : `ndarray`
+        Will be in the correct range and will have type ``out_dtype``.
+
+    Raises
+    ------
+    ValueError
+        Pixels are floating point and range outside [0, 1]
+    ValueError
+        Input pixels dtype not in the set {float32, float64, bool}.
+    ValueError
+        Output dtype not in the set {uint8, uint16}
+    """
+    in_dtype = pixels.dtype
+    if in_dtype == out_dtype:
+        return pixels
+
+    if in_dtype == np.float64 or in_dtype == np.float32:
+        p_min = pixels.min()
+        p_max = pixels.max()
+        if p_min < 0.0 or p_max > 1.0:
+            raise ValueError('Unexpected input range [{}, {}] - pixels must be '
+                             'in the range [0, 1]'.format(p_min, p_max))
+    elif in_dtype != np.bool:
+        raise ValueError('Unexpected input dtype ({}) - only float32, float64 '
+                         'and bool supported'.format(in_dtype))
+
+    if out_dtype == np.uint8:
+        max_range = 255.0
+    elif out_dtype == np.uint16:
+        max_range = 65535.0
+    else:
+        raise ValueError('Unexpected output dtype ({}) - normalisation range '
+                         'is unknown'.format(out_dtype))
+
+    return (pixels * max_range).astype(out_dtype)
+
+
+def channels_to_back(pixels):
     r"""
     Roll the channels from the front to the back for an image. If the image
     that is passed is already a numpy array, then that is also fine.
@@ -76,7 +173,7 @@ def channels_to_back(image):
 
     Parameters
     ----------
-    image : `ndarray` or :map:`Image` subclass
+    image : `ndarray`
         The pixels or image to roll the channel back for.
 
     Returns
@@ -84,13 +181,32 @@ def channels_to_back(image):
     rolled_pixels : `ndarray`
         The numpy array of pixels with the channels on the last axis.
     """
-    if isinstance(image, np.ndarray):
-        pixels = image
-    else:
-        pixels = image.pixels
-
     return np.require(np.rollaxis(pixels, 0, pixels.ndim), dtype=pixels.dtype,
                       requirements=['C'])
+
+
+def channels_to_front(pixels):
+    r"""
+    Convert the given pixels array (channels assumed to be at the last axis
+    as is common in other imaging packages) into a numpy array.
+
+    Parameters
+    ----------
+    pixels : ``(H, W, C)`` `buffer`
+        The pixels to convert to the Menpo channels at axis 0.
+
+    Returns
+    -------
+    pixels : ``(C, H, W)`` `ndarray`
+        Numpy array, channels as axis 0.
+    """
+    if not isinstance(pixels, np.ndarray):
+        pixels = np.array(pixels)
+    # Channels to axis 0
+    if pixels.ndim == 3:
+        pixels = np.require(np.rollaxis(pixels, -1), dtype=pixels.dtype,
+                            requirements=['C'])
+    return pixels
 
 
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
@@ -133,16 +249,19 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                      'Please ensure the data you pass is C-contiguous.')
         else:
             image_data = np.array(image_data, copy=True, order='C')
-            # Degenerate case whereby we can just put the extra axis
-            # on ourselves
-            if image_data.ndim == 2:
-                image_data = image_data[None, ...]
-            if image_data.ndim < 2:
-                raise ValueError(
-                    "Pixel array has to be 2D (implicitly 1 channel, "
-                    "2D shape) or 3D+ (n_channels, 2D+ shape) "
-                    " - a {}D array "
-                    "was provided".format(image_data.ndim))
+
+        # Degenerate case whereby we can just put the extra axis
+        # on ourselves
+        if image_data.ndim == 2:
+            # Ensures that the data STAYS C-contiguous
+            image_data = image_data.reshape((1,) + image_data.shape)
+
+        if image_data.ndim < 2:
+            raise ValueError(
+                "Pixel array has to be 2D (implicitly 1 channel, "
+                "2D shape) or 3D+ (n_channels, 2D+ shape) "
+                " - a {}D array "
+                "was provided".format(image_data.ndim))
         self.pixels = image_data
 
     @classmethod
@@ -401,7 +520,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         new_image.landmarks = self.landmarks
         return new_image
 
-    def from_vector_inplace(self, vector, copy=True):
+    def _from_vector_inplace(self, vector, copy=True):
         r"""
         Takes a flattened vector and update this image by
         reshaping the vector to the correct dimensions.
@@ -533,7 +652,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                  render_axes=False, axes_font_name='sans-serif',
                  axes_font_size=10, axes_font_style='normal',
                  axes_font_weight='normal', axes_x_limits=None,
-                 axes_y_limits=None, figure_size=(10, 8)):
+                 axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
+                 figure_size=(10, 8)):
         r"""
         View the image using the default image viewer. This method will appear 
         on the Image as ``view`` if the Image is 2D.
@@ -582,10 +702,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the x axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the Image as a percentage of the Image's width. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
         axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the y axis.
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the Image as a percentage of the Image's height. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) `tuple` or ``None``, optional
             The size of the figure in inches.
 
@@ -600,7 +730,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, figure_size=figure_size)
+            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
@@ -633,7 +764,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                            interpolation='bilinear', cmap_name=None, alpha=1.,
                            render_lines=True, line_colour=None, line_style='-',
                            line_width=1, render_markers=True, marker_style='o',
-                           marker_size=20, marker_face_colour=None,
+                           marker_size=5, marker_face_colour=None,
                            marker_edge_colour=None, marker_edge_width=1.,
                            render_numbering=False,
                            numbers_horizontal_align='center',
@@ -655,6 +786,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                            axes_font_name='sans-serif', axes_font_size=10,
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
+                           axes_x_ticks=None, axes_y_ticks=None,
                            figure_size=(10, 8)):
         """
         Visualize the landmarks. This method will appear on the Image as
@@ -716,7 +848,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
 
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
@@ -840,10 +972,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold,demibold, demi, bold, heavy, extra bold, black}
 
-        axes_x_limits : (`float`, `float`) `tuple` or ``None`` optional
-            The limits of the x axis.
-        axes_y_limits : (`float`, `float`) `tuple` or ``None`` optional
-            The limits of the y axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the Image as a percentage of the Image's width. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the Image as a percentage of the Image's height. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) `tuple` or ``None`` optional
             The size of the figure in inches.
 
@@ -871,36 +1013,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             legend_vertical_spacing, legend_border, legend_border_padding,
             legend_shadow, legend_rounded_corners, render_axes, axes_font_name,
             axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
-            axes_y_limits, figure_size)
-
-    def gradient(self, **kwargs):
-        r"""
-        Returns an :map:`Image` which is the gradient of this one. In the case
-        of multiple channels, it returns the gradient over each axis over
-        each channel as a flat `list`. Take care to note the ordering of
-        the returned gradient (the gradient over each spatial dimension
-        is taken over each channel).
-
-        The first axis of the gradient of a 2D, 3-channel image,
-        will have length `6`, the ordering being
-        ``I[:, 0, 0] = [R0_y, G0_y, B0_y, R0_x, G0_x, B0_x]``. To be clear,
-        all the ``y``-gradients are returned over each channel, then all
-        the ``x``-gradients.
-
-        Returns
-        -------
-        gradient : :map:`Image`
-            The gradient over each axis over each channel. Therefore, the
-            gradient of a 2D, single channel image, will have length `2`.
-            The length of a 2D, 3-channel image, will have length `6`.
-        """
-        warn('gradient() is deprecated and will be removed in'
-             ' the next major version of menpo. '
-             'Please use menpo.feature.gradient instead.',
-             MenpoDeprecationWarning)
-
-        from menpo.feature import gradient as grad_feature
-        return grad_feature(self)
+            axes_y_limits, axes_x_ticks, axes_y_ticks, figure_size)
 
     def crop(self, min_indices, max_indices, constrain_to_boundary=False,
              return_transform=False):
@@ -1158,38 +1271,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             self.mask = cropped.mask
         return self
 
-    def crop_inplace(self, *args, **kwargs):
-        r"""
-        Deprecated: please use :meth:`crop` instead.
-        """
-        warn('crop_inplace() is deprecated and will be removed in the next '
-             'major version of menpo. '
-             'Please use crop() instead.', MenpoDeprecationWarning)
-        cropped = self.crop(*args, **kwargs)
-        return self._propagate_crop_to_inplace(cropped)
-
-    def crop_to_landmarks_inplace(self, *args, **kwargs):
-        r"""
-        Deprecated: please use :meth:`crop_to_landmarks` instead.
-        """
-        warn('crop_to_landmarks_inplace() is deprecated and will be removed in'
-             ' the next major version of menpo. '
-             'Please use crop_to_landmarks() instead.',
-             MenpoDeprecationWarning)
-        cropped = self.crop_to_landmarks(*args, **kwargs)
-        return self._propagate_crop_to_inplace(cropped)
-
-    def crop_to_landmarks_proportion_inplace(self, *args, **kwargs):
-        r"""
-        Deprecated: please use :meth:`crop_to_landmarks_proportion` instead.
-        """
-        warn('crop_to_landmarks_proportion_inplace() is deprecated and will be'
-             ' removed in the next major version of menpo. Please use '
-             'crop_to_landmarks_proportion() instead.',
-             MenpoDeprecationWarning)
-        cropped = self.crop_to_landmarks_proportion(*args, **kwargs)
-        return self._propagate_crop_to_inplace(cropped)
-
     def constrain_points_to_bounds(self, points):
         r"""
         Constrains the points provided to be within the bounds of this image.
@@ -1267,7 +1348,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         else:
             sample_offsets = np.require(sample_offsets, dtype=np.intp)
 
-        single_array = extract_patches(self.pixels, patch_centers.points,
+        patch_centers = np.require(patch_centers.points, dtype=np.float,
+                                   requirements=['C'])
+        single_array = extract_patches(self.pixels, patch_centers,
                                        np.asarray(patch_shape, dtype=np.intp),
                                        sample_offsets)
 
@@ -1510,7 +1593,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image = self._build_warp_to_mask(template_mask, sampled)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse()._apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
         # optionally return the transform
@@ -1537,7 +1620,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         warped_image = MaskedImage.init_blank(template_mask.shape,
                                               n_channels=self.n_channels,
                                               mask=template_mask)
-        warped_image.from_vector_inplace(sampled_pixel_values.ravel())
+        warped_image._from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
     def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
@@ -1689,7 +1772,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # warp landmarks if requested.
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse()._apply_inplace(warped_image.landmarks)
         if hasattr(self, 'path'):
             warped_image.path = self.path
 
@@ -1811,18 +1894,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return self.rescale(diagonal / self.diagonal(), round=round,
                             return_transform=return_transform)
-
-    def rescale_to_reference_shape(self, reference_shape, group=None,
-                                   round='ceil', order=1):
-        r"""
-        Deprecated: please use :meth:`rescale_to_pointcloud` instead.
-        """
-        warn('rescale_to_reference_shape() is deprecated and will be removed '
-             'in the next major version of menpo. '
-             'Please use rescale_to_pointcloud() instead.',
-             MenpoDeprecationWarning)
-        return self.rescale_to_pointcloud(reference_shape, group=group,
-                                          round=round, order=order)
 
     def rescale_to_pointcloud(self, pointcloud, group=None,
                               round='ceil', order=1,
@@ -2251,39 +2322,40 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                     np.array([[1.0, 0.956, 0.621],
                               [1.0, -0.272, -0.647],
                               [1.0, -1.106, 1.703]]))[0, :]
-            pixels = np.einsum('i,ikl->kl', _greyscale_luminosity_coef,
-                               greyscale.pixels)
+            # Compute greyscale via dot product
+            pixels = np.dot(_greyscale_luminosity_coef,
+                            greyscale.pixels.reshape(3, -1))
+            # Reshape image back to original shape (with 1 channel)
+            pixels = pixels.reshape(greyscale.shape)
         elif mode == 'average':
             pixels = np.mean(greyscale.pixels, axis=0)
         elif mode == 'channel':
             if channel is None:
                 raise ValueError("For the 'channel' mode you have to provide"
                                  " a channel index")
-            pixels = greyscale.pixels[channel, ...]
+            pixels = greyscale.pixels[channel]
         else:
             raise ValueError("Unknown mode {} - expected 'luminosity', "
                              "'average' or 'channel'.".format(mode))
 
-        greyscale.pixels = pixels[None, ...]
+        # Set new pixels - ensure channel axis and maintain
+        greyscale.pixels = pixels[None, ...].astype(greyscale.pixels.dtype,
+                                                    copy=False)
         return greyscale
 
-    def as_PILImage(self):
+    def as_PILImage(self, out_dtype=np.uint8):
         r"""
-        Return a PIL copy of the image. Depending on the image data type,
-        different operations are performed:
-
-        ========= ===========================================
-        dtype     Processing
-        ========= ===========================================
-        uint8     No processing, directly converted to PIL
-        bool      Scale by 255, convert to uint8
-        float32   Scale by 255, convert to uint8
-        float64   Scale by 255, convert to uint8
-        OTHER     Raise ValueError
-        ========= ===========================================
+        Return a PIL copy of the image scaled and cast to the correct
+        values for the provided ``out_dtype``.
 
         Image must only have 1 or 3 channels and be 2 dimensional.
-        Non `uint8` images must be in the rage ``[0, 1]`` to be converted.
+        Non `uint8` floating point images must be in the range ``[0, 1]`` to be
+        converted.
+
+        Parameters
+        ----------
+        out_dtype : `np.dtype`, optional
+            The dtype the output array should be.
 
         Returns
         -------
@@ -2293,14 +2365,14 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         Raises
         ------
         ValueError
-            If image is not 2D and 1 channel or 3 channels.
-        ValueError
-            If pixels data type is not `float32`, `float64`, `bool` or `uint8`
+            If image is not 2D and has 1 channel or 3 channels.
         ValueError
             If pixels data type is `float32` or `float64` and the pixel
             range is outside of ``[0, 1]``
+        ValueError
+            If the output dtype is unsupported. Currently uint8 is supported.
         """
-        if self.n_dims != 2 or self.n_channels not in [1, 3]:
+        if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
             raise ValueError(
                 'Can only convert greyscale or RGB 2D images. '
                 'Received a {} channel {}D image.'.format(self.n_channels,
@@ -2311,16 +2383,63 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = self.pixels[0]
         else:
             pixels = channels_to_back(self.pixels)
-        if pixels.dtype in [np.float64, np.float32, np.bool]:  # Type check
-            if np.any((self.pixels < 0) | (self.pixels > 1)):  # Range check
-                raise ValueError('Pixel values are outside the range '
-                                 '[0, 1] - ({}, {}).'.format(self.pixels.min(),
-                                                             self.pixels.max()))
-            else:
-                pixels = (pixels * 255).astype(np.uint8)
-        if pixels.dtype != np.uint8:
-            raise ValueError('Unexpected data type - {}.'.format(pixels.dtype))
+        pixels = denormalise_pixels_range(pixels, out_dtype)
         return PILImage.fromarray(pixels)
+
+    def as_imageio(self, out_dtype=np.uint8):
+        r"""
+        Return an Imageio copy of the image scaled and cast to the correct
+        values for the provided ``out_dtype``.
+
+        Image must only have 1 or 3 channels and be 2 dimensional.
+        Non `uint8` floating point images must be in the range ``[0, 1]`` to be
+        converted.
+
+        Parameters
+        ----------
+        out_dtype : `np.dtype`, optional
+            The dtype the output array should be.
+
+        Returns
+        -------
+        imageio_image : `ndarray`
+            Imageio image (which is just a numpy ndarray with the channels
+            as the last axis).
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D and has 1 channel or 3 channels.
+        ValueError
+            If pixels data type is `float32` or `float64` and the pixel
+            range is outside of ``[0, 1]``
+        ValueError
+            If the output dtype is unsupported. Currently uint8 and uint16
+            are supported.
+        """
+        if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
+            raise ValueError(
+                'Can only convert greyscale or RGB 2D images. '
+                'Received a {} channel {}D image.'.format(self.n_channels,
+                                                          self.n_dims))
+
+        # Slice off the channel for greyscale images
+        if self.n_channels == 1:
+            pixels = self.pixels[0]
+        else:
+            pixels = channels_to_back(self.pixels)
+        return denormalise_pixels_range(pixels, out_dtype)
+
+    def pixels_range(self):
+        r"""
+        The range of the pixel values (min and max pixel values).
+
+        Returns
+        -------
+        min_max : ``(dtype, dtype)``
+            The minimum and maximum value of the pixels array.
+        """
+        return self.pixels.min(), self.pixels.max()
 
     def rolled_channels(self):
         r"""
@@ -2334,7 +2453,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         rolled_channels : `ndarray`
             Pixels with channels as the back (last) axis.
         """
-        return channels_to_back(self)
+        return channels_to_back(self.pixels)
 
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(
@@ -2371,8 +2490,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def normalize_std_inplace(self, mode='all', **kwargs):
         r"""
-        Normalizes this image such that its pixel values have zero mean and
-        unit variance.
+        Deprecated. See the non-mutating API, `normalize_std()`.
+        """
+        warn('the public API for inplace operations is deprecated '
+             'and will be removed in a future version of Menpo. '
+             'Use .normalize_std() instead.', MenpoDeprecationWarning)
+        self._normalize_inplace(np.std, mode=mode)
+
+    def normalize_std(self, mode='all', **kwargs):
+        r"""
+        Returns a copy of this image normalized such that its
+        pixel values have zero mean and unit variance.
 
         Parameters
         ----------
@@ -2381,24 +2509,47 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             ``per_channel``, each channel individually is mean centred and
             normalized in variance.
         """
-        self._normalize_inplace(np.std, mode=mode)
+        return self._normalize(np.std, mode=mode)
 
     def normalize_norm_inplace(self, mode='all', **kwargs):
         r"""
-        Normalizes this image such that its pixel values have zero mean and
-        its norm equals 1.
-
-        Parameters
-        ----------
-        mode : ``{all, per_channel}``, optional
-            If ``all``, the normalization is over all channels. If
-            ``per_channel``, each channel individually is mean centred and
-            normalized in variance.
+        Deprecated. See the non-mutating API, `normalize_norm()`.
         """
+        warn('the public API for inplace operations is deprecated '
+             'and will be removed in a future version of Menpo. '
+             'Use .normalize_norm() instead.', MenpoDeprecationWarning)
+
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
         self._normalize_inplace(scale_func, mode=mode)
+
+    def normalize_norm(self, mode='all', **kwargs):
+        r"""
+        Returns a copy of this image normalized such that its pixel values
+        have zero mean and its norm equals 1.
+
+        Parameters
+        ----------
+        mode : ``{all, per_channel}``, optional
+            If ``all``, the normalization is over all channels. If
+            ``per_channel``, each channel individually is mean centred and
+            normalized in variance.
+
+        Returns
+        -------
+        image : ``type(self)``
+            A copy of this image, normalized.
+        """
+        def scale_func(pixels, axis=None):
+            return np.linalg.norm(pixels, axis=axis, **kwargs)
+
+        return self._normalize(scale_func, mode=mode)
+
+    def _normalize(self, scale_func, mode='all'):
+        new = self.copy()
+        new._normalize_inplace(scale_func, mode=mode)
+        return new
 
     def _normalize_inplace(self, scale_func, mode='all'):
         pixels = self.as_vector(keep_channels=True)
@@ -2417,7 +2568,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             raise ValueError("Image has 0 variance - can't be "
                              "normalized")
         else:
-            self.from_vector_inplace(centered_pixels / scale_factor)
+            self._from_vector_inplace(centered_pixels / scale_factor)
 
     def rescale_pixels(self, minimum, maximum, per_channel=True):
         r"""A copy of this image with pixels linearly rescaled to fit a range.
@@ -2580,11 +2731,13 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     if background == 'black':
         patches_image = Image.init_blank(
             (height, width), n_channels,
-            fill=np.min(patches[patches_indices]))
+            fill=np.min(patches[patches_indices]),
+            dtype=patches.dtype)
     elif background == 'white':
         patches_image = Image.init_blank(
             (height, width), n_channels,
-            fill=np.max(patches[patches_indices]))
+            fill=np.max(patches[patches_indices]),
+            dtype=patches.dtype)
     else:
         raise ValueError('Background must be either ''black'' or ''white''.')
 

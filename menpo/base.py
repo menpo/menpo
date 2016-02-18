@@ -1,5 +1,7 @@
+import collections
 from functools import partial, wraps
 import os.path
+import warnings
 
 
 class Copyable(object):
@@ -28,16 +30,12 @@ class Copyable(object):
             A copy of this object
 
         """
-        # print('copy called on {}'.format(type(self).__name__))
         new = self.__class__.__new__(self.__class__)
         for k, v in self.__dict__.items():
             try:
                 new.__dict__[k] = v.copy()
-                # if not isinstance(v, Copyable):
-                #     alien_copies[type(v).__name__].add(type(self).__name__)
             except AttributeError:
                 new.__dict__[k] = v
-                # non_copies[type(v).__name__].add(type(self).__name__)
         return new
 
 
@@ -90,6 +88,23 @@ class Vectorizable(Copyable):
 
     def from_vector_inplace(self, vector):
         """
+        Deprecated. Use the non-mutating API, :map:`from_vector`.
+
+        For internal usage in performance-sensitive spots,
+        see `_from_vector_inplace()`
+
+        Parameters
+        ----------
+        vector : ``(n_parameters,)`` `ndarray`
+            Flattened representation of this object
+        """
+        warnings.warn('the public API for inplace operations is deprecated '
+                      'and will be removed in a future version of Menpo. '
+                      'Use .from_vector() instead.', MenpoDeprecationWarning)
+        return self._from_vector_inplace(vector)
+
+    def _from_vector_inplace(self, vector):
+        """
         Update the state of this object from a vector form.
 
         Parameters
@@ -120,7 +135,7 @@ class Vectorizable(Copyable):
             An new instance of this class.
         """
         new = self.copy()
-        new.from_vector_inplace(vector)
+        new._from_vector_inplace(vector)
         return new
 
     def has_nan_values(self):
@@ -435,3 +450,119 @@ class doc_inherit(object):
             raise NameError("Can't find '{}' in parents".format(self.name))
         func.__doc__ = source.__doc__
         return func
+
+
+class LazyList(collections.Sequence):
+    r"""
+    An immutable sequence that provides the ability to lazily access objects.
+    In truth, this sequence simply wraps a list of callables which are then
+    indexed and invoked. However, if the callable represents a function that
+    lazily access memory, then this list simply implements a lazy list
+    paradigm.
+
+    When slicing, another `LazyList` is returned, containing the subset
+    of callables.
+
+    Parameters
+    ----------
+    callables : list of `callable`
+        A list of `callable` objects that will be invoked if directly indexed.
+    """
+
+    def __init__(self, callables):
+        self._callables = callables
+
+    def __getitem__(self, slice_):
+        if isinstance(slice_, int) or hasattr(slice_, '__index__'):
+            # PEP 357 and single integer index access - returns element
+            return self._callables[slice_]()
+        elif isinstance(slice_, collections.Iterable):
+            # An iterable object is passed - return a new LazyList
+            return LazyList([self._callables[s] for s in slice_])
+        else:
+            # A slice or unknown type is passed - let List handle it
+            return LazyList(self._callables[slice_])
+
+    def __len__(self):
+        return len(self._callables)
+
+    @classmethod
+    def init_from_index_callable(cls, f, n_elements):
+        r"""
+        Create a lazy list from a `callable` that expects a single parameter,
+        the index into an underlying sequence. This allows for simply
+        creating a `LazyList` from a `callable` that likely wraps
+        another list in a closure.
+
+        Parameters
+        ----------
+        f : `callable`
+            Callable expecting a single integer parameter, index. This is an
+            index into (presumably) an underlying sequence.
+        n_elements : `int`
+            The number of elements in the underlying sequence.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A LazyList where each element returns the underlying indexable
+            object wrapped by ``f``.
+        """
+        return cls([partial(f, i) for i in range(n_elements)])
+
+    def map(self, f):
+        r"""
+        Create a new LazyList where the passed callable ``f`` wraps
+        each element.
+
+        ``f`` should take a single parameter, ``x``, that is the result
+        of the underlying callable -  it must also return a value. Note that
+        mapping is lazy and thus calling this function should return
+        immediately.
+
+        Parameters
+        ----------
+        f : `callable`
+            Callable to wrap each element with.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A new LazyList where each element is wrapped by ``f``.
+        """
+        # We need this delayed helper function in order to ensure that f
+        # is passed the actual instantiated object and not the callable itself.
+        def delayed(x2):
+            return f(x2())
+        return self.__class__([partial(delayed, x) for x in self._callables])
+
+    def __add__(self, other):
+        r"""
+        Create a new LazyList from this list and the given list. The passed list
+        items will be concatenated to the end of this list to give a new
+        LazyList that contains the concatenation of the two lists.
+
+        If a Python list is passed then the elements are wrapped in a function
+        that just returns their values to maintain the callable nature of
+        LazyList elements.
+
+        Parameters
+        ----------
+        other : `collections.Sequence`
+            Sequence to concatenate with this list.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A new LazyList formed of the concatenation of this list and
+            the ``other`` list.
+        """
+        # If the passed Sequence was not lazy then fake it being lazy by
+        # wrapping it in a function that just returns the value.
+        if not isinstance(other, LazyList):
+            def empty_f(a):
+                return a
+            new_callables = [partial(empty_f, x) for x in other]
+        else:
+            new_callables = list(other._callables)
+        return self.__class__(list(self._callables) + new_callables)

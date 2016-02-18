@@ -540,7 +540,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         :type: `list` of `str`
         """
-        return self._labels_to_masks.keys()
+        # Convert to list so that we can index immediately, as keys()
+        # is a generator in Python 3
+        return list(self._labels_to_masks.keys())
 
     @property
     def n_labels(self):
@@ -704,7 +706,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                  figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour=None, line_style='-',
                  line_width=1, render_markers=True, marker_style='o',
-                 marker_size=20, marker_face_colour=None,
+                 marker_size=5, marker_face_colour=None,
                  marker_edge_colour=None, marker_edge_width=1.,
                  render_numbering=False, numbers_horizontal_align='center',
                  numbers_vertical_align='bottom',
@@ -721,7 +723,8 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                  legend_rounded_corners=False, render_axes=True,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, figure_size=(10, 8)):
+                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
+                 axes_y_ticks=None, figure_size=(10, 8)):
         """
         Visualize the landmark group.
 
@@ -759,7 +762,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                         ``1``, ``2``, ``3``, ``4``, ``8``}, optional
             The style of the markers.
         marker_size : `int`, optional
-            The size of the markers in points^2.
+            The size of the markers in points.
         marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
                              or ``(3, )`` `ndarray`, optional
             The face (filling) colour of the markers.
@@ -857,10 +860,20 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                             ``demibold``, ``demi``, ``bold``, ``heavy``,
                             ``extra bold``, ``black``}, optional
             The font weight of the axes.
-        axes_x_limits : (`float`, `float`) or `None`, optional
-            The limits of the x axis.
-        axes_y_limits : (`float`, `float`) or `None`, optional
-            The limits of the y axis.
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the LandmarkGroup as a percentage of the
+            LandmarkGroup's width. If `tuple` or `list`, then it defines the axis
+            limits. If ``None``, then the limits are set automatically.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the LandmarkGroup as a percentage of the
+            LandmarkGroup's height. If `tuple` or `list`, then it defines the
+            axis limits. If ``None``, then the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
         figure_size : (`float`, `float`) or `None`, optional
             The size of the figure in inches.
 
@@ -917,7 +930,8 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             render_axes=render_axes, axes_font_name=axes_font_name,
             axes_font_size=axes_font_size, axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, figure_size=figure_size)
+            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
     def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
         try:

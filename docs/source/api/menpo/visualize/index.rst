@@ -38,3 +38,13 @@ Print Utilities
   print_dynamic
   progress_bar_str
   bytes_str
+
+
+Various
+-------
+
+.. toctree::
+  :maxdepth: 1
+
+  plot_curve
+  plot_gaussian_ellipses

@@ -13,8 +13,8 @@ Abstract Classes
 .. toctree::
   :maxdepth: 1
 
-  LinearModel
-  MeanLinearModel
+  LinearVectorModel
+  MeanLinearVectorModel
 
 
 Principal Component Analysis
@@ -25,3 +25,13 @@ Principal Component Analysis
 
   PCAModel
   PCAVectorModel
+
+
+Gaussian Markov Random Field
+----------------------------
+
+.. toctree::
+  :maxdepth: 1
+
+  GMRFModel
+  GMRFVectorModel

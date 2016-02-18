@@ -152,6 +152,7 @@ _labeller_docs = r"""
         expected number of points.
 """
 
+
 def labeller_func(group_label=None):
     r"""
     Decorator for labelling functions. Labelling functions should return

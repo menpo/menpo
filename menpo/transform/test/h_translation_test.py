@@ -72,12 +72,6 @@ def test_translation_3d_n_parameters():
     assert (t.n_parameters == 3)
 
 
-@raises(NotImplementedError)
-def test_translation_set_h_matrix_raises_notimplementederror():
-    t = Translation([3, 4])
-    t.set_h_matrix(t.h_matrix)
-
-
 def test_translation_from_list():
     t_a = Translation([3, 4])
     t_b = Translation(np.array([3, 4]))

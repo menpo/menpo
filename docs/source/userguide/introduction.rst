@@ -25,6 +25,7 @@ containers. The features of each of the data containers is explained in great
 detail in the notebooks - here we just list them to give you a feel for what
 to expect:
 
+- :map:`LazyList` - a list that calls a function when indexed
 - :map:`Image` - n-dimensional image with k-channels of data
 - :map:`MaskedImage` - As :map:`Image`, but with a boolean mask
 - :map:`BooleanImage` - As boolean image that is used for masking images.

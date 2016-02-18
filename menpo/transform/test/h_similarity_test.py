@@ -68,12 +68,6 @@ def test_similarity_3d_n_parameters_raises_notimplementederror():
     t.n_parameters
 
 
-@raises(NotImplementedError)
-def test_similarity_set_h_matrix_raises_notimplementederror():
-    s = Similarity(np.eye(3))
-    s.set_h_matrix(s.h_matrix)
-
-
 def test_similarity_identity_2d():
     assert_allclose(Similarity.init_identity(2).h_matrix,
                     np.eye(3))

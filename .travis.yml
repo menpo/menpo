@@ -2,7 +2,6 @@ sudo: false
 
 os:
 - linux
-#- osx  for now our own build bot is much faster
 
 git:
   depth: 200
@@ -13,6 +12,7 @@ env:
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.4
+    - PYTHON_VERSION: 3.5
 
 install:
 - wget https://raw.githubusercontent.com/menpo/condaci/v0.4.8/condaci.py -O condaci.py
@@ -28,3 +28,9 @@ notifications:
     on_success: :change
     on_failure: :change
   email: false
+
+after_success:
+  - ~/miniconda/bin/conda install coveralls -y
+  - cp ~/miniconda/conda-bld/test-tmp_dir/.coverage ./.coverage
+  - ~/miniconda/bin/coveralls
+

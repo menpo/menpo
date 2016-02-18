@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from menpo.transform import (Affine, Similarity, Rotation, Scale,
@@ -227,7 +229,7 @@ def test_uniformscale2d_update_from_vector():
                      [0, new_scale, 0],
                      [0, 0, 1]])
 
-    uniform_scale.from_vector_inplace(new_scale)
+    uniform_scale._from_vector_inplace(new_scale)
     assert_equal(uniform_scale.h_matrix, homo)
 
 
@@ -254,7 +256,7 @@ def test_nonuniformscale2d_update_from_vector():
                      [0, scale[1], 0],
                      [0, 0, 1]])
     tr = NonUniformScale(np.array([1, 2]))
-    tr.from_vector_inplace(scale)
+    tr._from_vector_inplace(scale)
     assert_equal(tr.h_matrix, homo)
 
 
@@ -448,36 +450,14 @@ def test_nonuniformscale_from_list():
     assert(np.all(u_a.h_matrix == u_b.h_matrix))
 
 
-# Test set_h_matrix is not allowed on similarity subclasses + uniformscale
+# Test set_h_matrix is deprecated (and disabled)
 
 @raises(NotImplementedError)
-def test_similarity_set_h_matrix_raises_notimplementederror():
-    s = Similarity(np.eye(3))
-    s.set_h_matrix(s.h_matrix)
-
-
-@raises(NotImplementedError)
-def test_translation_set_h_matrix_raises_notimplementederror():
-    t = Translation([3, 4])
-    t.set_h_matrix(t.h_matrix)
-
-
-@raises(NotImplementedError)
-def test_rotation_set_h_matrix_raises_notimplementederror():
-    r = Rotation(np.array([[1, 0], [0, 1]]))
-    r.set_h_matrix(r.h_matrix)
-
-
-@raises(NotImplementedError)
-def test_uniformscale_set_h_matrix_raises_notimplementederror():
-    s = UniformScale(2, 3)
-    s.set_h_matrix(s.h_matrix)
-
-
-@raises(NotImplementedError)
-def test_nonuniformscale_set_h_matrix_raises_notimplementederror():
-    s = NonUniformScale([2, 3, 4])
-    s.set_h_matrix(s.h_matrix)
+def test_homogenous_set_h_matrix_raises_notimplementederror():
+    s = Homogeneous(np.eye(4))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        s.set_h_matrix(s.h_matrix)
 
 
 def test_homogeneous_print():
@@ -540,5 +520,5 @@ def test_homogeneous_from_vector_inplace():
     h = Homogeneous(np.eye(3))
     e = np.eye(3) * 2
     e[2, 2] = 1
-    h.from_vector_inplace(e.ravel())
+    h._from_vector_inplace(e.ravel())
     assert_allclose(h.h_matrix, e)

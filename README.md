@@ -1,6 +1,5 @@
 [![Stories in Ready][waffle_shield]][waffle]
 [![Build Status][travis_shield]][travis]
-[![Coverage Status][coveralls_shield]][coveralls]
 [![PyPI Release][pypi_shield]][pypi]
 [![BSD License][bsd_shield]][bsd]
 
@@ -52,17 +51,39 @@ as simple as possible, we suggest that you use conda too! To try and persuade
 you, go to the [Menpo website](http://www.menpo.io/installation/) to find 
 installation instructions for all major platforms.
 
+If you feel strongly about using Menpo with the most commonly used Python
+package management system, `pip`, then you should be able to install
+Menpo as follows:
+
+```
+> pip install cython numpy
+> pip install menpo
+```
+
+However, this may be difficult to achieve on platforms such as Windows where
+a compiler would need to be correctly configured. Therefore, we strongly
+advocate the use of [conda](http://conda.pydata.org/docs/) which does
+not require compilation for installing Menpo (or Numpy, SciPy or Matplotlib
+for that matter). Installation via `conda` is as simple as
+
+```
+> conda install -c menpo menpo
+```
+
+And has the added benefit of installing a number of commonly used scientific
+packages such as SciPy and Numpy as Menpo also makes use of these packages.
+
 Usage
 -----
-Menpo makes extensive use of IPython Notebooks to explain functionality of the 
+Menpo makes extensive use of Jupyter Notebooks to explain functionality of the 
 package. These Notebooks are hosted in the 
 [menpo/menpo-notebooks](https://github.com/menpo/menpo-notebooks) repository. 
 We strongly suggest that after installation you:
 
   1. Download the [latest version of the notebooks][notebooks_gh]
-  2. Run `ipython notebook`
-  3. Play around with the notebooks.
-
+  2. Conda install Jupyter notebook and IPython: `conda install jupyter ipython notebook`
+  3. Run `jupyter notebook`
+  4. Play around with the notebooks.
   
 [notebooks_gh]: https://github.com/menpo/menpo-notebooks/releases
 
@@ -86,10 +107,15 @@ a number of more specific libraries that rely on the core components of Menpo:
     are wrapped, they may not be compatible with this BSD license. Therefore, 
     we urge caution be taken when interacting with this library for 
     non-academic purposes.
+  - [menpowidgets][mw_gh]: This package provides high level object
+    viewing classes using Matplotlib and Jupyter. Jupyter notebooks
+    are therefore required to this package - and Menpo also
+    implicitly relies on menpowidgets for any widget functionality.
   
 [mf_gh]: https://github.com/menpo/menpofit
 [m3d_gh]: https://github.com/menpo/menpo3d
 [md_gh]: https://github.com/menpo/menpodetect
+[mw_gh]: https://github.com/menpo/menpowidgets
 
 Documentation
 -------------
@@ -98,33 +124,16 @@ See our documentation on [ReadTheDocs](http://menpo.readthedocs.org)
 Testing
 -------
 We use [nose](https://nose.readthedocs.org/en/latest/) for unit tests. 
-You can check our current coverage on 
-[coveralls](https://coveralls.io/r/menpo/menpo).
 
-After installing `nose`, running
+After installing `nose` and `mock`, running
 
     >> nosetests .
 
 from the top of the repository will run all of the unit tests.
-
 
 Some small parts of Menpo are only available if the user has some optional
 dependency installed. These are:
 
 - 3D viewing methods, only available if `menpo3d` is installed
 - `menpo.feature.dsift` only available if `cyvlfeat` is installed
-
-If you are running the test suite in an environment **without** `cyvlfeat`,
-call
-
-    >> nosetests -a '!cyvlfeat' .
-
-to avoid testing features dependent on `cyvlfeat`.
-
-If you are running the test suite in an environment that **contains**
-`menpo3d`, call
-
-    >> nosetests -a '!viewing' .
-
-to avoid testing the behavior of `menpo` in the absence of `menpo3d`.
-
+- Widgets are only available if `menpowidgets` is installed
