@@ -1,18 +1,21 @@
-[![Stories in Ready][waffle_shield]][waffle]
-[![Build Status][travis_shield]][travis]
+[![Coverage Status][coveralls_shield]][coveralls]
 [![PyPI Release][pypi_shield]][pypi]
 [![BSD License][bsd_shield]][bsd]
 
-[waffle]: https://waffle.io/menpo/menpo
-[waffle_shield]: https://badge.waffle.io/menpo/menpo.png?label=ready&title=Ready
-[travis]: https://travis-ci.org/menpo/menpo
-[travis_shield]: http://img.shields.io/travis/menpo/menpo.svg?style=flat
+
+![Python 2.7 Support][python27]
+![Python 3.4 Support][python34]
+![Python 3.5 Support][python35]
+
 [coveralls]: https://coveralls.io/r/menpo/menpo
 [coveralls_shield]: http://img.shields.io/coveralls/menpo/menpo.svg?style=flat
 [pypi]: https://pypi.python.org/pypi/menpo
 [pypi_shield]: http://img.shields.io/pypi/v/menpo.svg?style=flat
 [bsd]: https://github.com/menpo/menpo/blob/master/LICENSE.txt
 [bsd_shield]: http://img.shields.io/badge/License-BSD-green.svg
+[python27]: https://img.shields.io/badge/Python-2.7-green.svg
+[python34]: https://img.shields.io/badge/Python-3.4-green.svg
+[python35]: https://img.shields.io/badge/Python-3.5-green.svg
 
 IMPORTANT
 =========
@@ -70,8 +73,22 @@ for that matter). Installation via `conda` is as simple as
 > conda install -c menpo menpo
 ```
 
+#### Build Status
 And has the added benefit of installing a number of commonly used scientific
 packages such as SciPy and Numpy as Menpo also makes use of these packages.
+
+|  CI Host |                 OS                |                      Build Status                     |
+|:--------:|:---------------------------------:|:-----------------------------------------------------:|
+| Travis   | Ubuntu 12.04 (x64)                | [![Travis Build Status][travis_shield]][travis]       |
+| Jenkins  | OSX 10.10 (x64)                   | [![Jenkins Build Status][jenkins_shield]][jenkins]    |
+| Appveyor | Windows Server 2012 R2 (x86, x64) | [![Appveyor Build Status][appveyor_shield]][appveyor] |
+
+[travis]: https://travis-ci.org/menpo/menpo
+[travis_shield]: http://img.shields.io/travis/menpo/menpo.svg?style=flat
+[appveyor]: https://ci.appveyor.com/project/jabooth/menpo
+[appveyor_shield]: https://ci.appveyor.com/api/projects/status/github/menpo/menpo?svg=true
+[jenkins]: http://jenkins.menpo.org/view/menpo/job/menpo
+[jenkins_shield]: http://jenkins.menpo.org/buildStatus/icon?job=menpo
 
 Usage
 -----
