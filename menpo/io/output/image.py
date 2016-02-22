@@ -14,4 +14,8 @@ def PILExporter(image, file_handle):
         The file to write in to
     """
     pil_image = image.as_PILImage()
+    import sys
+    if sys.version_info >= (3, 4):
+       from pathlib import Path
+       file_handle = Path(file_handle.name)
     pil_image.save(file_handle)
