@@ -1,3 +1,4 @@
+from os.path import sep as PATH_SEP
 from mock import patch
 from pathlib import Path
 from nose.tools import raises
@@ -22,7 +23,7 @@ def test_glob_parse_contains_dir_glob_no_sort(mock_glob):
     mock_glob.return_value = ['/tmp/a/test.test', '/tmp/b/test.test']
     result = list(_pathlib_glob_for_pattern(path, sort=False))
     assert len(result) == 2
-    mock_glob.assert_called_with('**/*')
+    mock_glob.assert_called_with('**/*'.replace('/', PATH_SEP))
 
 
 @patch('menpo.io.input.base.Path.glob')
@@ -32,7 +33,7 @@ def test_glob_parse_sort(mock_glob):
     result = list(_pathlib_glob_for_pattern(path, sort=True))
     assert len(result) == 2
     assert result[0] == mock_glob.return_value[1]
-    mock_glob.assert_called_with('**/*')
+    mock_glob.assert_called_with('**/*'.replace('/', PATH_SEP))
 
 
 def test_parse_extension_given_extension():
