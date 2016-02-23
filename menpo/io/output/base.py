@@ -130,11 +130,10 @@ def export_video(images, filepath, overwrite=False, fps=30, **kwargs):
     exporter_kwargs = {'fps': fps}
     exporter_kwargs.update(kwargs)
     path_filepath = _validate_filepath(Path(filepath), overwrite)
-    extension = _parse_and_validate_extension(filepath, None, video_types)
+    extension = _parse_and_validate_extension(path_filepath, None, video_types)
 
     export_function = _extension_to_export_function(extension, video_types)
-    export_function(images, path_filepath, extension=extension,
-                    **exporter_kwargs)
+    export_function(images, path_filepath, **exporter_kwargs)
 
 
 def export_pickle(obj, fp, overwrite=False, protocol=2):
