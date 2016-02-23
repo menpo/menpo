@@ -37,6 +37,7 @@ image_types = {
 
 pickle_types = {
     '.pkl': pickle_export,
+    '.pkl.gz': pickle_export,
 }
 
 

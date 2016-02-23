@@ -1,4 +1,4 @@
-def PILExporter(image, file_handle):
+def PILExporter(image, file_handle, extension='', **kwargs):
     r"""
     Given a file handle to write in to (which should act like a Python `file`
     object), write out the image data. No value is returned.
@@ -13,5 +13,15 @@ def PILExporter(image, file_handle):
     file_handle : `file`-like object
         The file to write in to
     """
+    from PIL.Image import EXTENSION
     pil_image = image.as_PILImage()
-    pil_image.save(file_handle)
+    # Also, the format kwarg of PIL/Pillow is a bit confusing and actually
+    # refers to the underlying algorithm and not the extension. Therefore,
+    # we need to reach into PIL/Pillow and grab the correct format for our
+    # given extension.
+    try:
+        pil_extension = EXTENSION[extension]
+    except KeyError:
+        raise ValueError('PIL/Pillow does not support the provided '
+                         'extension: ({})'.format(extension))
+    pil_image.save(file_handle, format=pil_extension)

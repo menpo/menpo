@@ -25,8 +25,8 @@ def export_landmark_file(landmark_group, fp, extension=None, overwrite=False):
     ----------
     landmark_group : :map:`LandmarkGroup`
         The landmark group to export.
-    fp : `str` or `file`-like object
-        The string path or file-like object to save the object at/into.
+    fp : `Path` or `file`-like object
+        The Path or file-like object to save the object at/into.
     extension : `str` or None, optional
         The extension to use, this must match the file path if the file
         path is a string. Determines the type of exporter that is used.
@@ -53,7 +53,7 @@ def export_landmark_file(landmark_group, fp, extension=None, overwrite=False):
 def export_image(image, fp, extension=None, overwrite=False):
     r"""
     Exports a given image. The ``fp`` argument can be either
-    a `str` or any Python type that acts like a file. If a file is provided,
+    a `Path` or any Python type that acts like a file. If a file is provided,
     the ``extension`` kwarg **must** be provided. If no
     ``extension`` is provided and a `str` filepath is provided, then
     the export type is calculated based on the filepath extension.
@@ -65,8 +65,8 @@ def export_image(image, fp, extension=None, overwrite=False):
     ----------
     image : :map:`Image`
         The image to export.
-    fp : `str` or `file`-like object
-        The string path or file-like object to save the object at/into.
+    fp : `Path` or `file`-like object
+        The Path or file-like object to save the object at/into.
     extension : `str` or None, optional
         The extension to use, this must match the file path if the file
         path is a string. Determines the type of exporter that is used.
@@ -93,9 +93,8 @@ def export_image(image, fp, extension=None, overwrite=False):
 def export_video(images, filepath, overwrite=False, fps=30, **kwargs):
     r"""
     Exports a given list of images as a video. The ``filepath`` argument is
-    a `str` representing the path to save the video to. If a file is provided,
-    the ``extension`` kwarg **must** be provided. The export type is calculated
-    based on the filepath extension.
+    a `Path` representing the path to save the video to. At this time,
+    it is not possible to export videos directly to a file buffer.
 
     Due to the mix of string and file types, an explicit overwrite argument is
     used which is ``False`` by default.
@@ -106,8 +105,9 @@ def export_video(images, filepath, overwrite=False, fps=30, **kwargs):
     ----------
     images : list of :map:`Image`
         The images to export as a video.
-    filepath : `str`
-        The string path to save the video at.
+    filepath : `Path`
+        The Path to save the video at. File buffers are not supported, unlike
+        other exporting formats.
     overwrite : `bool`, optional
         Whether or not to overwrite a file if it already exists.
     fps : `int`, optional
@@ -122,23 +122,26 @@ def export_video(images, filepath, overwrite=False, fps=30, **kwargs):
     ValueError
         File already exists and ``overwrite`` != ``True``
     ValueError
+        The input is a file buffer and not a valid `Path`
+    ValueError
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
     exporter_kwargs = {'fps': fps}
     exporter_kwargs.update(kwargs)
-    path_filepath = _validate_filepath(str(filepath), None, overwrite)
+    path_filepath = _validate_filepath(Path(filepath), overwrite)
+    extension = _parse_and_validate_extension(filepath, None, video_types)
 
-    export_function = _extension_to_export_function(
-        path_filepath.suffix, video_types)
-    export_function(images, path_filepath, **exporter_kwargs)
+    export_function = _extension_to_export_function(extension, video_types)
+    export_function(images, path_filepath, extension=extension,
+                    **exporter_kwargs)
 
 
 def export_pickle(obj, fp, overwrite=False, protocol=2):
     r"""
     Exports a given collection of Python objects with Pickle.
 
-    The ``fp`` argument can be either a `str` or any Python type that acts like
+    The ``fp`` argument can be either a `Path` or any Python type that acts like
     a file.
     If ``fp`` is a path, it must have the suffix `.pkl` or `.pkl.gz`. If
     `.pkl`, the object will be pickled using Pickle protocol 2 without
@@ -153,7 +156,7 @@ def export_pickle(obj, fp, overwrite=False, protocol=2):
     ----------
     obj : ``object``
         The object to export.
-    fp : `str` or `file`-like object
+    fp : `Path` or `file`-like object
         The string path or file-like object to save the object at/into.
     overwrite : `bool`, optional
         Whether or not to overwrite a file if it already exists.
@@ -184,19 +187,36 @@ def export_pickle(obj, fp, overwrite=False, protocol=2):
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    if isinstance(fp, Path):
-        fp = str(fp)  # cheeky conversion to string to reuse existing code
     if isinstance(fp, basestring):
+        fp = Path(fp)  # cheeky conversion to Path to reuse existing code
+    if isinstance(fp, Path):
         # user provided a path - if it ended .gz we will compress
-        path_filepath = _validate_filepath(fp, '.pkl', overwrite)
-        o = gzip_open if path_filepath.suffix == '.gz' else open
+        path_filepath = _validate_filepath(fp, overwrite)
+        extension = _parse_and_validate_extension(path_filepath, None,
+                                                  pickle_types)
+        o = gzip_open if extension[-3:] == '.gz' else open
         with o(str(path_filepath), 'wb') as f:
             # force overwrite as True we've already done the check above
-            _export(obj, f, pickle_types, '.pkl', True, protocol=protocol)
+            _export(obj, f, pickle_types, extension, True, protocol=protocol)
     else:
         _export(obj, fp, pickle_types, '.pkl', overwrite, protocol=protocol)
 
+
 def _normalise_extension(extension):
+    r"""
+    Simple function that takes a given extension string and ensures that it
+    is lower case and contains the leading period e.g. ('.jpg')
+
+    Parameters
+    ----------
+    extension : `str`
+        The string extension.
+
+    Returns
+    -------
+    norm_extension : `str`
+        The normalised extension, lower case with '.' prefix.
+    """
     # Account for the fact the user may only have passed the extension
     # without the proceeding period
     if extension[0] is not '.':
@@ -205,53 +225,169 @@ def _normalise_extension(extension):
 
 
 def _extension_to_export_function(extension, extensions_map):
+    r"""
+    Simple function that wraps the extensions map indexing and raises
+    a user friendly ``ValueError``
+
+    Parameters
+    ----------
+    extension : `str`
+        The string extension with period prefix e.g '.jpg'
+    extensions_map : `dict` of `str` -> `callable`
+        The extension map that maps extensions to export callables.
+
+    Returns
+    -------
+    mapping_callable : `callable`
+        The callable that performs exporting.
+
+    Raises
+    ------
+    ValueError
+        If ``extensions_map`` does not contain ``extension``. More friendly
+        than the ``KeyError`` that would be raised.
+    """
+    # This just ensures that a sensible, user friendly Exception is raised.
     try:
-        extension = _normalise_extension(extension)
-        return extensions_map[extension.lower()]
+        return extensions_map[extension]
     except KeyError:
-        raise ValueError('The output file extension provided is not currently '
-                         'supported.')
+        raise ValueError('The output file extension ({}) provided is not '
+                         'currently supported.'.format(extension))
 
 
-def _validate_filepath(fp, extension, overwrite):
-    path_filepath = Path(_norm_path(fp))
+def _validate_filepath(fp, overwrite):
+    r"""
+    Normalise a given file path and ensure that ``overwrite == True`` if the
+    file path exists. Normalisation involves things like making the given
+    path absolute and expanding environment variables and user variables.
+
+    Parameters
+    ----------
+    fp : `Path`
+        The file path.
+    overwrite : `bool`
+        Whether the export method should override an existing file at the
+        file path.
+
+    Returns
+    -------
+    normalised_filepath : `Path`
+        The normalised file path.
+
+    Raises
+    ------
+    ValueError
+        If ``overwrite == False`` and a file already exists at the file path.
+    """
+    path_filepath = _norm_path(fp)
     if path_filepath.exists() and not overwrite:
         raise ValueError('File already exists. Please set the overwrite '
                          'kwarg if you wish to overwrite the file.')
-    if extension is not None:
-        # use .suffixes[0] to handle compression suffixes correctly (see below)
-        filepath_suffix = path_filepath.suffixes[0]
-        # we couldn't find an exporter for all the suffixes (e.g .foo.bar)
-        # maybe the file stem has '.' in it? -> try again but this time just use
-        # the final suffix (.bar). (Note we first try '.foo.bar' as we want to
-        # catch cases like 'pkl.gz')
-        if _normalise_extension(extension) != filepath_suffix and len(path_filepath.suffixes) > 1:
-            filepath_suffix = path_filepath.suffix
-        if _normalise_extension(extension) != filepath_suffix:
-            raise ValueError('The file path extension must match the '
-                             'requested file extension.')
     return path_filepath
 
 
-def _export(obj, fp, extensions_map, extension, overwrite, protocol=None):
-    if isinstance(fp, Path):
-        fp = str(fp)  # cheeky conversion to string to reuse existing code
-    if isinstance(fp, basestring):
-        path_filepath = _validate_filepath(fp, extension, overwrite)
+def _parse_and_validate_extension(path_filepath, extension, extensions_map):
+    r"""
+    If an extension is given, validate that the given file path matches
+    the given extension.
 
-        export_function = _extension_to_export_function(
-            path_filepath.suffix, extensions_map)
+    If not, parse the file path and return a correct extension. This function
+    will handle cases such as file names with periods in.
+
+    Parameters
+    ----------
+    path_filepath : `Path`
+        The file path (normalised).
+    extension : `str`
+        The extension provided by the user.
+    extensions_map : `dict` of `str` -> `callable`
+        A dictionary mapping extensions to export callables.
+
+    Returns
+    -------
+    norm_extension : `str`
+        The correct extension, with leading period.
+
+    Raises
+    ------
+    ValueError
+        Unknown extension.
+    ValueError
+        File path contains extension that does not EXACTLY match the users'
+        provided extension.
+    """
+    # If an explicit extension is passed, it must match exactly. However, file
+    # names may contain periods, and therefore we need to try and parse
+    # a known extension from the given file path.
+    suffixes = path_filepath.suffixes
+    i = 1
+    while i < len(suffixes) + 1:
+        try:
+            suffix = ''.join(suffixes[-i:])
+            _extension_to_export_function(suffix, extensions_map)
+            known_extension = suffix
+            break
+        except ValueError:
+            pass
+        i += 1
+    else:
+        raise ValueError('Unknown file extension passed: ({})'.format(
+            ''.join(suffixes)))
+
+    if extension is not None:
+        extension = _normalise_extension(extension)
+        if extension != known_extension:
+            raise ValueError('The file path extension must match the '
+                             'requested file extension: ({}) != ({}).'.format(
+                               extension, known_extension))
+        known_extension = extension
+    return known_extension
+
+
+def _export(obj, fp, extensions_map, extension, overwrite, protocol=None):
+    r"""
+    The shared export function. This handles the shared logic of ensuring
+    that the given ``fp`` is either a ``pathlib.Path`` or a file like
+    object. All exporter methods are defined as receiving a buffer object,
+    regardless of if a path is provided. If a file-like object is provided
+    then the extension mut not be ``None``.
+
+    Parameters
+    ----------
+    obj : `object`
+        The Python object to export.
+    fp : `Path` or file-like object
+        The path or file buffer to write to.
+    extensions_map : `dict` of `str` -> `callable`
+        The dictionary mapping extensions to export callables.
+    extension : `str`
+        User provided extension (required if a file-like ``fp`` is passed).
+    overwrite : `bool`
+        If ``True``, overwrite any existing files at the given path.
+    protocol : `int`, optional
+        The output pickle protocol, if necessary.
+    """
+    if isinstance(fp, basestring):
+        fp = Path(fp)  # cheeky conversion to Path to reuse existing code
+    if isinstance(fp, Path):
+        path_filepath = _validate_filepath(fp, overwrite)
+        extension = _parse_and_validate_extension(path_filepath, extension,
+                                                  extensions_map)
+
+        export_function = _extension_to_export_function(extension,
+                                                        extensions_map)
 
         with path_filepath.open('wb') as file_handle:
-            if protocol is not None:
-                export_function(obj, file_handle, protocol)
-            else:
-                export_function(obj, file_handle)
+            export_function(obj, file_handle, protocol=protocol,
+                            extension=extension)
     else:
         # You MUST provide an extension if a file handle is given
         if extension is None:
             raise ValueError('An export file extension must be provided if a '
                              'file-like object is passed.')
+        else:
+            extension = _normalise_extension(extension)
+
         # Apparently in Python 2.x there is no reliable way to detect something
         # that is 'file' like (file handle or a StringIO object or something
         # you can read and write to like a file). Therefore, we are going to
@@ -260,12 +396,13 @@ def _export(obj, fp, extensions_map, extension, overwrite, protocol=None):
         try:
             # Follow PIL like behaviour. Check the file handle extension
             # and check if matches the given extension
-            _validate_filepath(fp.name, extension, overwrite)
+            filepath = Path(fp.name)
+            _validate_filepath(filepath, overwrite)
+            extension = _parse_and_validate_extension(filepath, extension,
+                                                      extensions_map)
         except AttributeError:
             pass
-        export_function = _extension_to_export_function(
-            _normalise_extension(extension), extensions_map)
-        if protocol is not None:
-            export_function(obj, fp, protocol)
-        else:
-            export_function(obj, fp)
+
+        export_function = _extension_to_export_function(extension,
+                                                        extensions_map)
+        export_function(obj, fp, protocol=protocol, extension=extension)

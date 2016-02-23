@@ -1,15 +1,16 @@
 import numpy as np
+import sys
 from numpy.testing import assert_allclose
 import os
-from menpo.io.utils import _norm_path
+from pathlib import PosixPath, WindowsPath, Path
 from mock import patch, PropertyMock, MagicMock
 from nose.tools import raises
-import sys
+
 
 import menpo.io as mio
+from menpo.io.utils import _norm_path
 from menpo.image import Image
 from menpo.io.output.pickle import pickle_paths_as_pure
-from pathlib import PosixPath, WindowsPath, Path
 
 
 builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
@@ -27,8 +28,8 @@ fake_path = '/tmp/test.fake'
 def test_export_filepath_overwrite_exists(mock_open, exists, landmark_types):
     exists.return_value = True
     mio.export_landmark_file(test_lg, fake_path, overwrite=True)
-    mock_open.assert_called_once_with('wb')
-    landmark_types.__getitem__.assert_called_once_with('.fake')
+    mock_open.assert_called_with('wb')
+    landmark_types.__getitem__.assert_called_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     assert export_function.call_count == 1
 
@@ -39,8 +40,8 @@ def test_export_filepath_overwrite_exists(mock_open, exists, landmark_types):
 def test_export_filepath_no_overwrite(mock_open, exists, landmark_types):
     exists.return_value = False
     mio.export_landmark_file(test_lg, fake_path)
-    mock_open.assert_called_once_with('wb')
-    landmark_types.__getitem__.assert_called_once_with('.fake')
+    mock_open.assert_called_with('wb')
+    landmark_types.__getitem__.assert_called_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     assert export_function.call_count == 1
 
@@ -52,7 +53,7 @@ def test_export_filepath_no_overwrite(mock_open, exists, landmark_types):
 def test_export_filepath_wrong_extension(mock_open, exists, landmark_types):
     exists.return_value = False
     mio.export_landmark_file(test_lg, fake_path, extension='pts')
-    mock_open.assert_called_once_with('wb')
+    mock_open.assert_called_with('wb')
 
 
 @patch('menpo.io.output.base.landmark_types')
@@ -61,8 +62,8 @@ def test_export_filepath_wrong_extension(mock_open, exists, landmark_types):
 def test_export_filepath_explicit_ext_no_dot(mock_open, exists, landmark_types):
     exists.return_value = False
     mio.export_landmark_file(test_lg, fake_path, extension='fake')
-    mock_open.assert_called_once_with('wb')
-    landmark_types.__getitem__.assert_called_once_with('.fake')
+    mock_open.assert_called_with('wb')
+    landmark_types.__getitem__.assert_called_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     assert export_function.call_count == 1
 
@@ -73,8 +74,8 @@ def test_export_filepath_explicit_ext_no_dot(mock_open, exists, landmark_types):
 def test_export_filepath_explicit_ext_dot(mock_open, exists, landmark_types):
     exists.return_value = False
     mio.export_landmark_file(test_lg, fake_path, extension='.fake')
-    mock_open.assert_called_once_with('wb')
-    landmark_types.__getitem__.assert_called_once_with('.fake')
+    mock_open.assert_called_with('wb')
+    landmark_types.__getitem__.assert_called_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     assert export_function.call_count == 1
 
@@ -143,7 +144,7 @@ def test_export_file_handle_file_exists_overwrite(mock_open, exists,
     with open(fake_path) as f:
         type(f).name = PropertyMock(return_value=fake_path)
         mio.export_landmark_file(test_lg, f, overwrite=True, extension='fake')
-    landmark_types.__getitem__.assert_called_once_with('.fake')
+    landmark_types.__getitem__.assert_called_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     assert export_function.call_count == 1
 
@@ -157,7 +158,7 @@ def test_export_file_handle_file_non_file_buffer(mock_open, exists,
     with open(fake_path) as f:
         del f.name  # Equivalent to raising an AttributeError side effect
         mio.export_landmark_file(test_lg, f, extension='fake')
-    landmark_types.__getitem__.assert_called_once_with('.fake')
+    landmark_types.__getitem__.assert_called_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     assert export_function.call_count == 1
 
@@ -250,14 +251,14 @@ def test_export_pickle(mock_open, exists, pickle_dump):
 @patch('{}.open'.format(builtins_str))
 def test_export_pickle_with_path_uses_open(mock_open, exists, pickle_dump):
     exists.return_value = False
-    fake_path = _norm_path('fake.pkl.gz')
+    fake_path = str(_norm_path('fake.pkl.gz'))
     mock_open_enter = MagicMock()
     # Make sure the name attribute returns the path
     mock_open_enter.__enter__.return_value.configure_mock(name=fake_path)
     mock_open.return_value = mock_open_enter
     mio.export_pickle(test_lg, fake_path)
     assert pickle_dump.call_count == 1
-    mock_open.assert_called_once_with(fake_path, 'wb')
+    mock_open.assert_called_with(fake_path, 'wb')
 
 
 @patch('menpo.io.output.pickle.pickle.dump')
@@ -273,7 +274,7 @@ def test_export_pickle_with_path_expands_vars(mock_open, exists, pickle_dump):
     mio.export_pickle(test_lg, fake_path)
     assert pickle_dump.call_count == 1
     expected_path = os.path.join(os.path.expanduser('~'), 'fake', 'fake.pkl.gz')
-    mock_open.assert_called_once_with(expected_path, 'wb')
+    mock_open.assert_called_with(expected_path, 'wb')
 
 
 def test_pickle_paths_as_pure_switches_reduce_method_on_path():
