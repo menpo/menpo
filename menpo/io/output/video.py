@@ -1,8 +1,8 @@
-import numpy as np
 
 
 def ImageioVideoExporter(images, out_path, fps=30, codec='libx264',
-                         quality=None, bitrate=None, pixelformat='yuv420p'):
+                         quality=None, bitrate=None, pixelformat='yuv420p',
+                         **kwargs):
     r"""
     Uses imageio to export the images using FFMPEG. Please see the imageio
     documentation for more information.
@@ -40,9 +40,10 @@ def ImageioVideoExporter(images, out_path, fps=30, codec='libx264',
     writer.close()
 
 
-def ImageioGifExporter(images, out_path, fps=30, loop=0, duration=None):
+def ImageioGifExporter(images, out_path, fps=30, loop=0, duration=None,
+                       **kwargs):
     r"""
-    Uses imageio to export the images to a gIF. Please see the imageio
+    Uses imageio to export the images to a GIF. Please see the imageio
     documentation for more information.
 
     Parameters
