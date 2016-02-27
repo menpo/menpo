@@ -671,7 +671,7 @@ def _import(filepath, extensions_map, landmark_resolver=same_name,
     assets : asset or list of assets
         The loaded asset or list of assets.
     """
-    path = Path(_norm_path(filepath))
+    path = _norm_path(filepath)
     if not path.is_file():
         raise ValueError("{} is not a file".format(path))
     # below could raise ValueError as well...
@@ -730,11 +730,12 @@ def _pathlib_glob_for_pattern(pattern, sort=True):
         If the pattern doesn't contain a '*' wildcard and is not a directory
     """
     pattern = _norm_path(pattern)
-    gsplit = pattern.split('*', 1)
+    pattern_str = str(pattern)
+    gsplit = pattern_str.split('*', 1)
     if len(gsplit) == 1:
         # no glob provided. Is the provided pattern a dir?
         if Path(pattern).is_dir():
-            preglob = pattern
+            preglob = pattern_str
             pattern = '*'
         else:
             raise ValueError('{} is an invalid glob and '

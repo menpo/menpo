@@ -509,3 +509,37 @@ def test_importing_pickles_as_generator(is_file, glob, mock_open, mock_pickle):
     assert len(objs) == 2
     assert objs[0]['test'] == 1
     assert objs[1]['test'] == 1
+
+
+@patch('imageio.get_reader')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_imageio_avi_normalise(is_file, mock_image):
+    mock_image.return_value.get_data.return_value = np.ones((10, 10, 3),
+                                                            dtype=np.uint8)
+    mock_image.return_value.get_length.return_value = 1
+    is_file.return_value = True
+
+    ll = mio.import_video('fake_image_being_mocked.avi', normalise=True)
+    assert len(ll) == 1
+
+    im = ll[0]
+    assert im.shape == (10, 10)
+    assert im.n_channels == 3
+    assert im.pixels.dtype == np.float
+
+
+@patch('imageio.get_reader')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_imageio_avi_no_normalise(is_file, mock_image):
+    mock_image.return_value.get_data.return_value = np.ones((10, 10, 3),
+                                                            dtype=np.uint8)
+    mock_image.return_value.get_length.return_value = 1
+    is_file.return_value = True
+
+    ll = mio.import_video('fake_image_being_mocked.avi', normalise=False)
+    assert len(ll) == 1
+
+    im = ll[0]
+    assert im.shape == (10, 10)
+    assert im.n_channels == 3
+    assert im.pixels.dtype == np.uint8

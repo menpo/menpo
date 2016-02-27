@@ -33,6 +33,9 @@ test:
   requires:
     - coverage
 
+  files:
+    - .coveragerc
+
   imports:
     - menpo
 

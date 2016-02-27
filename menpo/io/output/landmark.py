@@ -3,7 +3,7 @@ import itertools
 import numpy as np
 
 
-def LJSONExporter(landmark_group, file_handle):
+def LJSONExporter(landmark_group, file_handle, **kwargs):
     r"""
     Given a file handle to write in to (which should act like a Python `file`
     object), write out the landmark data. No value is returned.
@@ -48,7 +48,7 @@ def LJSONExporter(landmark_group, file_handle):
                      sort_keys=True, allow_nan=False)
 
 
-def PTSExporter(landmark_group, file_handle):
+def PTSExporter(landmark_group, file_handle, **kwargs):
     r"""
     Given a file handle to write in to (which should act like a Python `file`
     object), write out the landmark data. No value is returned.
