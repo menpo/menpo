@@ -661,6 +661,13 @@ def test_as_imageio_1channel_uint16_out():
     assert_allclose(np.ones([120, 120]) * 65535, new_im)
 
 
+def test_as_imageio_1channel_float32_out():
+    im = Image.init_blank((120, 120), n_channels=1, fill=1)
+    new_im = im.as_imageio(out_dtype=np.float32)
+    assert new_im.dtype == np.float32
+    assert_allclose(np.ones([120, 120]), new_im)
+
+
 @raises(ValueError)
 def test_as_pil_image_bad_range():
     im = MaskedImage(np.random.randn(1, 120, 120), copy=False)

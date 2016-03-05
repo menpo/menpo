@@ -142,12 +142,16 @@ def denormalise_pixels_range(pixels, out_dtype):
     if in_dtype == out_dtype:
         return pixels
 
-    if in_dtype == np.float64 or in_dtype == np.float32:
-        p_min = pixels.min()
-        p_max = pixels.max()
-        if p_min < 0.0 or p_max > 1.0:
-            raise ValueError('Unexpected input range [{}, {}] - pixels must be '
-                             'in the range [0, 1]'.format(p_min, p_max))
+    if np.issubclass_(in_dtype.type, np.floating) or in_dtype == np.float:
+        if np.issubclass_(out_dtype, np.floating) or out_dtype == np.float:
+            return pixels.astype(out_dtype)
+        else:
+            p_min = pixels.min()
+            p_max = pixels.max()
+            if p_min < 0.0 or p_max > 1.0:
+                raise ValueError('Unexpected input range [{}, {}] - pixels '
+                                 'must be in the range [0, 1]'.format(p_min,
+                                                                      p_max))
     elif in_dtype != np.bool:
         raise ValueError('Unexpected input dtype ({}) - only float32, float64 '
                          'and bool supported'.format(in_dtype))
