@@ -13,7 +13,7 @@ def test_trimesh_creation():
                        [0, 1, 0]])
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
-    TriMesh(points, trilist)
+    TriMesh(points, trilist=trilist)
 
 
 def test_trimesh__init_2d_grid():
@@ -32,7 +32,7 @@ def test_trimesh_creation_copy_true():
                        [0, 1, 0]])
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
-    tm = TriMesh(points, trilist)
+    tm = TriMesh(points, trilist=trilist)
     assert (not is_same_array(tm.points, points))
     assert (not is_same_array(tm.trilist, trilist))
 
@@ -44,7 +44,7 @@ def test_trimesh_creation_copy_false():
                        [0, 1, 0]])
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
-    tm = TriMesh(points, trilist, copy=False)
+    tm = TriMesh(points, trilist=trilist, copy=False)
     assert (is_same_array(tm.points, points))
     assert (is_same_array(tm.trilist, trilist))
 
@@ -93,7 +93,7 @@ def test_colouredtrimesh_creation_copy_false():
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
     colours = np.ones([4, 13])
-    ttm = ColouredTriMesh(points, trilist, colours=colours, copy=False)
+    ttm = ColouredTriMesh(points, trilist=trilist, colours=colours, copy=False)
     assert (is_same_array(ttm.points, points))
     assert (is_same_array(ttm.trilist, trilist))
     assert (is_same_array(ttm.colours, colours))
@@ -107,7 +107,7 @@ def test_colouredtrimesh_creation_copy_true():
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
     colours = np.ones([4, 13])
-    ttm = ColouredTriMesh(points, trilist, colours=colours, copy=True)
+    ttm = ColouredTriMesh(points, trilist=trilist, colours=colours, copy=True)
     assert (not is_same_array(ttm.points, points))
     assert (not is_same_array(ttm.trilist, trilist))
     assert (not is_same_array(ttm.colours, colours))
@@ -122,7 +122,7 @@ def test_trimesh_creation_copy_warning():
                         [1, 2, 3]], order='F')
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        TriMesh(points, trilist, copy=False)
+        TriMesh(points, trilist=trilist, copy=False)
         assert len(w) == 1
 
 
@@ -133,7 +133,7 @@ def test_trimesh_n_dims():
                        [0, 1, 0]])
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
-    trimesh = TriMesh(points, trilist)
+    trimesh = TriMesh(points, trilist=trilist)
     assert(trimesh.n_dims == 3)
 
 
@@ -144,7 +144,7 @@ def test_trimesh_n_points():
                        [0, 1, 0]])
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
-    trimesh = TriMesh(points, trilist)
+    trimesh = TriMesh(points, trilist=trilist)
     assert(trimesh.n_points == 4)
 
 
@@ -155,8 +155,23 @@ def test_trimesh_n_tris():
                        [0, 1, 0]])
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
-    trimesh = TriMesh(points, trilist)
+    trimesh = TriMesh(points, trilist=trilist)
     assert(trimesh.n_tris == 2)
+
+
+def test_trimesh_from_tri_mask():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    mask = np.zeros(2, dtype=np.bool)
+    mask[0] = True
+    trimesh = TriMesh(points, trilist=trilist).from_tri_mask(mask)
+    assert(trimesh.n_tris == 1)
+    assert(trimesh.n_points == 3)
+    assert_allclose(trimesh.points, points[trilist[0]])
 
 
 def test_trimesh_face_normals():
@@ -168,7 +183,7 @@ def test_trimesh_face_normals():
                         [1, 2, 3]])
     expected_normals = np.array([[-np.sqrt(3)/3, -np.sqrt(3)/3, np.sqrt(3)/3],
                                  [-0, -0, 1]])
-    trimesh = TriMesh(points, trilist)
+    trimesh = TriMesh(points, trilist=trilist)
     face_normals = trimesh.tri_normals()
     assert_allclose(face_normals, expected_normals)
 
