@@ -14,6 +14,14 @@ def PILExporter(image, file_handle, extension='', **kwargs):
         The file to write in to
     """
     from PIL.Image import EXTENSION
+    # The extensions are only filled out when save or open are called - which
+    # may not have been called before we reach here. So let's make sure that
+    # pillow is properly initialised.
+    if not EXTENSION:
+        from PIL.Image import init, preinit
+        preinit()
+        init()
+
     pil_image = image.as_PILImage()
     # Also, the format kwarg of PIL/Pillow is a bit confusing and actually
     # refers to the underlying algorithm and not the extension. Therefore,
