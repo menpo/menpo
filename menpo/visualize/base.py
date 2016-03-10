@@ -861,7 +861,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
                  axes_y_ticks=None, figure_size=(10, 8)):
     r"""
-    Method that renders the provided `patches` on a black canvas. The user can
+    Method that renders the provided `patches` on a canvas. The user can
     choose whether to render the patch centers (`render_centers`) as well as
     rectangle boundaries around the patches (`render_patches_bboxes`).
 
@@ -1073,7 +1073,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
     # Render patches image
     if render_centers:
         patch_view = patches_image.view_landmarks(
-            channels=channels, group='all_patch_centers', figure_id=figure_id,
+            channels=channels, group='selected_patch_centers', figure_id=figure_id,
             new_figure=new_figure, interpolation=interpolation,
             cmap_name=cmap_name, alpha=alpha, render_lines=render_lines,
             line_colour=line_colour, line_style=line_style,
