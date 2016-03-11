@@ -27,7 +27,7 @@ class MatplotlibRenderer(Renderer):
         # Create the extensions map, have to add . in front of the extensions
         # and map every extension to the savefig method
         n_ext = len(self._supported_ext)
-        func_list = [lambda obj, fp: self.figure.savefig(fp, **obj)] * n_ext
+        func_list = [lambda obj, fp, **kwargs: self.figure.savefig(fp, **obj)] * n_ext
         self._extensions_map = dict(zip(['.' + s for s in self._supported_ext],
                                     func_list))
 
