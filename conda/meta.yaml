@@ -16,11 +16,11 @@ requirements:
     # Scientific Python Stack
     - numpy >=1.10,<1.11
     - scipy 0.17.*
-    - pillow  3.0.*
+    - pillow  3.1.*
     - imageio 1.5.*
 
     # Features
-    - cyvlfeat >=0.4.2,<0.5
+    - cyvlfeat >=0.4.3,<0.5
 
     # Visualization
     - matplotlib >=1.4,<1.6
