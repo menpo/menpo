@@ -1,6 +1,126 @@
 Changelog
 #########
 
+0.7.0 (2016/03/21)
+------------------
+New release that contains some minor breaking changes. In general, the biggest
+two changes are:
+
+  - Use ImageIO rather than Pillow for basic importing of some image types.
+    The most important aspect of this change is that we now support importing
+    videos! Our GIF support also became much more robust.
+  - Change multi-asset importing to use a new type - the ``LazyList``. Lazy
+    lists are a generic concept for a container that holds onto a list of
+    callables which are invoked on indexing. This means that image importing,
+    for example, returns immediately but can be **randomly indexed**. This is
+    in contrast to generators, which have to be sequentially accessed. This
+    is particularly important for video support, as the frames can be accessed
+    randomly or sliced from the end (rather than having to pay the penalty
+    of importing the entirety of a long video just to access the last frame,
+    for example).
+
+These changes should not affect code currently in production - since these are
+behavioural breaking changes rather than syntax. Note that this release
+also officially supports Python 3.5!
+
+Breaking Changes
+................
+
+  - ImageIO is used for importing. Therefore, the pixel values of some images
+    have changed due to the difference in underlying importing code.
+  - Multi-asset importers are now ``LazyList``s.
+  - HOG previously returned negative values due to rounding errors on binning.
+    This has been rectified, so the output values of HOG are now slightly
+    different.
+
+New Features
+............
+
+  - ``from_tri_mask`` method added to ``TriMesh``
+  - ``LazyList`` type that holds a list of callables that are invoked on
+    indexing.
+  - New rasterize methods. Given an image and a landmark group, return a new
+    image with the landmarks rasterized onto the image. Useful for saving
+    results to disk.
+  - Python 3.5 support!
+  - Better support for non ``float64`` image types. For example,
+    ``as_greyscale`` can be called on a ``uint8`` image.
+
+Deprecated
+..........
+
+  - The previously deprecated ``inplace`` image methods **were not removed
+    in this release**.
+  - ``set_h_matrix`` is deprecated for ``Homogeneous`` transforms.
+
+Github Pull Requests
+....................
+
+- `#682`_ Update the view_patches to show only the selected landmarks. (@grigorisg9gr)
+- `#639`_ add from_tri_mask method to TriMesh instances (@patricksnape, @jabooth)
+- `#680`_ Expose file extension to exporters (Fix PIL exporter bug) (@patricksnape)
+- `#672`_ Use Conda environment.yml on RTD (@patricksnape)
+- `#678`_ Deprecate set_h_matrix and fix #677 (@patricksnape)
+- `#676`_ Implement LazyList __add__ (@patricksnape)
+- `#633`_ BREAKING: Imageio (@patricksnape)
+- `#648`_ Try turning coverage checking back on (@patricksnape)
+- `#670`_ Rasterize 2D Landmarks Method (@patricksnape)
+- `#606`_ Fix negative values in HOG calculation (@patricksnape)
+- `#673`_ Fix the widgets in PCA. (@grigorisg9gr)
+- `#669`_ BREAKING: Add LazyList - default importing is now Lazy (@patricksnape)
+- `#668`_ Speedup as_greyscale (@patricksnape)
+- `#666`_ Add the protocol option in exporting pickle. (@grigorisg9gr)
+- `#665`_ Fix bug with patches of different type than float64 (@patricksnape)
+- `#664`_ Python 3.5 builds (@patricksnape)
+- `#661`_ Return labels - which maps to a KeysView as a list (@patricksnape)
+
+.. _#682: https://github.com/menpo/menpo/pull/682
+.. _#639: https://github.com/menpo/menpo/pull/639
+.. _#680: https://github.com/menpo/menpo/pull/680
+.. _#672: https://github.com/menpo/menpo/pull/672
+.. _#678: https://github.com/menpo/menpo/pull/678
+.. _#676: https://github.com/menpo/menpo/pull/676
+.. _#633: https://github.com/menpo/menpo/pull/633
+.. _#648: https://github.com/menpo/menpo/pull/648
+.. _#670: https://github.com/menpo/menpo/pull/670
+.. _#606: https://github.com/menpo/menpo/pull/606
+.. _#673: https://github.com/menpo/menpo/pull/673
+.. _#669: https://github.com/menpo/menpo/pull/669
+.. _#668: https://github.com/menpo/menpo/pull/668
+.. _#666: https://github.com/menpo/menpo/pull/666
+.. _#665: https://github.com/menpo/menpo/pull/665
+.. _#664: https://github.com/menpo/menpo/pull/664
+.. _#661: https://github.com/menpo/menpo/pull/661
+
+0.6.2 (2015/12/13)
+------------------
+Add axes ticks option to ``view_patches``.
+
+Github Pull Requests
+....................
+
+- `#659`_ Add axes ticks options to view_patches (@nontas)
+.. _#659: https://github.com/menpo/menpo/pull/659
+
+0.6.1 (2015/12/09)
+------------------
+Fix a nasty bug pertaining to a Diamond inheritance problem in PCA. Add the
+Gaussion Markov Random Field (GRMF) model. Also a couple of other
+bugfixes for visualization.
+
+Github Pull Requests
+....................
+
+- `#658`_ PCA Diamond problem fix (@patricksnape)
+- `#655`_ Bugfix and improvements in visualize package (@nontas)
+- `#656`_ print_dynamic bugfix (@nontas)
+- `#635`_ Gaussian Markov Random Field (@nontas, @patricksnape)
+
+.. _#658: https://github.com/menpo/menpo/pull/658
+.. _#655: https://github.com/menpo/menpo/pull/655
+.. _#656: https://github.com/menpo/menpo/pull/656
+.. _#635: https://github.com/menpo/menpo/pull/635
+
 0.6.0 (2015/11/26)
 ------------------
 This release is another set of breaking changes for Menpo. All ``in_place`` 
@@ -19,7 +139,7 @@ Breaking Changes
     numpy array rather than a :map:`PointCloud`.
   - All widgets are removed and now exist as part of the `menpowidgets`_ 
     project. The widgets are now only compatible with Jupyter 4.0 and above.
-  - Landmark labellers have been totalled refactored and renamed. They have
+  - Landmark labellers have been totally refactored and renamed. They have
     not been deprecated due to the changes. However, the new changes mean
     that the naming scheme of labels is now much more intuitive. Practically,
     the usage of labelling has only changed in that now it is possible to label
