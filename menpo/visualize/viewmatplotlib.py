@@ -125,9 +125,9 @@ class MatplotlibRenderer(Renderer):
     def save_figure_widget(self):
         r"""
         Method for saving the figure of the current ``figure_id`` to file using
-        :func:`menpo.visualize.widgets.base.save_matplotlib_figure` widget.
+        `menpowidgets.base.save_matplotlib_figure` widget.
         """
-        from menpo.visualize.widgets import save_matplotlib_figure
+        from menpowidgets import save_matplotlib_figure
         save_matplotlib_figure(self)
 
 
