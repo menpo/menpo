@@ -815,6 +815,6 @@ def features_selection_widget():
         image = mio.import_builtin_asset.lenna_png()
         features_image = features_fun[0](image)
     """
-    from menpo.visualize.widgets import features_selection
+    from menpowidgets import features_selection
 
     return features_selection()
