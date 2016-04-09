@@ -137,7 +137,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalise=True,
         flag you will have to manually convert the farmes you import to floating
         point before doing most Menpo operations. This however can be useful to
         save on memory usage if you only wish to view or crop the frames.
-    importer_method : {'ffmpeg', 'avconv'}, optional
+    importer_method : {'ffmpeg'}, optional
         A string representing the type of importer to use, by default ffmpeg
         is used.
 
@@ -227,7 +227,7 @@ def import_images(pattern, max_images=None, shuffle=False,
         A glob path pattern to search for images. Every image found to match
         the glob will be imported one by one. See :map:`image_paths` for more
         details of what images will be found.
-    max_images : positive `int`, optional
+    max_images : `int`, optional
         If not ``None``, only import the first ``max_images`` found. Else,
         import all.
     shuffle : `bool`, optional
@@ -308,7 +308,7 @@ def import_videos(pattern, max_videos=None, shuffle=False,
         A glob path pattern to search for videos. Every video found to match
         the glob will be imported one by one. See :map:`video_paths` for more
         details of what videos will be found.
-    max_videos : positive `int`, optional
+    max_videos : `int`, optional
         If not ``None``, only import the first ``max_videos`` found. Else,
         import all.
     shuffle : `bool`, optional
@@ -326,10 +326,10 @@ def import_videos(pattern, max_videos=None, shuffle=False,
         to floating point. If ``False``, the native datatype of the image will
         be maintained (commonly `uint8`). Note that in general Menpo assumes
         :map:`Image` instances contain floating point data - if you disable this
-        flag you will have to manually convert the farmes you import to floating
+        flag you will have to manually convert the frames you import to floating
         point before doing most Menpo operations. This however can be useful to
         save on memory usage if you only wish to view or crop the frames.
-    importer_method : {'ffmpeg', 'avconv'}, optional
+    importer_method : {'ffmpeg'}, optional
         A string representing the type of importer to use, by default ffmpeg
         is used.
     as_generator : `bool`, optional
@@ -399,7 +399,7 @@ def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
         landmark file found to match the glob will be imported one by one.
         See :map:`landmark_file_paths` for more details of what landmark files
         will be found.
-    max_landmarks : positive `int`, optional
+    max_landmarks : `int`, optional
         If not ``None``, only import the first ``max_landmark_files`` found.
         Else, import all.
     shuffle : `bool`, optional
@@ -447,7 +447,7 @@ def import_pickles(pattern, max_pickles=None, shuffle=False, as_generator=False,
     pattern : `str`
         The glob path pattern to search for pickles. Every pickle file found
         to match the glob will be imported one by one.
-    max_pickles : positive `int`, optional
+    max_pickles : `int`, optional
         If not ``None``, only import the first ``max_pickles`` found.
         Else, import all.
     shuffle : `bool`, optional
