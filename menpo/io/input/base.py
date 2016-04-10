@@ -227,7 +227,7 @@ def import_images(pattern, max_images=None, shuffle=False,
         A glob path pattern to search for images. Every image found to match
         the glob will be imported one by one. See :map:`image_paths` for more
         details of what images will be found.
-    max_images : `int`, optional
+    max_images : positive `int`, optional
         If not ``None``, only import the first ``max_images`` found. Else,
         import all.
     shuffle : `bool`, optional
@@ -308,7 +308,7 @@ def import_videos(pattern, max_videos=None, shuffle=False,
         A glob path pattern to search for videos. Every video found to match
         the glob will be imported one by one. See :map:`video_paths` for more
         details of what videos will be found.
-    max_videos : `int`, optional
+    max_videos : positive `int`, optional
         If not ``None``, only import the first ``max_videos`` found. Else,
         import all.
     shuffle : `bool`, optional
@@ -399,7 +399,7 @@ def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
         landmark file found to match the glob will be imported one by one.
         See :map:`landmark_file_paths` for more details of what landmark files
         will be found.
-    max_landmarks : `int`, optional
+    max_landmarks : positive `int`, optional
         If not ``None``, only import the first ``max_landmark_files`` found.
         Else, import all.
     shuffle : `bool`, optional
@@ -447,7 +447,7 @@ def import_pickles(pattern, max_pickles=None, shuffle=False, as_generator=False,
     pattern : `str`
         The glob path pattern to search for pickles. Every pickle file found
         to match the glob will be imported one by one.
-    max_pickles : `int`, optional
+    max_pickles : positive `int`, optional
         If not ``None``, only import the first ``max_pickles`` found.
         Else, import all.
     shuffle : `bool`, optional
@@ -568,7 +568,10 @@ def _import_glob_lazy_list(pattern, extension_map, max_assets=None,
                                       sort=(not shuffle)))
     if shuffle:
         random.shuffle(filepaths)
-    if max_assets:
+    if (max_assets is not None) and max_assets <= 0:
+        raise ValueError('Max elements should be positive'
+                         ' ({} provided)'.format(max_assets))
+    elif max_assets:
         filepaths = filepaths[:max_assets]
     n_files = len(filepaths)
     if n_files == 0:
