@@ -137,7 +137,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalise=True,
         flag you will have to manually convert the farmes you import to floating
         point before doing most Menpo operations. This however can be useful to
         save on memory usage if you only wish to view or crop the frames.
-    importer_method : {'ffmpeg', 'avconv'}, optional
+    importer_method : {'ffmpeg'}, optional
         A string representing the type of importer to use, by default ffmpeg
         is used.
 
@@ -326,10 +326,10 @@ def import_videos(pattern, max_videos=None, shuffle=False,
         to floating point. If ``False``, the native datatype of the image will
         be maintained (commonly `uint8`). Note that in general Menpo assumes
         :map:`Image` instances contain floating point data - if you disable this
-        flag you will have to manually convert the farmes you import to floating
+        flag you will have to manually convert the frames you import to floating
         point before doing most Menpo operations. This however can be useful to
         save on memory usage if you only wish to view or crop the frames.
-    importer_method : {'ffmpeg', 'avconv'}, optional
+    importer_method : {'ffmpeg'}, optional
         A string representing the type of importer to use, by default ffmpeg
         is used.
     as_generator : `bool`, optional
@@ -568,7 +568,10 @@ def _import_glob_lazy_list(pattern, extension_map, max_assets=None,
                                       sort=(not shuffle)))
     if shuffle:
         random.shuffle(filepaths)
-    if max_assets:
+    if (max_assets is not None) and max_assets <= 0:
+        raise ValueError('Max elements should be positive'
+                         ' ({} provided)'.format(max_assets))
+    elif max_assets:
         filepaths = filepaths[:max_assets]
     n_files = len(filepaths)
     if n_files == 0:
