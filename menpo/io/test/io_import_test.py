@@ -543,3 +543,14 @@ def test_importing_imageio_avi_no_normalise(is_file, mock_image):
     assert im.shape == (10, 10)
     assert im.n_channels == 3
     assert im.pixels.dtype == np.uint8
+
+
+@raises(ValueError)
+def test_import_images_negative_max_images():
+    list(mio.import_images(mio.data_dir_path(), max_images=-2))
+
+@raises(ValueError)
+def test_import_images_zero_max_images():
+    # different since the conditional 'if max_assets' is skipped,
+    # thus all images might be imported.
+    list(mio.import_images(mio.data_dir_path(), max_images=0))
