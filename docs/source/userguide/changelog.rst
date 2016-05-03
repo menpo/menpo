@@ -1,7 +1,7 @@
 Changelog
 #########
 
-0.7.0 (2016/03/21)
+0.7.0 (**********)
 ------------------
 New release that contains some minor breaking changes. In general, the biggest
 two changes are:
