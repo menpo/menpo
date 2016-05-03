@@ -1163,14 +1163,14 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        value : float or (n_channels, 1) ndarray
-        n_pixels : int, optional
+        value : `float` or (n_channels, 1) ndarray
+        n_pixels : `int`, optional
             The number of pixels along the mask boundary that will be set to 0.
 
         Returns
         -------
-         : :map:`MaskedImage`
-            The copy of the image for which the n pixels along its mask
+        new_image : :map:`MaskedImage`
+            The copy of the image for which the ``n`` pixels along its mask
             boundary have been set to a particular value.
         """
         global binary_erosion
@@ -1192,13 +1192,13 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        n_pixels : int, optional
+        n_pixels : `int`, optional
             The number of pixels by which we want to shrink the mask along
             its own boundary.
 
         Returns
         -------
-         : :map:`MaskedImage`
+        eroded_image : :map:`MaskedImage`
             The copy of the masked image in which the mask has been shrunk
             by n pixels along its boundary.
         """
@@ -1219,13 +1219,13 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        n_pixels : int, optional
+        n_pixels : `int`, optional
             The number of pixels by which we want to expand the mask along
             its own boundary.
 
         Returns
         -------
-         : :map:`MaskedImage`
+        dilated_image : :map:`MaskedImage`
             The copy of the masked image in which the mask has been expanded
             by n pixels along its boundary.
         """
