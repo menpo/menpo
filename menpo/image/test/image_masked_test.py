@@ -79,6 +79,19 @@ def test_erode():
     assert(img3.mask.n_true() == 16)
 
 
+def test_set_boundary_pixels():
+    mask = np.ones((10, 10), dtype=np.bool)
+    img = MaskedImage.init_blank((10, 10), mask=mask, fill=0., n_channels=1)
+    img.set_boundary_pixels(value=2.)
+    print(img.mask.n_true())
+    assert(img.mask.n_true() == 100)
+    assert_allclose(img.pixels[0, 1:-1, 1:-1], 0.)
+    assert_allclose(img.pixels[0, :, 0],       2.)
+    assert_allclose(img.pixels[0, 0, :],       2.)
+    assert_allclose(img.pixels[0, :, -1],      2.)
+    assert_allclose(img.pixels[0, -1, :],      2.)
+
+
 def test_dilate():
     img = MaskedImage.init_blank((10, 10))
     img = img.erode(n_pixels=3)
