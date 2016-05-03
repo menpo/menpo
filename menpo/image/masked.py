@@ -1173,17 +1173,19 @@ class MaskedImage(Image):
             The copy of the image for which the ``n`` pixels along its mask
             boundary have been set to a particular value.
         """
+        copy = self.copy()
         global binary_erosion
         if binary_erosion is None:
             from scipy.ndimage import binary_erosion  # expensive
         # Erode the edge of the mask in by one pixel
-        eroded_mask = binary_erosion(self.mask.mask, iterations=n_pixels)
+        eroded_mask = binary_erosion(copy.mask.mask, iterations=n_pixels)
 
         # replace the eroded mask with the diff between the two
         # masks. This is only true in the region we want to nullify.
-        np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
+        np.logical_and(~eroded_mask, copy.mask.mask, out=eroded_mask)
         # set all the boundary pixels to a particular value
-        self.pixels[..., eroded_mask] = value
+        copy.pixels[..., eroded_mask] = value
+        return copy
 
     def erode(self, n_pixels=1):
         r"""
