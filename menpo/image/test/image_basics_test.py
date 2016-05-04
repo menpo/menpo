@@ -5,6 +5,7 @@ from pathlib import Path
 
 import menpo
 from menpo.image import Image, MaskedImage, BooleanImage
+from menpo.shape import PointCloud
 from menpo.transform import UniformScale
 
 
@@ -86,3 +87,21 @@ def test_init_from_rolled_channels():
     assert im.n_channels == 3
     assert im.height == 50
     assert im.width == 60
+
+
+def test_bounds_2d():
+    im = Image.init_blank((50, 30))
+    assert_allclose(im.bounds(), ((0, 0), (49, 29)))
+
+
+def test_bounds_3d():
+    im = Image.init_blank((50, 30, 10))
+    assert_allclose(im.bounds(), ((0, 0, 0), (49, 29, 9)))
+
+
+def test_constrain_landmarks_to_bounds():
+    im = Image.init_blank((10, 10))
+    im.landmarks['test'] = PointCloud.init_2d_grid((20, 20))
+    im.constrain_landmarks_to_bounds()
+    assert not im.has_landmarks_outside_bounds
+    assert_allclose(im.landmarks['test'].lms.bounds(), im.bounds())

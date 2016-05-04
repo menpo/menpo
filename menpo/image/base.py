@@ -422,6 +422,23 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return self.pixels.shape[1:]
 
+    def bounds(self):
+        r"""
+        The bounds of the image, minimum is always (0, 0). The maximum is
+        the maximum **index** that can used to index into the image for each
+        dimension. Therefore, bounds will be of the form:
+        ((0, 0), (self.height - 1, self.width - 1)) for a 2D image.
+
+        Note that this is akin to supporting a nearest neighbour interpolation.
+        Although the *actual* maximum subpixel value would be something
+        like ``self.height - eps`` where ``eps`` is some value arbitrarily
+        close to 0, this value at least allows sampling without worrying about
+        floating point error.
+
+        :type:`tuple`
+        """
+        return (0,) * self.n_dims, tuple(s - 1 for s in self.shape)
+
     def diagonal(self):
         r"""
         The diagonal size of this image
@@ -439,7 +456,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         :type: (``n_dims``,) `ndarray`
         """
-        # noinspection PyUnresolvedReferences
         return np.array(self.shape, dtype=np.double) / 2
 
     def _str_shape(self):
