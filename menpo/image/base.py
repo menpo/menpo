@@ -2232,7 +2232,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def pyramid(self, n_levels=3, downscale=2):
         r"""
         Return a rescaled pyramid of this image. The first image of the
-        pyramid will be the original, unmodified, image, and counts as level 1.
+        pyramid will be a copy of the original, unmodified, image, and counts
+        as level 1.
 
         Parameters
         ----------
@@ -2247,7 +2248,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image_pyramid: `generator`
             Generator yielding pyramid layers as :map:`Image` objects.
         """
-        image = self
+        image = self.copy()
         yield image
         for _ in range(n_levels - 1):
             image = image.rescale(1.0 / downscale)
@@ -2256,7 +2257,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def gaussian_pyramid(self, n_levels=3, downscale=2, sigma=None):
         r"""
         Return the gaussian pyramid of this image. The first image of the
-        pyramid will be the original, unmodified, image, and counts as level 1.
+        pyramid will be a copy of the original, unmodified, image, and counts
+        as level 1.
 
         Parameters
         ----------
@@ -2278,7 +2280,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.feature import gaussian_filter
         if sigma is None:
             sigma = downscale / 3.
-        image = self
+        image = self.copy()
         yield image
         for level in range(n_levels - 1):
             image = gaussian_filter(image, sigma).rescale(1.0 / downscale)
