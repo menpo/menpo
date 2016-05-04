@@ -1081,9 +1081,23 @@ class MaskedImage(Image):
 
     def build_mask_around_landmarks(self, patch_shape, group=None):
         r"""
-        Restricts this images mask to be patches around each landmark in
-        the chosen landmark group. This is useful for visualizing patch
-        based methods.
+        Deprecated - please use the equivalent
+        `constrain_mask_to_patches_around_landmarks` method.
+        """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .constrain_mask_to_patches_around_landmarks() instead.',
+             MenpoDeprecationWarning)
+        return self.constrain_mask_to_patches_around_landmarks(
+            patch_shape=patch_shape, group=group)
+
+    def constrain_mask_to_patches_around_landmarks(self, patch_shape,
+                                                   group=None):
+        r"""
+        Returns a copy of this image whereby the mask is restricted to be
+        patches around each landmark in the chosen landmark group. The
+        patch will be centred on the nearest pixel for each point in
+        the chosen landmark group.
 
         Parameters
         ----------
@@ -1092,16 +1106,24 @@ class MaskedImage(Image):
         group : `str`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
+
+        Returns
+        -------
+        constrained : :map:`MaskedImage`
+            A new image where the mask is constrained as patches centred on each
+            point in the provided landmarks.
         """
+        copy = self.copy()
         # get the selected pointcloud
-        pc = self.landmarks[group].lms
+        pc = copy.landmarks[group].lms
         # temporarily set all mask values to False
-        self.mask.pixels[:] = False
+        copy.mask.pixels[:] = False
         # create a patches array of the correct size, full of True values
         patches = np.ones((pc.n_points, 1, 1, int(patch_shape[0]),
                            int(patch_shape[1])), dtype=np.bool)
         # set True patches around pointcloud centers
-        self.mask.set_patches(patches, pc)
+        copy.mask.set_patches(patches, pc)
+        return copy
 
     def set_boundary_pixels(self, value=0.0, n_pixels=1):
         r"""

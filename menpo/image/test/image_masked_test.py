@@ -79,6 +79,30 @@ def test_erode():
     assert(img3.mask.n_true() == 16)
 
 
+def test_constrain_mask_to_patches_around_landmarks_even():
+    img = MaskedImage.init_blank((10, 10))
+    img.landmarks['box'] = PointCloud(np.array([[0., 0.], [5., 0.],
+                                                [5., 5.], [0., 5.]]))
+    new_img = img.constrain_mask_to_patches_around_landmarks((2,2), group='box')
+    assert(new_img.mask.n_true() == 9)
+    assert_allclose(new_img.mask.pixels[:, 0, 0], True)
+    assert_allclose(new_img.mask.pixels[:, 4:6, 0], True)
+    assert_allclose(new_img.mask.pixels[:, 0, 4:6], True)
+    assert_allclose(new_img.mask.pixels[:, 4:6, 4:6], True)
+
+
+def test_constrain_mask_to_patches_around_landmarks_odd():
+    img = MaskedImage.init_blank((10, 10))
+    img.landmarks['box'] = PointCloud(np.array([[0., 0.], [5., 0.],
+                                                [5., 5.], [0., 5.]]))
+    new_img = img.constrain_mask_to_patches_around_landmarks((3,3), group='box')
+    assert(new_img.mask.n_true() == 25)
+    assert_allclose(new_img.mask.pixels[:, :2, :2], True)
+    assert_allclose(new_img.mask.pixels[:, 4:7, :2], True)
+    assert_allclose(new_img.mask.pixels[:, :2, 4:7], True)
+    assert_allclose(new_img.mask.pixels[:, 4:7, 4:7], True)
+
+
 def test_set_boundary_pixels():
     mask = np.ones((10, 10), dtype=np.bool)
     img = MaskedImage.init_blank((10, 10), mask=mask, fill=0., n_channels=1)
