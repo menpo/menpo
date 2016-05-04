@@ -379,7 +379,7 @@ class MaskedImage(Image):
             If ``copy=False`` cannot be honored.
         """
         self._set_masked_pixels(vector.reshape((self.n_channels, -1)),
-                               copy=copy)
+                                copy=copy)
 
     def _view_2d(self, figure_id=None, new_figure=False, channels=None,
                  masked=True, interpolation='bilinear', cmap_name=None,
@@ -1133,7 +1133,7 @@ class MaskedImage(Image):
         patches = np.ones((pc.n_points, 1, 1, int(patch_shape[0]),
                            int(patch_shape[1])), dtype=np.bool)
         # set True patches around pointcloud centers
-        copy.mask.set_patches(patches, pc)
+        copy.mask = copy.mask.set_patches(patches, pc)
         return copy
 
     def set_boundary_pixels(self, value=0.0, n_pixels=1):

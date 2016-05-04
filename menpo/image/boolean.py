@@ -643,8 +643,8 @@ class BooleanImage(Image):
     def set_patches(self, patches, patch_centers, offset=None,
                     offset_index=None):
         r"""
-        Set the values of a group of patches into the correct regions of
-        **this** image. Given an array of patches and a set of patch centers,
+        Set the values of a group of patches into the correct regions in a copy
+        of this image. Given an array of patches and a set of patch centers,
         the patches' values are copied in the regions of the image that are
         centred on the coordinates of the given centers.
 
@@ -682,6 +682,12 @@ class BooleanImage(Image):
             If image is not 2D
         ValueError
             If offset does not have shape (1, 2)
+
+        Returns
+        -------
+        new_image : :map:`BooleanImage`
+            A new boolean image where the provided patch locations have been
+            set to the provided values.
         """
         # parse arguments
         if self.n_dims != 2:
@@ -703,10 +709,12 @@ class BooleanImage(Image):
             patches = _convert_patches_list_to_single_array(
                 patches, patch_centers.n_points)
 
+        copy = self.copy()
         # convert pixels to uint8 so that they get recognized by cython
-        tmp_pixels = self.pixels.astype(np.uint8)
+        tmp_pixels = copy.pixels.astype(np.uint8)
         # convert patches to uint8 as well and set them to pixels
         set_patches(patches.astype(np.uint8), tmp_pixels, patch_centers.points,
                     offset, offset_index)
         # convert pixels back to bool
-        self.pixels = tmp_pixels.astype(np.bool)
+        copy.pixels = tmp_pixels.astype(np.bool)
+        return copy

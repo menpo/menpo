@@ -1411,8 +1411,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def set_patches(self, patches, patch_centers, offset=None,
                     offset_index=None):
         r"""
-        Set the values of a group of patches into the correct regions of
-        **this** image. Given an array of patches and a set of patch centers,
+        Set the values of a group of patches into the correct regions of a copy
+        of this image. Given an array of patches and a set of patch centers,
         the patches' values are copied in the regions of the image that are
         centred on the coordinates of the given centers.
 
@@ -1471,15 +1471,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             patches = _convert_patches_list_to_single_array(
                 patches, patch_centers.n_points)
 
+        copy = self.copy()
         # set patches
-        set_patches(patches, self.pixels, patch_centers.points, offset,
+        set_patches(patches, copy.pixels, patch_centers.points, offset,
                     offset_index)
+        return copy
 
     def set_patches_around_landmarks(self, patches, group=None,
                                      offset=None, offset_index=None):
         r"""
-        Set the values of a group of patches around the landmarks existing in
-        **this** image. Given an array of patches, a group and a label, the
+        Set the values of a group of patches around the landmarks existing in a
+        copy of this image. Given an array of patches, a group and a label, the
         patches' values are copied in the regions of the image that are
         centred on the coordinates of corresponding landmarks.
 
@@ -2717,8 +2719,6 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     patches_image.landmarks['selected_patch_centers'] = tmp_centers
 
     # Set the patches
-    patches_image.set_patches_around_landmarks(patches[patches_indices],
-                                               group='selected_patch_centers',
-                                               offset_index=offset_index)
-
-    return patches_image
+    return patches_image.set_patches_around_landmarks(
+        patches[patches_indices], group='selected_patch_centers',
+        offset_index=offset_index)
