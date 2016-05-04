@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
@@ -102,6 +104,8 @@ def test_bounds_3d():
 def test_constrain_landmarks_to_bounds():
     im = Image.init_blank((10, 10))
     im.landmarks['test'] = PointCloud.init_2d_grid((20, 20))
-    im.constrain_landmarks_to_bounds()
-    assert not im.has_landmarks_outside_bounds
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        im.constrain_landmarks_to_bounds()
+    assert not im.has_landmarks_outside_bounds()
     assert_allclose(im.landmarks['test'].lms.bounds(), im.bounds())

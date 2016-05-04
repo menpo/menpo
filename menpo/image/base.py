@@ -6,7 +6,7 @@ import numpy as np
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
-from menpo.base import Vectorizable
+from menpo.base import Vectorizable, MenpoDeprecationWarning
 from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale,
@@ -2484,14 +2484,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             self._str_shape(), self.n_dims, self.n_channels,
             's' * (self.n_channels > 1)))
 
-    @property
     def has_landmarks_outside_bounds(self):
         """
         Indicates whether there are landmarks located outside the image bounds.
 
         :type: `bool`
         """
-        if self.landmarks.has_landmarks:
+        if self.has_landmarks:
             for l_group in self.landmarks:
                 pc = self.landmarks[l_group].lms.points
                 if np.any(np.logical_or(self.shape - pc < 1, pc < 0)):
@@ -2500,17 +2499,26 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def constrain_landmarks_to_bounds(self):
         r"""
-        Move landmarks that are located outside the image bounds on the bounds.
+        Deprecated - please use the equivalent ``constrain_to_bounds`` method
+        now on PointCloud, in conjunction with the new Image ``bounds()``
+        method. For example:
+
+            >>> im.constrain_landmarks_to_bounds()  # Equivalent to below
+            >>> im.landmarks['test'] = im.landmarks['test'].lms.constrain_to_bounds(im.bounds)
         """
-        if self.has_landmarks_outside_bounds:
-            for l_group in self.landmarks:
-                l = self.landmarks[l_group]
-                for k in range(l.lms.points.shape[1]):
-                    tmp = l.lms.points[:, k]
-                    tmp[tmp < 0] = 0
-                    tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
-                    l.lms.points[:, k] = tmp
-                self.landmarks[l_group] = l
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .constrain_to_bounds() instead (on PointCloud).',
+             MenpoDeprecationWarning)
+
+        for l_group in self.landmarks:
+            l = self.landmarks[l_group]
+            for k in range(l.lms.points.shape[1]):
+                tmp = l.lms.points[:, k]
+                tmp[tmp < 0] = 0
+                tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
+                l.lms.points[:, k] = tmp
+            self.landmarks[l_group] = l
 
     def normalize_std(self, mode='all', **kwargs):
         r"""

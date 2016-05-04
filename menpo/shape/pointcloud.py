@@ -890,3 +890,27 @@ class PointCloud(Shape):
         pc = self.copy()
         pc.points = pc.points[mask, :]
         return pc
+
+    def constrain_to_bounds(self, bounds):
+        r"""
+        Returns a copy of this PointCloud, constrained to lie exactly within
+        the given bounds. Any points outside the bounds will be 'snapped'
+        to lie *exactly* on the boundary.
+
+        Parameters
+        ----------
+        bounds : ``(n_dims, n_dims)`` tuple of scalars
+            The bounds to constrain this pointcloud within.
+
+        Returns
+        -------
+        constrained : :map:`PointCloud`
+            The constrained pointcloud.
+        """
+        pc = self.copy()
+        for k in range(pc.n_dims):
+            tmp = pc.points[:, k]
+            tmp[tmp < bounds[0][k]] = bounds[0][k]
+            tmp[tmp > bounds[1][k]] = bounds[1][k]
+            pc.points[:, k] = tmp
+        return pc
