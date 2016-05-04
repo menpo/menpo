@@ -42,6 +42,15 @@ def test_masked_image_as_unmasked_fill():
     assert_allclose(img.pixels[0, 0, 0], 8.0)
 
 
+def test_masked_image_as_unmasked_fill_tuple():
+    m_img = MaskedImage(np.random.rand(3, 3, 3), copy=False)
+    m_img.mask.pixels[0, 0, 0] = False
+    img = m_img.as_unmasked(fill=(1, 2, 3))
+    assert(type(img) == Image)
+    assert_allclose(m_img.pixels[0, 1:, 1:], img.pixels[0, 1:, 1:])
+    assert_allclose(img.pixels[:, 0, 0], (1, 2, 3))
+
+
 @raises(NotImplementedError)
 def test_boolean_image_as_masked_raises_not_implemented_error():
     b_img = BooleanImage.init_blank((4, 5))

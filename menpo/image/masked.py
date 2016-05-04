@@ -162,9 +162,9 @@ class MaskedImage(Image):
         copy : `bool`, optional
             If ``False``, the produced :map:`Image` will share pixels with
             ``self``. Only suggested to be used for performance.
-        fill : `float` or ``None``, optional
-            If ``None`` the mask is simply discarded. If a number, the
-             *unmasked* regions are filled with the given value.
+        fill : `float` or ``(n_channels,)`` iterable or ``None``, optional
+            If ``None`` the mask is simply discarded. If a scalar or iterable,
+            the *unmasked* regions are filled with the given value.
 
         Returns
         -------
@@ -174,6 +174,8 @@ class MaskedImage(Image):
         """
         img = Image(self.pixels, copy=copy)
         if fill is not None:
+            if not np.isscalar(fill):
+                fill = np.array(fill).reshape(self.n_channels, -1)
             img.pixels[..., ~self.mask.mask] = fill
 
         if self.has_landmarks:
