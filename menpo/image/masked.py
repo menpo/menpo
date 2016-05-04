@@ -1026,12 +1026,11 @@ class MaskedImage(Image):
         else:
             return Image.from_vector(self, new_pixels)
 
-    def constrain_mask_to_landmarks(self, group=None,
-                                    batch_size=None,
+    def constrain_mask_to_landmarks(self, group=None, batch_size=None,
                                     point_in_pointcloud='pwa'):
         r"""
-        Restricts this mask to be equal to the convex hull around the chosen
-        landmarks.
+        Returns a copy of this image whereby the mask is restricted to be equal
+        to the convex hull around the chosen landmarks.
 
         The choice of whether a pixel is inside or outside of the pointcloud
         is determined by the ``point_in_pointcloud`` parameter. By default
@@ -1048,7 +1047,7 @@ class MaskedImage(Image):
             and if there is only one set of landmarks, this set will be used.
             If the landmarks in question are an instance of :map:`TriMesh`,
             the triangulation of the landmarks will be used in the convex
-            hull caculation. If the landmarks are an instance of
+            hull calculation. If the landmarks are an instance of
             :map:`PointCloud`, Delaunay triangulation will be used to
             create a triangulation.
         batch_size : `int` or ``None``, optional
@@ -1067,10 +1066,18 @@ class MaskedImage(Image):
             ((d, n_dims) ndarray) to test and should return a (d, 1) boolean
             ndarray of whether the pixels were inside (True) or outside (False)
             of the :map:`PointCloud`.
+
+        Returns
+        -------
+        constrained : :map:`MaskedImage`
+            A new image where the mask is constrained by the provided
+            landmarks.
         """
-        self.mask.constrain_to_pointcloud(
-            self.landmarks[group].lms, batch_size=batch_size,
+        copy = self.copy()
+        copy.mask = copy.mask.constrain_to_pointcloud(
+            copy.landmarks[group].lms, batch_size=batch_size,
             point_in_pointcloud=point_in_pointcloud)
+        return copy
 
     def build_mask_around_landmarks(self, patch_shape, group=None):
         r"""

@@ -508,13 +508,14 @@ class BooleanImage(Image):
 
     def constrain_to_landmarks(self, group=None, batch_size=None):
         r"""
-        Restricts this mask to be equal to the convex hull around the
-        landmarks chosen. This is not a per-pixel convex hull, but instead
-        relies on a triangulated approximation. If the landmarks in question
-        are an instance of :map:`TriMesh`, the triangulation of the landmarks
-        will be used in the convex hull caculation. If the landmarks are an
-        instance of :map:`PointCloud`, Delaunay triangulation will be used to
-        create a triangulation.
+        Returns a copy of this image whereby the ``True`` values in the image
+        are restricted to be equal to the convex hull around the landmarks
+        chosen. This is not a per-pixel convex hull, but instead relies on a
+        triangulated approximation. If the landmarks in question are an instance
+        of :map:`TriMesh`, the triangulation of the landmarks will be used in
+        the convex hull calculation. If the landmarks are an instance of
+        :map:`PointCloud`, Delaunay triangulation will be used to create a
+        triangulation.
 
         Parameters
         ----------
@@ -527,22 +528,28 @@ class BooleanImage(Image):
             how many points in the image should be checked at a time, which
             keeps memory usage low. If ``None``, no batching is used and all
             points are checked at once.
+
+        Returns
+        -------
+        constrained : :map:`BooleanImage`
+            The new boolean image, constrained by the given landmark group.
         """
-        self.constrain_to_pointcloud(self.landmarks[group].lms,
-                                     batch_size=batch_size)
+        return self.constrain_to_pointcloud(self.landmarks[group].lms,
+                                            batch_size=batch_size)
 
     def constrain_to_pointcloud(self, pointcloud, batch_size=None,
                                 point_in_pointcloud='pwa'):
         r"""
-        Restricts this mask to be equal to the convex hull around a pointcloud.
-        The choice of whether a pixel is inside or outside of the pointcloud
-        is determined by the ``point_in_pointcloud`` parameter. By default
-        a Piecewise Affine transform is used to test for containment, which
-        is useful when aligning images by their landmarks. Triangluation
-        will be decided by Delauny - if you wish to customise it,
-        a :map:`TriMesh` instance can be passed for the ``pointcloud``
-        argument. In this case, the triangulation of the Trimesh will be
-        used to define the retained region.
+        Returns a copy of this image whereby the ``True`` values in the image
+        are restricted to be equal to the convex hull around a pointcloud. The
+        choice of whether a pixel is inside or outside of the pointcloud is
+        determined by the ``point_in_pointcloud`` parameter. By default a
+        Piecewise Affine transform is used to test for containment, which is
+        useful when aligning images by their landmarks. Triangluation will be
+        decided by Delauny - if you wish to customise it, a :map:`TriMesh`
+        instance can be passed for the ``pointcloud`` argument. In this case,
+        the triangulation of the Trimesh will be used to define the retained
+        region.
 
         For large images, a faster and pixel-accurate method can be used (
         'convex_hull'). Here, there is no specialization for
@@ -577,6 +584,11 @@ class BooleanImage(Image):
             ndarray of whether the pixels were inside (True) or outside (False)
             of the :map:`PointCloud`.
 
+        Returns
+        -------
+        constrained : :map:`BooleanImage`
+            The new boolean image, constrained by the given pointcloud.
+
         Raises
         ------
         ValueError
@@ -584,6 +596,7 @@ class BooleanImage(Image):
         ValueError
             If the chosen ``point_in_pointcloud`` is unknown.
         """
+        copy = self.copy()
         if point_in_pointcloud in {'pwa', 'convex_hull'} and self.n_dims != 2:
             raise ValueError('Can only constrain mask on 2D images with the '
                              'default point_in_pointcloud implementations.'
@@ -608,7 +621,7 @@ class BooleanImage(Image):
         bounds = pointcloud.bounds()
         # Convert to integer to try and reduce boundary fp rounding errors.
         bounds = [b.astype(np.int) for b in bounds]
-        indices = self.indices()
+        indices = copy.indices()
 
         # This loop is to ensure the code is multi-dimensional
         for k in range(self.n_dims):
@@ -616,7 +629,7 @@ class BooleanImage(Image):
             indices = indices[indices[:, k] <= bounds[1][k], :]
         # Due to only testing bounding box indices, make sure the mask starts
         # off as all False
-        self.pixels[:] = False
+        copy.pixels[:] = False
 
         # slice(0, 1) because we know we only have 1 channel
         # Slice all the channels, only inside the bounding box (for setting
@@ -624,7 +637,8 @@ class BooleanImage(Image):
         all_channels = [slice(0, 1)]
         slices = all_channels + [slice(bounds[0][k], bounds[1][k] + 1)
                                  for k in range(self.n_dims)]
-        self.pixels[slices].flat = point_in_pointcloud(pointcloud, indices)
+        copy.pixels[slices].flat = point_in_pointcloud(pointcloud, indices)
+        return copy
 
     def set_patches(self, patches, patch_centers, offset=None,
                     offset_index=None):

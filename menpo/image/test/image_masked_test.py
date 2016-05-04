@@ -10,36 +10,36 @@ def test_constrain_mask_to_landmarks_pwa():
     img = MaskedImage.init_blank((10, 10))
     img.landmarks['box'] = PointCloud(np.array([[0.0, 0.0], [5.0, 0.0],
                                                 [5.0, 5.0], [0.0, 5.0]]))
-    img.constrain_mask_to_landmarks(group='box')
+    new_img = img.constrain_mask_to_landmarks(group='box')
 
     example_mask = BooleanImage.init_blank((10, 10), fill=False)
     example_mask.pixels[0, :6, :6] = True
-    assert(img.mask.n_true() == 36)
-    assert_allclose(img.mask.pixels, example_mask.pixels)
+    assert(new_img.mask.n_true() == 36)
+    assert_allclose(new_img.mask.pixels, example_mask.pixels)
 
 
 def test_constrain_mask_to_landmarks_pwa_batched():
     img = MaskedImage.init_blank((10, 10))
     img.landmarks['box'] = PointCloud(np.array([[0.0, 0.0], [5.0, 0.0],
                                                 [5.0, 5.0], [0.0, 5.0]]))
-    img.constrain_mask_to_landmarks(group='box', batch_size=2)
+    new_img = img.constrain_mask_to_landmarks(group='box', batch_size=2)
 
     example_mask = BooleanImage.init_blank((10, 10), fill=False)
     example_mask.pixels[0, :6, :6] = True
-    assert(img.mask.n_true() == 36)
-    assert_allclose(img.mask.pixels, example_mask.pixels)
+    assert(new_img.mask.n_true() == 36)
+    assert_allclose(new_img.mask.pixels, example_mask.pixels)
 
 
 def test_constrain_mask_to_landmarks_convex_hull():
     img = MaskedImage.init_blank((10, 10))
     img.landmarks['box'] = PointCloud(np.array([[0., 0.], [5., 0.],
                                                 [5., 5.], [0., 5.]]))
-    img.constrain_mask_to_landmarks(group='box',
-                                    point_in_pointcloud='convex_hull')
+    new_img = img.constrain_mask_to_landmarks(group='box',
+                                              point_in_pointcloud='convex_hull')
     example_mask = BooleanImage.init_blank((10, 10), fill=False)
     example_mask.pixels[0, :6, 1:6] = True
-    assert(img.mask.n_true() == 30)
-    assert_allclose(img.mask.pixels, example_mask.pixels)
+    assert(new_img.mask.n_true() == 30)
+    assert_allclose(new_img.mask.pixels, example_mask.pixels)
 
 
 def test_constrain_mask_to_landmarks_callable():
@@ -49,12 +49,12 @@ def test_constrain_mask_to_landmarks_callable():
     img = MaskedImage.init_blank((10, 10))
     img.landmarks['box'] = PointCloud(np.array([[0., 0.], [5., 0.],
                                                 [5., 5.], [0., 5.]]))
-    img.constrain_mask_to_landmarks(group='box',
-                                    point_in_pointcloud=bounding_box)
+    new_img = img.constrain_mask_to_landmarks(group='box',
+                                              point_in_pointcloud=bounding_box)
     example_mask = BooleanImage.init_blank((10, 10), fill=False)
     example_mask.pixels[0, :6, :6] = True
-    assert(img.mask.n_true() == 36)
-    assert_allclose(img.mask.pixels, example_mask.pixels)
+    assert(new_img.mask.n_true() == 36)
+    assert_allclose(new_img.mask.pixels, example_mask.pixels)
 
 
 @raises(ValueError)
