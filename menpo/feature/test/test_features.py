@@ -1,11 +1,12 @@
 from __future__ import division
 import random
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, raises
 from nose.plugins.attrib import attr
 
+from menpo.testing import is_same_array
 from menpo.image import Image, MaskedImage
-from menpo.feature import hog, lbp, es, igo, daisy
+from menpo.feature import hog, lbp, es, igo, daisy, no_op, normalize
 import menpo.io as mio
 
 
@@ -273,7 +274,7 @@ def test_dsift_values():
                     rtol=1e-04)
     assert_allclose(np.around(sift_img.pixels[5, 1, 1], 6), 39.04007,
                     rtol=1e-04)
-    assert 1
+
 
 def test_lbp_values():
     image = Image([[0., 6., 0.], [5., 18., 13.], [0., 20., 0.]])
@@ -306,3 +307,66 @@ def test_constrain_landmarks():
     x = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[1] - 1)
     y = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[0] - 1)
     assert_allclose(len(x[0]) + len(y[0]), 0)
+
+
+def test_no_op():
+    image = Image([[1., 2.], [2., 1.]])
+    new_image = no_op(image)
+    assert_allclose(image.pixels, new_image.pixels)
+    assert not is_same_array(image.pixels, new_image.pixels)
+
+
+def test_normalise_no_scale_all():
+    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    image = Image(pixels, copy=False)
+    new_image = normalize(image, scale_func=None, mode='all')
+    assert_allclose(new_image.pixels, pixels - 13.)
+
+
+def test_normalise_no_scale_per_channel():
+    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    image = Image(pixels, copy=False)
+    new_image = normalize(image, scale_func=None, mode='per_channel')
+    assert_allclose(new_image.pixels[0], pixels[0] - 4.)
+    assert_allclose(new_image.pixels[1], pixels[1] - 13.)
+    assert_allclose(new_image.pixels[2], pixels[2] - 22.)
+
+
+def test_normalise_no_scale_per_channel():
+    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    image = Image(pixels, copy=False)
+    new_image = normalize(image, scale_func=None, mode='per_channel')
+    assert_allclose(new_image.pixels[0], pixels[0] - 4.)
+    assert_allclose(new_image.pixels[1], pixels[1] - 13.)
+    assert_allclose(new_image.pixels[2], pixels[2] - 22.)
+
+
+def test_normalise_scale_all():
+    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    dummy_scale = lambda *a, **kwargs: np.array(2.0)
+    image = Image(pixels, copy=False)
+    new_image = normalize(image, scale_func=dummy_scale, mode='all')
+    assert_allclose(new_image.pixels, (pixels - 13.0) / 2.0)
+
+
+def test_normalise_scale_per_channel():
+    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    image = Image(pixels, copy=False)
+    dummy_scale = lambda *a, **kwargs: np.array(2.0)
+    new_image = normalize(image, scale_func=dummy_scale, mode='per_channel')
+    assert_allclose(new_image.pixels[0], (pixels[0] - 4.) / 2.0)
+    assert_allclose(new_image.pixels[1], (pixels[1] - 13.) / 2.0)
+    assert_allclose(new_image.pixels[2], (pixels[2] - 22.) / 2.0)
+
+
+@raises(ValueError)
+def test_normalise_unknown_mode_raises():
+    image = Image.init_blank((2, 2))
+    normalize(image, mode='fake')
+
+
+@raises(ValueError)
+def test_normalise_0_variance_raises():
+    image = Image.init_blank((2, 2))
+    dummy_scale = lambda *a, **kwargs: np.array(0.0)
+    normalize(image, scale_func=dummy_scale)

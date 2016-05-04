@@ -768,6 +768,58 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
 
 
 @ndfeature
+def normalize(pixels, scale_func=None, mode='all'):
+    r"""
+    Normalize the pixel values via mean centring and an optional scaling. By
+    default the scaling will be ``1.0``. The ``mode`` parameter selects
+    whether the normalisation is computed across all pixels in the image or
+    per-channel.
+
+    Parameters
+    ----------
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels. This means an N-dimensional image
+        is represented by an N+1 dimensional array.
+    scale_func : `callable`, optional
+        Compute the scaling factor. Expects a single parameter and any number
+        of keyword arguments and will be passed the entire pixel array.
+        Should return a 1D numpy array of one or more values.
+    mode : ``{all, per_channel}``, optional
+        If ``all``, the normalization is over all channels. If
+        ``per_channel``, each channel individually is mean centred and
+        normalized in variance.
+
+    Returns
+    -------
+    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
+        A normalised copy of the image that was passed in.
+    """
+    if scale_func is None:
+        scale_func = lambda *a, **k: np.array([1.0])
+
+    # Equivalent to image.as_vector(keep_channels=True)
+    original_shape = pixels.shape
+    pixels = pixels.reshape([pixels.shape[0], -1])
+
+    if mode == 'all':
+        centered_pixels = pixels - np.mean(pixels)
+        scale_factor = scale_func(centered_pixels)
+
+    elif mode == 'per_channel':
+        centered_pixels = pixels - np.mean(pixels, axis=1).reshape([-1, 1])
+        scale_factor = scale_func(centered_pixels, axis=1).reshape([-1, 1])
+    else:
+        raise ValueError("Supported modes are {{'all', 'per_channel'}} - '{}' "
+                         "is not known".format(mode))
+
+    if np.any(scale_factor == 0):
+        raise ValueError("Computed scale factor cannot be 0.0")
+    else:
+        return (centered_pixels / scale_factor).reshape(original_shape)
+
+
+@ndfeature
 def no_op(pixels):
     r"""
     A no operation feature - does nothing but return a copy of the pixels

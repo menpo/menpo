@@ -956,29 +956,6 @@ class MaskedImage(Image):
         else:
             return masked_warped_image
 
-    def normalize_std_inplace(self, mode='all', limit_to_mask=True):
-        r"""
-        Normalizes this image such that it's pixel values have zero mean and
-        unit variance.
-
-        Parameters
-        ----------
-        mode : ``{all, per_channel}``, optional
-            If ``all``, the normalization is over all channels. If
-            ``per_channel``, each channel individually is mean centred and
-            normalized in variance.
-        limit_to_mask : `bool`, optional
-            If ``True``, the normalization is only performed wrt the masked
-            pixels.
-            If ``False``, the normalization is wrt all pixels, regardless of
-            their masking value.
-        """
-        warn('the public API for inplace operations is deprecated '
-             'and will be removed in a future version of Menpo. '
-             'Use .normalize_std() instead.', MenpoDeprecationWarning)
-        self._normalize_inplace(np.std, mode=mode,
-                                limit_to_mask=limit_to_mask)
-
     def normalize_std(self, mode='all', limit_to_mask=True):
         r"""
         Returns a copy of this image normalized such that it's pixel values
@@ -995,41 +972,18 @@ class MaskedImage(Image):
             pixels.
             If ``False``, the normalization is wrt all pixels, regardless of
             their masking value.
+
+        Returns
+        -------
+        image : ``type(self)``
+            A copy of this image, normalized.
         """
         return self._normalize(np.std, mode=mode,
                                limit_to_mask=limit_to_mask)
 
-    def normalize_norm_inplace(self, mode='all', limit_to_mask=True,
-                               **kwargs):
-        r"""
-        Normalizes this image such that it's pixel values have zero mean and
-        its norm equals 1.
-
-        Parameters
-        ----------
-        mode : ``{all, per_channel}``, optional
-            If ``all``, the normalization is over all channels. If
-            ``per_channel``, each channel individually is mean centred and
-            normalized in variance.
-        limit_to_mask : `bool`, optional
-            If ``True``, the normalization is only performed wrt the masked
-            pixels.
-            If ``False``, the normalization is wrt all pixels, regardless of
-            their masking value.
-        """
-        warn('the public API for inplace operations is deprecated '
-             'and will be removed in a future version of Menpo. '
-             'Use .normalize_norm() instead.', MenpoDeprecationWarning)
-
-        def scale_func(pixels, axis=None):
-            return np.linalg.norm(pixels, axis=axis, **kwargs)
-
-        self._normalize_inplace(scale_func, mode=mode,
-                                limit_to_mask=limit_to_mask)
-
     def normalize_norm(self, mode='all', limit_to_mask=True, **kwargs):
         r"""
-        Returns a copy of this imaage normalized such that it's pixel values
+        Returns a copy of this image normalized such that it's pixel values
         have zero mean and its norm equals 1.
 
         Parameters
@@ -1043,6 +997,13 @@ class MaskedImage(Image):
             pixels.
             If ``False``, the normalization is wrt all pixels, regardless of
             their masking value.
+        **kwargs : `dict`, optional
+            Will be passed through to the `np.linalg.norm` function.
+
+        Returns
+        -------
+        image : ``type(self)``
+            A copy of this image, normalized.
         """
 
         def scale_func(pixels, axis=None):
@@ -1052,37 +1013,18 @@ class MaskedImage(Image):
                                limit_to_mask=limit_to_mask)
 
     def _normalize(self, scale_func, mode='all', limit_to_mask=True):
-        new = self.copy()
-        new._normalize_inplace(scale_func, mode=mode,
-                               limit_to_mask=limit_to_mask)
-        return new
-
-    def _normalize_inplace(self, scale_func, mode='all', limit_to_mask=True):
+        from menpo.feature import normalize
         if limit_to_mask:
             pixels = self.as_vector(keep_channels=True)
         else:
             pixels = Image.as_vector(self, keep_channels=True)
-        if mode == 'all':
-            centered_pixels = pixels - np.mean(pixels)
-            scale_factor = scale_func(centered_pixels)
-        elif mode == 'per_channel':
-            centered_pixels = pixels - np.mean(pixels, axis=1)[..., None]
-            scale_factor = scale_func(centered_pixels, axis=1)[..., None]
-        else:
-            raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
-                             "was provided instead".format(mode))
 
-        if np.any(scale_factor == 0):
-            raise ValueError("Image has 0 variance - can't be "
-                             "normalized")
-        else:
-            normalized_pixels = centered_pixels / scale_factor
+        new_pixels = normalize(pixels, scale_func=scale_func, mode=mode)
 
         if limit_to_mask:
-            self._from_vector_inplace(normalized_pixels.flatten())
+            return self.from_vector(new_pixels)
         else:
-            Image._from_vector_inplace(self,
-                                       normalized_pixels.flatten())
+            return Image.from_vector(self, new_pixels)
 
     def constrain_mask_to_landmarks(self, group=None,
                                     batch_size=None,

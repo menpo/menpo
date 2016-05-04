@@ -2492,15 +2492,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                     l.lms.points[:, k] = tmp
                 self.landmarks[l_group] = l
 
-    def normalize_std_inplace(self, mode='all', **kwargs):
-        r"""
-        Deprecated. See the non-mutating API, `normalize_std()`.
-        """
-        warn('the public API for inplace operations is deprecated '
-             'and will be removed in a future version of Menpo. '
-             'Use .normalize_std() instead.', MenpoDeprecationWarning)
-        self._normalize_inplace(np.std, mode=mode)
-
     def normalize_std(self, mode='all', **kwargs):
         r"""
         Returns a copy of this image normalized such that its
@@ -2512,21 +2503,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``all``, the normalization is over all channels. If
             ``per_channel``, each channel individually is mean centred and
             normalized in variance.
+
+        Returns
+        -------
+        image : ``type(self)``
+            A copy of this image, normalized.
         """
         return self._normalize(np.std, mode=mode)
-
-    def normalize_norm_inplace(self, mode='all', **kwargs):
-        r"""
-        Deprecated. See the non-mutating API, `normalize_norm()`.
-        """
-        warn('the public API for inplace operations is deprecated '
-             'and will be removed in a future version of Menpo. '
-             'Use .normalize_norm() instead.', MenpoDeprecationWarning)
-
-        def scale_func(pixels, axis=None):
-            return np.linalg.norm(pixels, axis=axis, **kwargs)
-
-        self._normalize_inplace(scale_func, mode=mode)
 
     def normalize_norm(self, mode='all', **kwargs):
         r"""
@@ -2551,28 +2534,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return self._normalize(scale_func, mode=mode)
 
     def _normalize(self, scale_func, mode='all'):
-        new = self.copy()
-        new._normalize_inplace(scale_func, mode=mode)
-        return new
-
-    def _normalize_inplace(self, scale_func, mode='all'):
-        pixels = self.as_vector(keep_channels=True)
-        if mode == 'all':
-            centered_pixels = pixels - np.mean(pixels)
-            scale_factor = scale_func(centered_pixels)
-
-        elif mode == 'per_channel':
-            centered_pixels = pixels - np.mean(pixels, axis=1)[..., None]
-            scale_factor = scale_func(centered_pixels, axis=1)[..., None]
-        else:
-            raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
-                             "was provided instead".format(mode))
-
-        if np.any(scale_factor == 0):
-            raise ValueError("Image has 0 variance - can't be "
-                             "normalized")
-        else:
-            self._from_vector_inplace(centered_pixels / scale_factor)
+        from menpo.feature import normalize
+        new_pixels = normalize(self.as_vector(keep_channels=True),
+                               scale_func=scale_func, mode=mode)
+        return self.from_vector(new_pixels)
 
     def rescale_pixels(self, minimum, maximum, per_channel=True):
         r"""A copy of this image with pixels linearly rescaled to fit a range.
