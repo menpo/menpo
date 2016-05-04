@@ -234,6 +234,17 @@ class MaskedImage(Image):
 
     def set_masked_pixels(self, pixels, copy=True):
         r"""
+        Deprecated - please use the equivalent ``from_vector``
+        """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .from_vector() instead.',
+             MenpoDeprecationWarning)
+        self._set_masked_pixels(pixels, copy=copy)
+
+    # TODO: Replace _from_vector_inplace with this.
+    def _set_masked_pixels(self, pixels, copy=True):
+        r"""
         Update the masked pixels only to new values.
 
         Parameters
@@ -367,7 +378,7 @@ class MaskedImage(Image):
         Warning
             If ``copy=False`` cannot be honored.
         """
-        self.set_masked_pixels(vector.reshape((self.n_channels, -1)),
+        self._set_masked_pixels(vector.reshape((self.n_channels, -1)),
                                copy=copy)
 
     def _view_2d(self, figure_id=None, new_figure=False, channels=None,
