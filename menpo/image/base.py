@@ -322,6 +322,53 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return cls(np.rollaxis(pixels, -1))
 
+    @classmethod
+    def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,
+                             n_channels=1, fill=0, dtype=np.float):
+        r"""
+        Create an Image that is big enough to contain the given pointcloud.
+        The pointcloud will be translated to the origin and then translated
+        according to its bounds in order to fit inside the new image.
+        An optional boundary can be provided in order to increase the space
+        around the boundary of the pointcloud. The boundary will be added
+        to *all sides of the image* and so a boundary of 5 provides 10 pixels
+        of boundary total for each dimension.
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            Pointcloud to place inside the newly created image.
+        group : `str`, optional
+            If ``None``, the pointcloud will only be used to create the image.
+            If a `str` then the pointcloud will be attached as a landmark
+            group to the image, with the given string as key.
+        boundary : `float`
+            A optional padding distance that is added to the pointcloud bounds.
+            Default is ``0``, meaning the max/min of tightest possible
+            containing image is returned.
+        n_channels : `int`, optional
+            The number of channels to create the image with.
+        fill : `int`, optional
+            The value to fill all pixels with.
+        dtype : numpy data type, optional
+            The data type of the image.
+
+        Returns
+        -------
+        image : ``type(cls)`` Image or subclass
+            A new image with the same size as the given pointcloud, optionally
+            with the pointcloud attached as landmarks.
+        """
+        # Translate pointcloud to the origin
+        minimum = pointcloud.bounds(boundary=boundary)[0]
+        origin_pc = Translation(-minimum).apply(pointcloud)
+        image_shape = origin_pc.range(boundary=boundary)
+        new_image = cls.init_blank(image_shape, n_channels=n_channels,
+                                   fill=fill, dtype=dtype)
+        if group is not None:
+            new_image.landmarks[group] = origin_pc
+        return new_image
+
     def as_masked(self, mask=None, copy=True):
         r"""
         Return a copy of this image with an attached mask behavior.

@@ -29,3 +29,24 @@ def test_boolean_image_constrain_pointcloud_convex_hull():
     assert_allclose(new_mask.pixels[:, 2:-1, 2:-1], True)
     # Points on the boundary are OUTSIDE
     assert new_mask.n_true() == 56
+
+
+def test_boolean_image_init_from_pointcloud():
+    pc = PointCloud(np.array([[5, 5], [5, 20], [20, 20]]))
+    im = BooleanImage.init_from_pointcloud(pc, fill=False, constrain=False)
+    assert im.n_true() == 0
+    assert im.shape == (15, 15)
+
+
+def test_boolean_image_init_from_pointcloud_constraint():
+    pc = PointCloud(np.array([[5, 5], [5, 20], [20, 20]]))
+    im = BooleanImage.init_from_pointcloud(pc, fill=False, constrain=True)
+    assert im.n_true() == 120
+    assert im.shape == (15, 15)
+
+
+def test_boolean_image_init_from_pointcloud_constrain_all_true():
+    pc = PointCloud(np.array([[5, 5], [5, 20], [20, 20]]))
+    im = BooleanImage.init_from_pointcloud(pc, fill=True, constrain=True)
+    assert im.n_true() == 120
+    assert im.shape == (15, 15)

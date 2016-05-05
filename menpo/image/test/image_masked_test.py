@@ -6,6 +6,20 @@ from menpo.shape import PointCloud
 from menpo.image import MaskedImage, BooleanImage
 
 
+def test_init_from_pointcloud_constrain_mask():
+    pc = PointCloud(np.array([[5, 5], [5, 20], [20, 20]]))
+    im = MaskedImage.init_from_pointcloud(pc, constrain_mask=True)
+    assert im.shape == (15, 15)
+    assert im.mask.n_true() == 120
+
+
+def test_init_from_pointcloud_no_constrain_mask():
+    pc = PointCloud(np.array([[5, 5], [5, 20], [20, 20]]))
+    im = MaskedImage.init_from_pointcloud(pc, constrain_mask=False)
+    assert im.shape == (15, 15)
+    assert im.mask.n_true() == 225
+
+
 def test_constrain_mask_to_landmarks_pwa():
     img = MaskedImage.init_blank((10, 10))
     img.landmarks['box'] = PointCloud(np.array([[0.0, 0.0], [5.0, 0.0],

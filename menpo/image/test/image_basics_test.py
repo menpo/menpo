@@ -91,6 +91,26 @@ def test_init_from_rolled_channels():
     assert im.width == 60
 
 
+def test_init_from_pointcloud():
+    pc = PointCloud.init_2d_grid((10, 10))
+    im = Image.init_from_pointcloud(pc)
+    assert im.shape == (9, 9)
+
+
+def test_init_from_pointcloud_attach_group():
+    pc = PointCloud.init_2d_grid((10, 10))
+    im = Image.init_from_pointcloud(pc, group='test')
+    assert im.shape == (9, 9)
+    assert im.n_landmark_groups == 1
+
+
+def test_init_from_pointcloud_boundary():
+    pc = PointCloud.init_2d_grid((10, 10))
+    im = Image.init_from_pointcloud(pc, boundary=5)
+    print(im.shape)
+    assert im.shape == (19, 19)
+
+
 def test_bounds_2d():
     im = Image.init_blank((50, 30))
     assert_allclose(im.bounds(), ((0, 0), (49, 29)))

@@ -2,6 +2,7 @@ from functools import partial
 from warnings import warn
 import numpy as np
 
+from menpo.transform import Translation
 from .base import Image, _convert_patches_list_to_single_array
 from .patches import set_patches
 
@@ -140,6 +141,58 @@ class BooleanImage(Image):
         else:
             mask = np.zeros(shape, dtype=np.bool)
         return cls(mask, copy=False)
+
+    @classmethod
+    def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,
+                             constrain=True, fill=True):
+        r"""
+        Create an Image that is big enough to contain the given pointcloud.
+        The pointcloud will be translated to the origin and then translated
+        according to its bounds in order to fit inside the new image.
+        An optional boundary can be provided in order to increase the space
+        around the boundary of the pointcloud. The boundary will be added
+        to *all sides of the image* and so a boundary of 5 provides 10 pixels
+        of boundary total for each dimension.
+
+        By default, the mask will be constrained to the convex hull of the
+        provided pointcloud.
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            Pointcloud to place inside the newly created image.
+        group : `str`, optional
+            If ``None``, the pointcloud will only be used to create the image.
+            If a `str` then the pointcloud will be attached as a landmark
+            group to the image, with the given string as key.
+        boundary : `float`
+            A optional padding distance that is added to the pointcloud bounds.
+            Default is ``0``, meaning the max/min of tightest possible
+            containing image is returned.
+        fill : `int`, optional
+            The value to fill all pixels with.
+        constrain : `bool`, optional
+            If ``True``, the ``True`` values will be image will be constrained
+            to the convex hull of the provided pointcloud. If ``False``,
+            the mask will be the value of ``fill``.
+
+        Returns
+        -------
+        image : :map:`MaskedImage`
+            A new image with the same size as the given pointcloud, optionally
+            with the pointcloud attached as landmarks and the mask constrained
+            to the convex hull of the pointcloud.
+        """
+        # Translate pointcloud to the origin
+        minimum = pointcloud.bounds(boundary=boundary)[0]
+        origin_pc = Translation(-minimum).apply(pointcloud)
+        image_shape = origin_pc.range(boundary=boundary)
+        new_image = cls.init_blank(image_shape, fill=fill)
+        if constrain:
+            new_image = new_image.constrain_to_pointcloud(origin_pc)
+        if group is not None:
+            new_image.landmarks[group] = origin_pc
+        return new_image
 
     def as_masked(self, mask=None, copy=True):
         r"""
