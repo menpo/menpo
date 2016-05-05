@@ -770,7 +770,7 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
 @ndfeature
 def normalize(pixels, scale_func=None, mode='all'):
     r"""
-    Normalize the pixel values via mean centring and an optional scaling. By
+    Normalize the pixel values via mean centering and an optional scaling. By
     default the scaling will be ``1.0``. The ``mode`` parameter selects
     whether the normalisation is computed across all pixels in the image or
     per-channel.

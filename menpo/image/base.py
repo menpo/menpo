@@ -425,7 +425,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def bounds(self):
         r"""
         The bounds of the image, minimum is always (0, 0). The maximum is
-        the maximum **index** that can used to index into the image for each
+        the maximum **index** that can be used to index into the image for each
         dimension. Therefore, bounds will be of the form:
         ((0, 0), (self.height - 1, self.width - 1)) for a 2D image.
 
