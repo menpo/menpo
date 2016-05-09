@@ -45,6 +45,48 @@ class ColouredTriMesh(TriMesh):
             raise ValueError('Must provide a colour per-vertex.')
         self.colours = colours_handle
 
+    @classmethod
+    def init_2d_grid(cls, shape, spacing=None, colours=None):
+        r"""
+        Create a ColouredTriMesh that exists on a regular 2D grid. The first
+        dimension is the number of rows in the grid and the second dimension
+        of the shape is the number of columns. ``spacing`` optionally allows
+        the definition of the distance between points (uniform over points).
+        The spacing may be different for rows and columns.
+
+        The triangulation will be right-handed and the diagonal will go from
+        the top left to the bottom right of a square on the grid.
+
+        Parameters
+        ----------
+        shape : `tuple` of 2 `int`
+            The size of the grid to create, this defines the number of points
+            across each dimension in the grid. The first element is the number
+            of rows and the second is the number of columns.
+        spacing : `int` or `tuple` of 2 `int`, optional
+            The spacing between points. If a single `int` is provided, this
+            is applied uniformly across each dimension. If a `tuple` is
+            provided, the spacing is applied non-uniformly as defined e.g.
+            ``(2, 3)`` gives a spacing of 2 for the rows and 3 for the
+            columns.
+        colours : ``(N, 3)`` `ndarray`, optional
+            The floating point RGB colour per vertex. If not given, grey will be
+            assigned to each vertex.
+
+        Returns
+        -------
+        trimesh : :map:`TriMesh`
+            A TriMesh arranged in a grid.
+        """
+        pc = TriMesh.init_2d_grid(shape, spacing=spacing)
+        points = pc.points
+        trilist = pc.trilist
+        # Ensure that the colours are copied
+        if colours is not None:
+            colours = colours.copy()
+        return ColouredTriMesh(points, trilist=trilist, colours=colours,
+                               copy=False)
+
     def from_mask(self, mask):
         """
         A 1D boolean array with the same number of elements as the number of

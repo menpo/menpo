@@ -4,7 +4,7 @@ from menpo.shape import PointCloud
 from menpo.transform import Scale
 
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from .base import TriMesh
+from .base import TriMesh, grid_tcoords
 
 
 class TexturedTriMesh(TriMesh):
@@ -37,6 +37,57 @@ class TexturedTriMesh(TriMesh):
             self.texture = texture
         else:
             self.texture = texture.copy()
+
+    @classmethod
+    def init_2d_grid(cls, shape, spacing=None, tcoords=None, texture=None):
+        r"""
+        Create a TexturedTriMesh that exists on a regular 2D grid. The first
+        dimension is the number of rows in the grid and the second dimension
+        of the shape is the number of columns. ``spacing`` optionally allows
+        the definition of the distance between points (uniform over points).
+        The spacing may be different for rows and columns.
+
+        The triangulation will be right-handed and the diagonal will go from
+        the top left to the bottom right of a square on the grid.
+
+        Parameters
+        ----------
+        shape : `tuple` of 2 `int`
+            The size of the grid to create, this defines the number of points
+            across each dimension in the grid. The first element is the number
+            of rows and the second is the number of columns.
+        spacing : `int` or `tuple` of 2 `int`, optional
+            The spacing between points. If a single `int` is provided, this
+            is applied uniformly across each dimension. If a `tuple` is
+            provided, the spacing is applied non-uniformly as defined e.g.
+            ``(2, 3)`` gives a spacing of 2 for the rows and 3 for the
+            columns.
+        tcoords : ``(N, 2)`` `ndarray`, optional
+            The texture coordinates for the mesh.
+        texture : :map:`Image`, optional
+            The texture for the mesh.
+
+        Returns
+        -------
+        trimesh : :map:`TriMesh`
+            A TriMesh arranged in a grid.
+        """
+        pc = TriMesh.init_2d_grid(shape, spacing=spacing)
+        points = pc.points
+        trilist = pc.trilist
+        # Ensure that the tcoords and texture are copied
+        if tcoords is not None:
+            tcoords = tcoords.copy()
+        else:
+            tcoords = grid_tcoords(shape)
+        if texture is not None:
+            texture = texture.copy()
+        else:
+            from menpo.image import Image
+            # Default texture is all black
+            texture = Image.init_blank(shape)
+        return TexturedTriMesh(points, tcoords, texture, trilist=trilist,
+                               copy=False)
 
     def tcoords_pixel_scaled(self):
         r"""

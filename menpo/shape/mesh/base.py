@@ -11,6 +11,39 @@ from .normals import compute_normals
 Delaunay = None  # expensive, from scipy.spatial
 
 
+def grid_tcoords(shape):
+    r"""
+    Return texture coordinates laid out on a grid. This is useful for creating
+    a textured version of an image whereby the underlying mesh maps
+    1-1 with a texture. Therefore, the provided shape should be the shape
+    of the texture.
+
+    Parameters
+    ----------
+    shape : `tuple` of 2 `int`
+        The size of the grid to create, this defines the number of points
+        across each dimension in the grid. The first element is the number
+        of rows and the second is the number of columns.
+
+    Returns
+    -------
+    tcoords : ``(M, 2)`` `ndarray`
+        The texture coordinates of a uniform grid. The origin will be
+        at the image origin (appropriate for viewing texture mapped planes
+        such as viewing image height maps).
+    """
+    # Default tcoords are just a grid, which assumes the input texture
+    # is an image the same size as the input grid. The meshgrid is made in
+    # an ordering that attempts to reduce the amount of copying required but
+    # places the texture coordinates in the correct arrangement.
+    tcoords = np.meshgrid(np.linspace(0, 1, num=shape[1]),
+                          np.linspace(1, 0, num=shape[0]),
+                          indexing='xy')
+    tcoords = np.stack(tcoords, axis=2).reshape([-1, 2])
+    tcoords = np.require(tcoords, requirements=['C'])
+    return tcoords
+
+
 def trilist_to_adjacency_array(trilist):
     r"""
     Turn an ``(M, 3)`` trilist into an adjacency array suitable for building

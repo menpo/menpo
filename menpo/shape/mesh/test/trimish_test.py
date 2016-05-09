@@ -16,8 +16,26 @@ def test_trimesh_creation():
     TriMesh(points, trilist=trilist)
 
 
-def test_trimesh__init_2d_grid():
+def test_trimesh_init_2d_grid():
     tm = TriMesh.init_2d_grid([10, 10])
+    assert tm.n_points == 100
+    assert tm.n_dims == 2
+    # 162 = 9 * 9 * 2
+    assert_allclose(tm.trilist.shape, (162, 3))
+    assert_allclose(tm.range(), [9, 9])
+
+
+def test_colouredtrimesh_init_2d_grid():
+    tm = ColouredTriMesh.init_2d_grid([10, 10])
+    assert tm.n_points == 100
+    assert tm.n_dims == 2
+    # 162 = 9 * 9 * 2
+    assert_allclose(tm.trilist.shape, (162, 3))
+    assert_allclose(tm.range(), [9, 9])
+
+
+def test_texturedtrimesh_init_2d_grid():
+    tm = TexturedTriMesh.init_2d_grid([10, 10])
     assert tm.n_points == 100
     assert tm.n_dims == 2
     # 162 = 9 * 9 * 2
