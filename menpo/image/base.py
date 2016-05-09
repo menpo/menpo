@@ -66,16 +66,16 @@ def indices_for_image_of_shape(shape):
     return np.indices(shape).reshape([len(shape), -1]).T
 
 
-def normalise_pixels_range(pixels, error_on_unknown_type=True):
+def normalize_pixels_range(pixels, error_on_unknown_type=True):
     r"""
-    Normalise the given pixels to the Menpo valid floating point range, [0, 1].
+    Normalize the given pixels to the Menpo valid floating point range, [0, 1].
     This is a single place to handle normalising pixels ranges. At the moment
     the supported types are uint8 and uint16.
 
     Parameters
     ----------
     pixels : `ndarray`
-        The pixels to normalise in the floating point range.
+        The pixels to normalize in the floating point range.
     error_on_unknown_type : `bool`, optional
         If ``True``, this method throws a ``ValueError`` if the given pixels
         array is an unknown type. If ``False``, this method performs no
@@ -83,8 +83,8 @@ def normalise_pixels_range(pixels, error_on_unknown_type=True):
 
     Returns
     -------
-    normalised_pixels : `ndarray`
-        The normalised pixels in the range [0, 1].
+    normalized_pixels : `ndarray`
+        The normalized pixels in the range [0, 1].
 
     Raises
     ------
@@ -108,9 +108,9 @@ def normalise_pixels_range(pixels, error_on_unknown_type=True):
     return pixels * (1.0 / max_range)
 
 
-def denormalise_pixels_range(pixels, out_dtype):
+def denormalize_pixels_range(pixels, out_dtype):
     """
-    Denormalise the given pixels array into the range of the given out dtype.
+    Denormalize the given pixels array into the range of the given out dtype.
     If the given pixels are floating point or boolean then the values
     are scaled appropriately and cast to the output dtype. If the pixels
     are already the correct dtype they are immediately returned.
@@ -120,7 +120,7 @@ def denormalise_pixels_range(pixels, out_dtype):
     Parameters
     ----------
     pixels : `ndarray`
-        The pixels to denormalise.
+        The pixels to denormalize.
     out_dtype : `np.dtype`
         The numpy data type to output and scale the values into.
 
@@ -2454,7 +2454,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = self.pixels[0]
         else:
             pixels = channels_to_back(self.pixels)
-        pixels = denormalise_pixels_range(pixels, out_dtype)
+        pixels = denormalize_pixels_range(pixels, out_dtype)
         return PILImage.fromarray(pixels)
 
     def as_imageio(self, out_dtype=np.uint8):
@@ -2499,7 +2499,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = self.pixels[0]
         else:
             pixels = channels_to_back(self.pixels)
-        return denormalise_pixels_range(pixels, out_dtype)
+        return denormalize_pixels_range(pixels, out_dtype)
 
     def pixels_range(self):
         r"""

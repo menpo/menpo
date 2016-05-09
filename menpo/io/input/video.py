@@ -1,6 +1,6 @@
 from functools import partial
 
-from menpo.image.base import normalise_pixels_range, channels_to_front
+from menpo.image.base import normalize_pixels_range, channels_to_front
 from menpo.image import Image
 from menpo.base import LazyList
 
@@ -47,7 +47,7 @@ class ImageioFFMPEGImporter(Importer):
             pixels = channels_to_front(pixels)
 
             if self.normalise:
-                return Image(normalise_pixels_range(pixels), copy=False)
+                return Image(normalize_pixels_range(pixels), copy=False)
             else:
                 return Image(pixels, copy=False)
 
