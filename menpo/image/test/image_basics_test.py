@@ -8,7 +8,7 @@ from pathlib import Path
 import menpo
 from menpo.image import Image, MaskedImage, BooleanImage
 from menpo.shape import PointCloud
-from menpo.transform import UniformScale
+from menpo.transform import UniformScale, Translation
 
 
 def test_image_as_masked():
@@ -95,6 +95,14 @@ def test_init_from_pointcloud():
     pc = PointCloud.init_2d_grid((10, 10))
     im = Image.init_from_pointcloud(pc)
     assert im.shape == (9, 9)
+
+
+def test_init_from_pointcloud_return_transform():
+    correct_tr = Translation([5, 5])
+    pc = correct_tr.apply(PointCloud.init_2d_grid((10, 10)))
+    im, tr = Image.init_from_pointcloud(pc, return_transform=True)
+    assert im.shape == (9, 9)
+    assert_allclose(tr.as_vector(), -correct_tr.as_vector())
 
 
 def test_init_from_pointcloud_attach_group():
