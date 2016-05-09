@@ -417,7 +417,9 @@ def test_normalize_std_image():
     pixels[0] = 0.5
     pixels[1] = 0.2345
     image = Image(pixels)
-    new_image = image.normalize_std()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_std()
     assert_allclose(np.mean(new_image.pixels), 0, atol=1e-10)
     assert_allclose(np.std(new_image.pixels), 1)
 
@@ -427,7 +429,9 @@ def test_normalize_norm_image():
     pixels[0] = 0.5
     pixels[1] = 0.2345
     image = Image(pixels)
-    new_image = image.normalize_norm()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_norm()
     assert_allclose(np.mean(new_image.pixels), 0, atol=1e-10)
     assert_allclose(np.linalg.norm(new_image.pixels), 1)
 

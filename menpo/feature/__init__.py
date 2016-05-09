@@ -1,5 +1,6 @@
 from .features import (gradient, hog, lbp, es, igo, no_op, gaussian_filter,
-                       daisy, normalize, features_selection_widget)
+                       daisy, normalize, normalize_norm, normalize_std,
+                       normalize_var, features_selection_widget)
 # Optional dependencies may return nothing.
 from .optional import *
 

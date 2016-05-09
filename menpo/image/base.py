@@ -2584,6 +2584,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image : ``type(self)``
             A copy of this image, normalized.
         """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .normalize_std() instead (features package).',
+             MenpoDeprecationWarning)
         return self._normalize(np.std, mode=mode)
 
     def normalize_norm(self, mode='all', **kwargs):
@@ -2603,6 +2607,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image : ``type(self)``
             A copy of this image, normalized.
         """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .normalize_norm() instead (features package).',
+             MenpoDeprecationWarning)
+
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
