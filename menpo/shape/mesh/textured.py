@@ -113,7 +113,7 @@ class TexturedTriMesh(TriMesh):
 
         >>> texture = texturedtrimesh.texture
         >>> tc_ps = texturedtrimesh.tcoords_pixel_scaled()
-        >>> pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
+        >>> pixel_values_at_tcs = texture.sample(tc_ps)
         """
         scale = Scale(np.array(self.texture.shape)[::-1])
         tcoords = self.tcoords.points.copy()
