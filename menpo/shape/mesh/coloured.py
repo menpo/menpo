@@ -41,7 +41,7 @@ class ColouredTriMesh(TriMesh):
         else:
             colours_handle = colours.copy()
 
-        if points.shape[0] != colours.shape[0]:
+        if points.shape[0] != colours_handle.shape[0]:
             raise ValueError('Must provide a colour per-vertex.')
         self.colours = colours_handle
 
