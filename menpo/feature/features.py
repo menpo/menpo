@@ -800,6 +800,12 @@ def normalize(pixels, scale_func=None, mode='all',
     -------
     pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
         A normalised copy of the image that was passed in.
+
+    Raises
+    ------
+    ValueError
+        If any of the denominators are 0 and ``error_on_divide_by_zero`` is
+        ``True``.
     """
     if scale_func is None:
         def scale_func(_, axis=None):
@@ -860,6 +866,12 @@ def normalize_norm(pixels, mode='all', error_on_divide_by_zero=True):
     -------
     pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
         A normalised copy of the image that was passed in.
+
+    Raises
+    ------
+    ValueError
+        If any of the denominators are 0 and ``error_on_divide_by_zero`` is
+        ``True``.
     """
     def unit_norm(x, axis=None):
         return np.linalg.norm(x, axis=axis)
@@ -894,6 +906,12 @@ def normalize_std(pixels, mode='all', error_on_divide_by_zero=True):
     -------
     pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
         A normalised copy of the image that was passed in.
+
+    Raises
+    ------
+    ValueError
+        If any of the denominators are 0 and ``error_on_divide_by_zero`` is
+        ``True``.
     """
     def unit_std(x, axis=None):
         return np.std(x, axis=axis)
@@ -929,6 +947,12 @@ def normalize_var(pixels, mode='all', error_on_divide_by_zero=True):
     -------
     pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
         A normalised copy of the image that was passed in.
+
+    Raises
+    ------
+    ValueError
+        If any of the denominators are 0 and ``error_on_divide_by_zero`` is
+        ``True``.
     """
     def unit_var(x, axis=None):
         return np.var(x, axis=axis)
