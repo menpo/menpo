@@ -50,6 +50,10 @@ class TexturedTriMesh(TriMesh):
         The triangulation will be right-handed and the diagonal will go from
         the top left to the bottom right of a square on the grid.
 
+        If no texture is passed a blank (black) texture is attached with
+        correct texture coordinates for texture mapping an image of the same
+        size as ``shape``.
+
         Parameters
         ----------
         shape : `tuple` of 2 `int`
@@ -88,6 +92,49 @@ class TexturedTriMesh(TriMesh):
             texture = Image.init_blank(shape)
         return TexturedTriMesh(points, tcoords, texture, trilist=trilist,
                                copy=False)
+
+    @classmethod
+    def init_from_depth_image(cls, depth_image, tcoords=None, texture=None):
+        r"""
+        Return a 3D textured triangular mesh from the given depth image. The
+        depth image is assumed to represent height/depth values and the XY
+        coordinates are assumed to unit spaced and represent image coordinates.
+        This is particularly useful for visualising depth values that have been
+        recovered from images.
+
+        The optionally passed texture will be textured mapped onto the planar
+        surface using the correct texture coordinates for an image of the
+        same shape as ``depth_image``.
+
+        Parameters
+        ----------
+        depth_image : :map:`Image` or subclass
+            A single channel image that contains depth values - as commonly
+            returned by RGBD cameras, for example.
+        tcoords : ``(N, 2)`` `ndarray`, optional
+            The texture coordinates for the mesh.
+        texture : :map:`Image`, optional
+            The texture for the mesh.
+
+        Returns
+        -------
+        depth_cloud : ``type(cls)``
+            A new 3D TriMesh with unit XY coordinates and the given depth
+            values as Z coordinates. The trilist is constructed as in
+            :meth:`init_2d_grid`.
+        """
+        from menpo.image import MaskedImage
+
+        new_tmesh = cls.init_2d_grid(depth_image.shape, tcoords=tcoords,
+                                     texture=texture)
+        if isinstance(depth_image, MaskedImage):
+            new_tmesh = new_tmesh.from_mask(depth_image.mask.as_vector())
+        return cls(np.hstack([new_tmesh.points,
+                              depth_image.as_vector(keep_channels=True).T]),
+                   new_tmesh.tcoords.points,
+                   new_tmesh.texture,
+                   trilist=new_tmesh.trilist,
+                   copy=False)
 
     def tcoords_pixel_scaled(self):
         r"""

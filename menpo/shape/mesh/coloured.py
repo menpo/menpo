@@ -87,6 +87,46 @@ class ColouredTriMesh(TriMesh):
         return ColouredTriMesh(points, trilist=trilist, colours=colours,
                                copy=False)
 
+    @classmethod
+    def init_from_depth_image(cls, depth_image, colours=None):
+        r"""
+        Return a 3D textured triangular mesh from the given depth image. The
+        depth image is assumed to represent height/depth values and the XY
+        coordinates are assumed to unit spaced and represent image coordinates.
+        This is particularly useful for visualising depth values that have been
+        recovered from images.
+
+        The optionally passed texture will be textured mapped onto the planar
+        surface using the correct texture coordinates for an image of the
+        same shape as ``depth_image``.
+
+        Parameters
+        ----------
+        depth_image : :map:`Image` or subclass
+            A single channel image that contains depth values - as commonly
+            returned by RGBD cameras, for example.
+        colours : ``(N, 3)`` `ndarray`, optional
+            The floating point RGB colour per vertex. If not given, grey will be
+            assigned to each vertex.
+
+        Returns
+        -------
+        depth_cloud : ``type(cls)``
+            A new 3D TriMesh with unit XY coordinates and the given depth
+            values as Z coordinates. The trilist is constructed as in
+            :meth:`init_2d_grid`.
+        """
+        from menpo.image import MaskedImage
+
+        new_tmesh = cls.init_2d_grid(depth_image.shape, colours=colours)
+        if isinstance(depth_image, MaskedImage):
+            new_tmesh = new_tmesh.from_mask(depth_image.mask.as_vector())
+        return cls(np.hstack([new_tmesh.points,
+                              depth_image.as_vector(keep_channels=True).T]),
+                   colours=new_tmesh.colours,
+                   trilist=new_tmesh.trilist,
+                   copy=False)
+
     def from_mask(self, mask):
         """
         A 1D boolean array with the same number of elements as the number of
