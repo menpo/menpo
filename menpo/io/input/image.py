@@ -6,7 +6,7 @@ from pathlib import Path
 from menpo.base import LazyList
 from .base import Importer
 from menpo.image import Image, MaskedImage, BooleanImage
-from menpo.image.base import normalise_pixels_range, channels_to_front
+from menpo.image.base import normalize_pixels_range, channels_to_front
 
 
 class PILImporter(Importer):
@@ -80,7 +80,7 @@ class PILImporter(Importer):
         p = self._pil_image.convert(convert) if convert else self._pil_image
         p = channels_to_front(p)
         if normalise:
-            return normalise_pixels_range(p)
+            return normalize_pixels_range(p)
         else:
             return p
 
@@ -194,7 +194,7 @@ class ImageioImporter(Importer):
             # channel, which can be useful if the alpha channel has semantic
             # meanings!
             if self.normalise:
-                p = normalise_pixels_range(pixels[:3])
+                p = normalize_pixels_range(pixels[:3])
                 return MaskedImage(p, mask=pixels[-1].astype(np.bool),
                                    copy=False)
             else:
@@ -202,7 +202,7 @@ class ImageioImporter(Importer):
 
         # Assumed not to have an Alpha channel
         if self.normalise:
-            return Image(normalise_pixels_range(pixels), copy=False)
+            return Image(normalize_pixels_range(pixels), copy=False)
         else:
             return Image(pixels, copy=False)
 
@@ -240,7 +240,7 @@ class ImageioGIFImporter(Importer):
                 # channel, which can be useful if the alpha channel has semantic
                 # meanings!
                 if self.normalise:
-                    p = normalise_pixels_range(pixels[:3])
+                    p = normalize_pixels_range(pixels[:3])
                     return MaskedImage(p, mask=pixels[-1].astype(np.bool),
                                        copy=False)
                 else:
@@ -248,7 +248,7 @@ class ImageioGIFImporter(Importer):
 
             # Assumed not to have an Alpha channel
             if self.normalise:
-                return Image(normalise_pixels_range(pixels), copy=False)
+                return Image(normalize_pixels_range(pixels), copy=False)
             else:
                 return Image(pixels, copy=False)
 

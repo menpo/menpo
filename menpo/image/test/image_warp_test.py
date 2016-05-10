@@ -272,7 +272,8 @@ def test_rotate_image_90_180():
                                                    [2., 1.], [2., 2.]]))
     # rotate 90 degrees
     rotated_img = image.rotate_ccw_about_centre(theta=90, order=0)
-    rotated_img.constrain_landmarks_to_bounds()
+    rotated_img.landmarks['temp'] = rotated_img.landmarks['temp'].lms.constrain_to_bounds(
+        rotated_img.bounds())
     assert_allclose(rotated_img.pixels, np.array([[[4., 8., 12.],
                                                    [3., 7., 11.],
                                                    [2., 6., 10.],
@@ -282,7 +283,8 @@ def test_rotate_image_90_180():
 
     # rotate 180 degrees
     rotated_img = image.rotate_ccw_about_centre(theta=180, order=0)
-    rotated_img.constrain_landmarks_to_bounds()
+    rotated_img.landmarks['temp'] = rotated_img.landmarks['temp'].lms.constrain_to_bounds(
+        rotated_img.bounds())
     assert_allclose(rotated_img.pixels, np.array([[[12., 11., 10., 9.],
                                                    [8., 7., 6., 5.],
                                                    [4., 3., 2., 1.]]]))

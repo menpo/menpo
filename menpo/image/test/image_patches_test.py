@@ -151,10 +151,10 @@ def test_single_ndarray_patch():
     patch[1, 0, ...] = np.ones((n_channels,) + patch_shape)
     patch[1, 1, ...] = 2 * np.ones((n_channels,) + patch_shape)
     patch_center = PointCloud(np.array([[10., 3.], [11., 3.]]))
-    im.set_patches(patch, patch_center, offset=(0, 0), offset_index=1)
+    new_im = im.set_patches(patch, patch_center, offset=(0, 0), offset_index=1)
     res = np.zeros(patch_shape)
     res[1:-1, :] = 2
-    assert_array_equal(im.pixels[2, ...], res)
+    assert_array_equal(new_im.pixels[2, ...], res)
 
 
 def test_single_list_patch():
@@ -164,10 +164,10 @@ def test_single_list_patch():
     patch = [Image(np.ones((n_channels,) + patch_shape)),
              Image(2 * np.ones((n_channels,) + patch_shape))]
     patch_center = PointCloud(np.array([[10., 3.], [11., 3.]]))
-    im.set_patches(patch, patch_center, offset=(0, 0), offset_index=0)
+    new_im = im.set_patches(patch, patch_center, offset=(0, 0), offset_index=0)
     res = np.ones(patch_shape)
     res[1:-1, :] = 2
-    assert_array_equal(im.pixels[2, ...], res)
+    assert_array_equal(new_im.pixels[2, ...], res)
 
 
 def test_offset_argument():
@@ -179,7 +179,7 @@ def test_offset_argument():
     patch[0, 0, ...] = np.ones((image.n_channels,) + patch_shape)
     patch[1, 0, ...] = 2 * np.ones((image.n_channels,) + patch_shape)
     for off in offsets:
-        image.set_patches(patch, patch_center, offset=off)
+        image = image.set_patches(patch, patch_center, offset=off)
         assert_array_equal(image.pixels[:, 98:103, 98:104], patch[0, 0, ...])
         assert_array_equal(image.pixels[:, 48:53, 38:44], patch[1, 0, ...])
 
@@ -210,13 +210,14 @@ def test_set_patches_around_landmarks():
         patch_shape=patch_shape, as_single_array=True)
     new_image1 = Image.init_blank(image.shape, image.n_channels)
     new_image1.landmarks['LJSON'] = image.landmarks['LJSON']
-    new_image1.set_patches_around_landmarks(patches1)
+    extracted1 = new_image1.set_patches_around_landmarks(patches1)
+
     patches2 = image.extract_patches_around_landmarks(
         patch_shape=patch_shape, as_single_array=False)
     new_image2 = Image.init_blank(image.shape, image.n_channels)
     new_image2.landmarks['LJSON'] = image.landmarks['LJSON']
-    new_image2.set_patches_around_landmarks(patches2)
-    assert_array_equal(new_image1.pixels, new_image2.pixels)
+    extracted2 = new_image2.set_patches_around_landmarks(patches2)
+    assert_array_equal(extracted1.pixels, extracted2.pixels)
 
 
 def test_create_patches_image():
