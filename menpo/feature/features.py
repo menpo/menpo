@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 scipy_gaussian_filter = None  # expensive
 
-from .base import ndfeature, winitfeature
+from .base import ndfeature, winitfeature, imgfeature
 from .gradient import gradient_cython
 from .windowiterator import WindowIterator, WindowIteratorResult
 
@@ -768,8 +768,8 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     return lbp_descriptor
 
 
-@ndfeature
-def normalize(pixels, scale_func=None, mode='all',
+@imgfeature
+def normalize(img, scale_func=None, mode='all',
               error_on_divide_by_zero=True):
     r"""
     Normalize the pixel values via mean centering and an optional scaling. By
@@ -779,7 +779,7 @@ def normalize(pixels, scale_func=None, mode='all',
 
     Parameters
     ----------
-    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+    img : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
         Either the image object itself or an array with the pixels. The first
         dimension is interpreted as channels. This means an N-dimensional image
         is represented by an N+1 dimensional array.
@@ -811,15 +811,13 @@ def normalize(pixels, scale_func=None, mode='all',
         def scale_func(_, axis=None):
             return np.array([1.0])
 
-    # Equivalent to image.as_vector(keep_channels=True)
-    original_shape = pixels.shape
-    pixels = pixels.reshape([pixels.shape[0], -1])
+    pixels = img.as_vector(keep_channels=True)
 
     if mode == 'all':
         centered_pixels = pixels - np.mean(pixels)
         scale_factor = scale_func(centered_pixels)
     elif mode == 'per_channel':
-        centered_pixels = pixels - np.mean(pixels, axis=1).reshape([-1, 1])
+        centered_pixels = pixels - np.mean(pixels, axis=1, keepdims=1)
         scale_factor = scale_func(centered_pixels, axis=1).reshape([-1, 1])
     else:
         raise ValueError("Supported modes are {{'all', 'per_channel'}} - '{}' "
@@ -835,9 +833,9 @@ def normalize(pixels, scale_func=None, mode='all',
         non_zero_denom = ~zero_denom
         centered_pixels[non_zero_denom] = (centered_pixels[non_zero_denom] /
                                            scale_factor[non_zero_denom])
-        return centered_pixels.reshape(original_shape)
+        return img.from_vector(centered_pixels)
     else:
-        return (centered_pixels / scale_factor).reshape(original_shape)
+        return img.from_vector(centered_pixels / scale_factor)
 
 
 @ndfeature

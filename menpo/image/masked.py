@@ -1100,16 +1100,16 @@ class MaskedImage(Image):
     def _normalize(self, scale_func, mode='all', limit_to_mask=True):
         from menpo.feature import normalize
         if limit_to_mask:
-            pixels = self.as_vector(keep_channels=True)
+            pixels = self
         else:
-            pixels = Image.as_vector(self, keep_channels=True)
+            pixels = self.as_unmasked(copy=False)
 
-        new_pixels = normalize(pixels, scale_func=scale_func, mode=mode)
+        new_img = normalize(pixels, scale_func=scale_func, mode=mode)
 
         if limit_to_mask:
-            return self.from_vector(new_pixels)
+            return new_img
         else:
-            return Image.from_vector(self, new_pixels)
+            return new_img.as_masked(copy=False, mask=self.mask.copy())
 
     def constrain_mask_to_landmarks(self, group=None, batch_size=None,
                                     point_in_pointcloud='pwa'):

@@ -2630,9 +2630,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def _normalize(self, scale_func, mode='all'):
         from menpo.feature import normalize
-        new_pixels = normalize(self.as_vector(keep_channels=True),
-                               scale_func=scale_func, mode=mode)
-        return self.from_vector(new_pixels)
+        return normalize(self, scale_func=scale_func, mode=mode)
 
     def rescale_pixels(self, minimum, maximum, per_channel=True):
         r"""A copy of this image with pixels linearly rescaled to fit a range.
