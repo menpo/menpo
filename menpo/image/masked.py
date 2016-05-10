@@ -1080,8 +1080,6 @@ class MaskedImage(Image):
             pixels.
             If ``False``, the normalization is wrt all pixels, regardless of
             their masking value.
-        **kwargs : `dict`, optional
-            Will be passed through to the `np.linalg.norm` function.
 
         Returns
         -------
@@ -1329,8 +1327,8 @@ class MaskedImage(Image):
         group : `str` or `list` of `str`, optional
             The landmark group key, or a list of keys.
         render_lines : `bool`, optional
-            If ``True``, and the provided landmark group is a :map:`PointGraph`,
-            the edges are rendered.
+            If ``True``, and the provided landmark group is a
+            :map:`PointDirectedGraph`, the edges are rendered.
         line_style : `str`, optional
             The style of the edge line. Not all backends support this argument.
         line_colour : `str` or `tuple`, optional

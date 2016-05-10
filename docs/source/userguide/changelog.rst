@@ -100,6 +100,7 @@ Github Pull Requests
 ....................
 
 - `#659`_ Add axes ticks options to view_patches (@nontas)
+
 .. _#659: https://github.com/menpo/menpo/pull/659
 
 0.6.1 (2015/12/09)
