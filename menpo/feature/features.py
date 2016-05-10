@@ -1,9 +1,10 @@
 from __future__ import division
 import itertools
+import warnings
 import numpy as np
 scipy_gaussian_filter = None  # expensive
 
-from .base import ndfeature, winitfeature
+from .base import ndfeature, winitfeature, imgfeature
 from .gradient import gradient_cython
 from .windowiterator import WindowIterator, WindowIteratorResult
 
@@ -765,6 +766,197 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         np.ascontiguousarray(np.rollaxis(lbp_descriptor.pixels, -1)),
         lbp_descriptor.centres)
     return lbp_descriptor
+
+
+@imgfeature
+def normalize(img, scale_func=None, mode='all',
+              error_on_divide_by_zero=True):
+    r"""
+    Normalize the pixel values via mean centering and an optional scaling. By
+    default the scaling will be ``1.0``. The ``mode`` parameter selects
+    whether the normalisation is computed across all pixels in the image or
+    per-channel.
+
+    Parameters
+    ----------
+    img : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels. This means an N-dimensional image
+        is represented by an N+1 dimensional array.
+    scale_func : `callable`, optional
+        Compute the scaling factor. Expects a single parameter and an optional
+        `axis` keyword argument and will be passed the entire pixel array.
+        Should return a 1D numpy array of one or more values.
+    mode : ``{all, per_channel}``, optional
+        If ``all``, the normalization is over all channels. If
+        ``per_channel``, each channel individually is mean centred and
+        normalized in variance.
+    error_on_divide_by_zero : `bool`, optional
+        If ``True``, will raise a ``ValueError`` on dividing by zero.
+        If ``False``, will merely raise a warning and only those values
+        with non-zero denominators will be normalised.
+
+    Returns
+    -------
+    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
+        A normalised copy of the image that was passed in.
+
+    Raises
+    ------
+    ValueError
+        If any of the denominators are 0 and ``error_on_divide_by_zero`` is
+        ``True``.
+    """
+    if scale_func is None:
+        def scale_func(_, axis=None):
+            return np.array([1.0])
+
+    pixels = img.as_vector(keep_channels=True)
+
+    if mode == 'all':
+        centered_pixels = pixels - np.mean(pixels)
+        scale_factor = scale_func(centered_pixels)
+    elif mode == 'per_channel':
+        centered_pixels = pixels - np.mean(pixels, axis=1, keepdims=1)
+        scale_factor = scale_func(centered_pixels, axis=1).reshape([-1, 1])
+    else:
+        raise ValueError("Supported modes are {{'all', 'per_channel'}} - '{}' "
+                         "is not known".format(mode))
+
+    zero_denom = (scale_factor == 0).ravel()
+    any_non_zero = np.any(zero_denom)
+    if error_on_divide_by_zero and any_non_zero:
+        raise ValueError("Computed scale factor cannot be 0.0")
+    elif any_non_zero:
+        warnings.warn('One or more the scale factors are 0.0 and thus these'
+                      'entries will be skipped during normalization.')
+        non_zero_denom = ~zero_denom
+        centered_pixels[non_zero_denom] = (centered_pixels[non_zero_denom] /
+                                           scale_factor[non_zero_denom])
+        return img.from_vector(centered_pixels)
+    else:
+        return img.from_vector(centered_pixels / scale_factor)
+
+
+@ndfeature
+def normalize_norm(pixels, mode='all', error_on_divide_by_zero=True):
+    r"""
+    Normalize the pixels to be mean centred and have unit norm. The ``mode``
+    parameter selects whether the normalisation is computed across all pixels in
+    the image or per-channel.
+
+    Parameters
+    ----------
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels. This means an N-dimensional image
+        is represented by an N+1 dimensional array.
+    mode : ``{all, per_channel}``, optional
+        If ``all``, the normalization is over all channels. If
+        ``per_channel``, each channel individually is mean centred and
+        normalized in variance.
+    error_on_divide_by_zero : `bool`, optional
+        If ``True``, will raise a ``ValueError`` on dividing by zero.
+        If ``False``, will merely raise a warning and only those values
+        with non-zero denominators will be normalised.
+
+    Returns
+    -------
+    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
+        A normalised copy of the image that was passed in.
+
+    Raises
+    ------
+    ValueError
+        If any of the denominators are 0 and ``error_on_divide_by_zero`` is
+        ``True``.
+    """
+    def unit_norm(x, axis=None):
+        return np.linalg.norm(x, axis=axis)
+
+    return normalize(pixels, scale_func=unit_norm, mode=mode,
+                     error_on_divide_by_zero=error_on_divide_by_zero)
+
+
+@ndfeature
+def normalize_std(pixels, mode='all', error_on_divide_by_zero=True):
+    r"""
+    Normalize the pixels to be mean centred and have unit standard deviation.
+    The ``mode`` parameter selects whether the normalisation is computed across
+    all pixels in the image or per-channel.
+
+    Parameters
+    ----------
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels. This means an N-dimensional image
+        is represented by an N+1 dimensional array.
+    mode : ``{all, per_channel}``, optional
+        If ``all``, the normalization is over all channels. If
+        ``per_channel``, each channel individually is mean centred and
+        normalized in variance.
+    error_on_divide_by_zero : `bool`, optional
+        If ``True``, will raise a ``ValueError`` on dividing by zero.
+        If ``False``, will merely raise a warning and only those values
+        with non-zero denominators will be normalised.
+
+    Returns
+    -------
+    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
+        A normalised copy of the image that was passed in.
+
+    Raises
+    ------
+    ValueError
+        If any of the denominators are 0 and ``error_on_divide_by_zero`` is
+        ``True``.
+    """
+    def unit_std(x, axis=None):
+        return np.std(x, axis=axis)
+
+    return normalize(pixels, scale_func=unit_std, mode=mode,
+                     error_on_divide_by_zero=error_on_divide_by_zero)
+
+
+@ndfeature
+def normalize_var(pixels, mode='all', error_on_divide_by_zero=True):
+    r"""
+    Normalize the pixels to be mean centred and normalise according
+    to the variance.
+    The ``mode`` parameter selects whether the normalisation is computed across
+    all pixels in the image or per-channel.
+
+    Parameters
+    ----------
+    pixels : :map:`Image` or subclass or ``(C, X, Y, ..., Z)`` `ndarray`
+        Either the image object itself or an array with the pixels. The first
+        dimension is interpreted as channels. This means an N-dimensional image
+        is represented by an N+1 dimensional array.
+    mode : ``{all, per_channel}``, optional
+        If ``all``, the normalization is over all channels. If
+        ``per_channel``, each channel individually is mean centred and
+        normalized in variance.
+    error_on_divide_by_zero : `bool`, optional
+        If ``True``, will raise a ``ValueError`` on dividing by zero.
+        If ``False``, will merely raise a warning and only those values
+        with non-zero denominators will be normalised.
+
+    Returns
+    -------
+    pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
+        A normalised copy of the image that was passed in.
+
+    Raises
+    ------
+    ValueError
+        If any of the denominators are 0 and ``error_on_divide_by_zero`` is
+        ``True``.
+    """
+    def unit_var(x, axis=None):
+        return np.var(x, axis=axis)
+
+    return normalize(pixels, scale_func=unit_var, mode=mode,
+                     error_on_divide_by_zero=error_on_divide_by_zero)
 
 
 @ndfeature

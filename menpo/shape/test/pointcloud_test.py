@@ -130,6 +130,16 @@ def test_pointcloud_centre():
     assert_allclose(c, [1. / 3., 1.])
 
 
+def test_pointcloud_constrain_to_bounds():
+    points = np.array([[-1, -1],
+                       [10., 10],
+                       [4, 4]])
+    pc = PointCloud(points).constrain_to_bounds(((0, 0), (5, 5)))
+    assert_allclose(pc.points, np.array([[0, 0],
+                                         [5., 5],
+                                         [4, 4]]))
+
+
 def test_pointcloud_centre_of_bounds():
     points = np.array([[0, 0],
                        [1., 1],
