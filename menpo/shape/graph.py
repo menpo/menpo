@@ -876,7 +876,7 @@ class UndirectedGraph(Graph):
         # Get directed tree from the above undirected graph using DFS.
         mst_adjacency = csgraph.depth_first_tree(mst_adjacency, root_vertex,
                                                  directed=False)
-        return Tree(mst_adjacency, root_vertex)
+        return Tree(mst_adjacency, root_vertex, skip_checks=True)
 
     def __str__(self):
         isolated = ''
@@ -1433,15 +1433,12 @@ class PointGraph(Graph, PointCloud):
     ----------
     points : ``(n_vertices, n_dims, )`` `ndarray`
         The array of point locations.
-    adjacency_matrix : ``(n_vertices, n_vertices, )`` `ndarray` or `csr_matrix`
+    adjacency_matrix : ``(n_vertices, n_vertices)`` `ndarray` or `csr_matrix`
         The adjacency matrix of the graph in which the rows represent source
         vertices and columns represent destination vertices. The non-edges must
         be represented with zeros and the edges can have a weight value.
 
         The adjacency matrix of an undirected graph must be symmetric.
-    directed : `bool`
-        If ``True``, the graph is considered directed. If ``False``, the graph
-        is considered undirected.
     copy : `bool`, optional
         If ``False``, the ``adjacency_matrix`` will not be copied on assignment.
     skip_checks : `bool`, optional
@@ -2223,9 +2220,8 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
         else:
             # Get new adjacency_matrix and points
             (adjacency_matrix, points) = _mask_adjacency_matrix_and_points(
-                mask, self.adjacency_matrix.todense().copy(),
-                self.points.copy())
-            return PointUndirectedGraph(points, adjacency_matrix, copy=False,
+                mask, self.adjacency_matrix, self.points)
+            return PointUndirectedGraph(points, adjacency_matrix, copy=True,
                                         skip_checks=False)
 
     def minimum_spanning_tree(self, root_vertex):
@@ -2259,7 +2255,8 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
         mst_adjacency = csgraph.depth_first_tree(mst_adjacency, root_vertex,
                                                  directed=False)
         # remove isolated vertices from the points
-        return PointTree(self.points, mst_adjacency, root_vertex, copy=True)
+        return PointTree(self.points, mst_adjacency, root_vertex, copy=True,
+                         skip_checks=True)
 
 
 class PointDirectedGraph(PointGraph, DirectedGraph):
@@ -2460,9 +2457,8 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
         else:
             # Get new adjacency_matrix and points
             (adjacency_matrix, points) = _mask_adjacency_matrix_and_points(
-                mask, self.adjacency_matrix.todense().copy(),
-                self.points.copy())
-            return PointDirectedGraph(points, adjacency_matrix, copy=False,
+                mask, self.adjacency_matrix, self.points)
+            return PointDirectedGraph(points, adjacency_matrix, copy=True,
                                       skip_checks=False)
 
 
@@ -2474,7 +2470,7 @@ class PointTree(PointDirectedGraph, Tree):
     ----------
     points : ``(n_vertices, n_dims)`` `ndarray`
         The array representing the points.
-    adjacency_matrix : ``(n_vertices, n_vertices, )`` `ndarray` or `csr_matrix`
+    adjacency_matrix : ``(n_vertices, n_vertices)`` `ndarray` or `csr_matrix`
         The adjacency matrix of the tree in which the rows represent parents
         and columns represent children. The non-edges must be represented with
         zeros and the edges can have a weight value.
@@ -2788,8 +2784,7 @@ class PointTree(PointDirectedGraph, Tree):
                 raise ValueError('Cannot remove root vertex.')
             # Get new adjacency_matrix and points
             (adjacency_matrix, points) = _mask_adjacency_matrix_and_points(
-                mask, self.adjacency_matrix.todense().copy(),
-                self.points.copy())
+                mask, self.adjacency_matrix, self.points)
             root_vertex = self.root_vertex - np.sum(~mask[:self.root_vertex])
             # iteratively find isolated vertices and remove them
             n_components, labels = csgraph.connected_components(
@@ -2803,7 +2798,7 @@ class PointTree(PointDirectedGraph, Tree):
                 n_components, labels = csgraph.connected_components(
                     adjacency_matrix, directed=True)
             return PointTree(points, adjacency_matrix, root_vertex=root_vertex,
-                             copy=False, skip_checks=False)
+                             copy=True, skip_checks=False)
 
 
 def _is_symmetric(array):
@@ -2910,10 +2905,10 @@ def _mask_adjacency_matrix_and_points(mask, adjacency_matrix, points):
         The provided mask deletes all edges.
     """
     # Find the indices that have been asked to be removed
-    indices_to_remove = np.nonzero(~mask)[0]
+    indices_to_keep = np.nonzero(mask)[0]
     # Remove rows and columns from adjacency matrix
-    adjacency_matrix = np.delete(adjacency_matrix, indices_to_remove, 0)
-    adjacency_matrix = np.delete(adjacency_matrix, indices_to_remove, 1)
+    adjacency_matrix = adjacency_matrix[indices_to_keep, :]
+    adjacency_matrix = adjacency_matrix[:, indices_to_keep]
     if adjacency_matrix.size == 0:
         raise ValueError('The provided mask deletes all edges.')
     # remove rows from points
