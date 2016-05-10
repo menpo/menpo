@@ -88,6 +88,7 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
     # returns x, y centres.
     shape = (((centers[-1, :] - centers[0, :]) /
               [window_step_vertical, window_step_horizontal]) + 1)
+    shape = shape.astype(np.int)
 
     # print information
     if verbose:
