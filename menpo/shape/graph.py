@@ -1439,9 +1439,6 @@ class PointGraph(Graph, PointCloud):
         be represented with zeros and the edges can have a weight value.
 
         The adjacency matrix of an undirected graph must be symmetric.
-    directed : `bool`
-        If ``True``, the graph is considered directed. If ``False``, the graph
-        is considered undirected.
     copy : `bool`, optional
         If ``False``, the ``adjacency_matrix`` will not be copied on assignment.
     skip_checks : `bool`, optional

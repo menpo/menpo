@@ -493,7 +493,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         close to 0, this value at least allows sampling without worrying about
         floating point error.
 
-        :type:`tuple`
+        :type: `tuple`
         """
         return (0,) * self.n_dims, tuple(s - 1 for s in self.shape)
 
@@ -2611,7 +2611,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         mode : ``{all, per_channel}``, optional
             If ``all``, the normalization is over all channels. If
             ``per_channel``, each channel individually is mean centred and
-            normalized in variance.
+            unit norm.
 
         Returns
         -------
@@ -2694,8 +2694,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         group : `str` or `list` of `str`, optional
             The landmark group key, or a list of keys.
         render_lines : `bool`, optional
-            If ``True``, and the provided landmark group is a :map:`PointGraph`,
-            the edges are rendered.
+            If ``True``, and the provided landmark group is a
+            :map:`PointDirectedGraph`, the edges are rendered.
         line_style : `str`, optional
             The style of the edge line. Not all backends support this argument.
         line_colour : `str` or `tuple`, optional
