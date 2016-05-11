@@ -559,6 +559,14 @@ def landmark_file_paths(pattern):
     return glob_with_suffix(pattern, image_landmark_types)
 
 
+def pickle_paths(pattern):
+    r"""
+    Return pickle filepaths that Menpo can import that match the glob
+    pattern.
+    """
+    return glob_with_suffix(pattern, pickle_types)
+
+
 def _import_glob_lazy_list(pattern, extension_map, max_assets=None,
                            landmark_resolver=same_name, shuffle=False,
                            as_generator=False, landmark_ext_map=None,
