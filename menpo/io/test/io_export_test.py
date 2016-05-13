@@ -80,7 +80,7 @@ def test_export_filepath_explicit_ext_dot(mock_open, exists, landmark_types):
     assert export_function.call_count == 1
 
 
-@raises(ValueError)
+@raises(mio.OverwriteError)
 @patch('menpo.io.output.base.Path.exists')
 def test_export_filepath_no_overwrite_exists(exists):
     exists.return_value = True
