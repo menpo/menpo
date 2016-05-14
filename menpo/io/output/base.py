@@ -4,6 +4,7 @@ from pathlib import Path
 
 from menpo.compatibility import basestring, str
 from .extensions import landmark_types, image_types, pickle_types, video_types
+from ..exceptions import OverwriteError
 from ..utils import _norm_path
 
 # an open file handle that uses a small fast level of compression
@@ -275,13 +276,15 @@ def _validate_filepath(fp, overwrite):
 
     Raises
     ------
-    ValueError
+    OverwriteError
         If ``overwrite == False`` and a file already exists at the file path.
     """
     path_filepath = _norm_path(fp)
     if path_filepath.exists() and not overwrite:
-        raise ValueError('File already exists. Please set the overwrite '
-                         'kwarg if you wish to overwrite the file.')
+        raise OverwriteError('File {} already exists. Please set the overwrite '
+                             'kwarg if you wish to overwrite '
+                             'the file.'.format(path_filepath.name),
+                             path_filepath)
     return path_filepath
 
 
