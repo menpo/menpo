@@ -6,7 +6,7 @@ import random
 from menpo.base import menpo_src_dir_path, LazyList
 from menpo.visualize import print_progress
 
-from ..utils import _norm_path
+from ..utils import _norm_path, _possible_extensions_from_filepath
 from .extensions import (image_landmark_types, image_types, pickle_types,
                          ffmpeg_video_types)
 
@@ -790,28 +790,6 @@ def glob_with_suffix(pattern, extensions_map, sort=True):
         possible_exts = _possible_extensions_from_filepath(path)
         if any([ext in extensions_map for ext in possible_exts]):
             yield path
-
-
-def _possible_extensions_from_filepath(filepath):
-    r"""
-    Generate a list of possible extensions from the given filepath. Since
-    filenames can contain '.' characters and some extensions are compound
-    (e.g. '.pkl.gz'), there may be many possible extensions for a given
-    path. Generate a list possible extensions, preferring longer extensions.
-
-    Parameters
-    ----------
-    filepath : `Path`
-        A pathlib Path.
-
-    Returns
-    -------
-    possible_extensions : `list` of `str`
-        A list of extensions **with** leading '.' characters and converted
-        to lowercase.
-    """
-    suffixes = filepath.suffixes
-    return [''.join(suffixes[i:]).lower() for i in range(len(suffixes))]
 
 
 def importer_for_filepath(filepath, extensions_map):

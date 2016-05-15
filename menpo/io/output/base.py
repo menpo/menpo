@@ -5,7 +5,7 @@ from pathlib import Path
 from menpo.compatibility import basestring, str
 from .extensions import landmark_types, image_types, pickle_types, video_types
 from ..exceptions import OverwriteError
-from ..utils import _norm_path
+from ..utils import _norm_path, _possible_extensions_from_filepath
 
 # an open file handle that uses a small fast level of compression
 gzip_open = partial(gzip.open, compresslevel=3)
@@ -288,7 +288,7 @@ def _validate_filepath(fp, overwrite):
     return path_filepath
 
 
-def _parse_and_validate_extension(path_filepath, extension, extensions_map):
+def _parse_and_validate_extension(filepath, extension, extensions_map):
     r"""
     If an extension is given, validate that the given file path matches
     the given extension.
@@ -298,7 +298,7 @@ def _parse_and_validate_extension(path_filepath, extension, extensions_map):
 
     Parameters
     ----------
-    path_filepath : `Path`
+    filepath : `Path`
         The file path (normalised).
     extension : `str`
         The extension provided by the user.
@@ -321,28 +321,25 @@ def _parse_and_validate_extension(path_filepath, extension, extensions_map):
     # If an explicit extension is passed, it must match exactly. However, file
     # names may contain periods, and therefore we need to try and parse
     # a known extension from the given file path.
-    suffixes = path_filepath.suffixes
-    i = 1
-    while i < len(suffixes) + 1:
-        try:
-            suffix = ''.join(suffixes[-i:])
-            _extension_to_export_function(suffix, extensions_map)
-            known_extension = suffix
-            break
-        except ValueError:
-            pass
-        i += 1
-    else:
-        raise ValueError('Unknown file extension passed: ({})'.format(
-            ''.join(suffixes)))
+    possible_exts = _possible_extensions_from_filepath(filepath)
+
+    known_extension = None
+    while known_extension is None and possible_exts:
+        possible_extension = possible_exts.pop(0)
+        if possible_extension in extensions_map:
+            known_extension = possible_extension
+
+    if known_extension is None:
+        raise ValueError('Unknown file extension passed: {}'.format(
+            ''.join(filepath.suffixes)))
 
     if extension is not None:
         extension = _normalise_extension(extension)
         if extension != known_extension:
             raise ValueError('The file path extension must match the '
-                             'requested file extension: ({}) != ({}).'.format(
+                             'requested file extension: {} != {}'.format(
                                extension, known_extension))
-        known_extension = extension
+
     return known_extension
 
 
