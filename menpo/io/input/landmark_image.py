@@ -1,71 +1,10 @@
-import numpy as np
+from functools import partial
 
-from .landmark import ASFImporter, PTSImporter
-
-
-class ImageASFImporter(ASFImporter):
-    r"""
-    Implements the :meth:`_build_points` method for images. Here, `y` is the
-    first axis.
-
-    Parameters
-    ----------
-    filepath : string
-        Absolute filepath of the landmarks
-    """
-
-    def __init__(self, filepath):
-        super(ImageASFImporter, self).__init__(filepath)
-
-    def _build_points(self, xs, ys):
-        """
-        For images, `axis 0 = ys` and `axis 1 = xs`. Therefore, return the
-        appropriate points array ordering.
-
-        Parameters
-        ----------
-        xs : (N,) ndarray
-            Row vector of `x` coordinates
-        ys : (N,) ndarray
-            Row vector of `y` coordinates
-
-        Returns
-        -------
-        points : (N, 2) ndarray
-            Array with `ys` as the first axis: `[ys; xs]`
-        """
-        return np.hstack([ys, xs])
+from .landmark import asf_importer, pts_importer
 
 
-class ImagePTSImporter(PTSImporter):
-    r"""
-    Implements the :meth:`_build_points` method for images. Here, `y` is the
-    first axis.
+asf_image_importer = partial(asf_importer, image_origin=True)
+asf_image_importer.__doc__ = asf_importer.__doc__
 
-    Parameters
-    ----------
-    filepath : string
-        Absolute filepath of the landmarks
-    """
-
-    def __init__(self, filepath):
-        super(ImagePTSImporter, self).__init__(filepath)
-
-    def _build_points(self, xs, ys):
-        """
-        For images, `axis 0 = ys` and `axis 1 = xs`. Therefore, return the
-        appropriate points array ordering.
-
-        Parameters
-        ----------
-        xs : (N,) ndarray
-            Row vector of `x` coordinates
-        ys : (N,) ndarray
-            Row vector of `y` coordinates
-
-        Returns
-        -------
-        points : (N, 2) ndarray
-            Array with `ys` as the first axis: `[ys; xs]`
-        """
-        return np.hstack([ys, xs])
+pts_image_importer = partial(pts_importer, image_origin=True)
+pts_image_importer.__doc__ = pts_importer.__doc__

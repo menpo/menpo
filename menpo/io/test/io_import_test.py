@@ -105,7 +105,8 @@ def test_double_suffix(pathlib_glob):
 
     ret_val = next(mio_base.glob_with_suffix('*.t1.t2', ext_map))
     assert (ret_val == fake_path)
-    ext_map.__contains__.assert_called_with('.t1.t2')
+    ext_map.__contains__.assert_any_call('.t1.t2')
+    ext_map.__contains__.assert_any_call('.t2')
 
 
 def test_import_image():
