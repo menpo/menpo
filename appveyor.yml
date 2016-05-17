@@ -18,7 +18,7 @@ platform:
 - x64
 
 init:
-- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/less_win_magic/condaci.py' C:\\condaci.py; echo "Done"
+- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/v0.4.x/condaci.py' C:\\condaci.py; echo "Done"
 - cmd: python C:\\condaci.py setup
 
 install:
