@@ -462,7 +462,9 @@ def test_normalize_std_masked_per_channel():
     pixels[1] += -14
     pixels[2] /= 130
     image = MaskedImage(pixels)
-    new_image = image.normalize_std(mode='per_channel')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_std(mode='per_channel')
     assert_allclose(
         np.mean(new_image.as_vector(keep_channels=True), axis=1), 0, atol=1e-10)
     assert_allclose(
@@ -475,7 +477,9 @@ def test_normalize_std_image_per_channel():
     pixels[0] += -3
     pixels[2] /= 140
     image = Image(pixels)
-    new_image = image.normalize_std(mode='per_channel')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_std(mode='per_channel')
     assert_allclose(
         np.mean(new_image.as_vector(keep_channels=True), axis=1), 0,
         atol=1e-10)
@@ -489,7 +493,9 @@ def test_normalize_norm_image_per_channel():
     pixels[0] += -114
     pixels[2] /= 30
     image = Image(pixels)
-    new_image = image.normalize_norm(mode='per_channel')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_norm(mode='per_channel')
     assert_allclose(
         np.mean(new_image.as_vector(keep_channels=True), axis=1), 0,
         atol=1e-10)
