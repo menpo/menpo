@@ -18,10 +18,6 @@ platform:
 - x64
 
 init:
-- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/v0.4.x/condaci.py' C:\\condaci.py; echo "Done"
-- cmd: python C:\\condaci.py setup
-
-install:
 # If there is a newer build queued for the same PR, cancel this one.
 # The AppVeyor 'rollout builds' option is supposed to serve the same
 # purpose but it is problematic because it tends to cancel builds pushed
@@ -31,6 +27,10 @@ install:
     https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
     Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
       throw "There are newer queued builds for this pull request, failing early." }
+- ps: Start-FileDownload 'https://raw.githubusercontent.com/menpo/condaci/v0.4.x/condaci.py' C:\\condaci.py; echo "Done"
+- cmd: python C:\\condaci.py setup
+
+install:
 - cmd: set tmp_cmd=python C:\\condaci.py miniconda_dir
 - cmd: "FOR /F %%i IN (' %tmp_cmd% ') DO SET APPV_MINICONDA_DIR=%%i"
 - cmd: set APPV_MINICONDA_EXE="%APPV_MINICONDA_DIR%\python.exe"
