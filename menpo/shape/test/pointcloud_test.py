@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 from nose.tools import raises
 from numpy.testing import assert_allclose
+from menpo.image import Image, MaskedImage
 from menpo.shape import PointCloud, bounding_box
 from menpo.testing import is_same_array
 
@@ -17,6 +18,29 @@ def test_pointcloud_init_2d_grid():
     assert pc.n_points == 100
     assert pc.n_dims == 2
     assert_allclose(pc.range(), [9, 9])
+
+
+def test_pointcloud_init_from_depth_image():
+    fake_z = np.random.uniform(size=(10, 10))
+    pc = PointCloud.init_from_depth_image(Image(fake_z))
+    assert pc.n_points == 100
+    assert pc.n_dims == 3
+    assert_allclose(pc.range()[:2], [9, 9])
+    assert pc.points[:, -1].max() <= 1.0
+    assert pc.points[:, -1].min() >= 0.0
+
+
+def test_pointcloud_init_from_depth_image_masked():
+    fake_z = np.random.uniform(size=(10, 10))
+    mask = np.zeros(fake_z.shape, dtype=np.bool)
+    mask[2:6, 2:6] = True
+    im = MaskedImage(fake_z, mask=mask)
+    pc = PointCloud.init_from_depth_image(im)
+    assert pc.n_points == 16
+    assert pc.n_dims == 3
+    assert_allclose(pc.range()[:2], [3, 3])
+    assert pc.points[:, -1].max() <= 1.0
+    assert pc.points[:, -1].min() >= 0.0
 
 
 def test_pointcloud_init_2d_grid_single_spacing():

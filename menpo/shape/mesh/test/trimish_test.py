@@ -1,7 +1,7 @@
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose
-from menpo.image import Image
+from menpo.image import Image, MaskedImage
 from menpo.shape import TriMesh, TexturedTriMesh, ColouredTriMesh
 from menpo.testing import is_same_array
 
@@ -16,13 +16,125 @@ def test_trimesh_creation():
     TriMesh(points, trilist=trilist)
 
 
-def test_trimesh__init_2d_grid():
+def test_trimesh_init_2d_grid():
     tm = TriMesh.init_2d_grid([10, 10])
     assert tm.n_points == 100
     assert tm.n_dims == 2
     # 162 = 9 * 9 * 2
     assert_allclose(tm.trilist.shape, (162, 3))
     assert_allclose(tm.range(), [9, 9])
+
+
+def test_trimesh_init_from_depth_image():
+    fake_z = np.random.uniform(size=(10, 10))
+    tm = TriMesh.init_from_depth_image(Image(fake_z))
+    assert tm.n_points == 100
+    assert tm.n_dims == 3
+    assert_allclose(tm.range()[:2], [9, 9])
+    assert tm.points[:, -1].max() <= 1.0
+    assert tm.points[:, -1].min() >= 0.0
+
+
+def test_trimesh_init_from_depth_image_masked():
+    fake_z = np.random.uniform(size=(10, 10))
+    mask = np.zeros(fake_z.shape, dtype=np.bool)
+    mask[2:6, 2:6] = True
+    im = MaskedImage(fake_z, mask=mask)
+    tm = TriMesh.init_from_depth_image(im)
+    assert tm.n_points == 16
+    assert tm.n_dims == 3
+    assert_allclose(tm.range()[:2], [3, 3])
+    assert tm.points[:, -1].max() <= 1.0
+    assert tm.points[:, -1].min() >= 0.0
+
+
+def test_colouredtrimesh_init_2d_grid():
+    tm = ColouredTriMesh.init_2d_grid([10, 10])
+    assert tm.n_points == 100
+    assert tm.n_dims == 2
+    # 162 = 9 * 9 * 2
+    assert_allclose(tm.trilist.shape, (162, 3))
+    assert_allclose(tm.range(), [9, 9])
+
+
+def test_colouredtrimesh_init_from_depth_image():
+    fake_z = np.random.uniform(size=(10, 10))
+    tm = ColouredTriMesh.init_from_depth_image(Image(fake_z))
+    assert tm.n_points == 100
+    assert tm.n_dims == 3
+    assert_allclose(tm.range()[:2], [9, 9])
+    assert tm.points[:, -1].max() <= 1.0
+    assert tm.points[:, -1].min() >= 0.0
+
+
+def test_colouredtrimesh_init_from_depth_image_masked():
+    fake_z = np.random.uniform(size=(10, 10))
+    mask = np.zeros(fake_z.shape, dtype=np.bool)
+    mask[2:6, 2:6] = True
+    im = MaskedImage(fake_z, mask=mask)
+    tm = ColouredTriMesh.init_from_depth_image(im)
+    assert tm.n_points == 16
+    assert tm.n_dims == 3
+    assert_allclose(tm.range()[:2], [3, 3])
+    assert tm.points[:, -1].max() <= 1.0
+    assert tm.points[:, -1].min() >= 0.0
+
+
+def test_colouredtrimesh_init_from_depth_image_coloured():
+    fake_z = np.random.uniform(size=(10, 10))
+    fake_colours = np.random.uniform(size=(100, 3))
+    tm = ColouredTriMesh.init_from_depth_image(Image(fake_z),
+                                               colours=fake_colours)
+    assert tm.n_points == 100
+    assert tm.n_dims == 3
+    assert tm.colours.shape == (100, 3)
+    assert_allclose(tm.range()[:2], [9, 9])
+    assert tm.points[:, -1].max() <= 1.0
+    assert tm.points[:, -1].min() >= 0.0
+
+
+def test_texturedtrimesh_init_2d_grid():
+    tm = TexturedTriMesh.init_2d_grid([10, 10])
+    assert tm.n_points == 100
+    assert tm.n_dims == 2
+    # 162 = 9 * 9 * 2
+    assert_allclose(tm.trilist.shape, (162, 3))
+    assert_allclose(tm.range(), [9, 9])
+
+
+def test_texturedtrimesh_init_from_depth_image():
+    fake_z = np.random.uniform(size=(10, 10))
+    tm = TexturedTriMesh.init_from_depth_image(Image(fake_z))
+    assert tm.n_points == 100
+    assert tm.n_dims == 3
+    assert_allclose(tm.range()[:2], [9, 9])
+    assert tm.points[:, -1].max() <= 1.0
+    assert tm.points[:, -1].min() >= 0.0
+
+
+def test_texturedtrimesh_init_from_depth_image_masked():
+    fake_z = np.random.uniform(size=(10, 10))
+    mask = np.zeros(fake_z.shape, dtype=np.bool)
+    mask[2:6, 2:6] = True
+    im = MaskedImage(fake_z, mask=mask)
+    tm = TexturedTriMesh.init_from_depth_image(im)
+    assert tm.n_points == 16
+    assert tm.n_dims == 3
+    assert_allclose(tm.range()[:2], [3, 3])
+    assert tm.points[:, -1].max() <= 1.0
+    assert tm.points[:, -1].min() >= 0.0
+
+
+def test_texturedtrimesh_init_from_depth_image_textured():
+    fake_z = np.random.uniform(size=(10, 10))
+    fake_tex = Image(fake_z)
+    tm = TexturedTriMesh.init_from_depth_image(fake_tex, texture=fake_tex)
+    assert tm.n_points == 100
+    assert tm.n_dims == 3
+    assert tm.texture.shape == (10, 10)
+    assert_allclose(tm.range()[:2], [9, 9])
+    assert tm.points[:, -1].max() <= 1.0
+    assert tm.points[:, -1].min() >= 0.0
 
 
 def test_trimesh_creation_copy_true():

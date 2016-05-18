@@ -4,7 +4,7 @@ from menpo.shape import PointCloud
 from menpo.transform import Scale
 
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from .base import TriMesh
+from .base import TriMesh, grid_tcoords
 
 
 class TexturedTriMesh(TriMesh):
@@ -38,6 +38,104 @@ class TexturedTriMesh(TriMesh):
         else:
             self.texture = texture.copy()
 
+    @classmethod
+    def init_2d_grid(cls, shape, spacing=None, tcoords=None, texture=None):
+        r"""
+        Create a TexturedTriMesh that exists on a regular 2D grid. The first
+        dimension is the number of rows in the grid and the second dimension
+        of the shape is the number of columns. ``spacing`` optionally allows
+        the definition of the distance between points (uniform over points).
+        The spacing may be different for rows and columns.
+
+        The triangulation will be right-handed and the diagonal will go from
+        the top left to the bottom right of a square on the grid.
+
+        If no texture is passed a blank (black) texture is attached with
+        correct texture coordinates for texture mapping an image of the same
+        size as ``shape``.
+
+        Parameters
+        ----------
+        shape : `tuple` of 2 `int`
+            The size of the grid to create, this defines the number of points
+            across each dimension in the grid. The first element is the number
+            of rows and the second is the number of columns.
+        spacing : `int` or `tuple` of 2 `int`, optional
+            The spacing between points. If a single `int` is provided, this
+            is applied uniformly across each dimension. If a `tuple` is
+            provided, the spacing is applied non-uniformly as defined e.g.
+            ``(2, 3)`` gives a spacing of 2 for the rows and 3 for the
+            columns.
+        tcoords : ``(N, 2)`` `ndarray`, optional
+            The texture coordinates for the mesh.
+        texture : :map:`Image`, optional
+            The texture for the mesh.
+
+        Returns
+        -------
+        trimesh : :map:`TriMesh`
+            A TriMesh arranged in a grid.
+        """
+        pc = TriMesh.init_2d_grid(shape, spacing=spacing)
+        points = pc.points
+        trilist = pc.trilist
+        # Ensure that the tcoords and texture are copied
+        if tcoords is not None:
+            tcoords = tcoords.copy()
+        else:
+            tcoords = grid_tcoords(shape)
+        if texture is not None:
+            texture = texture.copy()
+        else:
+            from menpo.image import Image
+            # Default texture is all black
+            texture = Image.init_blank(shape)
+        return TexturedTriMesh(points, tcoords, texture, trilist=trilist,
+                               copy=False)
+
+    @classmethod
+    def init_from_depth_image(cls, depth_image, tcoords=None, texture=None):
+        r"""
+        Return a 3D textured triangular mesh from the given depth image. The
+        depth image is assumed to represent height/depth values and the XY
+        coordinates are assumed to unit spaced and represent image coordinates.
+        This is particularly useful for visualising depth values that have been
+        recovered from images.
+
+        The optionally passed texture will be textured mapped onto the planar
+        surface using the correct texture coordinates for an image of the
+        same shape as ``depth_image``.
+
+        Parameters
+        ----------
+        depth_image : :map:`Image` or subclass
+            A single channel image that contains depth values - as commonly
+            returned by RGBD cameras, for example.
+        tcoords : ``(N, 2)`` `ndarray`, optional
+            The texture coordinates for the mesh.
+        texture : :map:`Image`, optional
+            The texture for the mesh.
+
+        Returns
+        -------
+        depth_cloud : ``type(cls)``
+            A new 3D TriMesh with unit XY coordinates and the given depth
+            values as Z coordinates. The trilist is constructed as in
+            :meth:`init_2d_grid`.
+        """
+        from menpo.image import MaskedImage
+
+        new_tmesh = cls.init_2d_grid(depth_image.shape, tcoords=tcoords,
+                                     texture=texture)
+        if isinstance(depth_image, MaskedImage):
+            new_tmesh = new_tmesh.from_mask(depth_image.mask.as_vector())
+        return cls(np.hstack([new_tmesh.points,
+                              depth_image.as_vector(keep_channels=True).T]),
+                   new_tmesh.tcoords.points,
+                   new_tmesh.texture,
+                   trilist=new_tmesh.trilist,
+                   copy=False)
+
     def tcoords_pixel_scaled(self):
         r"""
         Returns a :map:`PointCloud` that is modified to be suitable for directly
@@ -62,7 +160,7 @@ class TexturedTriMesh(TriMesh):
 
         >>> texture = texturedtrimesh.texture
         >>> tc_ps = texturedtrimesh.tcoords_pixel_scaled()
-        >>> pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
+        >>> pixel_values_at_tcs = texture.sample(tc_ps)
         """
         scale = Scale(np.array(self.texture.shape)[::-1])
         tcoords = self.tcoords.points.copy()

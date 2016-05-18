@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
-from scipy.sparse import csr_matrix
-
+from scipy.sparse import csr_matrix, lil_matrix
+from menpo.image import Image, MaskedImage
 from menpo.shape import (UndirectedGraph, DirectedGraph, Tree,
                          PointUndirectedGraph, PointDirectedGraph, PointTree)
 
@@ -51,7 +51,6 @@ pg_isolated = PointUndirectedGraph(points, adj_isolated)
 adj_single = np.array([[0]])
 g_single = DirectedGraph(adj_single)
 pg_single = PointDirectedGraph(point, adj_single)
-
 
 
 @raises(ValueError)
@@ -103,6 +102,76 @@ def test_init_from_edges():
     assert (pg_isolated.adjacency_matrix - g.adjacency_matrix).nnz == 0
     g = PointDirectedGraph.init_from_edges(point, np.array([]))
     assert (pg_single.adjacency_matrix - g.adjacency_matrix).nnz == 0
+
+
+def test_init_2d_grid():
+    g = PointTree.init_2d_grid((5, 5))
+    assert g.adjacency_matrix.nnz == 24
+    assert g.n_points == 25
+    g = PointUndirectedGraph.init_2d_grid((5, 5))
+    assert g.adjacency_matrix.nnz == 80
+    assert g.n_points == 25
+    g = PointDirectedGraph.init_2d_grid((5, 5))
+    assert g.adjacency_matrix.nnz == 80
+    assert g.n_points == 25
+
+
+def test_init_2d_grid_custom_adjacency():
+    tree_adj = np.array([[0, 1, 0, 0],
+                         [0, 0, 0, 1],
+                         [0, 0, 0, 0],
+                         [0, 0, 1, 0]])
+    g = PointTree.init_2d_grid((2, 2), root_vertex=0, adjacency_matrix=tree_adj)
+    assert g.adjacency_matrix.nnz == 3
+    assert g.n_points == 4
+    single_edge = lil_matrix((25, 25))
+    single_edge[[0, 1], [1, 0]] = 1
+    single_edge = single_edge.tocsr()
+    g = PointUndirectedGraph.init_2d_grid(
+        (5, 5), adjacency_matrix=single_edge)
+    assert g.adjacency_matrix.nnz == 2
+    assert g.n_points == 25
+    g = PointDirectedGraph.init_2d_grid(
+        (5, 5), adjacency_matrix=single_edge)
+    assert g.adjacency_matrix.nnz == 2
+    assert g.n_points == 25
+
+
+def test_init_from_depth_image():
+    fake_z = np.random.uniform(size=(10, 10))
+    g = PointTree.init_from_depth_image(Image(fake_z))
+    assert g.n_dims == 3
+    assert g.root_vertex == 55
+    assert g.adjacency_matrix.nnz == 99
+    assert g.n_points == 100
+    g = PointUndirectedGraph.init_from_depth_image(Image(fake_z))
+    assert g.n_dims == 3
+    assert g.adjacency_matrix.nnz == 360
+    assert g.n_points == 100
+    g = PointDirectedGraph.init_from_depth_image(Image(fake_z))
+    assert g.n_dims == 3
+    assert g.adjacency_matrix.nnz == 360
+    assert g.n_points == 100
+
+
+def test_init_from_depth_image_masked():
+    fake_z = np.random.uniform(size=(10, 10))
+    mask = np.zeros(fake_z.shape, dtype=np.bool)
+    mask[2:6, 2:6] = True
+    im = MaskedImage(fake_z, mask=mask)
+    g = PointTree.init_from_depth_image(im)
+    assert g.n_dims == 3
+    assert g.root_vertex == 0
+    assert g.adjacency_matrix.nnz == 15
+    assert g.n_points == 16
+    g = PointUndirectedGraph.init_from_depth_image(im)
+    assert g.n_dims == 3
+    assert g.adjacency_matrix.nnz == 48
+    assert g.n_points == 16
+    g = PointDirectedGraph.init_from_depth_image(im)
+    assert g.n_dims == 3
+    assert g.adjacency_matrix.nnz == 48
+    assert g.n_points == 16
 
 
 def test_n_edges():
