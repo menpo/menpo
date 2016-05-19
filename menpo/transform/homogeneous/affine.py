@@ -109,9 +109,12 @@ class Affine(Homogeneous):
         Returns
         -------
         transforms : `list` of :map:`DiscreteAffine`
-            Equivalent to this affine transform, such that::
+            Equivalent to this affine transform, such that
 
-                reduce(lambda x,y: x.chain(y), self.decompose()) == self
+            .. code-block:: python
+
+                reduce(lambda x, y: x.chain(y), self.decompose()) == self
+
         """
         from .rotation import Rotation
         from .translation import Translation
@@ -168,18 +171,20 @@ class Affine(Homogeneous):
             [p1, p3, p5]
             [p2, p4, p6]
 
+
         3D Affine: 12 parameters::
 
             [p1, p4, p7, p10]
             [p2, p5, p8, p11]
             [p3, p6, p9, p12]
+
         """
         return self.n_dims * (self.n_dims + 1)
 
     def _as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
-        are parametrised as deltas from the identity warp. This does not
+        are parametrised as deltas from the identity warp. This does nots
         include the homogeneous part of the warp. Note that it flattens using
         Fortran ordering, to stay consistent with Matlab.
 
