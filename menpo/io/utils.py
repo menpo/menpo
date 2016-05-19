@@ -30,3 +30,25 @@ def _possible_extensions_from_filepath(filepath):
     """
     suffixes = filepath.suffixes
     return [''.join(suffixes[i:]).lower() for i in range(len(suffixes))]
+
+
+def _normalize_extension(extension):
+    r"""
+    Simple function that takes a given extension string and ensures that it
+    is lower case and contains the leading period e.g. ('.jpg')
+
+    Parameters
+    ----------
+    extension : `str`
+        The string extension.
+
+    Returns
+    -------
+    norm_extension : `str`
+        The normalised extension, lower case with '.' prefix.
+    """
+    # Account for the fact the user may only have passed the extension
+    # without the proceeding period
+    if extension[0] is not '.':
+        extension = '.' + extension
+    return extension.lower()

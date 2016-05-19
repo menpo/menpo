@@ -5,7 +5,8 @@ from pathlib import Path
 from menpo.compatibility import basestring, str
 from .extensions import landmark_types, image_types, pickle_types, video_types
 from ..exceptions import OverwriteError
-from ..utils import _norm_path, _possible_extensions_from_filepath
+from ..utils import (_norm_path, _possible_extensions_from_filepath,
+                     _normalize_extension)
 
 # an open file handle that uses a small fast level of compression
 gzip_open = partial(gzip.open, compresslevel=3)
@@ -202,28 +203,6 @@ def export_pickle(obj, fp, overwrite=False, protocol=2):
         _export(obj, fp, pickle_types, '.pkl', overwrite, protocol=protocol)
 
 
-def _normalise_extension(extension):
-    r"""
-    Simple function that takes a given extension string and ensures that it
-    is lower case and contains the leading period e.g. ('.jpg')
-
-    Parameters
-    ----------
-    extension : `str`
-        The string extension.
-
-    Returns
-    -------
-    norm_extension : `str`
-        The normalised extension, lower case with '.' prefix.
-    """
-    # Account for the fact the user may only have passed the extension
-    # without the proceeding period
-    if extension[0] is not '.':
-        extension = '.' + extension
-    return extension.lower()
-
-
 def _extension_to_export_function(extension, extensions_map):
     r"""
     Simple function that wraps the extensions map indexing and raises
@@ -334,7 +313,7 @@ def _parse_and_validate_extension(filepath, extension, extensions_map):
             ''.join(filepath.suffixes)))
 
     if extension is not None:
-        extension = _normalise_extension(extension)
+        extension = _normalize_extension(extension)
         if extension != known_extension:
             raise ValueError('The file path extension must match the '
                              'requested file extension: {} != {}'.format(
@@ -385,7 +364,7 @@ def _export(obj, fp, extensions_map, extension, overwrite, protocol=None):
             raise ValueError('An export file extension must be provided if a '
                              'file-like object is passed.')
         else:
-            extension = _normalise_extension(extension)
+            extension = _normalize_extension(extension)
 
         # Apparently in Python 2.x there is no reliable way to detect something
         # that is 'file' like (file handle or a StringIO object or something

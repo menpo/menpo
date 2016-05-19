@@ -1,12 +1,15 @@
+import warnings
 from functools import partial
 import os
 from pathlib import Path
 import random
 
-from menpo.base import menpo_src_dir_path, LazyList
+from menpo.base import menpo_src_dir_path, LazyList, partial_doc
+from menpo.compatibility import basestring
 from menpo.visualize import print_progress
 
-from ..utils import _norm_path, _possible_extensions_from_filepath
+from ..utils import _norm_path, _possible_extensions_from_filepath, \
+    _normalize_extension
 from .extensions import (image_landmark_types, image_types, pickle_types,
                          ffmpeg_video_types)
 
@@ -54,7 +57,7 @@ def _import_builtin_asset(data_path_to, object_types, landmark_types,
     r"""Single builtin asset (landmark or image) importer.
 
     Imports the relevant builtin asset from the ``./data`` directory that
-    ships with Menpo.
+    ships with the project.
 
     Parameters
     ----------
@@ -86,24 +89,63 @@ def _ls_builtin_assets(data_dir_path):
     Returns
     -------
     file_paths : list of `str`
-        Filenames of all assets in the data directory shipped with Menpo
+        Filenames of all assets in the data directory shipped with the
+        project.
     """
     return [p.name for p in data_dir_path().glob('*') if not p.is_dir()]
 
 
-menpo_data_dir_path = partial(_data_dir_path, menpo_src_dir_path)
-menpo_data_dir_path.__doc__ = _data_dir_path.__doc__
+def _register_importer(ext_map, extension, callable):
+    r"""
+    Register a new importer for the given extension. This makes it much
+    simpler to add custom importers to the IO package.
 
-menpo_ls_builtin_assets = partial(_ls_builtin_assets, menpo_data_dir_path)
-menpo_ls_builtin_assets.__doc__ = _ls_builtin_assets.__doc__
+    Parameters
+    ----------
+    ext_map : `{'str' -> 'callable'}` dict
+        Extensions map to callable.
+    extension : `str`
+        File extension to support. May be multi-part e.g. '.tar.gz'
+    callable : `callable`
+        The callable to invoke if a file with the provided extension is
+        discovered during importing. Should take a single argument (the
+        filepath) and any number of kwargs.
+    """
+    if not isinstance(extension, basestring):
+        raise ValueError('Only string type keys are supported.')
+    if extension in ext_map:
+        warnings.warn("Replacing an existing importer for the '{}' "
+                      "extension.".format(extension))
+    ext_map[_normalize_extension(extension)] = callable
 
-menpo_data_path_to = partial(_data_path_to, menpo_data_dir_path,
-                             menpo_ls_builtin_assets)
-menpo_data_path_to.__doc__ = _data_path_to.__doc__
 
-_menpo_import_builtin_asset = partial(_import_builtin_asset, menpo_data_path_to,
-                                      image_types, image_landmark_types)
-_menpo_import_builtin_asset.__doc__ = _import_builtin_asset.__doc__
+register_image_importer = partial_doc(_register_importer, image_types,
+                                      __menpo_f_name__='register_image_importer')
+
+register_video_importer = partial_doc(_register_importer, ffmpeg_video_types,
+                                      __menpo_f_name__='register_video_importer')
+
+register_landmark_importer = partial_doc(
+    _register_importer, image_landmark_types,
+    __menpo_f_name__='register_landmark_importer')
+
+register_pickle_importer = partial_doc(_register_importer, pickle_types,
+                                       __menpo_f_name__='register_pickle_importer')
+
+
+menpo_data_dir_path = partial_doc(_data_dir_path, menpo_src_dir_path,
+                                  __menpo_f_name__='data_dir_path')
+
+menpo_ls_builtin_assets = partial_doc(_ls_builtin_assets, menpo_data_dir_path,
+                                      __menpo_f_name__='ls_builtin_assets')
+
+menpo_data_path_to = partial_doc(_data_path_to, menpo_data_dir_path,
+                                 menpo_ls_builtin_assets,
+                                 __menpo_f_name__='data_path_to')
+
+_menpo_import_builtin_asset = partial_doc(_import_builtin_asset,
+                                          menpo_data_path_to,
+                                          image_types, image_landmark_types)
 
 
 def image_paths(pattern):
