@@ -1,10 +1,5 @@
-from functools import partial
+from menpo.base import partial_doc
 from .features import igo, hog
 
-double_igo = partial(igo, double_angles=True)
-double_igo.__name__ = 'double_igo'
-double_igo.__doc__ = igo.__doc__
-
-sparse_hog = partial(hog, mode='sparse')
-sparse_hog.__name__ = 'sparse_hog'
-sparse_hog.__doc__ = hog.__doc__
+double_igo = partial_doc(igo, double_angles=True, __menpo_f_name__='double_igo')
+sparse_hog = partial_doc(hog, mode='sparse', __menpo_f_name__='sparse_hog')

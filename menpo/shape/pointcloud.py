@@ -143,6 +143,36 @@ class PointCloud(Shape):
             points *= np.asarray(spacing, dtype=np.float64)
         return cls(points, copy=False)
 
+    @classmethod
+    def init_from_depth_image(cls, depth_image):
+        r"""
+        Return a 3D point cloud from the given depth image. The depth image
+        is assumed to represent height/depth values and the XY coordinates
+        are assumed to unit spaced and represent image coordinates. This is
+        particularly useful for visualising depth values that have been
+        recovered from images.
+
+        Parameters
+        ----------
+        depth_image : :map:`Image` or subclass
+            A single channel image that contains depth values - as commonly
+            returned by RGBD cameras, for example.
+
+        Returns
+        -------
+        depth_cloud : ``type(cls)``
+            A new 3D PointCloud with unit XY coordinates and the given depth
+            values as Z coordinates.
+        """
+        from menpo.image import MaskedImage
+
+        new_pcloud = cls.init_2d_grid(depth_image.shape)
+        if isinstance(depth_image, MaskedImage):
+            new_pcloud = new_pcloud.from_mask(depth_image.mask.as_vector())
+        return cls(np.hstack([new_pcloud.points,
+                              depth_image.as_vector(keep_channels=True).T]),
+                   copy=False)
+
     @property
     def n_points(self):
         r"""

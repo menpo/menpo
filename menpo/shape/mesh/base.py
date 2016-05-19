@@ -11,6 +11,39 @@ from .normals import compute_normals
 Delaunay = None  # expensive, from scipy.spatial
 
 
+def grid_tcoords(shape):
+    r"""
+    Return texture coordinates laid out on a grid. This is useful for creating
+    a textured version of an image whereby the underlying mesh maps
+    1-1 with a texture. Therefore, the provided shape should be the shape
+    of the texture.
+
+    Parameters
+    ----------
+    shape : `tuple` of 2 `int`
+        The size of the grid to create, this defines the number of points
+        across each dimension in the grid. The first element is the number
+        of rows and the second is the number of columns.
+
+    Returns
+    -------
+    tcoords : ``(M, 2)`` `ndarray`
+        The texture coordinates of a uniform grid. The origin will be
+        at the image origin (appropriate for viewing texture mapped planes
+        such as viewing image height maps).
+    """
+    # Default tcoords are just a grid, which assumes the input texture
+    # is an image the same size as the input grid. The meshgrid is made in
+    # an ordering that attempts to reduce the amount of copying required but
+    # places the texture coordinates in the correct arrangement.
+    tcoords = np.meshgrid(np.linspace(0, 1, num=shape[1]),
+                          np.linspace(1, 0, num=shape[0]),
+                          indexing='xy')
+    tcoords = np.stack(tcoords, axis=2).reshape([-1, 2])
+    tcoords = np.require(tcoords, requirements=['C'])
+    return tcoords
+
+
 def trilist_to_adjacency_array(trilist):
     r"""
     Turn an ``(M, 3)`` trilist into an adjacency array suitable for building
@@ -150,6 +183,38 @@ class TriMesh(PointCloud):
         points = pc.points
         return cls(points, trilist=subsampled_grid_triangulation(
             shape, subsampling=1), copy=False)
+
+    @classmethod
+    def init_from_depth_image(cls, depth_image):
+        r"""
+        Return a 3D triangular mesh from the given depth image. The depth image
+        is assumed to represent height/depth values and the XY coordinates
+        are assumed to unit spaced and represent image coordinates. This is
+        particularly useful for visualising depth values that have been
+        recovered from images.
+
+        Parameters
+        ----------
+        depth_image : :map:`Image` or subclass
+            A single channel image that contains depth values - as commonly
+            returned by RGBD cameras, for example.
+
+        Returns
+        -------
+        depth_cloud : ``type(cls)``
+            A new 3D TriMesh with unit XY coordinates and the given depth
+            values as Z coordinates. The trilist is constructed as in
+            :meth:`init_2d_grid`.
+        """
+        from menpo.image import MaskedImage
+
+        new_tmesh = cls.init_2d_grid(depth_image.shape)
+        if isinstance(depth_image, MaskedImage):
+            new_tmesh = new_tmesh.from_mask(depth_image.mask.as_vector())
+        return cls(np.hstack([new_tmesh.points,
+                              depth_image.as_vector(keep_channels=True).T]),
+                   trilist=new_tmesh.trilist,
+                   copy=False)
 
     def __str__(self):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),

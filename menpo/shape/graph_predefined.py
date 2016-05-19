@@ -1,6 +1,186 @@
+import numpy as np
+import scipy.sparse as sparse
+
 from menpo.landmark import LandmarkGroup
 from . import (PointCloud, UndirectedGraph, DirectedGraph, Tree, TriMesh,
                PointUndirectedGraph, PointDirectedGraph, PointTree)
+
+
+def stencil_grid(stencil, shape, dtype=None, format=None):
+    """Construct a sparse matrix form a local matrix stencil
+
+    This function is useful for building sparse adjacency matrices according
+    to a specific connectivity pattern.
+
+    This function is borrowed from the PyAMG project, under the permission of
+    the MIT license:
+
+    The MIT License (MIT)
+
+    Copyright (c) 2008-2015 PyAMG Developers
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to
+    deal in the Software without restriction, including without limitation the
+    rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+    sell copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+    IN THE SOFTWARE.
+
+    The original version of this file can be found here:
+
+    https://github.com/pyamg/pyamg/blob/621d63411895898660e5ea078840118905bec061/pyamg/gallery/stencil.py
+
+    This file has been modified to fit the style standards of the Menpo
+    project.
+
+    Parameters
+    ----------
+    S : `ndarray`
+        Matrix stencil stored in N-d array
+    grid : `tuple`
+        Tuple containing the N shape dimensions (shape)
+    dtype : `np.dtype`, optional
+        Numpy data type of the result
+    format : `str`, optional
+        Sparse matrix format to return, e.g. "csr", "coo", etc.
+
+    Returns
+    -------
+    A : sparse matrix
+        Sparse matrix which represents the operator given by applying
+        stencil stencil at each vertex of a regular shape with given dimensions.
+
+    Notes
+    -----
+    The shape vertices are enumerated as ``arange(prod(shape)).reshape(shape)``.
+    This implies that the last shape dimension cycles fastest, while the
+    first dimension cycles slowest.  For example, if ``shape=(2,3)`` then the
+    shape vertices are ordered as ``(0,0), (0,1), (0,2), (1,0), (1,1), (1,2)``.
+
+    This coincides with the ordering used by the NumPy functions
+    ``ndenumerate()`` and ``mgrid()``.
+
+    Raises
+    ------
+    ValueError
+        If the stencil shape is not odd.
+    ValueError
+        If the stencil dimension does not equal the number of shape dimensions
+    ValueError
+        If the shape dimensions are not all positive
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from menpo.shape import stencil_grid
+    >>> stencil = [[0,-1,0],[-1,4,-1],[0,-1,0]]  # 2D Poisson stencil
+    >>> shape = (3, 3)                           # 2D shape with shape 3x3
+    >>> A = stencil_grid(stencil, shape, dtype=np.float, format='csr')
+    >>> A.todense()
+    matrix([[ 4., -1.,  0., -1.,  0.,  0.,  0.,  0.,  0.],
+            [-1.,  4., -1.,  0., -1.,  0.,  0.,  0.,  0.],
+            [ 0., -1.,  4.,  0.,  0., -1.,  0.,  0.,  0.],
+            [-1.,  0.,  0.,  4., -1.,  0., -1.,  0.,  0.],
+            [ 0., -1.,  0., -1.,  4., -1.,  0., -1.,  0.],
+            [ 0.,  0., -1.,  0., -1.,  4.,  0.,  0., -1.],
+            [ 0.,  0.,  0., -1.,  0.,  0.,  4., -1.,  0.],
+            [ 0.,  0.,  0.,  0., -1.,  0., -1.,  4., -1.],
+            [ 0.,  0.,  0.,  0.,  0., -1.,  0., -1.,  4.]])
+
+    >>> stencil = [[0,1,0],[1,0,1],[0,1,0]]  # 2D Lattice Connectivity
+    >>> shape = (3, 3)                       # 2D shape with shape 3x3
+    >>> A = stencil_grid(stencil, shape, dtype=np.float, format='csr')
+    >>> A.todense()
+    matrix([[ 0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  0.],
+            [ 1.,  0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.],
+            [ 0.,  1.,  0.,  0.,  0.,  1.,  0.,  0.,  0.],
+            [ 1.,  0.,  0.,  0.,  1.,  0.,  1.,  0.,  0.],
+            [ 0.,  1.,  0.,  1.,  0.,  1.,  0.,  1.,  0.],
+            [ 0.,  0.,  1.,  0.,  1.,  0.,  0.,  0.,  1.],
+            [ 0.,  0.,  0.,  1.,  0.,  0.,  0.,  1.,  0.],
+            [ 0.,  0.,  0.,  0.,  1.,  0.,  1.,  0.,  1.],
+            [ 0.,  0.,  0.,  0.,  0.,  1.,  0.,  1.,  0.]])
+
+    """
+    stencil = np.asarray(stencil, dtype=dtype)
+    shape = tuple(shape)
+
+    if not (np.asarray(stencil.shape) % 2 == 1).all():
+        raise ValueError('all stencil dimensions must be odd')
+
+    if len(shape) != np.ndim(stencil):
+        raise ValueError('stencil dimension must equal number of shape\
+                          dimensions')
+
+    if min(shape) < 1:
+        raise ValueError('shape dimensions must be positive')
+
+    N_v = np.prod(shape)        # number of vertices in the mesh
+    N_s = (stencil != 0).sum()  # number of nonzero stencil entries
+
+    # diagonal offsets
+    diags = np.zeros(N_s, dtype=int)
+
+    # compute index offset of each dof within the stencil
+    strides = np.cumprod([1] + list(reversed(shape)))[:-1]
+    indices = tuple(i.copy() for i in stencil.nonzero())
+    for i, s in zip(indices, stencil.shape):
+        i -= s // 2
+        # i = (i - s) // 2
+        # i = i // 2
+        # i = i - (s // 2)
+    for stride, coords in zip(strides, reversed(indices)):
+        diags += stride * coords
+
+    data = stencil[stencil != 0].repeat(N_v).reshape(N_s, N_v)
+
+    indices = np.vstack(indices).T
+
+    # zero boundary connections
+    for index, diag in zip(indices, data):
+        diag = diag.reshape(shape)
+        for n, i in enumerate(index):
+            if i > 0:
+                s = [slice(None)] * len(shape)
+                s[n] = slice(0, i)
+                diag[s] = 0
+            elif i < 0:
+                s = [slice(None)]*len(shape)
+                s[n] = slice(i, None)
+                diag[s] = 0
+
+    # remove diagonals that lie outside matrix
+    mask = abs(diags) < N_v
+    if not mask.all():
+        diags = diags[mask]
+        data = data[mask]
+
+    # sum duplicate diagonals
+    if len(np.unique(diags)) != len(diags):
+        new_diags = np.unique(diags)
+        new_data = np.zeros((len(new_diags), data.shape[1]),
+                            dtype=data.dtype)
+
+        for dia, dat in zip(diags, data):
+            n = np.searchsorted(new_diags, dia)
+            new_data[n, :] += dat
+
+        diags = new_diags
+        data = new_data
+
+    return sparse.dia_matrix((data, diags),
+                             shape=(N_v, N_v)).asformat(format)
 
 
 def _get_points_and_number_of_vertices(shape):

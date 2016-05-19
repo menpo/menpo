@@ -1150,7 +1150,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
 
-        new_shape = max_bounded - min_bounded
+        new_shape = (max_bounded - min_bounded).astype(np.int)
         return self.warp_to_shape(new_shape, Translation(min_bounded), order=0,
                                   warp_landmarks=True,
                                   return_transform=return_transform)
