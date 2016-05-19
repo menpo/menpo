@@ -1,5 +1,4 @@
 from functools import partial
-from collections import Sequence
 import os
 from pathlib import Path
 import random

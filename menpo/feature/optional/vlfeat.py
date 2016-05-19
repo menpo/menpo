@@ -1,7 +1,6 @@
 from __future__ import division
-from functools import partial
 import numpy as np
-from menpo.base import MenpoMissingDependencyError
+from menpo.base import MenpoMissingDependencyError, partial_doc
 from menpo.image.base import normalize_pixels_range
 from ..base import winitfeature
 
@@ -116,11 +115,10 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
 
 
 # A predefined method for a 'faster' dsift method
-fast_dsift = partial(dsift, fast=True, cell_size_vertical=5,
-                     cell_size_horizontal=5, num_bins_horizontal=1,
-                     num_bins_vertical=1, num_or_bins=8)
-fast_dsift.__name__ = 'fast_dsift'
-fast_dsift.__doc__ = dsift.__doc__
+fast_dsift = partial_doc(dsift, fast=True, cell_size_vertical=5,
+                         cell_size_horizontal=5, num_bins_horizontal=1,
+                         num_bins_vertical=1, num_or_bins=8,
+                         __menpo_f_name__='fast_dsift')
 
 
 # Predefined dsift that returns a 128d vector
