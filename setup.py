@@ -17,12 +17,12 @@ cython_modules = ['menpo/shape/mesh/normals.pyx',
 
 cython_exts = cythonize(cython_modules, quiet=True)
 include_dirs = [np.get_include()]
-install_requires = ['numpy>=1.10,<1.11',
-                    'scipy>=0.17,<0.18',
-                    'matplotlib>=1.4,<1.6',
+install_requires = ['numpy>=1.10,<2.0',
+                    'scipy>=0.16,<1.0',
+                    'matplotlib>=1.4,<2.0',
                     'pillow>=3.0,<4.0',
-                    'imageio>=1.5.0,<1.6.0',
-                    'Cython>=0.23,<0.24']
+                    'imageio>=1.5.0,<2.0',
+                    'Cython>=0.23']
 
 if sys.version_info.major == 2:
     install_requires.append('pathlib==1.0')
