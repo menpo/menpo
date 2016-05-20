@@ -184,7 +184,7 @@ class Affine(Homogeneous):
     def _as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
-        are parametrised as deltas from the identity warp. This does nots
+        are parametrised as deltas from the identity warp. This does not
         include the homogeneous part of the warp. Note that it flattens using
         Fortran ordering, to stay consistent with Matlab.
 
