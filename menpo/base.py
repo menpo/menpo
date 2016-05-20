@@ -568,7 +568,7 @@ class LazyList(collections.Sequence):
         return self.__class__(list(self._callables) + new_callables)
 
 
-def partial_doc(func, *args, menpo_f_name=None, **kwargs):
+def partial_doc(func, *args, **kwargs):
     r"""
     Return a partial function but the __doc__ attached to the returned
     partial. Note that no effort is made to correct the docstring for
@@ -592,6 +592,7 @@ def partial_doc(func, *args, menpo_f_name=None, **kwargs):
     p_func : `callable`
         The partially wrapped func with __doc__ attached.
     """
+    menpo_f_name = kwargs.pop('menpo_f_name', None)
     p = partial(func, *args, **kwargs)
     p.__doc__ = func.__doc__
     if menpo_f_name is not None:
