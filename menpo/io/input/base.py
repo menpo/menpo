@@ -252,6 +252,15 @@ def import_video(filepath, landmark_resolver=same_name_video, normalise=True,
     extension of the landmark file appended with the frame number, although this
     behavior can be customised (see `landmark_resolver`).
 
+    .. warning::
+
+        This method currently uses imageio to perform the importing in
+        conjunction with the ffmpeg plugin. As of this release, and the release
+        of imageio at the time of writing (1.5.0), the per-frame computation
+        is not very accurate. This may cause errors when importing frames
+        that do not actually map to valid timestamps within the image.
+        Therefore, use this method at your own risk.
+
     Parameters
     ----------
     filepath : `pathlib.Path` or `str`
@@ -280,6 +289,12 @@ def import_video(filepath, landmark_resolver=same_name_video, normalise=True,
         An lazy list of :map:`Image` or subclass thereof which wraps the frames
         of the video. This list can be treated as a normal list, but the frame
         is only read when the video is indexed or iterated.
+
+    Examples
+    --------
+    >>> video = menpo.io.import_video('video.avi')
+    >>> # Lazily load the 100th frame without reading the entire video
+    >>> frame100 = video[100]
     """
     kwargs = {'normalise': normalise}
 
@@ -402,10 +417,10 @@ def import_images(pattern, max_images=None, shuffle=False,
     --------
     Import images at 20% scale from a huge collection:
 
-    >>> images = []
-    >>> for img in menpo.io.import_images('./massive_image_db/*'):
-    >>>    # rescale to a sensible size as we go
-    >>>    images.append(img.rescale(0.2))
+    >>> rescale_20p = lambda x: x.rescale(0.2)
+    >>> images =  menpo.io.import_images('./massive_image_db/*')  # Returns immediately
+    >>> images.map(rescale_20p)  # Returns immediately
+    >>> images[0]  # Get the first image, resize, lazily loaded
     """
     kwargs = {'normalise': normalise}
     return _import_glob_lazy_list(
@@ -434,6 +449,15 @@ def import_videos(pattern, max_videos=None, shuffle=False,
     function will return immediately and indexing into the returned list
     will load an image at run time. If all images should be loaded, then simply
     wrap the returned :map:`LazyList` in a Python `list`.
+
+    .. warning::
+
+        This method currently uses imageio to perform the importing in
+        conjunction with the ffmpeg plugin. As of this release, and the release
+        of imageio at the time of writing (1.5.0), the per-frame computation
+        is not very accurate. This may cause errors when importing frames
+        that do not actually map to valid timestamps within the image.
+        Therefore, use this method at your own risk.
 
     Parameters
     ----------

@@ -69,5 +69,6 @@ xref_map = {
 'Viewable': ('class', 'menpo.visualize.Viewable'),
 'view_patches': ('function', 'menpo.visualize.view_patches'),
 'VComposable': ('class', 'menpo.transform.VComposable'),
-'VInvertible': ('class', 'menpo.transform.VInvertible')
+'VInvertible': ('class', 'menpo.transform.VInvertible'),
+'video_paths': ('function', 'menpo.io.video_paths'),
 }
