@@ -118,7 +118,7 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
 fast_dsift = partial_doc(dsift, fast=True, cell_size_vertical=5,
                          cell_size_horizontal=5, num_bins_horizontal=1,
                          num_bins_vertical=1, num_or_bins=8,
-                         __menpo_f_name__='fast_dsift')
+                         menpo_f_name__='fast_dsift')
 
 
 # Predefined dsift that returns a 128d vector
