@@ -1,1 +1,1 @@
-import ref_prettify
+from . import ref_prettify
