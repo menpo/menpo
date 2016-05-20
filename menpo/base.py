@@ -568,7 +568,7 @@ class LazyList(collections.Sequence):
         return self.__class__(list(self._callables) + new_callables)
 
 
-def partial_doc(func, *args, menpo_f_name__=None, **kwargs):
+def partial_doc(func, *args, menpo_f_name=None, **kwargs):
     r"""
     Return a partial function but the __doc__ attached to the returned
     partial. Note that no effort is made to correct the docstring for
@@ -578,7 +578,7 @@ def partial_doc(func, *args, menpo_f_name__=None, **kwargs):
     ----------
     func : `callable`
         The func to partial and whose docs should be copied.
-    menpo_f_name__ : `str`, optional
+    menpo_f_name : `str`, optional
         Optionally pass a string to set as the name partial method __name__.
         Odd parameter name to attempt to avoid collisions with the
         partial function arguments.
@@ -594,6 +594,6 @@ def partial_doc(func, *args, menpo_f_name__=None, **kwargs):
     """
     p = partial(func, *args, **kwargs)
     p.__doc__ = func.__doc__
-    if menpo_f_name__ is not None:
-        p.__name__ = menpo_f_name__
+    if menpo_f_name is not None:
+        p.__name__ = menpo_f_name
     return p
