@@ -18,7 +18,7 @@ class PILImporter(Importer):
     RGB, L, I:
         Imported as either `float` or `uint8` depending on normalisation flag.
     RGBA:
-        Imported as :map:`MaskedImage` if normalise is ``True`` else imported
+        Imported as :map:`MaskedImage` if normalize is ``True`` else imported
         as a 4 channel `uint8` image.
     1:
         Imported as a :map:`BooleanImage`. Normalisation is ignored.
@@ -29,15 +29,15 @@ class PILImporter(Importer):
     ----------
     filepath : string
         Absolute filepath of image
-    normalise : `bool`, optional
-        If ``True``, normalise between 0.0 and 1.0 and convert to float. If
+    normalize : `bool`, optional
+        If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just pass whatever PIL imports back (according
         to types rules outlined in constructor).
     """
-    def __init__(self, filepath, normalise=True):
+    def __init__(self, filepath, normalize=True):
         super(PILImporter, self).__init__(filepath)
         self._pil_image = None
-        self.normalise = normalise
+        self.normalize = normalize
 
     def build(self):
         r"""
@@ -49,10 +49,10 @@ class PILImporter(Importer):
         self._pil_image = PILImage.open(self.filepath)
         mode = self._pil_image.mode
         if mode == 'RGBA':
-            # If normalise is False, then we return the alpha as an extra
+            # If normalize is False, then we return the alpha as an extra
             # channel, which can be useful if the alpha channel has semantic
             # meanings!
-            if self.normalise:
+            if self.normalize:
                 alpha = np.array(self._pil_image)[..., 3].astype(np.bool)
                 image_pixels = self._pil_to_numpy(True,
                                                   convert='RGB')
@@ -62,24 +62,24 @@ class PILImporter(Importer):
                 image = Image(self._pil_to_numpy(False), copy=False)
         elif mode in ['L', 'I', 'RGB']:
             # Greyscale, Integer and RGB images
-            image = Image(self._pil_to_numpy(self.normalise), copy=False)
+            image = Image(self._pil_to_numpy(self.normalize), copy=False)
         elif mode == '1':
-            # Can't normalise a binary image
+            # Can't normalize a binary image
             image = BooleanImage(self._pil_to_numpy(False), copy=False)
         elif mode == 'P':
             # Convert pallete images to RGB
-            image = Image(self._pil_to_numpy(self.normalise, convert='RGB'))
+            image = Image(self._pil_to_numpy(self.normalize, convert='RGB'))
         elif mode == 'F':  # Floating point images
-            # Don't normalise as we don't know the scale
+            # Don't normalize as we don't know the scale
             image = Image(self._pil_to_numpy(False), copy=False)
         else:
             raise ValueError('Unexpected mode for PIL: {}'.format(mode))
         return image
 
-    def _pil_to_numpy(self, normalise, convert=None):
+    def _pil_to_numpy(self, normalize, convert=None):
         p = self._pil_image.convert(convert) if convert else self._pil_image
         p = channels_to_front(p)
-        if normalise:
+        if normalize:
             return normalize_pixels_range(p)
         else:
             return p
@@ -171,15 +171,15 @@ class ImageioImporter(Importer):
     ----------
     filepath : string
         Absolute filepath of the image.
-    normalise : `bool`, optional
-        If ``True``, normalise between 0.0 and 1.0 and convert to float. If
+    normalize : `bool`, optional
+        If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just return whatever imageio imports.
     """
 
-    def __init__(self, filepath, normalise=True):
+    def __init__(self, filepath, normalize=True):
         super(ImageioImporter, self).__init__(filepath)
         self._pil_image = None
-        self.normalise = normalise
+        self.normalize = normalize
 
     def build(self):
         import imageio
@@ -190,10 +190,10 @@ class ImageioImporter(Importer):
         transparent_types = {'.png'}
         filepath = Path(self.filepath)
         if pixels.shape[0] == 4 and filepath.suffix in transparent_types:
-            # If normalise is False, then we return the alpha as an extra
+            # If normalize is False, then we return the alpha as an extra
             # channel, which can be useful if the alpha channel has semantic
             # meanings!
-            if self.normalise:
+            if self.normalize:
                 p = normalize_pixels_range(pixels[:3])
                 return MaskedImage(p, mask=pixels[-1].astype(np.bool),
                                    copy=False)
@@ -201,7 +201,7 @@ class ImageioImporter(Importer):
                 return Image(pixels, copy=False)
 
         # Assumed not to have an Alpha channel
-        if self.normalise:
+        if self.normalize:
             return Image(normalize_pixels_range(pixels), copy=False)
         else:
             return Image(pixels, copy=False)
@@ -217,14 +217,14 @@ class ImageioGIFImporter(Importer):
     ----------
     filepath : string
         Absolute filepath of the video.
-    normalise : `bool`, optional
-        If ``True``, normalise between 0.0 and 1.0 and convert to float. If
+    normalize : `bool`, optional
+        If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just return whatever imageio imports.
     """
 
-    def __init__(self, filepath, normalise=True):
+    def __init__(self, filepath, normalize=True):
         super(ImageioGIFImporter, self).__init__(filepath)
-        self.normalise = normalise
+        self.normalize = normalize
 
     def build(self):
         import imageio
@@ -236,10 +236,10 @@ class ImageioGIFImporter(Importer):
             pixels = channels_to_front(pixels)
 
             if pixels.shape[0] == 4:
-                # If normalise is False, then we return the alpha as an extra
+                # If normalize is False, then we return the alpha as an extra
                 # channel, which can be useful if the alpha channel has semantic
                 # meanings!
-                if self.normalise:
+                if self.normalize:
                     p = normalize_pixels_range(pixels[:3])
                     return MaskedImage(p, mask=pixels[-1].astype(np.bool),
                                        copy=False)
@@ -247,7 +247,7 @@ class ImageioGIFImporter(Importer):
                     return Image(pixels, copy=False)
 
             # Assumed not to have an Alpha channel
-            if self.normalise:
+            if self.normalize:
                 return Image(normalize_pixels_range(pixels), copy=False)
             else:
                 return Image(pixels, copy=False)

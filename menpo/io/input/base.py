@@ -68,7 +68,7 @@ def same_name_video(path, frame_number):
     return {p.suffix[1:].upper(): p for p in landmark_file_paths(pattern)}
 
 
-def import_image(filepath, landmark_resolver=same_name, normalise=True):
+def import_image(filepath, landmark_resolver=same_name, normalize=True):
     r"""Single image (and associated landmarks) importer.
 
     If an image file is found at `filepath`, returns an :map:`Image` or
@@ -87,8 +87,8 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
         image. The function should take one argument (the path to the image) and
         return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
         Default finds landmarks with the same name as the image file.
-    normalise : `bool`, optional
-        If ``True``, normalise the image pixels between 0 and 1 and convert
+    normalize : `bool`, optional
+        If ``True``, normalize the image pixels between 0 and 1 and convert
         to floating point. If false, the native datatype of the image will be
         maintained (commonly `uint8`). Note that in general Menpo assumes
         :map:`Image` instances contain floating point data - if you disable
@@ -101,7 +101,7 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
     images : :map:`Image` or list of
         An instantiated :map:`Image` or subclass thereof or a list of images.
     """
-    kwargs = {'normalise': normalise}
+    kwargs = {'normalize': normalize}
     return _import(filepath, image_types,
                    landmark_ext_map=image_landmark_types,
                    landmark_resolver=landmark_resolver,
@@ -109,7 +109,7 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
                    importer_kwargs=kwargs)
 
 
-def import_video(filepath, landmark_resolver=same_name_video, normalise=True,
+def import_video(filepath, landmark_resolver=same_name_video, normalize=True,
                  importer_method='ffmpeg'):
     r"""Single video (and associated landmarks) importer.
 
@@ -138,8 +138,8 @@ def import_video(filepath, landmark_resolver=same_name_video, normalise=True,
         the frame number) and return a dictionary of the form ``{'group_name':
         'landmark_filepath'}`` Default finds landmarks with the same name as the
         video file, appended with '_{frame_number}'.
-    normalise : `bool`, optional
-        If ``True``, normalise the frame pixels between 0 and 1 and convert
+    normalize : `bool`, optional
+        If ``True``, normalize the frame pixels between 0 and 1 and convert
         to floating point. If ``False``, the native datatype of the image will
         be maintained (commonly `uint8`). Note that in general Menpo assumes
         :map:`Image` instances contain floating point data - if you disable this
@@ -163,7 +163,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalise=True,
     >>> # Lazily load the 100th frame without reading the entire video
     >>> frame100 = video[100]
     """
-    kwargs = {'normalise': normalise}
+    kwargs = {'normalize': normalize}
 
     video_importer_methods = {'ffmpeg': ffmpeg_video_types}
     if importer_method not in video_importer_methods:
@@ -220,7 +220,7 @@ def import_pickle(filepath):
 
 
 def import_images(pattern, max_images=None, shuffle=False,
-                  landmark_resolver=same_name, normalise=True,
+                  landmark_resolver=same_name, normalize=True,
                   as_generator=False, verbose=False):
     r"""Multiple image (and associated landmarks) importer.
 
@@ -254,8 +254,8 @@ def import_images(pattern, max_images=None, shuffle=False,
         image. The function should take one argument (the image itself) and
         return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
         Default finds landmarks with the same name as the image file.
-    normalise : `bool`, optional
-        If ``True``, normalise the image pixels between 0 and 1 and convert
+    normalize : `bool`, optional
+        If ``True``, normalize the image pixels between 0 and 1 and convert
         to floating point. If false, the native datatype of the image will be
         maintained (commonly `uint8`). Note that in general Menpo assumes
         :map:`Image` instances contain floating point data - if you disable
@@ -286,10 +286,10 @@ def import_images(pattern, max_images=None, shuffle=False,
 
     >>> rescale_20p = lambda x: x.rescale(0.2)
     >>> images =  menpo.io.import_images('./massive_image_db/*')  # Returns immediately
-    >>> images.map(rescale_20p)  # Returns immediately
+    >>> images = images.map(rescale_20p)  # Returns immediately
     >>> images[0]  # Get the first image, resize, lazily loaded
     """
-    kwargs = {'normalise': normalise}
+    kwargs = {'normalize': normalize}
     return _import_glob_lazy_list(
         pattern, image_types,
         max_assets=max_images, shuffle=shuffle,
@@ -303,7 +303,7 @@ def import_images(pattern, max_images=None, shuffle=False,
 
 
 def import_videos(pattern, max_videos=None, shuffle=False,
-                  landmark_resolver=same_name_video, normalise=True,
+                  landmark_resolver=same_name_video, normalize=True,
                   importer_method='ffmpeg', as_generator=False, verbose=False):
     r"""Multiple video (and associated landmarks) importer.
 
@@ -345,8 +345,8 @@ def import_videos(pattern, max_videos=None, shuffle=False,
         the frame number) and return a dictionary of the form ``{'group_name':
         'landmark_filepath'}`` Default finds landmarks with the same name as the
         video file, appended with '_{frame_number}'.
-    normalise : `bool`, optional
-        If ``True``, normalise the frame pixels between 0 and 1 and convert
+    normalize : `bool`, optional
+        If ``True``, normalize the frame pixels between 0 and 1 and convert
         to floating point. If ``False``, the native datatype of the image will
         be maintained (commonly `uint8`). Note that in general Menpo assumes
         :map:`Image` instances contain floating point data - if you disable this
@@ -386,7 +386,7 @@ def import_videos(pattern, max_videos=None, shuffle=False,
     >>>        frames.append(frame.rescale(0.2))
     >>>    videos.append(frames)
     """
-    kwargs = {'normalise': normalise}
+    kwargs = {'normalize': normalize}
     video_importer_methods = {'ffmpeg': ffmpeg_video_types}
     if importer_method not in video_importer_methods:
         raise ValueError('Unsupported importer method requested. Valid values '

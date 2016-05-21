@@ -17,14 +17,14 @@ class ImageioFFMPEGImporter(Importer):
     ----------
     filepath : string
         Absolute filepath of the video.
-    normalise : `bool`, optional
-        If ``True``, normalise between 0.0 and 1.0 and convert to float. If
+    normalize : `bool`, optional
+        If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just return whatever imageio imports.
     """
 
-    def __init__(self, filepath, normalise=True):
+    def __init__(self, filepath, normalize=True):
         super(ImageioFFMPEGImporter, self).__init__(filepath)
-        self.normalise = normalise
+        self.normalize = normalize
 
     @classmethod
     def ffmpeg_types(cls):
@@ -47,7 +47,7 @@ class ImageioFFMPEGImporter(Importer):
             pixels = imio_reader.get_data(index)
             pixels = channels_to_front(pixels)
 
-            if self.normalise:
+            if self.normalize:
                 return Image(normalize_pixels_range(pixels), copy=False)
             else:
                 return Image(pixels, copy=False)

@@ -31,7 +31,7 @@ def test_float_type():
 
 
 def test_uint8_type():
-    image = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
+    image = mio.import_builtin_asset('breakingbad.jpg', normalize=False)
     patch_shape = (16, 16)
     patches = image.extract_patches(image.landmarks['PTS'].lms,
                                     patch_shape=patch_shape,
@@ -60,7 +60,7 @@ def test_int_pointcloud():
 
 
 def test_uint8_type_single_array():
-    image = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
+    image = mio.import_builtin_asset('breakingbad.jpg', normalize=False)
     patch_shape = (16, 16)
     patches = image.extract_patches(image.landmarks['PTS'].lms,
                                     patch_shape=patch_shape,
