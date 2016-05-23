@@ -34,7 +34,6 @@ visualizing these landmarks is very simple. Since landmarks are first class
 citizens within Menpo, it makes tasks like masking images, cropping images
 inside landmarks and aligning images very simple.
 
-
 > Menpo were facial armours which covered all or part of the face and provided 
 > a way to secure the top-heavy kabuto (helmet). The Shinobi-no-o (chin cord) 
 > of the kabuto would be tied under the chin of the menpo. There were small 
