@@ -646,8 +646,18 @@ def test_importing_imageio_avi_no_normalize(is_file, mock_image):
 def test_import_images_negative_max_images():
     list(mio.import_images(mio.data_dir_path(), max_images=-2))
 
+
 @raises(ValueError)
 def test_import_images_zero_max_images():
     # different since the conditional 'if max_assets' is skipped,
     # thus all images might be imported.
     list(mio.import_images(mio.data_dir_path(), max_images=0))
+
+
+# TODO: remove once the normalise argument is removed.
+def test_import_image_deprecated_normalise_kwarg():
+    with warnings.catch_warnings(record=True) as w:
+        img = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
+        assert len(w) == 1
+    assert img.pixels.dtype == np.uint8
+    
