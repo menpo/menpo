@@ -85,24 +85,23 @@ def test_pca_trim():
     samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
     model = PCAModel(samples)
     # trim components
-    model.trim_components(5)
-    # number of active components should be the same as number of components
-    assert_equal(model.n_active_components, model.n_components)
+    new_model = model.with_n_components(5)
+    assert_equal(new_model.n_components, 5)
 
+
+@raises(ValueError)
+def test_pca_with_n_components_variance_limit():
+    samples = [np.random.randn(10) for _ in range(10)]
+    model = PCAVectorModel(samples)
+    # impossible to keep more than 1.0 ratio variance
+    model = model.with_n_components(2.5)
 
 @raises(ValueError)
 def test_pca_trim_variance_limit():
     samples = [np.random.randn(10) for _ in range(10)]
     model = PCAVectorModel(samples)
     # impossible to keep more than 1.0 ratio variance
-    model.trim_components(2.5)
-
-@raises(ValueError)
-def test_pca_trim_variance_limit():
-    samples = [np.random.randn(10) for _ in range(10)]
-    model = PCAVectorModel(samples)
-    # impossible to keep more than 1.0 ratio variance
-    model.trim_components(2.5)
+    model._trim_components(2.5)
 
 
 @raises(ValueError)
@@ -110,7 +109,7 @@ def test_pca_trim_negative_integers():
     samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
     model = PCAModel(samples)
     # no negative number of components
-    model.trim_components(-2)
+    model._trim_components(-2)
 
 
 @raises(ValueError)
@@ -118,7 +117,7 @@ def test_pca_trim_negative_float():
     samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
     model = PCAModel(samples)
     # no negative number of components
-    model.trim_components(-2)
+    model._trim_components(-2)
 
 
 def test_pca_variance():
@@ -163,7 +162,7 @@ def test_pca_variance_after_trim():
     samples = [np.random.randn(10) for _ in range(10)]
     model = PCAVectorModel(samples)
     # set number of active components
-    model.trim_components(5)
+    model._trim_components(5)
     # kept variance must be smaller than total variance
     assert(model.variance() < model.original_variance())
     # kept variance ratio must be smaller than 1.0

@@ -134,12 +134,9 @@ class PCAVectorModel(MeanLinearVectorModel):
             MeanLinearVectorModel.__init__(self, eigenvectors,
                                            np.zeros(mean.shape, dtype=mean.dtype))
         self.centred = centred
-        self._eigenvalues = eigenvalues
-        # start the active components as all the components
-        self._n_active_components = int(self.n_components)
-        self._trimmed_eigenvalues = np.array([])
+        self._original_eigenvalues = eigenvalues
         if max_n_components is not None:
-            self.trim_components(max_n_components)
+            self._trim_components(max_n_components)
 
     def _data_to_matrix(self, data, n_samples):
         # build a data matrix from all the samples
@@ -152,80 +149,63 @@ class PCAVectorModel(MeanLinearVectorModel):
             data = np.array(data)[:n_samples]
         return data, n_samples
 
-    @property
-    def n_active_components(self):
-        r"""
-        The number of components currently in use on this model.
-
-        :type: `int`
-        """
-        return self._n_active_components
-
-    @n_active_components.setter
-    def n_active_components(self, value):
-        r"""
-        Sets an updated number of active components on this model. The number
-        of active components represents the number of principal components
-        that will be used for generative purposes. Note that this therefore
-        makes the model stateful. Also note that setting the number of
-        components will not affect memory unless :meth:`trim_components`
-        is called.
+    def with_n_components(self, n):
+        r"""Return a copy of this model with only `n` components retained. Self
+        is left unaffected.
 
         Parameters
         ----------
-        value : `int`
-            The new number of active components.
+        n : The number of components that will be retained in the new model
 
-        Raises
-        ------
-        ValueError
-            Tried setting n_active_components to {value} - value needs to be a
-            float 0.0 < n_components < self._total_kept_variance_ratio ({}) or
-            an integer 1 < n_components < self.n_components ({})
+        Returns
+        -------
+        model : A copy of self, with only n components retained.
+
         """
-        err_str = ("Tried setting n_active_components to {} - "
+        err_str = ("Tried calling with_n_components with {} - "
                    "value needs to be a float "
-                   "0.0 < n_components < self._total_kept_variance_ratio "
-                   "({}) or an integer 1 < n_components < "
+                   "0.0 < n_components < self._total_variance_ratio "
+                   "({}) or an integer 1 < n < "
                    "self.n_components ({})".format(
-            value, self._total_variance_ratio(), self.n_components))
+            n, self._total_variance_ratio(), self.n_components))
 
         # check value
-        if isinstance(value, float):
-            if 0.0 < value <= self._total_variance_ratio():
+        if isinstance(n, float):
+            if 0.0 < n <= self._total_variance_ratio():
                 # value needed to capture desired variance
-                value = np.sum(
-                    [r < value
+                n = np.sum(
+                    [r < n
                      for r in self._total_eigenvalues_cumulative_ratio()]) + 1
             else:
                 # variance must be bigger than 0.0
                 raise ValueError(err_str)
-        if isinstance(value, int):
-            if value < 1:
-                # at least 1 value must be kept
+        if isinstance(n, int):
+            if not 1 <= n <= self.n_components:
                 raise ValueError(err_str)
-            elif value >= self.n_components:
-                if self.n_active_components < self.n_components:
-                    # if the number of available components is smaller than
-                    # the total number of components set value to the later
-                    value = self.n_components
-                else:
-                    # if the previous is false and value bigger than the
-                    # total number of components, do nothing
-                    return
-        if 0 < value <= self.n_components:
-            self._n_active_components = int(value)
         else:
             raise ValueError(err_str)
+        # return a new version with n components only.
+        new = self.copy()
+        new._trim_components(int(n))
+        return new
 
-    @MeanLinearVectorModel.components.getter
-    def components(self):
+    @property
+    def n_original_components(self):
         r"""
-        Returns the active components of the model.
-
-        :type: ``(n_active_components, n_features)`` `ndarray`
+        Returns the number of components that were recovered in the original
+        space where this PCA model was constructed.
+        :type: `int`
         """
-        return self._components[:self.n_active_components, :]
+        return self._original_eigenvalues.shape[0]
+
+    @property
+    def n_trimmed_components(self):
+        r"""
+        Returns the number of components that were recovered in the original
+        space where this PCA model was constructed.
+        :type: `int`
+        """
+        return self._trimmed_eigenvalues.shape[0]
 
     @property
     def eigenvalues(self):
@@ -234,9 +214,19 @@ class PCAVectorModel(MeanLinearVectorModel):
         model, i.e. the amount of variance captured by each active component,
         sorted form largest to smallest.
 
-        :type: ``(n_active_components,)`` `ndarray`
+        :type: ``(n_components,)`` `ndarray`
         """
-        return self._eigenvalues[:self.n_active_components]
+        return self._original_eigenvalues[:self.n_components]
+
+    @property
+    def _trimmed_eigenvalues(self):
+        r"""
+        Returns the eigenvalues associated with trimmed (discared) components
+        of the model
+
+        :type: ``(n_trimmed_components,)`` `ndarray`
+        """
+        return self._original_eigenvalues[self.n_components:]
 
     def whitened_components(self):
         r"""
@@ -244,7 +234,7 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         Returns
         -------
-        whitened_components : ``(n_active_components, n_features)`` `ndarray`
+        whitened_components : ``(n_components, n_features)`` `ndarray`
             The whitened components.
         """
         return self.components / (
@@ -261,31 +251,31 @@ class PCAVectorModel(MeanLinearVectorModel):
         optional_variance : `float`
             The variance captured by the model.
         """
-        return self._eigenvalues.sum() + self._trimmed_eigenvalues.sum()
+        return self._original_eigenvalues.sum() + self._trimmed_eigenvalues.sum()
 
     def variance(self):
         r"""
-        Returns the total amount of variance retained by the active
-        components.
+        Returns the total amount of variance retained by the components in this
+        model.
 
         Returns
         -------
         variance : `float`
-            Total variance captured by the active components.
+            Total variance captured by the components in this model.
         """
         return self.eigenvalues.sum()
 
     def _total_variance(self):
         r"""
-        Returns the total amount of variance retained by all components
-        (active and inactive). Useful when the model has been trimmed.
+        Returns the total amount of variance retained by all original components
+        Useful when the model has been trimmed.
 
         Returns
         -------
         total_variance : `float`
-            Total variance captured by all components.
+            Total variance captured by all original components.
         """
-        return self._eigenvalues.sum()
+        return self._original_eigenvalues.sum()
 
     def variance_ratio(self):
         r"""
@@ -322,7 +312,7 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         Returns
         -------
-        eigenvalues_ratio : ``(n_active_components,)`` `ndarray`
+        eigenvalues_ratio : ``(n_components,)`` `ndarray`
             The active eigenvalues array scaled by the original variance.
         """
         return self.eigenvalues / self.original_variance()
@@ -338,17 +328,17 @@ class PCAVectorModel(MeanLinearVectorModel):
         total_eigenvalues_ratio : ``(n_components,)`` `ndarray`
             Array of eigenvalues scaled by the original variance.
         """
-        return self._eigenvalues / self.original_variance()
+        return self._original_eigenvalues / self.original_variance()
 
     def eigenvalues_cumulative_ratio(self):
         r"""
         Returns the cumulative ratio between the variance captured by the
-        active components and the total amount of variance present on the
+        retained components and the total amount of variance present on the
         original samples.
 
         Returns
         -------
-        eigenvalues_cumulative_ratio : ``(n_active_components,)`` `ndarray`
+        eigenvalues_cumulative_ratio : ``(n_components,)`` `ndarray`
             Array of cumulative eigenvalues.
         """
         return np.cumsum(self.eigenvalues_ratio())
@@ -356,38 +346,32 @@ class PCAVectorModel(MeanLinearVectorModel):
     def _total_eigenvalues_cumulative_ratio(self):
         r"""
         Returns the cumulative ratio between the variance captured by the
-        active components and the total amount of variance present on the
+        retained components and the total amount of variance present on the
         original samples.
 
         Returns
         -------
-        total_eigenvalues_cumulative_ratio : ``(n_active_components,)`` `ndarray`
+        total_eigenvalues_cumulative_ratio : ``(n_components,)`` `ndarray`
             Array of total cumulative eigenvalues.
         """
         return np.cumsum(self._total_eigenvalues_ratio())
 
     def noise_variance(self):
         r"""
-        Returns the average variance captured by the inactive components,
+        Returns the average variance captured by the unused components,
         i.e. the sample noise assumed in a Probabilistic PCA formulation.
 
-        If all components are active, then ``noise_variance == 0.0``.
+        If all components are kept, then ``noise_variance == 0.0``.
 
         Returns
         -------
         noise_variance : `float`
             The mean variance of the inactive components.
         """
-        if self.n_active_components == self.n_components:
-            if self._trimmed_eigenvalues.size != 0:
-                noise_variance = self._trimmed_eigenvalues.mean()
-            else:
-                noise_variance = 0.0
+        if self.n_components == self.n_original_components:
+            return self._trimmed_eigenvalues.mean()
         else:
-            noise_variance = np.hstack(
-                (self._eigenvalues[self.n_active_components:],
-                 self._trimmed_eigenvalues)).mean()
-        return noise_variance
+            return 0.0
 
     def noise_variance_ratio(self):
         r"""
@@ -486,13 +470,13 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         weights = np.asarray(weights)  # if eg a list is provided
         n_instances, n_weights = weights.shape
-        if n_weights > self.n_active_components:
+        if n_weights > self.n_components:
             raise ValueError(
                 "Number of weightings cannot be greater than {}".format(
-                    self.n_active_components))
+                    self.n_components))
         else:
-            full_weights = np.zeros((n_instances, self.n_active_components),
-                                    dtype=self._components.dtype)
+            full_weights = np.zeros((n_instances, self.n_components),
+                                    dtype=self.components.dtype)
             full_weights[..., :n_weights] = weights
             weights = full_weights
 
@@ -530,23 +514,21 @@ class PCAVectorModel(MeanLinearVectorModel):
         return self.instance_vectors(
             weights[None, :], normalized_weights=normalized_weights).flatten()
 
-    def trim_components(self, n_components=None):
+    def _trim_components(self, n_components):
         r"""
         Permanently trims the components down to a certain amount. The number of
         active components will be automatically reset to this particular value.
 
         This will reduce `self.n_components` down to `n_components`
-        (if ``None``, `self.n_active_components` will be used), freeing up
+        (if ``None``, `self.n_components` will be used), freeing up
         memory in the process.
 
         Once the model is trimmed, the trimmed components cannot be recovered.
 
         Parameters
         ----------
-        n_components: `int` >= ``1`` or `float` > ``0.0`` or ``None``, optional
-            The number of components that are kept or else the amount (ratio)
-            of variance that is kept. If ``None``, `self.n_active_components` is
-            used.
+        n_components: `int` >= ``1``
+            The number of components that are kept
 
         Notes
         -----
@@ -554,24 +536,10 @@ class PCAVectorModel(MeanLinearVectorModel):
         greater than the amount of variance currently kept, this method does
         not perform any action.
         """
-        if n_components is None:
-            # by default trim using the current n_active_components
-            n_components = self.n_active_components
-        # set self.n_active_components to n_components
-        self.n_active_components = n_components
-
-        if self.n_active_components < self.n_components:
-            # Just stored so that we can fit < 80 chars
-            nac = self.n_active_components
-            # set self.n_components to n_components. We have to copy to ensure
-            # that the data is actually removed, otherwise a view is returned
-            self._components = self._components[:nac].copy()
-            # store the eigenvalues associated to the discarded components
-            self._trimmed_eigenvalues = np.hstack((
-                self._trimmed_eigenvalues,
-                self._eigenvalues[self.n_active_components:]))
-            # make sure that the eigenvalues are trimmed too
-            self._eigenvalues = self._eigenvalues[:nac].copy()
+        if n_components < self.n_components:
+            # We have to copy to ensure that the data is actually removed,
+            # otherwise a view is returned
+            self.components = self.components[:n_components].copy()
 
     def project_whitened(self, vector_instance):
         """
@@ -611,8 +579,8 @@ class PCAVectorModel(MeanLinearVectorModel):
             A second linear model to orthonormalize this against.
         """
         # take the QR decomposition of the model components
-        Q = (np.linalg.qr(np.hstack((linear_model._components.T,
-                                     self._components.T)))[0]).T
+        Q = (np.linalg.qr(np.hstack((linear_model.components.T,
+                                     self.components.T)))[0]).T
         # the model passed to us went first, so all it's components will
         # survive. Pull them off, and update the other model.
         linear_model.components = Q[:linear_model.n_components, :]
@@ -623,17 +591,17 @@ class PCAVectorModel(MeanLinearVectorModel):
         n_available_components = Q.shape[0] - linear_model.n_components
         if n_available_components < self.n_components:
             # oh dear, we've lost some components from the end of our model.
-            if self.n_active_components < n_available_components:
+            if self.n_components < n_available_components:
                 # save the current number of active components
-                n_active_components = self.n_active_components
+                n_components = self.n_components
             else:
                 # save the current number of available components
-                n_active_components = n_available_components
+                n_components = n_available_components
             # call trim_components to update our state.
-            self.trim_components(n_components=n_available_components)
-            if n_active_components < n_available_components:
+            self._trim_components(n_available_components)
+            if n_components < n_available_components:
                 # reset the number of active components
-                self.n_active_components = n_active_components
+                self.n_components = n_components
 
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
@@ -641,12 +609,12 @@ class PCAVectorModel(MeanLinearVectorModel):
     def increment(self, data, n_samples=None, forgetting_factor=1.0,
                   verbose=False):
         r"""
-        Update the eigenvectors, eigenvalues and mean vector of this model
-        by performing incremental PCA on the given samples.
+        Return a new model which is the result of performing incremental PCA on
+        this model with the given samples.
 
         Parameters
         ----------
-        samples : `list` of :map:`Vectorizable`
+        data : `list` of :map:`Vectorizable`
             List of new samples to update the model from.
         n_samples : `int`, optional
             If provided then ``samples``  must be an iterator that yields
@@ -668,23 +636,13 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         # compute incremental pca
         e_vectors, e_values, m_vector = ipca(
-            data, self._components, self._eigenvalues, self.n_samples,
+            data, self.components, self.eigenvalues, self.n_samples,
             m_a=self._mean, f=forgetting_factor)
 
-        # if the number of active components is the same as the total number
-        # of components so it will be after this method is executed
-        reset = (self.n_active_components == self.n_components)
-
-        # update mean, components, eigenvalues and number of samples
-        self._mean = m_vector
-        self._components = e_vectors
-        self._eigenvalues = e_values
-        self.n_samples += n_new_samples
-
-        # reset the number of active components to the total number of
-        # components
-        if reset:
-            self.n_active_components = self.n_components
+        # TODO this will loose eigenvalues from before
+        return self.init_from_components(e_vectors, e_values, m_vector,
+                                         self.n_samples + n_new_samples,
+                                         self.centred)
 
     def plot_eigenvalues(self, figure_id=None, new_figure=False,
                          render_lines=True, line_colour='b', line_style='-',
@@ -793,11 +751,11 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         from menpo.visualize import plot_curve
         return plot_curve(
-            range(self.n_active_components), [self.eigenvalues],
+            range(self.n_components), [self.eigenvalues],
             figure_id=figure_id, new_figure=new_figure, legend_entries=None,
             title='Eigenvalues', x_label='Component Number',
             y_label='Eigenvalue',
-            axes_x_limits=[0, self.n_active_components - 1],
+            axes_x_limits=[0, self.n_components - 1],
             axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
             render_lines=render_lines, line_colour=line_colour,
             line_style=line_style, line_width=line_width,
@@ -828,7 +786,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         except:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
-        plot_graph(x_axis=range(self.n_active_components),
+        plot_graph(x_axis=range(self.n_components),
                    y_axis=[self.eigenvalues], legend_entries=['Eigenvalues'],
                    figure_size=figure_size, style=style)
 
@@ -940,11 +898,11 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         from menpo.visualize import plot_curve
         return plot_curve(
-            range(self.n_active_components), [self.eigenvalues_ratio()],
+            range(self.n_components), [self.eigenvalues_ratio()],
             figure_id=figure_id, new_figure=new_figure, legend_entries=None,
             title='Variance Ratio of Eigenvalues', x_label='Component Number',
             y_label='Variance Ratio',
-            axes_x_limits=[0, self.n_active_components - 1],
+            axes_x_limits=[0, self.n_components - 1],
             axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
             render_lines=render_lines, line_colour=line_colour,
             line_style=line_style, line_width=line_width,
@@ -977,7 +935,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         except:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
-        plot_graph(x_axis=range(self.n_active_components),
+        plot_graph(x_axis=range(self.n_components),
                    y_axis=[self.eigenvalues_ratio()],
                    legend_entries=['Eigenvalues ratio'],
                    figure_size=figure_size, style=style)
@@ -1095,12 +1053,12 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         from menpo.visualize import plot_curve
         return plot_curve(
-            range(self.n_active_components),
+            range(self.n_components),
             [self.eigenvalues_cumulative_ratio()], figure_id=figure_id,
             new_figure=new_figure, legend_entries=None,
             title='Cumulative Variance Ratio of Eigenvalues',
             x_label='Component Number', y_label='Cumulative Variance Ratio',
-            axes_x_limits=[0, self.n_active_components - 1],
+            axes_x_limits=[0, self.n_components - 1],
             axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
             render_lines=render_lines, line_colour=line_colour,
             line_style=line_style, line_width=line_width,
@@ -1133,7 +1091,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         except:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
-        plot_graph(x_axis=range(self.n_active_components),
+        plot_graph(x_axis=range(self.n_components),
                    y_axis=[self.eigenvalues_cumulative_ratio()],
                    legend_entries=['Eigenvalues cumulative ratio'],
                    figure_size=figure_size, style=style)
@@ -1142,14 +1100,14 @@ class PCAVectorModel(MeanLinearVectorModel):
         str_out = 'PCA Vector Model \n'                      \
                   ' - centred:              {}\n'            \
                   ' - # features:           {}\n'            \
-                  ' - # active components:  {}\n'            \
+                  ' - # components:         {}\n'            \
                   ' - kept variance:        {:.2}  {:.1%}\n' \
                   ' - noise variance:       {:.2}  {:.1%}\n' \
-                  ' - total # components:   {}\n'            \
+                  ' - original # components:{}\n'            \
                   ' - components shape:     {}\n'.format(
-            self.centred,  self.n_features, self.n_active_components,
+            self.centred,  self.n_features, self.n_components,
             self.variance(), self.variance_ratio(), self.noise_variance(),
-            self.noise_variance_ratio(), self.n_components,
+            self.noise_variance_ratio(), self.n_original_components,
             self.components.shape)
         return str_out
 
@@ -1429,13 +1387,13 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
                   ' - instance class:       {}\n'            \
                   ' - centred:              {}\n'            \
                   ' - # features:           {}\n'            \
-                  ' - # active components:  {}\n'            \
+                  ' - # components:         {}\n'            \
                   ' - kept variance:        {:.2}  {:.1%}\n' \
                   ' - noise variance:       {:.2}  {:.1%}\n' \
-                  ' - total # components:   {}\n'            \
+                  ' - original # components:{}\n'            \
                   ' - components shape:     {}\n'.format(
             type(self.template_instance), self.centred,  self.n_features,
-            self.n_active_components, self.variance(), self.variance_ratio(),
+            self.n_components, self.variance(), self.variance_ratio(),
             self.noise_variance(), self.noise_variance_ratio(),
-            self.n_components, self.components.shape)
+            self.n_original_components, self.components.shape)
         return str_out
