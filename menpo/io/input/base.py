@@ -107,7 +107,7 @@ def import_image(filepath, landmark_resolver=same_name, normalize=None,
         An instantiated :map:`Image` or subclass thereof or a list of images.
     """
     if normalise is not None and normalize is not None:
-        m = 'Do not se both arguments. The preferred one is normalize.'
+        m = 'Do not set both arguments. The preferred one is normalize.'
         raise ValueError(m)
     elif normalise is not None:
         warn('This argument is no longer supported and will be removed in a '
@@ -183,7 +183,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
     >>> frame100 = video[100]
     """
     if normalise is not None and normalize is not None:
-        m = 'Do not se both arguments. The preferred one is normalize.'
+        m = 'Do not set both arguments. The preferred one is normalize.'
         raise ValueError(m)
     elif normalise is not None:
         warn('This argument is no longer supported and will be removed in a '
@@ -323,7 +323,7 @@ def import_images(pattern, max_images=None, shuffle=False,
     >>> images[0]  # Get the first image, resize, lazily loaded
     """
     if normalise is not None and normalize is not None:
-        m = 'Do not se both arguments. The preferred one is normalize.'
+        m = 'Do not set both arguments. The preferred one is normalize.'
         raise ValueError(m)
     elif normalise is not None:
         warn('This argument is no longer supported and will be removed in a '
@@ -435,7 +435,7 @@ def import_videos(pattern, max_videos=None, shuffle=False,
     >>>    videos.append(frames)
     """
     if normalise is not None and normalize is not None:
-        m = 'Do not se both arguments. The preferred one is normalize.'
+        m = 'Do not set both arguments. The preferred one is normalize.'
         raise ValueError(m)
     elif normalise is not None:
         warn('This argument is no longer supported and will be removed in a '
@@ -581,7 +581,7 @@ def _import_builtin_asset(asset_name, **kwargs):
         # catch the case of having normalise as kwarg. Remove once
         # the argument is removed.
         if 'normalise' in kwargs.keys() and 'normalize' in kwargs.keys():
-            m = 'Do not se both normalize and normalise arguments. ' \
+            m = 'Do not set both normalize and normalise arguments. ' \
                 'The preferred one is normalize.'
             raise ValueError(m)
         elif 'normalise' in kwargs.keys():

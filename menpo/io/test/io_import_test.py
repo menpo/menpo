@@ -660,4 +660,3 @@ def test_import_image_deprecated_normalise_kwarg():
         img = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
         assert len(w) == 1
     assert img.pixels.dtype == np.uint8
-    
