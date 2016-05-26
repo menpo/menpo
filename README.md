@@ -19,13 +19,15 @@
 
 IMPORTANT
 =========
+
 Menpo has been designed for academic use. The project changes quickly as
-determined by our research, and this should be kept in mind at all times.
+determined by our research, and this should be kept in mind at all times. 
 
 Menpo. A Python toolkit for handling annotated data.
 ====================================================
 What is Menpo?
 --------------
+
 Menpo was designed from the ground up to make importing, manipulating and
 visualizing image and mesh data as simple as possible. In particular,
 we focus on **annotated** data which is common within the fields of Machine
