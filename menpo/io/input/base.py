@@ -8,8 +8,8 @@ from menpo.base import menpo_src_dir_path, LazyList, partial_doc
 from menpo.compatibility import basestring
 from menpo.visualize import print_progress
 
-from ..utils import _norm_path, _possible_extensions_from_filepath, \
-    _normalize_extension
+from ..utils import (_norm_path, _possible_extensions_from_filepath,
+                     _normalize_extension)
 from .extensions import (image_landmark_types, image_types, pickle_types,
                          ffmpeg_video_types)
 
@@ -97,8 +97,7 @@ def _ls_builtin_assets(data_dir_path):
 
 def _register_importer(ext_map, extension, callable):
     r"""
-    Register a new importer for the given extension. This makes it much
-    simpler to add custom importers to the IO package.
+    Register a new importer for the given extension.
 
     Parameters
     ----------
