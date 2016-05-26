@@ -512,135 +512,34 @@ def test_importing_pickles_as_generator(is_file, glob, mock_open, mock_pickle):
     assert objs[1]['test'] == 1
 
 
-# TODO: Remove when imageio is fixed
-@patch('imageio.get_reader')
+@patch('subprocess.Popen')
+@patch('menpo.io.input.video.video_infos_ffprobe')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_ffmpeg_bad_frames(is_file, mock_reader):
-    def fake_get_data(index):
-        if index not in [1, 2]:
-            raise ValueError()
-        f = np.ones((10, 10, 3)) * -1
-        f[0, 0, 0] = index
-        return f
-
-    mock_reader.return_value.get_length.return_value = 4
-    mock_reader.return_value.get_data.side_effect = fake_get_data
+def test_importing_ffmpeg_avi_no_normalise(is_file, video_infos_ffprobe, pipe):
+    video_infos_ffprobe.return_value = {'duration': 2, 'width': 100, 'height': 150, 'n_frames': 10, 'fps': 5}
     is_file.return_value = True
-
+    pipe.return_value.stdout.read.return_value = np.zeros(150*100*3, dtype=np.uint8).tostring()
     ll = mio.import_video('fake_image_being_mocked.avi', normalise=False)
-    assert len(ll) == 2
+    assert len(ll) == 5*2
+    image = ll[0]
+    assert image.shape == ((150, 100))
+    assert image.n_channels == 3
+    assert image.pixels.dtype == np.uint8
 
-    im = ll[0]
-    assert im.shape == (10, 10)
-    assert im.pixels[0, 0, 0] == 1
 
-
-# TODO: Remove when imageio is fixed
-@patch('imageio.get_reader')
+@patch('subprocess.Popen')
+@patch('menpo.io.input.video.video_infos_ffprobe')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_ffmpeg_many_bad_frames_warning_start(is_file, mock_reader):
-    def fake_get_data(index):
-        if index < 11:
-            raise ValueError()
-        f = np.ones((10, 10, 3)) * -1
-        f[0, 0, 0] = index
-        return f
-
-    mock_reader.return_value.get_length.return_value = 15
-    mock_reader.return_value.get_data.side_effect = fake_get_data
+def test_importing_ffmpeg_avi_normalise(is_file, video_infos_ffprobe, pipe):
+    video_infos_ffprobe.return_value = {'duration': 2, 'width': 100, 'height': 150, 'n_frames': 10, 'fps': 5}
     is_file.return_value = True
-
-    with warnings.catch_warnings(record=True) as w:
-        ll = mio.import_video('fake_image_being_mocked.avi', normalise=False)
-        assert len(w) == 1
-    assert len(ll) == 4
-
-    im = ll[0]
-    assert im.shape == (10, 10)
-    assert im.pixels[0, 0, 0] == 11
-
-
-# TODO: Remove when imageio is fixed
-@patch('imageio.get_reader')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_ffmpeg_many_bad_frames_warning_end(is_file, mock_reader):
-    def fake_get_data(index):
-        if index > 3:
-            raise ValueError()
-        f = np.ones((10, 10, 3)) * -1
-        f[0, 0, 0] = index
-        return f
-
-    mock_reader.return_value.get_length.return_value = 15
-    mock_reader.return_value.get_data.side_effect = fake_get_data
-    is_file.return_value = True
-
-    with warnings.catch_warnings(record=True) as w:
-        ll = mio.import_video('fake_image_being_mocked.avi', normalise=False)
-        assert len(w) == 1
-    assert len(ll) == 4
-
-    assert ll[0].pixels[0, 0, 0] == 0
-    assert ll[-1].pixels[0, 0, 0] == 3
-
-
-# TODO: Remove when imageio is fixed
-@patch('imageio.get_reader')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_ffmpeg_all_bad_frames(is_file, mock_reader):
-    def fake_get_data(_):
-        raise ValueError()
-
-    mock_reader.return_value.get_length.return_value = 2
-    mock_reader.return_value.get_data.side_effect = fake_get_data
-    is_file.return_value = True
-
-    ll = mio.import_video('fake_image_being_mocked.avi')
-    assert len(ll) == 0
-
-
-@patch('imageio.get_reader')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_avi_no_frames(is_file, mock_image):
-    mock_image.return_value.get_length.return_value = 0
-    is_file.return_value = True
-
-    ll = mio.import_video('fake_image_being_mocked.avi')
-    assert len(ll) == 0
-
-
-@patch('imageio.get_reader')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_avi_normalise(is_file, mock_image):
-    mock_image.return_value.get_data.return_value = np.ones((10, 10, 3),
-                                                            dtype=np.uint8)
-    mock_image.return_value.get_length.return_value = 1
-    is_file.return_value = True
-
+    pipe.return_value.stdout.read.return_value = np.zeros(150*100*3, dtype=np.uint8).tostring()
     ll = mio.import_video('fake_image_being_mocked.avi', normalise=True)
-    assert len(ll) == 1
-
-    im = ll[0]
-    assert im.shape == (10, 10)
-    assert im.n_channels == 3
-    assert im.pixels.dtype == np.float
-
-
-@patch('imageio.get_reader')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_avi_no_normalise(is_file, mock_image):
-    mock_image.return_value.get_data.return_value = np.ones((10, 10, 3),
-                                                            dtype=np.uint8)
-    mock_image.return_value.get_length.return_value = 1
-    is_file.return_value = True
-
-    ll = mio.import_video('fake_image_being_mocked.avi', normalise=False)
-    assert len(ll) == 1
-
-    im = ll[0]
-    assert im.shape == (10, 10)
-    assert im.n_channels == 3
-    assert im.pixels.dtype == np.uint8
+    assert len(ll) == 5*2
+    image = ll[0]
+    assert image.shape == ((150, 100))
+    assert image.n_channels == 3
+    assert image.pixels.dtype == np.float
 
 
 @raises(ValueError)
