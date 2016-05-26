@@ -118,29 +118,22 @@ def _register_importer(ext_map, extension, callable):
     ext_map[_normalize_extension(extension)] = callable
 
 
-register_image_importer = partial_doc(_register_importer, image_types,
-                                      menpo_f_name='register_image_importer')
+register_image_importer = partial_doc(_register_importer, image_types)
 
-register_video_importer = partial_doc(_register_importer, ffmpeg_video_types,
-                                      menpo_f_name='register_video_importer')
+register_video_importer = partial_doc(_register_importer, ffmpeg_video_types)
 
-register_landmark_importer = partial_doc(
-    _register_importer, image_landmark_types,
-    menpo_f_name='register_landmark_importer')
+register_landmark_importer = partial_doc(_register_importer,
+                                         image_landmark_types)
 
-register_pickle_importer = partial_doc(_register_importer, pickle_types,
-                                       menpo_f_name='register_pickle_importer')
+register_pickle_importer = partial_doc(_register_importer, pickle_types)
 
 
-menpo_data_dir_path = partial_doc(_data_dir_path, menpo_src_dir_path,
-                                  menpo_f_name='data_dir_path')
+menpo_data_dir_path = partial_doc(_data_dir_path, menpo_src_dir_path)
 
-menpo_ls_builtin_assets = partial_doc(_ls_builtin_assets, menpo_data_dir_path,
-                                      menpo_f_name='ls_builtin_assets')
+menpo_ls_builtin_assets = partial_doc(_ls_builtin_assets, menpo_data_dir_path)
 
 menpo_data_path_to = partial_doc(_data_path_to, menpo_data_dir_path,
-                                 menpo_ls_builtin_assets,
-                                 menpo_f_name='data_path_to')
+                                 menpo_ls_builtin_assets)
 
 _menpo_import_builtin_asset = partial_doc(_import_builtin_asset,
                                           menpo_data_path_to,

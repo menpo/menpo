@@ -578,10 +578,6 @@ def partial_doc(func, *args, **kwargs):
     ----------
     func : `callable`
         The func to partial and whose docs should be copied.
-    menpo_f_name : `str`, optional
-        Optionally pass a string to set as the name partial method __name__.
-        Odd parameter name to attempt to avoid collisions with the
-        partial function arguments.
     args : ...
         Any arguments to partial.
     kwargs : `dict`
@@ -592,9 +588,6 @@ def partial_doc(func, *args, **kwargs):
     p_func : `callable`
         The partially wrapped func with __doc__ attached.
     """
-    menpo_f_name = kwargs.pop('menpo_f_name', None)
     p = partial(func, *args, **kwargs)
     p.__doc__ = func.__doc__
-    if menpo_f_name is not None:
-        p.__name__ = menpo_f_name
     return p
