@@ -617,7 +617,7 @@ def test_as_greyscale_luminosity_dtype_uint8():
 
 def test_rolled_channels():
     image = Image.init_blank((120, 120), n_channels=3)
-    rolled_channels = image.rolled_channels()
+    rolled_channels = image.as_rolled_channels()
     assert rolled_channels.shape == (120, 120, 3)
 
 

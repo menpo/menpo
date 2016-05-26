@@ -167,7 +167,7 @@ def denormalize_pixels_range(pixels, out_dtype):
     return (pixels * max_range).astype(out_dtype)
 
 
-def channels_to_back(pixels):
+def roll_channels(pixels):
     r"""
     Roll the channels from the front to the back for an image. If the image
     that is passed is already a numpy array, then that is also fine.
@@ -2464,7 +2464,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if self.n_channels == 1:
             pixels = self.pixels[0]
         else:
-            pixels = channels_to_back(self.pixels)
+            pixels = roll_channels(self.pixels)
         pixels = denormalize_pixels_range(pixels, out_dtype)
         return PILImage.fromarray(pixels)
 
@@ -2499,6 +2499,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If the output dtype is unsupported. Currently uint8 and uint16
             are supported.
         """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .channels_to_back instead.',
+             MenpoDeprecationWarning)
+
         if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
             raise ValueError(
                 'Can only convert greyscale or RGB 2D images. '
@@ -2509,8 +2514,33 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if self.n_channels == 1:
             pixels = self.pixels[0]
         else:
-            pixels = channels_to_back(self.pixels)
+            pixels = roll_channels(self.pixels)
         return denormalize_pixels_range(pixels, out_dtype)
+
+    def roll_channels(self):
+        r"""
+        Return the image as an ndarray with the channels in the end.
+
+        Image must only have 1 or 3 channels and be 2 dimensional.
+
+        Returns
+        -------
+        image : `ndarray`
+            image (which is just a numpy ndarray with the channels as the last axis).
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D and has 1 channel or 3 channels.
+        """
+        if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
+            raise ValueError(
+                'Can only convert greyscale or RGB 2D images. '
+                'Received a {} channel {}D image.'.format(self.n_channels,
+                                                          self.n_dims))
+
+        # Slice off the channel for greyscale images
+        return np.squeeze(roll_channels(self.pixels))
 
     def pixels_range(self):
         r"""
@@ -2523,7 +2553,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return self.pixels.min(), self.pixels.max()
 
-    def rolled_channels(self):
+    def as_rolled_channels(self):
         r"""
         Returns the pixels matrix, with the channels rolled to the back axis.
         This may be required for interacting with external code bases that
@@ -2535,7 +2565,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         rolled_channels : `ndarray`
             Pixels with channels as the back (last) axis.
         """
-        return channels_to_back(self.pixels)
+        return roll_channels(self.pixels)
 
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(
