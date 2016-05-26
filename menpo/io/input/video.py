@@ -79,7 +79,7 @@ class FFMpegVideoReader:
     def __del__(self):
         """Close the pipe if open...
         """
-        if self._pipe:
+        if self._pipe is not None:
             self._pipe.stdout.close()
 
     def __len__(self):
