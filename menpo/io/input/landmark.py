@@ -8,58 +8,9 @@ import numpy as np
 from menpo.landmark.base import LandmarkGroup
 from menpo.shape import PointCloud, PointUndirectedGraph
 from menpo.transform import Scale
-from .base import Importer
 
 
-class LandmarkImporter(Importer):
-    """
-    Abstract base class for importing landmarks.
-
-    Parameters
-    ----------
-    filepath : string
-        Absolute filepath of the landmarks.
-    """
-
-    def __init__(self, filepath):
-        super(LandmarkImporter, self).__init__(filepath)
-        self.pointcloud = None
-        self.labels_to_masks = None
-
-    def build(self, asset=None):
-        """
-        Overrides the :meth:`build <menpo.io.base.Importer.build>` method.
-
-        Parse the landmark format and return the label and landmark dictionary.
-
-        Parameters
-        ----------
-        asset : object, optional
-            The asset that the landmarks are being built for. Can be used to
-            adjust landmarks as necessary (e.g. rescaling image landmarks
-            from 0-1 to image.shape)
-
-        Returns
-        -------
-        landmark_group : string
-            The landmark group parsed from the file.
-            Every point will be labelled.
-        """
-        self._parse_format(asset=asset)
-        return LandmarkGroup(self.pointcloud,
-                             self.labels_to_masks)
-
-    def _parse_format(self, asset=None):
-        r"""
-        Read the landmarks file from disk, parse it in to semantic labels and
-        :class:`menpo.shape.base.PointCloud`.
-
-        Set the `self.label` and `self.pointcloud` attributes.
-        """
-        raise NotImplementedError()
-
-
-class ASFImporter(LandmarkImporter):
+def asf_importer(filepath, asset=None, image_origin=True, **kwargs):
     r"""
     Abstract base class for an importer for the ASF file format.
     Currently **does not support the connectivity specified in the format**.
@@ -81,63 +32,68 @@ class ASFImporter(LandmarkImporter):
 
     Parameters
     ----------
-    filepath : string
-        Absolute filepath to landmark file.
+    filepath : `Path`
+        Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
+    image_origin : `bool`, optional
+        If ``True``, assume that the landmarks exist within an image and thus
+        the origin is the image origin.
+    \**kwargs : `dict`, optional
+        Any other keyword arguments.
+
+    Returns
+    -------
+    landmarks : :map:`LandmarkGroup`
+        The landmarks including appropriate labels if available.
 
     References
     ----------
     .. [1] http://www2.imm.dtu.dk/~aam/datasets/datasets.html
     """
-    def __init__(self, filepath):
-        super(ASFImporter, self).__init__(filepath)
+    with open(str(filepath), 'r') as f:
+        landmarks = f.read()
 
-    def _build_points(self, xs, ys):
-        r"""
-        Determines the ordering of points within the landmarks. For meshes
-        `x` is the first axis, where as for images `y` is the first axis.
-        """
-        raise NotImplementedError()
+    # Remove comments and blank lines
+    landmarks = [l for l in landmarks.splitlines()
+                 if (l.rstrip() and not '#' in l)]
 
-    def _parse_format(self, asset=None):
-        with open(self.filepath, 'r') as f:
-            landmarks = f.read()
+    # Pop the front of the list for the number of landmarks
+    count = int(landmarks.pop(0))
+    # Pop the last element of the list for the image_name
+    image_name = landmarks.pop()
 
-        # Remove comments and blank lines
-        landmarks = [l for l in landmarks.splitlines()
-                     if (l.rstrip() and not '#' in l)]
+    xs = np.empty([count, 1])
+    ys = np.empty([count, 1])
+    connectivity = np.empty([count, 2], dtype=np.int)
+    for i in range(count):
+        # Though unpacked, they are still all strings
+        # Only unpack the first 7
+        (path_num, path_type, xpos, ypos,
+         point_num, connects_from, connects_to) = landmarks[i].split()[:7]
+        xs[i, ...] = float(xpos)
+        ys[i, ...] = float(ypos)
+        connectivity[i, ...] = [int(connects_from), int(connects_to)]
 
-        # Pop the front of the list for the number of landmarks
-        count = int(landmarks.pop(0))
-        # Pop the last element of the list for the image_name
-        image_name = landmarks.pop()
+    if image_origin:
+        points = np.hstack([ys, xs])
+    else:
+        points = np.hstack([xs, ys])
+    if asset is not None:
+        # we've been given an asset. As ASF files are normalized,
+        # fix that here
+        points = Scale(np.array(asset.shape)).apply(points)
 
-        xs = np.empty([count, 1])
-        ys = np.empty([count, 1])
-        connectivity = np.empty([count, 2], dtype=np.int)
-        for i in range(count):
-            # Though unpacked, they are still all strings
-            # Only unpack the first 7
-            (path_num, path_type, xpos, ypos,
-             point_num, connects_from, connects_to) = landmarks[i].split()[:7]
-            xs[i, ...] = float(xpos)
-            ys[i, ...] = float(ypos)
-            connectivity[i, ...] = [int(connects_from), int(connects_to)]
+    # TODO: Use connectivity and create a graph type instead of PointCloud
+    # edges = scaled_points[connectivity]
 
-        points = self._build_points(xs, ys)
-        if asset is not None:
-            # we've been given an asset. As ASF files are normalized,
-            # fix that here
-            points = Scale(np.array(asset.shape)).apply(points)
-
-        # TODO: Use connectivity and create a graph type instead of PointCloud
-        # edges = scaled_points[connectivity]
-
-        self.pointcloud = PointCloud(points)
-        self.labels_to_masks = OrderedDict(
-            [('all', np.ones(points.shape[0], dtype=np.bool))])
+    return LandmarkGroup(PointCloud(points, copy=False),
+                         OrderedDict([('all', np.ones(points.shape[0],
+                                                      dtype=np.bool))]))
 
 
-class PTSImporter(LandmarkImporter):
+def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
     r"""
     Importer for the PTS file format. Assumes version 1 of the format.
 
@@ -164,40 +120,50 @@ class PTSImporter(LandmarkImporter):
     +=========+
     | all     |
     +---------+
+
+    Parameters
+    ----------
+    filepath : `Path`
+        Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
+    image_origin : `bool`, optional
+        If ``True``, assume that the landmarks exist within an image and thus
+        the origin is the image origin.
+    \**kwargs : `dict`, optional
+        Any other keyword arguments.
+
+    Returns
+    -------
+    landmarks : :map:`LandmarkGroup`
+        The landmarks including appropriate labels if available.
     """
-    def __init__(self, filepath):
-        super(PTSImporter, self).__init__(filepath)
+    f = open(str(filepath), 'r')
+    for line in f:
+        if line.split()[0] == '{':
+            break
+    xs = []
+    ys = []
+    for line in f:
+        if line.split()[0] != '}':
+            xpos, ypos = line.split()[0:2]
+            xs.append(xpos)
+            ys.append(ypos)
+    xs = np.array(xs, dtype=np.float).reshape((-1, 1))
+    ys = np.array(ys, dtype=np.float).reshape((-1, 1))
+    # PTS landmarks are 1-based, need to convert to 0-based (subtract 1)
+    if image_origin:
+        points = np.hstack([ys - 1, xs - 1])
+    else:
+        points = np.hstack([xs - 1, ys - 1])
 
-    def _build_points(self, xs, ys):
-        r"""
-        Determines the ordering of points within the landmarks. For meshes
-        `x` is the first axis, where as for images `y` is the first axis.
-        """
-        raise NotImplementedError()
-
-    def _parse_format(self, asset=None):
-        f = open(self.filepath, 'r')
-        for line in f:
-            if line.split()[0] == '{':
-                break
-        xs = []
-        ys = []
-        for line in f:
-            if line.split()[0] != '}':
-                xpos, ypos = line.split()[0:2]
-                xs.append(xpos)
-                ys.append(ypos)
-        xs = np.array(xs, dtype=np.float).reshape((-1, 1))
-        ys = np.array(ys, dtype=np.float).reshape((-1, 1))
-        # PTS landmarks are 1-based, need to convert to 0-based (subtract 1)
-        points = self._build_points(xs - 1, ys - 1)
-
-        self.pointcloud = PointCloud(points)
-        self.labels_to_masks = OrderedDict(
-            [('all', np.ones(points.shape[0], dtype=np.bool))])
+    return LandmarkGroup(PointCloud(points, copy=False),
+                         OrderedDict([('all', np.ones(points.shape[0],
+                                                      dtype=np.bool))]))
 
 
-class LM2Importer(LandmarkImporter):
+def lm2_importer(filepath, asset=None, **kwargs):
     r"""
     Importer for the LM2 file format from the bosphorus dataset. This is a 2D
     landmark type and so it is assumed it only applies to images.
@@ -232,60 +198,73 @@ class LM2Importer(LandmarkImporter):
     | lower_lip_outer_middle |
     | chin_middle            |
     +------------------------+
+
+    Parameters
+    ----------
+    filepath : `Path`
+        Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
+    \**kwargs : `dict`, optional
+        Any other keyword arguments.
+
+    Returns
+    -------
+    landmarks : :map:`LandmarkGroup`
+        The landmarks including appropriate labels if available.
     """
-    def __init__(self, filepath):
-        super(LM2Importer, self).__init__(filepath)
+    with open(str(filepath), 'r') as f:
+        landmarks = f.read()
 
-    def _parse_format(self, asset=None):
-        with open(self.filepath, 'r') as f:
-            landmarks = f.read()
+    # Remove comments and blank lines
+    landmark_text = [l for l in landmarks.splitlines()
+                     if (l.rstrip() and '#' not in l)]
 
-        # Remove comments and blank lines
-        landmark_text = [l for l in landmarks.splitlines()
-                         if (l.rstrip() and '#' not in l)]
+    # First line says how many landmarks there are: 22 Landmarks
+    # So pop it off the front
+    num_points = int(landmark_text.pop(0).split()[0])
+    labels = []
 
-        # First line says how many landmarks there are: 22 Landmarks
-        # So pop it off the front
-        num_points = int(landmark_text.pop(0).split()[0])
-        labels = []
+    # The next set of lines defines the labels
+    labels_str = landmark_text.pop(0)
+    if not labels_str == 'Labels:':
+        raise ValueError("LM2 landmarks are incorrectly formatted. "
+                         "Expected a list of labels beginning with "
+                         "'Labels:' but found '{0}'".format(labels_str))
+    for i in range(num_points):
+        # Lowercase, remove spaces and replace with underscores
+        l = landmark_text.pop(0)
+        l = '_'.join(l.lower().split())
+        labels.append(l)
 
-        # The next set of lines defines the labels
-        labels_str = landmark_text.pop(0)
-        if not labels_str == 'Labels:':
-            raise ValueError("LM2 landmarks are incorrectly formatted. "
-                             "Expected a list of labels beginning with "
-                             "'Labels:' but found '{0}'".format(labels_str))
-        for i in range(num_points):
-            # Lowercase, remove spaces and replace with underscores
-            l = landmark_text.pop(0)
-            l = '_'.join(l.lower().split())
-            labels.append(l)
+    # The next set of lines defines the coordinates
+    coords_str = landmark_text.pop(0)
+    if not coords_str == '2D Image coordinates:':
+        raise ValueError("LM2 landmarks are incorrectly formatted. "
+                         "Expected a list of coordinates beginning with "
+                         "'2D Image coordinates:' "
+                         "but found '{0}'".format(coords_str))
+    xs = []
+    ys = []
+    for i in range(num_points):
+        p = landmark_text.pop(0).split()
+        xs.append(float(p[0]))
+        ys.append(float(p[1]))
 
-        # The next set of lines defines the coordinates
-        coords_str = landmark_text.pop(0)
-        if not coords_str == '2D Image coordinates:':
-            raise ValueError("LM2 landmarks are incorrectly formatted. "
-                             "Expected a list of coordinates beginning with "
-                             "'2D Image coordinates:' "
-                             "but found '{0}'".format(coords_str))
-        xs = []
-        ys = []
-        for i in range(num_points):
-            p = landmark_text.pop(0).split()
-            xs.append(float(p[0]))
-            ys.append(float(p[1]))
+    xs = np.array(xs, dtype=np.float).reshape((-1, 1))
+    ys = np.array(ys, dtype=np.float).reshape((-1, 1))
 
-        xs = np.array(xs, dtype=np.float).reshape((-1, 1))
-        ys = np.array(ys, dtype=np.float).reshape((-1, 1))
+    # Flip the x and y
+    pointcloud = PointCloud(np.hstack([ys, xs]), copy=False)
+    # Create the mask whereby there is one landmark per label
+    # (identity matrix)
+    masks = np.eye(num_points).astype(np.bool)
+    masks = np.vsplit(masks, num_points)
+    masks = [np.squeeze(m) for m in masks]
+    labels_to_masks = OrderedDict(zip(labels, masks))
 
-        # Flip the x and y
-        self.pointcloud = PointCloud(np.hstack([ys, xs]))
-        # Create the mask whereby there is one landmark per label
-        # (identity matrix)
-        masks = np.eye(num_points).astype(np.bool)
-        masks = np.vsplit(masks, num_points)
-        masks = [np.squeeze(m) for m in masks]
-        self.labels_to_masks = OrderedDict(zip(labels, masks))
+    return LandmarkGroup(pointcloud, labels_to_masks)
 
 
 def _ljson_parse_null_values(points_list):
@@ -361,7 +340,7 @@ _ljson_parser_for_version = {
 }
 
 
-class LJSONImporter(LandmarkImporter):
+def ljson_importer(filepath, asset=None, **kwargs):
     r"""
     Importer for the Menpo JSON format. This is an n-dimensional
     landmark type for both images and meshes that encodes semantic labels in
@@ -371,15 +350,28 @@ class LJSONImporter(LandmarkImporter):
 
     Landmark labels: decided by file
 
+    Parameters
+    ----------
+    filepath : `Path`
+        Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
+    \**kwargs : `dict`, optional
+        Any other keyword arguments.
+
+    Returns
+    -------
+    landmarks : :map:`LandmarkGroup`
+        The landmarks including appropriate labels if available.
     """
-    def _parse_format(self, asset=None):
-        with open(self.filepath, 'r') as f:
-            # lms_dict is now a dict rep of the JSON
-            lms_dict = json.load(f, object_pairs_hook=OrderedDict)
-        v = lms_dict.get('version')
-        parser = _ljson_parser_for_version.get(v)
-        if parser is None:
-            raise ValueError("{} has unknown version {} must be "
-                             "1, or 2".format(self.filepath, v))
-        else:
-            self.pointcloud, self.labels_to_masks = parser(lms_dict)
+    with open(str(filepath), 'r') as f:
+        # lms_dict is now a dict rep of the JSON
+        lms_dict = json.load(f, object_pairs_hook=OrderedDict)
+    v = lms_dict.get('version')
+    parser = _ljson_parser_for_version.get(v)
+
+    if parser is None:
+        raise ValueError("{} has unknown version {} must be "
+                         "1, or 2".format(self.filepath, v))
+    return LandmarkGroup(*parser(lms_dict))
