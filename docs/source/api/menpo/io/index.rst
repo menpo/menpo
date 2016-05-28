@@ -18,6 +18,10 @@ Input
   import_pickle
   import_pickles
   import_builtin_asset
+  register_image_importer
+  register_landmark_importer
+  register_pickle_importer
+  register_video_importer
 
 
 Output
