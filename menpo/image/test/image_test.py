@@ -654,36 +654,37 @@ def test_as_pil_image_1channel():
                     (im.pixels * 255).astype(np.uint8))
 
 
-def test_as_imageio_1channel():
+def test_as_rolled_channels_1channel():
     im = Image.init_blank((120, 120), n_channels=1, fill=1.0)
-    new_im = im.as_imageio()
-    assert new_im.dtype == np.uint8
-    assert_allclose(np.ones([120, 120]) * 255, new_im)
+    new_im = im.as_rolled_channels()
+    assert new_im.dtype == np.float
+    assert_allclose(np.ones([120, 120]), new_im)
+    assert new_im.ndim == 2
 
 
 @raises(ValueError)
-def test_as_imageio_float_out_range():
+def test_as_rolled_channels_float_out_range():
     im = Image.init_blank((120, 120), n_channels=1, fill=2.0)
-    im.as_imageio()
+    im.as_rolled_channels(out_dtype=np.uint8)
 
 
-def test_as_imageio_3channels():
+def test_as_rolled_channels_3channels():
     im = Image.init_blank((120, 120), n_channels=3, fill=1)
-    new_im = im.as_imageio()
-    assert new_im.dtype == np.uint8
-    assert_allclose(np.ones([120, 120, 3]) * 255, new_im)
+    new_im = im.as_rolled_channels()
+    assert new_im.dtype == np.float
+    assert_allclose(np.ones([120, 120, 3]), new_im)
 
 
-def test_as_imageio_1channel_uint16_out():
+def test_as_rolled_channels_1channel_uint16_out():
     im = Image.init_blank((120, 120), n_channels=1, fill=1)
-    new_im = im.as_imageio(out_dtype=np.uint16)
+    new_im = im.as_rolled_channels(out_dtype=np.uint16)
     assert new_im.dtype == np.uint16
     assert_allclose(np.ones([120, 120]) * 65535, new_im)
 
 
-def test_as_imageio_1channel_float32_out():
+def test_as_rolled_channels_1channel_float32_out():
     im = Image.init_blank((120, 120), n_channels=1, fill=1)
-    new_im = im.as_imageio(out_dtype=np.float32)
+    new_im = im.as_rolled_channels(out_dtype=np.float32)
     assert new_im.dtype == np.float32
     assert_allclose(np.ones([120, 120]), new_im)
 

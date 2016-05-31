@@ -105,6 +105,6 @@ def image_gif_exporter(images, out_path, fps=30, loop=0, duration=None,
                                 loop=loop, duration=duration)
 
     for v in images:
-        v = v.as_imageio()
+        v = v.as_rolled_channels()
         writer.append_data(v)
     writer.close()
