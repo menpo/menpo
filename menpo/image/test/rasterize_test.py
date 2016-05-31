@@ -21,6 +21,7 @@ def test_rasterize_matplotlib_basic():
                                     marker_size=2, marker_edge_width=0,
                                     backend='matplotlib')
     assert new_im.n_channels == 3
+    assert new_im.shape == (11, 11)
     assert_allclose(new_im.pixels[:, 5, 5], [255, 0, 0])
 
 
@@ -33,6 +34,7 @@ def test_rasterize_matplotlib_basic_line():
                                     marker_size=2, marker_edge_width=0,
                                     backend='matplotlib')
     assert new_im.n_channels == 3
+    assert new_im.shape == (11, 11)
     assert_allclose(new_im.pixels[0, 3, 5], [255])
     assert_allclose(new_im.pixels[0, 9, 5], [255])
     assert_allclose(new_im.pixels[2, 5:8, 5], [255, 255, 255])
@@ -47,6 +49,7 @@ def test_rasterize_pillow_basic():
                                     marker_size=1, marker_edge_width=0,
                                     backend='pillow')
     assert new_im.n_channels == 3
+    assert new_im.shape == (11, 11)
     assert_allclose(new_im.pixels[0, 3:6, 3:6], 255)
 
 
