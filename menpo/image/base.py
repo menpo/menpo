@@ -2517,31 +2517,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = roll_channels(self.pixels)
         return denormalize_pixels_range(pixels, out_dtype)
 
-    def roll_channels(self):
-        r"""
-        Return the image as an ndarray with the channels in the end.
-
-        Image must only have 1 or 3 channels and be 2 dimensional.
-
-        Returns
-        -------
-        image : `ndarray`
-            image (which is just a numpy ndarray with the channels as the last axis).
-
-        Raises
-        ------
-        ValueError
-            If image is not 2D and has 1 channel or 3 channels.
-        """
-        if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
-            raise ValueError(
-                'Can only convert greyscale or RGB 2D images. '
-                'Received a {} channel {}D image.'.format(self.n_channels,
-                                                          self.n_dims))
-
-        # Slice off the channel for greyscale images
-        return np.squeeze(roll_channels(self.pixels))
-
     def pixels_range(self):
         r"""
         The range of the pixel values (min and max pixel values).
@@ -2552,6 +2527,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The minimum and maximum value of the pixels array.
         """
         return self.pixels.min(), self.pixels.max()
+
+    def rolled_channels(self):
+        r"""
+        Deprecated - please use the equivalent ``as_rolled_channels`` method.
+        """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .as_rolled_channels() instead.',
+             MenpoDeprecationWarning)
+        return self.as_rolled_channels()
 
     def as_rolled_channels(self):
         r"""
