@@ -1,8 +1,8 @@
 
 
-def ImageioVideoExporter(images, out_path, fps=30, codec='libx264',
-                         quality=None, bitrate=None, pixelformat='yuv420p',
-                         **kwargs):
+def imageio_video_exporter(images, out_path, fps=30, codec='libx264',
+                           quality=None, bitrate=None, pixelformat='yuv420p',
+                           **kwargs):
     r"""
     Uses imageio to export the images using FFMPEG. Please see the imageio
     documentation for more information.
@@ -40,7 +40,7 @@ def ImageioVideoExporter(images, out_path, fps=30, codec='libx264',
     writer.close()
 
 
-def ImageioGifExporter(images, out_path, fps=30, loop=0, duration=None,
+def image_gif_exporter(images, out_path, fps=30, loop=0, duration=None,
                        **kwargs):
     r"""
     Uses imageio to export the images to a GIF. Please see the imageio

@@ -1,10 +1,10 @@
 import sys
+import warnings
 import numpy as np
 from mock import patch, MagicMock
 from nose.tools import raises
 from PIL import Image as PILImage
 import menpo.io as mio
-import warnings
 
 
 builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
@@ -105,7 +105,8 @@ def test_double_suffix(pathlib_glob):
 
     ret_val = next(mio_base.glob_with_suffix('*.t1.t2', ext_map))
     assert (ret_val == fake_path)
-    ext_map.__contains__.assert_called_with('.t1.t2')
+    ext_map.__contains__.assert_any_call('.t1.t2')
+    ext_map.__contains__.assert_any_call('.t2')
 
 
 def test_import_image():
@@ -660,3 +661,74 @@ def test_import_image_deprecated_normalise_kwarg():
         img = mio.import_builtin_asset('breakingbad.jpg', normalise=False)
         assert len(w) == 1
     assert img.pixels.dtype == np.uint8
+
+
+@patch('menpo.io.input.base.Path.is_file')
+def test_register_image_importer(is_file):
+    from menpo.image import Image
+    image = Image.init_blank((10, 10))
+
+    def foo_importer(filepath, **kwargs):
+        return image
+
+    is_file.return_value = True
+
+    with patch.dict(mio.input.extensions.image_types, {}, clear=True):
+        mio.register_image_importer('.foo', foo_importer)
+        new_image = mio.import_image('fake.foo')
+    assert image is new_image
+
+
+@patch('menpo.io.input.base.Path.is_file')
+def test_register_landmark_importer(is_file):
+    from menpo.shape import PointCloud
+    from menpo.landmark import LandmarkGroup
+    lmark = LandmarkGroup.init_with_all_label(PointCloud.init_2d_grid((1, 1)))
+
+    def foo_importer(filepath, **kwargs):
+        return lmark
+
+    is_file.return_value = True
+
+    with patch.dict(mio.input.extensions.image_landmark_types, {}, clear=True):
+        mio.register_landmark_importer('.foo', foo_importer)
+        new_lmark = mio.import_landmark_file('fake.foo')
+    assert lmark is new_lmark
+
+
+@patch('menpo.io.input.base.Path.is_file')
+def test_register_video_importer(is_file):
+    from menpo.image import Image
+    from menpo.base import LazyList
+
+    def foo_importer(filepath, **kwargs):
+        return LazyList([lambda: Image.init_blank((10, 10))])
+
+    is_file.return_value = True
+
+    with patch.dict(mio.input.extensions.ffmpeg_video_types, {}, clear=True):
+        mio.register_video_importer('.foo', foo_importer)
+        new_video = mio.import_video('fake.foo')
+    assert len(new_video) == 1
+
+
+@patch('menpo.io.input.base.Path.is_file')
+def test_register_pickle_importer(is_file):
+    obj = object()
+
+    def foo_importer(filepath, **kwargs):
+        return obj
+
+    is_file.return_value = True
+
+    with patch.dict(mio.input.extensions.pickle_types, {}, clear=True):
+        mio.register_pickle_importer('.foo', foo_importer)
+        new_obj = mio.import_pickle('fake.foo')
+    assert new_obj is obj
+
+
+def test_register_no_leading_period():
+    ext_map = {}
+    mio.input.base._register_importer(ext_map, 'foo', lambda x: x)
+    assert '.foo' in ext_map
+    assert 'foo' not in ext_map

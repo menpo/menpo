@@ -1,4 +1,4 @@
-def PILExporter(image, file_handle, extension='', **kwargs):
+def pil_exporter(image, file_handle, extension='', **kwargs):
     r"""
     Given a file handle to write in to (which should act like a Python `file`
     object), write out the image data. No value is returned.
@@ -12,6 +12,8 @@ def PILExporter(image, file_handle, extension='', **kwargs):
         The image data to write out.
     file_handle : `file`-like object
         The file to write in to
+    extension : `str`, optional
+        The extension to use for writing if necessary
     """
     from PIL.Image import EXTENSION
     # The extensions are only filled out when save or open are called - which
