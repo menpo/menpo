@@ -1,5 +1,4 @@
 from functools import partial
-from collections import Sequence
 import os
 from pathlib import Path
 import random
@@ -9,6 +8,22 @@ from menpo.visualize import print_progress
 
 from warnings import warn
 from menpo.base import MenpoDeprecationWarning
+
+
+# TODO: Remove once deprecated
+def _parse_deprecated_normalise(normalise, normalize):
+    if normalise is not None and normalize is not None:
+        raise ValueError('normalise is now deprecated, do not set both '
+                         'normalize and normalise.')
+    elif normalise is not None:
+        warn('normalise is no longer supported and will be removed in a '
+             'future version of Menpo. Use normalize instead.',
+             MenpoDeprecationWarning)
+        normalize = normalise
+    elif normalize is None:
+        normalize = True
+    return normalize
+
 
 def data_dir_path():
     r"""A path to the Menpo built in ./data folder on this machine.
@@ -106,18 +121,7 @@ def import_image(filepath, landmark_resolver=same_name, normalize=None,
     images : :map:`Image` or list of
         An instantiated :map:`Image` or subclass thereof or a list of images.
     """
-    if normalise is not None and normalize is not None:
-        m = 'Do not set both arguments. The preferred one is normalize.'
-        raise ValueError(m)
-    elif normalise is not None:
-        warn('This argument is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use normalize instead.',
-             MenpoDeprecationWarning)
-        normalize = normalise
-    elif normalize is None:
-        normalize = True
-
+    normalize = _parse_deprecated_normalise(normalise, normalize)
     kwargs = {'normalize': normalize}
     return _import(filepath, image_types,
                    landmark_ext_map=image_landmark_types,
@@ -182,17 +186,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
     >>> # Lazily load the 100th frame without reading the entire video
     >>> frame100 = video[100]
     """
-    if normalise is not None and normalize is not None:
-        m = 'Do not set both arguments. The preferred one is normalize.'
-        raise ValueError(m)
-    elif normalise is not None:
-        warn('This argument is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use normalize instead.',
-             MenpoDeprecationWarning)
-        normalize = normalise
-    elif normalize is None:
-        normalize = True
+    normalize = _parse_deprecated_normalise(normalise, normalize)
 
     kwargs = {'normalize': normalize}
 
@@ -322,17 +316,7 @@ def import_images(pattern, max_images=None, shuffle=False,
     >>> images = images.map(rescale_20p)  # Returns immediately
     >>> images[0]  # Get the first image, resize, lazily loaded
     """
-    if normalise is not None and normalize is not None:
-        m = 'Do not set both arguments. The preferred one is normalize.'
-        raise ValueError(m)
-    elif normalise is not None:
-        warn('This argument is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use normalize instead.',
-             MenpoDeprecationWarning)
-        normalize = normalise
-    elif normalize is None:
-        normalize = True
+    normalize = _parse_deprecated_normalise(normalise, normalize)
 
     kwargs = {'normalize': normalize}
     return _import_glob_lazy_list(
@@ -434,17 +418,7 @@ def import_videos(pattern, max_videos=None, shuffle=False,
     >>>        frames.append(frame.rescale(0.2))
     >>>    videos.append(frames)
     """
-    if normalise is not None and normalize is not None:
-        m = 'Do not set both arguments. The preferred one is normalize.'
-        raise ValueError(m)
-    elif normalise is not None:
-        warn('This argument is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use normalize instead.',
-             MenpoDeprecationWarning)
-        normalize = normalise
-    elif normalize is None:
-        normalize = True
+    normalize = _parse_deprecated_normalise(normalise, normalize)
 
     kwargs = {'normalize': normalize}
     video_importer_methods = {'ffmpeg': ffmpeg_video_types}
@@ -578,24 +552,15 @@ def _import_builtin_asset(asset_name, **kwargs):
         An instantiated :map:`Image` or :map:`LandmarkGroup` asset.
     """
     if kwargs != {}:
-        # catch the case of having normalise as kwarg. Remove once
-        # the argument is removed.
-        if 'normalise' in kwargs.keys() and 'normalize' in kwargs.keys():
-            m = 'Do not set both normalize and normalise arguments. ' \
-                'The preferred one is normalize.'
-            raise ValueError(m)
-        elif 'normalise' in kwargs.keys():
-            warn('The argument of normalise is no longer supported and '
-                 'will be removed in a future version of Menpo. '
-                 'Use normalize instead.',
-                 MenpoDeprecationWarning)
-            kwargs['normalize'] = kwargs['normalise']
+        normalize = _parse_deprecated_normalise(kwargs.get('normalise'),
+                                                kwargs.get('normalize'))
+        kwargs['normalize'] = normalize
+        if 'normalise' in kwargs:
             del kwargs['normalise']
 
     asset_path = data_path_to(asset_name)
     # Import could be either an image or a set of landmarks, so we try
     # importing them both separately.
-
     try:
         return _import(asset_path, image_types,
                        landmark_ext_map=image_landmark_types,
