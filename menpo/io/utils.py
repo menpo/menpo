@@ -52,7 +52,7 @@ def _normalize_extension(extension):
     Returns
     -------
     norm_extension : `str`
-        The normalised extension, lower case with '.' prefix.
+        The normalized extension, lower case with '.' prefix.
     """
     # Account for the fact the user may only have passed the extension
     # without the proceeding period
