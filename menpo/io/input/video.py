@@ -11,9 +11,6 @@ from menpo.base import LazyList
 
 from ..utils import DEVNULL, _call_subprocess
 
-def _imageio_to_menpo(imio_reader, normalise, index):
-    pixels = imio_reader.get_data(index)
-    pixels = channels_to_front(pixels)
 
 _FFMPEG_CMD = lambda: str(Path(os.environ.get('MENPO_FFMPEG_CMD', 'ffmpeg')))
 _FFPROBE_CMD = lambda: str(Path(os.environ.get('MENPO_FFPROBE_CMD', 'ffprobe')))
@@ -59,10 +56,6 @@ def ffmpeg_importer(filepath, normalize=True, **kwargs):
 
     return ll
 
-    index_callable = partial(_imageio_to_menpo, reader, normalize)
-    ll = LazyList.init_from_index_callable(index_callable,
-                                           reader.get_length())
-    ll.fps = reader.get_meta_data()['fps']
 
 def ffmpeg_types():
     r"""The supported FFMPEG types.

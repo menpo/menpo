@@ -196,32 +196,6 @@ def test_importing_pil_RGBA_normalize(is_file, mock_image):
     assert type(im) == MaskedImage
 
 
-@patch('imageio.imread')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_RGB_normalise(is_file, mock_image):
-
-    mock_image.return_value = np.zeros([10, 10, 3], dtype=np.uint8)
-    is_file.return_value = True
-
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=True)
-    assert im.shape == (10, 10)
-    assert im.n_channels == 3
-    assert im.pixels.dtype == np.float
-
-
-@patch('imageio.imread')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_RGB_no_normalise(is_file, mock_image):
-
-    mock_image.return_value = np.zeros([10, 10, 3], dtype=np.uint8)
-    is_file.return_value = True
-
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=False)
-    assert im.shape == (10, 10)
-    assert im.n_channels == 3
-    assert im.pixels.dtype == np.uint8
-
-
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_PIL_RGBA_normalize(is_file, mock_image):
@@ -530,9 +504,6 @@ def test_importing_ffmpeg_avi_no_normalize(is_file, video_infos_ffprobe, pipe):
     assert image.n_channels == 3
     assert image.pixels.dtype == np.uint8
 
-    im = ll[0]
-    assert im.shape == (10, 10)
-    assert im.pixels[0, 0, 0] == 1
 
 @patch('subprocess.Popen')
 @patch('menpo.io.input.video.video_infos_ffprobe')
