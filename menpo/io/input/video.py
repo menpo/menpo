@@ -6,11 +6,11 @@ from menpo.image import Image
 from menpo.base import LazyList
 
 
-def _imageio_to_menpo(imio_reader, normalise, index):
+def _imageio_to_menpo(imio_reader, normalize, index):
     pixels = imio_reader.get_data(index)
     pixels = channels_to_front(pixels)
 
-    if normalise:
+    if normalize:
         return Image(normalize_pixels_range(pixels), copy=False)
     else:
         return Image(pixels, copy=False)
@@ -35,7 +35,7 @@ def ffmpeg_types():
         return {}
 
 
-def imageio_ffmpeg_importer(filepath, asset=None, normalise=True, **kwargs):
+def imageio_ffmpeg_importer(filepath, asset=None, normalize=True, **kwargs):
     r"""
     Imports videos using the FFMPEG plugin from the imageio library. Returns a
     :map:`LazyList` that gives lazy access to the video on a per-frame basis.
@@ -47,8 +47,8 @@ def imageio_ffmpeg_importer(filepath, asset=None, normalise=True, **kwargs):
     asset : `object`, optional
         An optional asset that may help with loading. This is unused for this
         implementation.
-    normalise : `bool`, optional
-        If ``True``, normalise between 0.0 and 1.0 and convert to float. If
+    normalize : `bool`, optional
+        If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just return whatever imageio imports.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
@@ -63,7 +63,7 @@ def imageio_ffmpeg_importer(filepath, asset=None, normalise=True, **kwargs):
 
     reader = imageio.get_reader(str(filepath), format='ffmpeg', mode='I')
 
-    index_callable = partial(_imageio_to_menpo, reader, normalise)
+    index_callable = partial(_imageio_to_menpo, reader, normalize)
     ll = LazyList.init_from_index_callable(index_callable,
                                            reader.get_length())
     ll.fps = reader.get_meta_data()['fps']

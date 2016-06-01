@@ -8,16 +8,16 @@ from menpo.image import Image, MaskedImage, BooleanImage
 from menpo.image.base import normalize_pixels_range, channels_to_front
 
 
-def _pil_to_numpy(pil_image, normalise, convert=None):
+def _pil_to_numpy(pil_image, normalize, convert=None):
     p = pil_image.convert(convert) if convert else pil_image
     p = channels_to_front(p)
-    if normalise:
+    if normalize:
         return normalize_pixels_range(p)
     else:
         return p
 
 
-def pillow_importer(filepath, asset=None, normalise=True, **kwargs):
+def pillow_importer(filepath, asset=None, normalize=True, **kwargs):
     r"""
     Imports an image using PIL/pillow.
 
@@ -26,7 +26,7 @@ def pillow_importer(filepath, asset=None, normalise=True, **kwargs):
     RGB, L, I:
         Imported as either `float` or `uint8` depending on normalisation flag.
     RGBA:
-        Imported as :map:`MaskedImage` if normalise is ``True`` else imported
+        Imported as :map:`MaskedImage` if normalize is ``True`` else imported
         as a 4 channel `uint8` image.
     1:
         Imported as a :map:`BooleanImage`. Normalisation is ignored.
@@ -40,8 +40,8 @@ def pillow_importer(filepath, asset=None, normalise=True, **kwargs):
     asset : `object`, optional
         An optional asset that may help with loading. This is unused for this
         implementation.
-    normalise : `bool`, optional
-        If ``True``, normalise between 0.0 and 1.0 and convert to float. If
+    normalize : `bool`, optional
+        If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just pass whatever PIL imports back (according
         to types rules outlined in constructor).
     \**kwargs : `dict`, optional
@@ -57,10 +57,10 @@ def pillow_importer(filepath, asset=None, normalise=True, **kwargs):
     pil_image = PILImage.open(str(filepath))
     mode = pil_image.mode
     if mode == 'RGBA':
-        # If normalise is False, then we return the alpha as an extra
+        # If normalize is False, then we return the alpha as an extra
         # channel, which can be useful if the alpha channel has semantic
         # meanings!
-        if normalise:
+        if normalize:
             alpha = np.array(pil_image)[..., 3].astype(np.bool)
             image_pixels = _pil_to_numpy(pil_image, True, convert='RGB')
             image = MaskedImage(image_pixels, mask=alpha, copy=False)
@@ -69,15 +69,15 @@ def pillow_importer(filepath, asset=None, normalise=True, **kwargs):
             image = Image(_pil_to_numpy(pil_image, False), copy=False)
     elif mode in ['L', 'I', 'RGB']:
         # Greyscale, Integer and RGB images
-        image = Image(_pil_to_numpy(pil_image, normalise), copy=False)
+        image = Image(_pil_to_numpy(pil_image, normalize), copy=False)
     elif mode == '1':
-        # Can't normalise a binary image
+        # Can't normalize a binary image
         image = BooleanImage(_pil_to_numpy(pil_image, False), copy=False)
     elif mode == 'P':
         # Convert pallete images to RGB
-        image = Image(_pil_to_numpy(pil_image, normalise, convert='RGB'))
+        image = Image(_pil_to_numpy(pil_image, normalize, convert='RGB'))
     elif mode == 'F':  # Floating point images
-        # Don't normalise as we don't know the scale
+        # Don't normalize as we don't know the scale
         image = Image(_pil_to_numpy(pil_image, False), copy=False)
     else:
         raise ValueError('Unexpected mode for PIL: {}'.format(mode))
@@ -168,7 +168,7 @@ def flo_importer(filepath, asset=None, **kwargs):
     return Image(uv, copy=False)
 
 
-def imageio_importer(filepath, asset=None, normalise=True, **kwargs):
+def imageio_importer(filepath, asset=None, normalize=True, **kwargs):
     r"""
     Imports images using the imageio library - which is actually fairly similar
     to our importing logic - but contains the necessary plugins to import lots
@@ -181,8 +181,8 @@ def imageio_importer(filepath, asset=None, normalise=True, **kwargs):
     asset : `object`, optional
         An optional asset that may help with loading. This is unused for this
         implementation.
-    normalise : `bool`, optional
-        If ``True``, normalise between 0.0 and 1.0 and convert to float. If
+    normalize : `bool`, optional
+        If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just return whatever imageio imports.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
@@ -199,10 +199,10 @@ def imageio_importer(filepath, asset=None, normalise=True, **kwargs):
 
     transparent_types = {'.png'}
     if pixels.shape[0] == 4 and filepath.suffix in transparent_types:
-        # If normalise is False, then we return the alpha as an extra
+        # If normalize is False, then we return the alpha as an extra
         # channel, which can be useful if the alpha channel has semantic
         # meanings!
-        if normalise:
+        if normalize:
             p = normalize_pixels_range(pixels[:3])
             return MaskedImage(p, mask=pixels[-1].astype(np.bool),
                                copy=False)
@@ -210,13 +210,13 @@ def imageio_importer(filepath, asset=None, normalise=True, **kwargs):
             return Image(pixels, copy=False)
 
     # Assumed not to have an Alpha channel
-    if normalise:
+    if normalize:
         return Image(normalize_pixels_range(pixels), copy=False)
     else:
         return Image(pixels, copy=False)
 
 
-def imageio_gif_importer(filepath, asset=None, normalise=True, **kwargs):
+def imageio_gif_importer(filepath, asset=None, normalize=True, **kwargs):
     r"""
     Imports GIF images using freeimagemulti plugin from the imageio library.
     Returns a :map:`LazyList` that gives lazy access to the GIF on a per-frame
@@ -229,8 +229,8 @@ def imageio_gif_importer(filepath, asset=None, normalise=True, **kwargs):
     asset : `object`, optional
         An optional asset that may help with loading. This is unused for this
         implementation.
-    normalise : `bool`, optional
-        If ``True``, normalise between 0.0 and 1.0 and convert to float. If
+    normalize : `bool`, optional
+        If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just return whatever imageio imports.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
@@ -250,10 +250,10 @@ def imageio_gif_importer(filepath, asset=None, normalise=True, **kwargs):
         pixels = channels_to_front(pixels)
 
         if pixels.shape[0] == 4:
-            # If normalise is False, then we return the alpha as an extra
+            # If normalize is False, then we return the alpha as an extra
             # channel, which can be useful if the alpha channel has semantic
             # meanings!
-            if normalise:
+            if normalize:
                 p = normalize_pixels_range(pixels[:3])
                 return MaskedImage(p, mask=pixels[-1].astype(np.bool),
                                    copy=False)
@@ -261,7 +261,7 @@ def imageio_gif_importer(filepath, asset=None, normalise=True, **kwargs):
                 return Image(pixels, copy=False)
 
         # Assumed not to have an Alpha channel
-        if normalise:
+        if normalize:
             return Image(normalize_pixels_range(pixels), copy=False)
         else:
             return Image(pixels, copy=False)

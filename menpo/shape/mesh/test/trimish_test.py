@@ -308,8 +308,8 @@ def test_trimesh_vertex_normals():
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
     # 0 and 2 are the corner of the triangles and so the maintain the
-    # face normals. The other two are the re-normalised vertices:
-    # normalise(n0 + n2)
+    # face normals. The other two are the re-normalized vertices:
+    # normalize(n0 + n2)
     expected_normals = np.array([[-np.sqrt(3)/3, -np.sqrt(3)/3, np.sqrt(3)/3],
                                  [-0.32505758,  -0.32505758, 0.88807383],
                                  [0, 0, 1],
