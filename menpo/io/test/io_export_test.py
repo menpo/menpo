@@ -248,17 +248,16 @@ def test_export_video_avi(exists, pipe):
     exists.return_value = False
     fake_path = Path('/fake/fake.avi')
     mio.export_video([test_img, test_img], fake_path, extension='avi')
-    print(pipe.return_value.stin.write.call_count)
     assert pipe.return_value.stdin.write.call_count == 2
 
 
-@patch('imageio.get_writer')
+@patch('subprocess.Popen')
 @patch('menpo.io.output.base.Path.exists')
-def test_export_video_gif(exists, fake_writer):
+def test_export_video_gif(exists, pipe):
     exists.return_value = False
     fake_path = Path('/fake/fake.gif')
     mio.export_video([test_img, test_img], fake_path, extension='gif')
-    assert fake_writer.return_value.append_data.call_count == 2
+    assert pipe.return_value.stdin.write.call_count == 2
 
 
 @patch('menpo.io.output.pickle.pickle.dump')

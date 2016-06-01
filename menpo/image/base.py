@@ -2501,7 +2501,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         warn('This method is no longer supported and will be removed in a '
              'future version of Menpo. '
-             'Use .channels_to_back instead.',
+             'Use .as_rolled_channels instead.',
              MenpoDeprecationWarning)
 
         if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
@@ -2517,31 +2517,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = roll_channels(self.pixels)
         return denormalize_pixels_range(pixels, out_dtype)
 
-    def roll_channels(self):
-        r"""
-        Return the image as an ndarray with the channels in the end.
-
-        Image must only have 1 or 3 channels and be 2 dimensional.
-
-        Returns
-        -------
-        image : `ndarray`
-            image (which is just a numpy ndarray with the channels as the last axis).
-
-        Raises
-        ------
-        ValueError
-            If image is not 2D and has 1 channel or 3 channels.
-        """
-        if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
-            raise ValueError(
-                'Can only convert greyscale or RGB 2D images. '
-                'Received a {} channel {}D image.'.format(self.n_channels,
-                                                          self.n_dims))
-
-        # Slice off the channel for greyscale images
-        return np.squeeze(roll_channels(self.pixels))
-
     def pixels_range(self):
         r"""
         The range of the pixel values (min and max pixel values).
@@ -2553,19 +2528,40 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return self.pixels.min(), self.pixels.max()
 
-    def as_rolled_channels(self):
+    def rolled_channels(self):
+        r"""
+        Deprecated - please use the equivalent ``as_rolled_channels`` method.
+        """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .as_rolled_channels() instead.',
+             MenpoDeprecationWarning)
+        return self.as_rolled_channels()
+
+    def as_rolled_channels(self, out_dtype=None):
         r"""
         Returns the pixels matrix, with the channels rolled to the back axis.
         This may be required for interacting with external code bases that
         require images to have channels as the last axis, rather than the
-        menpo convention of channels as the first axis.
+        Menpo convention of channels as the first axis.
+
+        If this image is single channel, the final axis is dropped.
+
+        Parameters
+        ----------
+        out_dtype : `np.dtype`, optional
+            The dtype the output array should be.
 
         Returns
         -------
         rolled_channels : `ndarray`
-            Pixels with channels as the back (last) axis.
+            Pixels with channels as the back (last) axis. If single channel,
+            the last axis will be dropped.
         """
-        return roll_channels(self.pixels)
+        p = roll_channels(self.pixels)
+        if out_dtype is not None:
+            p = denormalize_pixels_range(p, out_dtype=out_dtype)
+        return np.squeeze(p)
 
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(

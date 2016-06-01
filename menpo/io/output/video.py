@@ -1,45 +1,85 @@
+import os
 import subprocess as sp
+import numpy as np
+from pathlib import Path
+
+from menpo.visualize import print_progress
+from ..utils import DEVNULL, _call_subprocess
 
 
-def ffmpeg_video_exporter(images, out_path, fps=30, **kwargs):
+_FFMPEG_CMD = lambda: str(Path(os.environ.get('MENPO_FFMPEG_CMD', 'ffmpeg')))
+
+
+def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
+                          preset='medium', bitrate=None, verbose=False,
+                          **kwargs):
     r"""
-    Uses imageio to export the images using FFMPEG. Please see the imageio
-    documentation for more information.
+    Uses subprocess PIPE to export the images using FFMPEG.
+
+    There are is one important environment variable that can be set to alter
+    the behaviour of this function:
+
+        ================== ======================================
+        ENV Variable       Definition
+        ================== ======================================
+        MENPO_FFMPEG_CMD   The path to the 'ffmpeg' executable.
+        ================== ======================================
 
     Parameters
     ----------
+    images : `list` of :map:`Image`
+        List of Menpo images to export as a video.
+    out_path : `Path`
+        Path to save the video to.
     fps : `int`, optional
         The number of frames per second.
     codec : `str`, optional
         The video codec to use. Default 'libx264', which represents the
         widely available mpeg4. Except when saving .wmv files, then the
-        defaults is 'msmpeg4' which is more commonly supported for windows
-    quality : `float` or `None`
-        Video output quality. Uses variable bit rate. Highest
-        quality is 10, lowest is 0. Specifying a fixed bitrate using ``bitrate``
-        disables this parameter.
-    bitrate : `int` or `None`, optional
-        Set a constant bitrate for the video encoding. Default is ``None``
-        causing ``quality` parameter to be used instead.  Better quality videos
-        with smaller file sizes will result from using the ``quality`` variable
-        bitrate parameter rather than specifying a fixed bitrate with this
-        parameter.
-    pixelformat: `str`, optional
-        The output video pixel format.
+        defaults is 'msmpeg4' which is more commonly supported for windows.
+    preset : `str`, optional
+        The preset FFMPEG compression level.
+    bitrate: `str`, optional
+        The output video bitrate.
+    verbose : `bool`, optional
+        If ``True``, print a progress bar.
     """
-    for index, image in enumerate(images):
-        if not index:
-            cmd = ['ffmpeg', '-y', '-s', '{0}x{1}'.format(image.shape[1], image.shape[0]),
-                   '-r', str(fps),
-                   '-an',
-                   '-c:v', 'rawvideo', '-f', 'rawvideo',
-                   '-pix_fmt', 'rgb24',
-                   '-i', '-', str(out_path)]
-            pipe = sp.Popen(cmd, stdin=sp.PIPE)
-        pipe.stdin.write(image.as_rolled_channels().tostring())
+    # Some of the below was inspired by moviepy:
+    #   https://github.com/Zulko/moviepy/blob/master/moviepy/video/io/ffmpeg_writer.py
+    # and is used under the terms of the MIT license which can be found at
+    #   https://github.com/Zulko/moviepy/blob/master/LICENCE.txt
+    first_image = images[0]
+    cmd = [_FFMPEG_CMD(), '-y',
+           '-s', '{}x{}'.format(first_image.shape[1], first_image.shape[0]),
+           '-r', str(fps),
+           '-an',
+           '-pix_fmt', 'rgb24',
+           '-c:v', 'rawvideo', '-f', 'rawvideo',
+           '-i', '-']
+    if codec:
+        cmd.extend(['-vcodec', codec])
+    if preset:
+        cmd.extend(['-preset', preset])
+    if bitrate:
+        cmd.extend(['-b', str(bitrate)])
+    cmd.append(str(out_path))
 
-    pipe.stdin.close()
-    pipe.wait()
+    images = (print_progress(images, prefix='Exporting frames') if verbose
+              else images)
+
+    # Pipe stdout to DEVNULL to ignore it
+    with _call_subprocess(sp.Popen(cmd, stdin=sp.PIPE, stderr=sp.PIPE,
+                                   stdout=DEVNULL)) as pipe:
+        for image in images:
+            try:
+                i = image.as_rolled_channels(out_dtype=np.uint8)
+                pipe.stdin.write(i.tostring())
+            except IOError:
+                error = ('FFMPEG encountered the following error while '
+                         'writing the video:\n\n{}'.format(
+                    pipe.stderr.read().decode()))
+                # Re-raise the error for a useful error message
+                raise IOError(error)
 
 
 def imageio_video_exporter(images, out_path, fps=30, codec='libx264',
@@ -51,6 +91,10 @@ def imageio_video_exporter(images, out_path, fps=30, codec='libx264',
 
     Parameters
     ----------
+    images : `list` of :map:`Image`
+        List of Menpo images to export as a video.
+    out_path : `Path`
+        Path to save the video to.
     fps : `int`, optional
         The number of frames per second.
     codec : `str`, optional
@@ -77,7 +121,7 @@ def imageio_video_exporter(images, out_path, fps=30, codec='libx264',
                                 pixelformat=pixelformat)
 
     for v in images:
-        v = v.as_imageio()
+        v = v.as_rolled_channels(out_dtype=np.uint8)
         writer.append_data(v)
     writer.close()
 
@@ -90,6 +134,10 @@ def image_gif_exporter(images, out_path, fps=30, loop=0, duration=None,
 
     Parameters
     ----------
+    images : `list` of :map:`Image`
+        List of Menpo images to export as a video.
+    out_path : `Path`
+        Path to save the video to.
     fps : `float`, optional
         The number of frames per second. If ``duration`` is not given, the
         duration for each frame is set to 1/fps.
@@ -105,6 +153,6 @@ def image_gif_exporter(images, out_path, fps=30, loop=0, duration=None,
                                 loop=loop, duration=duration)
 
     for v in images:
-        v = v.as_imageio()
+        v = v.as_rolled_channels(out_dtype=np.uint8)
         writer.append_data(v)
     writer.close()

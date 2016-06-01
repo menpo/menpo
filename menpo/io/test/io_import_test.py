@@ -183,7 +183,7 @@ def test_importing_PIL_no_normalise(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_RGBA_normalise(is_file, mock_image):
+def test_importing_pil_RGBA_normalise(is_file, mock_image):
     from menpo.image import MaskedImage
 
     mock_image.return_value = PILImage.new('RGBA', (10, 10))
@@ -194,32 +194,6 @@ def test_importing_imageio_RGBA_normalise(is_file, mock_image):
     assert im.n_channels == 3
     assert im.pixels.dtype == np.float
     assert type(im) == MaskedImage
-
-
-@patch('imageio.imread')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_RGB_normalise(is_file, mock_image):
-
-    mock_image.return_value = np.zeros([10, 10, 3], dtype=np.uint8)
-    is_file.return_value = True
-
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=True)
-    assert im.shape == (10, 10)
-    assert im.n_channels == 3
-    assert im.pixels.dtype == np.float
-
-
-@patch('imageio.imread')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_RGB_no_normalise(is_file, mock_image):
-
-    mock_image.return_value = np.zeros([10, 10, 3], dtype=np.uint8)
-    is_file.return_value = True
-
-    im = mio.import_image('fake_image_being_mocked.jpg', normalise=False)
-    assert im.shape == (10, 10)
-    assert im.n_channels == 3
-    assert im.pixels.dtype == np.uint8
 
 
 @patch('PIL.Image.open')
@@ -350,36 +324,40 @@ def test_importing_PIL_P_no_normalise(is_file, mock_image):
     assert im.pixels.dtype == np.uint8
 
 
-@patch('imageio.get_reader')
+@patch('subprocess.Popen')
+@patch('menpo.io.input.video.video_infos_ffprobe')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_GIF_normalise(is_file, mock_image):
-    mock_image.return_value.get_data.return_value = np.ones((10, 10, 3),
-                                                            dtype=np.uint8)
-    mock_image.return_value.get_length.return_value = 1
+def test_importing_ffmpeg_GIF_normalise(is_file, video_infos_ffprobe, pipe):
+    video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
+                                        'height': 150, 'n_frames': 10, 'fps': 5}
+    pipe.return_value.stdout.read.return_value = np.ones(150 * 100 * 3,
+                                                         dtype=np.uint8).tostring()
     is_file.return_value = True
 
     ll = mio.import_image('fake_image_being_mocked.gif', normalise=True)
-    assert len(ll) == 1
+    assert len(ll) == 10
 
     im = ll[0]
-    assert im.shape == (10, 10)
+    assert im.shape == (150, 100)
     assert im.n_channels == 3
     assert im.pixels.dtype == np.float
 
 
-@patch('imageio.get_reader')
+@patch('subprocess.Popen')
+@patch('menpo.io.input.video.video_infos_ffprobe')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_imageio_GIF_no_normalise(is_file, mock_image):
-    mock_image.return_value.get_data.return_value = np.ones((10, 10, 3),
-                                                            dtype=np.uint8)
-    mock_image.return_value.get_length.return_value = 2
+def test_importing_ffmpeg_GIF_no_normalise(is_file, video_infos_ffprobe, pipe):
+    video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
+                                        'height': 150, 'n_frames': 10, 'fps': 5}
+    pipe.return_value.stdout.read.return_value = np.ones(150 * 100 * 3,
+                                                         dtype=np.uint8).tostring()
     is_file.return_value = True
 
     ll = mio.import_image('fake_image_being_mocked.gif', normalise=False)
-    assert len(ll) == 2
+    assert len(ll) == 10
 
     im = ll[0]
-    assert im.shape == (10, 10)
+    assert im.shape == (150, 100)
     assert im.n_channels == 3
     assert im.pixels.dtype == np.uint8
 

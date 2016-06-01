@@ -246,12 +246,13 @@ def import_video(filepath, landmark_resolver=same_name_video, normalise=True,
 
     .. warning::
 
-        This method currently uses imageio to perform the importing in
-        conjunction with the ffmpeg plugin. As of this release, and the release
-        of imageio at the time of writing (1.5.0), the per-frame computation
-        is not very accurate. This may cause errors when importing frames
-        that do not actually map to valid timestamps within the image.
-        Therefore, use this method at your own risk.
+        This method currently uses ffmpeg to perform the importing. In order
+        to recover accurate frame counts from videos it is necessary to use
+        ffprobe to count the frames. This involves reading the entire
+        video in to memory which may cause a delay in loading despite the lazy
+        nature of the video loading within Menpo. If ffprobe cannot be found,
+        Menpo falls back to ffmpeg itself which is not accurate and the user
+        should proceed at their own risk.
 
     Parameters
     ----------
@@ -444,12 +445,13 @@ def import_videos(pattern, max_videos=None, shuffle=False,
 
     .. warning::
 
-        This method currently uses imageio to perform the importing in
-        conjunction with the ffmpeg plugin. As of this release, and the release
-        of imageio at the time of writing (1.5.0), the per-frame computation
-        is not very accurate. This may cause errors when importing frames
-        that do not actually map to valid timestamps within the image.
-        Therefore, use this method at your own risk.
+        This method currently uses ffmpeg to perform the importing. In order
+        to recover accurate frame counts from videos it is necessary to use
+        ffprobe to count the frames. This involves reading the entire
+        video in to memory which may cause a delay in loading despite the lazy
+        nature of the video loading within Menpo. If ffprobe cannot be found,
+        Menpo falls back to ffmpeg itself which is not accurate and the user
+        should proceed at their own risk.
 
     Parameters
     ----------
