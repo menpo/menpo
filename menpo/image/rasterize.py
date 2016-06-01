@@ -80,7 +80,8 @@ def _rasterize_matplotlib(image, pclouds, render_lines=True, line_style='-',
     # Get the pixels directly from the canvas buffer which is fast
     c_buffer, shape = f.canvas.print_to_buffer()
     # Turn buffer into numpy array and reshape to image
-    pixels_buffer = np.array(c_buffer).reshape(shape[::-1] + (-1,))
+    pixels_buffer = np.fromstring(c_buffer,
+                                  dtype=np.uint8).reshape(shape[::-1] + (-1,))
     # Prevent matplotlib from rendering
     plt.close(f)
     # Ignore the Alpha channel
