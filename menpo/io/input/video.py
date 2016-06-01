@@ -16,7 +16,7 @@ _FFMPEG_CMD = lambda: str(Path(os.environ.get('MENPO_FFMPEG_CMD', 'ffmpeg')))
 _FFPROBE_CMD = lambda: str(Path(os.environ.get('MENPO_FFPROBE_CMD', 'ffprobe')))
 
 
-def ffmpeg_importer(filepath, normalise=True, **kwargs):
+def ffmpeg_importer(filepath, normalize=True, **kwargs):
     r"""
     Imports videos using the FFMPEG plugin from the imageio library. Returns a
     :map:`LazyList` that gives lazy access to the video on a per-frame basis.
@@ -35,7 +35,7 @@ def ffmpeg_importer(filepath, normalise=True, **kwargs):
     ----------
     filepath : `Path`
         Absolute filepath of the video.
-    normalise : `bool`, optional
+    normalize : `bool`, optional
         If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just return whatever ffmpeg imports.
     \**kwargs : `dict`, optional
@@ -47,7 +47,7 @@ def ffmpeg_importer(filepath, normalise=True, **kwargs):
         A :map:`LazyList` containing :map:`Image` or subclasses per frame
         of the video.
     """
-    reader = FFMpegVideoReader(filepath, normalize=normalise)
+    reader = FFMpegVideoReader(filepath, normalize=normalize)
     ll = LazyList.init_from_index_callable(reader.__getitem__, len(reader))
     ll.fps = reader.fps
 

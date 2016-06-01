@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 
-from menpo.base import doc_inherit
+from menpo.base import doc_inherit, name_of_callable
 from menpo.math import pca, pcacov, ipca, as_matrix
 from .linear import MeanLinearVectorModel
 from .vectorizable import VectorizableBackedModel
@@ -1434,8 +1434,9 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
                   ' - noise variance:       {:.2}  {:.1%}\n' \
                   ' - total # components:   {}\n'            \
                   ' - components shape:     {}\n'.format(
-            type(self.template_instance), self.centred,  self.n_features,
-            self.n_active_components, self.variance(), self.variance_ratio(),
-            self.noise_variance(), self.noise_variance_ratio(),
-            self.n_components, self.components.shape)
+            name_of_callable(self.template_instance), self.centred,
+            self.n_features, self.n_active_components, self.variance(),
+            self.variance_ratio(), self.noise_variance(),
+            self.noise_variance_ratio(), self.n_components,
+            self.components.shape)
         return str_out

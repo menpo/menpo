@@ -794,12 +794,12 @@ def normalize(img, scale_func=None, mode='all',
     error_on_divide_by_zero : `bool`, optional
         If ``True``, will raise a ``ValueError`` on dividing by zero.
         If ``False``, will merely raise a warning and only those values
-        with non-zero denominators will be normalised.
+        with non-zero denominators will be normalized.
 
     Returns
     -------
     pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        A normalised copy of the image that was passed in.
+        A normalized copy of the image that was passed in.
 
     Raises
     ------
@@ -858,12 +858,12 @@ def normalize_norm(pixels, mode='all', error_on_divide_by_zero=True):
     error_on_divide_by_zero : `bool`, optional
         If ``True``, will raise a ``ValueError`` on dividing by zero.
         If ``False``, will merely raise a warning and only those values
-        with non-zero denominators will be normalised.
+        with non-zero denominators will be normalized.
 
     Returns
     -------
     pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        A normalised copy of the image that was passed in.
+        A normalized copy of the image that was passed in.
 
     Raises
     ------
@@ -898,12 +898,12 @@ def normalize_std(pixels, mode='all', error_on_divide_by_zero=True):
     error_on_divide_by_zero : `bool`, optional
         If ``True``, will raise a ``ValueError`` on dividing by zero.
         If ``False``, will merely raise a warning and only those values
-        with non-zero denominators will be normalised.
+        with non-zero denominators will be normalized.
 
     Returns
     -------
     pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        A normalised copy of the image that was passed in.
+        A normalized copy of the image that was passed in.
 
     Raises
     ------
@@ -921,7 +921,7 @@ def normalize_std(pixels, mode='all', error_on_divide_by_zero=True):
 @ndfeature
 def normalize_var(pixels, mode='all', error_on_divide_by_zero=True):
     r"""
-    Normalize the pixels to be mean centred and normalise according
+    Normalize the pixels to be mean centred and normalize according
     to the variance.
     The ``mode`` parameter selects whether the normalisation is computed across
     all pixels in the image or per-channel.
@@ -939,12 +939,12 @@ def normalize_var(pixels, mode='all', error_on_divide_by_zero=True):
     error_on_divide_by_zero : `bool`, optional
         If ``True``, will raise a ``ValueError`` on dividing by zero.
         If ``False``, will merely raise a warning and only those values
-        with non-zero denominators will be normalised.
+        with non-zero denominators will be normalized.
 
     Returns
     -------
     pixels : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
-        A normalised copy of the image that was passed in.
+        A normalized copy of the image that was passed in.
 
     Raises
     ------
