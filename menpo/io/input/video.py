@@ -35,12 +35,9 @@ def ffmpeg_importer(filepath, normalize=True, **kwargs):
     ----------
     filepath : `Path`
         Absolute filepath of the video.
-    asset : `object`, optional
-        An optional asset that may help with loading. This is unused for this
-        implementation.
     normalize : `bool`, optional
         If ``True``, normalize between 0.0 and 1.0 and convert to float. If
-        ``False`` just return whatever imageio imports.
+        ``False`` just return whatever ffmpeg imports.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
 
