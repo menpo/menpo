@@ -1,5 +1,12 @@
 import os
 from pathlib import Path
+import contextlib
+
+
+try:
+    from subprocess import DEVNULL
+except ImportError:
+    DEVNULL = open(os.devnull, 'wb')
 
 
 def _norm_path(filepath):
@@ -52,3 +59,27 @@ def _normalize_extension(extension):
     if extension[0] is not '.':
         extension = '.' + extension
     return extension.lower()
+
+
+@contextlib.contextmanager
+def _call_subprocess(process):
+    r"""
+    Call a subprocess and automatically clean up/wait for the various
+    pipe interfaces, {stderr, stdout, stdin}.
+
+    Parameters
+    ----------
+    process : `subprocess.POpen`
+        The subprocess POpen object to automatically close.
+
+    Yields
+    ------
+    The ``subprocess.POpen`` object back for processing.
+    """
+    try:
+        yield process
+    finally:
+        for stream in (process.stdout, process.stdin, process.stderr):
+            if stream:
+                stream.close()
+        process.wait()

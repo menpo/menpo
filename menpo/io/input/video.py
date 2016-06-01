@@ -9,6 +9,8 @@ from menpo.image.base import normalize_pixels_range, channels_to_front
 from menpo.image import Image
 from menpo.base import LazyList
 
+from ..utils import DEVNULL, _call_subprocess
+
 
 _FFMPEG_CMD = lambda: str(Path(os.environ.get('MENPO_FFMPEG_CMD', 'ffmpeg')))
 _FFPROBE_CMD = lambda: str(Path(os.environ.get('MENPO_FFPROBE_CMD', 'ffprobe')))
@@ -27,7 +29,7 @@ def ffmpeg_importer(filepath, normalise=True, **kwargs):
         ================== ======================================
         MENPO_FFMPEG_CMD   The path to the 'ffmpeg' executable.
         MENPO_FFPROBE_CMD  The path to the 'ffprobe' executable.
-        ========= ===============================================
+        ================== ======================================
 
     Parameters
     ----------
@@ -61,7 +63,7 @@ def ffmpeg_types():
         A dictionary of extensions supported by the FFMPEG importer.
     """
     # Need to check this
-    ffmpeg_exts = ['.avi', '.mp4', '.mpg', '.mpeg']
+    ffmpeg_exts = ['.avi', '.mp4', '.mpg', '.mpeg', '.wmv', '.mov']
     return {ext: ffmpeg_importer for ext in ffmpeg_exts}
 
 
@@ -80,27 +82,36 @@ class FFMpegVideoReader(object):
     def __init__(self, filepath, normalize=False):
         self.filepath = filepath
         self.normalize = normalize
+        self._pipe = None
         try:
             infos = video_infos_ffprobe(self.filepath)
-        except Exception as e:
-            print(e)
+        except:
+            # Eat the exception from above as we warn about it inside
+            # video_infos_ffmpeg
             infos = video_infos_ffmpeg(self.filepath)
         self.duration = infos['duration']
         self.width = infos['width']
         self.height = infos['height']
         self.n_frames = infos['n_frames']
         self.fps = infos['fps']
-        self._pipe = None
         # contains the index of the last read frame
         # the index is updated in _open_pipe, _read_one_frame and _trash_frames
         self.index = -1
+
+    def _shutdown_pipe(self):
+        if self._pipe is not None:
+            if self._pipe.stdout:
+                self._pipe.stdout.close()
+            if self._pipe.stderr:
+                self._pipe.stderr.close()
+            if self._pipe.stdin:
+                self._pipe.stdin.close()
 
     def __del__(self):
         r"""
         Close the pipe if open.
         """
-        if self._pipe is not None:
-            self._pipe.stdout.close()
+        self._shutdown_pipe()
 
     def __len__(self):
         return self.n_frames
@@ -111,7 +122,7 @@ class FFMpegVideoReader(object):
 
         Parameters
         ----------
-        frame: `int`, optional
+        frame : `int`, optional
             If ``None``, pipe opened from the beginning of the video
             otherwise, pipe opened at the time corresponding to that frame
 
@@ -120,7 +131,7 @@ class FFMpegVideoReader(object):
         Since v.2.1 of ffmpeg, this is frame-accurate
         """
         if frame is not None and frame > 0:
-            time = str(frame / self.fps)
+            time = str(frame / float(self.fps))
             command = [_FFMPEG_CMD(),
                        '-ss', time,
                        '-i', str(self.filepath),
@@ -135,10 +146,12 @@ class FFMpegVideoReader(object):
                        '-vcodec', 'rawvideo', '-']
             frame = 0
 
-        if self._pipe is not None:
-            self._pipe.stdout.close()
-        self._pipe = sp.Popen(command, stdout=sp.PIPE, bufsize=10**8)
-        self.index = frame - 1  # We have not yet read the specified frame
+        self._shutdown_pipe()
+        self._pipe = sp.Popen(command, stdout=sp.PIPE, stdin=DEVNULL,
+                              stderr=DEVNULL,
+                              bufsize=10**8)  # Is this buffer the correct size?
+        # We have not yet read the specified frame
+        self.index = frame - 1
 
     def __iter__(self):
         r"""
@@ -208,30 +221,40 @@ def video_infos_ffmpeg(filepath):
 
     Returns
     -------
-    infos: dict
+    infos : `dict`
         keys are width, height (size of the frames)
         duration (duration of the video in seconds)
         n_frames
     """
     warnings.warn('Estimating number of frames using ffmpeg duration which '
-                  'may be inaccurate for certain types of encodings.')
+                  'may be inaccurate for certain types of encodings. Try '
+                  'setting the MENPO_FFPROBE_CMD environment variable to '
+                  'define the path to ffprobe.')
 
-    # Read information using ffmpeg
+    # Read information using ffmpeg - the call below intentionally causes
+    # an error about no output from FFMPEG in order to terminate faster - hence
+    # reading the output from stderr.
     command = [_FFMPEG_CMD(), '-i', str(filepath), '-']
-    pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.PIPE)
-    pipe.stdout.readlines()
-    raw_infos = pipe.stderr.read().decode()
-    pipe.terminate()
+    with _call_subprocess(sp.Popen(command, stdout=DEVNULL,
+                                   stderr=sp.PIPE)) as pipe:
+        raw_infos = pipe.stderr.read().decode()
 
     # Note: we use '\d+\.?\d*' so we can match both int and float for the fps
     video_info = re.search(
         r"Video:.*(?P<width> \d+)x(?P<height>\d+).*(?P<fps> \d+\.?\d*) fps",
         raw_infos, re.DOTALL).groupdict()
+
+    # Some videos don't have a valid duration
     time = re.search(
         r"Duration:\s(?P<hours>\d+?):(?P<minutes>\d+?):(?P<seconds>\d+\.\d+?),",
-        raw_infos, re.DOTALL).groupdict()
+        raw_infos, re.DOTALL)
+    if time is None:
+        raise ValueError('Unable to determine duration for video - please '
+                         'install and use ffprobe for accurate frame count '
+                         'computation.')
 
     # Get the duration in seconds and convert size to ints
+    time = time.groupdict()
     hours = float(time['hours'])
     minutes = float(time['minutes'])
     seconds = float(time['seconds'])
@@ -257,11 +280,11 @@ def video_infos_ffprobe(filepath):
     Parameters
     ----------
     filepath : `Path`
-        absolute path to the video file which information to extract
+        Absolute path to the video file which information to extract
 
     Returns
     -------
-    infos: dict
+    infos : `dict`
         keys are width, height (size of the frames)
         duration (duration of the video in seconds)
         n_frames
@@ -281,9 +304,11 @@ def video_infos_ffprobe(filepath):
         stdout=sp.PIPE,
         stderr=sp.PIPE,
     )
+    with _call_subprocess(p) as pipe:
+        stdout_output = pipe.stdout.readlines()
+    del p
 
     # Split the key=value pairs on the '='
-    stdout_output = p.stdout.readlines()
     kv_dict = dict([v.decode().strip().split('=') for v in stdout_output])
     found_keys = set(kv_dict.keys())
 
@@ -295,7 +320,11 @@ def video_infos_ffprobe(filepath):
     kv_dict['n_frames'] = int(kv_dict.pop('nb_read_frames'))
     kv_dict['width'] = int(kv_dict['width'])
     kv_dict['height'] = int(kv_dict['height'])
-    kv_dict['duration'] = float(kv_dict['duration'])
+    # Some videos may not have a valid duration
+    if kv_dict['duration'] == 'N/A':
+        kv_dict['duration'] = np.nan
+    else:
+        kv_dict['duration'] = float(kv_dict['duration'])
     fps = kv_dict.pop('avg_frame_rate').split('/')
     kv_dict['fps'] = float(fps[0]) / float(fps[1])
 
