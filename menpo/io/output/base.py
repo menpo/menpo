@@ -236,7 +236,7 @@ def _extension_to_export_function(extension, extensions_map):
 
 def _validate_filepath(fp, overwrite):
     r"""
-    Normalise a given file path and ensure that ``overwrite == True`` if the
+    Normalize a given file path and ensure that ``overwrite == True`` if the
     file path exists. Normalisation involves things like making the given
     path absolute and expanding environment variables and user variables.
 
@@ -250,8 +250,8 @@ def _validate_filepath(fp, overwrite):
 
     Returns
     -------
-    normalised_filepath : `Path`
-        The normalised file path.
+    normalized_filepath : `Path`
+        The normalized file path.
 
     Raises
     ------
@@ -278,7 +278,7 @@ def _parse_and_validate_extension(filepath, extension, extensions_map):
     Parameters
     ----------
     filepath : `Path`
-        The file path (normalised).
+        The file path (normalized).
     extension : `str`
         The extension provided by the user.
     extensions_map : `dict` of `str` -> `callable`

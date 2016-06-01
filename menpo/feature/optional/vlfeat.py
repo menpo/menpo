@@ -165,7 +165,7 @@ def hellinger_vector_128_dsift(x, dtype=np.float32):
     **must** be square and the output vector will *always* be a ``(128,)``
     vector. Please see :func:`dsift` for more information.
 
-    The output of :func:`vector_128_dsift` is normalised using the hellinger
+    The output of :func:`vector_128_dsift` is normalized using the hellinger
     norm (also called the Bhattacharyya distance) which is a measure
     designed to quantify the similarity between two probability distributions.
     Since SIFT is a histogram based feature, this has been shown to improve
