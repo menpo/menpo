@@ -63,7 +63,7 @@ def ffmpeg_types():
         A dictionary of extensions supported by the FFMPEG importer.
     """
     # Need to check this
-    ffmpeg_exts = ['.avi', '.mp4', '.mpg', '.mpeg', '.wmv', '.mov']
+    ffmpeg_exts = ['.avi', '.mp4', '.mpg', '.mpeg', '.wmv', '.mov', '.mkv']
     return {ext: ffmpeg_importer for ext in ffmpeg_exts}
 
 
