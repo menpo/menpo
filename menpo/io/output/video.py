@@ -72,7 +72,7 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
                                    stdout=DEVNULL)) as pipe:
         for image in images:
             try:
-                i = image.as_rolled_channels(out_dtype=np.uint8)
+                i = image.pixels_with_channels_at_back(out_dtype=np.uint8)
                 pipe.stdin.write(i.tostring())
             except IOError:
                 error = ('FFMPEG encountered the following error while '
@@ -121,7 +121,7 @@ def imageio_video_exporter(images, out_path, fps=30, codec='libx264',
                                 pixelformat=pixelformat)
 
     for v in images:
-        v = v.as_rolled_channels(out_dtype=np.uint8)
+        v = v.pixels_with_channels_at_back(out_dtype=np.uint8)
         writer.append_data(v)
     writer.close()
 
@@ -153,6 +153,6 @@ def image_gif_exporter(images, out_path, fps=30, loop=0, duration=None,
                                 loop=loop, duration=duration)
 
     for v in images:
-        v = v.as_rolled_channels(out_dtype=np.uint8)
+        v = v.pixels_with_channels_at_back(out_dtype=np.uint8)
         writer.append_data(v)
     writer.close()

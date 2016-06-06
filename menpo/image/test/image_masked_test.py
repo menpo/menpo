@@ -141,7 +141,7 @@ def test_dilate():
 
 def test_init_from_rolled_channels():
     p = np.empty([50, 60, 3])
-    im = MaskedImage.init_from_rolled_channels(p)
+    im = MaskedImage.init_from_channels_at_back(p)
     assert im.n_channels == 3
     assert im.height == 50
     assert im.width == 60
@@ -152,7 +152,7 @@ def test_init_from_rolled_channels_masked():
     example_mask = BooleanImage.init_blank((50, 60), fill=False)
     example_mask.pixels[0, :6, :6] = True
 
-    im = MaskedImage.init_from_rolled_channels(p, mask=example_mask)
+    im = MaskedImage.init_from_channels_at_back(p, mask=example_mask)
     assert im.n_channels == 3
     assert im.height == 50
     assert im.width == 60

@@ -125,7 +125,7 @@ class MaskedImage(Image):
         return cls(pixels, copy=False, mask=mask)
 
     @classmethod
-    def init_from_rolled_channels(cls, pixels, mask=None):
+    def init_from_channels_at_back(cls, pixels, mask=None):
         r"""
         Create an Image from a set of pixels where the channels axis is on
         the last axis (the back). This is common in other frameworks, and

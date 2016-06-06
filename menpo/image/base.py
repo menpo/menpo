@@ -302,6 +302,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     @classmethod
     def init_from_rolled_channels(cls, pixels):
         r"""
+        Deprecated - please use the equivalent ``pixels_with_channels_at_back`` method.
+        """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .as_rolled_channels instead.',
+             MenpoDeprecationWarning)
+
+        return cls(np.rollaxis(pixels, -1))
+
+    @classmethod
+    def init_from_channels_at_back(cls, pixels):
+        r"""
         Create an Image from a set of pixels where the channels axis is on
         the last axis (the back). This is common in other frameworks, and
         therefore this method provides a convenient means of creating a menpo
@@ -2530,15 +2542,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def rolled_channels(self):
         r"""
-        Deprecated - please use the equivalent ``as_rolled_channels`` method.
+        Deprecated - please use the equivalent ``pixels_with_channels_at_back`` method.
         """
         warn('This method is no longer supported and will be removed in a '
              'future version of Menpo. '
-             'Use .as_rolled_channels() instead.',
+             'Use .pixels_with_channels_at_back() instead.',
              MenpoDeprecationWarning)
-        return self.as_rolled_channels()
+        return self.pixels_with_channels_at_back()
 
-    def as_rolled_channels(self, out_dtype=None):
+    def pixels_with_channels_at_back(self, out_dtype=None):
         r"""
         Returns the pixels matrix, with the channels rolled to the back axis.
         This may be required for interacting with external code bases that

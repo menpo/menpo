@@ -78,8 +78,11 @@ class FFMpegVideoReader(object):
     normalize : `bool`, optional
         If ``True``, the resulting range of the pixels of the returned
         frames is normalized.
+    exact_frame_count: `bool`, optional
+        If True, the import fails if ffmprobe is not available
+        (reading from ffmpeg's output returns inexact frame count)
     """
-    def __init__(self, filepath, normalize=False, exact_frame_count=False):
+    def __init__(self, filepath, normalize=False, exact_frame_count=True):
         self.filepath = filepath
         self.normalize = normalize
         self.exact_frame_count = exact_frame_count
@@ -88,7 +91,9 @@ class FFMpegVideoReader(object):
             infos = video_infos_ffprobe(self.filepath)
         except:
             if self.exact_frame_count:
-                raise RuntimeError('ffprobe not available, unable to get exact frame count.')
+                raise ValueError('ffprobe not available, unable to get exact frame count.'
+                                 ' If you want to use an approximate frame number, set exact_frame_count to False'
+                                 ' and proceed at your own risks.')
             else:
                 # Eat the exception from above as we warn about it inside
                 # video_infos_ffmpeg

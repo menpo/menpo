@@ -617,7 +617,7 @@ def test_as_greyscale_luminosity_dtype_uint8():
 
 def test_rolled_channels():
     image = Image.init_blank((120, 120), n_channels=3)
-    rolled_channels = image.as_rolled_channels()
+    rolled_channels = image.pixels_with_channels_at_back()
     assert rolled_channels.shape == (120, 120, 3)
 
 
@@ -656,7 +656,7 @@ def test_as_pil_image_1channel():
 
 def test_as_rolled_channels_1channel():
     im = Image.init_blank((120, 120), n_channels=1, fill=1.0)
-    new_im = im.as_rolled_channels()
+    new_im = im.pixels_with_channels_at_back()
     assert new_im.dtype == np.float
     assert_allclose(np.ones([120, 120]), new_im)
     assert new_im.ndim == 2
@@ -665,26 +665,26 @@ def test_as_rolled_channels_1channel():
 @raises(ValueError)
 def test_as_rolled_channels_float_out_range():
     im = Image.init_blank((120, 120), n_channels=1, fill=2.0)
-    im.as_rolled_channels(out_dtype=np.uint8)
+    im.pixels_with_channels_at_back(out_dtype=np.uint8)
 
 
 def test_as_rolled_channels_3channels():
     im = Image.init_blank((120, 120), n_channels=3, fill=1)
-    new_im = im.as_rolled_channels()
+    new_im = im.pixels_with_channels_at_back()
     assert new_im.dtype == np.float
     assert_allclose(np.ones([120, 120, 3]), new_im)
 
 
 def test_as_rolled_channels_1channel_uint16_out():
     im = Image.init_blank((120, 120), n_channels=1, fill=1)
-    new_im = im.as_rolled_channels(out_dtype=np.uint16)
+    new_im = im.pixels_with_channels_at_back(out_dtype=np.uint16)
     assert new_im.dtype == np.uint16
     assert_allclose(np.ones([120, 120]) * 65535, new_im)
 
 
 def test_as_rolled_channels_1channel_float32_out():
     im = Image.init_blank((120, 120), n_channels=1, fill=1)
-    new_im = im.as_rolled_channels(out_dtype=np.float32)
+    new_im = im.pixels_with_channels_at_back(out_dtype=np.float32)
     assert new_im.dtype == np.float32
     assert_allclose(np.ones([120, 120]), new_im)
 

@@ -262,7 +262,7 @@ def import_image(filepath, landmark_resolver=same_name, normalize=None,
 
 
 def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
-                 normalise=None, importer_method='ffmpeg', exact_frame_count=False):
+                 normalise=None, importer_method='ffmpeg', exact_frame_count=True):
     r"""Single video (and associated landmarks) importer.
 
     If a video file is found at `filepath`, returns an :map:`LazyList` wrapping
@@ -278,7 +278,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
         ffprobe to count the frames. This involves reading the entire
         video in to memory which may cause a delay in loading despite the lazy
         nature of the video loading within Menpo. 
-        If ffprobe cannot be found, and `exact_frame_count` is ``True``,
+        If ffprobe cannot be found, and `exact_frame_count` is ``False``,
         Menpo falls back to ffmpeg itself which is not accurate and the user
         should proceed at their own risk.
 
@@ -306,7 +306,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
         A string representing the type of importer to use, by default ffmpeg
         is used.
     exact_frame_count: `bool`, optional
-        If True, the import fails if ffmprobe is not available 
+        If True, the import fails if ffmprobe is not available
         (reading from ffmpeg's output returns inexact frame count)
 
     Returns
@@ -470,7 +470,7 @@ def import_images(pattern, max_images=None, shuffle=False,
 def import_videos(pattern, max_videos=None, shuffle=False,
                   landmark_resolver=same_name_video, normalize=None,
                   normalise=None, importer_method='ffmpeg',
-                  exact_frame_count=False, as_generator=False, verbose=False):
+                  exact_frame_count=True, as_generator=False, verbose=False):
     r"""Multiple video (and associated landmarks) importer.
 
     For each video found yields a :map:`LazyList`. By default, landmark files
@@ -490,7 +490,7 @@ def import_videos(pattern, max_videos=None, shuffle=False,
         ffprobe to count the frames. This involves reading the entire
         video in to memory which may cause a delay in loading despite the lazy
         nature of the video loading within Menpo. 
-        If ffprobe cannot be found, and `exact_frame_count` is ``True``,
+        If ffprobe cannot be found, and `exact_frame_count` is ``False``,
         Menpo falls back to ffmpeg itself which is not accurate and the user
         should proceed at their own risk.
 
@@ -530,7 +530,7 @@ def import_videos(pattern, max_videos=None, shuffle=False,
         If ``True``, the function returns a generator and assets will be yielded
         one after another when the generator is iterated over.
     exact_frame_count: `bool`, optional
-        If True, the import fails if ffmprobe is not available 
+        If True, the import fails if ffmprobe is not available
         (reading from ffmpeg's output returns inexact frame count)
     verbose : `bool`, optional
         If ``True`` progress of the importing will be dynamically reported with
