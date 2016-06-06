@@ -16,7 +16,7 @@ _FFMPEG_CMD = lambda: str(Path(os.environ.get('MENPO_FFMPEG_CMD', 'ffmpeg')))
 _FFPROBE_CMD = lambda: str(Path(os.environ.get('MENPO_FFPROBE_CMD', 'ffprobe')))
 
 
-def ffmpeg_importer(filepath, normalize=True, **kwargs):
+def ffmpeg_importer(filepath, normalize=True, exact_frame_count=False, **kwargs):
     r"""
     Imports videos by streaming frames from a pipe using FFMPEG. Returns a
     :map:`LazyList` that gives lazy access to the video on a per-frame basis.
@@ -47,7 +47,7 @@ def ffmpeg_importer(filepath, normalize=True, **kwargs):
         A :map:`LazyList` containing :map:`Image` or subclasses per frame
         of the video.
     """
-    reader = FFMpegVideoReader(filepath, normalize=normalize)
+    reader = FFMpegVideoReader(filepath, normalize=normalize, exact_frame_count=exact_frame_count)
     ll = LazyList.init_from_index_callable(reader.__getitem__, len(reader))
     ll.fps = reader.fps
 
@@ -79,16 +79,20 @@ class FFMpegVideoReader(object):
         If ``True``, the resulting range of the pixels of the returned
         frames is normalized.
     """
-    def __init__(self, filepath, normalize=False):
+    def __init__(self, filepath, normalize=False, exact_frame_count=False):
         self.filepath = filepath
         self.normalize = normalize
+        self.exact_frame_count = exact_frame_count
         self._pipe = None
         try:
             infos = video_infos_ffprobe(self.filepath)
         except:
-            # Eat the exception from above as we warn about it inside
-            # video_infos_ffmpeg
-            infos = video_infos_ffmpeg(self.filepath)
+            if self.exact_frame_count:
+                raise RuntimeError('ffprobe not available, unable to get exact frame count.')
+            else:
+                # Eat the exception from above as we warn about it inside
+                # video_infos_ffmpeg
+                infos = video_infos_ffmpeg(self.filepath)
         self.duration = infos['duration']
         self.width = infos['width']
         self.height = infos['height']

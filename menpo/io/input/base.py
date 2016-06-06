@@ -262,7 +262,7 @@ def import_image(filepath, landmark_resolver=same_name, normalize=None,
 
 
 def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
-                 normalise=None, importer_method='ffmpeg'):
+                 normalise=None, importer_method='ffmpeg', exact_frame_count=False):
     r"""Single video (and associated landmarks) importer.
 
     If a video file is found at `filepath`, returns an :map:`LazyList` wrapping
@@ -277,7 +277,8 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
         to recover accurate frame counts from videos it is necessary to use
         ffprobe to count the frames. This involves reading the entire
         video in to memory which may cause a delay in loading despite the lazy
-        nature of the video loading within Menpo. If ffprobe cannot be found,
+        nature of the video loading within Menpo. 
+        If ffprobe cannot be found, and `exact_frame_count` is ``True``,
         Menpo falls back to ffmpeg itself which is not accurate and the user
         should proceed at their own risk.
 
@@ -304,6 +305,9 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
     importer_method : {'ffmpeg'}, optional
         A string representing the type of importer to use, by default ffmpeg
         is used.
+    exact_frame_count: `bool`, optional
+        If True, the import fails if ffmprobe is not available 
+        (reading from ffmpeg's output returns inexact frame count)
 
     Returns
     -------
@@ -331,6 +335,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
                    landmark_ext_map=image_landmark_types,
                    landmark_resolver=landmark_resolver,
                    landmark_attach_func=_import_lazylist_attach_landmarks,
+                   exact_frame_count=exact_frame_count,
                    importer_kwargs=kwargs)
 
 
