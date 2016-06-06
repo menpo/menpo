@@ -743,6 +743,7 @@ def _import_lazylist_attach_landmarks(built_objects, landmark_resolver,
 
             new_ll = LazyList([partial(wrap_landmarks, c, i)
                                for i, c in enumerate(x._callables)])
+            new_ll.path = x.path
             built_objects[k] = new_ll
 
 
