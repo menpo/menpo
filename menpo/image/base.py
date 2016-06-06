@@ -302,11 +302,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     @classmethod
     def init_from_rolled_channels(cls, pixels):
         r"""
-        Deprecated - please use the equivalent ``pixels_with_channels_at_back`` method.
+        Deprecated - please use the equivalent ``init_from_channels_at_back`` method.
         """
         warn('This method is no longer supported and will be removed in a '
              'future version of Menpo. '
-             'Use .as_rolled_channels instead.',
+             'Use .init_from_channels_at_back instead.',
              MenpoDeprecationWarning)
 
         return cls(np.rollaxis(pixels, -1))
