@@ -18,7 +18,7 @@ _FFPROBE_CMD = lambda: str(Path(os.environ.get('MENPO_FFPROBE_CMD', 'ffprobe')))
 
 def ffmpeg_importer(filepath, normalize=True, **kwargs):
     r"""
-    Imports videos using the FFMPEG plugin from the imageio library. Returns a
+    Imports videos by streaming frames from a pipe using FFMPEG. Returns a
     :map:`LazyList` that gives lazy access to the video on a per-frame basis.
 
     There are two important environment variables that can be set to alter
