@@ -2513,7 +2513,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         warn('This method is no longer supported and will be removed in a '
              'future version of Menpo. '
-             'Use .as_rolled_channels instead.',
+             'Use .pixels_with_channels_at_back instead.',
              MenpoDeprecationWarning)
 
         if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
