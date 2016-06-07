@@ -26,10 +26,8 @@ class Copyable(object):
 
         Returns
         -------
-
         ``type(self)``
             A copy of this object
-
         """
         new = self.__class__.__new__(self.__class__)
         for k, v in self.__dict__.items():
@@ -453,7 +451,7 @@ class doc_inherit(object):
         return func
 
 
-class LazyList(collections.Sequence):
+class LazyList(collections.Sequence, Copyable):
     r"""
     An immutable sequence that provides the ability to lazily access objects.
     In truth, this sequence simply wraps a list of callables which are then
@@ -608,6 +606,21 @@ class LazyList(collections.Sequence):
         >>> items = list(repeated_ll)   # [0, 0, 1, 1]
         """
         return self.__class__(list(chain(*zip(*[self._callables] * n))))
+
+    def copy(self):
+        r"""
+        Generate an efficient copy of this LazyList - copying the underlying
+        callables will be lazy and shallow (each callable will **not** be
+        called nor copied) but they will reside within in a new `list`.
+
+        Returns
+        -------
+        ``type(self)``
+            A copy of this LazyList.
+        """
+        new = super(LazyList, self).copy()
+        new._callables = list(self._callables)
+        return new
 
     def __add__(self, other):
         r"""

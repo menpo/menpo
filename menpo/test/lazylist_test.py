@@ -14,6 +14,28 @@ def test_lazylist_get():
     assert ll[0] == 1
 
 
+def test_lazylist_copy_lazy():
+    mock_func = Mock()
+    mock_func.return_value = 1
+    ll = LazyList([mock_func] * 10)
+    copied_ll = ll.copy()
+    assert len(copied_ll) == 10
+    assert id(ll._callables) != id(copied_ll._callables)
+    mock_func.assert_not_called()
+
+
+def test_lazylist_copy_duck_typed():
+    mock_func = Mock()
+    mock_func.return_value = 1
+    ll = LazyList([mock_func] * 10)
+    ll.fps = 50
+    copied_ll = ll.copy()
+    assert len(copied_ll) == 10
+    assert id(ll._callables) != id(copied_ll._callables)
+    mock_func.assert_not_called()
+    assert copied_ll.fps == 50
+
+
 def test_lazylist_multiple_calls():
     mock_func = Mock()
     mock_func.return_value = 1
