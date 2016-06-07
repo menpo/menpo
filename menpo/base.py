@@ -488,6 +488,34 @@ class LazyList(collections.Sequence):
         return len(self._callables)
 
     @classmethod
+    def init_from_iterable(cls, iterable, f=None):
+        r"""
+        Create a lazy list from an existing iterable (think Python `list`) and
+        optionally a `callable` that expects a single parameter which will be
+        applied to each element of the list. This allows for simply
+        creating a `LazyList` from an existing list and if no `callable` is
+        provided the identity function is assumed.
+
+        Parameters
+        ----------
+        iterable : `iterable`
+            An iterable object such as a `list`.
+        f : `callable`, optional
+            Callable expecting a single parameter.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A LazyList where each element returns each item of the provided
+            iterable, optionally with `f` applied to it.
+        """
+        if f is None:
+            # The identity function
+            def f(i):
+                return i
+        return cls([partial(f, x) for x in iterable])
+
+    @classmethod
     def init_from_index_callable(cls, f, n_elements):
         r"""
         Create a lazy list from a `callable` that expects a single parameter,
