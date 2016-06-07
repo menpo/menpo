@@ -109,9 +109,12 @@ class Affine(Homogeneous):
         Returns
         -------
         transforms : `list` of :map:`DiscreteAffine`
-            Equivalent to this affine transform, such that::
+            Equivalent to this affine transform, such that
 
-                reduce(lambda x,y: x.chain(y), self.decompose()) == self
+            .. code-block:: python
+
+                reduce(lambda x, y: x.chain(y), self.decompose()) == self
+
         """
         from .rotation import Rotation
         from .translation import Translation
@@ -168,11 +171,13 @@ class Affine(Homogeneous):
             [p1, p3, p5]
             [p2, p4, p6]
 
+
         3D Affine: 12 parameters::
 
             [p1, p4, p7, p10]
             [p2, p5, p8, p11]
             [p3, p6, p9, p12]
+
         """
         return self.n_dims * (self.n_dims + 1)
 

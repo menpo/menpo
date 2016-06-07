@@ -37,10 +37,12 @@ def indices_to_masks(labels_to_indices, n_points):
 
 class LandmarkGroup(PointUndirectedGraph):
     r"""
-    An immutable object that holds a :map:`PointCloud` (or a subclass) and
-    stores labels for each point. These labels are defined via masks on the
-    :map:`PointCloud`. For this reason, the :map:`PointCloud` is considered to
-    be immutable.
+    A subclass of :map:`PointUndirectedGraph` that allows the attaching
+    of 'labels' associated with semantic parts of an object. For example,
+    for a face the semantic parts might be the eyes, nose and mouth. These
+    'labels' are defined as a dictionary of string keys that map to
+    boolean mask arrays that define which of the underlying points belong
+    to a given label.
 
     The labels to masks must be within an `OrderedDict` so that semantic
     ordering can be maintained.

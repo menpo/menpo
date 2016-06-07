@@ -6,7 +6,7 @@ from menpo.transform.piecewiseaffine.base import (CythonPWA, CachedPWA,
 b = menpo.io.import_builtin_asset('breakingbad.jpg').as_masked()
 b = b.crop_to_landmarks_proportion(0.1)
 b = b.rescale_landmarks_to_diagonal_range(120)
-b.constrain_mask_to_landmarks()
+b = b.constrain_mask_to_landmarks()
 points = b.mask.true_indices()
 src = b.landmarks['PTS']
 tgt = src.copy()

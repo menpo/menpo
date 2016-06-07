@@ -417,7 +417,9 @@ def test_normalize_std_image():
     pixels[0] = 0.5
     pixels[1] = 0.2345
     image = Image(pixels)
-    new_image = image.normalize_std()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_std()
     assert_allclose(np.mean(new_image.pixels), 0, atol=1e-10)
     assert_allclose(np.std(new_image.pixels), 1)
 
@@ -427,7 +429,9 @@ def test_normalize_norm_image():
     pixels[0] = 0.5
     pixels[1] = 0.2345
     image = Image(pixels)
-    new_image = image.normalize_norm()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_norm()
     assert_allclose(np.mean(new_image.pixels), 0, atol=1e-10)
     assert_allclose(np.linalg.norm(new_image.pixels), 1)
 
@@ -438,14 +442,18 @@ def test_normalize_std_no_variance_exception():
     pixels[0] = 0.5
     pixels[1] = 0.2345
     image = MaskedImage(pixels)
-    image.normalize_std(mode='per_channel')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        image.normalize_std(mode='per_channel')
 
 
 @raises(ValueError)
 def test_normalize_norm_zero_norm_exception():
     pixels = np.zeros((3, 120, 120))
     image = MaskedImage(pixels)
-    image.normalize_norm(mode='per_channel')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        image.normalize_norm(mode='per_channel')
 
 
 def test_normalize_std_masked_per_channel():
@@ -454,7 +462,9 @@ def test_normalize_std_masked_per_channel():
     pixels[1] += -14
     pixels[2] /= 130
     image = MaskedImage(pixels)
-    new_image = image.normalize_std(mode='per_channel')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_std(mode='per_channel')
     assert_allclose(
         np.mean(new_image.as_vector(keep_channels=True), axis=1), 0, atol=1e-10)
     assert_allclose(
@@ -467,7 +477,9 @@ def test_normalize_std_image_per_channel():
     pixels[0] += -3
     pixels[2] /= 140
     image = Image(pixels)
-    new_image = image.normalize_std(mode='per_channel')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_std(mode='per_channel')
     assert_allclose(
         np.mean(new_image.as_vector(keep_channels=True), axis=1), 0,
         atol=1e-10)
@@ -481,7 +493,9 @@ def test_normalize_norm_image_per_channel():
     pixels[0] += -114
     pixels[2] /= 30
     image = Image(pixels)
-    new_image = image.normalize_norm(mode='per_channel')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_norm(mode='per_channel')
     assert_allclose(
         np.mean(new_image.as_vector(keep_channels=True), axis=1), 0,
         atol=1e-10)
@@ -495,7 +509,9 @@ def test_normalize_norm_masked_per_channel():
     pixels[0] += -14
     pixels[2] /= 130
     image = MaskedImage(pixels)
-    new_image = image.normalize_norm(mode='per_channel')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_norm(mode='per_channel')
     assert_allclose(
         np.mean(new_image.as_vector(keep_channels=True), axis=1), 0,
         atol=1e-10)
@@ -511,7 +527,9 @@ def test_normalize_std_masked():
     mask = np.zeros((120, 120))
     mask[30:50, 20:30] = 1
     image = MaskedImage(pixels, mask=mask)
-    new_image = image.normalize_std(mode='per_channel', limit_to_mask=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_std(mode='per_channel', limit_to_mask=True)
     assert_allclose(
         np.mean(new_image.as_vector(keep_channels=True), axis=1), 0,
         atol=1e-10)
@@ -527,7 +545,9 @@ def test_normalize_norm_masked():
     mask = np.zeros((120, 120))
     mask[30:50, 20:30] = 1
     image = MaskedImage(pixels, mask=mask)
-    new_image = image.normalize_norm(mode='per_channel', limit_to_mask=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        new_image = image.normalize_norm(mode='per_channel', limit_to_mask=True)
     assert_allclose(
         np.mean(new_image.as_vector(keep_channels=True), axis=1), 0,
         atol=1e-10)
@@ -597,7 +617,7 @@ def test_as_greyscale_luminosity_dtype_uint8():
 
 def test_rolled_channels():
     image = Image.init_blank((120, 120), n_channels=3)
-    rolled_channels = image.rolled_channels()
+    rolled_channels = image.pixels_with_channels_at_back()
     assert rolled_channels.shape == (120, 120, 3)
 
 
@@ -634,31 +654,39 @@ def test_as_pil_image_1channel():
                     (im.pixels * 255).astype(np.uint8))
 
 
-def test_as_imageio_1channel():
+def test_as_rolled_channels_1channel():
     im = Image.init_blank((120, 120), n_channels=1, fill=1.0)
-    new_im = im.as_imageio()
-    assert new_im.dtype == np.uint8
-    assert_allclose(np.ones([120, 120]) * 255, new_im)
+    new_im = im.pixels_with_channels_at_back()
+    assert new_im.dtype == np.float
+    assert_allclose(np.ones([120, 120]), new_im)
+    assert new_im.ndim == 2
 
 
 @raises(ValueError)
-def test_as_imageio_float_out_range():
+def test_as_rolled_channels_float_out_range():
     im = Image.init_blank((120, 120), n_channels=1, fill=2.0)
-    im.as_imageio()
+    im.pixels_with_channels_at_back(out_dtype=np.uint8)
 
 
-def test_as_imageio_3channels():
+def test_as_rolled_channels_3channels():
     im = Image.init_blank((120, 120), n_channels=3, fill=1)
-    new_im = im.as_imageio()
-    assert new_im.dtype == np.uint8
-    assert_allclose(np.ones([120, 120, 3]) * 255, new_im)
+    new_im = im.pixels_with_channels_at_back()
+    assert new_im.dtype == np.float
+    assert_allclose(np.ones([120, 120, 3]), new_im)
 
 
-def test_as_imageio_1channel_uint16_out():
+def test_as_rolled_channels_1channel_uint16_out():
     im = Image.init_blank((120, 120), n_channels=1, fill=1)
-    new_im = im.as_imageio(out_dtype=np.uint16)
+    new_im = im.pixels_with_channels_at_back(out_dtype=np.uint16)
     assert new_im.dtype == np.uint16
     assert_allclose(np.ones([120, 120]) * 65535, new_im)
+
+
+def test_as_rolled_channels_1channel_float32_out():
+    im = Image.init_blank((120, 120), n_channels=1, fill=1)
+    new_im = im.pixels_with_channels_at_back(out_dtype=np.float32)
+    assert new_im.dtype == np.float32
+    assert_allclose(np.ones([120, 120]), new_im)
 
 
 @raises(ValueError)

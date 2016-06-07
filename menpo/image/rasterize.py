@@ -1,7 +1,7 @@
 import collections
 import numpy as np
 
-from menpo.shape import bounding_box, TriMesh
+from menpo.shape import TriMesh
 from menpo.image import Image
 from menpo.compatibility import basestring
 
@@ -80,11 +80,12 @@ def _rasterize_matplotlib(image, pclouds, render_lines=True, line_style='-',
     # Get the pixels directly from the canvas buffer which is fast
     c_buffer, shape = f.canvas.print_to_buffer()
     # Turn buffer into numpy array and reshape to image
-    pixels_buffer = np.array(c_buffer).reshape(shape[::-1] + (-1,))
+    pixels_buffer = np.fromstring(c_buffer,
+                                  dtype=np.uint8).reshape(shape[::-1] + (-1,))
     # Prevent matplotlib from rendering
     plt.close(f)
     # Ignore the Alpha channel
-    return Image.init_from_rolled_channels(pixels_buffer[..., :3])
+    return Image.init_from_channels_at_back(pixels_buffer[..., :3])
 
 
 def _parse_colour(x):
@@ -154,7 +155,7 @@ def _rasterize_pillow(image, pclouds, render_lines=True, line_style='-',
 
     pixels = np.asarray(pil_im)
     if image.n_channels == 3:
-        return Image.init_from_rolled_channels(pixels)
+        return Image.init_from_channels_at_back(pixels)
     else:
         return Image(pixels)
 
@@ -235,9 +236,9 @@ def rasterize_landmarks_2d(image, group=None, render_lines=True, line_style='-',
 
     if backend in _RASTERIZE_BACKENDS:
         if isinstance(group, list):
-            landmarks = [image.landmarks[g].lms for g in group]
+            landmarks = [image.landmarks[g] for g in group]
         else:
-            landmarks = [image.landmarks[group].lms]
+            landmarks = [image.landmarks[group]]
 
         # Validate all the parameters for multiple landmark groups being
         # passed in

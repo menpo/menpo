@@ -1,1 +1,3 @@
+_build/*
+source/_build/*
 source/api/generated/*

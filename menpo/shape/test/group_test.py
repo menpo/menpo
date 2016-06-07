@@ -1,10 +1,10 @@
 from collections import OrderedDict
 import numpy as np
-from nose.tools import assert_equal, raises
+from nose.tools import raises
 from numpy.testing import assert_allclose
 from scipy.sparse import csr_matrix
 
-from menpo.shape import PointCloud, LandmarkGroup, PointUndirectedGraph
+from menpo.shape import LandmarkGroup, PointUndirectedGraph
 from menpo.testing import is_same_array
 
 

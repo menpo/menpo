@@ -564,3 +564,28 @@ class LazyList(collections.Sequence):
         else:
             new_callables = list(other._callables)
         return self.__class__(list(self._callables) + new_callables)
+
+
+def partial_doc(func, *args, **kwargs):
+    r"""
+    Return a partial function but the __doc__ attached to the returned
+    partial. Note that no effort is made to correct the docstring for
+    any parameters that are covered by the partial.
+
+    Parameters
+    ----------
+    func : `callable`
+        The func to partial and whose docs should be copied.
+    args : ...
+        Any arguments to partial.
+    kwargs : `dict`
+        Any keyword arguments to partial.
+
+    Returns
+    -------
+    p_func : `callable`
+        The partially wrapped func with __doc__ attached.
+    """
+    p = partial(func, *args, **kwargs)
+    p.__doc__ = func.__doc__
+    return p

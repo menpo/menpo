@@ -10,19 +10,19 @@ ctypedef fused integrals:
     np.int32_t
     np.int64_t
 
-cdef np.ndarray[FLOAT64_T, ndim=2] normalise(np.ndarray[FLOAT64_T, ndim=2] vec):
+cdef np.ndarray[FLOAT64_T, ndim=2] normalize(np.ndarray[FLOAT64_T, ndim=2] vec):
     """
-    Normalise the given array of vectors.
+    Normalize the given array of vectors.
 
     Parameters
     ----------
     vec : (N, 3) c-contiguous double ndarray
-        The array of vectors to normalise
+        The array of vectors to normalize
 
     Returns
     -------
-    normalised : (N, 3) c-contiguous double ndarray
-        Normalised array of vectors.
+    normalized : (N, 3) c-contiguous double ndarray
+        Normalized array of vectors.
     """
     # Avoid divisions by almost 0 numbers
     # np.spacing(1) is equivalent to Matlab's eps
@@ -91,7 +91,7 @@ cpdef compute_normals(np.ndarray[FLOAT64_T, ndim=2] vertex,
     cdef np.ndarray[FLOAT64_T, ndim=2] face_normal = cross(
         vertex[face[:, 1], :] - vertex[face[:, 0], :],
         vertex[face[:, 2], :] - vertex[face[:, 0], :])
-    face_normal = normalise(face_normal)
+    face_normal = normalize(face_normal)
 
     # Calculate per-vertex normal
     cdef np.ndarray[FLOAT64_T, ndim=2] vertex_normal = np.zeros([nvert, 3])
@@ -106,6 +106,6 @@ cpdef compute_normals(np.ndarray[FLOAT64_T, ndim=2] vertex,
             vertex_normal[f2, j] += face_normal[i, j]
 
     # Normalize
-    vertex_normal = normalise(vertex_normal)
+    vertex_normal = normalize(vertex_normal)
 
     return vertex_normal, face_normal

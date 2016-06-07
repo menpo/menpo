@@ -1,45 +1,44 @@
-from .landmark import LM2Importer, LJSONImporter, ASFImporter
-from .image import (PILImporter, ImageioImporter, ImageioGIFImporter,
-                    ABSImporter, FLOImporter)
-from .video import ImageioFFMPEGImporter
-from .landmark_image import ImagePTSImporter
-from .pickle import PickleImporter, GZipPickleImporter
+from .landmark import lm2_importer, ljson_importer
+from .image import pillow_importer, abs_importer, flo_importer
+from .video import ffmpeg_types, ffmpeg_importer
+from .landmark_image import asf_image_importer, pts_image_importer
+from .pickle import pickle_importer, pickle_gzip_importer
 
 
-image_types = {'.bmp': ImageioImporter,
-               '.dib': PILImporter,
-               '.dcx': PILImporter,
-               '.eps': PILImporter,
-               '.ps': PILImporter,
-               '.gif': ImageioGIFImporter,
-               '.im': PILImporter,
-               '.jpg': ImageioImporter,
-               '.jpg2': ImageioImporter,
-               '.jpx': PILImporter,
-               '.jpe': ImageioImporter,
-               '.jpeg': ImageioImporter,
-               '.pcd': PILImporter,
-               '.pcx': PILImporter,
-               '.png': PILImporter,
-               '.pbm': PILImporter,
-               '.pgm': PILImporter,
-               '.ppm': PILImporter,
-               '.psd': PILImporter,
-               '.tif': PILImporter,
-               '.tiff': PILImporter,
-               '.xbm': PILImporter,
-               '.xpm': PILImporter,
-               '.abs': ABSImporter,
-               '.flo': FLOImporter}
+image_types = {'.bmp': pillow_importer,
+               '.dib': pillow_importer,
+               '.dcx': pillow_importer,
+               '.eps': pillow_importer,
+               '.ps': pillow_importer,
+               '.gif': ffmpeg_importer,
+               '.im': pillow_importer,
+               '.jpg': pillow_importer,
+               '.jpg2': pillow_importer,
+               '.jpx': pillow_importer,
+               '.jpe': pillow_importer,
+               '.jpeg': pillow_importer,
+               '.pcd': pillow_importer,
+               '.pcx': pillow_importer,
+               '.png': pillow_importer,
+               '.pbm': pillow_importer,
+               '.pgm': pillow_importer,
+               '.ppm': pillow_importer,
+               '.psd': pillow_importer,
+               '.tif': pillow_importer,
+               '.tiff': pillow_importer,
+               '.xbm': pillow_importer,
+               '.xpm': pillow_importer,
+               '.abs': abs_importer,
+               '.flo': flo_importer}
 
 
-ffmpeg_video_types = ImageioFFMPEGImporter.ffmpeg_types()
+ffmpeg_video_types = ffmpeg_types()
 
-image_landmark_types = {'.asf': ASFImporter,
-                        '.lm2': LM2Importer,
-                        '.pts': ImagePTSImporter,
-                        '.ptsx': ImagePTSImporter,
-                        '.ljson': LJSONImporter}
+image_landmark_types = {'.asf': asf_image_importer,
+                        '.lm2': lm2_importer,
+                        '.pts': pts_image_importer,
+                        '.ptsx': pts_image_importer,
+                        '.ljson': ljson_importer}
 
-pickle_types = {'.pkl': PickleImporter,
-                '.pkl.gz': GZipPickleImporter}
+pickle_types = {'.pkl': pickle_importer,
+                '.pkl.gz': pickle_gzip_importer}

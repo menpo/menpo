@@ -27,6 +27,7 @@ fake_path = '/tmp/test.fake'
 @patch('menpo.io.output.base.Path.open')
 def test_export_filepath_overwrite_exists(mock_open, exists, landmark_types):
     exists.return_value = True
+    landmark_types.__contains__.return_value = True
     mio.export_landmark_file(test_lg, fake_path, overwrite=True)
     mock_open.assert_called_with('wb')
     landmark_types.__getitem__.assert_called_with('.fake')
@@ -39,6 +40,7 @@ def test_export_filepath_overwrite_exists(mock_open, exists, landmark_types):
 @patch('menpo.io.output.base.Path.open')
 def test_export_filepath_no_overwrite(mock_open, exists, landmark_types):
     exists.return_value = False
+    landmark_types.__contains__.return_value = True
     mio.export_landmark_file(test_lg, fake_path)
     mock_open.assert_called_with('wb')
     landmark_types.__getitem__.assert_called_with('.fake')
@@ -61,6 +63,7 @@ def test_export_filepath_wrong_extension(mock_open, exists, landmark_types):
 @patch('menpo.io.output.base.Path.open')
 def test_export_filepath_explicit_ext_no_dot(mock_open, exists, landmark_types):
     exists.return_value = False
+    landmark_types.__contains__.return_value = True
     mio.export_landmark_file(test_lg, fake_path, extension='fake')
     mock_open.assert_called_with('wb')
     landmark_types.__getitem__.assert_called_with('.fake')
@@ -73,6 +76,7 @@ def test_export_filepath_explicit_ext_no_dot(mock_open, exists, landmark_types):
 @patch('menpo.io.output.base.Path.open')
 def test_export_filepath_explicit_ext_dot(mock_open, exists, landmark_types):
     exists.return_value = False
+    landmark_types.__contains__.return_value = True
     mio.export_landmark_file(test_lg, fake_path, extension='.fake')
     mock_open.assert_called_with('wb')
     landmark_types.__getitem__.assert_called_with('.fake')
@@ -80,7 +84,7 @@ def test_export_filepath_explicit_ext_dot(mock_open, exists, landmark_types):
     assert export_function.call_count == 1
 
 
-@raises(ValueError)
+@raises(mio.OverwriteError)
 @patch('menpo.io.output.base.Path.exists')
 def test_export_filepath_no_overwrite_exists(exists):
     exists.return_value = True
@@ -92,7 +96,7 @@ def test_export_filepath_no_overwrite_exists(exists):
 @patch('menpo.io.output.base.Path.exists')
 def test_export_unsupported_extension(exists, landmark_types):
     exists.return_value = False
-    landmark_types.__getitem__.side_effect = KeyError
+    landmark_types.get.side_effect = KeyError
     mio.export_landmark_file(test_lg, fake_path)
 
 
@@ -141,6 +145,7 @@ def test_export_file_handle_file_exists(mock_open, exists):
 def test_export_file_handle_file_exists_overwrite(mock_open, exists,
                                                   landmark_types):
     exists.return_value = True
+    landmark_types.__contains__.return_value = True
     with open(fake_path) as f:
         type(f).name = PropertyMock(return_value=fake_path)
         mio.export_landmark_file(test_lg, f, overwrite=True, extension='fake')
@@ -155,6 +160,7 @@ def test_export_file_handle_file_exists_overwrite(mock_open, exists,
 def test_export_file_handle_file_non_file_buffer(mock_open, exists,
                                                  landmark_types):
     exists.return_value = False
+    landmark_types.__contains__.return_value = True
     with open(fake_path) as f:
         del f.name  # Equivalent to raising an AttributeError side effect
         mio.export_landmark_file(test_lg, f, extension='fake')
@@ -174,6 +180,7 @@ def test_export_landmark_ljson(mock_open, exists, json_dump):
         mio.export_landmark_file(test_lg, f, extension='ljson')
     assert json_dump.call_count == 1
 
+
 @patch('menpo.io.output.landmark.json.dump')
 @patch('menpo.io.output.base.Path.exists')
 @patch('{}.open'.format(__name__), create=True)
@@ -192,6 +199,7 @@ def test_export_landmark_ljson_3d(mock_open, exists, json_dump):
     assert json_dump.call_count == 1
     json_points = np.array(json_dump.call_args[0][0]['landmarks']['points'])
     assert_allclose(json_points[:, -1], fake_z_points)
+
 
 @patch('menpo.io.output.base.Path.exists')
 @patch('{}.open'.format(__name__), create=True)
@@ -237,22 +245,22 @@ def test_export_image_jpg(mock_open, exists, PILImage):
     assert PILImage.fromarray.return_value.save.call_count == 1
 
 
-@patch('imageio.get_writer')
+@patch('subprocess.Popen')
 @patch('menpo.io.output.base.Path.exists')
-def test_export_video_avi(exists, fake_writer):
+def test_export_video_avi(exists, pipe):
     exists.return_value = False
     fake_path = Path('/fake/fake.avi')
     mio.export_video([test_img, test_img], fake_path, extension='avi')
-    assert fake_writer.return_value.append_data.call_count == 2
+    assert pipe.return_value.stdin.write.call_count == 2
 
 
-@patch('imageio.get_writer')
+@patch('subprocess.Popen')
 @patch('menpo.io.output.base.Path.exists')
-def test_export_video_gif(exists, fake_writer):
+def test_export_video_gif(exists, pipe):
     exists.return_value = False
     fake_path = Path('/fake/fake.gif')
     mio.export_video([test_img, test_img], fake_path, extension='gif')
-    assert fake_writer.return_value.append_data.call_count == 2
+    assert pipe.return_value.stdin.write.call_count == 2
 
 
 @patch('menpo.io.output.pickle.pickle.dump')

@@ -1,8 +1,7 @@
 from __future__ import division
-from functools import partial
 import numpy as np
-from menpo.base import MenpoMissingDependencyError
-from menpo.image.base import normalise_pixels_range
+from menpo.base import MenpoMissingDependencyError, partial_doc
+from menpo.image.base import normalize_pixels_range
 from ..base import winitfeature
 
 try:
@@ -88,6 +87,7 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
     # returns x, y centres.
     shape = (((centers[-1, :] - centers[0, :]) /
               [window_step_vertical, window_step_horizontal]) + 1)
+    shape = shape.astype(np.int)
 
     # print information
     if verbose:
@@ -115,11 +115,9 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
 
 
 # A predefined method for a 'faster' dsift method
-fast_dsift = partial(dsift, fast=True, cell_size_vertical=5,
-                     cell_size_horizontal=5, num_bins_horizontal=1,
-                     num_bins_vertical=1, num_or_bins=8)
-fast_dsift.__name__ = 'fast_dsift'
-fast_dsift.__doc__ = dsift.__doc__
+fast_dsift = partial_doc(dsift, fast=True, cell_size_vertical=5,
+                         cell_size_horizontal=5, num_bins_horizontal=1,
+                         num_bins_vertical=1, num_or_bins=8)
 
 
 # Predefined dsift that returns a 128d vector
@@ -151,7 +149,7 @@ def vector_128_dsift(x, dtype=np.float32):
     patch_shape = x.shape[-1]
     n_bins = 4
     c_size = patch_shape // n_bins
-    x = normalise_pixels_range(x, error_on_unknown_type=False)
+    x = normalize_pixels_range(x, error_on_unknown_type=False)
     return dsift(x,
                  window_step_horizontal=patch_shape,
                  window_step_vertical=patch_shape,
@@ -167,7 +165,7 @@ def hellinger_vector_128_dsift(x, dtype=np.float32):
     **must** be square and the output vector will *always* be a ``(128,)``
     vector. Please see :func:`dsift` for more information.
 
-    The output of :func:`vector_128_dsift` is normalised using the hellinger
+    The output of :func:`vector_128_dsift` is normalized using the hellinger
     norm (also called the Bhattacharyya distance) which is a measure
     designed to quantify the similarity between two probability distributions.
     Since SIFT is a histogram based feature, this has been shown to improve

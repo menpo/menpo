@@ -55,8 +55,9 @@ class Similarity(Affine):
 
     @property
     def n_parameters(self):
-        r"""
-        2D Similarity: 4 parameters::
+        r"""Number of parameters of Similarity
+
+        2D Similarity - 4 parameters ::
 
             [(1 + a), -b,      tx]
             [b,       (1 + a), ty]

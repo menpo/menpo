@@ -27,7 +27,7 @@ class MatplotlibRenderer(Renderer):
         # Create the extensions map, have to add . in front of the extensions
         # and map every extension to the savefig method
         n_ext = len(self._supported_ext)
-        func_list = [lambda obj, fp: self.figure.savefig(fp, **obj)] * n_ext
+        func_list = [lambda obj, fp, **kwargs: self.figure.savefig(fp, **obj)] * n_ext
         self._extensions_map = dict(zip(['.' + s for s in self._supported_ext],
                                     func_list))
 
@@ -125,9 +125,9 @@ class MatplotlibRenderer(Renderer):
     def save_figure_widget(self):
         r"""
         Method for saving the figure of the current ``figure_id`` to file using
-        :func:`menpo.visualize.widgets.base.save_matplotlib_figure` widget.
+        `menpowidgets.base.save_matplotlib_figure` widget.
         """
-        from menpo.visualize.widgets import save_matplotlib_figure
+        from menpowidgets import save_matplotlib_figure
         save_matplotlib_figure(self)
 
 

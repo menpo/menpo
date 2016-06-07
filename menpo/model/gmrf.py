@@ -966,15 +966,12 @@ class GMRFVectorModel(object):
             samples = samples - np.tile(self.mean_vector[..., None],
                                         n_samples).T
 
-        # make sure we have the correct data type
-        if self.sparse:
-            samples = bsr_matrix(samples)
-
         # compute mahalanobis per sample
         if self.sparse:
             # if sparse, unfortunately the einstein sum is not implemented
-            d = samples.dot(self.precision).dot(samples.T)
-            d = np.diag(d.todense())
+            tmp = self.precision.dot(samples.T)
+            d = samples.dot(tmp)
+            d = np.diag(d)
         else:
             # if dense, then the einstein sum is much faster
             d = np.einsum('ij,ij->i', np.dot(samples, self.precision), samples)

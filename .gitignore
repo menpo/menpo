@@ -1,4 +1,5 @@
 *~
+__pycache__
 .coverage
 cover/*
 *.pyd

@@ -66,16 +66,16 @@ def indices_for_image_of_shape(shape):
     return np.indices(shape).reshape([len(shape), -1]).T
 
 
-def normalise_pixels_range(pixels, error_on_unknown_type=True):
+def normalize_pixels_range(pixels, error_on_unknown_type=True):
     r"""
-    Normalise the given pixels to the Menpo valid floating point range, [0, 1].
+    Normalize the given pixels to the Menpo valid floating point range, [0, 1].
     This is a single place to handle normalising pixels ranges. At the moment
     the supported types are uint8 and uint16.
 
     Parameters
     ----------
     pixels : `ndarray`
-        The pixels to normalise in the floating point range.
+        The pixels to normalize in the floating point range.
     error_on_unknown_type : `bool`, optional
         If ``True``, this method throws a ``ValueError`` if the given pixels
         array is an unknown type. If ``False``, this method performs no
@@ -83,8 +83,8 @@ def normalise_pixels_range(pixels, error_on_unknown_type=True):
 
     Returns
     -------
-    normalised_pixels : `ndarray`
-        The normalised pixels in the range [0, 1].
+    normalized_pixels : `ndarray`
+        The normalized pixels in the range [0, 1].
 
     Raises
     ------
@@ -108,9 +108,9 @@ def normalise_pixels_range(pixels, error_on_unknown_type=True):
     return pixels * (1.0 / max_range)
 
 
-def denormalise_pixels_range(pixels, out_dtype):
+def denormalize_pixels_range(pixels, out_dtype):
     """
-    Denormalise the given pixels array into the range of the given out dtype.
+    Denormalize the given pixels array into the range of the given out dtype.
     If the given pixels are floating point or boolean then the values
     are scaled appropriately and cast to the output dtype. If the pixels
     are already the correct dtype they are immediately returned.
@@ -120,7 +120,7 @@ def denormalise_pixels_range(pixels, out_dtype):
     Parameters
     ----------
     pixels : `ndarray`
-        The pixels to denormalise.
+        The pixels to denormalize.
     out_dtype : `np.dtype`
         The numpy data type to output and scale the values into.
 
@@ -142,12 +142,16 @@ def denormalise_pixels_range(pixels, out_dtype):
     if in_dtype == out_dtype:
         return pixels
 
-    if in_dtype == np.float64 or in_dtype == np.float32:
-        p_min = pixels.min()
-        p_max = pixels.max()
-        if p_min < 0.0 or p_max > 1.0:
-            raise ValueError('Unexpected input range [{}, {}] - pixels must be '
-                             'in the range [0, 1]'.format(p_min, p_max))
+    if np.issubclass_(in_dtype.type, np.floating) or in_dtype == np.float:
+        if np.issubclass_(out_dtype, np.floating) or out_dtype == np.float:
+            return pixels.astype(out_dtype)
+        else:
+            p_min = pixels.min()
+            p_max = pixels.max()
+            if p_min < 0.0 or p_max > 1.0:
+                raise ValueError('Unexpected input range [{}, {}] - pixels '
+                                 'must be in the range [0, 1]'.format(p_min,
+                                                                      p_max))
     elif in_dtype != np.bool:
         raise ValueError('Unexpected input dtype ({}) - only float32, float64 '
                          'and bool supported'.format(in_dtype))
@@ -298,6 +302,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     @classmethod
     def init_from_rolled_channels(cls, pixels):
         r"""
+        Deprecated - please use the equivalent ``init_from_channels_at_back`` method.
+        """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .init_from_channels_at_back instead.',
+             MenpoDeprecationWarning)
+
+        return cls(np.rollaxis(pixels, -1))
+
+    @classmethod
+    def init_from_channels_at_back(cls, pixels):
+        r"""
         Create an Image from a set of pixels where the channels axis is on
         the last axis (the back). This is common in other frameworks, and
         therefore this method provides a convenient means of creating a menpo
@@ -317,6 +333,64 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             channels.
         """
         return cls(np.rollaxis(pixels, -1))
+
+    @classmethod
+    def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,
+                             n_channels=1, fill=0, dtype=np.float,
+                             return_transform=False):
+        r"""
+        Create an Image that is big enough to contain the given pointcloud.
+        The pointcloud will be translated to the origin and then translated
+        according to its bounds in order to fit inside the new image.
+        An optional boundary can be provided in order to increase the space
+        around the boundary of the pointcloud. The boundary will be added
+        to *all sides of the image* and so a boundary of 5 provides 10 pixels
+        of boundary total for each dimension.
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            Pointcloud to place inside the newly created image.
+        group : `str`, optional
+            If ``None``, the pointcloud will only be used to create the image.
+            If a `str` then the pointcloud will be attached as a landmark
+            group to the image, with the given string as key.
+        boundary : `float`
+            A optional padding distance that is added to the pointcloud bounds.
+            Default is ``0``, meaning the max/min of tightest possible
+            containing image is returned.
+        n_channels : `int`, optional
+            The number of channels to create the image with.
+        fill : `int`, optional
+            The value to fill all pixels with.
+        dtype : numpy data type, optional
+            The data type of the image.
+        return_transform : `bool`, optional
+            If ``True``, then the :map:`Transform` object that was used to
+            adjust the PointCloud in order to build the image, is returned.
+
+        Returns
+        -------
+        image : ``type(cls)`` Image or subclass
+            A new image with the same size as the given pointcloud, optionally
+            with the pointcloud attached as landmarks.
+        transform : :map:`Transform`
+            The transform that was used. It only applies if
+            `return_transform` is ``True``.
+        """
+        # Translate pointcloud to the origin
+        minimum = pointcloud.bounds(boundary=boundary)[0]
+        tr = Translation(-minimum)
+        origin_pc = tr.apply(pointcloud)
+        image_shape = origin_pc.range(boundary=boundary)
+        new_image = cls.init_blank(image_shape, n_channels=n_channels,
+                                   fill=fill, dtype=dtype)
+        if group is not None:
+            new_image.landmarks[group] = origin_pc
+        if return_transform:
+            return new_image, tr
+        else:
+            return new_image
 
     def as_masked(self, mask=None, copy=True):
         r"""
@@ -418,6 +492,23 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         return self.pixels.shape[1:]
 
+    def bounds(self):
+        r"""
+        The bounds of the image, minimum is always (0, 0). The maximum is
+        the maximum **index** that can be used to index into the image for each
+        dimension. Therefore, bounds will be of the form:
+        ((0, 0), (self.height - 1, self.width - 1)) for a 2D image.
+
+        Note that this is akin to supporting a nearest neighbour interpolation.
+        Although the *actual* maximum subpixel value would be something
+        like ``self.height - eps`` where ``eps`` is some value arbitrarily
+        close to 0, this value at least allows sampling without worrying about
+        floating point error.
+
+        :type: `tuple`
+        """
+        return (0,) * self.n_dims, tuple(s - 1 for s in self.shape)
+
     def diagonal(self):
         r"""
         The diagonal size of this image
@@ -435,7 +526,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         :type: (``n_dims``,) `ndarray`
         """
-        # noinspection PyUnresolvedReferences
         return np.array(self.shape, dtype=np.double) / 2
 
     def _str_shape(self):
@@ -1072,7 +1162,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
 
-        new_shape = max_bounded - min_bounded
+        new_shape = (max_bounded - min_bounded).astype(np.int)
         return self.warp_to_shape(new_shape, Translation(min_bounded), order=0,
                                   warp_landmarks=True,
                                   return_transform=return_transform)
@@ -1407,8 +1497,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def set_patches(self, patches, patch_centers, offset=None,
                     offset_index=None):
         r"""
-        Set the values of a group of patches into the correct regions of
-        **this** image. Given an array of patches and a set of patch centers,
+        Set the values of a group of patches into the correct regions of a copy
+        of this image. Given an array of patches and a set of patch centers,
         the patches' values are copied in the regions of the image that are
         centred on the coordinates of the given centers.
 
@@ -1467,15 +1557,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             patches = _convert_patches_list_to_single_array(
                 patches, patch_centers.n_points)
 
+        copy = self.copy()
         # set patches
-        set_patches(patches, self.pixels, patch_centers.points, offset,
+        set_patches(patches, copy.pixels, patch_centers.points, offset,
                     offset_index)
+        return copy
 
     def set_patches_around_landmarks(self, patches, group=None,
                                      offset=None, offset_index=None):
         r"""
-        Set the values of a group of patches around the landmarks existing in
-        **this** image. Given an array of patches, a group and a label, the
+        Set the values of a group of patches around the landmarks existing in a
+        copy of this image. Given an array of patches, a group and a label, the
         patches' values are copied in the regions of the image that are
         centred on the coordinates of corresponding landmarks.
 
@@ -2228,7 +2320,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def pyramid(self, n_levels=3, downscale=2):
         r"""
         Return a rescaled pyramid of this image. The first image of the
-        pyramid will be the original, unmodified, image, and counts as level 1.
+        pyramid will be a copy of the original, unmodified, image, and counts
+        as level 1.
 
         Parameters
         ----------
@@ -2243,7 +2336,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image_pyramid: `generator`
             Generator yielding pyramid layers as :map:`Image` objects.
         """
-        image = self
+        image = self.copy()
         yield image
         for _ in range(n_levels - 1):
             image = image.rescale(1.0 / downscale)
@@ -2252,7 +2345,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def gaussian_pyramid(self, n_levels=3, downscale=2, sigma=None):
         r"""
         Return the gaussian pyramid of this image. The first image of the
-        pyramid will be the original, unmodified, image, and counts as level 1.
+        pyramid will be a copy of the original, unmodified, image, and counts
+        as level 1.
 
         Parameters
         ----------
@@ -2274,7 +2368,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         from menpo.feature import gaussian_filter
         if sigma is None:
             sigma = downscale / 3.
-        image = self
+        image = self.copy()
         yield image
         for level in range(n_levels - 1):
             image = gaussian_filter(image, sigma).rescale(1.0 / downscale)
@@ -2383,7 +2477,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = self.pixels[0]
         else:
             pixels = channels_to_back(self.pixels)
-        pixels = denormalise_pixels_range(pixels, out_dtype)
+        pixels = denormalize_pixels_range(pixels, out_dtype)
         return PILImage.fromarray(pixels)
 
     def as_imageio(self, out_dtype=np.uint8):
@@ -2417,6 +2511,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If the output dtype is unsupported. Currently uint8 and uint16
             are supported.
         """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .pixels_with_channels_at_back instead.',
+             MenpoDeprecationWarning)
+
         if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
             raise ValueError(
                 'Can only convert greyscale or RGB 2D images. '
@@ -2428,7 +2527,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pixels = self.pixels[0]
         else:
             pixels = channels_to_back(self.pixels)
-        return denormalise_pixels_range(pixels, out_dtype)
+        return denormalize_pixels_range(pixels, out_dtype)
 
     def pixels_range(self):
         r"""
@@ -2443,31 +2542,51 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def rolled_channels(self):
         r"""
+        Deprecated - please use the equivalent ``pixels_with_channels_at_back`` method.
+        """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .pixels_with_channels_at_back() instead.',
+             MenpoDeprecationWarning)
+        return self.pixels_with_channels_at_back()
+
+    def pixels_with_channels_at_back(self, out_dtype=None):
+        r"""
         Returns the pixels matrix, with the channels rolled to the back axis.
         This may be required for interacting with external code bases that
         require images to have channels as the last axis, rather than the
-        menpo convention of channels as the first axis.
+        Menpo convention of channels as the first axis.
+
+        If this image is single channel, the final axis is dropped.
+
+        Parameters
+        ----------
+        out_dtype : `np.dtype`, optional
+            The dtype the output array should be.
 
         Returns
         -------
         rolled_channels : `ndarray`
-            Pixels with channels as the back (last) axis.
+            Pixels with channels as the back (last) axis. If single channel,
+            the last axis will be dropped.
         """
-        return channels_to_back(self.pixels)
+        p = channels_to_back(self.pixels)
+        if out_dtype is not None:
+            p = denormalize_pixels_range(p, out_dtype=out_dtype)
+        return np.squeeze(p)
 
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(
             self._str_shape(), self.n_dims, self.n_channels,
             's' * (self.n_channels > 1)))
 
-    @property
     def has_landmarks_outside_bounds(self):
         """
         Indicates whether there are landmarks located outside the image bounds.
 
         :type: `bool`
         """
-        if self.landmarks.has_landmarks:
+        if self.has_landmarks:
             for l_group in self.landmarks:
                 pc = self.landmarks[l_group].points
                 if np.any(np.logical_or(self.shape - pc < 1, pc < 0)):
@@ -2476,58 +2595,31 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def constrain_landmarks_to_bounds(self):
         r"""
-        Move landmarks that are located outside the image bounds on the bounds.
-        """
-        if self.has_landmarks_outside_bounds:
-            for l_group in self.landmarks:
-                l = self.landmarks[l_group]
-                for k in range(l.points.shape[1]):
-                    tmp = l.points[:, k]
-                    tmp[tmp < 0] = 0
-                    tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
-                    l.points[:, k] = tmp
-                self.landmarks[l_group] = l
+        Deprecated - please use the equivalent ``constrain_to_bounds`` method
+        now on PointCloud, in conjunction with the new Image ``bounds()``
+        method. For example:
 
-    def normalize_std_inplace(self, mode='all', **kwargs):
-        r"""
-        Deprecated. See the non-mutating API, `normalize_std()`.
+            >>> im.constrain_landmarks_to_bounds()  # Equivalent to below
+            >>> im.landmarks['test'] = im.landmarks['test'].constrain_to_bounds(im.bounds)
         """
-        warn('the public API for inplace operations is deprecated '
-             'and will be removed in a future version of Menpo. '
-             'Use .normalize_std() instead.', MenpoDeprecationWarning)
-        self._normalize_inplace(np.std, mode=mode)
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .constrain_to_bounds() instead (on PointCloud).',
+             MenpoDeprecationWarning)
+
+        for l_group in self.landmarks:
+            l = self.landmarks[l_group]
+            for k in range(l.points.shape[1]):
+                tmp = l.points[:, k]
+                tmp[tmp < 0] = 0
+                tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
+                l.points[:, k] = tmp
+            self.landmarks[l_group] = l
 
     def normalize_std(self, mode='all', **kwargs):
         r"""
         Returns a copy of this image normalized such that its
         pixel values have zero mean and unit variance.
-
-        Parameters
-        ----------
-        mode : ``{all, per_channel}``, optional
-            If ``all``, the normalization is over all channels. If
-            ``per_channel``, each channel individually is mean centred and
-            normalized in variance.
-        """
-        return self._normalize(np.std, mode=mode)
-
-    def normalize_norm_inplace(self, mode='all', **kwargs):
-        r"""
-        Deprecated. See the non-mutating API, `normalize_norm()`.
-        """
-        warn('the public API for inplace operations is deprecated '
-             'and will be removed in a future version of Menpo. '
-             'Use .normalize_norm() instead.', MenpoDeprecationWarning)
-
-        def scale_func(pixels, axis=None):
-            return np.linalg.norm(pixels, axis=axis, **kwargs)
-
-        self._normalize_inplace(scale_func, mode=mode)
-
-    def normalize_norm(self, mode='all', **kwargs):
-        r"""
-        Returns a copy of this image normalized such that its pixel values
-        have zero mean and its norm equals 1.
 
         Parameters
         ----------
@@ -2541,34 +2633,42 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image : ``type(self)``
             A copy of this image, normalized.
         """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .normalize_std() instead (features package).',
+             MenpoDeprecationWarning)
+        return self._normalize(np.std, mode=mode)
+
+    def normalize_norm(self, mode='all', **kwargs):
+        r"""
+        Returns a copy of this image normalized such that its pixel values
+        have zero mean and its norm equals 1.
+
+        Parameters
+        ----------
+        mode : ``{all, per_channel}``, optional
+            If ``all``, the normalization is over all channels. If
+            ``per_channel``, each channel individually is mean centred and
+            unit norm.
+
+        Returns
+        -------
+        image : ``type(self)``
+            A copy of this image, normalized.
+        """
+        warn('This method is no longer supported and will be removed in a '
+             'future version of Menpo. '
+             'Use .normalize_norm() instead (features package).',
+             MenpoDeprecationWarning)
+
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
         return self._normalize(scale_func, mode=mode)
 
     def _normalize(self, scale_func, mode='all'):
-        new = self.copy()
-        new._normalize_inplace(scale_func, mode=mode)
-        return new
-
-    def _normalize_inplace(self, scale_func, mode='all'):
-        pixels = self.as_vector(keep_channels=True)
-        if mode == 'all':
-            centered_pixels = pixels - np.mean(pixels)
-            scale_factor = scale_func(centered_pixels)
-
-        elif mode == 'per_channel':
-            centered_pixels = pixels - np.mean(pixels, axis=1)[..., None]
-            scale_factor = scale_func(centered_pixels, axis=1)[..., None]
-        else:
-            raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
-                             "was provided instead".format(mode))
-
-        if np.any(scale_factor == 0):
-            raise ValueError("Image has 0 variance - can't be "
-                             "normalized")
-        else:
-            self._from_vector_inplace(centered_pixels / scale_factor)
+        from menpo.feature import normalize
+        return normalize(self, scale_func=scale_func, mode=mode)
 
     def rescale_pixels(self, minimum, maximum, per_channel=True):
         r"""A copy of this image with pixels linearly rescaled to fit a range.
@@ -2602,6 +2702,80 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         sf = ((maximum - minimum) * 1.0) / (max_ - min_)
         v_new = ((v - min_) * sf) + minimum
         return self.from_vector(v_new.T.ravel())
+
+    def rasterize_landmarks(self, group=None, render_lines=True, line_style='-',
+                            line_colour='b', line_width=1, render_markers=True,
+                            marker_style='o', marker_size=1,
+                            marker_face_colour='b', marker_edge_colour='b',
+                            marker_edge_width=1, backend='matplotlib'):
+        r"""
+        This method provides the ability to rasterize 2D landmarks onto the
+        image. The returned image has the specified landmark groups rasterized
+        onto the image - which is useful for things like creating result
+        examples or rendering videos with annotations.
+
+        Since multiple landmark groups can be specified, all arguments can take
+        lists of parameters that map to the provided groups list. Therefore, the
+        parameters must be lists of the correct length or a single parameter to
+        apply to every landmark group.
+
+        Multiple backends are provided, all with different strengths. The
+        'pillow' backend is very fast, but not very flexible. The `matplotlib`
+        backend should be feature compatible with other Menpo rendering methods,
+        but is much slower due to the overhead of creating a figure to render
+        into.
+
+        Parameters
+        ----------
+        group : `str` or `list` of `str`, optional
+            The landmark group key, or a list of keys.
+        render_lines : `bool`, optional
+            If ``True``, and the provided landmark group is a
+            :map:`PointDirectedGraph`, the edges are rendered.
+        line_style : `str`, optional
+            The style of the edge line. Not all backends support this argument.
+        line_colour : `str` or `tuple`, optional
+            A Matplotlib style colour or a backend dependant colour.
+        line_width : `int`, optional
+            The width of the line to rasterize.
+        render_markers : `bool`, optional
+            If ``True``, render markers at the coordinates of each landmark.
+        marker_style : `str`, optional
+            A Matplotlib marker style. Not all backends support all marker
+            styles.
+        marker_size : `int`, optional
+            The size of the marker - different backends use different scale
+            spaces so consistent output may by difficult.
+        marker_face_colour : `str`, optional
+            A Matplotlib style colour or a backend dependant colour.
+        marker_edge_colour : `str`, optional
+            A Matplotlib style colour or a backend dependant colour.
+        marker_edge_width : `int`, optional
+            The width of the marker edge. Not all backends support this.
+        backend : {'matplotlib', 'pillow'}, optional
+            The backend to use.
+
+        Returns
+        -------
+        rasterized_image : :map:`Image`
+            The image with the landmarks rasterized directly into the pixels.
+
+        Raises
+        ------
+        ValueError
+            Only 2D images are supported.
+        ValueError
+            Only RGB (3-channel) or Greyscale (1-channel) images are supported.
+        """
+        from .rasterize import rasterize_landmarks_2d
+        return rasterize_landmarks_2d(
+            self, group=group, render_lines=render_lines,
+            line_style=line_style, line_colour=line_colour,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width, backend=backend)
 
 
 def round_image_shape(shape, round):
@@ -2746,8 +2920,6 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     patches_image.landmarks['selected_patch_centers'] = tmp_centers
 
     # Set the patches
-    patches_image.set_patches_around_landmarks(patches[patches_indices],
-                                               group='selected_patch_centers',
-                                               offset_index=offset_index)
-
-    return patches_image
+    return patches_image.set_patches_around_landmarks(
+        patches[patches_indices], group='selected_patch_centers',
+        offset_index=offset_index)

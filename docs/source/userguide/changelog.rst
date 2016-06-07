@@ -1,25 +1,239 @@
 Changelog
 #########
 
+0.7.0 (2016/05/20)
+------------------
+New release that contains some minor breaking changes. In general, the biggest
+changes are:
+
+  - Use `ImageIO <https://imageio.github.io/>`_ rather than Pillow for basic
+    importing of some image types.
+    The most important aspect of this change is that we now support importing
+    videos! Our GIF support also became much more robust. Note that importing
+    videos is still considered to be relatively experimental due to the
+    underlying implementation in imageio not being 100% accurate. Therefore,
+    we warn our users that importing videos for important experiments is
+    not advised.
+  - Change multi-asset importing to use a new type - the :map:`LazyList`. Lazy
+    lists are a generic concept for a container that holds onto a list of
+    callables which are invoked on indexing. This means that image importing,
+    for example, returns immediately but can be **randomly indexed**. This is
+    in contrast to generators, which have to be sequentially accessed. This
+    is particularly important for video support, as the frames can be accessed
+    randomly or sliced from the end (rather than having to pay the penalty
+    of importing the entirety of a long video just to access the last frame,
+    for example). A simple example of using the :map:`LazyList` to import
+    images is as follows:
+
+        .. code-block:: python
+
+            import menpo.io as mio
+            images = mio.import_images('/path/to/many/images')  # Returns immediately
+            image0 = images[0]  # Loading performed at access
+
+            # Example of much simpler preprocessing
+            preprocess_func = lambda x: x.as_greyscale()
+            greyscale_images = images.map(preprocess_func)  # Returns immediately
+            grey_image0 = greyscale_images[0]  # Loading and as_greyscale() performed at access
+
+            # Visualizing randomly is now much simpler too!
+            % matplotlib inline
+            from menpowidgets import visualize_images
+            visualize_images(greyscale_images)  # Can now randomly access list
+
+  - Move one step closer to ensuring that all image operatons are copies rather
+    than inplace. This means breaking some methods as there was no 'non' inplace
+    method (the break was to change them to return a copy). Likely the most
+    common anti-pattern was code such as:
+
+        .. code-block:: python
+
+            import menpo.io as mio
+            image = mio.import_builtin_asset.takeo_ppm().as_masked()
+            image.constrain_landmarks_to_bounds()
+
+    Which now requires assigning the call to ``constrain_landmarks_to_bounds``
+    to a variable, as a copy is returned:
+
+        .. code-block:: python
+
+            import menpo.io as mio
+            image = mio.import_builtin_asset.takeo_ppm().as_masked()
+            image = image.constrain_landmarks_to_bounds()
+
+Note that this release also officially supports **Python 3.5**!
+
+Breaking Changes
+................
+
+  - ImageIO is used for importing. Therefore, the pixel values of some images
+    have changed due to the difference in underlying importing code.
+  - Multi-asset importers are now of type ``LazyList``.
+  - HOG previously returned negative values due to rounding errors on binning.
+    This has been rectified, so the output values of HOG are now slightly
+    different.
+  - ``set_boundary_pixels`` is no longer in place.
+  - ``normalize_inplace`` has been deprecated and removed. ``normalize`` is now
+    a feature that abstracts out the normalisation logic.
+  - ``gaussian_pyramid`` and ``pyramid`` always return copies (before the first
+    image was the original image, not copied).
+  - ``constrain_to_landmarks``/``constrain_to_pointcloud``/``constrain_mask_to_landmarks``
+    are no longer in place.
+  - ``set_patches`` is no longer in place.
+  - ``has_landmarks_outside_bounds`` is now a method.
+
+New Features
+............
+
+  - ``from_tri_mask`` method added to ``TriMesh``
+  - ``LazyList`` type that holds a list of callables that are invoked on
+    indexing.
+  - New rasterize methods. Given an image and a landmark group, return a new
+    image with the landmarks rasterized onto the image. Useful for saving
+    results to disk.
+  - Python 3.5 support!
+  - Better support for non ``float64`` image types. For example,
+    ``as_greyscale`` can be called on a ``uint8`` image.
+  - New method ``rasterize_landmarks`` that allows easy image rasterization.
+    By default, MaskedImages are masked with a black background. Use
+    ``as_unmasked`` to change the colour/not returned masked image.
+  - Add ``bounds`` method to images. This is defined as
+    ``((0, 0), (height - 1, width - 1))`` - the set of indices that are
+    indexable into the image for sampling.
+  - Add ``constrain_to_bounds`` to ``PointCloud``. Snaps the pointcloud exactly
+    to the bounds given.
+  - ``init_from_pointcloud`` method add to ``Image``. Allows the creation of an
+    image that completely bounds a given pointcloud. This is useful for both
+    viewing images of pointclouds and for creating 'reference frames' for
+    algorithms like Active Appearance Models.
+  - ``init_from_depth_image`` method on ``PointCloud`` and subclasses. Allows
+    the creation of a mesh from an image that contains pixel values that
+    represent depth/height values. Very useful for visualising RGB-D data.
+  - ``pickle_paths`` method.
+  - Overwriting images now throws ``OverwriteError`` rather than just
+    ``ValueError`` (``OverwriteError`` is a subclass of ``ValueError``) so
+    this is not a breaking change.
+
+Deprecated
+..........
+
+  - The previously deprecated ``inplace`` image methods **were not removed
+    in this release**.
+  - ``set_h_matrix`` is deprecated for ``Homogeneous`` transforms.
+  - ``set_masked_pixels`` is deprecated in favor of from_vector.
+  - Deprecate ``constrain_landmarks_to_bounds`` on images.
+
+Github Pull Requests
+....................
+
+- `#698`_ Video importing warnings. (@patricksnape)
+- `#697`_ Relex version constraints on dependencies. (@jabooth)
+- `#695`_ condaci fixes. (@patricksnape)
+- `#692`_ new OverwriteError raised specifically for overwrite errors in io.export. (@jabooth)
+- `#691`_ Add mio.pickle_paths(glob). (@jabooth)
+- `#690`_ Fix init_2d_grid for TriMesh subclasses + add init_from_depth_image. (@patricksnape)
+- `#687`_ WIP: BREAKING: Various release fixes. (@patricksnape)
+- `#685`_ GMRF mahalanobis computation with sparse precision. (@nontas)
+- `#684`_ Video importer docs and negative max_images. (@grigorisg9gr)
+- `#683`_ Bugfix: Widget imports. (@nontas)
+- `#682`_ Update the view_patches to show only the selected landmarks. (@grigorisg9gr)
+- `#680`_ Expose file extension to exporters (Fix PIL exporter bug). (@patricksnape)
+- `#678`_ Deprecate set_h_matrix and fix #677. (@patricksnape)
+- `#676`_ Implement LazyList __add__. (@patricksnape)
+- `#673`_ Fix the widgets in PCA. (@grigorisg9gr)
+- `#672`_ Use Conda environment.yml on RTD. (@patricksnape)
+- `#670`_ Rasterize 2D Landmarks Method. (@patricksnape)
+- `#669`_ BREAKING: Add LazyList - default importing is now Lazy. (@patricksnape)
+- `#668`_ Speedup as_greyscale. (@patricksnape)
+- `#666`_ Add the protocol option in exporting pickle. (@grigorisg9gr)
+- `#665`_ Fix bug with patches of different type than float64. (@patricksnape)
+- `#664`_ Python 3.5 builds. (@patricksnape)
+- `#661`_ Return labels - which maps to a KeysView as a list. (@patricksnape)
+- `#648`_ Turn coverage checking back on. (@patricksnape)
+- `#644`_ Remove label kwarg. (@patricksnape)
+- `#639`_ add from_tri_mask method to TriMesh instances. (@jabooth)
+- `#633`_ BREAKING: Imageio. (@patricksnape)
+- `#606`_ Fix negative values in HOG calculation. (@patricksnape)
+
+.. _#698: https://github.com/menpo/menpo/pull/698
+.. _#697: https://github.com/menpo/menpo/pull/697
+.. _#695: https://github.com/menpo/menpo/pull/695
+.. _#692: https://github.com/menpo/menpo/pull/692
+.. _#691: https://github.com/menpo/menpo/pull/691
+.. _#690: https://github.com/menpo/menpo/pull/690
+.. _#687: https://github.com/menpo/menpo/pull/687
+.. _#685: https://github.com/menpo/menpo/pull/685
+.. _#684: https://github.com/menpo/menpo/pull/684
+.. _#683: https://github.com/menpo/menpo/pull/683
+.. _#682: https://github.com/menpo/menpo/pull/682
+.. _#680: https://github.com/menpo/menpo/pull/680
+.. _#678: https://github.com/menpo/menpo/pull/678
+.. _#676: https://github.com/menpo/menpo/pull/676
+.. _#673: https://github.com/menpo/menpo/pull/673
+.. _#672: https://github.com/menpo/menpo/pull/672
+.. _#670: https://github.com/menpo/menpo/pull/670
+.. _#669: https://github.com/menpo/menpo/pull/669
+.. _#668: https://github.com/menpo/menpo/pull/668
+.. _#666: https://github.com/menpo/menpo/pull/666
+.. _#665: https://github.com/menpo/menpo/pull/665
+.. _#664: https://github.com/menpo/menpo/pull/664
+.. _#661: https://github.com/menpo/menpo/pull/661
+.. _#648: https://github.com/menpo/menpo/pull/648
+.. _#644: https://github.com/menpo/menpo/pull/644
+.. _#639: https://github.com/menpo/menpo/pull/639
+.. _#633: https://github.com/menpo/menpo/pull/633
+.. _#606: https://github.com/menpo/menpo/pull/606
+
+
+0.6.2 (2015/12/13)
+------------------
+Add axes ticks option to ``view_patches``.
+
+Github Pull Requests
+....................
+
+- `#659`_ Add axes ticks options to view_patches (@nontas)
+
+.. _#659: https://github.com/menpo/menpo/pull/659
+
+0.6.1 (2015/12/09)
+------------------
+Fix a nasty bug pertaining to a Diamond inheritance problem in PCA. Add the
+Gaussion Markov Random Field (GRMF) model. Also a couple of other
+bugfixes for visualization.
+
+Github Pull Requests
+....................
+
+- `#658`_ PCA Diamond problem fix (@patricksnape)
+- `#655`_ Bugfix and improvements in visualize package (@nontas)
+- `#656`_ print_dynamic bugfix (@nontas)
+- `#635`_ Gaussian Markov Random Field (@nontas, @patricksnape)
+
+.. _#658: https://github.com/menpo/menpo/pull/658
+.. _#655: https://github.com/menpo/menpo/pull/655
+.. _#656: https://github.com/menpo/menpo/pull/656
+.. _#635: https://github.com/menpo/menpo/pull/635
+
 0.6.0 (2015/11/26)
 ------------------
-This release is another set of breaking changes for Menpo. All ``in_place`` 
+This release is another set of breaking changes for Menpo. All ``in_place``
 methods have been deprecated to make the API clearer (always copy). The largest
 change is the removal of all widgets into a subpackage called `menpowidgets`_.
 To continue using widgets within the Jupyter notebook, you should install
-menpowidgets. 
+menpowidgets.
 
 Breaking Changes
 ................
 
   - Procrustes analysis now checks for mirroring and disables it by default.
     This is a change in behaviour.
-  - The ``sample_offsets`` argument of 
+  - The ``sample_offsets`` argument of
     :func:`menpo.image.Image.extract_patches` now expects a
     numpy array rather than a :map:`PointCloud`.
-  - All widgets are removed and now exist as part of the `menpowidgets`_ 
+  - All widgets are removed and now exist as part of the `menpowidgets`_
     project. The widgets are now only compatible with Jupyter 4.0 and above.
-  - Landmark labellers have been totalled refactored and renamed. They have
+  - Landmark labellers have been totally refactored and renamed. They have
     not been deprecated due to the changes. However, the new changes mean
     that the naming scheme of labels is now much more intuitive. Practically,
     the usage of labelling has only changed in that now it is possible to label
@@ -29,27 +243,27 @@ Breaking Changes
   - All vlfeat features have now become optional and will not appear if
     cyvlfeat is not installed.
   - All ``label`` keyword arguments have been removed. They were not found
-    to be useful. For the same effect, you can always create a new landmark 
+    to be useful. For the same effect, you can always create a new landmark
     group that only contains that label and use that as the ``group`` key.
 
 New Features
 ............
 
   - New SIFT type features that return vectors rather than dense features.
-    (:func:`menpo.feature.vector_128_dsift`, 
+    (:func:`menpo.feature.vector_128_dsift`,
     :func:`menpo.feature.hellinger_vector_128_dsift`)
-  - :func:`menpo.shape.PointCloud.init_2d_grid` static constructor for 
+  - :func:`menpo.shape.PointCloud.init_2d_grid` static constructor for
     :map:`PointCloud` and subclasses.
-  - Add :map:`PCAVectorModel` class that allows performing PCA directly on 
+  - Add :map:`PCAVectorModel` class that allows performing PCA directly on
     arrays.
   - New static constructors on PCA models for building PCA directly from
-    covariance matrices or components 
-    (:func:`menpo.model.PCAVectorModel.init_from_components` and 
+    covariance matrices or components
+    (:func:`menpo.model.PCAVectorModel.init_from_components` and
     :func:`menpo.model.PCAVectorModel.init_from_covariance_matrix`).
   - New :func:`menpo.image.Image.mirror` method on images.
   - New :func:`menpo.image.Image.set_patches` methods on images.
   - New :func:`menpo.image.Image.rotate_ccw_about_centre` method on images.
-  - When performing operations on images, you can now add the 
+  - When performing operations on images, you can now add the
     ``return_transform`` kwarg that will return both the new image **and** the
     transform that created the image. This can be very useful for processing
     landmarks after images have been cropped and rescaled for example.
@@ -107,19 +321,19 @@ Tiny point release just fixing a typo in the ``unique_edge_indices`` method.
 ------------------
 Minor bug fixes and impovements including:
 
-  - Menpo is now better at preserving dtypes other than np.float through common 
+  - Menpo is now better at preserving dtypes other than np.float through common
     operations
-  - Image has a new convenience constructor ``init_from_rolled_channels()`` to 
+  - Image has a new convenience constructor ``init_from_rolled_channels()`` to
     handle building images that have the channels at the back of the array.
-  - There are also new ``crop_to_pointcloud()`` and 
-    ``crop_to_pointcloud_proportion()`` methods to round out the Image API, 
-    and a deprecation of ``rescale_to_reference_shape()`` in favour of 
+  - There are also new ``crop_to_pointcloud()`` and
+    ``crop_to_pointcloud_proportion()`` methods to round out the Image API,
+    and a deprecation of ``rescale_to_reference_shape()`` in favour of
     ``rescale_to_pointcloud()`` to make things more consistent.
-  - The ``gradient()`` method is deprecated (use ``menpo.feature.gradient`` 
+  - The ``gradient()`` method is deprecated (use ``menpo.feature.gradient``
     instead)
   - Propagation of the ``.path`` property when using ``as_masked()`` was fixed
   - Fix for exporting 3D LJSON landmark files
-  - A new ``shuffle`` kwarg (default ``False``) is present on all multi 
+  - A new ``shuffle`` kwarg (default ``False``) is present on all multi
     importers.
 
 Github Pull Requests

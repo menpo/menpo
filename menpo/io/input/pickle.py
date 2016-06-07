@@ -3,20 +3,49 @@ try:
 except ImportError:
     import pickle
 import gzip
-from .base import Importer
 
 
-class PickleImporter(Importer):
+def pickle_importer(filepath, asset=None, **kwargs):
+    r"""Import a pickle file.
 
-    def build(self):
-        with open(self.filepath, 'rb') as f:
-            x = pickle.load(f)
-        return x
+    Parameters
+    ----------
+    filepath : `Path`
+        Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
+    \**kwargs : `dict`, optional
+        Any other keyword arguments.
+
+    Returns
+    -------
+    object : `object`
+        The pickled objects.
+    """
+    with open(str(filepath), 'rb') as f:
+        x = pickle.load(f)
+    return x
 
 
-class GZipPickleImporter(Importer):
+def pickle_gzip_importer(filepath, asset=None, **kwargs):
+    r"""Import a pickle file that has been compressed with GZip compression.
 
-    def build(self):
-        with gzip.open(self.filepath, 'rb') as f:
-            x = pickle.load(f)
-        return x
+    Parameters
+    ----------
+    filepath : `Path`
+        Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
+    \**kwargs : `dict`, optional
+        Any other keyword arguments.
+
+    Returns
+    -------
+    object : `object`
+        The pickled objects.
+    """
+    with gzip.open(str(filepath), 'rb') as f:
+        x = pickle.load(f)
+    return x

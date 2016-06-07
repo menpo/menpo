@@ -41,9 +41,91 @@ class ColouredTriMesh(TriMesh):
         else:
             colours_handle = colours.copy()
 
-        if points.shape[0] != colours.shape[0]:
+        if points.shape[0] != colours_handle.shape[0]:
             raise ValueError('Must provide a colour per-vertex.')
         self.colours = colours_handle
+
+    @classmethod
+    def init_2d_grid(cls, shape, spacing=None, colours=None):
+        r"""
+        Create a ColouredTriMesh that exists on a regular 2D grid. The first
+        dimension is the number of rows in the grid and the second dimension
+        of the shape is the number of columns. ``spacing`` optionally allows
+        the definition of the distance between points (uniform over points).
+        The spacing may be different for rows and columns.
+
+        The triangulation will be right-handed and the diagonal will go from
+        the top left to the bottom right of a square on the grid.
+
+        Parameters
+        ----------
+        shape : `tuple` of 2 `int`
+            The size of the grid to create, this defines the number of points
+            across each dimension in the grid. The first element is the number
+            of rows and the second is the number of columns.
+        spacing : `int` or `tuple` of 2 `int`, optional
+            The spacing between points. If a single `int` is provided, this
+            is applied uniformly across each dimension. If a `tuple` is
+            provided, the spacing is applied non-uniformly as defined e.g.
+            ``(2, 3)`` gives a spacing of 2 for the rows and 3 for the
+            columns.
+        colours : ``(N, 3)`` `ndarray`, optional
+            The floating point RGB colour per vertex. If not given, grey will be
+            assigned to each vertex.
+
+        Returns
+        -------
+        trimesh : :map:`TriMesh`
+            A TriMesh arranged in a grid.
+        """
+        pc = TriMesh.init_2d_grid(shape, spacing=spacing)
+        points = pc.points
+        trilist = pc.trilist
+        # Ensure that the colours are copied
+        if colours is not None:
+            colours = colours.copy()
+        return ColouredTriMesh(points, trilist=trilist, colours=colours,
+                               copy=False)
+
+    @classmethod
+    def init_from_depth_image(cls, depth_image, colours=None):
+        r"""
+        Return a 3D textured triangular mesh from the given depth image. The
+        depth image is assumed to represent height/depth values and the XY
+        coordinates are assumed to unit spaced and represent image coordinates.
+        This is particularly useful for visualising depth values that have been
+        recovered from images.
+
+        The optionally passed texture will be textured mapped onto the planar
+        surface using the correct texture coordinates for an image of the
+        same shape as ``depth_image``.
+
+        Parameters
+        ----------
+        depth_image : :map:`Image` or subclass
+            A single channel image that contains depth values - as commonly
+            returned by RGBD cameras, for example.
+        colours : ``(N, 3)`` `ndarray`, optional
+            The floating point RGB colour per vertex. If not given, grey will be
+            assigned to each vertex.
+
+        Returns
+        -------
+        depth_cloud : ``type(cls)``
+            A new 3D TriMesh with unit XY coordinates and the given depth
+            values as Z coordinates. The trilist is constructed as in
+            :meth:`init_2d_grid`.
+        """
+        from menpo.image import MaskedImage
+
+        new_tmesh = cls.init_2d_grid(depth_image.shape, colours=colours)
+        if isinstance(depth_image, MaskedImage):
+            new_tmesh = new_tmesh.from_mask(depth_image.mask.as_vector())
+        return cls(np.hstack([new_tmesh.points,
+                              depth_image.as_vector(keep_channels=True).T]),
+                   colours=new_tmesh.colours,
+                   trilist=new_tmesh.trilist,
+                   copy=False)
 
     def from_mask(self, mask):
         """
