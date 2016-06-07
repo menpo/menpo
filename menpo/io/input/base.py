@@ -262,7 +262,7 @@ def import_image(filepath, landmark_resolver=same_name, normalize=None,
 
 
 def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
-                 normalise=None, importer_method='ffmpeg'):
+                 normalise=None, importer_method='ffmpeg', exact_frame_count=True):
     r"""Single video (and associated landmarks) importer.
 
     If a video file is found at `filepath`, returns an :map:`LazyList` wrapping
@@ -273,12 +273,14 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
 
     .. warning::
 
-        This method currently uses imageio to perform the importing in
-        conjunction with the ffmpeg plugin. As of this release, and the release
-        of imageio at the time of writing (1.5.0), the per-frame computation
-        is not very accurate. This may cause errors when importing frames
-        that do not actually map to valid timestamps within the image.
-        Therefore, use this method at your own risk.
+        This method currently uses ffmpeg to perform the importing. In order
+        to recover accurate frame counts from videos it is necessary to use
+        ffprobe to count the frames. This involves reading the entire
+        video in to memory which may cause a delay in loading despite the lazy
+        nature of the video loading within Menpo. 
+        If ffprobe cannot be found, and `exact_frame_count` is ``False``,
+        Menpo falls back to ffmpeg itself which is not accurate and the user
+        should proceed at their own risk.
 
     Parameters
     ----------
@@ -303,6 +305,9 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
     importer_method : {'ffmpeg'}, optional
         A string representing the type of importer to use, by default ffmpeg
         is used.
+    exact_frame_count: `bool`, optional
+        If True, the import fails if ffmprobe is not available
+        (reading from ffmpeg's output returns inexact frame count)
 
     Returns
     -------
@@ -319,7 +324,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
     """
     normalize = _parse_deprecated_normalise(normalise, normalize)
 
-    kwargs = {'normalize': normalize}
+    kwargs = {'normalize': normalize, 'exact_frame_count':exact_frame_count}
 
     video_importer_methods = {'ffmpeg': ffmpeg_video_types}
     if importer_method not in video_importer_methods:
@@ -465,7 +470,7 @@ def import_images(pattern, max_images=None, shuffle=False,
 def import_videos(pattern, max_videos=None, shuffle=False,
                   landmark_resolver=same_name_video, normalize=None,
                   normalise=None, importer_method='ffmpeg',
-                  as_generator=False, verbose=False):
+                  exact_frame_count=True, as_generator=False, verbose=False):
     r"""Multiple video (and associated landmarks) importer.
 
     For each video found yields a :map:`LazyList`. By default, landmark files
@@ -480,12 +485,14 @@ def import_videos(pattern, max_videos=None, shuffle=False,
 
     .. warning::
 
-        This method currently uses imageio to perform the importing in
-        conjunction with the ffmpeg plugin. As of this release, and the release
-        of imageio at the time of writing (1.5.0), the per-frame computation
-        is not very accurate. This may cause errors when importing frames
-        that do not actually map to valid timestamps within the image.
-        Therefore, use this method at your own risk.
+        This method currently uses ffmpeg to perform the importing. In order
+        to recover accurate frame counts from videos it is necessary to use
+        ffprobe to count the frames. This involves reading the entire
+        video in to memory which may cause a delay in loading despite the lazy
+        nature of the video loading within Menpo. 
+        If ffprobe cannot be found, and `exact_frame_count` is ``False``,
+        Menpo falls back to ffmpeg itself which is not accurate and the user
+        should proceed at their own risk.
 
     Parameters
     ----------
@@ -522,6 +529,9 @@ def import_videos(pattern, max_videos=None, shuffle=False,
     as_generator : `bool`, optional
         If ``True``, the function returns a generator and assets will be yielded
         one after another when the generator is iterated over.
+    exact_frame_count: `bool`, optional
+        If True, the import fails if ffmprobe is not available
+        (reading from ffmpeg's output returns inexact frame count)
     verbose : `bool`, optional
         If ``True`` progress of the importing will be dynamically reported with
         a progress bar.
@@ -551,7 +561,7 @@ def import_videos(pattern, max_videos=None, shuffle=False,
     """
     normalize = _parse_deprecated_normalise(normalise, normalize)
 
-    kwargs = {'normalize': normalize}
+    kwargs = {'normalize': normalize, 'exact_frame_count':exact_frame_count}
     video_importer_methods = {'ffmpeg': ffmpeg_video_types}
     if importer_method not in video_importer_methods:
         raise ValueError('Unsupported importer method requested. Valid values '
@@ -741,6 +751,7 @@ def _import_lazylist_attach_landmarks(built_objects, landmark_resolver,
 
             new_ll = LazyList([partial(wrap_landmarks, c, i)
                                for i, c in enumerate(x._callables)])
+            new_ll.path = x.path
             built_objects[k] = new_ll
 
 

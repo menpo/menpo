@@ -85,7 +85,7 @@ def test_warp_to_shape_boolean_preserves_path():
 
 def test_init_from_rolled_channels():
     p = np.empty([50, 60, 3])
-    im = Image.init_from_rolled_channels(p)
+    im = Image.init_from_channels_at_back(p)
     assert im.n_channels == 3
     assert im.height == 50
     assert im.width == 60

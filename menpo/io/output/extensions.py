@@ -1,6 +1,8 @@
+from functools import partial
+
 from .landmark import ljson_exporter, pts_exporter
 from .image import pil_exporter
-from .video import imageio_video_exporter, image_gif_exporter
+from .video import ffmpeg_video_exporter
 from .pickle import pickle_exporter
 
 
@@ -42,12 +44,12 @@ pickle_types = {
 
 
 video_types = {
-    '.mov': imageio_video_exporter,
-    '.avi': imageio_video_exporter,
-    '.mpg': imageio_video_exporter,
-    '.mpeg': imageio_video_exporter,
-    '.mp4': imageio_video_exporter,
-    '.mkv': imageio_video_exporter,
-    '.wmv': imageio_video_exporter,
-    '.gif': image_gif_exporter
+    '.mov': ffmpeg_video_exporter,
+    '.avi': ffmpeg_video_exporter,
+    '.mpg': ffmpeg_video_exporter,
+    '.mpeg': ffmpeg_video_exporter,
+    '.mp4': ffmpeg_video_exporter,
+    '.mkv': ffmpeg_video_exporter,
+    '.wmv': ffmpeg_video_exporter,
+    '.gif': partial(ffmpeg_video_exporter, codec=None)
 }

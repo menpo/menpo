@@ -85,7 +85,7 @@ def _rasterize_matplotlib(image, pclouds, render_lines=True, line_style='-',
     # Prevent matplotlib from rendering
     plt.close(f)
     # Ignore the Alpha channel
-    return Image.init_from_rolled_channels(pixels_buffer[..., :3])
+    return Image.init_from_channels_at_back(pixels_buffer[..., :3])
 
 
 def _parse_colour(x):
@@ -155,7 +155,7 @@ def _rasterize_pillow(image, pclouds, render_lines=True, line_style='-',
 
     pixels = np.asarray(pil_im)
     if image.n_channels == 3:
-        return Image.init_from_rolled_channels(pixels)
+        return Image.init_from_channels_at_back(pixels)
     else:
         return Image(pixels)
 
