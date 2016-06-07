@@ -48,7 +48,7 @@ def ffmpeg_importer(filepath, normalize=True, exact_frame_count=False, **kwargs)
         of the video.
     """
     reader = FFMpegVideoReader(filepath, normalize=normalize, exact_frame_count=exact_frame_count)
-    ll = LazyList.init_from_index_callable(reader.__getitem__, len(reader))
+    ll = LazyList.init_from_index_callable(lambda x: Image.init_from_channels_at_back(reader[x]), len(reader))
     ll.fps = reader.fps
 
     return ll
@@ -208,14 +208,13 @@ class FFMpegVideoReader(object):
         raw_data = self._pipe.stdout.read(self.height*self.width*3)
         frame = np.fromstring(raw_data, dtype=np.uint8)
         frame = frame.reshape((self.height, self.width, 3))
-        frame = channels_to_front(frame)
         self._pipe.stdout.flush()
         self.index += 1
 
         if self.normalize:
             frame = normalize_pixels_range(frame)
 
-        return Image(frame, copy=False)
+        return frame
 
 
 def video_infos_ffmpeg(filepath):
