@@ -240,8 +240,8 @@ class ImageViewer(object):
 
     def _flip_image_channels(self):
         if self.pixels.ndim == 3:
-            from menpo.image.base import roll_channels
-            self.pixels = roll_channels(self.pixels)
+            from menpo.image.base import channels_to_back
+            self.pixels = channels_to_back(self.pixels)
 
     def _parse_channels(self, channels, pixels):
         r"""

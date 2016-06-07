@@ -167,7 +167,7 @@ def denormalize_pixels_range(pixels, out_dtype):
     return (pixels * max_range).astype(out_dtype)
 
 
-def roll_channels(pixels):
+def channels_to_back(pixels):
     r"""
     Roll the channels from the front to the back for an image. If the image
     that is passed is already a numpy array, then that is also fine.
@@ -2476,7 +2476,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if self.n_channels == 1:
             pixels = self.pixels[0]
         else:
-            pixels = roll_channels(self.pixels)
+            pixels = channels_to_back(self.pixels)
         pixels = denormalize_pixels_range(pixels, out_dtype)
         return PILImage.fromarray(pixels)
 
@@ -2526,7 +2526,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if self.n_channels == 1:
             pixels = self.pixels[0]
         else:
-            pixels = roll_channels(self.pixels)
+            pixels = channels_to_back(self.pixels)
         return denormalize_pixels_range(pixels, out_dtype)
 
     def pixels_range(self):
@@ -2570,7 +2570,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Pixels with channels as the back (last) axis. If single channel,
             the last axis will be dropped.
         """
-        p = roll_channels(self.pixels)
+        p = channels_to_back(self.pixels)
         if out_dtype is not None:
             p = denormalize_pixels_range(p, out_dtype=out_dtype)
         return np.squeeze(p)
