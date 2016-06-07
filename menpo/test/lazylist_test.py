@@ -57,6 +57,13 @@ def test_lazylist_multi_map_iterable_and_callable():
     assert 1
 
 
+def test_lazylist_repeat():
+    ll = LazyList.init_from_iterable([0, 1])
+    ll_repeated = ll.repeat(2)
+    assert len(ll_repeated) == 4
+    assert all([a == b for a, b in zip([0, 0, 1, 1], ll_repeated)])
+
+
 def test_lazylist_map():
     two_func = lambda: 2
     double_func = lambda x: x * 2

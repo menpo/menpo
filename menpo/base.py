@@ -1,4 +1,5 @@
 import collections
+from itertools import chain
 from functools import partial, wraps
 import os.path
 import warnings
@@ -553,6 +554,32 @@ class LazyList(collections.Sequence):
         else:
             return self.__class__([partial(delayed, f, x)
                                    for x in self._callables])
+
+    def repeat(self, n):
+        r"""
+        Repeat each item of the underlying LazyList ``n`` times. Therefore,
+        if a list currently has ``D`` items, the returned list will contain
+        ``D * n`` items and will return immediately (method is lazy).
+
+        Parameters
+        ----------
+        n : `int`
+            The number of times to repeat each item.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A LazyList where each element returns each item of the provided
+            iterable, optionally with `f` applied to it.
+
+        Examples
+        --------
+        >>> from menpo.base import LazyList
+        >>> ll = LazyList.init_from_list([0, 1])
+        >>> repeated_ll = ll.repeat(2)  # Returns immediately
+        >>> items = list(repeated_ll)   # [0, 0, 1, 1]
+        """
+        return self.__class__(list(chain(*zip(*[self._callables] * n))))
 
     def __add__(self, other):
         r"""
