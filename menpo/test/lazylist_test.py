@@ -1,3 +1,5 @@
+import collections
+
 from mock import Mock
 from nose.tools import raises
 
@@ -19,6 +21,40 @@ def test_lazylist_multiple_calls():
     ll[0]
     ll[0]
     assert mock_func.call_count == 2
+
+
+def test_lazylist_multi_map():
+    two_func = lambda: 2
+    double_func = [lambda x: x * 2] * 2
+    ll = LazyList([two_func] * 2)
+    ll_mapped = ll.map(double_func)
+    assert len(ll_mapped) == 2
+    assert id(ll) != id(ll_mapped)
+    assert all(x == 4 for x in ll_mapped)
+
+
+@raises(ValueError)
+def test_lazylist_multi_map_unequal_lengths():
+    two_func = lambda: 2
+    double_func = [lambda x: x * 2] * 2
+    ll = LazyList([two_func])
+    ll.map(double_func)
+
+
+@raises(ValueError)
+def test_lazylist_multi_map_iterable_and_callable():
+    class double_func(collections.Iterable):
+        def __call__(self, x, **kwargs):
+            return x * 2
+
+        def __iter__(self):
+            yield 1
+
+    f = double_func()
+    two_func = lambda: 2
+    ll = LazyList([two_func])
+    ll.map(f)
+    assert 1
 
 
 def test_lazylist_map():

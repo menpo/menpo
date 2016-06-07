@@ -520,21 +520,39 @@ class LazyList(collections.Sequence):
         mapping is lazy and thus calling this function should return
         immediately.
 
+        Alternatively, ``f`` may be a list of `callable`, one per entry
+        in the underlying list, with the same specification as above.
+
         Parameters
         ----------
-        f : `callable`
-            Callable to wrap each element with.
+        f : `callable` or `iterable` of `callable`
+            Callable to wrap each element with. If an iterable of callables
+            (think list) is passed then it **must** by the same length as
+            this LazyList.
 
         Returns
         -------
         lazy : `LazyList`
-            A new LazyList where each element is wrapped by ``f``.
+            A new LazyList where each element is wrapped by (each) ``f``.
         """
         # We need this delayed helper function in order to ensure that f
         # is passed the actual instantiated object and not the callable itself.
-        def delayed(x2):
-            return f(x2())
-        return self.__class__([partial(delayed, x) for x in self._callables])
+        def delayed(delay_f, delay_x):
+            return delay_f(delay_x())
+
+        if isinstance(f, collections.Iterable) and callable(f):
+            raise ValueError('It is ambiguous whether the provided argument '
+                             'is an iterable object or a callable.')
+
+        if isinstance(f, collections.Iterable):
+            if len(f) != len(self):
+                raise ValueError('A callable per element of the LazyList must '
+                                 'be passed.')
+            return self.__class__([partial(delayed, one_f, x)
+                                   for one_f, x in zip(f, self._callables)])
+        else:
+            return self.__class__([partial(delayed, f, x)
+                                   for x in self._callables])
 
     def __add__(self, other):
         r"""
