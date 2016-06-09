@@ -496,7 +496,7 @@ class LazyList(collections.Sequence, Copyable):
 
         Parameters
         ----------
-        iterable : `iterable`
+        iterable : `collections.Iterable`
             An iterable object such as a `list`.
         f : `callable`, optional
             Callable expecting a single parameter.
@@ -571,15 +571,16 @@ class LazyList(collections.Sequence, Copyable):
             raise ValueError('It is ambiguous whether the provided argument '
                              'is an iterable object or a callable.')
 
+        new = self.copy()
         if isinstance(f, collections.Iterable):
-            if len(f) != len(self):
+            if len(f) != len(new):
                 raise ValueError('A callable per element of the LazyList must '
                                  'be passed.')
-            return self.__class__([partial(delayed, one_f, x)
-                                   for one_f, x in zip(f, self._callables)])
+            new._callables = [partial(delayed, one_f, x)
+                              for one_f, x in zip(f, new._callables)]
         else:
-            return self.__class__([partial(delayed, f, x)
-                                   for x in self._callables])
+            new._callables = [partial(delayed, f, x) for x in new._callables]
+        return new
 
     def repeat(self, n):
         r"""
@@ -605,7 +606,9 @@ class LazyList(collections.Sequence, Copyable):
         >>> repeated_ll = ll.repeat(2)  # Returns immediately
         >>> items = list(repeated_ll)   # [0, 0, 1, 1]
         """
-        return self.__class__(list(chain(*zip(*[self._callables] * n))))
+        new = self.copy()
+        new._callables = list(chain(*zip(*[new._callables] * n)))
+        return new
 
     def copy(self):
         r"""
@@ -618,7 +621,7 @@ class LazyList(collections.Sequence, Copyable):
         ``type(self)``
             A copy of this LazyList.
         """
-        new = super(LazyList, self).copy()
+        new = Copyable.copy(self)
         new._callables = list(self._callables)
         return new
 
@@ -643,15 +646,15 @@ class LazyList(collections.Sequence, Copyable):
             A new LazyList formed of the concatenation of this list and
             the ``other`` list.
         """
+        new = self.copy()
         # If the passed Sequence was not lazy then fake it being lazy by
         # wrapping it in a function that just returns the value.
         if not isinstance(other, LazyList):
-            def empty_f(a):
-                return a
-            new_callables = [partial(empty_f, x) for x in other]
+            new_callables = LazyList.init_from_iterable(other)._callables
         else:
-            new_callables = list(other._callables)
-        return self.__class__(list(self._callables) + new_callables)
+            new_callables = other._callables
+        new._callables = new._callables + new_callables
+        return new
 
 
 def partial_doc(func, *args, **kwargs):
