@@ -330,11 +330,13 @@ def test_importing_PIL_P_no_normalize(is_file, mock_image):
 def test_importing_ffmpeg_GIF_normalize(is_file, video_infos_ffprobe, pipe):
     video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
                                         'height': 150, 'n_frames': 10, 'fps': 5}
-    pipe.return_value.stdout.read.return_value = np.ones(150 * 100 * 3,
-                                                         dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
     ll = mio.import_image('fake_image_being_mocked.gif', normalize=True)
+    assert ll.path.name == 'fake_image_being_mocked.gif'
+    assert ll.fps == 5
     assert len(ll) == 10
 
     im = ll[0]
@@ -349,11 +351,13 @@ def test_importing_ffmpeg_GIF_normalize(is_file, video_infos_ffprobe, pipe):
 def test_importing_ffmpeg_GIF_no_normalize(is_file, video_infos_ffprobe, pipe):
     video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
                                         'height': 150, 'n_frames': 10, 'fps': 5}
-    pipe.return_value.stdout.read.return_value = np.ones(150 * 100 * 3,
-                                                         dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
     ll = mio.import_image('fake_image_being_mocked.gif', normalize=False)
+    assert ll.path.name == 'fake_image_being_mocked.gif'
+    assert ll.fps == 5
     assert len(ll) == 10
 
     im = ll[0]
@@ -494,10 +498,14 @@ def test_importing_pickles_as_generator(is_file, glob, mock_open, mock_pickle):
 @patch('menpo.io.input.video.video_infos_ffprobe')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_ffmpeg_avi_no_normalize(is_file, video_infos_ffprobe, pipe):
-    video_infos_ffprobe.return_value = {'duration': 2, 'width': 100, 'height': 150, 'n_frames': 10, 'fps': 5}
+    video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
+                                        'height': 150, 'n_frames': 10, 'fps': 5}
     is_file.return_value = True
-    pipe.return_value.stdout.read.return_value = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video('fake_image_being_mocked.avi', normalize=False)
+    assert ll.path.name == 'fake_image_being_mocked.avi'
+    assert ll.fps == 5
     assert len(ll) == 5*2
     image = ll[0]
     assert image.shape == ((150, 100))
@@ -509,13 +517,17 @@ def test_importing_ffmpeg_avi_no_normalize(is_file, video_infos_ffprobe, pipe):
 @patch('menpo.io.input.video.video_infos_ffprobe')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_ffmpeg_avi_normalize(is_file, video_infos_ffprobe, pipe):
-    video_infos_ffprobe.return_value = {'duration': 2, 'width': 100, 'height': 150, 'n_frames': 10, 'fps': 5}
+    video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
+                                        'height': 150, 'n_frames': 10, 'fps': 5}
     is_file.return_value = True
-    pipe.return_value.stdout.read.return_value = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video('fake_image_being_mocked.avi', normalize=True)
+    assert ll.path.name == 'fake_image_being_mocked.avi'
+    assert ll.fps == 5
     assert len(ll) == 5*2
     image = ll[0]
-    assert image.shape == ((150, 100))
+    assert image.shape == (150, 100)
     assert image.n_channels == 3
     assert image.pixels.dtype == np.float
 
