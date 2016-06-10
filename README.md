@@ -29,29 +29,29 @@ What is Menpo?
 Menpo was designed from the ground up to make importing, manipulating and
 visualizing image and mesh data as simple as possible. In particular,
 we focus on **annotated** data which is common within the fields of Machine
-Learning and Computer Vision. All core types are `Landmarkable` and 
+Learning and Computer Vision. All core types are `Landmarkable` and
 visualizing these landmarks is very simple. Since landmarks are first class
 citizens within Menpo, it makes tasks like masking images, cropping images
 inside landmarks and aligning images very simple.
 
-> Menpo were facial armours which covered all or part of the face and provided 
-> a way to secure the top-heavy kabuto (helmet). The Shinobi-no-o (chin cord) 
-> of the kabuto would be tied under the chin of the menpo. There were small 
-> hooks called ori-kugi or posts called odome located on various places to 
+> Menpo were facial armours which covered all or part of the face and provided
+> a way to secure the top-heavy kabuto (helmet). The Shinobi-no-o (chin cord)
+> of the kabuto would be tied under the chin of the menpo. There were small
+> hooks called ori-kugi or posts called odome located on various places to
 > help secure the kabuto's chin cord.
 >
 > --- Wikipedia, Menpo
 
 Installation
 ------------
-Here in the Menpo team, we are firm believers in making installation as simple 
-as possible. Unfortunately, we are a complex project that relies on satisfying 
-a number of complex 3rd party library dependencies. The default Python packing 
-environment does not make this an easy task. Therefore, we evangelise the use 
-of the conda ecosystem, provided by 
-[Anaconda](https://store.continuum.io/cshop/anaconda/). In order to make things 
-as simple as possible, we suggest that you use conda too! To try and persuade 
-you, go to the [Menpo website](http://www.menpo.io/installation/) to find 
+Here in the Menpo team, we are firm believers in making installation as simple
+as possible. Unfortunately, we are a complex project that relies on satisfying
+a number of complex 3rd party library dependencies. The default Python packing
+environment does not make this an easy task. Therefore, we evangelise the use
+of the conda ecosystem, provided by
+[Anaconda](https://store.continuum.io/cshop/anaconda/). In order to make things
+as simple as possible, we suggest that you use conda too! To try and persuade
+you, go to the [Menpo website](http://www.menpo.io/installation/) to find
 installation instructions for all major platforms.
 
 If you feel strongly about using Menpo with the most commonly used Python
@@ -77,34 +77,32 @@ for that matter). Installation via `conda` is as simple as
 And has the added benefit of installing a number of commonly used scientific
 packages such as SciPy and Numpy as Menpo also makes use of these packages.
 
-|  CI Host |                 OS                |                      Build Status                     |
-|:--------:|:---------------------------------:|:-----------------------------------------------------:|
-| Travis   | Ubuntu 12.04 (x64)                | [![Travis Build Status][travis_shield]][travis]       |
-| Jenkins  | OSX 10.10 (x64)                   | [![Jenkins Build Status][jenkins_shield]][jenkins]    |
-| Appveyor | Windows Server 2012 R2 (x86, x64) | [![Appveyor Build Status][appveyor_shield]][appveyor] |
+|  CI Host |                     OS                    |                      Build Status                     |
+|:--------:|:-----------------------------------------:|:-----------------------------------------------------:|
+| Travis   | Ubuntu 12.04 (x64)                        | [![Travis Build Status][travis_shield]][travis]       |
+| Jenkins  | OSX 10.10 (x64) and Windows 10 (x86, x64) | [![Jenkins Build Status][jenkins_shield]][jenkins]    |
+
 
 [travis]: https://travis-ci.org/menpo/menpo
 [travis_shield]: http://img.shields.io/travis/menpo/menpo.svg?style=flat
-[appveyor]: https://ci.appveyor.com/project/jabooth/menpo
-[appveyor_shield]: https://ci.appveyor.com/api/projects/status/github/menpo/menpo?svg=true
 [jenkins]: http://jenkins.menpo.org/view/menpo/job/menpo
 [jenkins_shield]: http://jenkins.menpo.org/buildStatus/icon?job=menpo
 
 Usage
 -----
-Menpo makes extensive use of Jupyter Notebooks to explain functionality of the 
-package. These Notebooks are hosted in the 
-[menpo/menpo-notebooks](https://github.com/menpo/menpo-notebooks) repository. 
+Menpo makes extensive use of Jupyter Notebooks to explain functionality of the
+package. These Notebooks are hosted in the
+[menpo/menpo-notebooks](https://github.com/menpo/menpo-notebooks) repository.
 We strongly suggest that after installation you:
 
   1. Download the [latest version of the notebooks][notebooks_gh]
   2. Conda install Jupyter notebook and IPython: `conda install jupyter ipython notebook`
   3. Run `jupyter notebook`
   4. Play around with the notebooks.
-  
+
 [notebooks_gh]: https://github.com/menpo/menpo-notebooks/releases
 
-Want to get a feel for Menpo without installing anything? You can browse the 
+Want to get a feel for Menpo without installing anything? You can browse the
 notebooks straight from the [menpo website](http://www.menpo.io/notebooks.html).
 
 Other Menpo projects
@@ -119,16 +117,16 @@ a number of more specific libraries that rely on the core components of Menpo:
   - [menpo3d][m3d_gh]: Useful tools for handling 3D mesh data including
     visualization and an OpenGL rasterizer. The requirements of this package
     are complex and really benefit from the use of conda!
-  - [menpodetect][md_gh]: A package that wraps existing sources of object 
-    detection. The core project is under a BSD license, but since other projects 
-    are wrapped, they may not be compatible with this BSD license. Therefore, 
-    we urge caution be taken when interacting with this library for 
+  - [menpodetect][md_gh]: A package that wraps existing sources of object
+    detection. The core project is under a BSD license, but since other projects
+    are wrapped, they may not be compatible with this BSD license. Therefore,
+    we urge caution be taken when interacting with this library for
     non-academic purposes.
   - [menpowidgets][mw_gh]: This package provides high level object
     viewing classes using Matplotlib and Jupyter. Jupyter notebooks
     are therefore required to this package - and Menpo also
     implicitly relies on menpowidgets for any widget functionality.
-  
+
 [mf_gh]: https://github.com/menpo/menpofit
 [m3d_gh]: https://github.com/menpo/menpo3d
 [md_gh]: https://github.com/menpo/menpodetect
@@ -140,7 +138,7 @@ See our documentation on [ReadTheDocs](http://menpo.readthedocs.org)
 
 Testing
 -------
-We use [nose](https://nose.readthedocs.org/en/latest/) for unit tests. 
+We use [nose](https://nose.readthedocs.org/en/latest/) for unit tests.
 
 After installing `nose` and `mock`, running
 
