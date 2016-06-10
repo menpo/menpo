@@ -734,24 +734,25 @@ def _import_lazylist_attach_landmarks(built_objects, landmark_resolver,
                                       landmark_ext_map=None):
     # handle landmarks
     if landmark_ext_map is not None:
-        for k in range(len(built_objects)):
-            x = built_objects[k]
-            # Use the users function to find landmarks
-            lm_paths = partial(landmark_resolver, x.path)
+        for k, x in enumerate(built_objects):
+            # Use the users function to find landmarks - builds a list
+            # of functions that we will map against the frames in order to
+            # attach a landmark per frame.
+            lm_resolvers = [partial(landmark_resolver, x.path, i)
+                            for i in range(len(x))]
 
-            # Do a little trick where we compose the landmark resolution onto
-            # the lazy list indexing - after the item has been indexed.
-            def wrap_landmarks(f, index):
-                obj = f()
-                for group_name, lm_path in lm_paths(index).items():
+            def wrap_landmarks(lm_resolver, obj):
+                lm_paths = lm_resolver()
+                for group_name, lm_path in lm_paths.items():
                     lms = _import(lm_path, landmark_ext_map, asset=obj)
                     if obj.n_dims == lms.n_dims:
                         obj.landmarks[group_name] = lms
                 return obj
 
-            new_ll = LazyList([partial(wrap_landmarks, c, i)
-                               for i, c in enumerate(x._callables)])
-            new_ll.path = x.path
+            # Provide the lm_resolver for each wrap_landmarks function and then
+            # lazily map against the underlying importers.
+            new_ll = x.map([partial(wrap_landmarks, lmr)
+                            for lmr in lm_resolvers])
             built_objects[k] = new_ll
 
 
