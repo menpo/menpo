@@ -1352,15 +1352,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             constrain_to_boundary=constrain_to_boundary,
             return_transform=return_transform)
 
-    def _propagate_crop_to_inplace(self, cropped):
-        # helper method that sets self's state to the result of a crop call.
-        # only needed for the deprecation period of the inplace crop methods.
-        self.pixels = cropped.pixels
-        self.landmarks = cropped.landmarks
-        if hasattr(self, 'mask'):
-            self.mask = cropped.mask
-        return self
-
     def constrain_points_to_bounds(self, points):
         r"""
         Constrains the points provided to be within the bounds of this image.
@@ -2600,7 +2591,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         method. For example:
 
             >>> im.constrain_landmarks_to_bounds()  # Equivalent to below
-            >>> im.landmarks['test'] = im.landmarks['test'].lms.constrain_to_bounds(im.bounds)
+            >>> im.landmarks['test'] = im.landmarks['test'].lms.constrain_to_bounds(im.bounds())
         """
         warn('This method is no longer supported and will be removed in a '
              'future version of Menpo. '
