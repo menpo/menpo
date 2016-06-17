@@ -49,11 +49,12 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
     # and is used under the terms of the MIT license which can be found at
     #   https://github.com/Zulko/moviepy/blob/master/LICENCE.txt
     first_image = images[0]
+    colour = 'rgb24' if images[0].n_channels == 3 else 'gray'
     cmd = [_FFMPEG_CMD(), '-y',
            '-s', '{}x{}'.format(first_image.shape[1], first_image.shape[0]),
            '-r', str(fps),
            '-an',
-           '-pix_fmt', 'rgb24',
+           '-pix_fmt', colour,
            '-c:v', 'rawvideo', '-f', 'rawvideo',
            '-i', '-']
     if codec:
