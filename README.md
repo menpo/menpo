@@ -1,11 +1,16 @@
-[![Coverage Status][coveralls_shield]][coveralls]
-[![PyPI Release][pypi_shield]][pypi]
-[![BSD License][bsd_shield]][bsd]
-
-
-![Python 2.7 Support][python27]
-![Python 3.4 Support][python34]
-![Python 3.5 Support][python35]
+<center>
+  <img src="menpo_logo.png" alt="menpo" width="30%">
+  </br>
+  </br>
+  <a href=coveralls><img src=coveralls_shield alt="Coverage Status"/></a>
+  <a href=pypi><img src=pypi_shield alt="PyPI Release"/></a>
+  <a href=bsd><img src=bsd_shield alt="BSD License"/></a>
+  </br>
+  <img src=python27 alt="Python 2.7 Support"/>
+  <img src=python34 alt="Python 3.4 Support"/>
+  <img src=python35 alt="Python 3.5 Support"/>
+  </br>
+</center>
 
 [coveralls]: https://coveralls.io/r/menpo/menpo
 [coveralls_shield]: http://img.shields.io/coveralls/menpo/menpo.svg?style=flat
@@ -22,11 +27,12 @@ IMPORTANT
 Menpo has been designed for academic use. The project changes quickly as
 determined by our research, and this should be kept in mind at all times.
 
-Menpo. A Python toolkit for handling annotated data.
-====================================================
+Menpo. The Menpo Project Python package for handling annotated data.
+====================================================================
 What is Menpo?
 --------------
-Menpo was designed from the ground up to make importing, manipulating and
+Menpo is a [Menpo Project](http://www.menpo.org/) package designed from
+the ground up to make importing, manipulating and
 visualizing image and mesh data as simple as possible. In particular,
 we focus on **annotated** data which is common within the fields of Machine
 Learning and Computer Vision. All core types are `Landmarkable` and
@@ -44,7 +50,7 @@ inside landmarks and aligning images very simple.
 
 Installation
 ------------
-Here in the Menpo team, we are firm believers in making installation as simple
+Here in the Menpo Team, we are firm believers in making installation as simple
 as possible. Unfortunately, we are a complex project that relies on satisfying
 a number of complex 3rd party library dependencies. The default Python packing
 environment does not make this an easy task. Therefore, we evangelise the use
