@@ -2909,8 +2909,6 @@ def _mask_adjacency_matrix_and_points(mask, adjacency_matrix, points):
     # Remove rows and columns from adjacency matrix
     adjacency_matrix = adjacency_matrix[indices_to_keep, :]
     adjacency_matrix = adjacency_matrix[:, indices_to_keep]
-    if adjacency_matrix.size == 0:
-        raise ValueError('The provided mask deletes all edges.')
     # remove rows from points
     points = points[mask, :]
     return adjacency_matrix, points
