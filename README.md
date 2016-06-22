@@ -1,16 +1,16 @@
-<div style="text-align:center">
-  <img src="menpo-logo.png" alt="menpo" width="30%">
-  </br>
-  </br>
+
+<p align="center">
+  <img src="menpo-logo.png" alt="menpo" width="30%"></center>
+  <br><br>
   <a href="https://coveralls.io/r/menpo/menpo"><img src="http://img.shields.io/coveralls/menpo/menpo.svg?style=flat" alt="Coverage Status"/></a>
   <a href="https://pypi.python.org/pypi/menpo"><img src="http://img.shields.io/pypi/v/menpo.svg?style=flat" alt="PyPI Release"/></a>
   <a href="https://github.com/menpo/menpo/blob/master/LICENSE.txt"><img src="http://img.shields.io/badge/License-BSD-green.svg" alt="BSD License"/></a>
-  </br>
+  <br>
   <img src="https://img.shields.io/badge/Python-2.7-green.svg" alt="Python 2.7 Support"/>
   <img src="https://img.shields.io/badge/Python-3.4-green.svg" alt="Python 3.4 Support"/>
   <img src="https://img.shields.io/badge/Python-3.5-green.svg" alt="Python 3.5 Support"/>
-  </br>
-</div>
+</p>
+
 
 IMPORTANT
 =========
