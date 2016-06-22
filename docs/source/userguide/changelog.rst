@@ -1,6 +1,69 @@
 Changelog
 #########
 
+0.7.2 (2016/06/22)
+------------------
+Minor fixes including allowing exporting grayscale videos and fixing a minor
+bug in ``PointGraph`` masking. The Menpo logo has also been updated.
+
+Github Pull Requests
+....................
+
+- `#709`_ Minor change in documentation of pickle, contrain_landmarks in image. (@grigorisg9gr)
+- `#713`_ Remove zero edge adjacency check. (@patricksnape)
+- `#711`_ Enable greyscale video to be exported. (@grigorisg9gr,@patricksnape)
+
+.. _#709: https://github.com/menpo/menpo/pull/709
+.. _#713: https://github.com/menpo/menpo/pull/713
+.. _#711: https://github.com/menpo/menpo/pull/711
+
+0.7.1 (2016/06/10)
+------------------
+We now ship our own FFMPEG video importer based on piping, thus removing the
+dependency on imageio. A couple of further minor improvements were also
+introduced:
+
+  - Added ``register_*`` methods to the importing packages to make it simpler to
+    add custom importers. For example, use
+    ``menpo.io.register_image_importer('.extension', your_method)`` to register
+    a new importer.
+  - Fix rasterization bug for maplotlib on Python 3.x
+  - ``normalise`` keyword arguments are now deprecated in favour of
+    ``normalize`` to make spelling consistent across project.
+  - LazyList is now copyable -> ``LazyList.copy``
+  - LazyList ``map`` method now accepts a list of callables as well as a
+    single callable.
+  - Add ``LazyList.init_from_iterable`` for easily creating lazy lists from
+    existing iterables.
+  - Fix small visualisation bug for viewing of LandmarkGroup that contain
+    PointClouds
+  - New ``pixel_with_channels_at_back`` method for images
+  - Deprecate ``init_from_rolled_channels`` in favour of new method
+    ``init_from_channels_at_back``
+  - Deprecate ``as_imageio``
+
+Finally, as of this release we no longer use Appveyor, in favour of our own
+Windows Jenkins build boxes.
+
+Github Pull Requests
+....................
+
+- `#694`_ Functional IO Package. (@patricksnape)
+- `#703`_ Fix the bug with rasterize landmarks with matplotlib backend. (@grigorisg9gr)
+- `#700`_ Standardise the normalize spelling in importers. (@grigorisg9gr)
+- `#702`_ Now reading videos using subprocess and ffmpeg. Drop ImageIO. (@JeanKossaifi,@patricksnape)
+- `#706`_ Autoscale PointCloud if no limits set. (@patricksnape)
+- `#707`_ LazyList init methods and are now Copyable. (@patricksnape)
+- `#708`_ Remove appveyor in favour of Jenkins. (@patricksnape)
+
+.. _#694: https://github.com/menpo/menpo/pull/694
+.. _#703: https://github.com/menpo/menpo/pull/703
+.. _#700: https://github.com/menpo/menpo/pull/700
+.. _#702: https://github.com/menpo/menpo/pull/702
+.. _#706: https://github.com/menpo/menpo/pull/706
+.. _#707: https://github.com/menpo/menpo/pull/707
+.. _#708: https://github.com/menpo/menpo/pull/708
+
 0.7.0 (2016/05/20)
 ------------------
 New release that contains some minor breaking changes. In general, the biggest
