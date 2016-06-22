@@ -1,26 +1,16 @@
-<center>
-  <img src="menpo_logo.png" alt="menpo" width="30%">
+<div style="text-align:center">
+  <img src="menpo-logo.png" alt="menpo" width="30%">
   </br>
   </br>
-  <a href=coveralls><img src=coveralls_shield alt="Coverage Status"/></a>
-  <a href=pypi><img src=pypi_shield alt="PyPI Release"/></a>
-  <a href=bsd><img src=bsd_shield alt="BSD License"/></a>
+  <a href="https://coveralls.io/r/menpo/menpo"><img src="http://img.shields.io/coveralls/menpo/menpo.svg?style=flat" alt="Coverage Status"/></a>
+  <a href="https://pypi.python.org/pypi/menpo"><img src="http://img.shields.io/pypi/v/menpo.svg?style=flat" alt="PyPI Release"/></a>
+  <a href="https://github.com/menpo/menpo/blob/master/LICENSE.txt"><img src="http://img.shields.io/badge/License-BSD-green.svg" alt="BSD License"/></a>
   </br>
-  <img src=python27 alt="Python 2.7 Support"/>
-  <img src=python34 alt="Python 3.4 Support"/>
-  <img src=python35 alt="Python 3.5 Support"/>
+  <img src="https://img.shields.io/badge/Python-2.7-green.svg" alt="Python 2.7 Support"/>
+  <img src="https://img.shields.io/badge/Python-3.4-green.svg" alt="Python 3.4 Support"/>
+  <img src="https://img.shields.io/badge/Python-3.5-green.svg" alt="Python 3.5 Support"/>
   </br>
-</center>
-
-[coveralls]: https://coveralls.io/r/menpo/menpo
-[coveralls_shield]: http://img.shields.io/coveralls/menpo/menpo.svg?style=flat
-[pypi]: https://pypi.python.org/pypi/menpo
-[pypi_shield]: http://img.shields.io/pypi/v/menpo.svg?style=flat
-[bsd]: https://github.com/menpo/menpo/blob/master/LICENSE.txt
-[bsd_shield]: http://img.shields.io/badge/License-BSD-green.svg
-[python27]: https://img.shields.io/badge/Python-2.7-green.svg
-[python34]: https://img.shields.io/badge/Python-3.4-green.svg
-[python35]: https://img.shields.io/badge/Python-3.5-green.svg
+</div>
 
 IMPORTANT
 =========
