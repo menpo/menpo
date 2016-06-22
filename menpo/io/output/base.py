@@ -94,9 +94,11 @@ def export_image(image, fp, extension=None, overwrite=False):
 
 def export_video(images, filepath, overwrite=False, fps=30, **kwargs):
     r"""
-    Exports a given list of images as a video. The ``filepath`` argument is
-    a `Path` representing the path to save the video to. At this time,
-    it is not possible to export videos directly to a file buffer.
+    Exports a given list of images as a video. Ensure that all the images
+    have the same shape, otherwise you might get unexpected results from
+    the ffmpeg writer. The ``filepath`` argument is a `Path` representing
+    the path to save the video to. At this time, it is not possible
+    to export videos directly to a file buffer.
 
     Due to the mix of string and file types, an explicit overwrite argument is
     used which is ``False`` by default.
