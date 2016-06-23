@@ -12,11 +12,6 @@
 </p>
 
 
-IMPORTANT
-=========
-Menpo has been designed for academic use. The project changes quickly as
-determined by our research, and this should be kept in mind at all times.
-
 Menpo. The Menpo Project Python package for handling annotated data.
 ====================================================================
 What is Menpo?
