@@ -318,6 +318,16 @@ def test_export_video_gif(exists, pipe):
     assert pipe.return_value.stdin.write.call_count == 2
 
 
+@patch('subprocess.Popen')
+@patch('menpo.io.output.base.Path.exists')
+def test_export_video_avi_kwargs(exists, pipe):
+    exists.return_value = False
+    fake_path = Path('/fake/fake.avi')
+    mio.export_video([test_img, test_img], fake_path, extension='avi', **{'crf' : '0'})
+    assert pipe.return_value.stdin.write.call_count == 2
+    assert '-crf' in pipe.call_args[0][0]
+
+
 @patch('menpo.io.output.pickle.pickle.dump')
 @patch('menpo.io.output.base.Path.exists')
 @patch('{}.open'.format(__name__), create=True)
