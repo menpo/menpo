@@ -51,7 +51,7 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
         Extra parameters for advanced video exporting options.
         They are passed through directly to FFMPEG and they should.
         be organised in pairs of option/value in a dictionary.
-        For instance: {'crf' : '0'} # equivalent to -crf 0 in ffmpeg.
+        For instance: ``{'crf' : '0'} # equivalent to -crf 0 in ffmpeg.``
         You can find further details in the documentation:
         https://ffmpeg.org/ffmpeg.html#Options
     """
