@@ -94,9 +94,11 @@ class FFMpegVideoReader(object):
             try:
                 infos = video_infos_ffprobe(self.filepath)
             except:
-                raise ValueError('ffprobe not available, unable to get exact frame count.'
-                                 ' If you want to use an approximate frame number, set exact_frame_count to False'
-                                 ' and proceed at your own risks.')
+                raise ValueError('ffprobe not available, unable to get exact '
+                                 'frame count. If you want to use an '
+                                 'approximate frame number, set exact_frame_'
+                                 'count to False and proceed at your own '
+                                 'risk.')
         else:
             infos = video_infos_ffmpeg(self.filepath)
         self.duration = infos['duration']
