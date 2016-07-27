@@ -16,7 +16,7 @@ _FFMPEG_CMD = lambda: str(Path(os.environ.get('MENPO_FFMPEG_CMD', 'ffmpeg')))
 _FFPROBE_CMD = lambda: str(Path(os.environ.get('MENPO_FFPROBE_CMD', 'ffprobe')))
 
 
-def ffmpeg_importer(filepath, normalize=True, exact_frame_count=False, **kwargs):
+def ffmpeg_importer(filepath, normalize=True, exact_frame_count=True, **kwargs):
     r"""
     Imports videos by streaming frames from a pipe using FFMPEG. Returns a
     :map:`LazyList` that gives lazy access to the video on a per-frame basis.
@@ -38,6 +38,9 @@ def ffmpeg_importer(filepath, normalize=True, exact_frame_count=False, **kwargs)
     normalize : `bool`, optional
         If ``True``, normalize between 0.0 and 1.0 and convert to float. If
         ``False`` just return whatever ffmpeg imports.
+    exact_frame_count: `bool`, optional
+        If ``True``, the import fails if ffprobe is not available
+        (reading from ffmpeg's output returns inexact frame count)
     \**kwargs : `dict`, optional
         Any other keyword arguments.
 
