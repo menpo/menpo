@@ -5,7 +5,7 @@ from warnings import warn
 
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from .normals import compute_normals
+from .normals import compute_vertex_normals, compute_face_normals
 
 
 Delaunay = None  # expensive, from scipy.spatial
@@ -360,7 +360,7 @@ class TriMesh(PointCloud):
         """
         if self.n_dims != 3:
             raise ValueError("Normals are only valid for 3D meshes")
-        return compute_normals(self.points, self.trilist)[0]
+        return compute_vertex_normals(self.points, self.trilist)
 
     def tri_normals(self):
         r"""
@@ -379,7 +379,7 @@ class TriMesh(PointCloud):
         """
         if self.n_dims != 3:
             raise ValueError("Normals are only valid for 3D meshes")
-        return compute_normals(self.points, self.trilist)[1]
+        return compute_face_normals(self.points, self.trilist)
 
     def tri_areas(self):
         r"""The area of each triangle face.

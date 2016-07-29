@@ -299,6 +299,10 @@ def test_trimesh_face_normals():
     face_normals = trimesh.tri_normals()
     assert_allclose(face_normals, expected_normals)
 
+    trimesh.points = trimesh.points.astype(np.float32)
+    face_normals = trimesh.tri_normals()
+    assert_allclose(face_normals, expected_normals)
+
 
 def test_trimesh_vertex_normals():
     points = np.array([[0.0, 0.0, -1.0],
@@ -315,5 +319,9 @@ def test_trimesh_vertex_normals():
                                  [0, 0, 1],
                                  [-0.32505758,  -0.32505758, 0.88807383]])
     trimesh = TriMesh(points, trilist)
+    vertex_normals = trimesh.vertex_normals()
+    assert_allclose(vertex_normals, expected_normals)
+
+    trimesh.points = trimesh.points.astype(np.float32)
     vertex_normals = trimesh.vertex_normals()
     assert_allclose(vertex_normals, expected_normals)
