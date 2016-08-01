@@ -14,12 +14,14 @@ IS_WIN = 'windows' == SYS_PLATFORM
 
 
 # ---- C/C++ EXTENSIONS ---- #
-cython_modules = ['menpo/shape/mesh/normals.pyx',
-                  'menpo/transform/piecewiseaffine/fastpwa.pyx',
-                  'menpo/feature/windowiterator.pyx',
-                  'menpo/feature/gradient.pyx',
-                  'menpo/external/skimage/_warps_cy.pyx',
-                  'menpo/image/patches.pyx']
+cython_modules = [
+    'menpo/external/skimage/_warps_cy.pyx',
+    'menpo/transform/piecewiseaffine/fastpwa.pyx',
+    'menpo/feature/windowiterator.pyx',
+    'menpo/feature/gradient.pyx',
+    'menpo/image/patches.pyx',
+    'menpo/shape/mesh/normals.pyx'
+]
 
 cython_exts = cythonize(cython_modules, quiet=True)
 # Perform a small amount of gymnastics to improve the compilation output on
@@ -37,7 +39,7 @@ install_requires = ['numpy>=1.10,<2.0',
                     'scipy>=0.16,<1.0',
                     'matplotlib>=1.4,<2.0',
                     'pillow>=3.0,<4.0',
-                    'Cython>=0.23']
+                    'cython>=0.23']
 
 if sys.version_info.major == 2:
     install_requires.append('pathlib==1.0')
@@ -46,9 +48,8 @@ setup(name='menpo',
       version=versioneer.get_version(),
       cmdclass=versioneer.get_cmdclass(),
       description='A Python toolkit for handling annotated data',
-      author='James Booth',
-      author_email='james.booth08@imperial.ac.uk',
-      include_dirs=include_dirs,
+      author='The Menpo Team',
+      author_email='hello@menpo.org',
       ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=install_requires,
