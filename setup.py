@@ -1,10 +1,16 @@
 import os
+import platform
 import sys
+import pkg_resources
 from setuptools import setup, find_packages
 import versioneer
-import glob
 from Cython.Build import cythonize
-import numpy as np
+
+
+SYS_PLATFORM = platform.system().lower()
+IS_LINUX = 'linux' in SYS_PLATFORM
+IS_OSX = 'darwin' == SYS_PLATFORM
+IS_WIN = 'windows' == SYS_PLATFORM
 
 
 # ---- C/C++ EXTENSIONS ---- #
@@ -16,7 +22,17 @@ cython_modules = ['menpo/shape/mesh/normals.pyx',
                   'menpo/image/patches.pyx']
 
 cython_exts = cythonize(cython_modules, quiet=True)
-include_dirs = [np.get_include()]
+# Perform a small amount of gymnastics to improve the compilation output on
+# each platform (including finding numpy without importing it)
+numpy_incl = pkg_resources.resource_filename('numpy', 'core/include')
+for ext in cython_exts:
+    if numpy_incl not in ext.include_dirs:
+        ext.include_dirs.append(numpy_incl)
+    if IS_LINUX or IS_OSX:
+        ext.extra_compile_args.append('-Wno-unused-function')
+
+
+# Please see conda/meta.yaml for other binary dependencies
 install_requires = ['numpy>=1.10,<2.0',
                     'scipy>=0.16,<1.0',
                     'matplotlib>=1.4,<2.0',
