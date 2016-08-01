@@ -533,6 +533,41 @@ def test_importing_ffmpeg_avi_normalize(is_file, video_infos_ffprobe, pipe):
 
 
 @raises(ValueError)
+@patch('menpo.io.input.video.video_infos_ffprobe')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_ffmpeg_exact_frame_count_no_ffprobe(
+        is_file, video_infos_ffprobe):
+    video_infos_ffprobe.side_effect = ValueError
+    is_file.return_value = True
+    mio.import_video('fake_image_being_mocked.avi', normalize=True,
+                     exact_frame_count=True)
+
+
+@patch('subprocess.Popen')
+@patch('menpo.io.input.video.video_infos_ffprobe')
+@patch('menpo.io.input.video.video_infos_ffmpeg')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_ffmpeg_no_exact_frame_count_no_ffprobe(
+        is_file, video_infos_ffmpeg, video_infos_ffprobe, pipe):
+    video_infos_ffprobe.side_effect = ValueError
+    video_infos_ffmpeg.return_value = {'duration': 2, 'width': 100,
+                                       'height': 150, 'n_frames': 10, 'fps': 5}
+    is_file.return_value = True
+    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    pipe.return_value.stdout.read.return_value = empty_frame
+    ll = mio.import_video('fake_image_being_mocked.avi', normalize=True,
+                          exact_frame_count=False)
+    assert ll.path.name == 'fake_image_being_mocked.avi'
+    assert ll.fps == 5
+    assert len(ll) == 5*2
+    image = ll[0]
+    assert image.shape == (150, 100)
+    assert image.n_channels == 3
+    assert image.pixels.dtype == np.float
+
+
+
+@raises(ValueError)
 def test_import_images_negative_max_images():
     list(mio.import_images(mio.data_dir_path(), max_images=-2))
 

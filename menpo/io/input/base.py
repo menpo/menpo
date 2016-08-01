@@ -262,7 +262,8 @@ def import_image(filepath, landmark_resolver=same_name, normalize=None,
 
 
 def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
-                 normalise=None, importer_method='ffmpeg', exact_frame_count=True):
+                 normalise=None, importer_method='ffmpeg',
+                 exact_frame_count=True):
     r"""Single video (and associated landmarks) importer.
 
     If a video file is found at `filepath`, returns an :map:`LazyList` wrapping
@@ -306,7 +307,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
         A string representing the type of importer to use, by default ffmpeg
         is used.
     exact_frame_count: `bool`, optional
-        If True, the import fails if ffmprobe is not available
+        If ``True``, the import fails if ffprobe is not available
         (reading from ffmpeg's output returns inexact frame count)
 
     Returns

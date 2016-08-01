@@ -14,6 +14,8 @@ line = PointUndirectedGraph(np.array([[2, 4.5], [8, 4.5]]),
 
 @unittest.skipIf(os.environ.get('TRAVIS'), 'Skipping due to lack of DISPLAY on Travis')
 def test_rasterize_matplotlib_basic():
+    import matplotlib
+    matplotlib.use('agg')
     im = Image.init_blank([11, 11], fill=0, n_channels=1)
     im.landmarks['test'] = centre
     new_im = rasterize_landmarks_2d(im, group='test', render_lines=False,
@@ -27,6 +29,8 @@ def test_rasterize_matplotlib_basic():
 
 @unittest.skipIf(os.environ.get('TRAVIS'), 'Skipping due to lack of DISPLAY on Travis')
 def test_rasterize_matplotlib_basic_line():
+    import matplotlib
+    matplotlib.use('agg')
     im = Image.init_blank([11, 11], fill=0, n_channels=1)
     im.landmarks['test'] = line
     new_im = rasterize_landmarks_2d(im, group='test', render_lines=True,

@@ -5,6 +5,11 @@ from nose.tools import raises
 from menpo.testing import is_same_array
 from menpo.image import BooleanImage, MaskedImage, Image
 
+# TODO: Remove when Pillow 3.3.0 release on all platforms
+import unittest
+from PIL import PILLOW_VERSION
+from distutils.version import LooseVersion
+
 
 @raises(ValueError)
 def test_create_1d_error():
@@ -702,10 +707,12 @@ def test_as_pil_image_float32():
                     (im.pixels * 255).astype(np.uint8))
 
 
-@raises(TypeError)
+@unittest.skipIf(LooseVersion(PILLOW_VERSION) < LooseVersion('3.3.0'), "requires pillow>=3.3.0")
 def test_as_pil_image_float32_uint16_out():
     im = Image(np.ones((1, 120, 120), dtype=np.float32), copy=False)
-    im.as_PILImage(out_dtype=np.uint16)
+    new_im = im.as_PILImage(out_dtype=np.uint16)
+    assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
+                    (im.pixels * 65535).astype(np.uint16))
 
 
 def test_as_pil_image_bool():
