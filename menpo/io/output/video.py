@@ -41,10 +41,19 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
         defaults is 'msmpeg4' which is more commonly supported for windows.
     preset : `str`, optional
         The preset FFMPEG compression level.
+        Please check out the documentation for more information:
+        https://trac.ffmpeg.org/wiki/Encode/H.264#a2.Chooseapreset
     bitrate: `str`, optional
         The output video bitrate.
     verbose : `bool`, optional
         If ``True``, print a progress bar.
+    **kwargs : `dict`, optional
+        Extra parameters for advanced video exporting options.
+        They are passed through directly to FFMPEG and they should.
+        be organised in pairs of option/value in a dictionary.
+        For instance: ``{'crf' : '0'} # equivalent to -crf 0 in ffmpeg.``
+        You can find further details in the documentation:
+        https://ffmpeg.org/ffmpeg.html#Options
     """
     # Some of the below was inspired by moviepy:
     #   https://github.com/Zulko/moviepy/blob/master/moviepy/video/io/ffmpeg_writer.py
@@ -68,6 +77,9 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
         cmd.extend(['-preset', preset])
     if bitrate:
         cmd.extend(['-b', str(bitrate)])
+    # add the optional kwargs for FFMPEG options.
+    for key, value in kwargs.items():
+        cmd.extend(['-{}'.format(key), value])
     cmd.append(str(out_path))
 
     images = (print_progress(images, prefix='Exporting frames') if verbose
