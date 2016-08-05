@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import sys
 from numpy.testing import assert_allclose
@@ -19,6 +21,7 @@ test_lg = mio.import_landmark_file(mio.data_path_to('lenna.ljson'))
 nan_lg = test_lg.copy()
 nan_lg.points[0, :] = np.nan
 test_img = Image(np.random.random([100, 100]))
+colour_test_img = Image(np.random.random([3, 100, 100]))
 fake_path = '/tmp/test.fake'
 
 
@@ -247,11 +250,66 @@ def test_export_image_jpg(mock_open, exists, PILImage):
 
 @patch('subprocess.Popen')
 @patch('menpo.io.output.base.Path.exists')
-def test_export_video_avi(exists, pipe):
+def test_export_video_avi_gray(exists, pipe):
     exists.return_value = False
     fake_path = Path('/fake/fake.avi')
     mio.export_video([test_img, test_img], fake_path, extension='avi')
     assert pipe.return_value.stdin.write.call_count == 2
+    assert 'gray8' in pipe.call_args[0][0]
+
+
+@patch('subprocess.Popen')
+@patch('menpo.io.output.base.Path.exists')
+def test_export_video_avi_colour(exists, pipe):
+    exists.return_value = False
+    fake_path = Path('/fake/fake.avi')
+    mio.export_video([colour_test_img, colour_test_img], fake_path,
+                     extension='avi')
+    assert pipe.return_value.stdin.write.call_count == 2
+    assert 'rgb24' in pipe.call_args[0][0]
+
+
+@patch('subprocess.Popen')
+@patch('menpo.io.output.base.Path.exists')
+def test_export_video_avi_gray_first_mixed(exists, pipe):
+    exists.return_value = False
+    fake_path = Path('/fake/fake.avi')
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        mio.export_video([test_img, colour_test_img], fake_path,
+                         extension='avi')
+        assert len(w) == 1
+    assert pipe.return_value.stdin.write.call_count == 2
+    assert 'gray8' in pipe.call_args[0][0]
+
+
+@patch('subprocess.Popen')
+@patch('menpo.io.output.base.Path.exists')
+def test_export_video_avi_colour_first_mixed(exists, pipe):
+    exists.return_value = False
+    fake_path = Path('/fake/fake.avi')
+    mio.export_video([colour_test_img, test_img], fake_path,
+                     extension='avi')
+    assert pipe.return_value.stdin.write.call_count == 2
+    recon_0 = pipe.return_value.stdin.write.mock_calls[0][1][0]
+    assert np.fromstring(recon_0, dtype=np.uint8).size == 30000
+    # Ensure that the second frame is converted to gray
+    recon_1 = pipe.return_value.stdin.write.mock_calls[1][1][0]
+    assert np.fromstring(recon_1, dtype=np.uint8).size == 30000
+    assert 'rgb24' in pipe.call_args[0][0]
+
+
+@patch('subprocess.Popen')
+@patch('menpo.io.output.base.Path.exists')
+def test_export_video_avi_shape_mismatch(exists, pipe):
+    exists.return_value = False
+    fake_path = Path('/fake/fake.avi')
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        mio.export_video([test_img.resize([150, 100]), test_img], fake_path,
+                         extension='avi')
+        assert len(w) == 1
+    assert 'gray8' in pipe.call_args[0][0]
 
 
 @patch('subprocess.Popen')
@@ -261,6 +319,16 @@ def test_export_video_gif(exists, pipe):
     fake_path = Path('/fake/fake.gif')
     mio.export_video([test_img, test_img], fake_path, extension='gif')
     assert pipe.return_value.stdin.write.call_count == 2
+
+
+@patch('subprocess.Popen')
+@patch('menpo.io.output.base.Path.exists')
+def test_export_video_avi_kwargs(exists, pipe):
+    exists.return_value = False
+    fake_path = Path('/fake/fake.avi')
+    mio.export_video([test_img, test_img], fake_path, extension='avi', **{'crf' : '0'})
+    assert pipe.return_value.stdin.write.call_count == 2
+    assert '-crf' in pipe.call_args[0][0]
 
 
 @patch('menpo.io.output.pickle.pickle.dump')

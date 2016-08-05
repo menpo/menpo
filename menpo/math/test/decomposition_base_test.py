@@ -108,7 +108,7 @@ def eigenvalue_decomposition_large_epsilon_test():
 
 
 def ipca_samples_yescentre_test():
-    n_a = large_samples_data_matrix.shape[0] / 2
+    n_a = large_samples_data_matrix.shape[0] // 2
     A = large_samples_data_matrix[:n_a, :]
     U_a, l_a, m_a = pca(A, centre=True)
 
@@ -123,7 +123,7 @@ def ipca_samples_yescentre_test():
 
 
 def ipca_samples_nocentre_test():
-    n_a = large_samples_data_matrix.shape[0] / 2
+    n_a = large_samples_data_matrix.shape[0] // 2
     A = large_samples_data_matrix[:n_a, :]
     U_a, l_a, m_a = pca(A, centre=False)
 
@@ -140,7 +140,7 @@ def ipca_samples_nocentre_test():
 def ipca_features_yescentre_test():
     C = np.vstack((large_samples_data_matrix.T, large_samples_data_matrix.T))
 
-    n_a = C.shape[0] / 2
+    n_a = C.shape[0] // 2
     A = C[:n_a, :]
     U_a, l_a, m_a = pca(A, centre=True)
 
@@ -157,7 +157,7 @@ def ipca_features_yescentre_test():
 def ipca_features_nocentre_test():
     C = np.vstack((large_samples_data_matrix.T, large_samples_data_matrix.T))
 
-    n_a = C.shape[0] / 2
+    n_a = C.shape[0] // 2
     A = C[:n_a, :]
     U_a, l_a, m_a = pca(A, centre=False)
 

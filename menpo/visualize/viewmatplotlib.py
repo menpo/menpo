@@ -639,6 +639,10 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
 
         # set figure size
         _set_figure_size(self.figure, figure_size)
+        # If no limits are set then ensure that all sub-pointclouds fit in the
+        # view
+        if axes_x_limits is None and axes_y_limits is None:
+            plt.autoscale()
 
         return self
 

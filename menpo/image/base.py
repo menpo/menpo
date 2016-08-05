@@ -1258,13 +1258,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         Parameters
         ----------
+        pointcloud : :map:`PointCloud`
+            The pointcloud to crop around.
         boundary_proportion : `float`
             Additional padding to be added all around the landmarks
             bounds defined as a proportion of the landmarks range. See
             the minimum parameter for a definition of how the range is
             calculated.
-        pointcloud : :map:`PointCloud`
-            The pointcloud to crop around.
         minimum : `bool`, optional
             If ``True`` the specified proportion is relative to the minimum
             value of the pointclouds' per-dimension range; if ``False`` w.r.t.
@@ -1351,15 +1351,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             pc, boundary_proportion, minimum=minimum,
             constrain_to_boundary=constrain_to_boundary,
             return_transform=return_transform)
-
-    def _propagate_crop_to_inplace(self, cropped):
-        # helper method that sets self's state to the result of a crop call.
-        # only needed for the deprecation period of the inplace crop methods.
-        self.pixels = cropped.pixels
-        self.landmarks = cropped.landmarks
-        if hasattr(self, 'mask'):
-            self.mask = cropped.mask
-        return self
 
     def constrain_points_to_bounds(self, points):
         r"""

@@ -1,5 +1,7 @@
 import os
 import subprocess as sp
+import warnings
+
 import numpy as np
 from pathlib import Path
 
@@ -39,21 +41,34 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
         defaults is 'msmpeg4' which is more commonly supported for windows.
     preset : `str`, optional
         The preset FFMPEG compression level.
+        Please check out the documentation for more information:
+        https://trac.ffmpeg.org/wiki/Encode/H.264#a2.Chooseapreset
     bitrate: `str`, optional
         The output video bitrate.
     verbose : `bool`, optional
         If ``True``, print a progress bar.
+    **kwargs : `dict`, optional
+        Extra parameters for advanced video exporting options.
+        They are passed through directly to FFMPEG and they should.
+        be organised in pairs of option/value in a dictionary.
+        For instance: ``{'crf' : '0'} # equivalent to -crf 0 in ffmpeg.``
+        You can find further details in the documentation:
+        https://ffmpeg.org/ffmpeg.html#Options
     """
     # Some of the below was inspired by moviepy:
     #   https://github.com/Zulko/moviepy/blob/master/moviepy/video/io/ffmpeg_writer.py
     # and is used under the terms of the MIT license which can be found at
     #   https://github.com/Zulko/moviepy/blob/master/LICENCE.txt
     first_image = images[0]
+    frame_shape = first_image.shape
+    # If the first image is gray then all the images will be assumed to be
+    # gray
+    colour = 'rgb24' if images[0].n_channels == 3 else 'gray8'
     cmd = [_FFMPEG_CMD(), '-y',
-           '-s', '{}x{}'.format(first_image.shape[1], first_image.shape[0]),
+           '-s', '{}x{}'.format(frame_shape[1], frame_shape[0]),
            '-r', str(fps),
            '-an',
-           '-pix_fmt', 'rgb24',
+           '-pix_fmt', colour,
            '-c:v', 'rawvideo', '-f', 'rawvideo',
            '-i', '-']
     if codec:
@@ -62,6 +77,9 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
         cmd.extend(['-preset', preset])
     if bitrate:
         cmd.extend(['-b', str(bitrate)])
+    # add the optional kwargs for FFMPEG options.
+    for key, value in kwargs.items():
+        cmd.extend(['-{}'.format(key), value])
     cmd.append(str(out_path))
 
     images = (print_progress(images, prefix='Exporting frames') if verbose
@@ -70,9 +88,22 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
     # Pipe stdout to DEVNULL to ignore it
     with _call_subprocess(sp.Popen(cmd, stdin=sp.PIPE, stderr=sp.PIPE,
                                    stdout=DEVNULL)) as pipe:
-        for image in images:
+        for k, image in enumerate(images):
             try:
+                if image.n_channels != 1 and colour == 'gray8':
+                    warnings.warn('Frame {} is non-greyscale and the initial '
+                                  'frame was greyscale. This frame will be '
+                                  'corrupted.'.format(k))
+                if image.shape != frame_shape:  # Valid due to tuple/int
+                    warnings.warn('Frame {} is not the same shape as the '
+                                  'initial frame and therefore the output '
+                                  'may be corrupted.'.format(k))
+
                 i = image.pixels_with_channels_at_back(out_dtype=np.uint8)
+                # Handle the case of a greyscale image amidst colour images
+                if image.n_channels == 1 and colour == 'rgb24':
+                    # Repeat the channels axis 3 times
+                    i = i.reshape(i.shape + (1,)).repeat(3, axis=2)
                 pipe.stdin.write(i.tostring())
             except IOError:
                 error = ('FFMPEG encountered the following error while '

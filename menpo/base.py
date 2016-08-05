@@ -1,4 +1,5 @@
 import collections
+from itertools import chain
 from functools import partial, wraps
 import os.path
 import warnings
@@ -450,7 +451,7 @@ class doc_inherit(object):
         return func
 
 
-class LazyList(collections.Sequence):
+class LazyList(collections.Sequence, Copyable):
     r"""
     An immutable sequence that provides the ability to lazily access objects.
     In truth, this sequence simply wraps a list of callables which are then
@@ -483,6 +484,34 @@ class LazyList(collections.Sequence):
 
     def __len__(self):
         return len(self._callables)
+
+    @classmethod
+    def init_from_iterable(cls, iterable, f=None):
+        r"""
+        Create a lazy list from an existing iterable (think Python `list`) and
+        optionally a `callable` that expects a single parameter which will be
+        applied to each element of the list. This allows for simply
+        creating a `LazyList` from an existing list and if no `callable` is
+        provided the identity function is assumed.
+
+        Parameters
+        ----------
+        iterable : `collections.Iterable`
+            An iterable object such as a `list`.
+        f : `callable`, optional
+            Callable expecting a single parameter.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A LazyList where each element returns each item of the provided
+            iterable, optionally with `f` applied to it.
+        """
+        if f is None:
+            # The identity function
+            def f(i):
+                return i
+        return cls([partial(f, x) for x in iterable])
 
     @classmethod
     def init_from_index_callable(cls, f, n_elements):
@@ -518,21 +547,83 @@ class LazyList(collections.Sequence):
         mapping is lazy and thus calling this function should return
         immediately.
 
+        Alternatively, ``f`` may be a list of `callable`, one per entry
+        in the underlying list, with the same specification as above.
+
         Parameters
         ----------
-        f : `callable`
-            Callable to wrap each element with.
+        f : `callable` or `iterable` of `callable`
+            Callable to wrap each element with. If an iterable of callables
+            (think list) is passed then it **must** by the same length as
+            this LazyList.
 
         Returns
         -------
         lazy : `LazyList`
-            A new LazyList where each element is wrapped by ``f``.
+            A new LazyList where each element is wrapped by (each) ``f``.
         """
         # We need this delayed helper function in order to ensure that f
         # is passed the actual instantiated object and not the callable itself.
-        def delayed(x2):
-            return f(x2())
-        return self.__class__([partial(delayed, x) for x in self._callables])
+        def delayed(delay_f, delay_x):
+            return delay_f(delay_x())
+
+        if isinstance(f, collections.Iterable) and callable(f):
+            raise ValueError('It is ambiguous whether the provided argument '
+                             'is an iterable object or a callable.')
+
+        new = self.copy()
+        if isinstance(f, collections.Iterable):
+            if len(f) != len(new):
+                raise ValueError('A callable per element of the LazyList must '
+                                 'be passed.')
+            new._callables = [partial(delayed, one_f, x)
+                              for one_f, x in zip(f, new._callables)]
+        else:
+            new._callables = [partial(delayed, f, x) for x in new._callables]
+        return new
+
+    def repeat(self, n):
+        r"""
+        Repeat each item of the underlying LazyList ``n`` times. Therefore,
+        if a list currently has ``D`` items, the returned list will contain
+        ``D * n`` items and will return immediately (method is lazy).
+
+        Parameters
+        ----------
+        n : `int`
+            The number of times to repeat each item.
+
+        Returns
+        -------
+        lazy : `LazyList`
+            A LazyList where each element returns each item of the provided
+            iterable, optionally with `f` applied to it.
+
+        Examples
+        --------
+        >>> from menpo.base import LazyList
+        >>> ll = LazyList.init_from_list([0, 1])
+        >>> repeated_ll = ll.repeat(2)  # Returns immediately
+        >>> items = list(repeated_ll)   # [0, 0, 1, 1]
+        """
+        new = self.copy()
+        new._callables = list(chain(*zip(*[new._callables] * n)))
+        return new
+
+    def copy(self):
+        r"""
+        Generate an efficient copy of this LazyList - copying the underlying
+        callables will be lazy and shallow (each callable will **not** be
+        called nor copied) but they will reside within in a new `list`.
+
+        Returns
+        -------
+        ``type(self)``
+            A copy of this LazyList.
+        """
+        new = Copyable.copy(self)
+        new._callables = list(self._callables)
+        return new
 
     def __add__(self, other):
         r"""
@@ -555,15 +646,15 @@ class LazyList(collections.Sequence):
             A new LazyList formed of the concatenation of this list and
             the ``other`` list.
         """
+        new = self.copy()
         # If the passed Sequence was not lazy then fake it being lazy by
         # wrapping it in a function that just returns the value.
         if not isinstance(other, LazyList):
-            def empty_f(a):
-                return a
-            new_callables = [partial(empty_f, x) for x in other]
+            new_callables = LazyList.init_from_iterable(other)._callables
         else:
-            new_callables = list(other._callables)
-        return self.__class__(list(self._callables) + new_callables)
+            new_callables = other._callables
+        new._callables = new._callables + new_callables
+        return new
 
 
 def partial_doc(func, *args, **kwargs):
