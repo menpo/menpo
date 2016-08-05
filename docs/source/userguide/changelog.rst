@@ -1,6 +1,24 @@
 Changelog
 #########
 
+0.7.3 (2016/08/05)
+------------------
+Minor fixes and additions including allowing more flexibility in FFMPEG exporting options,
+supporting more types with normal calculations, and tidying up the conda build recipe.
+
+Github Pull Requests
+....................
+
+- `#716`_ allow for forced inexact frame count in FFMpegVideoReader.(@san-bil)
+- `#714`_ Utilise the kwargs in exporting video with ffmpeg. (@grigorisg9gr)
+- `#720`_ Simplify the conda build. (@patricksnape)
+- `#719`_ Support more types for normals. (@patricksnape)
+
+.. _#716: https://github.com/menpo/menpo/pull/716
+.. _#714: https://github.com/menpo/menpo/pull/714
+.. _#720: https://github.com/menpo/menpo/pull/720
+.. _#719: https://github.com/menpo/menpo/pull/719
+
 0.7.2 (2016/06/22)
 ------------------
 Minor fixes including allowing exporting grayscale videos and fixing a minor
