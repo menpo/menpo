@@ -358,7 +358,7 @@ def import_landmark_file(filepath, asset=None):
     return _import(filepath, image_landmark_types, asset=asset)
 
 
-def import_pickle(filepath):
+def import_pickle(filepath, **kwargs):
     r"""Import a pickle file of arbitrary Python objects.
 
     Menpo unambiguously uses ``.pkl`` as it's choice of extension for Pickle
@@ -378,7 +378,7 @@ def import_pickle(filepath):
     object : `object`
         Whatever Python objects are present in the Pickle file
     """
-    return _import(filepath, pickle_types)
+    return _import(filepath, pickle_types, importer_kwargs=kwargs)
 
 
 def import_images(pattern, max_images=None, shuffle=False,

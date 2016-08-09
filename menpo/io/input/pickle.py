@@ -1,8 +1,17 @@
+import sys
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 import gzip
+
+
+def _unpickle_with_encoding(f, encoding=None):
+    # Support the encoding kwarg on Python 3.x only.
+    if encoding is not None and sys.version_info.major > 2:
+        return pickle.load(f, encoding=encoding)
+    else:
+        return pickle.load(f)
 
 
 def pickle_importer(filepath, asset=None, **kwargs):
@@ -24,7 +33,7 @@ def pickle_importer(filepath, asset=None, **kwargs):
         The pickled objects.
     """
     with open(str(filepath), 'rb') as f:
-        x = pickle.load(f)
+        x = _unpickle_with_encoding(f, encoding=kwargs.get('encoding'))
     return x
 
 
@@ -47,5 +56,5 @@ def pickle_gzip_importer(filepath, asset=None, **kwargs):
         The pickled objects.
     """
     with gzip.open(str(filepath), 'rb') as f:
-        x = pickle.load(f)
+        x = _unpickle_with_encoding(f, encoding=kwargs.get('encoding'))
     return x
