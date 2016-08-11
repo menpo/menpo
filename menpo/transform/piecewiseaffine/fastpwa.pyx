@@ -1,8 +1,6 @@
-# distutils: language = c++
-# distutils: sources = ./menpo/transform/piecewiseaffine/fastpwa/pwa.cpp
-
 import numpy as np
 cimport numpy as cnp
+
 
 cdef extern from "./fastpwa/pwa.h":
     ctypedef struct TriangleCollection:
@@ -26,6 +24,7 @@ cdef extern from "./fastpwa/pwa.h":
                                       double *alphas, double *betas)
     void clearCacheAndDelete(AlphaBetaIndex **hashMap)
     void deleteTriangleCollection(TriangleCollection *tris)
+
 
 cdef class CLookupPWA:
     cdef TriangleCollection tris

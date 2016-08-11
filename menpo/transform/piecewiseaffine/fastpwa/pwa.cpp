@@ -134,7 +134,7 @@ void addAlphaBetaIndexToCache(AlphaBetaIndex **hash, Point queryPoint, int index
 {
   // dynamically allocate a new result object
   AlphaBetaIndex *result;
-  result = malloc(sizeof(AlphaBetaIndex));
+  result = (AlphaBetaIndex *)malloc(sizeof(AlphaBetaIndex));
   memset(result, 0, sizeof(AlphaBetaIndex));
   result->queryPoint = queryPoint;
   result->index = index;

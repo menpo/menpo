@@ -1,5 +1,4 @@
-# distutils: language = c++
-# distutils: sources = menpo/feature/cpp/ImageWindowIterator.cpp menpo/feature/cpp/WindowFeature.cpp menpo/feature/cpp/HOG.cpp menpo/feature/cpp/LBP.cpp
+# distutils: sources =
 
 import numpy as np
 cimport numpy as np
