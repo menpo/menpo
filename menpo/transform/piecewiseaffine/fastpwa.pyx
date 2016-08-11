@@ -1,5 +1,5 @@
-# distutils: language = c
-# distutils: sources = ./menpo/transform/piecewiseaffine/fastpwa/pwa.c
+# distutils: language = c++
+# distutils: sources = ./menpo/transform/piecewiseaffine/fastpwa/pwa.cpp
 
 import numpy as np
 cimport numpy as cnp
