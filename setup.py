@@ -16,7 +16,7 @@ IS_WIN = 'windows' == SYS_PLATFORM
 # ---- C/C++ EXTENSIONS ---- #
 cython_modules = [
     'menpo/external/skimage/_warps_cy.pyx',
-    'menpo/transform/piecewiseaffine/fastpwa.pyx',
+    'menpo/transform/piecewiseaffine/quadtreepwa.pyx',
     'menpo/feature/windowiterator.pyx',
     'menpo/feature/gradient.pyx',
     'menpo/image/patches.pyx',
@@ -54,10 +54,8 @@ setup(name='menpo',
       packages=find_packages(),
       install_requires=install_requires,
       package_data={'menpo': ['data/*',
-                              'feature/cpp/*.cpp',
-                              'feature/cpp/*.h',
-                              'transform/piecewiseaffine/fastpwa/*.c',
-                              'transform/piecewiseaffine/fastpwa/*.h'],
-                    '': ['*.pxd', '*.pyx']},
+                              'transform/piecewiseaffine/cpp/*.cpp',
+                              'feature/cpp/*.cpp'],
+                    '': ['*.pxd', '*.pyx', '*.h']},
       tests_require=['nose', 'mock']
 )
