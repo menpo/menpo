@@ -152,7 +152,7 @@ def flo_importer(filepath, asset=None, **kwargs):
     """
     with open(str(filepath), 'rb') as f:
         fingerprint = f.read(4)
-        if fingerprint != 'PIEH':
+        if fingerprint != b'PIEH':
             raise ValueError('Invalid FLO file.')
 
         width, height = np.fromfile(f, dtype=np.uint32, count=2)
