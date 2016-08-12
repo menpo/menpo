@@ -17,6 +17,7 @@ Decomposition
   pca
   pcacov
   ipca
+  cca
 
 
 Linear Algebra
