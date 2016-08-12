@@ -32,7 +32,7 @@ def pwa_point_in_pointcloud(pcloud, indices, batch_size=None):
         Whether each pixel index was in inside the convex hull of the
         pointcloud or not.
     """
-    from menpo.transform.piecewiseaffine import PiecewiseAffine
+    from menpo.transform.piecewiseaffine.base import CythonPWA as PiecewiseAffine
     from menpo.transform.piecewiseaffine import TriangleContainmentError
 
     try:
