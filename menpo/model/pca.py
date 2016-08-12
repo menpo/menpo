@@ -80,7 +80,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         e_vectors, e_values = pcacov(C, is_inverse=is_inverse)
 
         # Create new pca instance
-        model = PCAModel.__new__(cls)
+        model = cls.__new__(cls)
         model.n_samples = n_samples
 
         # The call to __init__ of MeanLinearModel is done in here
@@ -116,7 +116,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         # This is a bit of a filthy trick that by rights should not be done,
         # but we want to have these nice static constructors so we are living
         # with the shame (create an empty object instance which we fill in).
-        model = PCAModel.__new__(cls)
+        model = cls.__new__(cls)
         model.n_samples = n_samples
 
         # The call to __init__ of MeanLinearModel is done in here
@@ -151,6 +151,13 @@ class PCAVectorModel(MeanLinearVectorModel):
             # samples
             data = np.array(data)[:n_samples]
         return data, n_samples
+
+    def __setstate__(self, state):
+        if 'mean_vector' in state:
+            state['_mean'] = state['mean_vector']
+            del state['mean_vector']
+
+        self.__dict__ = state
 
     @property
     def n_active_components(self):
