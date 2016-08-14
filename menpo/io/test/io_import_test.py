@@ -459,6 +459,34 @@ def test_importing_pickle(is_file, mock_open, mock_pickle):
 
 @patch('menpo.io.input.pickle.pickle.load')
 @patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.is_file')
+@patch('sys.version_info')
+def test_importing_pickle_encoding_py3(version_info, is_file, mock_open,
+                                       mock_pickle):
+    version_info.major = 3
+    mock_pickle.return_value = {'test': 1}
+    is_file.return_value = True
+
+    mio.import_pickle('mocked.pkl', encoding='latin1')
+    assert mock_pickle.call_args[1].get('encoding') == 'latin1'
+
+
+@patch('menpo.io.input.pickle.pickle.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.is_file')
+@patch('sys.version_info')
+def test_importing_pickle_encoding_ignored_py2(version_info, is_file, mock_open,
+                                               mock_pickle):
+    version_info.major = 2
+    mock_pickle.return_value = {'test': 1}
+    is_file.return_value = True
+
+    mio.import_pickle('mocked.pkl', encoding='latin1')
+    assert 'encoding' not in mock_pickle.call_args[1]
+
+
+@patch('menpo.io.input.pickle.pickle.load')
+@patch('{}.open'.format(builtins_str))
 @patch('menpo.io.input.base.Path.glob')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_pickles(is_file, glob, mock_open, mock_pickle):

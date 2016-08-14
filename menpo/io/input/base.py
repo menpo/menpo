@@ -325,7 +325,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
     """
     normalize = _parse_deprecated_normalise(normalise, normalize)
 
-    kwargs = {'normalize': normalize, 'exact_frame_count':exact_frame_count}
+    kwargs = {'normalize': normalize, 'exact_frame_count': exact_frame_count}
 
     video_importer_methods = {'ffmpeg': ffmpeg_video_types}
     if importer_method not in video_importer_methods:
@@ -358,7 +358,7 @@ def import_landmark_file(filepath, asset=None):
     return _import(filepath, image_landmark_types, asset=asset)
 
 
-def import_pickle(filepath):
+def import_pickle(filepath, **kwargs):
     r"""Import a pickle file of arbitrary Python objects.
 
     Menpo unambiguously uses ``.pkl`` as it's choice of extension for Pickle
@@ -378,7 +378,64 @@ def import_pickle(filepath):
     object : `object`
         Whatever Python objects are present in the Pickle file
     """
-    return _import(filepath, pickle_types)
+    return _import(filepath, pickle_types, importer_kwargs=kwargs)
+
+
+def import_pickles(pattern, max_pickles=None, shuffle=False,
+                   as_generator=False, verbose=False, **kwargs):
+    r"""Multiple pickle importer.
+
+    Menpo unambiguously uses ``.pkl`` as it's choice of extension for Pickle
+    files. Menpo also supports automatic importing and exporting of gzip
+    compressed pickle files - just choose a ``filepath`` ending ``pkl.gz`` and
+    gzip compression will automatically be applied. Compression can massively
+    reduce the filesize of a pickle file at the cost of longer import and
+    export times.
+
+    Note that this is a function returns a :map:`LazyList`. Therefore, the
+    function will return immediately and indexing into the returned list
+    will load a pickle at run time. If all pickles should be loaded, then simply
+    wrap the returned :map:`LazyList` in a Python `list`.
+
+    Parameters
+    ----------
+    pattern : `str`
+        A glob path pattern to search for pickles. Every pickle found to match
+        the glob will be imported one by one. See :map:`pickle_paths` for more
+        details of what pickles will be found.
+    max_pickles : positive `int`, optional
+        If not ``None``, only import the first ``max_pickles`` found. Else,
+        import all.
+    shuffle : `bool`, optional
+        If ``True``, the order of the returned pickles will be randomised. If
+        ``False``, the order of the returned pickles will be alphanumerically
+        ordered.
+    as_generator : `bool`, optional
+        If ``True``, the function returns a generator and assets will be yielded
+        one after another when the generator is iterated over.
+    verbose : `bool`, optional
+        If ``True`` progress of the importing will be dynamically reported with
+        a progress bar.
+
+    Returns
+    -------
+    lazy_list : :map:`LazyList` or generator of Python objects
+        A :map:`LazyList` or generator yielding whatever Python objects are
+        present in the Pickle file instances that match the glob pattern
+        provided.
+
+    Raises
+    ------
+    ValueError
+        If no pickles are found at the provided glob.
+    """
+    return _import_glob_lazy_list(
+        pattern, pickle_types,
+        max_assets=max_pickles, shuffle=shuffle,
+        as_generator=as_generator,
+        verbose=verbose,
+        importer_kwargs=kwargs
+    )
 
 
 def import_images(pattern, max_images=None, shuffle=False,
