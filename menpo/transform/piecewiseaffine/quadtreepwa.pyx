@@ -11,11 +11,13 @@ import cython
 
 
 cdef extern from "./cpp/quadtree.h":
+    ctypedef struct Point:
+        double x
+        double y
+
     ctypedef struct BoundingBox:
-        double min_y
-        double min_x
-        double max_y
-        double max_x
+        Point min
+        Point max
 
     ctypedef struct QuadNode:
         unsigned long index
@@ -46,8 +48,8 @@ cdef extern from "./cpp/quadtree.h":
 
     void dealloc_quadtree(QuadTree &qtree)
 
-    void rect_intersect(const QuadTree &qtree, const BoundingBox bb,
-                        set[unsigned long]& results)
+    void point_intersect(const QuadTree &qtree, const Point p,
+                         set[unsigned long]& results)
 
 
 cdef draw(QuadTree qtree, object bbs=None):
@@ -58,8 +60,8 @@ cdef draw(QuadTree qtree, object bbs=None):
         bbs = []
     for c in qtree.children:
         draw(c, bbs=bbs)
-    bbs.append(((qtree.bounding_box.min_y, qtree.bounding_box.min_x),
-                (qtree.bounding_box.max_y, qtree.bounding_box.max_x)))
+    bbs.append(((qtree.bounding_box.min.y, qtree.bounding_box.min.x),
+                (qtree.bounding_box.max.y, qtree.bounding_box.max.x)))
     return bbs
 
 
@@ -92,7 +94,7 @@ cdef search(double[:, ::1] points, unsigned int[:, ::1] trilist,
         unsigned long tt = 0
         long previous_tt = -1
         AlphaBeta ab
-        BoundingBox bb
+        Point p
 
     # fill the arrays with the C results
     for qq in range(n_search_points):
@@ -101,7 +103,7 @@ cdef search(double[:, ::1] points, unsigned int[:, ::1] trilist,
         # same triangle as the last successful lookup first
         if shortcut_lookup and previous_tt != -1:
             ab = point_in_triangle(i, j, k, &points[0, 0], y, x)
-            if ab.alpha >= 0 and ab.beta >= 0:
+            if ab.alpha >= 0 and ab.beta >= 0 and ab.alpha + ab.beta <= 1:
                 alphas[qq] = ab.alpha
                 betas[qq] = ab.beta
                 indexes[qq] = previous_tt
@@ -111,15 +113,14 @@ cdef search(double[:, ::1] points, unsigned int[:, ::1] trilist,
         # If that failed, then we fall back to the quadtree
         # (or if shortcut_lookup is False)
         if not shortcut_lookup or previous_tt == -1:
-            bb.min_y, bb.max_y = y, y
-            bb.min_x, bb.max_x = x, x
-            rect_intersect(qtree, bb, results)
+            p.x, p.y = x, y
+            point_intersect(qtree, p, results)
             for tt in results:
                 i = trilist[tt, 0]
                 j = trilist[tt, 1]
                 k = trilist[tt, 2]
                 ab = point_in_triangle(i, j, k, &points[0, 0], y, x)
-                if ab.alpha >= 0 and ab.beta >= 0:
+                if ab.alpha >= 0 and ab.beta >= 0 and ab.alpha + ab.beta <= 1:
                     alphas[qq] = ab.alpha
                     betas[qq] = ab.beta
                     indexes[qq] = tt

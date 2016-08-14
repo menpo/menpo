@@ -17,17 +17,27 @@ BoundingBox triangle_bounding_box(const unsigned int i, const unsigned int j,
     const double x2 = TRIANGLE_X(vertices, j);
     const double y3 = TRIANGLE_Y(vertices, k);
     const double x3 = TRIANGLE_X(vertices, k);
+    const Point min = init_point(std::min(std::min(x1, x2), x3),
+                                 std::min(std::min(y1, y2), y3));
+    const Point max = init_point(std::max(std::max(x1, x2), x3),
+                                 std::max(std::max(y1, y2), y3));
 
-    return init_bounding_box(std::min(std::min(y1, y2), y3),
-                             std::min(std::min(x1, x2), x3),
-                             std::max(std::max(y1, y2), y3),
-                             std::max(std::max(x1, x2), x3));
+    return init_bounding_box(min, max);
 }
 
 
 bool do_rectangles_overlap(const BoundingBox r1, const BoundingBox r2) {
-    return (r1.min_y <= r2.max_y && r1.max_y >= r2.min_y &&
-            r1.min_x <= r2.max_x && r1.max_x >= r2.min_x);
+    return ((r1.min.y < r2.max.y || approx_equal(r1.min.y, r2.max.y)) &&
+            (r1.max.y > r2.min.y || approx_equal(r1.max.y, r2.min.y)) &&
+            (r1.min.x < r2.max.x || approx_equal(r1.min.x, r2.max.x)) &&
+            (r1.max.x > r2.min.x || approx_equal(r1.max.x, r2.min.x)));
+}
+
+bool point_in_rectangle(const BoundingBox bb, const Point p) {
+    return ((p.y < bb.max.y || approx_equal(p.y, bb.max.y)) &&
+            (p.y > bb.min.y || approx_equal(p.y, bb.min.y)) &&
+            (p.x < bb.max.x || approx_equal(p.x, bb.max.x)) &&
+            (p.x > bb.min.x || approx_equal(p.x, bb.min.x)));
 }
 
 AlphaBeta point_in_triangle(const unsigned int i, const unsigned int j,
@@ -44,85 +54,28 @@ AlphaBeta point_in_triangle(const unsigned int i, const unsigned int j,
     const double alpha = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) * denominator;
     const double beta = ((y1 - y2) * (x - x2) + (x2 - x1) * (y - y2)) * denominator;
 
-    AlphaBeta ab = {-1, -1};
-    if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && alpha + beta <= 1) {
-        ab.alpha = alpha;
-        ab.beta = beta;
-    }
+    AlphaBeta ab;
+    ab.alpha = alpha;
+    ab.beta = beta;
     return ab;
 }
 
 void split_bounding_box_into_4(BoundingBox bb, BoundingBox new_boxes[4]) {
-    const double half_height = (bb.max_y - bb.min_y) / 2;
-    const double half_width = (bb.max_x - bb.min_x) / 2;
-    const double center_y = bb.min_y + half_height;
-    const double center_x = bb.min_x + half_width;
+    const double half_height = (bb.max.y - bb.min.y) / 2;
+    const double half_width = (bb.max.x - bb.min.x) / 2;
+    const double center_y = bb.min.y + half_height;
+    const double center_x = bb.min.x + half_width;
 
-    const double se_bb_min_y = bb.min_y;
-    const double se_bb_min_x = bb.min_x;
-    const double ne_bb_min_y = center_y;
-    const double ne_bb_min_x = bb.min_x;
-    const double nw_bb_min_y = center_y;
-    const double nw_bb_min_x = center_x;
-    const double sw_bb_min_y = bb.min_y;
-    const double sw_bb_min_x = center_x;
+    const Point se_bb_min = init_point(bb.min.x, bb.min.y);
+    const Point ne_bb_min = init_point(bb.min.x, center_y);
+    const Point nw_bb_min = init_point(center_x, center_y);
+    const Point sw_bb_min = init_point(center_x, bb.min.y);
+    const Point half_size = init_point(half_width, half_height);
 
-    new_boxes[0] = init_bounding_box(se_bb_min_y,
-                                     se_bb_min_x,
-                                     se_bb_min_y + half_height,
-                                     se_bb_min_x + half_width);
-    
-    new_boxes[1] = init_bounding_box(ne_bb_min_y,
-                                     ne_bb_min_x,
-                                     ne_bb_min_y + half_height,
-                                     ne_bb_min_x + half_width);
-    
-    new_boxes[2] = init_bounding_box(nw_bb_min_y,
-                                     nw_bb_min_x,
-                                     nw_bb_min_y + half_height,
-                                     nw_bb_min_x + half_width);
-    
-    new_boxes[3] = init_bounding_box(sw_bb_min_y,
-                                     sw_bb_min_x,
-                                     sw_bb_min_y + half_height,
-                                     sw_bb_min_x + half_width);
-}
-
-
-QuadTree init_quadtree(const BoundingBox bb,
-                       const unsigned long depth, const unsigned long max_items,
-                       const unsigned long max_depth) {
-    QuadTree qtree;
-    qtree.bounding_box = bb;
-    qtree.depth = depth;
-    qtree.max_items = max_items;
-    qtree.max_depth = max_depth;
-    return qtree;
-}
-
-QuadNode init_quadnode(const unsigned long index, const BoundingBox bb) {
-    QuadNode qnode;
-    qnode.bounding_box = bb;
-    qnode.index = index;
-    return qnode;
-}
-
-BoundingBox init_bounding_box(const double bb_min_y, const double bb_min_x,
-                              const double bb_max_y, const double bb_max_x) {
-    BoundingBox bb;
-    bb.min_y = bb_min_y;
-    bb.min_x = bb_min_x;
-    bb.max_y = bb_max_y;
-    bb.max_x = bb_max_x;
-    return bb;
-}
-
-bool is_full(const QuadTree &qtree) {
-    return qtree.nodes.size() >= qtree.max_items;
-}
-
-bool is_max_depth(const QuadTree &qtree) {
-    return qtree.depth >= qtree.max_depth;
+    new_boxes[0] = init_bounding_box(se_bb_min, se_bb_min + half_size);
+    new_boxes[1] = init_bounding_box(ne_bb_min, ne_bb_min + half_size);
+    new_boxes[2] = init_bounding_box(nw_bb_min, nw_bb_min + half_size);
+    new_boxes[3] = init_bounding_box(sw_bb_min, sw_bb_min + half_size);
 }
 
 bool insert(QuadTree &qtree, const unsigned long index, const BoundingBox bb) {
@@ -195,18 +148,18 @@ bool split(QuadTree &qtree) {
     return insert_successful;
 }
 
-void rect_intersect(const QuadTree &qtree, const BoundingBox bb,
-                    std::set<unsigned long>& results) {
+void point_intersect(const QuadTree &qtree, const Point p,
+                     std::set<unsigned long>& results) {
 
     for (ConstQuadTreeIterator it = qtree.children.begin(); it != qtree.children.end(); ++it) {
         const QuadTree& c = *it;
-        if (do_rectangles_overlap(c.bounding_box, bb)) {
-            rect_intersect(c, bb, results);
+        if (point_in_rectangle(c.bounding_box, p)) {
+            point_intersect(c, p, results);
         }
     }
 
     // Search nodes at this level
-    if (do_rectangles_overlap(qtree.bounding_box, bb)) {
+    if (point_in_rectangle(qtree.bounding_box, p)) {
         for (ConstQuadNodeIterator it = qtree.nodes.begin(); it != qtree.nodes.end(); ++it) {
             const QuadNode& node = *it;
             results.insert(node.index);
@@ -226,10 +179,10 @@ QuadTree build_quadtree(const unsigned long max_items,
     for (unsigned long i = 0; i < n_vertices; i++) {
         double y = TRIANGLE_Y(vertices, i);
         double x = TRIANGLE_X(vertices, i);
-        qtree_bb.min_y = std::min(qtree_bb.min_y, y);
-        qtree_bb.min_x = std::min(qtree_bb.min_x, x);
-        qtree_bb.max_y = std::max(qtree_bb.max_y, y);
-        qtree_bb.max_x = std::max(qtree_bb.max_x, x);
+        qtree_bb.min.y = std::min(qtree_bb.min.y, y);
+        qtree_bb.min.x = std::min(qtree_bb.min.x, x);
+        qtree_bb.max.y = std::max(qtree_bb.max.y, y);
+        qtree_bb.max.x = std::max(qtree_bb.max.x, x);
     }
     QuadTree qtree = init_quadtree(qtree_bb, 0, max_items, max_depth);
 
