@@ -94,7 +94,7 @@ setup(name='menpo',
       ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=install_requires,
-      package_data={'menpo': ['data/*',
+      package_data={'menpo': ['data/*'],
                     '': ['*.pxd', '*.pyx', '*.h', '*.cpp']},
       tests_require=['nose', 'mock']
 )
