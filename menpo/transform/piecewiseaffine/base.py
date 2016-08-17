@@ -298,6 +298,10 @@ class AbstractPWA(Alignment, Transform, Invertible):
                     exception_thrown = True
                     points_outside_source_domain.append(
                         e.points_outside_source_domain)
+                else:
+                    # No exception was thrown, so all points were inside
+                    points_outside_source_domain.append(
+                        np.zeros(batch_size, dtype=np.bool))
 
             if exception_thrown:
                 raise TriangleContainmentError(
