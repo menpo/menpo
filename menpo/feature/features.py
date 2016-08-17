@@ -5,7 +5,7 @@ import numpy as np
 scipy_gaussian_filter = None  # expensive
 
 from .base import ndfeature, winitfeature, imgfeature
-from .gradient import gradient_cython
+from ._gradient import gradient_cython
 from .windowiterator import WindowIterator, WindowIteratorResult
 
 

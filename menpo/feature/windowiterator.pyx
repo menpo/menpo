@@ -1,6 +1,3 @@
-# distutils: language = c++
-# distutils: sources = menpo/feature/cpp/ImageWindowIterator.cpp menpo/feature/cpp/WindowFeature.cpp menpo/feature/cpp/HOG.cpp menpo/feature/cpp/LBP.cpp
-
 import numpy as np
 cimport numpy as np
 from libcpp cimport bool
