@@ -1,7 +1,3 @@
-# distutils: language = c++
-# distutils: sources = ./menpo/transform/piecewiseaffine/cpp/quadtree.cpp
-
-
 import numpy as np
 cimport numpy as cnp
 from libcpp.set cimport set

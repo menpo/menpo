@@ -2,44 +2,85 @@ import os
 import platform
 import sys
 import pkg_resources
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 import versioneer
-from Cython.Build import cythonize
 
 
 SYS_PLATFORM = platform.system().lower()
 IS_LINUX = 'linux' in SYS_PLATFORM
 IS_OSX = 'darwin' == SYS_PLATFORM
 IS_WIN = 'windows' == SYS_PLATFORM
+# Get Numpy include path without importing it
+NUMPY_INC_PATH = pkg_resources.resource_filename('numpy', 'core/include')
 
 
 # ---- C/C++ EXTENSIONS ---- #
-cython_modules = [
-    'menpo/external/skimage/_warps_cy.pyx',
-    'menpo/transform/piecewiseaffine/quadtreepwa.pyx',
-    'menpo/feature/windowiterator.pyx',
-    'menpo/feature/gradient.pyx',
-    'menpo/image/patches.pyx',
-    'menpo/shape/mesh/normals.pyx'
-]
+# Stolen (and modified) from the Cython documentation:
+#     http://cython.readthedocs.io/en/latest/src/reference/compilation.html
+def no_cythonize(extensions, **_ignore):
+    import os.path as op
+    for extension in extensions:
+        sources = []
+        for sfile in extension.sources:
+            path, ext = os.path.splitext(sfile)
+            if ext in ('.pyx', '.py'):
+                if extension.language == 'c++':
+                    ext = '.cpp'
+                else:
+                    ext = '.c'
+                sfile = path + ext
+                if not op.exists(sfile):
+                    raise ValueError('Cannot find pre-compiled source file '
+                                     '({}) - please install Cython'.format(sfile))
+            sources.append(sfile)
+        extension.sources[:] = sources
+    return extensions
 
-cython_exts = cythonize(cython_modules, quiet=True)
-# Perform a small amount of gymnastics to improve the compilation output on
-# each platform (including finding numpy without importing it)
-numpy_incl = pkg_resources.resource_filename('numpy', 'core/include')
-for ext in cython_exts:
-    if numpy_incl not in ext.include_dirs:
-        ext.include_dirs.append(numpy_incl)
+
+def build_extension_from_pyx(pyx_path, extra_sources_paths=None):
+    if extra_sources_paths is None:
+        extra_sources_paths = []
+    extra_sources_paths.insert(0, pyx_path)
+    ext = Extension(name=pyx_path[:-4].replace('/', '.'),
+                    sources=extra_sources_paths,
+                    include_dirs=[NUMPY_INC_PATH],
+                    language='c++')
     if IS_LINUX or IS_OSX:
         ext.extra_compile_args.append('-Wno-unused-function')
+    return ext
+
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    import warnings
+    cythonize = no_cythonize
+    warnings.warn('Unable to import Cython - attempting to build using the '
+                  'pre-compiled C++ files.')
+
+
+cython_modules = [
+    build_extension_from_pyx('menpo/external/skimage/_warps_cy.pyx'),
+    build_extension_from_pyx(
+        'menpo/transform/piecewiseaffine/quadtreepwa.pyx',
+        extra_sources_paths=['menpo/transform/piecewiseaffine/cpp/quadtree.cpp']),
+    build_extension_from_pyx(
+        'menpo/feature/windowiterator.pyx',
+        extra_sources_paths=['menpo/feature/cpp/ImageWindowIterator.cpp',
+                             'menpo/feature/cpp/WindowFeature.cpp',
+                             'menpo/feature/cpp/HOG.cpp',
+                             'menpo/feature/cpp/LBP.cpp']),
+    build_extension_from_pyx('menpo/feature/_gradient.pyx'),
+    build_extension_from_pyx('menpo/image/patches.pyx'),
+    build_extension_from_pyx('menpo/shape/mesh/normals.pyx')
+]
+cython_exts = cythonize(cython_modules, quiet=True)
 
 
 # Please see conda/meta.yaml for other binary dependencies
 install_requires = ['numpy>=1.10,<2.0',
                     'scipy>=0.16,<1.0',
                     'matplotlib>=1.4,<2.0',
-                    'pillow>=3.0,<4.0',
-                    'cython>=0.23']
+                    'pillow>=3.0,<4.0']
 
 if sys.version_info.major == 2:
     install_requires.append('pathlib==1.0')
@@ -53,9 +94,7 @@ setup(name='menpo',
       ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=install_requires,
-      package_data={'menpo': ['data/*',
-                              'transform/piecewiseaffine/cpp/*.cpp',
-                              'feature/cpp/*.cpp'],
-                    '': ['*.pxd', '*.pyx', '*.h']},
+      package_data={'menpo': ['data/*'],
+                    '': ['*.pxd', '*.pyx', '*.h', '*.cpp']},
       tests_require=['nose', 'mock']
 )
