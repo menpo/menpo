@@ -4,8 +4,8 @@
 ==================
 
 
-Base Classes
-------------
+Base Class
+----------
 
 .. toctree::
   :maxdepth: 2
@@ -57,6 +57,7 @@ Predefined Graphs
   complete_graph
   chain_graph
   delaunay_graph
+  stencil_grid
 
 
 Triangular Meshes

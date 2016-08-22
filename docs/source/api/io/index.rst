@@ -31,6 +31,7 @@ Output
   :maxdepth: 2
 
   export_image
+  export_video
   export_landmark_file
   export_pickle
 

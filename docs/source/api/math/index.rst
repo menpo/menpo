@@ -3,9 +3,6 @@
 :mod:`menpo.math`
 =================
 
-.. toctree::
-  :maxdepth: 2
-
 
 Decomposition
 -------------

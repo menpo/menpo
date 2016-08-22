@@ -3,17 +3,15 @@
 :mod:`menpo.model`
 ==================
 
-.. toctree::
-  :maxdepth: 2
-
-
 Abstract Classes
 ----------------
 
 .. toctree::
   :maxdepth: 2
 
+  LinearModel
   LinearVectorModel
+  MeanLinearModel
   MeanLinearVectorModel
 
 

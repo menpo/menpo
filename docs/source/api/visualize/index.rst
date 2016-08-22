@@ -3,9 +3,6 @@
 :mod:`menpo.visualize`
 ======================
 
-.. toctree::
-  :maxdepth: 2
-
 
 Abstract Classes
 ----------------

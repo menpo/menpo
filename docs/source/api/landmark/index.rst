@@ -3,9 +3,6 @@
 :mod:`menpo.landmark`
 =====================
 
-.. toctree::
-  :maxdepth: 2
-
 
 Abstract Classes
 ----------------

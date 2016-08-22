@@ -26,10 +26,11 @@ Convenience
   name_of_callable
 
 
-Warnings
---------
+Warnings and Exceptions
+-----------------------
 
 .. toctree::
   :maxdepth: 2
 
   MenpoDeprecationWarning
+  MenpoMissingDependencyError
