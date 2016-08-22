@@ -18,7 +18,9 @@ areas within the bounding boxes using Menpo:
 
     import menpo.io as mio
 
-    images = mio.import_images('./images_folder')
+    images = []
+    for image in mio.import_images('./images_folder'):
+        images.append(image.crop_to_landmarks())
 
 Where :map:`import_images` returns a :map:`LazyList` to keep memory usage low.
 
