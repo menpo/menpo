@@ -43,8 +43,8 @@ point localisation.
 Finally, please refer to Menpo's :ref:`changelog` for a list of changes per release.
 
 
-Menpo API
-~~~~~~~~~
+API Documentation
+~~~~~~~~~~~~~~~~~
 This section attempts to provide a simple browsing experience for the Menpo
 documentation. In Menpo, we use legible docstrings, and therefore, all
 documentation should be easily accessible in any sensible IDE (or IPython)
