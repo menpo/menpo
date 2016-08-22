@@ -106,7 +106,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             The mean vector.
         n_samples : `int`
             The number of samples used to generate the eigenvectors.
-        centred : `bool`, optional
+        centred : `bool`
             When ``True`` we assume that the data were centered before
             computing the eigenvectors.
         max_n_components : `int`, optional
