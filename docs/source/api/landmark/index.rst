@@ -4,14 +4,14 @@
 =====================
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
 
 Abstract Classes
 ----------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   Landmarkable
 
@@ -20,7 +20,7 @@ Exceptions
 ----------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   LabellingError
 
@@ -29,7 +29,7 @@ Landmarks & Labeller
 --------------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   LandmarkManager
   LandmarkGroup
@@ -44,8 +44,13 @@ Bounding Box Labels
   bounding_box_mirrored_to_bounding_box
   bounding_box_to_bounding_box
 
-Face Labels
------------
+Labels
+------
+Pre-defined landmark labels that normally correspond to standard database
+mark-ups.
+
+Human Face
+``````````
 
 .. toctree::
   :maxdepth: 2
@@ -65,11 +70,11 @@ Face Labels
   face_lfpw_29_to_face_lfpw_29
   face_bu3dfe_83_to_face_bu3dfe_83
 
-Eyes Labels
------------
+Human Eyes
+``````````
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   eye_ibug_close_17_to_eye_ibug_close_17
   eye_ibug_close_17_to_eye_ibug_close_17_trimesh
@@ -77,20 +82,20 @@ Eyes Labels
   eye_ibug_open_38_to_eye_ibug_open_38_trimesh
 
 
-Hands Labels
-------------
+Human Hand
+``````````
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   hand_ibug_39_to_hand_ibug_39
 
 
-Pose Labels
------------
+Human Body Pose
+```````````````
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   pose_flic_11_to_pose_flic_11
   pose_human36M_32_to_pose_human36M_17
@@ -99,11 +104,11 @@ Pose Labels
   pose_stickmen_12_to_pose_stickmen_12
 
 
-Car Labels
-----------
+Car
+```
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   car_streetscene_20_to_car_streetscene_view_0_8
   car_streetscene_20_to_car_streetscene_view_1_14
@@ -115,10 +120,10 @@ Car Labels
   car_streetscene_20_to_car_streetscene_view_7_8
 
 
-Tongue Labels
--------------
+Human Tongue
+````````````
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   tongue_ibug_19_to_tongue_ibug_19

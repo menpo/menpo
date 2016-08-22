@@ -8,7 +8,7 @@ Composite Transforms
 --------------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   rotate_ccw_about_centre
   scale_about_centre
@@ -18,7 +18,7 @@ Homogeneous Transforms
 ----------------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   Homogeneous
   Affine
@@ -34,7 +34,7 @@ Alignments
 ----------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   ThinPlateSplines
   PiecewiseAffine
@@ -49,7 +49,7 @@ Group Alignments
 ----------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   GeneralizedProcrustesAnalysis
 
@@ -58,7 +58,7 @@ Composite Transforms
 --------------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   TransformChain
 
@@ -67,7 +67,7 @@ Radial Basis Functions
 ----------------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   R2LogR2RBF
   R2LogRRBF
@@ -77,7 +77,7 @@ Abstract Bases
 --------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   Transform
   Transformable
@@ -93,7 +93,7 @@ Performance Specializations
 Mix-ins that provide fast vectorized variants of methods.
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   VComposable
   VInvertible

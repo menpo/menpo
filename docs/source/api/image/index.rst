@@ -7,7 +7,7 @@ Image Types
 -----------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   Image
   BooleanImage
@@ -17,7 +17,7 @@ Exceptions
 ----------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   ImageBoundaryError
   OutOfMaskSampleError

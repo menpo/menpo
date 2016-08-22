@@ -4,14 +4,14 @@
 ====================
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
 
 Features
 --------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   no_op
   gradient
@@ -36,7 +36,7 @@ Features that have been wrapped from the Vlfeat [1]_ project. Currently,
 the wrapped features are all variants on the SIFT [2]_ algorithm.
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   dsift
   fast_dsift
@@ -51,7 +51,7 @@ partial functions. This implies that some sensible parameter choices have
 already been made that provides a unique set of properties.
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   double_igo
   sparse_hog
@@ -61,7 +61,7 @@ Visualization
 -------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   glyph
   sum_channels
@@ -71,7 +71,7 @@ Widget
 ------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   features_selection_widget
 

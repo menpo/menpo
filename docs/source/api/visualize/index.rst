@@ -4,14 +4,14 @@
 ======================
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
 
 Abstract Classes
 ----------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   Renderer
   Viewable
@@ -23,7 +23,7 @@ Patches
 -------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   view_patches
 
@@ -32,7 +32,7 @@ Print Utilities
 ---------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   print_progress
   print_dynamic
@@ -44,7 +44,7 @@ Various
 -------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   plot_curve
   plot_gaussian_ellipses
