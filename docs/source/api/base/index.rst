@@ -8,7 +8,7 @@ Core
 Core interfaces of Menpo.
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   Copyable
   Vectorizable
@@ -20,16 +20,17 @@ Convenience
 -----------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   menpo_src_dir_path
   name_of_callable
 
 
-Convenience
------------
+Warnings and Exceptions
+-----------------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   MenpoDeprecationWarning
+  MenpoMissingDependencyError
