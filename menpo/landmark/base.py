@@ -240,7 +240,7 @@ class LandmarkManager(MutableMapping, Transformable):
     @property
     def group_labels(self):
         """
-        All the labels for the landmark set.
+        All the labels for the landmark set sorted alphabetically.
 
         :type: `list` of `str`
         """
