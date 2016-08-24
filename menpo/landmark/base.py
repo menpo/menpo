@@ -246,7 +246,7 @@ class LandmarkManager(MutableMapping, Transformable):
         """
         # Convert to list so that we can index immediately, as keys()
         # is a generator in Python 3
-        return list(self._landmark_groups.keys())
+        return sorted(list(self._landmark_groups.keys()))
 
     def keys_matching(self, glob_pattern):
         r"""
