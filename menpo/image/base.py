@@ -331,7 +331,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image : :map:`Image`
             A new image from the given pixels, with the FIRST axis as the
             channels.
+
+        Raises
+        ------
+        ValueError
+            If image is not at least 2D, i.e. has at least 2 dimensions plus
+            the channels in the end.
         """
+        if pixels.ndim <= 2:
+            m = ('The image should have more than 2 dimensions plus one more '
+                 'for \nthe channels. Currently provided {} dimensions.')
+            raise ValueError(m.format(pixels.ndim))
         return cls(np.rollaxis(pixels, -1))
 
     @classmethod
