@@ -71,11 +71,10 @@ def pillow_importer(filepath, asset=None, normalize=True, **kwargs):
         # Greyscale, Integer and RGB images
         image = Image(_pil_to_numpy(pil_image, normalize), copy=False)
     elif mode == '1':
-        # convert first to 'L' type, see here:
-        # http://stackoverflow.com/a/4114122/1716869
-        pil_image = pil_image.convert('L')
+        # Convert to 'L' type (http://stackoverflow.com/a/4114122/1716869).
         # Can't normalize a binary image
-        image = BooleanImage(_pil_to_numpy(pil_image, False), copy=False)
+        image = BooleanImage(_pil_to_numpy(pil_image, False, convert='L'),
+                             copy=True)
     elif mode == 'P':
         # Convert pallete images to RGB
         image = Image(_pil_to_numpy(pil_image, normalize, convert='RGB'))
