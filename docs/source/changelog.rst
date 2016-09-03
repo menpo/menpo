@@ -1,5 +1,24 @@
+.. _changelog:
+
 Changelog
 #########
+
+0.7.4 (2016/08/18)
+------------------
+Minor fixes and additions including improved compatibility with loading older menpo PCAModel pickles and importing Python 2 pickles in Python 3.
+
+Github Pull Requests
+....................
+
+- `#723`_ Add optional 'encoding' argument to import_pickle. (@patricksnape)
+- `#728`_ Allow for unpickling of the older PCAModel. (@patricksnape)
+- `#726`_ Improve pip install. (@patricksnape)
+- `#731`_ Pin setuptools to 23.x. (@jabooth)
+
+.. _#723: https://github.com/menpo/menpo/pull/723
+.. _#728: https://github.com/menpo/menpo/pull/728
+.. _#726: https://github.com/menpo/menpo/pull/726
+.. _#731: https://github.com/menpo/menpo/pull/731
 
 0.7.3 (2016/08/05)
 ------------------
@@ -9,7 +28,7 @@ supporting more types with normal calculations, and tidying up the conda build r
 Github Pull Requests
 ....................
 
-- `#716`_ allow for forced inexact frame count in FFMpegVideoReader.(@san-bil)
+- `#716`_ allow for forced inexact frame count in FFMpegVideoReader. (@san-bil)
 - `#714`_ Utilise the kwargs in exporting video with ffmpeg. (@grigorisg9gr)
 - `#720`_ Simplify the conda build. (@patricksnape)
 - `#719`_ Support more types for normals. (@patricksnape)

@@ -3,15 +3,12 @@
 :mod:`menpo.feature`
 ====================
 
-.. toctree::
-  :maxdepth: 1
-
 
 Features
 --------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   no_op
   gradient
@@ -23,20 +20,19 @@ Features
   daisy
 
 
-Optional
---------
+Optional Features
+-----------------
 The following features are optional and may or may not be available depending
 on whether the required packages that implement them are available. If
 conda was used to install menpo then it is highly likely that all the optional
 packages will be available.
 
-Vlfeat
-``````
+**Vlfeat:**
 Features that have been wrapped from the Vlfeat [1]_ project. Currently,
 the wrapped features are all variants on the SIFT [2]_ algorithm.
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   dsift
   fast_dsift
@@ -51,17 +47,28 @@ partial functions. This implies that some sensible parameter choices have
 already been made that provides a unique set of properties.
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   double_igo
   sparse_hog
 
+Normalization
+-------------
+The following functions perform some kind of normalization on an image.
+
+.. toctree::
+  :maxdepth: 2
+
+  normalize
+  normalize_norm
+  normalize_std
+  normalize_var
 
 Visualization
 -------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   glyph
   sum_channels
@@ -71,7 +78,7 @@ Widget
 ------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   features_selection_widget
 
