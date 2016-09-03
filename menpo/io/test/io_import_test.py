@@ -302,6 +302,24 @@ def test_importing_PIL_1_no_normalize(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
+def test_importing_PIL_1_proper_conversion(is_file, mock_image):
+    from menpo.image import BooleanImage
+ 
+    arr = np.zeros((10, 10), dtype=np.uint8)
+    arr[4, 4] = 255
+    mock_image.return_value = PILImage.fromarray(arr).convert('1')
+    is_file.return_value = True
+
+    im = mio.import_image('fake_image_being_mocked.ppm', normalize=False)
+    assert im.shape == (10, 10)
+    assert im.n_channels == 1
+    assert im.pixels.dtype == np.bool
+    assert type(im) == BooleanImage
+    assert np.all(im.pixels == arr.astype(np.bool))
+
+
+@patch('PIL.Image.open')
+@patch('menpo.io.input.base.Path.is_file')
 def test_importing_PIL_P_normalize(is_file, mock_image):
     mock_image.return_value = PILImage.new('P', (10, 10))
     is_file.return_value = True
