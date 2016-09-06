@@ -3,15 +3,12 @@
 :mod:`menpo.math`
 =================
 
-.. toctree::
-  :maxdepth: 1
-
 
 Decomposition
 -------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   eigenvalue_decomposition
   pca
@@ -23,7 +20,7 @@ Linear Algebra
 --------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   dot_inplace_right
   dot_inplace_left
@@ -35,6 +32,6 @@ Convolution
 -----------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   log_gabor

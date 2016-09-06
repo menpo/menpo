@@ -118,6 +118,7 @@ class FFMpegVideoReader(object):
                 self._pipe.stderr.close()
             if self._pipe.stdin:
                 self._pipe.stdin.close()
+        self._pipe = None
 
     def __del__(self):
         r"""
@@ -171,9 +172,9 @@ class FFMpegVideoReader(object):
 
         Only opens the pipe once at the beginning
         """
-        self._open_pipe(frame=None)
-        for self.index in range(self.n_frames):
-            yield self._read_one_frame()
+        self.index = 0
+        for index in range(self.n_frames):
+            yield self[index]
 
     def __getitem__(self, index):
         r"""
@@ -181,11 +182,11 @@ class FFMpegVideoReader(object):
         """
         # If the user is reading consecutive frames, or a frame later in the
         # video, do not reopen a pipe
-        if (self._pipe is None) or (index <= self.index):
-            self._open_pipe(index)
+        if self._pipe is None or self._pipe.poll() is not None or index <= self.index:
+            self._open_pipe(frame=index)
         else:
             to_trash = index - self.index - 1
-            if to_trash != 0:
+            if to_trash > 0:
                 self._trash_frames(to_trash)
 
         return self._read_one_frame()
