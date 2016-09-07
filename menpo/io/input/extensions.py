@@ -33,6 +33,7 @@ image_types = {'.bmp': pillow_importer,
 
 
 ffmpeg_video_types = ffmpeg_types()
+ffmpeg_video_types['.gif'] = ffmpeg_importer
 
 image_landmark_types = {'.asf': asf_image_importer,
                         '.lm2': lm2_importer,

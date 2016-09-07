@@ -338,6 +338,9 @@ def video_infos_ffprobe(filepath):
     else:
         kv_dict['duration'] = float(kv_dict['duration'])
     fps = kv_dict.pop('avg_frame_rate').split('/')
-    kv_dict['fps'] = float(fps[0]) / float(fps[1])
+    try:
+        kv_dict['fps'] = float(fps[0]) / float(fps[1])
+    except ZeroDivisionError:
+        kv_dict['fps'] = np.nan
 
     return kv_dict

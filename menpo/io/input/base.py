@@ -778,8 +778,7 @@ def _import_object_attach_landmarks(built_objects, landmark_resolver,
     # handle landmarks
     if landmark_ext_map is not None:
         for x in built_objects:
-            lm_paths = landmark_resolver(x.path)  # use the users fcn to find
-            # paths
+            lm_paths = landmark_resolver(x.path)
             if lm_paths is None:
                 continue
             for group_name, lm_path in lm_paths.items():
