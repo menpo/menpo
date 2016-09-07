@@ -465,8 +465,8 @@ def _export(obj, fp, extensions_map, extension, overwrite,
     if isinstance(fp, basestring):
         fp = Path(fp)  # cheeky conversion to Path to reuse existing code
     if isinstance(fp, Path):
-        export_function = _validate_and_get_export_func(fp, extensions_map,
-                                                        extension, overwrite)
+        export_function, extension = _validate_and_get_export_func(
+            fp, extensions_map, extension, overwrite, return_extension=True)
 
         with fp.open('wb') as file_handle:
             export_function(obj, file_handle, extension=extension,
