@@ -80,7 +80,7 @@ class Landmarkable(Copyable):
 
 
 class LandmarkManager(MutableMapping, Transformable):
-    """Store for :map:`LandmarkGroup` instances associated with an object
+    """Store for :map:`LandmarkGroup` instances associated with an object.
 
     Every :map:`Landmarkable` instance has an instance of this class available
     at the ``.landmarks`` property.  It is through this class that all access
@@ -99,7 +99,7 @@ class LandmarkManager(MutableMapping, Transformable):
     """
     def __init__(self):
         super(LandmarkManager, self).__init__()
-        self._landmark_groups = {}
+        self._landmark_groups = OrderedDict()
 
     @property
     def n_dims(self):
@@ -133,7 +133,7 @@ class LandmarkManager(MutableMapping, Transformable):
 
     def __iter__(self):
         """
-        Iterate over the internal landmark group dictionary
+        Iterate over the internal landmark group dictionary.
         """
         return iter(self._landmark_groups)
 
@@ -246,7 +246,7 @@ class LandmarkManager(MutableMapping, Transformable):
         """
         # Convert to list so that we can index immediately, as keys()
         # is a generator in Python 3
-        return sorted(list(self._landmark_groups.keys()))
+        return list(self._landmark_groups.keys())
 
     def keys_matching(self, glob_pattern):
         r"""
