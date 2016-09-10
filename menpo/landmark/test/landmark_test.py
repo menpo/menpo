@@ -179,11 +179,11 @@ def test_LandmarkManager_group_order():
     man['test_set'] = pcloud.copy()
     man['abc'] = pcloud.copy()
     man['def'] = pcloud.copy()
-    assert_equal(man._landmark_groups.keys(), ['test_set', 'abc', 'def'])
+    assert_equal(list(man._landmark_groups.keys()), ['test_set', 'abc', 'def'])
     # check that after deleting and inserting the order will remain the same.
     del man['test_set']
     man['tt'] = pcloud.copy()
-    assert_equal(man._landmark_groups.keys(), ['abc', 'def', 'tt'])
+    assert_equal(list(man._landmark_groups.keys()), ['abc', 'def', 'tt'])
 
 
 def test_LandmarkManager_in():

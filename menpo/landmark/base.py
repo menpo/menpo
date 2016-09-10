@@ -219,6 +219,13 @@ class LandmarkManager(MutableMapping, Transformable):
     def __len__(self):
         return len(self._landmark_groups)
 
+    def __setstate__(self, state):
+        # consistency with older versions imported.
+        if ~isinstance(state['_landmark_groups'], OrderedDict):
+            state['_landmark_groups'] = OrderedDict(state['_landmark_groups'])
+
+        self.__dict__ = state
+
     @property
     def n_groups(self):
         """
