@@ -92,7 +92,6 @@ class LandmarkManager(MutableMapping, Transformable):
     :map:`LandmarkManager` - in this case ``None`` can be used as a key to
     access the sole group.
 
-
     Note that all landmarks stored on a :map:`Landmarkable` in it's attached
     :map:`LandmarkManager` are automatically transformed and copied with their
     parent object.
@@ -247,7 +246,7 @@ class LandmarkManager(MutableMapping, Transformable):
     @property
     def group_labels(self):
         """
-        All the labels for the landmark set sorted alphabetically.
+        All the labels for the landmark set sorted by insertion order.
 
         :type: `list` of `str`
         """
