@@ -221,7 +221,7 @@ class LandmarkManager(MutableMapping, Transformable):
 
     def __setstate__(self, state):
         # consistency with older versions imported.
-        if ~isinstance(state['_landmark_groups'], OrderedDict):
+        if not isinstance(state['_landmark_groups'], OrderedDict):
             state['_landmark_groups'] = OrderedDict(state['_landmark_groups'])
 
         self.__dict__ = state
