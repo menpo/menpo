@@ -53,8 +53,9 @@ def pillow_importer(filepath, asset=None, normalize=True, **kwargs):
         The imported image.
     """
     import PIL.Image as PILImage
-
-    pil_image = PILImage.open(str(filepath))
+    if isinstance(filepath, Path):
+        filepath = str(filepath)
+    pil_image = PILImage.open(filepath)
     mode = pil_image.mode
     if mode == 'RGBA':
         # If normalize is False, then we return the alpha as an extra
