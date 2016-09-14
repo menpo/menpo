@@ -4,7 +4,7 @@ from nose.tools import raises
 from numpy.testing import assert_allclose, assert_almost_equal
 from menpo.image import BooleanImage, Image, MaskedImage, OutOfMaskSampleError
 from menpo.shape import PointCloud, bounding_box
-from menpo.transform import Affine
+from menpo.transform import Affine, UniformScale, Rotation
 import menpo.io as mio
 
 # do the import to generate the expected outputs
@@ -189,6 +189,21 @@ def test_sample_booleanimage():
 
     arr = im.sample(p)
     assert_allclose(arr, [[True, False]])
+
+
+def test_transform_about_centre():
+    pixels_16 = np.arange(16, dtype=np.float)
+    image = Image(pixels_16.reshape(4, 4))
+    transform = Rotation.init_from_2d_ccw_angle(180).compose_before(
+        UniformScale(2, n_dims=2))
+    # rotate 90 + scale degrees
+    transformed_img = image.transform_about_centre(transform, order=0)
+    expected_pixels = np.rot90(np.repeat(np.repeat(pixels_16, 2).reshape(4, -1),
+                                         2, axis=0)[1:, 1:],
+                               k=2)
+
+    assert transformed_img.shape == (7, 7)
+    assert_allclose(transformed_img.pixels[0], expected_pixels)
 
 
 def test_zoom_image():

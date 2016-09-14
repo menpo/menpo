@@ -11,9 +11,9 @@ from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale, Rotation,
                              AlignmentUniformScale, Affine, scale_about_centre,
-                             rotate_ccw_about_centre, shear_about_centre)
-from menpo.transform.compositions import create_2d_shear_transform
+                             transform_about_centre)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
+
 from .interpolation import scipy_interpolation, cython_interpolation
 from .patches import extract_patches, set_patches
 
@@ -2232,54 +2232,42 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             raise ValueError('Image rotation is presently only supported on '
                              '2D images')
 
-        if retain_shape:
-            # Rotate the image about its centre
-            trans = rotate_ccw_about_centre(self, theta, degrees=degrees)
-            # Output image's shape must be the same as the original one
-            shape = self.shape
-        else:
-            # Get image's bounding box coordinates
-            bbox = bounding_box((0, 0), (self.shape[0] - 1, self.shape[1] - 1))
-            # Translate to origin and rotate counter-clockwise
-            trans = Translation(-self.centre(),
-                                skip_checks=True).compose_before(
-                Rotation.init_from_2d_ccw_angle(theta, degrees=degrees))
-            rotated_bbox = trans.apply(bbox)
-            # Create new translation so that min bbox values go to 0
-            t = Translation(-rotated_bbox.bounds()[0])
-            trans.compose_before_inplace(t)
-            rotated_bbox = trans.apply(bbox)
-            # Output image's shape is the range of the rotated bounding box
-            # while respecting the users rounding preference.
-            shape = round_image_shape(rotated_bbox.range() + 1, round)
+        rotation = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
+        return self.transform_about_centre(rotation, retain_shape=retain_shape,
+                                           cval=cval, round=round, order=order,
+                                           return_transform=return_transform)
 
-        # Warp image
-        return self.warp_to_shape(
-            shape, trans.pseudoinverse(), order=order, warp_landmarks=True,
-            cval=cval, return_transform=return_transform)
-
-    def shear_about_centre(self, phi, psi, degrees=True, retain_shape=False,
-                           cval=0.0, round='round', order=1,
-                           return_transform=False):
+    def transform_about_centre(self, transform, retain_shape=False,
+                               cval=0.0, round='round', order=1,
+                               return_transform=False):
         r"""
-        Return a copy of this image, sheared (distorted) about its centre.
+        Return a copy of this image, transformed about its centre.
 
-        Note that the `retain_shape` argument defines the shape of the sheared
-        image. If ``retain_shape=True``, then the shape of the sheared image
-        will be the same as the one of current image, so some regions will
-        probably be cropped. If ``retain_shape=False``, then the returned image
-        has the correct size so that the whole area of the current image is
-        included.
+        Note that the `retain_shape` argument defines the shape of the
+        transformed image. If ``retain_shape=True``, then the shape of the
+        transformed image will be the same as the one of current image, so some
+        regions will probably be cropped. If ``retain_shape=False``, then the
+        returned image has the correct size so that the whole area of the
+        current image is included.
+
+         .. note::
+
+             This method will not work for transforms that result in a transform
+             chain as :map:`TransformChain` is not invertible.
+
+         .. note::
+
+             Be careful when defining transforms for warping imgaes. All pixel
+             locations must fall within a valid range as expected by the
+             transform. Therefore, your transformation must accept 'negative'
+             pixel locations as the pixel locations provided to your transform
+             will have the object centre subtracted from them.
 
         Parameters
         ----------
-        phi : `float`
-            The angle of shearing in the X direction.
-        psi : `float`
-            The angle of shearing in the Y direction.
-        degrees : `bool`, optional
-            If ``True``, then phi and psi are interpreted as degrees.
-            If ``False`` they are interpreted as radians.
+        transform : :map:`ComposableTransform` and :map:`VInvertible` type
+            A composable transform. ``pseudoinverse`` will be invoked on the
+            resulting transform so it must implement a valid inverse.
         retain_shape : `bool`, optional
             If ``True``, then the shape of the sheared image will be the same as
             the one of current image, so some regions will probably be cropped.
@@ -2311,47 +2299,36 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         Returns
         -------
-        sheared_image : ``type(self)``
-            The sheared image.
+        transformed_image : ``type(self)``
+            The transformed image.
         transform : :map:`Transform`
             The transform that was used. It only applies if
             `return_transform` is ``True``.
-
-        Raises
-        ------
-        ValueError
-            Image shearing is presently only supported on 2D images
         """
-        if self.n_dims != 2:
-            raise ValueError('Image shearing is presently only supported on '
-                             '2D images')
-
         if retain_shape:
-            # Shear the image about its centre
-            trans = shear_about_centre(self, phi, psi, degrees=degrees)
-            # Output image's shape must be the same as the original one
             shape = self.shape
+            applied_transform = transform_about_centre(self, transform)
         else:
             # Get image's bounding box coordinates
-            bbox = bounding_box((0, 0), (self.shape[0] - 1, self.shape[1] - 1))
-            # Create shear transform
-            a = create_2d_shear_transform(phi, psi, degrees=degrees)
-            # Translate to origin and shear
+            original_bbox = bounding_box((0, 0),
+                                         np.array(self.shape) - 1)
+            # Translate to origin and apply transform
             trans = Translation(-self.centre(),
-                                skip_checks=True).compose_before(a)
-            sheared_bbox = trans.apply(bbox)
+                                skip_checks=True).compose_before(transform)
+            transformed_bbox = trans.apply(original_bbox)
+
             # Create new translation so that min bbox values go to 0
-            t = Translation(-sheared_bbox.bounds()[0])
-            trans.compose_before_inplace(t)
-            sheared_bbox = trans.apply(bbox)
+            t = Translation(-transformed_bbox.bounds()[0])
+            applied_transform = trans.compose_before(t)
+            transformed_bbox = trans.apply(original_bbox)
             # Output image's shape is the range of the sheared bounding box
             # while respecting the users rounding preference.
-            shape = round_image_shape(sheared_bbox.range() + 1, round)
+            shape = round_image_shape(transformed_bbox.range() + 1, round)
 
         # Warp image
         return self.warp_to_shape(
-            shape, trans.pseudoinverse(), order=order, warp_landmarks=True,
-            cval=cval, return_transform=return_transform)
+            shape, applied_transform.pseudoinverse(), order=order,
+            warp_landmarks=True, cval=cval, return_transform=return_transform)
 
     def mirror(self, axis=1, return_transform=False):
         r"""

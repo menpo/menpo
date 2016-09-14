@@ -11,8 +11,9 @@ Composite Transforms
   :maxdepth: 2
 
   rotate_ccw_about_centre
-  shear_about_centre
   scale_about_centre
+  shear_about_centre
+  transform_about_centre
 
 
 Homogeneous Transforms
