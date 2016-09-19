@@ -2304,6 +2304,65 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         transform : :map:`Transform`
             The transform that was used. It only applies if
             `return_transform` is ``True``.
+
+        Examples
+        --------
+        This is an example for rotating an image about its center. Let's
+        first load an image, create the rotation transform and then apply it ::
+
+            import matplotlib.pyplot as plt
+            import menpo.io as mio
+            from menpo.transform import Rotation
+
+            # Load image
+            im = mio.import_builtin_asset.lenna_png()
+
+            # Create shearing transform
+            rot_tr = Rotation.init_from_2d_ccw_angle(45)
+
+            # Render original image
+            plt.subplot(131)
+            im.view_landmarks()
+            plt.title('Original')
+
+            # Render rotated image
+            plt.subplot(132)
+            im.transform_about_centre(rot_tr).view_landmarks()
+            plt.title('Rotated')
+
+            # Render rotated image that has shape equal as original image
+            plt.subplot(133)
+            im.transform_about_centre(rot_tr, retain_shape=True).view_landmarks()
+            plt.title('Rotated (Retain original shape)')
+
+
+        Similarly, in order to apply a shear transform ::
+
+            import matplotlib.pyplot as plt
+            import menpo.io as mio
+            from menpo.transform import Affine
+
+            # Load image
+            im = mio.import_builtin_asset.lenna_png()
+
+            # Create shearing transform
+            shear_tr = Affine.init_from_2d_shear(25, 10)
+
+            # Render original image
+            plt.subplot(131)
+            im.view_landmarks()
+            plt.title('Original')
+
+            # Render sheared image
+            plt.subplot(132)
+            im.transform_about_centre(shear_tr).view_landmarks()
+            plt.title('Sheared')
+
+            # Render sheared image that has shape equal as original image
+            plt.subplot(133)
+            im.transform_about_centre(shear_tr,
+                                      retain_shape=True).view_landmarks()
+            plt.title('Sheared (Retain original shape)')
         """
         if retain_shape:
             shape = self.shape

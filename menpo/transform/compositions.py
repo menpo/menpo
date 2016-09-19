@@ -81,7 +81,7 @@ def rotate_ccw_about_centre(obj, theta, degrees=True):
         A homogeneous transform that implements the rotation.
     """
     if obj.n_dims != 2:
-        raise ValueError('CCW rotation is curerrently only supported for '
+        raise ValueError('CCW rotation is currently only supported for '
                          '2D objects')
     r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
     return transform_about_centre(obj, r)
@@ -116,6 +116,6 @@ def shear_about_centre(obj, phi, psi, degrees=True):
         Shearing can only be applied on 2D objects
     """
     if obj.n_dims != 2:
-        raise ValueError('Shearing can only be applied on 2D objects')
+        raise ValueError('Shearing is currently only supported for 2D objects')
     s = Affine.init_from_2d_shear(phi, psi, degrees=degrees)
     return transform_about_centre(obj, s)
