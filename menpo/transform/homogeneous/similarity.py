@@ -275,6 +275,26 @@ def procrustes_alignment(source, target, rotation=True, allow_mirror=False):
     p.compose_before_inplace(src_t)
     p.compose_before_inplace(src_s)
 
+    # Try to align even if the two shapes do not have the same number of points
+    if source.n_points < target.n_points:
+        diff = target.n_points - source.n_points
+        source_points = source.points
+        # padd with a value that will not modify the overall behavior
+        constant_values = np.mean(source_points, axis=0)
+        padded = np.pad(source_points, pad_width=((0, diff), (0, 0)), 
+                mode='constant', constant_values=constant_values)
+        # Do not padd the original points
+        source = source.copy()
+        source.points = padded
+    elif target.n_points < source.n_points:
+        diff = source.n_points - target.n_points
+        target_points = target.points
+        constant_values = np.mean(target_points, axis=0)
+        padded = np.pad(target_points, pad_width=((0, diff), (0, 0)), 
+                mode='constant', constant_values=constant_values)
+        target = target.copy()
+        target.points = padded
+
     if rotation:
         # to calculate optimal rotation we need the source and target in the
         # centre and of the correct size. Use the current p to do this
