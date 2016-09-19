@@ -10,7 +10,7 @@ from menpo.image.base import normalize_pixels_range, channels_to_front
 
 def _pil_to_numpy(pil_image, normalize, convert=None):
     p = pil_image.convert(convert) if convert else pil_image
-    p = channels_to_front(p)
+    p = np.asarray(p)
     if normalize:
         return normalize_pixels_range(p)
     else:
@@ -64,13 +64,16 @@ def pillow_importer(filepath, asset=None, normalize=True, **kwargs):
         if normalize:
             alpha = np.array(pil_image)[..., 3].astype(np.bool)
             image_pixels = _pil_to_numpy(pil_image, True, convert='RGB')
-            image = MaskedImage(image_pixels, mask=alpha, copy=False)
+            image = MaskedImage.init_from_channels_at_back(image_pixels,
+                                                           mask=alpha)
         else:
             # With no normalisation we just return the pixels
-            image = Image(_pil_to_numpy(pil_image, False), copy=False)
+            image = Image.init_from_channels_at_back(
+                _pil_to_numpy(pil_image, False))
     elif mode in ['L', 'I', 'RGB']:
         # Greyscale, Integer and RGB images
-        image = Image(_pil_to_numpy(pil_image, normalize), copy=False)
+        image = Image.init_from_channels_at_back(
+            _pil_to_numpy(pil_image, normalize))
     elif mode == '1':
         # Convert to 'L' type (http://stackoverflow.com/a/4114122/1716869).
         # Can't normalize a binary image
@@ -78,10 +81,12 @@ def pillow_importer(filepath, asset=None, normalize=True, **kwargs):
                              copy=True)
     elif mode == 'P':
         # Convert pallete images to RGB
-        image = Image(_pil_to_numpy(pil_image, normalize, convert='RGB'))
+        image = Image.init_from_channels_at_back(
+            _pil_to_numpy(pil_image, normalize, convert='RGB'))
     elif mode == 'F':  # Floating point images
         # Don't normalize as we don't know the scale
-        image = Image(_pil_to_numpy(pil_image, False), copy=False)
+        image = Image.init_from_channels_at_back(
+            _pil_to_numpy(pil_image, False))
     else:
         raise ValueError('Unexpected mode for PIL: {}'.format(mode))
     return image

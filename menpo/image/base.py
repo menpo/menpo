@@ -206,11 +206,8 @@ def channels_to_front(pixels):
     """
     if not isinstance(pixels, np.ndarray):
         pixels = np.array(pixels)
-    # Channels to axis 0
-    if pixels.ndim == 3:
-        pixels = np.require(np.rollaxis(pixels, -1), dtype=pixels.dtype,
-                            requirements=['C'])
-    return pixels
+    return np.require(np.rollaxis(pixels, -1), dtype=pixels.dtype,
+                      requirements=['C'])
 
 
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
@@ -309,7 +306,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
              'Use .init_from_channels_at_back instead.',
              MenpoDeprecationWarning)
 
-        return cls(np.rollaxis(pixels, -1))
+        return cls.init_from_channels_at_back(pixels)
 
     @classmethod
     def init_from_channels_at_back(cls, pixels):
@@ -331,8 +328,24 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image : :map:`Image`
             A new image from the given pixels, with the FIRST axis as the
             channels.
+
+        Raises
+        ------
+        ValueError
+            If image is not at least 2D, i.e. has at least 2 dimensions plus
+            the channels in the end.
         """
-        return cls(np.rollaxis(pixels, -1))
+        if pixels.ndim == 2:
+            pixels = pixels[..., None]
+
+        if pixels.ndim < 2:
+            raise ValueError(
+                "Pixel array has to be 2D "
+                "(2D shape, implicitly 1 channel) "
+                "or 3D+ (2D+ shape, n_channels) "
+                " - a {}D array "
+                "was provided".format(pixels.ndim))
+        return cls(channels_to_front(pixels))
 
     @classmethod
     def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,

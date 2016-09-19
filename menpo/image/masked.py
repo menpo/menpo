@@ -149,7 +149,10 @@ class MaskedImage(Image):
             A new image from the given pixels, with the FIRST axis as the
             channels.
         """
-        return cls(np.rollaxis(pixels, -1), mask=mask)
+        im = Image.init_from_channels_at_back(pixels)
+        if mask is not None:
+            mask = mask.copy()
+        return MaskedImage(im.pixels, mask=mask, copy=False)
 
     @classmethod
     def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,
