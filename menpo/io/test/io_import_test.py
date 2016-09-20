@@ -116,6 +116,25 @@ def test_import_image():
     assert im.n_channels == 1
 
 
+def test_custom_landmark_resolver():
+    def lmark_resolver(path):
+        return {'PTS': mio.data_path_to('takeo.pts')}
+
+    img = mio.import_image(mio.data_path_to('lenna.png'),
+                           landmark_resolver=lmark_resolver)
+    assert(img.has_landmarks)
+
+    takeo_lmarks = mio.import_builtin_asset.takeo_pts()
+    np.allclose(img.landmarks['PTS'].lms.points,
+                takeo_lmarks.lms.points)
+
+
+def test_landmark_resolver_none():
+    img = mio.import_image(mio.data_path_to('lenna.png'),
+                           landmark_resolver=None)
+    assert(not img.has_landmarks)
+
+
 def test_import_image_no_norm():
     img_path = mio.data_dir_path() / 'einstein.jpg'
     im = mio.import_image(img_path, normalize=False)
