@@ -3,6 +3,39 @@
 Changelog
 #########
 
+0.7.5 (2016/09/20)
+------------------
+Minor bug fixes and two new pieces of functionality:
+  
+  - Fix bug in video importing when importing long videos (closed pipe) (@patricksnape)
+  - Update `MANIFEST.in` to include the `LICENSE.txt` and `AUTHORS.txt`
+  - Add new `transform_about_centre` method on images. Allow easily performing operations such as
+    rotating an image about it's centre or shearing an image about it's centre.
+  - Allow path only exporters (rather than hard requiring a buffer). The exporting
+    logic was also updated to support multiple kwargs to be passed through to the
+    exporters easily.
+
+Github Pull Requests
+....................
+
+- `#733`_ Remove user guide as it now lives at www.menpo.org (@nontas)
+- `#729`_ Fix PCA docs w.r.t `centre` parameter (@jabooth)
+- `#736`_ Fix bug importing boolean images with pillow (@grigorisg9gr)
+- `#739`_ Fix PointGraph printing to mention dimensionality (@nontas)
+- `#737`_ Allow path only exporters. Fix landmarking exporting on Python 3. (@patricksnape)
+- `#735`_ Fix `init_from_channels_at_back` to support 2D arrays. (@grigorisg9gr, @patricksnape)
+- `#738`_ Add `transform_about_centre` to images (@nontas, @patricksnape)
+- `#743`_ Set `nan` values to `None` in video importing (@JeanKossaifi)
+
+.. _#733: https://github.com/menpo/menpo/pull/733
+.. _#729: https://github.com/menpo/menpo/pull/729
+.. _#736: https://github.com/menpo/menpo/pull/736
+.. _#739: https://github.com/menpo/menpo/pull/739
+.. _#737: https://github.com/menpo/menpo/pull/737
+.. _#735: https://github.com/menpo/menpo/pull/735
+.. _#738: https://github.com/menpo/menpo/pull/738
+.. _#743: https://github.com/menpo/menpo/pull/743
+
 0.7.4 (2016/08/18)
 ------------------
 Minor fixes and additions including improved compatibility with loading older menpo PCAModel pickles and importing Python 2 pickles in Python 3.
