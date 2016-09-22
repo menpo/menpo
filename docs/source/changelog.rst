@@ -26,6 +26,7 @@ Github Pull Requests
 - `#735`_ Fix `init_from_channels_at_back` to support 2D arrays. (@grigorisg9gr, @patricksnape)
 - `#738`_ Add `transform_about_centre` to images (@nontas, @patricksnape)
 - `#743`_ Set `nan` values to `None` in video importing (@JeanKossaifi)
+- `#744`_ Fix Regression: Allow `None` for `landmark_resolver` (@grigorisg9gr, @patricksnape)
 
 .. _#733: https://github.com/menpo/menpo/pull/733
 .. _#729: https://github.com/menpo/menpo/pull/729
@@ -35,6 +36,7 @@ Github Pull Requests
 .. _#735: https://github.com/menpo/menpo/pull/735
 .. _#738: https://github.com/menpo/menpo/pull/738
 .. _#743: https://github.com/menpo/menpo/pull/743
+.. _#744: https://github.com/menpo/menpo/pull/744
 
 0.7.4 (2016/08/18)
 ------------------
