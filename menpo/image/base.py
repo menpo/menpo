@@ -2162,7 +2162,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             ``scale < 1.0`` denotes zooming out. The image will be padded
             by the value of ``cval``.
         cval : ``float``, optional
-            The value to be set outside the rotated image boundaries.
+            The value to be set outside the zoomed image boundaries.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the zooming is also returned.
