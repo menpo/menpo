@@ -12,7 +12,7 @@ build:
 requirements:
   build:
     - python
-    - setuptools 23.*
+    - setuptools
     - numpy >=1.10,<2.0
     - cython >=0.23
 

@@ -1,7 +1,7 @@
 import os
 import platform
 import sys
-import pkg_resources
+import site
 from setuptools import setup, find_packages, Extension
 import versioneer
 
@@ -11,7 +11,7 @@ IS_LINUX = 'linux' in SYS_PLATFORM
 IS_OSX = 'darwin' == SYS_PLATFORM
 IS_WIN = 'windows' == SYS_PLATFORM
 # Get Numpy include path without importing it
-NUMPY_INC_PATH = pkg_resources.resource_filename('numpy', 'core/include')
+NUMPY_INC_PATH = os.path.join(site.getsitepackages()[0], 'numpy', 'core', 'include')
 
 
 # ---- C/C++ EXTENSIONS ---- #
