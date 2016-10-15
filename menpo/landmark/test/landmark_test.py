@@ -170,6 +170,22 @@ def test_LandmarkManager_del():
     assert_equal(man.n_groups, 0)
 
 
+def test_LandmarkManager_group_order():
+    points = np.ones((10, 3))
+    pcloud = PointCloud(points, copy=False)
+    target = PointCloud(points)
+
+    man = LandmarkManager()
+    man['test_set'] = pcloud.copy()
+    man['abc'] = pcloud.copy()
+    man['def'] = pcloud.copy()
+    assert_equal(list(man._landmark_groups.keys()), ['test_set', 'abc', 'def'])
+    # check that after deleting and inserting the order will remain the same.
+    del man['test_set']
+    man['tt'] = pcloud.copy()
+    assert_equal(list(man._landmark_groups.keys()), ['abc', 'def', 'tt'])
+
+
 def test_LandmarkManager_in():
     points = np.ones((10, 3))
     pcloud = PointCloud(points, copy=False)
