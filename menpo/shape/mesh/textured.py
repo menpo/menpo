@@ -1,10 +1,10 @@
 import numpy as np
 
 from menpo.shape import PointCloud
-from menpo.transform import Scale
+from menpo.transform import tcoords_to_image_coords
 
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from .base import TriMesh, grid_tcoords, tcoords_to_image_coords
+from .base import TriMesh, grid_tcoords
 
 
 class TexturedTriMesh(TriMesh):
