@@ -143,6 +143,24 @@ class BooleanImage(Image):
         return cls(mask, copy=False)
 
     @classmethod
+    def init_from_channels_at_back(cls, pixels):
+        r"""
+        This method is not required for ``BooleanImage`` types as boolean images
+        do not expect a channel axis for construction.
+
+        Parameters
+        ----------
+        pixels : ``(M, N ..., Q)`` `ndarray`
+            Array representing the image pixels, with NO channel axis.
+
+        Returns
+        -------
+        image : :map:`BooleanImage`
+            A new image from the given boolean pixels.
+        """
+        return cls(pixels)
+
+    @classmethod
     def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,
                              constrain=True, fill=True):
         r"""

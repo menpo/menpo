@@ -5,7 +5,7 @@ import numpy as np
 scipy_gaussian_filter = None  # expensive
 
 from .base import ndfeature, winitfeature, imgfeature
-from .gradient import gradient_cython
+from ._gradient import gradient_cython
 from .windowiterator import WindowIterator, WindowIteratorResult
 
 
@@ -55,6 +55,8 @@ def gradient(pixels):
         Either the image object itself or an array where the first dimension
         is interpreted as channels. This means an N-dimensional image is
         represented by an N+1 dimensional array.
+        If the image is 2-dimensional the pixels should be of type
+        float/double (int is not supported).
 
     Returns
     -------
