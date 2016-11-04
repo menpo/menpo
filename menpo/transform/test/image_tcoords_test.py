@@ -3,7 +3,7 @@ from numpy.testing import assert_equal
 
 from menpo.transform import image_coords_to_tcoords, tcoords_to_image_coords
 
-IMG_SHAPE = (120, 250)
+IMG_SHAPE = (121, 251)
 TCOORDS = np.array([[0, 0],
                     [0, 1],
                     [1, 1],

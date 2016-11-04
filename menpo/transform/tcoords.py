@@ -13,7 +13,9 @@ def tcoords_to_image_coords(image_shape):
 
       - Flipping the origin from bottom-left to top-left
       - Permuting the axis so that  st (or uv) -> yx
-      - Scaling the tcoords by the image shape (denormalising them)
+      - Scaling the tcoords by the image shape (denormalising them). Note that
+        (1, 1) has to map to the highest pixel value, which is actually
+        (h - 1, w - 1) due to Menpo being 0-based with image operations.
 
     Parameters
     ----------
@@ -40,7 +42,7 @@ def tcoords_to_image_coords(image_shape):
 
     return (invert_unit_y
             .compose_before(flip_xy_yx)
-            .compose_before(Scale(image_shape)))
+            .compose_before(Scale(np.array(image_shape) - 1)))
 
 
 def image_coords_to_tcoords(image_shape):
@@ -51,7 +53,9 @@ def image_coords_to_tcoords(image_shape):
 
     The operations that are performed are:
 
-      - Normalizing by image shape (e.g. converting to [0, 1]
+      - Normalizing by image shape (e.g. converting to [0, 1]). Note that
+        (1, 1) has to map to the highest pixel value, which is actually
+        (h - 1, w - 1) due to Menpo being 0-based with image operations.
       - Permuting the axis so that yx -> st (or uv)
       - Flipping the origin from top-left to bottom-left
 
