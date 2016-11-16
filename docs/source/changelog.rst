@@ -3,9 +3,9 @@
 Changelog
 #########
 
-0.7.5 (2016/09/20)
+0.7.5 (2016/11/17)
 ------------------
-Minor bug fixes and two new pieces of functionality:
+Minor bug fixes and three new pieces of functionality:
   
   - Fix bug in video importing when importing long videos (closed pipe) (@patricksnape)
   - Update `MANIFEST.in` to include the `LICENSE.txt` and `AUTHORS.txt`
@@ -14,10 +14,12 @@ Minor bug fixes and two new pieces of functionality:
   - Allow path only exporters (rather than hard requiring a buffer). The exporting
     logic was also updated to support multiple kwargs to be passed through to the
     exporters easily.
+  - New transforms to move between image and texture coordinates. (@jabooth).
 
 Github Pull Requests
 ....................
 
+- `#724`_ add transforms for tcoords -> image coords (@jabooth)
 - `#733`_ Remove user guide as it now lives at www.menpo.org (@nontas)
 - `#729`_ Fix PCA docs w.r.t `centre` parameter (@jabooth)
 - `#736`_ Fix bug importing boolean images with pillow (@grigorisg9gr)
@@ -28,6 +30,7 @@ Github Pull Requests
 - `#743`_ Set `nan` values to `None` in video importing (@JeanKossaifi)
 - `#744`_ Fix Regression: Allow `None` for `landmark_resolver` (@grigorisg9gr, @patricksnape)
 
+.. _#724: https://github.com/menpo/menpo/pull/724
 .. _#733: https://github.com/menpo/menpo/pull/733
 .. _#729: https://github.com/menpo/menpo/pull/729
 .. _#736: https://github.com/menpo/menpo/pull/736
