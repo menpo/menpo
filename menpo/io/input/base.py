@@ -231,11 +231,12 @@ def import_image(filepath, landmark_resolver=same_name, normalize=None,
     ----------
     filepath : `pathlib.Path` or `str`
         A relative or absolute filepath to an image file.
-    landmark_resolver : `function`, optional
+    landmark_resolver : `function` or `None`, optional
         This function will be used to find landmarks for the
         image. The function should take one argument (the path to the image) and
         return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
         Default finds landmarks with the same name as the image file.
+        If ``None``, landmark importing will be skipped.
     normalize : `bool`, optional
         If ``True``, normalize the image pixels between 0 and 1 and convert
         to floating point. If false, the native datatype of the image will be
@@ -287,12 +288,13 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
     ----------
     filepath : `pathlib.Path` or `str`
         A relative or absolute filepath to a video file.
-    landmark_resolver : `function`, optional
+    landmark_resolver : `function` or `None`, optional
         This function will be used to find landmarks for the
         video. The function should take two arguments (the path to the video and
         the frame number) and return a dictionary of the form ``{'group_name':
         'landmark_filepath'}`` Default finds landmarks with the same name as the
         video file, appended with '_{frame_number}'.
+        If ``None``, landmark importing will be skipped.
     normalize : `bool`, optional
         If ``True``, normalize the frame pixels between 0 and 1 and convert
         to floating point. If ``False``, the native datatype of the image will
@@ -325,7 +327,7 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
     """
     normalize = _parse_deprecated_normalise(normalise, normalize)
 
-    kwargs = {'normalize': normalize, 'exact_frame_count':exact_frame_count}
+    kwargs = {'normalize': normalize, 'exact_frame_count': exact_frame_count}
 
     video_importer_methods = {'ffmpeg': ffmpeg_video_types}
     if importer_method not in video_importer_methods:
@@ -358,7 +360,7 @@ def import_landmark_file(filepath, asset=None):
     return _import(filepath, image_landmark_types, asset=asset)
 
 
-def import_pickle(filepath):
+def import_pickle(filepath, **kwargs):
     r"""Import a pickle file of arbitrary Python objects.
 
     Menpo unambiguously uses ``.pkl`` as it's choice of extension for Pickle
@@ -378,7 +380,64 @@ def import_pickle(filepath):
     object : `object`
         Whatever Python objects are present in the Pickle file
     """
-    return _import(filepath, pickle_types)
+    return _import(filepath, pickle_types, importer_kwargs=kwargs)
+
+
+def import_pickles(pattern, max_pickles=None, shuffle=False,
+                   as_generator=False, verbose=False, **kwargs):
+    r"""Multiple pickle importer.
+
+    Menpo unambiguously uses ``.pkl`` as it's choice of extension for Pickle
+    files. Menpo also supports automatic importing and exporting of gzip
+    compressed pickle files - just choose a ``filepath`` ending ``pkl.gz`` and
+    gzip compression will automatically be applied. Compression can massively
+    reduce the filesize of a pickle file at the cost of longer import and
+    export times.
+
+    Note that this is a function returns a :map:`LazyList`. Therefore, the
+    function will return immediately and indexing into the returned list
+    will load a pickle at run time. If all pickles should be loaded, then simply
+    wrap the returned :map:`LazyList` in a Python `list`.
+
+    Parameters
+    ----------
+    pattern : `str`
+        A glob path pattern to search for pickles. Every pickle found to match
+        the glob will be imported one by one. See :map:`pickle_paths` for more
+        details of what pickles will be found.
+    max_pickles : positive `int`, optional
+        If not ``None``, only import the first ``max_pickles`` found. Else,
+        import all.
+    shuffle : `bool`, optional
+        If ``True``, the order of the returned pickles will be randomised. If
+        ``False``, the order of the returned pickles will be alphanumerically
+        ordered.
+    as_generator : `bool`, optional
+        If ``True``, the function returns a generator and assets will be yielded
+        one after another when the generator is iterated over.
+    verbose : `bool`, optional
+        If ``True`` progress of the importing will be dynamically reported with
+        a progress bar.
+
+    Returns
+    -------
+    lazy_list : :map:`LazyList` or generator of Python objects
+        A :map:`LazyList` or generator yielding whatever Python objects are
+        present in the Pickle file instances that match the glob pattern
+        provided.
+
+    Raises
+    ------
+    ValueError
+        If no pickles are found at the provided glob.
+    """
+    return _import_glob_lazy_list(
+        pattern, pickle_types,
+        max_assets=max_pickles, shuffle=shuffle,
+        as_generator=as_generator,
+        verbose=verbose,
+        importer_kwargs=kwargs
+    )
 
 
 def import_images(pattern, max_images=None, shuffle=False,
@@ -411,11 +470,12 @@ def import_images(pattern, max_images=None, shuffle=False,
         If ``True``, the order of the returned images will be randomised. If
         ``False``, the order of the returned images will be alphanumerically
         ordered.
-    landmark_resolver : `function`, optional
+    landmark_resolver : `function` or `None`, optional
         This function will be used to find landmarks for the
         image. The function should take one argument (the image itself) and
         return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
         Default finds landmarks with the same name as the image file.
+        If ``None``, landmark importing will be skipped.
     normalize : `bool`, optional
         If ``True``, normalize the image pixels between 0 and 1 and convert
         to floating point. If false, the native datatype of the image will be
@@ -508,12 +568,13 @@ def import_videos(pattern, max_videos=None, shuffle=False,
         If ``True``, the order of the returned videos will be randomised. If
         ``False``, the order of the returned videos will be alphanumerically
         ordered.
-    landmark_resolver : `function`, optional
+    landmark_resolver : `function` or `None`, optional
         This function will be used to find landmarks for the
         video. The function should take two arguments (the path to the video and
         the frame number) and return a dictionary of the form ``{'group_name':
         'landmark_filepath'}`` Default finds landmarks with the same name as the
         video file, appended with '_{frame_number}'.
+        If ``None``, landmark importing will be skipped.
     normalize : `bool`, optional
         If ``True``, normalize the frame pixels between 0 and 1 and convert
         to floating point. If ``False``, the native datatype of the image will
@@ -719,10 +780,9 @@ def _import_glob_lazy_list(pattern, extension_map, max_assets=None,
 def _import_object_attach_landmarks(built_objects, landmark_resolver,
                                     landmark_ext_map=None):
     # handle landmarks
-    if landmark_ext_map is not None:
+    if landmark_ext_map is not None and landmark_resolver is not None:
         for x in built_objects:
-            lm_paths = landmark_resolver(x.path)  # use the users fcn to find
-            # paths
+            lm_paths = landmark_resolver(x.path)
             if lm_paths is None:
                 continue
             for group_name, lm_path in lm_paths.items():
@@ -734,7 +794,7 @@ def _import_object_attach_landmarks(built_objects, landmark_resolver,
 def _import_lazylist_attach_landmarks(built_objects, landmark_resolver,
                                       landmark_ext_map=None):
     # handle landmarks
-    if landmark_ext_map is not None:
+    if landmark_ext_map is not None and landmark_resolver is not None:
         for k, x in enumerate(built_objects):
             # Use the users function to find landmarks - builds a list
             # of functions that we will map against the frames in order to
@@ -779,10 +839,11 @@ def _import(filepath, extensions_map, landmark_resolver=same_name,
         If not None an attempt will be made to import annotations with
         extensions defined in this mapping. If None, no attempt will be
         made to import annotations.
-    landmark_resolver : `callable`, optional
-        If not None, this function will be used to find landmarks for each
+    landmark_resolver : `function` or `None`, optional
+        If not ``None``, this function will be used to find landmarks for each
         asset. The function should take one argument (the asset itself) and
-        return a dictionary of the form {'group_name': 'landmark_filepath'}
+        return a dictionary of the form {'group_name': 'landmark_filepath'}.
+        If ``None``, landmark importing will be skipped.
     asset : `object`, optional
         Passed through to the importer callable.
     importer_kwargs : `dict`, optional
@@ -815,7 +876,7 @@ def _import(filepath, extensions_map, landmark_resolver=same_name,
             except AttributeError:
                 pass  # that's fine! Probably a dict/list from PickleImporter.
 
-    if landmark_attach_func is not None:
+    if landmark_attach_func is not None and landmark_resolver is not None:
         landmark_attach_func(built_objects, landmark_resolver,
                              landmark_ext_map=landmark_ext_map)
 

@@ -103,7 +103,7 @@ class LandmarkManager(MutableMapping, Transformable):
     """
     def __init__(self):
         super(LandmarkManager, self).__init__()
-        self._landmark_groups = {}
+        self._landmark_groups = OrderedDict()
 
     @property
     def n_dims(self):
@@ -136,7 +136,7 @@ class LandmarkManager(MutableMapping, Transformable):
 
     def __iter__(self):
         """
-        Iterate over the internal landmark group dictionary
+        Iterate over the internal landmark group dictionary.
         """
         return iter(self._landmark_groups)
 
@@ -213,6 +213,13 @@ class LandmarkManager(MutableMapping, Transformable):
     def __len__(self):
         return len(self._landmark_groups)
 
+    def __setstate__(self, state):
+        # consistency with older versions imported.
+        if not isinstance(state['_landmark_groups'], OrderedDict):
+            state['_landmark_groups'] = OrderedDict(state['_landmark_groups'])
+
+        self.__dict__ = state
+
     @property
     def n_groups(self):
         """
@@ -234,7 +241,7 @@ class LandmarkManager(MutableMapping, Transformable):
     @property
     def group_labels(self):
         """
-        All the labels for the landmark set.
+        All the labels for the landmark set sorted by insertion order.
 
         :type: `list` of `str`
         """

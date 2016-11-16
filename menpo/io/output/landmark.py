@@ -3,6 +3,12 @@ import itertools
 import numpy as np
 
 
+class _UTF8Encoder(json.JSONEncoder):
+    def iterencode(self, obj, **kwargs):
+        for chunk in json.JSONEncoder.iterencode(self, obj, **kwargs):
+            yield chunk.encode('utf8')
+
+
 def ljson_exporter(landmark_group, file_handle, **kwargs):
     r"""
     Given a file handle to write in to (which should act like a Python `file`
@@ -45,7 +51,7 @@ def ljson_exporter(landmark_group, file_handle, **kwargs):
         lg_json['landmarks']['points'] = []
 
     return json.dump(lg_json, file_handle, indent=4, separators=(',', ': '),
-                     sort_keys=True, allow_nan=False)
+                     sort_keys=True, allow_nan=False, cls=_UTF8Encoder)
 
 
 def pts_exporter(landmark_group, file_handle, **kwargs):

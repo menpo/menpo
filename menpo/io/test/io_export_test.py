@@ -217,11 +217,10 @@ def test_export_landmark_ljson_nan_values(mock_open, exists):
 
     # This is a bit ugly, but we parse the write calls to check that json
     # wrote null values
-    assert len(mock_writer.method_calls) == 842
-    first_null = mock_open.mock_calls[495][1][0][1:].strip()
-    second_null = mock_open.mock_calls[496][1][0][1:].strip()
-    assert first_null == 'null'
-    assert second_null == 'null'
+    first_null = mock_open.mock_calls[97][1][0][1:].strip()
+    second_null = mock_open.mock_calls[98][1][0][1:].strip()
+    assert first_null == b'null'
+    assert second_null == b'null'
 
 
 @patch('menpo.io.output.landmark.np.savetxt')

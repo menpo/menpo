@@ -2,8 +2,6 @@ from __future__ import division
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from menpo.feature import gradient
-
 
 def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
            normalization='l1', sigmas=None, ring_radii=None):
@@ -87,6 +85,8 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
            Transactions on 32.5 (2010): 815-830.
     .. [2] http://cvlab.epfl.ch/alumni/tola/daisy.html
     """
+    from menpo.feature import gradient
+
     # Compute image derivatives.
     # Get number of input image's channels
     n_channels = img.shape[0]

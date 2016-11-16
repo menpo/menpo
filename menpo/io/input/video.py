@@ -81,7 +81,7 @@ class FFMpegVideoReader(object):
     normalize : `bool`, optional
         If ``True``, the resulting range of the pixels of the returned
         frames is normalized.
-    exact_frame_count: `bool`, optional
+    exact_frame_count : `bool`, optional
         If True, the import fails if ffmprobe is not available
         (reading from ffmpeg's output returns inexact frame count)
     """
@@ -118,6 +118,7 @@ class FFMpegVideoReader(object):
                 self._pipe.stderr.close()
             if self._pipe.stdin:
                 self._pipe.stdin.close()
+        self._pipe = None
 
     def __del__(self):
         r"""
@@ -171,9 +172,9 @@ class FFMpegVideoReader(object):
 
         Only opens the pipe once at the beginning
         """
-        self._open_pipe(frame=None)
-        for self.index in range(self.n_frames):
-            yield self._read_one_frame()
+        self.index = 0
+        for index in range(self.n_frames):
+            yield self[index]
 
     def __getitem__(self, index):
         r"""
@@ -181,11 +182,11 @@ class FFMpegVideoReader(object):
         """
         # If the user is reading consecutive frames, or a frame later in the
         # video, do not reopen a pipe
-        if (self._pipe is None) or (index <= self.index):
-            self._open_pipe(index)
+        if self._pipe is None or self._pipe.poll() is not None or index <= self.index:
+            self._open_pipe(frame=index)
         else:
             to_trash = index - self.index - 1
-            if to_trash != 0:
+            if to_trash > 0:
                 self._trash_frames(to_trash)
 
         return self._read_one_frame()
@@ -333,10 +334,13 @@ def video_infos_ffprobe(filepath):
     kv_dict['height'] = int(kv_dict['height'])
     # Some videos may not have a valid duration
     if kv_dict['duration'] == 'N/A':
-        kv_dict['duration'] = np.nan
+        kv_dict['duration'] = None
     else:
         kv_dict['duration'] = float(kv_dict['duration'])
     fps = kv_dict.pop('avg_frame_rate').split('/')
-    kv_dict['fps'] = float(fps[0]) / float(fps[1])
+    try:
+        kv_dict['fps'] = float(fps[0]) / float(fps[1])
+    except ZeroDivisionError:
+        kv_dict['fps'] = None
 
     return kv_dict

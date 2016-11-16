@@ -41,6 +41,35 @@ class Affine(Homogeneous):
         """
         return cls(np.eye(n_dims + 1), copy=False, skip_checks=True)
 
+    @classmethod
+    def init_from_2d_shear(cls, phi, psi, degrees=True):
+        r"""
+        Convenience constructor for 2D shear transformations about the origin.
+
+        Parameters
+        ----------
+        phi : `float`
+            The angle of shearing in the X direction.
+        psi : `float`
+            The angle of shearing in the Y direction.
+        degrees : `bool`, optional
+            If ``True`` phi and psi are interpreted as degrees.
+            If ``False``, phi and psi are interpreted as radians.
+
+        Returns
+        -------
+        shear_transform : :map:`Affine`
+            A 2D shear transform.
+        """
+        if degrees:
+            phi = phi * np.pi / 180.
+            psi = psi * np.pi / 180.
+        # Create shear matrix
+        h_matrix = np.eye(3)
+        h_matrix[0, 1] = np.tan(phi)
+        h_matrix[1, 0] = np.tan(psi)
+        return cls(h_matrix, skip_checks=True)
+
     @property
     def h_matrix(self):
         r"""

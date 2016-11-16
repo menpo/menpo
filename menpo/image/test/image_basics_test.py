@@ -91,6 +91,14 @@ def test_init_from_rolled_channels():
     assert im.width == 60
 
 
+def test_init_from_channels_at_back_less_dimensions():
+    p = np.empty([50, 60])
+    im = Image.init_from_channels_at_back(p)
+    assert im.n_channels == 1
+    assert im.height == 50
+    assert im.width == 60
+
+
 def test_init_from_pointcloud():
     pc = PointCloud.init_2d_grid((10, 10))
     im = Image.init_from_pointcloud(pc)

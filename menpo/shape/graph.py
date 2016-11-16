@@ -2256,6 +2256,14 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
         return PointTree(self.points, mst_adjacency, root_vertex, copy=True,
                          skip_checks=True)
 
+    def __str__(self):
+        isolated = ''
+        if self.has_isolated_vertices():
+            isolated = " ({} isolated)".format(len(self.isolated_vertices()))
+        return "{}D undirected graph of {} vertices{} and {} " \
+               "edges.".format(self.n_dims, self.n_vertices, isolated,
+                               self.n_edges)
+
 
 class PointDirectedGraph(PointGraph, DirectedGraph):
     r"""
@@ -2458,6 +2466,14 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
                 mask, self.adjacency_matrix, self.points)
             return PointDirectedGraph(points, adjacency_matrix, copy=True,
                                       skip_checks=False)
+
+    def __str__(self):
+        isolated = ''
+        if self.has_isolated_vertices():
+            isolated = " ({} isolated)".format(len(self.isolated_vertices()))
+        return "{}D directed graph of {} vertices{} and {} " \
+               "edges.".format(self.n_dims, self.n_vertices, isolated,
+                               self.n_edges)
 
 
 class PointTree(PointDirectedGraph, Tree):
@@ -2797,6 +2813,10 @@ class PointTree(PointDirectedGraph, Tree):
                     adjacency_matrix, directed=True)
             return PointTree(points, adjacency_matrix, root_vertex=root_vertex,
                              copy=True, skip_checks=False)
+
+    def __str__(self):
+        return "{}D tree of depth {} with {} vertices and {} leaves.".format(
+            self.n_dims, self.maximum_depth, self.n_vertices, self.n_leaves)
 
 
 def _is_symmetric(array):

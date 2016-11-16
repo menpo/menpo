@@ -393,8 +393,10 @@ class CachedPWA(PythonPWA):
     def index_alpha_beta(self, points):
         if (self._applied_points is None or not
                 np.all(points == self._applied_points)):
-            self._applied_points = points
+            # This must happen first in case index_alpha_beta throws a
+            # TriangleContainmentError
             self._iab = PythonPWA.index_alpha_beta(self, points)
+            self._applied_points = points
         return self._iab
 
 

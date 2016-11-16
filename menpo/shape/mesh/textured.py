@@ -1,7 +1,7 @@
 import numpy as np
 
 from menpo.shape import PointCloud
-from menpo.transform import Scale
+from menpo.transform import tcoords_to_image_coords
 
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .base import TriMesh, grid_tcoords
@@ -162,15 +162,7 @@ class TexturedTriMesh(TriMesh):
         >>> tc_ps = texturedtrimesh.tcoords_pixel_scaled()
         >>> pixel_values_at_tcs = texture.sample(tc_ps)
         """
-        scale = Scale(np.array(self.texture.shape)[::-1])
-        tcoords = self.tcoords.points.copy()
-        # flip the 'y' st 1 -> 0 and 0 -> 1, moving the axis to upper left
-        tcoords[:, 1] = 1 - tcoords[:, 1]
-        # apply the scale to get the units correct
-        tcoords = scale.apply(tcoords)
-        # flip axis 0 and axis 1 so indexing is as expected
-        tcoords = tcoords[:, ::-1]
-        return PointCloud(tcoords)
+        return tcoords_to_image_coords(self.texture.shape).apply(self.tcoords)
 
     def from_vector(self, flattened):
         r"""
