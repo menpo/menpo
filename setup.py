@@ -11,8 +11,15 @@ IS_LINUX = 'linux' in SYS_PLATFORM
 IS_OSX = 'darwin' == SYS_PLATFORM
 IS_WIN = 'windows' == SYS_PLATFORM
 # Get Numpy include path without importing it
-NUMPY_INC_PATH = os.path.join(site.getsitepackages()[0], 'numpy', 'core', 'include')
-
+NUMPY_INC_PATHS = [os.path.join(r, 'numpy', 'core', 'include') 
+                   for r in site.getsitepackages() if 
+                   os.path.isdir(os.path.join(r, 'numpy', 'core', 'include'))]
+if len(NUMPY_INC_PATHS) != 1:
+    print("Warning expected a single numpy include dir and found "
+          "{}: {}".format(len(NUMPY_INC_PATHS), ', '.join(NUMPY_INC_PATHS)))
+    NUMPY_INC_PATH = ''
+else:
+    NUMPY_INC_PATH = NUMPY_INC_PATHS[0]
 
 # ---- C/C++ EXTENSIONS ---- #
 # Stolen (and modified) from the Cython documentation:
