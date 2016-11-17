@@ -687,6 +687,8 @@ def copy_landmarks_and_path(source, target):
     Transfers over the landmarks and path, if any, from one object to another.
     This should be called in conversion and copy functions.
 
+    See `.as_masked()` on :map:`Image` as an example of usage.
+
     Parameters
     ----------
     source : :map:`Landmarkable`
