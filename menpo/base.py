@@ -680,3 +680,11 @@ def partial_doc(func, *args, **kwargs):
     p = partial(func, *args, **kwargs)
     p.__doc__ = func.__doc__
     return p
+
+
+def copy_landmarks_and_path(orig, new):
+    if orig.has_landmarks:
+        new.landmarks = orig.landmarks
+    if hasattr(orig, 'path'):
+        new.path = orig.path
+    return new
