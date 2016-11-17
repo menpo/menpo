@@ -177,10 +177,14 @@ class PointCloud(Shape):
 
     def with_dims(self, dims):
         r"""
+        Return a copy of this shape with only particular dimensions retained.
 
         Parameters
         ----------
-        dims : dims valid slice operation
+        dims : valid numpy array slice
+            The slice that will be used on the dimensionality axis of the shape
+            under transform. For example, to go from a 3D shape to a 2D one,
+            [0, 1] could be provided or np.array([True, True, False]).
 
         Returns
         -------

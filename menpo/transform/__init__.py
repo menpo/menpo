@@ -10,12 +10,18 @@ from .tcoords import image_coords_to_tcoords, tcoords_to_image_coords
 
 
 class WithDims(Transform):
+    r"""
+    Slices off select dimensions of a shape.
+
+    Parameters
+    ----------
+    dims : valid numpy array slice
+        The slice that will be used on the dimensionality axis of the shape
+        under transform. For example, to go from a 3D shape to a 2D one,
+        [0, 1] could be provided or np.array([True, True, False]).
+    """
     def __init__(self, dims):
         self.dims = dims
 
     def _apply(self, x, **kwargs):
         return x[:, self.dims].copy()
-
-    @property
-    def n_dims_output(self):
-        return len(self.dims)
