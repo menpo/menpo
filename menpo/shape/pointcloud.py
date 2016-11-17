@@ -5,7 +5,9 @@ from warnings import warn
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
-from menpo.shape.base import Shape
+from menpo.transform import WithDims
+
+from .base import Shape
 
 
 def bounding_box(closest_to_origin, opposite_corner):
@@ -172,6 +174,19 @@ class PointCloud(Shape):
         return cls(np.hstack([new_pcloud.points,
                               depth_image.as_vector(keep_channels=True).T]),
                    copy=False)
+
+    def with_dims(self, dims):
+        r"""
+
+        Parameters
+        ----------
+        dims : dims valid slice operation
+
+        Returns
+        -------
+        copy of self, with only the requested dims
+        """
+        return WithDims(dims).apply(self)
 
     @property
     def n_points(self):
