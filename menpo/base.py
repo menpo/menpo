@@ -680,3 +680,29 @@ def partial_doc(func, *args, **kwargs):
     p = partial(func, *args, **kwargs)
     p.__doc__ = func.__doc__
     return p
+
+
+def copy_landmarks_and_path(source, target):
+    r"""
+    Transfers over the landmarks and path, if any, from one object to another.
+    This should be called in conversion and copy functions.
+
+    See `.as_masked()` on :map:`Image` as an example of usage.
+
+    Parameters
+    ----------
+    source : :map:`Landmarkable`
+        The object who's landmarks and path, if any, will be copied
+    target : :map:`Landmarkable`
+        The object who will have landmarks and path set on
+
+    Returns
+    -------
+    target : :map:`Landmarkable`
+        The updated target.
+    """
+    if source.has_landmarks:
+        target.landmarks = source.landmarks
+    if hasattr(source, 'path'):
+        target.path = source.path
+    return target
