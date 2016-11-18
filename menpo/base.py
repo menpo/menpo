@@ -656,6 +656,40 @@ class LazyList(collections.Sequence, Copyable):
         new._callables = new._callables + new_callables
         return new
 
+    def view(self):
+        r"""
+        Visualize this lazy collection of items using menpowidgets.
+
+        The type of the first item will be used to determine an appropriate
+        visualization for the list of items.
+
+        Parameters
+        ----------
+        other : `collections.Sequence`
+            Sequence to concatenate with this list.
+
+        Returns
+        -------
+        widget
+            The appropriate menpowidget to view these items
+
+
+        Raises
+        ------
+        MenpowidgetsMissingError
+            If menpowidgets is not installed
+        ValueError
+            If menpowidgets cannot locate an appropriate items-visualization
+            for the type of items in this :map:`LazyList`
+        """
+        try:
+            from menpowidgets import visualize_list
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
+        else:
+            return visualize_list(self)
+
 
 def partial_doc(func, *args, **kwargs):
     r"""
