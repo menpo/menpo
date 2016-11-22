@@ -61,9 +61,14 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
     #   https://github.com/Zulko/moviepy/blob/master/LICENCE.txt
     first_image = images[0]
     frame_shape = first_image.shape
+    im = images[0]
+    if im.n_channels != 3 and im.n_channels != 1:
+        m = ('Currently only images of 1 or 3 channels are expected, '
+             'while {} channels were found in the first frame.')
+        raise ValueError(m.format(im.n_channels))
     # If the first image is gray then all the images will be assumed to be
     # gray
-    colour = 'rgb24' if images[0].n_channels == 3 else 'gray8'
+    colour = 'rgb24' if im.n_channels == 3 else 'gray8'
     cmd = [_FFMPEG_CMD(), '-y',
            '-s', '{}x{}'.format(frame_shape[1], frame_shape[0]),
            '-r', str(fps),
