@@ -59,9 +59,8 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
     #   https://github.com/Zulko/moviepy/blob/master/moviepy/video/io/ffmpeg_writer.py
     # and is used under the terms of the MIT license which can be found at
     #   https://github.com/Zulko/moviepy/blob/master/LICENCE.txt
-    first_image = images[0]
-    frame_shape = first_image.shape
     im = images[0]
+    frame_shape = im.shape
     if im.n_channels != 3 and im.n_channels != 1:
         m = ('Currently only images of 1 or 3 channels are expected, '
              'while {} channels were found in the first frame.')
