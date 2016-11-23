@@ -656,7 +656,7 @@ class LazyList(collections.Sequence, Copyable):
         new._callables = new._callables + new_callables
         return new
 
-    def view(self):
+    def view_widget(self):
         r"""
         Visualize this lazy collection of items using menpowidgets.
 
