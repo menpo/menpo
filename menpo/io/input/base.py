@@ -689,54 +689,6 @@ def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
                                   as_generator=as_generator, verbose=verbose)
 
 
-def import_pickles(pattern, max_pickles=None, shuffle=False, as_generator=False,
-                   verbose=False):
-    r"""Import multiple pickle files.
-
-    Menpo unambiguously uses ``.pkl`` as it's choice of extension for pickle
-    files. Menpo also supports automatic importing of gzip compressed pickle
-    files - matching files with extension ``pkl.gz`` will be automatically
-    un-gzipped and imported.
-
-    Note that this is a function returns a :map:`LazyList`. Therefore, the
-    function will return immediately and indexing into the returned list
-    will load the landmarks at run time. If all pickles should be loaded, then
-    simply wrap the returned :map:`LazyList` in a Python `list`.
-
-    Parameters
-    ----------
-    pattern : `str`
-        The glob path pattern to search for pickles. Every pickle file found
-        to match the glob will be imported one by one.
-    max_pickles : positive `int`, optional
-        If not ``None``, only import the first ``max_pickles`` found.
-        Else, import all.
-    shuffle : `bool`, optional
-        If ``True``, the order of the returned pickles will be randomised. If
-        ``False``, the order of the returned pickles will be alphanumerically
-        ordered.
-    as_generator : `bool`, optional
-        If ``True``, the function returns a generator and assets will be yielded
-        one after another when the generator is iterated over.
-    verbose : `bool`, optional
-        If ``True`` progress of the importing will be dynamically reported.
-
-    Returns
-    -------
-    lazy_list : :map:`LazyList` or generator of Python objects
-        A :map:`LazyList` or generator yielding Python objects inside the
-        pickle files found to match the glob pattern provided.
-
-    Raises
-    ------
-    ValueError
-        If no pickles are found at the provided glob.
-    """
-    return _import_glob_lazy_list(pattern, pickle_types,
-                                  max_assets=max_pickles, shuffle=shuffle,
-                                  as_generator=as_generator, verbose=verbose)
-
-
 def _import_glob_lazy_list(pattern, extension_map, max_assets=None,
                            landmark_resolver=same_name, shuffle=False,
                            as_generator=False, landmark_ext_map=None,
