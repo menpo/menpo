@@ -939,7 +939,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
             axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
-    def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
+    def _view_3d(self, figure_id=None, new_figure=True, **kwargs):
         try:
             from menpo3d.visualize import LandmarkViewer3d
             return LandmarkViewer3d(figure_id, new_figure,
