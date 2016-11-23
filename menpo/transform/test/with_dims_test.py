@@ -9,6 +9,14 @@ def test_withdims_transform():
     assert np.all(pc_3d.points[:, :2] == pc_2d.points)
 
 
+def test_withdims_single_axis_transform():
+    pc_3d = PointCloud(np.random.random((14, 3)))
+    pc_1d = WithDims(0).apply(pc_3d)
+    assert np.all(pc_3d.points[:, :0] == pc_1d.points)
+    assert pc_1d.n_dims == 1
+    assert pc_1d.n_points == pc_3d.n_points
+
+
 def test_with_dims_method():
     pc_3d = PointCloud(np.random.random((14, 3)))
     pc_2d = pc_3d.with_dims([0, 1])

@@ -24,4 +24,6 @@ class WithDims(Transform):
         self.dims = dims
 
     def _apply(self, x, **kwargs):
-        return x[:, self.dims].copy()
+        # if self.dims is a single number we will return an array with the
+        # spatial dimension missing - always reshape to avoid this case.
+        return x[:, self.dims].reshape([x.shape[0], -1]).copy()
