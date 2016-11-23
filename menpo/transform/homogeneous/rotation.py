@@ -149,8 +149,7 @@ class Rotation(DiscreteAffine, Similarity):
             A 3D rotation transform.
         """
         r = cls.init_identity(n_dims=3)
-        r.from_vector_inplace(q)
-        return r
+        return r.from_vector(q)
 
     @property
     def rotation_matrix(self):
@@ -369,19 +368,25 @@ class Rotation(DiscreteAffine, Similarity):
         ------
         DimensionalityError, NotImplementedError
             Non-3D Rotations are not yet vectorizable
+        ValueError
+            Expected 4 quaternion parameters; got {} instead.
         """
-        if len(p) == 4 and self.n_dims == 3:
-            n = np.dot(p, p)
-            # epsilon for testing whether a number is close to zero
-            if n < np.finfo(float).eps * 4.0:
-                return np.identity(4)
-            p = p * np.sqrt(2.0 / n)
-            p = np.outer(p, p)
-            rotation = np.array(
-                [[1.-p[2, 2]-p[3, 3],    p[1, 2]-p[3, 0],    p[1, 3]+p[2, 0]],
-                 [   p[1, 2]+p[3, 0], 1.-p[1, 1]-p[3, 3],    p[2, 3]-p[1, 0]],
-                 [   p[1, 3]-p[2, 0],    p[2, 3]+p[1, 0], 1.-p[1, 1]-p[2, 2]]])
-            self.set_rotation_matrix(rotation, skip_checks=True)
+        if self.n_dims == 3:
+            if len(p) == 4:
+                n = np.dot(p, p)
+                # epsilon for testing whether a number is close to zero
+                if n < np.finfo(float).eps * 4.0:
+                    return np.identity(4)
+                p = p * np.sqrt(2.0 / n)
+                p = np.outer(p, p)
+                rotation = np.array(
+                    [[1.-p[2, 2]-p[3, 3],    p[1, 2]-p[3, 0],    p[1, 3]+p[2, 0]],
+                     [   p[1, 2]+p[3, 0], 1.-p[1, 1]-p[3, 3],    p[2, 3]-p[1, 0]],
+                     [   p[1, 3]-p[2, 0],    p[2, 3]+p[1, 0], 1.-p[1, 1]-p[2, 2]]])
+                self.set_rotation_matrix(rotation, skip_checks=True)
+            else:
+                raise ValueError("Expected 4 quaternion parameters; got {} "
+                                 "instead.".format(len(p)))
         else:
             raise NotImplementedError("Non-3D rotations are not yet "
                                       "vectorizable")
