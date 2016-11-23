@@ -1,3 +1,33 @@
+# Parts of this code taken from:
+#
+# Copyright (c) 2006-2015, Christoph Gohlke
+# Copyright (c) 2006-2015, The Regents of the University of California
+# Produced at the Laboratory for Fluorescence Dynamics
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# * Neither the name of the copyright holders nor the names of any
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 import numpy as np
 
 from .base import HomogFamilyAlignment
@@ -102,6 +132,25 @@ class Rotation(DiscreteAffine, Similarity):
         return Rotation(np.array([[np.cos(theta), -np.sin(theta)],
                                   [np.sin(theta),  np.cos(theta)]]),
                         skip_checks=True)
+
+    @classmethod
+    def init_3d_from_quaternion(cls, q):
+        r"""
+        Convenience constructor for 3D rotations based on quaternion parameters.
+
+        Parameters
+        ----------
+        q : ``(4,)`` `ndarray`
+            The quaternion parameters.
+
+        Returns
+        -------
+        rotation : :map:`Rotation`
+            A 3D rotation transform.
+        """
+        r = cls.init_identity(n_dims=3)
+        r.from_vector_inplace(q)
+        return r
 
     @property
     def rotation_matrix(self):
@@ -236,50 +285,106 @@ class Rotation(DiscreteAffine, Similarity):
 
     @property
     def n_parameters(self):
-        raise NotImplementedError("Rotations are not yet vectorizable")
+        r"""
+        Number of parameters of Rotation. Only 3D rotations are currently
+        supported.
+
+        Returns
+        -------
+        n_parameters : `int`
+            The transform parameters. Only 3D rotations are currently
+            supported which are parametrized with quaternions.
+
+        Raises
+        ------
+        DimensionalityError, NotImplementedError
+            Non-3D Rotations are not yet vectorizable
+        """
+        if self.n_dims == 3:
+            # Quaternion parameters
+            return 4
+        else:
+            raise NotImplementedError("Non-3D Rotations are not yet "
+                                      "vectorizable")
 
     def _as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
-        are parametrised as deltas from the identity warp. The parameters
-        are output in the order [theta].
-
-        +----------+--------------------------------------------+
-        |parameter | definition                                 |
-        +==========+============================================+
-        |theta     | The angle of rotation around `[0, 0, 1]`   |
-        +----------+--------------------------------------------+
+        are parametrised as quaternions. Only 3D transforms are currently
+        supported.
 
         Returns
         -------
-        theta : `float`
-            Angle of rotation around axis. Right-handed.
+        q : ``(4,)`` `ndarray`
+            The 4 quaternion parameters.
+
+        Raises
+        ------
+        DimensionalityError, NotImplementedError
+            Non-3D Rotations are not yet vectorizable
         """
-        # TODO vectorizable rotations
-        raise NotImplementedError("Rotations are not yet vectorizable")
+        if self.n_dims == 3:
+            m00 = self.h_matrix[0, 0]
+            m01 = self.h_matrix[0, 1]
+            m02 = self.h_matrix[0, 2]
+            m10 = self.h_matrix[1, 0]
+            m11 = self.h_matrix[1, 1]
+            m12 = self.h_matrix[1, 2]
+            m20 = self.h_matrix[2, 0]
+            m21 = self.h_matrix[2, 1]
+            m22 = self.h_matrix[2, 2]
+            # symmetric matrix K
+            K = np.array([[m00-m11-m22, 0.0,         0.0,         0.0],
+                          [m01+m10,     m11-m00-m22, 0.0,         0.0],
+                          [m02+m20,     m12+m21,     m22-m00-m11, 0.0],
+                          [m21-m12,     m02-m20,     m10-m01,     m00+m11+m22]])
+            K /= 3.0
+            # Quaternion is eigenvector of K that corresponds to largest
+            # eigenvalue
+            w, V = np.linalg.eigh(K)
+            q = V[[3, 0, 1, 2], np.argmax(w)]
+            if q[0] < 0.0:
+                q = -q
+            return q
+        else:
+            raise NotImplementedError("Non-3D Rotations are not yet "
+                                      "vectorizable")
 
     def _from_vector_inplace(self, p):
         r"""
-        Returns an instance of the transform from the given parameters,
-        expected to be in Fortran ordering.
-
-        Supports rebuilding from 2D parameter sets.
-
-        2D Rotation: 1 parameter::
-
-            [theta]
+        Returns an instance of the transform from the given parameters
+        expressed in quaternions. Currently only 3D rotations are supported.
 
         Parameters
         ----------
-        p : ``(1,)`` `ndarray`
-            The array of parameters.
+        p : ``(4,)`` `ndarray`
+            The array of quaternion parameters.
 
         Returns
         -------
-        transform : :class:`Rotation`
+        transform : :map:`Rotation`
             The transform initialised to the given parameters.
+
+        Raises
+        ------
+        DimensionalityError, NotImplementedError
+            Non-3D Rotations are not yet vectorizable
         """
-        raise NotImplementedError("Rotations are not yet vectorizable")
+        if len(p) == 4 and self.n_dims == 3:
+            n = np.dot(p, p)
+            # epsilon for testing whether a number is close to zero
+            if n < np.finfo(float).eps * 4.0:
+                return np.identity(4)
+            p = p * np.sqrt(2.0 / n)
+            p = np.outer(p, p)
+            rotation = np.array(
+                [[1.-p[2, 2]-p[3, 3],    p[1, 2]-p[3, 0],    p[1, 3]+p[2, 0]],
+                 [   p[1, 2]+p[3, 0], 1.-p[1, 1]-p[3, 3],    p[2, 3]-p[1, 0]],
+                 [   p[1, 3]-p[2, 0],    p[2, 3]+p[1, 0], 1.-p[1, 1]-p[2, 2]]])
+            self.set_rotation_matrix(rotation, skip_checks=True)
+        else:
+            raise NotImplementedError("Non-3D rotations are not yet "
+                                      "vectorizable")
 
     @property
     def composes_inplace_with(self):
