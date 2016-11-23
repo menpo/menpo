@@ -64,6 +64,54 @@ def bounding_box(closest_to_origin, opposite_corner):
     return PointDirectedGraph(box, adjacency_matrix, copy=False)
 
 
+def bounding_cuboid(near_closest_to_origin, far_opposite_corner):
+    r"""
+    Return a bounding cuboid from the near closest and far opposite
+    corners as a directed graph.
+
+    Parameters
+    ----------
+    near_closest_to_origin : (`float`, `float`, `float`)
+        Three floats representing the coordinates of the near corner closest to
+        the origin.
+    far_opposite_corner  : (`float`, `float`, `float`)
+        Three floats representing the coordinates of the far opposite corner
+        compared to near_closest_to_origin.
+
+    Returns
+    -------
+    bounding_box : :map:`PointDirectedGraph`
+        The axis aligned bounding cuboid from the two given corners.
+    """
+    from .graph import PointDirectedGraph
+
+    if len(near_closest_to_origin) != 3 or len(far_opposite_corner) != 3:
+        raise ValueError('Only 3D bounding cuboids can be created.')
+
+    adjacency_matrix = csr_matrix(
+        ([1] * 12,
+         ([0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7],
+          [1, 2, 3, 0, 4, 5, 6, 7, 5, 6, 7, 4])), shape=(8, 8))
+    cuboid = np.array(
+        [near_closest_to_origin, [far_opposite_corner[0],
+                                  near_closest_to_origin[1],
+                                  near_closest_to_origin[2]],
+         [far_opposite_corner[0],
+          far_opposite_corner[1],
+          near_closest_to_origin[2]], [near_closest_to_origin[0],
+                                       far_opposite_corner[1],
+                                       near_closest_to_origin[2]],
+         [near_closest_to_origin[0],
+          near_closest_to_origin[1],
+          far_opposite_corner[2]], [far_opposite_corner[0],
+                                    near_closest_to_origin[1],
+                                    far_opposite_corner[2]],
+         far_opposite_corner, [near_closest_to_origin[0],
+                               far_opposite_corner[1],
+                               far_opposite_corner[2]]], dtype=np.float)
+    return PointDirectedGraph(cuboid, adjacency_matrix, copy=False)
+
+
 class PointCloud(Shape):
     r"""
     An N-dimensional point cloud. This is internally represented as an `ndarray`
@@ -315,8 +363,8 @@ class PointCloud(Shape):
     def bounding_box(self):
         r"""
         Return a bounding box from two corner points as a directed graph.
-        The the first point (0) should be nearest the origin.
-        In the case of an image, this ordering would appear as:
+        In the case of a 2D pointcloud, first point (0) should be nearest the
+        origin. In the case of an image, this ordering would appear as:
 
         ::
 
@@ -336,16 +384,23 @@ class PointCloud(Shape):
             v   |
             0-->1
 
+        In the case of a 3D pointcloud, the first point (0) should be the
+        near closest to the origin and the second point is the far opposite
+        corner.
+
         Returns
         -------
         bounding_box : :map:`PointDirectedGraph`
             The axis aligned bounding box of the PointCloud.
         """
-        if self.n_dims != 2:
-            raise ValueError('Bounding boxes are only supported for 2D '
+        if self.n_dims != 2 and self.n_dims != 3:
+            raise ValueError('Bounding boxes are only supported for 2D or 3D '
                              'pointclouds.')
         min_p, max_p = self.bounds()
-        return bounding_box(min_p, max_p)
+        if self.n_dims == 2:
+            return bounding_box(min_p, max_p)
+        elif self.n_dims == 3:
+            return bounding_cuboid(min_p, max_p)
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_markers=True, marker_style='o', marker_size=5,

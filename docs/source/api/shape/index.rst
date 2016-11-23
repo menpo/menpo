@@ -87,3 +87,4 @@ Shape Building
   :maxdepth: 2
 
   bounding_box
+  bounding_cuboid

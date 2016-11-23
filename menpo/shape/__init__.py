@@ -1,4 +1,4 @@
-from .pointcloud import PointCloud, bounding_box
+from .pointcloud import PointCloud, bounding_box, bounding_cuboid
 from .mesh import TriMesh, ColouredTriMesh, TexturedTriMesh
 from .groupops import mean_pointcloud
 from .graph import (UndirectedGraph, DirectedGraph, Tree, PointUndirectedGraph,
