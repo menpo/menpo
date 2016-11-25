@@ -246,12 +246,12 @@ class TexturedTriMesh(TriMesh):
         instance.texture.pixels = np.clip(self.texture.pixels, *range)
         return instance
 
-    def _view_3d(self, figure_id=None, new_figure=True, textured=True,
-                 mesh_type='surface', mesh_colour=(1, 0, 0), line_width=2,
-                 ambient_light=0.0, specular_light=0.0, normals=None,
-                 normals_colour=(0, 0, 0), normals_line_width=2,
-                 normals_marker_style='2darrow', normals_marker_resolution=8,
-                 normals_marker_size=0.05, step=None, alpha=1.0):
+    def _view_3d(self, figure_id=None, new_figure=True, render_texture=True,
+                 mesh_type='surface', ambient_light=0.0, specular_light=0.0,
+                 colour='r', line_width=2, normals=None, normals_colour='k',
+                 normals_line_width=2, normals_marker_style='2darrow',
+                 normals_marker_resolution=8, normals_marker_size=None,
+                 step=None, alpha=1.0):
         r"""
         Visualize the Textured TriMesh in 3D.
 
@@ -261,27 +261,37 @@ class TexturedTriMesh(TriMesh):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
-        textured : `bool`, optional
+        render_texture : `bool`, optional
             If ``True``, then the texture is rendered. If ``False``, then only
             the TriMesh is rendered with the specified `colour`.
         mesh_type : ``{'surface', 'wireframe'}``, optional
             The representation type to be used for the mesh.
-        mesh_colour : `(float, float, float)`, optional
-            The colour of the mesh as a tuple of RGB values. It only applies if
-            `textured` is ``False``.
-        line_width : `float`, optional
-            The width of the lines, if there are any.
         ambient_light : `float`, optional
             The ambient light intensity. It must be in range ``[0., 1.]``.
         specular_light : `float`, optional
             The specular light intensity. It must be in range ``[0., 1.]``.
+        colour : See Below, optional
+            The colour of the mesh if `render_texture` is ``False``.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_width : `float`, optional
+            The width of the lines, if there are any.
         normals : ``(n_points, 3)`` `ndarray` or ``None``, optional
             If ``None``, then the normals will not be rendered. If `ndarray`,
             then the provided normals will be rendered as well. Note that a
             normal must be provided for each point in the TriMesh.
-        normals_colour : `(float, float, float)`, optional
-            The colour of the normals as a tuple of RGB values. It only applies
-            if `normals` is not ``None``.
+        normals_colour : See Below, optional
+            The colour of the normals.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         normals_line_width : `float`, optional
             The width of the lines of the normals. It only applies if `normals`
             is not ``None``.
@@ -298,10 +308,11 @@ class TexturedTriMesh(TriMesh):
             The resolution of the markers of the normals. For spheres, for
             instance, this is the number of divisions along theta and phi. It
             only applies if `normals` is not ``None``.
-        normals_marker_size : `float`, optional
+        normals_marker_size : `float` or ``None``, optional
             The size of the markers. This size can be seen as a scale factor
             applied to the size markers, which is by default calculated from
-            the inter-marker spacing. It only applies if `normals` is not
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically. It only applies if `normals` is not
             ``None``.
         step : `int` or ``None``, optional
             If `int`, then one every `step` normals will be rendered.
@@ -315,13 +326,14 @@ class TexturedTriMesh(TriMesh):
         renderer : `menpo3d.visualize.TexturedTriMeshViewer3D`
             The Menpo3D rendering object.
         """
-        if textured:
+        if render_texture:
             try:
                 from menpo3d.visualize import TexturedTriMeshViewer3d
-                return TexturedTriMeshViewer3d(figure_id, new_figure,
-                                               self.points, self.trilist,
-                                               self.texture,
-                                               self.tcoords.points).render(
+                renderer = TexturedTriMeshViewer3d(figure_id, new_figure,
+                                                   self.points, self.trilist,
+                                                   self.texture,
+                                                   self.tcoords.points)
+                renderer.render(
                     mesh_type=mesh_type, ambient_light=ambient_light,
                     specular_light=specular_light, normals=normals,
                     normals_colour=normals_colour,
@@ -330,19 +342,27 @@ class TexturedTriMesh(TriMesh):
                     normals_marker_resolution=normals_marker_resolution,
                     normals_marker_size=normals_marker_size, step=step,
                     alpha=alpha)
+                return renderer
             except ImportError:
                 from menpo.visualize import Menpo3dMissingError
                 raise Menpo3dMissingError()
         else:
-            from menpo3d.visualize import TriMeshViewer3d
-            return TriMeshViewer3d(figure_id, new_figure,
-                                   self.points, self.trilist).render(
-                mesh_type=mesh_type, line_width=line_width, colour=mesh_colour,
-                normals=normals, normals_colour=normals_colour,
-                normals_line_width=normals_line_width,
-                normals_marker_style=normals_marker_style,
-                normals_marker_resolution=normals_marker_resolution,
-                normals_marker_size=normals_marker_size, step=step, alpha=alpha)
+            try:
+                from menpo3d.visualize import TriMeshViewer3d
+                renderer = TriMeshViewer3d(figure_id, new_figure, self.points,
+                                           self.trilist)
+                renderer.render(
+                    mesh_type=mesh_type, line_width=line_width, colour=colour,
+                    normals=normals, normals_colour=normals_colour,
+                    normals_line_width=normals_line_width,
+                    normals_marker_style=normals_marker_style,
+                    normals_marker_resolution=normals_marker_resolution,
+                    normals_marker_size=normals_marker_size, step=step,
+                    alpha=alpha)
+                return renderer
+            except ImportError:
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError()
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r', line_style='-',

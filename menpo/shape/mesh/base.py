@@ -817,10 +817,11 @@ class TriMesh(PointCloud):
             The resolution of the markers of the normals. For spheres, for
             instance, this is the number of divisions along theta and phi. It
             only applies if `normals` is not ``None``.
-        normals_marker_size : `float`, optional
+        normals_marker_size : `float` or ``None``, optional
             The size of the markers. This size can be seen as a scale factor
             applied to the size markers, which is by default calculated from
-            the inter-marker spacing. It only applies if `normals` is not
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically. It only applies if `normals` is not
             ``None``.
         step : `int` or ``None``, optional
             If `int`, then one every `step` markers will be rendered.
