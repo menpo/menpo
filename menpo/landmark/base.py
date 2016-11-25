@@ -939,11 +939,31 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
             axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
-    def _view_3d(self, figure_id=None, new_figure=True, **kwargs):
+    def _view_3d(self, with_labels=None, without_labels=None, group='group',
+                 figure_id=None, new_figure=False, render_lines=True,
+                 line_colour=None, line_width=4, render_markers=True,
+                 marker_style='sphere', marker_size=None, marker_colour=None,
+                 marker_resolution=8, step=None, alpha=1.0):
         try:
             from menpo3d.visualize import LandmarkViewer3d
-            return LandmarkViewer3d(figure_id, new_figure,
-                                    self._pointcloud, self).render(**kwargs)
+            if with_labels is not None and without_labels is not None:
+                raise ValueError('You may only pass one of `with_labels` or '
+                                 '`without_labels`.')
+            elif with_labels is not None:
+                lmark_group = self.with_labels(with_labels)
+            elif without_labels is not None:
+                lmark_group = self.without_labels(without_labels)
+            else:
+                lmark_group = self  # Fall through
+            landmark_viewer = LandmarkViewer3d(figure_id, new_figure,
+                                               group, lmark_group._pointcloud,
+                                               lmark_group._labels_to_masks)
+            return landmark_viewer.render(
+                render_lines=render_lines, line_colour=line_colour,
+                line_width=line_width, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_colour=marker_colour,
+                marker_resolution=marker_resolution, step=step, alpha=alpha)
         except ImportError:
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()
