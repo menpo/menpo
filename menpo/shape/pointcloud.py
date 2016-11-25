@@ -768,7 +768,9 @@ class PointCloud(Shape):
 
     def _view_3d(self, figure_id=None, new_figure=True, render_markers=True,
                  marker_style='sphere', marker_size=None, marker_colour='r',
-                 marker_resolution=8, step=None, alpha=1.0, **kwargs):
+                 marker_resolution=8, step=None, alpha=1.0,
+                 render_numbering=False, numbers_colour='k', numbers_size=None,
+                 **kwargs):
         r"""
         Visualization of the PointCloud in 3D.
 
@@ -809,6 +811,21 @@ class PointCloud(Shape):
             If ``None``, then all vertexes will be rendered.
         alpha : `float`, optional
             Defines the transparency (opacity) of the object.
+        render_numbering : `bool`, optional
+            If ``True``, the points will be numbered.
+        numbers_colour : See Below, optional
+            The colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        numbers_size : `float` or ``None``, optional
+            The size of the numbers. This size can be seen as a scale factor
+            applied to the numbers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal numbers size
+            value will be set automatically.
 
         Returns
         -------
@@ -824,7 +841,9 @@ class PointCloud(Shape):
                 render_lines=False, line_colour='r', line_width=4,
                 render_markers=render_markers, marker_style=marker_style,
                 marker_size=marker_size, marker_colour=marker_colour,
-                marker_resolution=marker_resolution, step=step, alpha=alpha)
+                marker_resolution=marker_resolution, step=step, alpha=alpha,
+                render_numbering=render_numbering,
+                numbers_colour=numbers_colour, numbers_size=numbers_size)
             return renderer
         except ImportError:
             from menpo.visualize import Menpo3dMissingError
