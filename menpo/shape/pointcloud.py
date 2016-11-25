@@ -830,35 +830,100 @@ class PointCloud(Shape):
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()
 
-    def _view_landmarks_3d(self, figure_id=None, new_figure=False,
-                           group=None):
+    def _view_landmarks_3d(self, group=None, with_labels=None,
+                           without_labels=None, figure_id=None,
+                           new_figure=False, render_lines=True,
+                           line_colour=None, line_width=4, render_markers=True,
+                           marker_style='sphere', marker_size=None,
+                           marker_colour=None, marker_resolution=8,
+                           step=None, alpha=1.0):
         r"""
         Visualization of the PointCloud landmarks in 3D.
 
         Parameters
         ----------
+        with_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, only show the given label(s). Should **not** be
+            used with the ``without_labels`` kwarg.
+        without_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, show all except the given label(s). Should **not**
+            be used with the ``with_labels`` kwarg.
+        group : `str` or `None`, optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
         figure_id : `object`, optional
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
-        group : `str`
-            The landmark group to visualize. If ``None`` is passed, the first
-            and only landmark group on the object will be visualized.
+        render_lines : `bool`, optional
+            If ``True``, then the lines will be rendered.
+        line_colour : See Below, optional
+            The colour of the lines. If ``None``, a different colour will be
+            automatically selected for each label.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+                or
+                None
+
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, then the markers will be rendered.
+        marker_style : `str`, optional
+            The style of the markers.
+            Example options ::
+
+                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
+                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
+                 arrow, axes, cone, cube, cylinder, point, sphere}
+
+        marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically.
+        marker_colour : See Below, optional
+            The colour of the markers. If ``None``, a different colour will be
+            automatically selected for each label.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+                or
+                None
+
+        marker_resolution : `int`, optional
+            The resolution of the markers. For spheres, for instance, this is
+            the number of divisions along theta and phi.
+        step : `int` or ``None``, optional
+            If `int`, then one every `step` vertexes will be rendered.
+            If ``None``, then all vertexes will be rendered.
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
 
         Returns
         -------
-        viewer : LandmarkViewer3d
-            The Menpo3D viewer object.
+        renderer : `menpo3d.visualize.LandmarkViewer3d`
+            The Menpo3D rendering object.
         """
-        try:
-            from menpo3d.visualize import LandmarkViewer3d
-            self_renderer = self.view(figure_id=figure_id,
-                                      new_figure=new_figure)
-            return LandmarkViewer3d(self_renderer.figure, False,  self,
-                                    self.landmarks[group]).render()
-        except ImportError:
-            from menpo.visualize import Menpo3dMissingError
-            raise Menpo3dMissingError()
+        if not self.has_landmarks:
+            raise ValueError('PointCloud does not have landmarks attached, '
+                             'unable to view landmarks.')
+        self_view = self.view(figure_id=figure_id, new_figure=new_figure)
+        landmark_view = self.landmarks[group].view(
+            with_labels=with_labels, without_labels=without_labels,
+            figure_id=self_view.figure_id, new_figure=False,
+            render_lines=render_lines, line_colour=line_colour,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_colour=marker_colour, marker_resolution=marker_resolution,
+            step=step, alpha=alpha)
+
+        return landmark_view
 
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):

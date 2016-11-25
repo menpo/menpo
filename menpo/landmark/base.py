@@ -944,6 +944,84 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                  line_colour=None, line_width=4, render_markers=True,
                  marker_style='sphere', marker_size=None, marker_colour=None,
                  marker_resolution=8, step=None, alpha=1.0):
+        """
+        Visualize the landmark group in 3D.
+
+        Parameters
+        ----------
+        with_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, only show the given label(s). Should **not** be
+            used with the ``without_labels`` kwarg.
+        without_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, show all except the given label(s). Should **not**
+            be used with the ``with_labels`` kwarg.
+        group : `str` or `None`, optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        render_lines : `bool`, optional
+            If ``True``, then the lines will be rendered.
+        line_colour : See Below, optional
+            The colour of the lines. If ``None``, a different colour will be
+            automatically selected for each label.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+                or
+                None
+
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, then the markers will be rendered.
+        marker_style : `str`, optional
+            The style of the markers.
+            Example options ::
+
+                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
+                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
+                 arrow, axes, cone, cube, cylinder, point, sphere}
+
+        marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically.
+        marker_colour : See Below, optional
+            The colour of the markers. If ``None``, a different colour will be
+            automatically selected for each label.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+                or
+                None
+
+        marker_resolution : `int`, optional
+            The resolution of the markers. For spheres, for instance, this is
+            the number of divisions along theta and phi.
+        step : `int` or ``None``, optional
+            If `int`, then one every `step` vertexes will be rendered.
+            If ``None``, then all vertexes will be rendered.
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
+
+        Returns
+        -------
+        renderer : `menpo3d.visualize.LandmarkViewer3d`
+            The Menpo3D rendering object.
+
+        Raises
+        ------
+        ValueError
+            If both ``with_labels`` and ``without_labels`` are passed.
+        """
         try:
             from menpo3d.visualize import LandmarkViewer3d
             if with_labels is not None and without_labels is not None:
