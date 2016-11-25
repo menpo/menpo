@@ -940,7 +940,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
     def _view_3d(self, with_labels=None, without_labels=None, group='group',
-                 figure_id=None, new_figure=False, render_lines=True,
+                 figure_id=None, new_figure=True, render_lines=True,
                  line_colour=None, line_width=4, render_markers=True,
                  marker_style='sphere', marker_size=None, marker_colour=None,
                  marker_resolution=8, step=None, alpha=1.0):

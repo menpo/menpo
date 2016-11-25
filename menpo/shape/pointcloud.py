@@ -832,7 +832,7 @@ class PointCloud(Shape):
 
     def _view_landmarks_3d(self, group=None, with_labels=None,
                            without_labels=None, figure_id=None,
-                           new_figure=False, render_lines=True,
+                           new_figure=True, render_lines=True,
                            line_colour=None, line_width=4, render_markers=True,
                            marker_style='sphere', marker_size=None,
                            marker_colour=None, marker_resolution=8,
