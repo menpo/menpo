@@ -5,7 +5,9 @@ from warnings import warn
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
-from menpo.shape.base import Shape
+from menpo.transform import WithDims
+
+from .base import Shape
 
 
 def bounding_box(closest_to_origin, opposite_corner):
@@ -172,6 +174,23 @@ class PointCloud(Shape):
         return cls(np.hstack([new_pcloud.points,
                               depth_image.as_vector(keep_channels=True).T]),
                    copy=False)
+
+    def with_dims(self, dims):
+        r"""
+        Return a copy of this shape with only particular dimensions retained.
+
+        Parameters
+        ----------
+        dims : valid numpy array slice
+            The slice that will be used on the dimensionality axis of the shape
+            under transform. For example, to go from a 3D shape to a 2D one,
+            [0, 1] could be provided or np.array([True, True, False]).
+
+        Returns
+        -------
+        copy of self, with only the requested dims
+        """
+        return WithDims(dims).apply(self)
 
     @property
     def n_points(self):
