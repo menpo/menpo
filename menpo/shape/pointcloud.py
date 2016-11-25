@@ -475,8 +475,7 @@ class PointCloud(Shape):
         from menpo.visualize.base import PointGraphViewer2d
         adjacency_array = np.empty(0)
         renderer = PointGraphViewer2d(figure_id, new_figure,
-                                      self.points,
-                                      adjacency_array)
+                                      self.points, adjacency_array)
         renderer.render(
             image_view=image_view, render_lines=False, line_colour='b',
             line_style='-', line_width=1., render_markers=render_markers,
@@ -767,9 +766,9 @@ class PointCloud(Shape):
 
         return landmark_view
 
-    def _view_3d(self, figure_id=None, new_figure=True, marker_style='sphere',
-                 marker_size=None, marker_colour=(1, 0, 0), marker_resolution=8,
-                 step=None, alpha=1.0):
+    def _view_3d(self, figure_id=None, new_figure=True, render_markers=True,
+                 marker_style='sphere', marker_size=None, marker_colour='r',
+                 marker_resolution=8, step=None, alpha=1.0, **kwargs):
         r"""
         Visualization of the PointCloud in 3D.
 
@@ -779,6 +778,8 @@ class PointCloud(Shape):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
         marker_style : `str`, optional
             The style of the markers.
             Example options ::
@@ -792,8 +793,14 @@ class PointCloud(Shape):
             applied to the size markers, which is by default calculated from
             the inter-marker spacing. If ``None``, then an optimal marker size
             value will be set automatically.
-        marker_colour : `(float, float, float)`, optional
-            The colour of the markers as a tuple of RGB values.
+        marker_colour : See Below, optional
+            The colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         marker_resolution : `int`, optional
             The resolution of the markers. For spheres, for instance, this is
             the number of divisions along theta and phi.
@@ -805,16 +812,20 @@ class PointCloud(Shape):
 
         Returns
         -------
-        renderer : `menpo3d.visualize.PointCloudViewer3d`
+        renderer : `menpo3d.visualize.PointGraphViewer3d`
             The Menpo3D rendering object.
         """
         try:
-            from menpo3d.visualize import PointCloudViewer3d
-            return PointCloudViewer3d(figure_id, new_figure,
-                                      self.points).render(
-                marker_style=marker_style, marker_size=marker_size,
-                marker_colour=marker_colour,
+            from menpo3d.visualize import PointGraphViewer3d
+            edges = np.empty(0)
+            renderer = PointGraphViewer3d(figure_id, new_figure,
+                                          self.points, edges)
+            renderer.render(
+                render_lines=False, line_colour='r', line_width=4,
+                render_markers=render_markers, marker_style=marker_style,
+                marker_size=marker_size, marker_colour=marker_colour,
                 marker_resolution=marker_resolution, step=step, alpha=alpha)
+            return renderer
         except ImportError:
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()

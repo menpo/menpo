@@ -1949,10 +1949,9 @@ class PointGraph(Graph, PointCloud):
         return renderer
 
     def _view_3d(self, figure_id=None, new_figure=True, render_lines=True,
-                 line_colour=(1, 0, 0), line_width=4, render_markers=True,
-                 marker_style='sphere', marker_size=None,
-                 marker_colour=(1, 0, 0), marker_resolution=8, step=None,
-                 alpha=1.0):
+                 line_colour='r', line_width=4, render_markers=True,
+                 marker_style='sphere', marker_size=None, marker_colour='k',
+                 marker_resolution=8, step=None, alpha=1.0):
         r"""
         Visualization of the PointGraph in 3D.
 
@@ -1964,8 +1963,14 @@ class PointGraph(Graph, PointCloud):
             If ``True``, a new figure is created.
         render_lines : `bool`, optional
             If ``True``, then the lines will be rendered.
-        line_colour : `(float, float, float)`, optional
-            The colour of the lines as a tuple of RGB values.
+        line_colour : See Below, optional
+            The colour of the lines.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         line_width : `float`, optional
             The width of the lines.
         render_markers : `bool`, optional
@@ -1983,8 +1988,14 @@ class PointGraph(Graph, PointCloud):
             applied to the size markers, which is by default calculated from
             the inter-marker spacing. If ``None``, then an optimal marker size
             value will be set automatically.
-        marker_colour : `(float, float, float)`, optional
-            The colour of the markers as a tuple of RGB values.
+        marker_colour : See Below, optional
+            The colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         marker_resolution : `int`, optional
             The resolution of the markers. For spheres, for instance, this is
             the number of divisions along theta and phi.
@@ -2001,13 +2012,15 @@ class PointGraph(Graph, PointCloud):
         """
         try:
             from menpo3d.visualize import PointGraphViewer3d
-            return PointGraphViewer3d(figure_id, new_figure, self.points,
-                                      self.edges).render(
+            renderer = PointGraphViewer3d(figure_id, new_figure,
+                                          self.points, self.edges)
+            renderer.render(
                 render_lines=render_lines, line_colour=line_colour,
                 line_width=line_width, render_markers=render_markers,
                 marker_style=marker_style, marker_size=marker_size,
-                marker_colour=marker_colour, step=step,
-                marker_resolution=marker_resolution, alpha=alpha)
+                marker_colour=marker_colour,
+                marker_resolution=marker_resolution, step=step, alpha=alpha)
+            return renderer
         except ImportError:
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()
