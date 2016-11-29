@@ -838,11 +838,10 @@ class PointCloud(Shape):
             renderer = PointGraphViewer3d(figure_id, new_figure,
                                           self.points, edges)
             renderer.render(
-                render_lines=False, line_colour='r', line_width=4,
-                render_markers=render_markers, marker_style=marker_style,
-                marker_size=marker_size, marker_colour=marker_colour,
-                marker_resolution=marker_resolution, step=step, alpha=alpha,
-                render_numbering=render_numbering,
+                render_lines=False, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_colour=marker_colour, marker_resolution=marker_resolution,
+                step=step, alpha=alpha, render_numbering=render_numbering,
                 numbers_colour=numbers_colour, numbers_size=numbers_size)
             return renderer
         except ImportError:
