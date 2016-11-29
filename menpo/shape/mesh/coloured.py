@@ -314,6 +314,7 @@ class ColouredTriMesh(TriMesh):
                     normals_marker_resolution=normals_marker_resolution,
                     normals_marker_size=normals_marker_size, step=step,
                     alpha=alpha)
+                return renderer
             except ImportError:
                 from menpo.visualize import Menpo3dMissingError
                 raise Menpo3dMissingError()
