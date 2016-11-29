@@ -215,7 +215,7 @@ class ColouredTriMesh(TriMesh):
             min_, max_ = colours.min(axis=0), colours.max(axis=0)
         else:
             min_, max_ = colours.min(), colours.max()
-        sf = ((maximum - minimum) * 1.0) / (max_ - min_)
+        sf = (maximum - minimum) / (max_ - min_)
         instance.colours = ((colours - min_) * sf) + minimum
         return instance
 
