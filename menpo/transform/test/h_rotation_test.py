@@ -59,28 +59,43 @@ def test_3d_rotation_inverse_eye():
     assert_allclose(np.eye(4), transformed.h_matrix, atol=1e-15)
 
 
-@raises(NotImplementedError)
-def test_rotation3d_from_vector_raises_notimplementederror():
-    Rotation.init_identity(3).from_vector(0)
+def test_init_3d_from_quaternion():
+    q = np.array([1., 0., 0.27, 0.])
+    r = Rotation.init_3d_from_quaternion(q)
+    axis, angle = r.axis_and_angle_of_rotation()
+    assert_allclose(r.axis_and_angle_of_rotation()[0], np.array([0., 1., 0.]))
+    assert np.round(angle * 180 / np.pi) == 30.
+
+
+def test_3d_rotation_as_vector():
+    a = np.sqrt(3.0) / 2.0
+    b = 0.5
+    # this is a rotation of -30 degrees about the x axis
+    rotation_matrix = np.array([[1, 0, 0],
+                                [0, a, b],
+                                [0, -b, a]])
+    rotation = Rotation(rotation_matrix)
+    assert_allclose(np.round(rotation.as_vector()[2:]), np.array([0., 0.]))
+
+
+def test_3d_rotation_n_parameters():
+    assert Rotation.init_identity(3).n_parameters == 4
 
 
 @raises(NotImplementedError)
-def test_rotation3d_as_vector_raises_notimplementederror():
-    Rotation.init_identity(3).as_vector()
+def test_rotation2d_from_vector_raises_notimplementederror():
+    Rotation.init_identity(2).from_vector(0)
+
+
+@raises(NotImplementedError)
+def test_rotation2d_as_vector_raises_notimplementederror():
+    Rotation.init_identity(2).as_vector()
 
 
 @raises(NotImplementedError)
 def test_rotation2d_n_parameters_raises_notimplementederror():
     rot_matrix = np.eye(2)
     t = Rotation(rot_matrix)
-    t.n_parameters
-
-
-@raises(NotImplementedError)
-def test_rotation3d_n_parameters_raises_notimplementederror():
-    rot_matrix = np.eye(3)
-    t = Rotation(rot_matrix)
-    # Throws exception
     t.n_parameters
 
 
