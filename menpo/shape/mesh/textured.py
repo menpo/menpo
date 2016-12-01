@@ -227,7 +227,7 @@ class TexturedTriMesh(TriMesh):
             ttm.tcoords.points = ttm.tcoords.points[isolated_mask, :]
             return ttm
 
-    def with_clipped_texture(self, range=(0., 1.)):
+    def clip_texture(self, range=(0., 1.)):
         """
         Method that returns a copy of the object with the texture values
         clipped in range ``(0, 1)``.
@@ -244,6 +244,31 @@ class TexturedTriMesh(TriMesh):
         """
         instance = self.copy()
         instance.texture.pixels = np.clip(self.texture.pixels, *range)
+        return instance
+
+    def rescale_texture(self, minimum, maximum, per_channel=True):
+        r"""
+        A copy of this mesh with texture linearly rescaled to fit a range.
+
+        Parameters
+        ----------
+        minimum: `float`
+            The minimal value of the rescaled colours
+        maximum: `float`
+            The maximal value of the rescaled colours
+        per_channel: `boolean`, optional
+            If ``True``, each channel will be rescaled independently. If
+            ``False``, the scaling will be over all channels.
+
+        Returns
+        -------
+        textured_mesh : ``type(self)``
+            A copy of this mesh with texture linearly rescaled to fit in the
+            range provided.
+        """
+        instance = self.copy()
+        instance.texture = instance.texture.rescale_pixels(
+            minimum, maximum, per_channel=per_channel)
         return instance
 
     def _view_3d(self, figure_id=None, new_figure=True, render_texture=True,

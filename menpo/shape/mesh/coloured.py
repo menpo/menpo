@@ -171,7 +171,7 @@ class ColouredTriMesh(TriMesh):
             ctm.colours = ctm.colours[isolated_mask, :]
             return ctm
 
-    def with_clipped_texture(self, range=(0., 1.)):
+    def clip_texture(self, range=(0., 1.)):
         """
         Method that returns a copy of the object with the coloured values
         clipped in range ``(0, 1)``.
@@ -190,8 +190,9 @@ class ColouredTriMesh(TriMesh):
         instance.colours = np.clip(self.colours, *range)
         return instance
 
-    def with_rescaled_texture(self, minimum, maximum, per_channel=True):
-        r"""A copy of this mesh with colours linearly rescaled to fit a range.
+    def rescale_texture(self, minimum, maximum, per_channel=True):
+        r"""
+        A copy of this mesh with colours linearly rescaled to fit a range.
 
         Parameters
         ----------
