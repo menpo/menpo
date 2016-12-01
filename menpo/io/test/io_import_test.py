@@ -125,8 +125,8 @@ def test_custom_landmark_resolver():
     assert(img.has_landmarks)
 
     takeo_lmarks = mio.import_builtin_asset.takeo_pts()
-    np.allclose(img.landmarks['PTS'].lms.points,
-                takeo_lmarks.lms.points)
+    np.allclose(img.landmarks['PTS'].points,
+                takeo_lmarks.points)
 
 
 def test_landmark_resolver_none():

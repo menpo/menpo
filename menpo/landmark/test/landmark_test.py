@@ -2,7 +2,7 @@ from collections import OrderedDict
 import numpy as np
 from scipy.sparse import csr_matrix
 from nose.tools import raises
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_equal
 
 from menpo.landmark import LandmarkManager
 from menpo.shape import PointCloud, LandmarkGroup

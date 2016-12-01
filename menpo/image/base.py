@@ -2735,7 +2735,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         method. For example:
 
             >>> im.constrain_landmarks_to_bounds()  # Equivalent to below
-            >>> im.landmarks['test'] = im.landmarks['test'].constrain_to_bounds(im.bounds)
+            >>> im.landmarks['test'] = im.landmarks['test'].constrain_to_bounds(im.bounds())
         """
         warn('This method is no longer supported and will be removed in a '
              'future version of Menpo. '
