@@ -5,7 +5,7 @@ import numpy as np
 binary_erosion = None  # expensive, from scipy.ndimage
 binary_dilation = None  # expensive, from scipy.ndimage
 
-from menpo.base import MenpoDeprecationWarning
+from menpo.base import MenpoDeprecationWarning, copy_landmarks_and_path
 from menpo.transform import Translation
 from menpo.visualize.base import ImageViewer
 
@@ -245,12 +245,7 @@ class MaskedImage(Image):
             if not np.isscalar(fill):
                 fill = np.array(fill).reshape(self.n_channels, -1)
             img.pixels[..., ~self.mask.mask] = fill
-
-        if self.has_landmarks:
-            img.landmarks = self.landmarks
-        if hasattr(self, 'path'):
-            img.path = self.path
-        return img
+        return copy_landmarks_and_path(self, img)
 
     def n_true_pixels(self):
         r"""

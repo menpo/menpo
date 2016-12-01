@@ -6,7 +6,8 @@ import numpy as np
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
-from menpo.base import Vectorizable, MenpoDeprecationWarning
+from menpo.base import (Vectorizable, MenpoDeprecationWarning,
+                        copy_landmarks_and_path)
 from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale, Rotation,
@@ -428,11 +429,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             a mask.
         """
         from menpo.image import MaskedImage
-        img = MaskedImage(self.pixels, mask=mask, copy=copy)
-        img.landmarks = self.landmarks
-        if hasattr(self, 'path'):
-            img.path = self.path
-        return img
+        return copy_landmarks_and_path(self,
+                                       MaskedImage(self.pixels,
+                                                   mask=mask, copy=copy))
 
     @property
     def n_dims(self):

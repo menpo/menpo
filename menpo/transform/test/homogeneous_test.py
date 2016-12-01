@@ -350,13 +350,13 @@ def test_scale_zero_scale_raise_valuerror():
 # Vectorizable interface tests
 
 @raises(NotImplementedError)
-def test_rotation3d_from_vector_raises_notimplementederror():
-    Rotation.init_identity(3).from_vector(0)
+def test_rotation2d_from_vector_raises_notimplementederror():
+    Rotation.init_identity(2).from_vector(0)
 
 
 @raises(NotImplementedError)
-def test_rotation3d_as_vector_raises_notimplementederror():
-    Rotation.init_identity(3).as_vector()
+def test_rotation2d_as_vector_raises_notimplementederror():
+    Rotation.init_identity(2).as_vector()
 
 
 def test_affine_2d_n_parameters():
@@ -425,14 +425,6 @@ def test_translation_3d_n_parameters():
 def test_rotation2d_n_parameters_raises_notimplementederror():
     rot_matrix = np.eye(2)
     t = Rotation(rot_matrix)
-    t.n_parameters
-
-
-@raises(NotImplementedError)
-def test_rotation3d_n_parameters_raises_notimplementederror():
-    rot_matrix = np.eye(3)
-    t = Rotation(rot_matrix)
-    # Throws exception
     t.n_parameters
 
 
