@@ -5,6 +5,7 @@ import itertools
 
 import numpy as np
 
+from menpo.landmark.labels.base import connectivity_from_array
 from menpo.landmark.base import LandmarkGroup
 from menpo.shape import PointCloud, PointUndirectedGraph
 from menpo.transform import Scale
@@ -88,12 +89,11 @@ def asf_importer(filepath, asset=None, image_origin=True, **kwargs):
     # TODO: Use connectivity and create a graph type instead of PointCloud
     # edges = scaled_points[connectivity]
 
-    return LandmarkGroup(PointCloud(points, copy=False),
-                         OrderedDict([('all', np.ones(points.shape[0],
-                                                      dtype=np.bool))]))
+    return LandmarkGroup.init_with_all_label(PointCloud(points, copy=False),
+                                             copy=False)
 
 
-def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
+def pts_importer(filepath, image_origin=True, **kwargs):
     r"""
     Importer for the PTS file format. Assumes version 1 of the format.
 
@@ -125,9 +125,6 @@ def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
     ----------
     filepath : `Path`
         Absolute filepath of the file.
-    asset : `object`, optional
-        An optional asset that may help with loading. This is unused for this
-        implementation.
     image_origin : `bool`, optional
         If ``True``, assume that the landmarks exist within an image and thus
         the origin is the image origin.
@@ -158,12 +155,11 @@ def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
     else:
         points = np.hstack([xs - 1, ys - 1])
 
-    return LandmarkGroup(PointCloud(points, copy=False),
-                         OrderedDict([('all', np.ones(points.shape[0],
-                                                      dtype=np.bool))]))
+    return LandmarkGroup.init_with_all_label(PointCloud(points, copy=False),
+                                             copy=False)
 
 
-def lm2_importer(filepath, asset=None, **kwargs):
+def lm2_importer(filepath, **kwargs):
     r"""
     Importer for the LM2 file format from the bosphorus dataset. This is a 2D
     landmark type and so it is assumed it only applies to images.
@@ -203,9 +199,6 @@ def lm2_importer(filepath, asset=None, **kwargs):
     ----------
     filepath : `Path`
         Absolute filepath of the file.
-    asset : `object`, optional
-        An optional asset that may help with loading. This is unused for this
-        implementation.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
 
@@ -340,7 +333,7 @@ _ljson_parser_for_version = {
 }
 
 
-def ljson_importer(filepath, asset=None, **kwargs):
+def ljson_importer(filepath, **kwargs):
     r"""
     Importer for the Menpo JSON format. This is an n-dimensional
     landmark type for both images and meshes that encodes semantic labels in
@@ -354,9 +347,6 @@ def ljson_importer(filepath, asset=None, **kwargs):
     ----------
     filepath : `Path`
         Absolute filepath of the file.
-    asset : `object`, optional
-        An optional asset that may help with loading. This is unused for this
-        implementation.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
 
@@ -375,3 +365,40 @@ def ljson_importer(filepath, asset=None, **kwargs):
         raise ValueError("{} has unknown version {} must be "
                          "1, or 2".format(self.filepath, v))
     return LandmarkGroup(*parser(lms_dict))
+
+
+def tem_importer(filepath, **kwargs):
+    """
+    Import the PsychoMorph .tem template/landmark format. Builds a PointGraph.
+
+    Parameters
+    ----------
+    filepath : `Path`
+        Absolute filepath of the file.
+    \**kwargs : `dict`, optional
+        Any other keyword arguments.
+
+    Returns
+    -------
+    landmarks : :map:`LandmarkGroup`
+        The landmarks including appropriate labels if available.
+    """
+    with open(str(filepath), 'rt') as f:
+        data = [l.strip() for l in f.readlines()]
+    n_points = int(data.pop(0))
+    points, rest = data[:n_points], data[n_points:]
+    points = np.array([tuple(map(float, l.split())) for l in points])
+
+    n_connectivities = int(rest.pop(0))
+    # Skip the first two entries (a zero and then the number of connections in
+    # the first set) and then skip all the subsequent 0s and connectivity
+    # counts since we don't need them
+    connectivities = rest[2::3]
+    assert len(connectivities) == n_connectivities
+    connectivities = [tuple(map(int, c.split())) for c in connectivities]
+
+    edges = np.vstack([connectivity_from_array(c) for c in connectivities])
+
+    # Swap x and y axes for Menpo ordering
+    pgraph = PointUndirectedGraph.init_from_edges(points[:, ::-1], edges)
+    return LandmarkGroup.init_with_all_label(pgraph, copy=False)

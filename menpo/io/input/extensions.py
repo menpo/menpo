@@ -1,4 +1,4 @@
-from .landmark import lm2_importer, ljson_importer
+from .landmark import lm2_importer, ljson_importer, tem_importer
 from .image import pillow_importer, abs_importer, flo_importer
 from .video import ffmpeg_types, ffmpeg_importer
 from .landmark_image import asf_image_importer, pts_image_importer
@@ -39,6 +39,7 @@ image_landmark_types = {'.asf': asf_image_importer,
                         '.lm2': lm2_importer,
                         '.pts': pts_image_importer,
                         '.ptsx': pts_image_importer,
+                        '.tem': tem_importer,
                         '.ljson': ljson_importer}
 
 pickle_types = {'.pkl': pickle_importer,
