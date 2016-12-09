@@ -2808,7 +2808,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def rescale_pixels(self, minimum, maximum, per_channel=True):
         r"""A copy of this image with pixels linearly rescaled to fit a range.
 
-        Note that the only pixels that will considered and rescaled are those
+        Note that the only pixels that will be considered and rescaled are those
         that feature in the vectorized form of this image. If you want to use
         this routine on all the pixels in a :map:`MaskedImage`, consider
         using `as_unmasked()` prior to this call.
@@ -2837,6 +2837,42 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         sf = ((maximum - minimum) * 1.0) / (max_ - min_)
         v_new = ((v - min_) * sf) + minimum
         return self.from_vector(v_new.T.ravel())
+
+    def clip_pixels(self, minimum=None, maximum=None):
+        r"""A copy of this image with pixels linearly clipped to fit a range.
+
+        Parameters
+        ----------
+        minimum: `float`, optional
+            The minimal value of the clipped pixels. If None is provided, the
+            default value will be 0.
+        maximum: `float`, optional
+            The maximal value of the clipped pixels. If None is provided, the
+            default value will depend on the dtype.
+
+        Returns
+        -------
+        rescaled_image: ``type(self)``
+            A copy of this image with pixels linearly rescaled to fit in the
+            range provided.
+        """
+        if minimum is None:
+            minimum = 0
+        if maximum is None:
+            dtype = self.pixels.dtype
+            if dtype == np.uint8:
+                maximum = 255
+            elif dtype == np.uint16:
+                maximum = 65535
+            elif dtype in [np.float32, np.float64]:
+                maximum = 1.0
+            else:
+                m1 = 'Could not recognise the dtype ({}) to set the maximum.'
+                raise ValueError(m1.format(dtype))
+
+        copy = self.copy()
+        copy.pixels = copy.pixels.clip(min=minimum, max=maximum)
+        return copy
 
     def rasterize_landmarks(self, group=None, render_lines=True, line_style='-',
                             line_colour='b', line_width=1, render_markers=True,
