@@ -756,7 +756,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                  axes_font_size=10, axes_font_style='normal',
                  axes_font_weight='normal', axes_x_limits=None,
                  axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-                 figure_size=(10, 8)):
+                 figure_size=(7, 7)):
         r"""
         View the image using the default image viewer. This method will appear 
         on the Image as ``view`` if the Image is 2D.
@@ -836,7 +836,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
             axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+    def view_widget(self, browser_style='buttons', figure_size=(7, 7),
                     style='coloured'):
         r"""
         Visualizes the image object using an interactive widget. Currently
@@ -890,7 +890,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
                            axes_x_ticks=None, axes_y_ticks=None,
-                           figure_size=(10, 8)):
+                           figure_size=(7, 7)):
         """
         Visualize the landmarks. This method will appear on the Image as
         ``view_landmarks`` if the Image is 2D.

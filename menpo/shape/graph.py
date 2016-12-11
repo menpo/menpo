@@ -1795,7 +1795,7 @@ class PointGraph(Graph, PointCloud):
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8), label=None):
+                 axes_y_ticks=None, figure_size=(7, 7), label=None):
         r"""
         Visualization of the PointGraph in 2D.
 
@@ -2043,7 +2043,7 @@ class PointGraph(Graph, PointCloud):
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+    def view_widget(self, browser_style='buttons', figure_size=(7, 7),
                     style='coloured'):
         r"""
         Visualization of the PointGraph using an interactive widget.

@@ -297,7 +297,7 @@ def _set_grid_options(render_grid=True, grid_line_style='--', grid_line_width=2)
         plt.grid('off')
 
 
-def _set_figure_size(fig, figure_size=(10, 8)):
+def _set_figure_size(fig, figure_size=(7, 7)):
     if figure_size is not None:
         fig.set_size_inches(np.asarray(figure_size))
 
@@ -356,7 +356,7 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
                axes_font_size=10, axes_font_style='normal',
                axes_font_weight='normal', axes_x_limits=None,
                axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-               figure_size=(10, 8)):
+               figure_size=(7, 7)):
         import matplotlib.pyplot as plt
 
         # parse colour map argument
@@ -404,7 +404,7 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
                axes_font_size=10, axes_font_style='normal',
                axes_font_weight='normal', axes_x_limits=None,
                axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-               figure_size=(10, 8)):
+               figure_size=(7, 7)):
         import matplotlib.pyplot as plt
 
         # parse colour map argument
@@ -459,7 +459,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
                axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-               axes_y_ticks=None, figure_size=(10, 8), label=None):
+               axes_y_ticks=None, figure_size=(7, 7), label=None):
         from matplotlib import collections as mc
         import matplotlib.pyplot as plt
 
@@ -557,7 +557,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
                axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-               axes_y_ticks=None, figure_size=(10, 8)):
+               axes_y_ticks=None, figure_size=(7, 7)):
         import matplotlib.lines as mlines
         from menpo.shape import TriMesh
         from menpo.shape.graph import PointGraph
@@ -778,7 +778,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
                legend_rounded_corners=False, render_axes=True,
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
-               figure_size=(10, 8), render_grid=True, grid_line_style='--',
+               figure_size=(7, 7), render_grid=True, grid_line_style='--',
                grid_line_width=1):
         import matplotlib.pyplot as plt
 

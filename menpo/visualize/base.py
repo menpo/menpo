@@ -519,7 +519,7 @@ def plot_curve(x_axis, y_axis, figure_id=None, new_figure=True,
                legend_shadow=False, legend_rounded_corners=False,
                render_axes=True, axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
-               figure_size=(10, 8), render_grid=True, grid_line_style='--',
+               figure_size=(7, 7), render_grid=True, grid_line_style='--',
                grid_line_width=1):
     r"""
     Plot a single or multiple curves on the same figure.
@@ -871,7 +871,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8)):
+                 axes_y_ticks=None, figure_size=(7, 7)):
     r"""
     Method that renders the provided `patches` on a canvas. The user can
     choose whether to render the patch centers (`render_centers`) as well as
@@ -1140,7 +1140,7 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
                            marker_style='o', render_axes=False,
                            axes_font_name='sans-serif', axes_font_size=10,
                            axes_font_style='normal', axes_font_weight='normal',
-                           crop_proportion=0.1, figure_size=(10, 8)):
+                           crop_proportion=0.1, figure_size=(7, 7)):
     r"""
     Method that renders the Gaussian ellipses that correspond to a set of
     covariance matrices and mean vectors. Naturally, this only works for

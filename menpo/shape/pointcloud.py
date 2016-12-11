@@ -433,7 +433,7 @@ class PointCloud(Shape):
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8), label=None, **kwargs):
+                 axes_y_ticks=None, figure_size=(7, 7), label=None, **kwargs):
         r"""
         Visualization of the PointCloud in 2D.
 
@@ -600,7 +600,7 @@ class PointCloud(Shape):
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
                            axes_x_ticks=None, axes_y_ticks=None,
-                           figure_size=(10, 8)):
+                           figure_size=(7, 7)):
         """
         Visualize the landmarks. This method will appear on the Image as
         ``view_landmarks`` if the Image is 2D.
@@ -1034,7 +1034,7 @@ class PointCloud(Shape):
 
         return landmark_view
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
+    def view_widget(self, browser_style='buttons', figure_size=(7, 7),
                     style='coloured'):
         r"""
         Visualization of the PointCloud using an interactive widget.
