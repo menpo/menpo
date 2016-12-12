@@ -2959,10 +2959,9 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     r"""
     Creates an :map:`Image` object in which the patches are located on the
     correct regions based on the centers. Thus, the image is a block-sparse
-    matrix. It has also two attached :map:`LandmarkGroup` objects. The
-    `all_patch_centers` one contains all the patch centers, while the
-    `selected_patch_centers` one contains only the centers that correspond to
-    the patches that the user selected to set.
+    matrix. It has also attached a `patch_Centers` :map:`LandmarkGroup`
+    object with the centers that correspond to the patches that the user
+    selected to set.
 
     The patches argument can have any of the two formats that are returned
     from the `extract_patches()` and `extract_patches_around_landmarks()`
@@ -3033,9 +3032,6 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     new_patch_centers = patch_centers.copy()
     new_patch_centers.points = patch_centers.points - np.array([[min_0, min_1]])
 
-    # Create temporary pointcloud with the selected patch centers
-    tmp_centers = PointCloud(new_patch_centers.points[patches_indices])
-
     # Create new image with the correct background values
     if background == 'black':
         patches_image = Image.init_blank(
@@ -3050,11 +3046,15 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     else:
         raise ValueError('Background must be either ''black'' or ''white''.')
 
-    # Attach the corrected patch centers
-    patches_image.landmarks['all_patch_centers'] = new_patch_centers
-    patches_image.landmarks['selected_patch_centers'] = tmp_centers
+    # If there was no slicing on the patches, then attach the original patch
+    # centers. Otherwise, attach the sliced ones.
+    if set(patches_indices) == set(range(patches.shape[0])):
+        patches_image.landmarks['patch_centers'] = new_patch_centers
+    else:
+        tmp_centers = PointCloud(new_patch_centers.points[patches_indices])
+        patches_image.landmarks['patch_centers'] = tmp_centers
 
     # Set the patches
     return patches_image.set_patches_around_landmarks(
-        patches[patches_indices], group='selected_patch_centers',
+        patches[patches_indices], group='patch_centers',
         offset_index=offset_index)

@@ -1085,7 +1085,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
     # Render patches image
     if render_centers:
         patch_view = patches_image.view_landmarks(
-            channels=channels, group='selected_patch_centers', figure_id=figure_id,
+            channels=channels, group='patch_centers', figure_id=figure_id,
             new_figure=new_figure, interpolation=interpolation,
             cmap_name=cmap_name, alpha=alpha, render_lines=render_lines,
             line_colour=line_colour, line_style=line_style,
@@ -1122,7 +1122,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
     if render_patches_bboxes:
         patch_shape = [patches.shape[3], patches.shape[4]]
         render_rectangles_around_patches(
-            patches_image.landmarks['selected_patch_centers'].lms.points,
+            patches_image.landmarks['patch_centers'].lms.points,
             patch_shape, image_view=True, line_colour=bboxes_line_colour,
             line_style=bboxes_line_style, line_width=bboxes_line_width,
             interpolation=interpolation)
