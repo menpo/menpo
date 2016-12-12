@@ -574,12 +574,16 @@ class PointCloud(Shape):
 
     def _view_landmarks_2d(self, group=None, with_labels=None,
                            without_labels=None, figure_id=None,
-                           new_figure=False, image_view=True, render_lines=True,
-                           line_colour=None, line_style='-', line_width=1,
-                           render_markers=True, marker_style='o',
-                           marker_size=5, marker_face_colour=None,
-                           marker_edge_colour=None, marker_edge_width=1.,
-                           render_numbering=False,
+                           new_figure=False, image_view=True,
+                           render_markers=True, marker_style='s', marker_size=7,
+                           marker_face_colour='k', marker_edge_colour='k',
+                           marker_edge_width=1., render_lines_lms=True,
+                           line_colour_lms=None, line_style_lms='-',
+                           line_width_lms=1, render_markers_lms=True,
+                           marker_style_lms='o', marker_size_lms=5,
+                           marker_face_colour_lms=None,
+                           marker_edge_colour_lms=None,
+                           marker_edge_width_lms=1., render_numbering=False,
                            numbers_horizontal_align='center',
                            numbers_vertical_align='bottom',
                            numbers_font_name='sans-serif', numbers_font_size=10,
@@ -602,8 +606,8 @@ class PointCloud(Shape):
                            axes_x_ticks=None, axes_y_ticks=None,
                            figure_size=(7, 7)):
         """
-        Visualize the landmarks. This method will appear on the Image as
-        ``view_landmarks`` if the Image is 2D.
+        Visualize the landmarks. This method will appear on the `PointCloud` as
+        ``view_landmarks``.
 
         Parameters
         ----------
@@ -623,20 +627,6 @@ class PointCloud(Shape):
         image_view : `bool`, optional
             If ``True`` the PointCloud will be viewed as if it is in the image
             coordinate system.
-        render_lines : `bool`, optional
-            If ``True``, the edges will be rendered.
-        line_colour : See Below, optional
-            The colour of the lines.
-            Example options::
-
-                {r, g, b, c, m, k, w}
-                or
-                (3, ) ndarray
-
-        line_style : ``{-, --, -., :}``, optional
-            The style of the lines.
-        line_width : `float`, optional
-            The width of the lines.
         render_markers : `bool`, optional
             If ``True``, the markers will be rendered.
         marker_style : See Below, optional
@@ -664,6 +654,47 @@ class PointCloud(Shape):
 
         marker_edge_width : `float`, optional
             The width of the markers' edge.
+        render_lines_lms : `bool`, optional
+            If ``True``, the edges of the landmarks will be rendered.
+        line_colour_lms : See Below, optional
+            The colour of the lines of the landmarks.
+            Example options::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_style_lms : ``{-, --, -., :}``, optional
+            The style of the lines of the landmarks.
+        line_width_lms : `float`, optional
+            The width of the lines of the landmarks.
+        render_markers : `bool`, optional
+            If ``True``, the markers of the landmarks will be rendered.
+        marker_style : See Below, optional
+            The style of the markers of the landmarks. Example options ::
+
+                {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
+        marker_size : `int`, optional
+            The size of the markers of the landmarks in points.
+        marker_face_colour : See Below, optional
+            The face (filling) colour of the markers of the landmarks.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_colour : See Below, optional
+            The edge colour of the markers of the landmarks.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_width : `float`, optional
+            The width of the markers' edge of the landmarks.
         render_numbering : `bool`, optional
             If ``True``, the landmarks will be numbered.
         numbers_horizontal_align : ``{center, right, left}``, optional
@@ -797,17 +828,26 @@ class PointCloud(Shape):
             raise ValueError('PointCloud does not have landmarks attached, '
                              'unable to view landmarks.')
         self_view = self.view(figure_id=figure_id, new_figure=new_figure,
-                              image_view=image_view, figure_size=figure_size)
+                              image_view=image_view, figure_size=figure_size,
+                              render_markers=render_markers,
+                              marker_style=marker_style,
+                              marker_size=marker_size,
+                              marker_face_colour=marker_face_colour,
+                              marker_edge_colour=marker_edge_colour,
+                              marker_edge_width=marker_edge_width)
+        # correct group label in legend
+        if group is None:
+            group = self.landmarks.group_labels[0]
         landmark_view = self.landmarks[group].view(
             with_labels=with_labels, without_labels=without_labels,
-            figure_id=self_view.figure_id, new_figure=False,
-            image_view=image_view, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
-            marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width,
+            figure_id=self_view.figure_id, new_figure=False, group=group,
+            image_view=image_view, render_lines=render_lines_lms,
+            line_colour=line_colour_lms, line_style=line_style_lms,
+            line_width=line_width_lms, render_markers=render_markers_lms,
+            marker_style=marker_style_lms, marker_size=marker_size_lms,
+            marker_face_colour=marker_face_colour_lms,
+            marker_edge_colour=marker_edge_colour_lms,
+            marker_edge_width=marker_edge_width_lms,
             render_numbering=render_numbering,
             numbers_horizontal_align=numbers_horizontal_align,
             numbers_vertical_align=numbers_vertical_align,
