@@ -43,7 +43,7 @@ def asf_importer(filepath, asset=None, **kwargs):
 
     Returns
     -------
-    landmarks : :map:`LandmarkGroup`
+    landmarks : :map:`LabelledPointUndirectedGraph`
         The landmarks including appropriate labels if available.
 
     References
@@ -152,7 +152,7 @@ def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
 
     Returns
     -------
-    landmarks : :map:`LandmarkGroup`
+    landmarks : :map:`PointCloud`
         The landmarks including appropriate labels if available.
     """
     f = open(str(filepath), 'r')
@@ -225,7 +225,7 @@ def lm2_importer(filepath, asset=None, **kwargs):
 
     Returns
     -------
-    landmarks : :map:`LandmarkGroup`
+    landmarks : :map:`LabelledPointUndirectedGraph`
         The landmarks including appropriate labels if available.
     """
     with open(str(filepath), 'r') as f:
@@ -329,18 +329,22 @@ def _parse_ljson_v1(lms_dict):
 
 
 def _parse_ljson_v2(lms_dict):
-    labels_to_mask = OrderedDict()  # masks into the full pointcloud per label
-
     points = _ljson_parse_null_values(lms_dict['landmarks']['points'])
-    n_points = points.shape[0]
     connectivity = lms_dict['landmarks'].get('connectivity')
 
-    for label in lms_dict['labels']:
-        mask = np.zeros(n_points, dtype=np.bool)
-        mask[label['mask']] = True
-        labels_to_mask[label['label']] = mask
-
-    return LabelledPointUndirectedGraph.init_from_edges(points, connectivity, labels_to_mask)
+    if connectivity is None and len(lms_dict['labels']) == 0:
+        return PointCloud(points)
+    else:
+        labels_to_mask = OrderedDict() # masks into the pointcloud per label
+        n_points = points.shape[0]
+        for label in lms_dict['labels']:
+            mask = np.zeros(n_points, dtype=np.bool)
+            mask[label['mask']] = True
+            labels_to_mask[label['label']] = mask
+        # Note that we can pass connectivity as None here and the edges will be
+        # empty.
+        return LabelledPointUndirectedGraph.init_from_edges(
+            points, connectivity, labels_to_mask)
 
 
 _ljson_parser_for_version = {
@@ -371,7 +375,7 @@ def ljson_importer(filepath, asset=None, **kwargs):
 
     Returns
     -------
-    landmarks : :map:`LandmarkGroup`
+    landmarks : :map:`LabelledPointUndirectedGraph`
         The landmarks including appropriate labels if available.
     """
     with open(str(filepath), 'r') as f:

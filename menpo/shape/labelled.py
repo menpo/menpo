@@ -12,7 +12,7 @@ def indices_to_masks(labels_to_indices, n_points):
     r"""
     Take a dictionary of labels to indices and convert it to a dictionary
     that maps labels to masks. This dictionary is the correct format for
-    constructing a :map:`LandmarkGroup`.
+    constructing a :map:`LabelledPointUndirectedGraph`.
 
     Parameters
     ----------
@@ -80,8 +80,8 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
                                       skip_checks=skip_checks)
 
         if not labels_to_masks:
-            raise ValueError('Landmark groups are designed to be immutable. '
-                             'Empty label sets are not permitted.')
+            raise ValueError('Labelled point graphs are designed to be '
+                             'immutable. Empty label sets are not permitted.')
         if np.vstack(labels_to_masks.values()).shape[1] != points.shape[0]:
             raise ValueError('Each mask must have the same number of points '
                              'as the given points.')
@@ -100,8 +100,8 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
     @classmethod
     def init_with_all_label(cls, points, adjacency_matrix, copy=True):
         r"""
-        Static constructor to create a :map:`LandmarkGroup` with a single
-        default 'all' label that covers all points.
+        Static constructor to create a :map:`LabelledPointUndirectedGraph` with
+        a single default 'all' label that covers all points.
 
         Parameters
         ----------
@@ -117,21 +117,21 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
         Returns
         -------
-        lmark_group : :map:`LandmarkGroup`
-            Landmark group wrapping the given points with a single label
+        labelled_pointgraph : :map:`LabelledPointUndirectedGraph`
+            Labelled pointgraph wrapping the given points with a single label
             called 'all' that is ``True`` for all points.
         """
         labels_to_masks = OrderedDict(
             [('all', np.ones(points.shape[0], dtype=np.bool))])
-        return LabelledPointUndirectedGraph(points, adjacency_matrix, labels_to_masks,
-                                            copy=copy)
+        return LabelledPointUndirectedGraph(points, adjacency_matrix,
+                                            labels_to_masks, copy=copy)
 
     @classmethod
     def init_from_indices_mapping(cls, points, adjacency,
                                   labels_to_indices, copy=True):
         r"""
-        Static constructor to create a :map:`LandmarkGroup` from an ordered
-        dictionary that maps a set of indices .
+        Static constructor to create a :map:`LabelledPointUndirectedGraph` from
+        an ordered dictionary that maps a set of indices .
 
         Parameters
         ----------
@@ -148,9 +148,9 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
         Returns
         -------
-        lmark_group : :map:`LandmarkGroup`
-            Landmark group wrapping the given points with the given
-            semantic labels applied.
+        labelled_pointgraph : :map:`LabelledPointUndirectedGraph`
+            Labelled point undirected graph wrapping the given points with the
+            given semantic labels applied.
 
         Raises
         ------
@@ -175,25 +175,26 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
     def init_from_edges(cls, points, edges, labels_to_masks, copy=True,
                         skip_checks=False):
         r"""
-        Construct a :map:`LandmarkGroup` from an edges array.
+        Construct a :map:`LabelledPointUndirectedGraph` from an edges array.
+
+        See :map:`PointUndirectedGraph` for more information.
 
         Parameters
         ----------
         points : ``(n_vertices, n_dims, )`` `ndarray`
             The array of point locations.
-        edges : ``(n_edges, 2, )`` `ndarray`
+        edges : ``(n_edges, 2, )`` `ndarray` or ``None``
             The `ndarray` of edges, i.e. all the pairs of vertices that are
-            connected with an edge.
-        labels_to_masks : `ordereddict` {`str` -> `bool ndarray`}
+            connected with an edge. If ``None``, then an empty adjacency
+            matrix is created.
+        labels_to_masks : `ordereddict` `{str -> bool ndarray}`
             For each label, the mask that specifies the indices in to the
             points that belong to the label.
         copy : `bool`, optional
-            If ``False``, the ``adjacency_matrix`` will not be copied on
+            If ``False``, the `adjacency_matrix` will not be copied on
             assignment.
         skip_checks : `bool`, optional
             If ``True``, no checks will be performed.
-
-        See :map:`PointUndirectedGraph` for more information.
         """
         adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
             edges, points.shape[0])
@@ -232,7 +233,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
     def copy(self):
         r"""
-        Generate an efficient copy of this :map:`LandmarkGroup`.
+        Generate an efficient copy of this :map:`LabelledPointUndirectedGraph`.
 
         Returns
         -------
@@ -247,7 +248,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
     def add_label(self, label, indices):
         """
         Add a new label by creating a new mask over the points. A new
-        :map:`LandmarkGroup` is returned.
+        :map:`LabelledPointUndirectedGraph` is returned.
 
         Parameters
         ----------
@@ -259,8 +260,8 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
         Returns
         -------
-        lmark_group : :map:`LandmarkGroup`
-            A new landmark group with the new label specified by indices.
+        labelled_pointgraph : :map:`LabelledPointUndirectedGraph`
+            A new labelled pointgraph with the new label specified by indices.
         """
         new = self.copy()
         mask = np.zeros(self.n_points, dtype=np.bool)
@@ -289,14 +290,14 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
     def remove_label(self, label):
         """
-        Returns a new :map:`LandmarkGroup` that does not contain the given
-        label.
+        Returns a new :map:`LabelledPointUndirectedGraph` that does not contain
+        the given label.
 
          .. note::
 
-             You cannot delete a semantic label and leave the landmark group
-             partially unlabelled. Landmark groups must contain labels for
-             **every point**.
+             You cannot delete a semantic label and leave the labelled point
+             graph partially unlabelled. Labelled point graphs must contain
+             labels for **every point**.
 
         Parameters
         ---------
@@ -343,13 +344,14 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         Returns a copy of this object, which previously would have held
         the 'underlying' :map:`PointCloud` subclass.
 
-        :type: :map:`LandmarkGroup`
+        :type: :map:`LabelledPointUndirectedGraph`
         """
         from menpo.base import MenpoDeprecationWarning
         warnings.warn('The .lms property is deprecated. LandmarkGroups are now '
-                      'subclasses of UndirectedPointGraph and thus may be used '
-                      'anywhere the previous .lms PointCloud objects may have '
-                      'been used. This now returns a copy.',
+                      'LabelledPointUndirectedGraphs which are subclasses of '
+                      'UndirectedPointGraph and thus may be used anywhere the '
+                      'previous .lms PointCloud objects may have been used. '
+                      'This now returns a copy.',
                       MenpoDeprecationWarning)
         return self.copy()
 
@@ -362,25 +364,27 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         """
         from menpo.base import MenpoDeprecationWarning
         warnings.warn('The .n_landmarks property is deprecated. LandmarkGroups '
-                      'are now subclasses of UndirectedPointGraph and thus may '
+                      'are now LabelledPointUndirectedGraph which '
+                      'are subclasses of UndirectedPointGraph and thus may '
                       'be used as such. Thus .n_landmarks is an alias for '
                       '.n_points .',
                       MenpoDeprecationWarning)
         return self.n_points
 
     def with_labels(self, labels):
-        """A new landmark group that contains only the given labels.
+        """A new labelled point undirected graph that contains only the given
+        labels.
 
         Parameters
         ----------
         labels : `str` or `list` of `str`
-            Label(s) that should be kept in the returned landmark group.
+            Label(s) that should be kept in the returned labelled point graph.
 
         Returns
         -------
-        landmark_group : :map:`LandmarkGroup`
-            A new landmark group with the same group label but containing only
-            the given label(s).
+        labelled_pointgraph : :map:`LabelledPointUndirectedGraph`
+            A new labelled point undirected graph with the same group label but
+            containing only the given label(s).
         """
         # Make it easier to use by accepting a single string as well as a list
         if isinstance(labels, str):
@@ -388,18 +392,19 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         return self._new_group_with_only_labels(labels)
 
     def without_labels(self, labels):
-        """A new landmark group that excludes certain labels.
+        """A new labelled point undirected graph that excludes certain labels.
 
         Parameters
         ----------
         labels : `str` or `list` of `str`
-            Label(s) that should be excluded in the returned landmark group.
+            Label(s) that should be excluded in the returned labelled point
+            graph.
 
         Returns
         -------
-        landmark_group : :map:`LandmarkGroup`
-            A new landmark group with the same group label but containing all
-            labels except the given label.
+        labelled_pointgraph : :map:`LabelledPointUndirectedGraph`
+            A new labelled point undirected graph with the same group label but
+            containing all labels except the given label.
         """
         # Make it easier to use by accepting a single string as well as a list
         if isinstance(labels, str):
@@ -434,8 +439,8 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
         Returns
         -------
-        lmark_group : :map:`LandmarkGroup`
-            The new landmark group with only the requested labels.
+        labelled_pointgraph : :map:`LabelledPointUndirectedGraph`
+            The new labelled pointgraph with only the requested labels.
         """
         set_difference = set(labels).difference(self.labels)
         if len(set_difference) > 0:
@@ -451,11 +456,13 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         new_graph = self.from_mask(overlap)
         return LabelledPointUndirectedGraph(new_graph.points,
                                             new_graph.adjacency_matrix,
-                                            OrderedDict(zip(labels, masks_to_keep)))
+                                            OrderedDict(zip(labels,
+                                                            masks_to_keep)))
 
     def tojson(self):
         r"""
-        Convert this `LandmarkGroup` to a dictionary JSON representation.
+        Convert this `LabelledPointUndirectedGraph` to a dictionary JSON
+        representation.
 
         Returns
         -------
@@ -465,9 +472,9 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         labels = [{'mask': mask.nonzero()[0].tolist(),
                    'label': label}
                   for label, mask in self._labels_to_masks.items()]
-
-        return {'landmarks': PointUndirectedGraph.tojson(self),
-                'labels': labels}
+        lms_dict = PointUndirectedGraph.tojson(self)
+        lms_dict['labels'] = labels
+        return lms_dict
 
     def _view_2d(self, with_labels=None, without_labels=None, group='group',
                  figure_id=None, new_figure=False, image_view=True,
@@ -493,7 +500,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
                  axes_y_ticks=None, figure_size=(10, 8)):
         """
-        Visualize the landmark group.
+        Visualize the labelled point undirected graph.
 
         Parameters
         ----------
@@ -504,8 +511,8 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             If not ``None``, show all except the given label(s). Should **not**
             be used with the ``with_labels`` kwarg.
         group : `str` or `None`, optional
-            The landmark group to be visualized. If ``None`` and there are more
-            than one landmark groups, an error is raised.
+            The name of the labelled point undirected graph. It is used in
+            the legend.
         figure_id : `object`, optional
             The id of the figure to be used.
         new_figure : `bool`, optional
@@ -514,68 +521,102 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             If ``True``, the x and y axes are flipped.
         render_lines : `bool`, optional
             If ``True``, the edges will be rendered.
-        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                      ``(3, )`` `ndarray` or ``None``, optional
-            The colour of the lines. If ``None``, a different colour will be
-            automatically selected for each label.
-        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+        line_colour : See Below, optional
+            The colour of the lines.
+            Example options::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+            It can either be one of the above or a `list` of those defining a
+            value per label.
+        line_style : ``{'-', '--', '-.', ':'}``, optional
             The style of the lines.
         line_width : `float`, optional
             The width of the lines.
         render_markers : `bool`, optional
             If ``True``, the markers will be rendered.
-        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
-                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
-                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
-            The style of the markers.
+        marker_style : See Below, optional
+            The style of the markers. Example options ::
+
+                {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
         marker_size : `int`, optional
             The size of the markers in points.
-        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+        marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
-        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+            It can either be one of the above or a `list` of those defining a
+            value per label.
+        marker_edge_colour : See Below, optional
             The edge colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+            It can either be one of the above or a `list` of those defining a
+            value per label.
         marker_edge_width : `float`, optional
             The width of the markers' edge.
         render_numbering : `bool`, optional
             If ``True``, the landmarks will be numbered.
-        numbers_horizontal_align : {``center``, ``right``, ``left``}, optional
+        numbers_horizontal_align : ``{center, right, left}``, optional
             The horizontal alignment of the numbers' texts.
-        numbers_vertical_align : {``center``, ``top``, ``bottom``,
-                                  ``baseline``}, optional
+        numbers_vertical_align : ``{center, top, bottom, baseline}``, optional
             The vertical alignment of the numbers' texts.
-        numbers_font_name : {``serif``, ``sans-serif``, ``cursive``,
-                             ``fantasy``, ``monospace``}, optional
-            The font of the numbers.
+        numbers_font_name : See Below, optional
+            The font of the numbers. Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
         numbers_font_size : `int`, optional
             The font size of the numbers.
-        numbers_font_style : {``normal``, ``italic``, ``oblique``}, optional
+        numbers_font_style : ``{normal, italic, oblique}``, optional
             The font style of the numbers.
-        numbers_font_weight : {``ultralight``, ``light``, ``normal``,
-                               ``regular``, ``book``, ``medium``, ``roman``,
-                               ``semibold``, ``demibold``, ``demi``, ``bold``,
-                               ``heavy``, ``extra bold``, ``black``}, optional
+        numbers_font_weight : See Below, optional
             The font weight of the numbers.
-        numbers_font_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                              or ``(3, )`` `ndarray`, optional
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        numbers_font_colour : See Below, optional
             The font colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
         render_legend : `bool`, optional
             If ``True``, the legend will be rendered.
         legend_title : `str`, optional
             The title of the legend.
-        legend_font_name : {``serif``, ``sans-serif``, ``cursive``,
-                            ``fantasy``, ``monospace``}, optional
+        legend_font_name : See Below, optional
             The font of the legend.
+            Possible options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
         legend_font_style : {``normal``, ``italic``, ``oblique``}, optional
             The font style of the legend.
         legend_font_size : `int`, optional
             The font size of the legend.
-        legend_font_weight : {``ultralight``, ``light``, ``normal``,
-                              ``regular``, ``book``, ``medium``, ``roman``,
-                              ``semibold``, ``demibold``, ``demi``, ``bold``,
-                              ``heavy``, ``extra bold``, ``black``}, optional
+        legend_font_weight : See Below, optional
             The font weight of the legend.
+            Possible options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                 semibold, demibold, demi, bold, heavy, extra bold, black}
+
         legend_marker_scale : `float`, optional
             The relative size of the legend markers with respect to the original
         legend_location : `int`, optional
@@ -615,28 +656,35 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             If ``True``, the frame's corners will be rounded (fancybox).
         render_axes : `bool`, optional
             If ``True``, the axes will be rendered.
-        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                          ``monospace``}, optional
+        axes_font_name : See Below, optional
             The font of the axes.
+            Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
         axes_font_size : `int`, optional
             The font size of the axes.
         axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
             The font style of the axes.
-        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
-                            ``book``, ``medium``, ``roman``, ``semibold``,
-                            ``demibold``, ``demi``, ``bold``, ``heavy``,
-                            ``extra bold``, ``black``}, optional
+        axes_font_weight : See Below, optional
             The font weight of the axes.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
         axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
             The limits of the x axis. If `float`, then it sets padding on the
-            right and left of the LandmarkGroup as a percentage of the
-            LandmarkGroup's width. If `tuple` or `list`, then it defines the axis
-            limits. If ``None``, then the limits are set automatically.
+            right and left of the LabelledPointUndirectedGraph as a percentage
+            of the LabelledPointUndirectedGraph's width. If `tuple` or `list`,
+            then it defines the axis limits. If ``None``, then the limits are
+            set automatically.
         axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
             The limits of the y axis. If `float`, then it sets padding on the
-            top and bottom of the LandmarkGroup as a percentage of the
-            LandmarkGroup's height. If `tuple` or `list`, then it defines the
-            axis limits. If ``None``, then the limits are set automatically.
+            top and bottom of the LabelledPointUndirectedGraph as a percentage
+            of the LabelledPointUndirectedGraph's height. If `tuple` or `list`,
+            then it defines the axis limits. If ``None``, then the limits are
+            set automatically.
         axes_x_ticks : `list` or `tuple` or ``None``, optional
             The ticks of the x axis.
         axes_y_ticks : `list` or `tuple` or ``None``, optional
@@ -711,7 +759,8 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
         r"""
-        Visualizes the landmark group object using an interactive widget.
+        Visualizes the labelled point undirected graph object using an
+        interactive widget.
 
         Parameters
         ----------
@@ -725,9 +774,9 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             ``minimal``, then the style is simple using black and white colours.
         """
         try:
-            from menpowidgets import visualize_landmarkgroups
-            visualize_landmarkgroups(self, figure_size=figure_size, style=style,
-                                     browser_style=browser_style)
+            from menpowidgets import visualize_pointclouds
+            visualize_pointclouds(self, figure_size=figure_size, style=style,
+                                  browser_style=browser_style)
         except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()

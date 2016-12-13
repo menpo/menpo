@@ -63,7 +63,7 @@ def validate_input(pcloud, n_expected_points):
     n_actual_points = pcloud.n_points
     if n_actual_points != n_expected_points:
         msg = 'Label expects exactly {} ' \
-              'points. However, the given landmark group ' \
+              'points. However, the given pointcloud ' \
               'has {} points'.format(n_expected_points, n_actual_points)
         raise LabellingError(msg)
 
@@ -118,36 +118,37 @@ def pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
 _labeller_docs = r"""
     Parameters
     ----------
-    x : :map:`LandmarkGroup` or :map:`PointCloud` or `ndarray`
-        The input landmark group, pointcloud or array to label. If a pointcloud
-        is passed, then only the connectivity information is propagated to
-        the pointcloud (a subclass of :map:`PointCloud` may be returned).
+    x : :map:`LabelledPointUndirectedGraph` or :map:`PointCloud` or `ndarray`
+        The input labelled point graph, pointcloud, subclass of those or
+        array to label. If a pointcloud is passed, then only the connectivity
+        information is propagated to the pointcloud (a subclass of
+        :map:`PointCloud` may be returned).
     return_mapping : `bool`, optional
         Only applicable if a :map:`PointCloud` or `ndarray` is passed. Returns
         the mapping dictionary which maps labels to indices into the resulting
         :map:`PointCloud` (which is then used to for building a
-        :map:`LandmarkGroup`. This parameter is only provided for internal
-        use so that other labellers can piggyback off one another.
+        :map:`LabelledPointUndirectedGraph`. This parameter is only provided
+        for internal use so that other labellers can piggyback off one another.
 
     Returns
     -------
-    x_labelled : :map:`LandmarkGroup` or :map:`PointCloud`
-        If a :map:`LandmarkGroup` was passed, a :map:`LandmarkGroup` is
-        returned. This landmark group will contain specific labels and
-        these labels may refer to sub-pointclouds with specific connectivity
-        information.
+    x_labelled : :map:`LabelledPointUndirectedGraph` or :map:`PointCloud`
+        If a :map:`LabelledPointUndirectedGraph` was passed, a
+        :map:`LabelledPointUndirectedGraph` is returned. This labelled
+        pointgraph will contain specific labels and these labels may refer to
+        sub-pointclouds with specific connectivity information.
 
         If a :map:`PointCloud` was passed, a :map:`PointCloud` is returned. Only
         the connectivity information is propagated to the pointcloud
         (a subclass of :map:`PointCloud` may be returned).
     mapping_dict : `ordereddict` {`str` -> `int ndarray`}, optional
         Only returned if ``return_mapping==True``. Used for building
-        :map:`LandmarkGroup`.
+        :map:`LabelledPointUndirectedGraph`.
 
     Raises
     ------
     : :map:`LabellingError`
-        If the given landmark group/pointcloud contains less than the
+        If the given labelled point graph/pointcloud contains less than the
         expected number of points.
 """
 
@@ -201,16 +202,18 @@ def labeller(landmarkable, group, label_func):
     ----------
     landmarkable: :map:`Landmarkable`
         :map:`Landmarkable` that will have it's :map:`LandmarkManager`
-        augmented with a new :map:`LandmarkGroup`
+        augmented with a new :map:`LabelledPointUndirectedGraph` or
+        :map:`PointCloud`
     group: `str`
-        The group label of the existing landmark group that should be
-        re-labelled. A copy of this group will be attached to it's landmark
-        manager with new labels. The group label of this new group and the
-        labels it will have is determined by ``label_func``
-    label_func: `func`  -> `(str, LandmarkGroup)`
-        A labelling function taken from this module, Takes as input a
-        :map:`LandmarkGroup` and returns a tuple of
-        (new group label, new LandmarkGroup with semantic labels applied).
+        The group label of the existing pointcloud that should be re-labelled.
+        A copy of this group will be attached to it's landmark manager with
+        new labels. The group label of this new group and the labels it will
+        have is determined by ``label_func``
+    label_func: `func`  -> `(str, LabelledPointUndirectedGraph)`
+        A labelling function taken from this module. Takes as input a
+        :map:`PointCloud` or :map:`LabelledPointUndirectedGraph` or subclass
+        and returns a tuple of (new group label, new
+        LabelledPointUndirectedGraph with semantic labels applied).
 
     Returns
     -------

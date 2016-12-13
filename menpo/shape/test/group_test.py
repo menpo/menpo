@@ -20,21 +20,21 @@ mask_dict_3 = OrderedDict([('all', np.ones(10, dtype=np.bool)),
                            ('lower', lower), ('upper', upper)])
 
 
-def test_LandmarkGroup_copy_true():
+def test_LabelledPointUndirectedGraph_copy_true():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
     assert not is_same_array(lgroup.points, points)
     assert lgroup._labels_to_masks is not mask_dict
     assert lgroup.adjacency_matrix is not adjacency_matrix
 
 
-def test_LandmarkGroup_copy_false():
+def test_LabelledPointUndirectedGraph_copy_false():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict, copy=False)
     assert is_same_array(lgroup.points, points)
     assert lgroup._labels_to_masks is mask_dict
     assert lgroup.adjacency_matrix is adjacency_matrix
 
 
-def test_landmarkgroup_copy_method():
+def test_LabelledPointUndirectedGraph_copy_method():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
     lgroup_copy = lgroup.copy()
 
@@ -47,7 +47,7 @@ def test_landmarkgroup_copy_method():
         assert ms[0] is not ms[1]
 
 
-def test_LandmarkGroup_iterate_labels():
+def test_LabelledPointUndirectedGraph_iterate_labels():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
     for l in lgroup.labels:
@@ -55,7 +55,7 @@ def test_LandmarkGroup_iterate_labels():
     assert len(lgroup.labels) == 1
 
 
-def test_LandmarkGroup_get_label():
+def test_LabelledPointUndirectedGraph_get_label():
     pcloud = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     assert isinstance(pcloud, PointUndirectedGraph)
@@ -63,7 +63,7 @@ def test_LandmarkGroup_get_label():
     assert pcloud.get_label('upper').n_points == 4
 
 
-def test_LandmarkGroup_add_label():
+def test_LabelledPointUndirectedGraph_add_label():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     new_lgroup = lgroup.add_label('lower2', [0, 1])
@@ -75,7 +75,7 @@ def test_LandmarkGroup_add_label():
     assert_allclose(lower_pcloud.points[1, :], [1., 1., 1.])
 
 
-def test_LandmarkGroup_add_ordered_labels():
+def test_LabelledPointUndirectedGraph_add_ordered_labels():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     labels = lgroup.labels
@@ -88,7 +88,7 @@ def test_LandmarkGroup_add_ordered_labels():
     assert new_labels[2] == 'A'
 
 
-def test_LandmarkGroup_remove_label():
+def test_LabelledPointUndirectedGraph_remove_label():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_3)
 
     new_lgroup = lgroup.remove_label('lower')
@@ -99,14 +99,14 @@ def test_LandmarkGroup_remove_label():
 
 
 @raises(ValueError)
-def test_LandmarkGroup_remove_label_unlabelled():
+def test_LabelledPointUndirectedGraph_remove_label_unlabelled():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     lgroup.remove_label('lower')
 
 
 @raises(ValueError)
-def test_LandmarkGroup_create_unlabelled():
+def test_LabelledPointUndirectedGraph_create_unlabelled():
     points = np.array([[0, 1], [2, 3], [4, 5]])
     adjacency_matrix = csr_matrix((3, 3))
     mask_dict = OrderedDict([('all', np.zeros(3, dtype=np.bool))])
@@ -115,7 +115,7 @@ def test_LandmarkGroup_create_unlabelled():
 
 
 @raises(ValueError)
-def test_LandmarkGroup_pass_non_ordered_dict():
+def test_LabelledPointUndirectedGraph_pass_non_ordered_dict():
     points = np.array([[0, 1], [2, 3], [4, 5]])
     adjacency_matrix = csr_matrix((3, 3))
     mask_dict = {'all': np.ones(3, dtype=np.bool)}
@@ -124,7 +124,7 @@ def test_LandmarkGroup_pass_non_ordered_dict():
 
 
 @raises(ValueError)
-def test_LandmarkGroup_create_no_mask():
+def test_LabelledPointUndirectedGraph_create_no_mask():
     points = np.array([[0, 1], [2, 3], [4, 5]])
     adjacency_matrix = csr_matrix((3, 3))
     mask_dict = None
@@ -133,7 +133,7 @@ def test_LandmarkGroup_create_no_mask():
 
 
 @raises(ValueError)
-def test_LandmarkGroup_create_incorrect_shape():
+def test_LabelledPointUndirectedGraph_create_incorrect_shape():
     points = np.array([[0, 1], [2, 3], [4, 5]])
     adjacency_matrix = csr_matrix((3, 3))
     mask_dict = OrderedDict(['all', np.ones(5, dtype=np.bool)])
@@ -141,7 +141,7 @@ def test_LandmarkGroup_create_incorrect_shape():
     LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
 
-def test_LandmarkGroup_with_labels():
+def test_LabelledPointUndirectedGraph_with_labels():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     new_lgroup = lgroup.with_labels('lower')
@@ -157,7 +157,7 @@ def test_LandmarkGroup_with_labels():
     assert 'lower' in new_lgroup.labels
 
 
-def test_LandmarkGroup_without_labels():
+def test_LabelledPointUndirectedGraph_without_labels():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     new_lgroup = lgroup.without_labels('upper')
@@ -175,22 +175,24 @@ def test_LandmarkGroup_without_labels():
     assert 'upper' not in new_lgroup.labels
 
 
-def test_LandmarkGroup_str():
+def test_LabelledPointUndirectedGraph_str():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     out_str = lgroup.__str__()
     assert len(out_str) > 0
 
 
-def test_LandmarkGroup_create_with_all_label():
-    lgroup = LabelledPointUndirectedGraph.init_with_all_label(points, adjacency_matrix)
+def test_LabelledPointUndirectedGraph_create_with_all_label():
+    lgroup = LabelledPointUndirectedGraph.init_with_all_label(points,
+                                                              adjacency_matrix)
 
     assert lgroup.n_labels == 1
     assert 'all' in lgroup.labels
 
 
-def test_LandmarkGroup_has_nan_values():
+def test_LabelledPointUndirectedGraph_has_nan_values():
     points2 = points.copy()
     points2[0, 0] = np.nan
-    lgroup = LabelledPointUndirectedGraph.init_with_all_label(points2, adjacency_matrix)
+    lgroup = LabelledPointUndirectedGraph.init_with_all_label(points2,
+                                                              adjacency_matrix)
     assert lgroup.has_nan_values()

@@ -1775,7 +1775,7 @@ class PointGraph(Graph, PointCloud):
             Dictionary with ``points`` and ``connectivity`` keys.
         """
         json_dict = PointCloud.tojson(self)
-        json_dict['connectivity'] = self.edges.tolist()
+        json_dict['landmarks']['connectivity'] = self.edges.tolist()
         return json_dict
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,

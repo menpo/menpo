@@ -32,9 +32,10 @@ def pointcloud_view_widget_test():
 @surrogate('menpowidgets.visualize_landmarkgroups')
 @patch('menpowidgets.visualize_landmarkgroups', menpowidgets_mock)
 @raises(MenpowidgetsMissingError)
-def landmarkgroup_view_widget_test():
+def labelledpointundirectedgraph_view_widget_test():
     adj_matrix = csr_matrix((1, 1))
-    LabelledPointUndirectedGraph.init_with_all_label(pcloud2d, adj_matrix).view_widget()
+    LabelledPointUndirectedGraph.init_with_all_label(
+        pcloud2d, adj_matrix).view_widget()
 
 
 @surrogate('menpowidgets.visualize_landmarks')

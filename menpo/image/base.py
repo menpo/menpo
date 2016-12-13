@@ -2959,7 +2959,7 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     r"""
     Creates an :map:`Image` object in which the patches are located on the
     correct regions based on the centers. Thus, the image is a block-sparse
-    matrix. It has also two attached :map:`LandmarkGroup` objects. The
+    matrix. It has also two attached :map:`PointCloud` objects. The
     `all_patch_centers` one contains all the patch centers, while the
     `selected_patch_centers` one contains only the centers that correspond to
     the patches that the user selected to set.

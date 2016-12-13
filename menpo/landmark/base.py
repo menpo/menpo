@@ -15,9 +15,7 @@ class Landmarkable(Copyable):
     managed by a :map:`LandmarkManager`. This means that
     different sets of landmarks can be attached to the same object.
     Landmarks can be N-dimensional and are expected to be some
-    subclass of :map:`PointCloud`. These landmarks
-    are wrapped inside a :map:`LandmarkGroup` object that performs
-    useful tasks like label filtering and viewing.
+    subclass of :map:`PointCloud` or :map:`LabelledPointUndirectedGraph`.
     """
 
     def __init__(self):
@@ -80,22 +78,23 @@ class Landmarkable(Copyable):
 
 
 class LandmarkManager(MutableMapping, Transformable):
-    """Store for :map:`PointCloud` instances associated with an object.
+    """Store for :map:`PointCloud` or ::map:`LabelledPointUndirectedGraph`
+    instances associated with an object.
 
     Every :map:`Landmarkable` instance has an instance of this class available
     at the ``.landmarks`` property.  It is through this class that all access
     to landmarks attached to instances is handled. In general the
     :map:`LandmarkManager` provides a dictionary-like interface for storing
     landmarks. The LandmarkManager will contain instances of :map:`PointCloud`
-    or subclasses thereof, including the specialised subclass
-    :map:`LandmarkGroup`.  :map:`LandmarkGroup` is unique in it's ability to
+    or :map:`LabelledPointUndirectedGraph` or subclasses thereof.
+    :map:`LabelledPointUndirectedGraph` is unique in it's ability to
     include labels that refer to subsets of the underlying points that represent
-    interesting semantic *labels*. These :map:`PointCloud` (or subclasses)
-    are stored under string keys - these keys are refereed to as the
-    **group name**. A special case is where there is a single unambiguous
-    group attached to a :map:`LandmarkManager` - in this case ``None`` can be
-     used as a key to access this sole group.
-
+    interesting semantic *labels*. These :map:`PointCloud` or
+    :map:`LabelledPointUndirectedGraph` (or subclasses) are stored under
+    string keys - these keys are refereed to as the **group name**. A special
+    case is where there is a single unambiguous group attached to a
+    :map:`LandmarkManager` - in this case ``None`` can be used as a key to
+    access this sole group.
 
     Note that all groups stored on a :map:`Landmarkable` in it's attached
     :map:`LandmarkManager` are automatically transformed and copied with their
@@ -188,8 +187,8 @@ class LandmarkManager(MutableMapping, Transformable):
 
         Returns
         -------
-        lmark_group : :map:`LandmarkGroup`
-            The matching landmark group.
+        lmark_group : :map:`PointCloud` or :map:`LabelledPointUndirectedGraph`
+            The matching landmarks.
         """
         if group is None:
             if self.n_groups == 1:

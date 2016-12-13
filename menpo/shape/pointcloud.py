@@ -315,7 +315,12 @@ class PointCloud(Shape):
         json : `dict`
             Dictionary with ``points`` keys.
         """
-        return {'points': self.points.tolist()}
+        return {
+            'labels': [],
+            'landmarks': {
+                'points': self.points.tolist()
+            }
+        }
 
     def _from_vector_inplace(self, vector):
         r"""

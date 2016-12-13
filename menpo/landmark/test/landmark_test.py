@@ -14,7 +14,7 @@ adjacency_matrix = csr_matrix((10, 10))
 mask_dict = OrderedDict([('all', np.ones(10, dtype=np.bool))])
 
 
-def test_LandmarkManager_set_LandmarkGroup():
+def test_LandmarkManager_set_LabelledPointUndirectedGraph():
     lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
     man = LandmarkManager()
