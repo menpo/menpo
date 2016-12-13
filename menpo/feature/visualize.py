@@ -93,7 +93,7 @@ def _create_feature_glyph(feature, vbs):
     # construct a "glyph" for each orientation
     block_image_temp = np.zeros((vbs, vbs))
     # Create a vertical line of ones, to be the first vector
-    block_image_temp[:, np.round(vbs / 2) - 1:np.round(vbs / 2) + 1] = 1
+    block_image_temp[:, int(np.round(vbs/2))-1:int(np.round(vbs/2))+1] = 1
     block_im = np.zeros((block_image_temp.shape[0],
                          block_image_temp.shape[1],
                          num_bins))
