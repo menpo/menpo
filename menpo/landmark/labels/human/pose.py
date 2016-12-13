@@ -54,7 +54,7 @@ def pose_lsp_14_to_pose_lsp_14(pcloud):
     ----------
     .. [1] http://www.comp.leeds.ac.uk/mat4saj/lsp.html
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 14
     validate_input(pcloud, n_expected_points)
@@ -84,7 +84,7 @@ def pose_lsp_14_to_pose_lsp_14(pcloud):
     mapping['right_arm'] = right_arm_indices
     mapping['head'] = head_indices
 
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -140,7 +140,7 @@ def pose_human36M_32_to_pose_human36M_32(pcloud):
     ----------
     .. [1] http://vision.imar.ro/human3.6m/
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 32
     validate_input(pcloud, n_expected_points)
@@ -187,7 +187,7 @@ def pose_human36M_32_to_pose_human36M_32(pcloud):
     mapping['right_hand'] = right_hand_indices
     mapping['torso'] = torso_indices
 
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -215,7 +215,7 @@ def pose_human36M_32_to_pose_human36M_17(pcloud):
     ----------
     .. [1] http://vision.imar.ro/human3.6m/
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 32
     validate_input(pcloud, n_expected_points)
@@ -258,7 +258,7 @@ def pose_human36M_32_to_pose_human36M_17(pcloud):
     # Ignore duplicate points, sole and palms
     ind = np.hstack([np.arange(0, 4), np.arange(6, 9), np.arange(12, 16),
                      np.arange(17, 20), np.arange(25, 28)])
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping

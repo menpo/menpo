@@ -5,7 +5,7 @@ from nose.tools import raises
 from numpy.testing import assert_allclose, assert_equal
 
 from menpo.landmark import LandmarkManager
-from menpo.shape import PointCloud, LandmarkGroup
+from menpo.shape import PointCloud, LabelledPointUndirectedGraph
 from menpo.testing import is_same_array
 
 
@@ -15,7 +15,7 @@ mask_dict = OrderedDict([('all', np.ones(10, dtype=np.bool))])
 
 
 def test_LandmarkManager_set_LandmarkGroup():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
     man = LandmarkManager()
     man['test_set'] = lgroup
@@ -26,7 +26,7 @@ def test_LandmarkManager_set_LandmarkGroup():
 
 @raises(ValueError)
 def test_LandmarkManager_set_None_key():
-    lgroup = LandmarkGroup.init_with_all_label(points, adjacency_matrix)
+    lgroup = LabelledPointUndirectedGraph.init_with_all_label(points, adjacency_matrix)
 
     man = LandmarkManager()
     man[None] = lgroup
@@ -79,7 +79,7 @@ def test_LandmarkManager_iterate():
 
 
 def test_LandmarkManager_get():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
     man = LandmarkManager()
     man._landmark_groups['test_set'] = lgroup
@@ -89,7 +89,7 @@ def test_LandmarkManager_get():
 
 
 def test_LandmarkManager_set():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
     man = LandmarkManager()
     man['test_set'] = lgroup

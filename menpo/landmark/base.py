@@ -329,7 +329,8 @@ class LandmarkGroup(object):
 
     def __new__(cls, *args, **kwargs):
         # This is a crazy hack that means when old style LandmarkGroup
-        # objects are imported it is actually new-style LandmarkGroups
-        # that are created.
-        from menpo.shape import LandmarkGroup as NewLandmarkGroup
-        return NewLandmarkGroup.__new__(NewLandmarkGroup, *args, **kwargs)
+        # objects are imported it is actually new-style
+        # LabelledPointUndirectedGraph objects that are created.
+        from menpo.shape import LabelledPointUndirectedGraph
+        return LabelledPointUndirectedGraph.__new__(
+            LabelledPointUndirectedGraph, *args, **kwargs)

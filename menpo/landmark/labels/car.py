@@ -20,7 +20,7 @@ def car_streetscene_20_to_car_streetscene_view_0_8(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -45,9 +45,9 @@ def car_streetscene_20_to_car_streetscene_view_0_8(pcloud):
     mapping['windshield'] = windshield_indices
 
     ind = np.arange(8)
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(pcloud.points[ind],
-                                                         all_connectivity,
-                                                         mapping)
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(pcloud.points[ind],
+                                                                        all_connectivity,
+                                                                        mapping)
 
     return new_pcloud, mapping
 
@@ -69,7 +69,7 @@ def car_streetscene_20_to_car_streetscene_view_1_14(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -100,7 +100,7 @@ def car_streetscene_20_to_car_streetscene_view_1_14(pcloud):
     mapping['left_side'] = left_side_indices
 
     ind = np.hstack((np.arange(9), np.array([10, 12, 14, 16, 18])))
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -120,7 +120,7 @@ def car_streetscene_20_to_car_streetscene_view_2_10(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -136,7 +136,7 @@ def car_streetscene_20_to_car_streetscene_view_2_10(pcloud):
     mapping['left_side'] = left_side_indices
 
     ind = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -159,7 +159,7 @@ def car_streetscene_20_to_car_streetscene_view_3_14(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -188,7 +188,7 @@ def car_streetscene_20_to_car_streetscene_view_3_14(pcloud):
     mapping['rear'] = rear_indices
 
     ind = np.array([0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18])
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -211,7 +211,7 @@ def car_streetscene_20_to_car_streetscene_view_4_14(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -242,7 +242,7 @@ def car_streetscene_20_to_car_streetscene_view_4_14(pcloud):
     mapping['right_side'] = right_side_indices
 
     ind = np.hstack([np.arange(8), np.array([9, 11, 13, 15, 17, 19])])
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -262,7 +262,7 @@ def car_streetscene_20_to_car_streetscene_view_5_10(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -278,7 +278,7 @@ def car_streetscene_20_to_car_streetscene_view_5_10(pcloud):
     mapping['right_side'] = right_side_indices
 
     ind = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19])
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -301,7 +301,7 @@ def car_streetscene_20_to_car_streetscene_view_6_14(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -330,7 +330,7 @@ def car_streetscene_20_to_car_streetscene_view_6_14(pcloud):
     mapping['rear'] = rear_indices
 
     ind = np.array([1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19])
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -352,7 +352,7 @@ def car_streetscene_20_to_car_streetscene_view_7_8(pcloud):
     ----------
     .. [1] http://www.cs.cmu.edu/~vboddeti/alignment.html
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 20
     validate_input(pcloud, n_expected_points)
@@ -375,7 +375,7 @@ def car_streetscene_20_to_car_streetscene_view_7_8(pcloud):
     mapping['rear'] = rear_indices
 
     ind = np.arange(8, 16)
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping

@@ -5,7 +5,7 @@ from scipy.sparse import csr_matrix
 
 from menpo.image import Image
 from menpo.visualize import MenpowidgetsMissingError
-from menpo.shape import PointCloud, TriMesh, PointDirectedGraph, LandmarkGroup
+from menpo.shape import PointCloud, TriMesh, PointDirectedGraph, LabelledPointUndirectedGraph
 from menpo.landmark import LandmarkManager
 from menpo.testing import surrogate
 
@@ -34,7 +34,7 @@ def pointcloud_view_widget_test():
 @raises(MenpowidgetsMissingError)
 def landmarkgroup_view_widget_test():
     adj_matrix = csr_matrix((1, 1))
-    LandmarkGroup.init_with_all_label(pcloud2d, adj_matrix).view_widget()
+    LabelledPointUndirectedGraph.init_with_all_label(pcloud2d, adj_matrix).view_widget()
 
 
 @surrogate('menpowidgets.visualize_landmarks')

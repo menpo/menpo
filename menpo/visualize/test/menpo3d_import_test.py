@@ -6,7 +6,7 @@ from scipy.sparse import csr_matrix
 
 from menpo.image import Image
 from menpo.shape import (TriMesh, TexturedTriMesh, ColouredTriMesh, PointCloud,
-                         LandmarkGroup)
+                         LabelledPointUndirectedGraph)
 from menpo.visualize import Menpo3dMissingError
 from menpo.testing import surrogate
 
@@ -56,7 +56,7 @@ def pointcloud3d_viewer_test():
 @raises(Menpo3dMissingError)
 def landmark3d_viewer_test():
     adj_matrix = csr_matrix((3, 3))
-    LandmarkGroup(fake_triangle,
-                  adj_matrix,
-                  OrderedDict([('all', np.ones(3, dtype=np.bool))]),
-                  copy=False).view()
+    LabelledPointUndirectedGraph(fake_triangle,
+                                 adj_matrix,
+                                 OrderedDict([('all', np.ones(3, dtype=np.bool))]),
+                                 copy=False).view()

@@ -4,7 +4,7 @@ from nose.tools import raises
 from numpy.testing import assert_allclose
 from scipy.sparse import csr_matrix
 
-from menpo.shape import LandmarkGroup, PointUndirectedGraph
+from menpo.shape import LabelledPointUndirectedGraph, PointUndirectedGraph
 from menpo.testing import is_same_array
 
 
@@ -21,21 +21,21 @@ mask_dict_3 = OrderedDict([('all', np.ones(10, dtype=np.bool)),
 
 
 def test_LandmarkGroup_copy_true():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
     assert not is_same_array(lgroup.points, points)
     assert lgroup._labels_to_masks is not mask_dict
     assert lgroup.adjacency_matrix is not adjacency_matrix
 
 
 def test_LandmarkGroup_copy_false():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict, copy=False)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict, copy=False)
     assert is_same_array(lgroup.points, points)
     assert lgroup._labels_to_masks is mask_dict
     assert lgroup.adjacency_matrix is adjacency_matrix
 
 
 def test_landmarkgroup_copy_method():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
     lgroup_copy = lgroup.copy()
 
     assert not is_same_array(lgroup_copy.points, lgroup.points)
@@ -48,7 +48,7 @@ def test_landmarkgroup_copy_method():
 
 
 def test_LandmarkGroup_iterate_labels():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
     for l in lgroup.labels:
         assert l == 'all'
@@ -56,7 +56,7 @@ def test_LandmarkGroup_iterate_labels():
 
 
 def test_LandmarkGroup_get_label():
-    pcloud = LandmarkGroup(points, adjacency_matrix, mask_dict_2)
+    pcloud = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     assert isinstance(pcloud, PointUndirectedGraph)
     assert pcloud.get_label('lower').n_points == 6
@@ -64,7 +64,7 @@ def test_LandmarkGroup_get_label():
 
 
 def test_LandmarkGroup_add_label():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict_2)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     new_lgroup = lgroup.add_label('lower2', [0, 1])
     assert not is_same_array(new_lgroup.points, lgroup.points)
@@ -76,7 +76,7 @@ def test_LandmarkGroup_add_label():
 
 
 def test_LandmarkGroup_add_ordered_labels():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict_2)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     labels = lgroup.labels
     assert labels[0] == 'lower'
@@ -89,7 +89,7 @@ def test_LandmarkGroup_add_ordered_labels():
 
 
 def test_LandmarkGroup_remove_label():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict_3)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_3)
 
     new_lgroup = lgroup.remove_label('lower')
 
@@ -100,7 +100,7 @@ def test_LandmarkGroup_remove_label():
 
 @raises(ValueError)
 def test_LandmarkGroup_remove_label_unlabelled():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict_2)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     lgroup.remove_label('lower')
 
@@ -111,7 +111,7 @@ def test_LandmarkGroup_create_unlabelled():
     adjacency_matrix = csr_matrix((3, 3))
     mask_dict = OrderedDict([('all', np.zeros(3, dtype=np.bool))])
 
-    LandmarkGroup(points, adjacency_matrix, mask_dict)
+    LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
 
 @raises(ValueError)
@@ -120,7 +120,7 @@ def test_LandmarkGroup_pass_non_ordered_dict():
     adjacency_matrix = csr_matrix((3, 3))
     mask_dict = {'all': np.ones(3, dtype=np.bool)}
 
-    LandmarkGroup(points, adjacency_matrix, mask_dict)
+    LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
 
 @raises(ValueError)
@@ -129,7 +129,7 @@ def test_LandmarkGroup_create_no_mask():
     adjacency_matrix = csr_matrix((3, 3))
     mask_dict = None
 
-    LandmarkGroup(points, adjacency_matrix, mask_dict)
+    LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
 
 @raises(ValueError)
@@ -138,11 +138,11 @@ def test_LandmarkGroup_create_incorrect_shape():
     adjacency_matrix = csr_matrix((3, 3))
     mask_dict = OrderedDict(['all', np.ones(5, dtype=np.bool)])
 
-    LandmarkGroup(points, adjacency_matrix, mask_dict)
+    LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
 
 
 def test_LandmarkGroup_with_labels():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict_2)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     new_lgroup = lgroup.with_labels('lower')
 
@@ -158,7 +158,7 @@ def test_LandmarkGroup_with_labels():
 
 
 def test_LandmarkGroup_without_labels():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict_2)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     new_lgroup = lgroup.without_labels('upper')
 
@@ -176,14 +176,14 @@ def test_LandmarkGroup_without_labels():
 
 
 def test_LandmarkGroup_str():
-    lgroup = LandmarkGroup(points, adjacency_matrix, mask_dict_2)
+    lgroup = LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict_2)
 
     out_str = lgroup.__str__()
     assert len(out_str) > 0
 
 
 def test_LandmarkGroup_create_with_all_label():
-    lgroup = LandmarkGroup.init_with_all_label(points, adjacency_matrix)
+    lgroup = LabelledPointUndirectedGraph.init_with_all_label(points, adjacency_matrix)
 
     assert lgroup.n_labels == 1
     assert 'all' in lgroup.labels
@@ -192,5 +192,5 @@ def test_LandmarkGroup_create_with_all_label():
 def test_LandmarkGroup_has_nan_values():
     points2 = points.copy()
     points2[0, 0] = np.nan
-    lgroup = LandmarkGroup.init_with_all_label(points2, adjacency_matrix)
+    lgroup = LabelledPointUndirectedGraph.init_with_all_label(points2, adjacency_matrix)
     assert lgroup.has_nan_values()

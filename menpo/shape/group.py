@@ -35,7 +35,7 @@ def indices_to_masks(labels_to_indices, n_points):
     return masks
 
 
-class LandmarkGroup(PointUndirectedGraph):
+class LabelledPointUndirectedGraph(PointUndirectedGraph):
     r"""
     A subclass of :map:`PointUndirectedGraph` that allows the attaching
     of 'labels' associated with semantic parts of an object. For example,
@@ -123,8 +123,8 @@ class LandmarkGroup(PointUndirectedGraph):
         """
         labels_to_masks = OrderedDict(
             [('all', np.ones(points.shape[0], dtype=np.bool))])
-        return LandmarkGroup(points, adjacency_matrix, labels_to_masks,
-                             copy=copy)
+        return LabelledPointUndirectedGraph(points, adjacency_matrix, labels_to_masks,
+                                            copy=copy)
 
     @classmethod
     def init_from_indices_mapping(cls, points, adjacency,
@@ -168,8 +168,8 @@ class LandmarkGroup(PointUndirectedGraph):
                 adjacency, points.shape[0])
         labels_to_masks = indices_to_masks(labels_to_indices,
                                            points.shape[0])
-        return LandmarkGroup(points, adjacency, labels_to_masks,
-                             copy=copy)
+        return LabelledPointUndirectedGraph(points, adjacency, labels_to_masks,
+                                            copy=copy)
 
     @classmethod
     def init_from_edges(cls, points, edges, labels_to_masks, copy=True,
@@ -449,9 +449,9 @@ class LandmarkGroup(PointUndirectedGraph):
         masks_to_keep = [l[overlap] for l in masks_to_keep]
 
         new_graph = self.from_mask(overlap)
-        return LandmarkGroup(new_graph.points,
-                             new_graph.adjacency_matrix,
-                             OrderedDict(zip(labels, masks_to_keep)))
+        return LabelledPointUndirectedGraph(new_graph.points,
+                                            new_graph.adjacency_matrix,
+                                            OrderedDict(zip(labels, masks_to_keep)))
 
     def tojson(self):
         r"""

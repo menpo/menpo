@@ -26,7 +26,7 @@ def face_ibug_68_to_face_ibug_68(pcloud):
     .. [1] http://www.multipie.org/
     .. [2] http://ibug.doc.ic.ac.uk/resources/300-W/
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 68
     validate_input(pcloud, n_expected_points)
@@ -68,7 +68,7 @@ def face_ibug_68_to_face_ibug_68(pcloud):
     mapping['right_eye'] = reye_indices
     mapping['mouth'] = np.hstack((outer_mouth_indices, inner_mouth_indices))
 
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -133,7 +133,7 @@ def face_ibug_68_to_face_ibug_66(pcloud):
     .. [1] http://www.multipie.org/
     .. [2] http://ibug.doc.ic.ac.uk/resources/300-W/
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 68
     validate_input(pcloud, n_expected_points)
@@ -177,7 +177,7 @@ def face_ibug_68_to_face_ibug_66(pcloud):
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(60), np.arange(61, 64), np.arange(65, 68)))
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -203,7 +203,7 @@ def face_ibug_68_to_face_ibug_51(pcloud):
     .. [1] http://www.multipie.org/
     .. [2] http://ibug.doc.ic.ac.uk/resources/300-W/
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 68
     validate_input(pcloud, n_expected_points)
@@ -242,7 +242,7 @@ def face_ibug_68_to_face_ibug_51(pcloud):
 
     # Ignore the two inner mouth points
     ind = np.arange(17, 68)
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -267,7 +267,7 @@ def face_ibug_49_to_face_ibug_49(pcloud):
     .. [1] http://www.multipie.org/
     .. [2] http://ibug.doc.ic.ac.uk/resources/300-W/
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 49
     validate_input(pcloud, n_expected_points)
@@ -306,7 +306,7 @@ def face_ibug_49_to_face_ibug_49(pcloud):
     mapping['mouth'] = np.hstack([outer_mouth_indices, inner_mouth_indices])
 
     # Ignore the two inner mouth points
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -333,7 +333,7 @@ def face_ibug_68_to_face_ibug_49(pcloud):
     .. [1] http://www.multipie.org/
     .. [2] http://ibug.doc.ic.ac.uk/resources/300-W/
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 68
     validate_input(pcloud, n_expected_points)
@@ -373,7 +373,7 @@ def face_ibug_68_to_face_ibug_49(pcloud):
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(17, 60), np.arange(61, 64), np.arange(65, 68)))
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points[ind], all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -645,7 +645,7 @@ def face_ibug_68_to_face_ibug_65(pcloud):
     .. [1] http://www.multipie.org/
     .. [2] http://ibug.doc.ic.ac.uk/resources/300-W/
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     # Apply face_ibug_68_to_face_ibug_68
     new_pcloud, mapping = face_ibug_68_to_face_ibug_68(pcloud,
@@ -664,7 +664,7 @@ def face_ibug_68_to_face_ibug_65(pcloud):
     inner_mouth_indices = np.arange(60, 65)
     mapping['mouth'] = np.hstack([outer_mouth_indices, inner_mouth_indices])
 
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         new_pcloud.points[:-3], edges, mapping)
 
     return new_pcloud, mapping
@@ -723,7 +723,7 @@ def face_lfpw_29_to_face_lfpw_29(pcloud):
     ----------
     .. [1] http://homes.cs.washington.edu/~neeraj/databases/lfpw/
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 29
     validate_input(pcloud, n_expected_points)
@@ -767,7 +767,7 @@ def face_lfpw_29_to_face_lfpw_29(pcloud):
     mapping['mouth'] = np.hstack((outer_mouth_indices, inner_mouth_indices))
     mapping['nose'] = nose_indices
 
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -799,7 +799,7 @@ def eye_ibug_open_38_to_eye_ibug_open_38(pcloud):
       - pupil
       - sclera
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 38
     validate_input(pcloud, n_expected_points)
@@ -841,7 +841,7 @@ def eye_ibug_open_38_to_eye_ibug_open_38(pcloud):
     mapping['iris'] = np.arange(*iris_range)
     mapping['sclera'] = sclera_indices
 
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping
@@ -857,7 +857,7 @@ def eye_ibug_close_17_to_eye_ibug_close_17(pcloud):
       - upper_eyelid
       - lower_eyelid
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     n_expected_points = 17
     validate_input(pcloud, n_expected_points)
@@ -878,7 +878,7 @@ def eye_ibug_close_17_to_eye_ibug_close_17(pcloud):
     mapping['upper_eyelid'] = upper_indices
     mapping['lower_eyelid'] = lower_indices
 
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping

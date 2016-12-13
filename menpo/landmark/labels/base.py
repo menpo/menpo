@@ -95,7 +95,7 @@ def pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
         For each label, the indices in to the pointcloud that belong to the
         label.
     """
-    from menpo.shape import LandmarkGroup
+    from menpo.shape import LabelledPointUndirectedGraph
 
     mapping = OrderedDict()
     all_connectivity = []
@@ -109,7 +109,7 @@ def pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
         mapping[label] = np.arange(*range_tuple)
     all_connectivity = np.vstack(all_connectivity)
 
-    new_pcloud = LandmarkGroup.init_from_indices_mapping(
+    new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
         pointcloud.points, all_connectivity, mapping)
 
     return new_pcloud, mapping

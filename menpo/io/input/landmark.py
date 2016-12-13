@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from menpo.shape import PointCloud, LandmarkGroup
+from menpo.shape import PointCloud, LabelledPointUndirectedGraph
 from menpo.transform import Scale
 
 
@@ -105,8 +105,8 @@ def asf_importer(filepath, asset=None, **kwargs):
 
     labels_to_masks = OrderedDict(
         [('all', np.ones(points.shape[0], dtype=np.bool))])
-    return LandmarkGroup.init_from_edges(points, connectivity,
-                                         labels_to_masks)
+    return LabelledPointUndirectedGraph.init_from_edges(points, connectivity,
+                                                        labels_to_masks)
 
 
 def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
@@ -279,7 +279,7 @@ def lm2_importer(filepath, asset=None, **kwargs):
     labels_to_masks = OrderedDict(zip(labels, masks))
 
     empty_adj_matrix = csr_matrix((num_points, num_points))
-    return LandmarkGroup(points, empty_adj_matrix, labels_to_masks)
+    return LabelledPointUndirectedGraph(points, empty_adj_matrix, labels_to_masks)
 
 
 def _ljson_parse_null_values(points_list):
@@ -325,7 +325,7 @@ def _parse_ljson_v1(lms_dict):
         mask[l_slice] = True
         labels_to_masks[label] = mask
 
-    return LandmarkGroup.init_from_edges(points, connectivity, labels_to_masks)
+    return LabelledPointUndirectedGraph.init_from_edges(points, connectivity, labels_to_masks)
 
 
 def _parse_ljson_v2(lms_dict):
@@ -340,7 +340,7 @@ def _parse_ljson_v2(lms_dict):
         mask[label['mask']] = True
         labels_to_mask[label['label']] = mask
 
-    return LandmarkGroup.init_from_edges(points, connectivity, labels_to_mask)
+    return LabelledPointUndirectedGraph.init_from_edges(points, connectivity, labels_to_mask)
 
 
 _ljson_parser_for_version = {
