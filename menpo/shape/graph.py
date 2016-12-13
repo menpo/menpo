@@ -1945,7 +1945,11 @@ class PointGraph(Graph, PointCloud):
             figure_size=figure_size, label=label)
         return renderer
 
-    def _view_3d(self, figure_id=None, new_figure=False):
+    def _view_3d(self, figure_id=None, new_figure=True, render_lines=True,
+                 line_colour='r', line_width=4, render_markers=True,
+                 marker_style='sphere', marker_size=None, marker_colour='k',
+                 marker_resolution=8, step=None, alpha=1.0,
+                 render_numbering=False, numbers_colour='k', numbers_size=None):
         r"""
         Visualization of the PointGraph in 3D.
 
@@ -1955,16 +1959,83 @@ class PointGraph(Graph, PointCloud):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
+        render_lines : `bool`, optional
+            If ``True``, then the lines will be rendered.
+        line_colour : See Below, optional
+            The colour of the lines.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, then the markers will be rendered.
+        marker_style : `str`, optional
+            The style of the markers.
+            Example options ::
+
+                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
+                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
+                 arrow, axes, cone, cube, cylinder, point, sphere}
+
+        marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically.
+        marker_colour : See Below, optional
+            The colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_resolution : `int`, optional
+            The resolution of the markers. For spheres, for instance, this is
+            the number of divisions along theta and phi.
+        step : `int` or ``None``, optional
+            If `int`, then one every `step` vertexes will be rendered.
+            If ``None``, then all vertexes will be rendered.
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
+        render_numbering : `bool`, optional
+            If ``True``, the points will be numbered.
+        numbers_colour : See Below, optional
+            The colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        numbers_size : `float` or ``None``, optional
+            The size of the numbers. This size can be seen as a scale factor
+            applied to the numbers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal numbers size
+            value will be set automatically.
 
         Returns
         -------
-        viewer : PointGraphViewer3d
-            The Menpo3D viewer object.
+        renderer : `menpo3d.visualize.PointGraphViewer3d`
+            The Menpo3D rendering object.
         """
         try:
             from menpo3d.visualize import PointGraphViewer3d
-            return PointGraphViewer3d(figure_id, new_figure, self.points,
-                                      self.edges).render()
+            renderer = PointGraphViewer3d(figure_id, new_figure,
+                                          self.points, self.edges)
+            renderer.render(
+                render_lines=render_lines, line_colour=line_colour,
+                line_width=line_width, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_colour=marker_colour,
+                marker_resolution=marker_resolution, step=step, alpha=alpha,
+                render_numbering=render_numbering,
+                numbers_colour=numbers_colour, numbers_size=numbers_size)
+            return renderer
         except ImportError:
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()
@@ -2938,7 +3009,7 @@ def _isolated_vertices(adjacency_matrix):
 
 def _convert_edges_to_adjacency_matrix(edges, n_vertices):
     r"""
-    Converts an edges array to and adjacency matrix.
+    Converts an edges array to an adjacency matrix.
 
     Parameters
     ----------
@@ -2969,7 +3040,7 @@ def _convert_edges_to_adjacency_matrix(edges, n_vertices):
 
 def _convert_edges_to_symmetric_adjacency_matrix(edges, n_vertices):
     r"""
-    Converts an edges array to and adjacency matrix.
+    Converts an edges array to an adjacency matrix.
 
     Parameters
     ----------

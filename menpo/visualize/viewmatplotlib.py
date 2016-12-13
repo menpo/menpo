@@ -27,7 +27,8 @@ class MatplotlibRenderer(Renderer):
         # Create the extensions map, have to add . in front of the extensions
         # and map every extension to the savefig method
         n_ext = len(self._supported_ext)
-        func_list = [lambda obj, fp, **kwargs: self.figure.savefig(fp, **obj)] * n_ext
+        func_list = [lambda obj, fp, **kwargs:
+                     self.figure.savefig(fp, **obj)] * n_ext
         self._extensions_map = dict(zip(['.' + s for s in self._supported_ext],
                                     func_list))
 
@@ -129,6 +130,20 @@ class MatplotlibRenderer(Renderer):
         """
         from menpowidgets import save_matplotlib_figure
         save_matplotlib_figure(self)
+
+    def clear_figure(self):
+        r"""
+        Method for clearing the current figure.
+        """
+        self.figure.clf()
+
+    def force_draw(self):
+        r"""
+        Method for forcing the current figure to render. This is useful for
+        the widgets animation.
+        """
+        import matplotlib.pyplot as plt
+        plt.show()
 
 
 class MatplotlibSubplots(object):

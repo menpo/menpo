@@ -102,6 +102,18 @@ class Renderer(object):
         """
         pass
 
+    def clear_figure(self):
+        r"""
+        Abstract method for clearing the current figure.
+        """
+        pass
+
+    def force_draw(self):
+        r"""
+        Abstract method for forcing the current figure to render.
+        """
+        pass
+
 
 class viewwrapper(object):
     r"""
