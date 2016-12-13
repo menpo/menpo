@@ -5,4 +5,4 @@ from .graph import (UndirectedGraph, DirectedGraph, Tree, PointUndirectedGraph,
                     PointDirectedGraph, PointTree)
 from .graph_predefined import (empty_graph, star_graph, complete_graph,
                                chain_graph, delaunay_graph, stencil_grid)
-from .group import LabelledPointUndirectedGraph
+from .labelled import LabelledPointUndirectedGraph
