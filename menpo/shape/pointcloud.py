@@ -6,6 +6,7 @@ from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
 from menpo.transform import WithDims
+from menpo.visualize import viewwrapper
 
 from .base import Shape
 
@@ -1074,8 +1075,17 @@ class PointCloud(Shape):
 
         return landmark_view
 
-    def view_widget(self, browser_style='buttons', figure_size=(7, 7),
+    @viewwrapper
+    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):
+        r"""
+        Abstract method for viewing with an interactive widget. See the
+        :map:`viewwrapper` documentation for an explanation of how the
+        `view_widget` method works.
+        """
+        pass
+
+    def _view_widget_2d(self, browser_style='buttons', figure_size=(10, 8)):
         r"""
         Visualization of the PointCloud using an interactive widget.
 
@@ -1086,15 +1096,28 @@ class PointCloud(Shape):
             plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
-        style : {``'coloured'``, ``'minimal'``}, optional
-            If ``'coloured'``, then the style of the widget will be coloured. If
-            ``minimal``, then the style is simple using black and white colours.
         """
         try:
-            from menpowidgets import visualize_pointclouds
+            from menpowidgets import view_widget
+            view_widget(self, figure_size=figure_size,
+                        browser_style=browser_style)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
 
-            visualize_pointclouds(self, figure_size=figure_size, style=style,
-                                  browser_style=browser_style)
+    def _view_widget_3d(self, browser_style='buttons'):
+        r"""
+        Visualization of the PointCloud using an interactive widget.
+
+        Parameters
+        ----------
+        browser_style : {``'buttons'``, ``'slider'``}, optional
+            It defines whether the selector of the objects will have the form of
+            plus/minus buttons or a slider.
+        """
+        try:
+            from menpowidgets import view_widget
+            view_widget(self, browser_style=browser_style)
         except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
