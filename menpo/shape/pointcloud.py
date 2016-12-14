@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import numbers
 import collections
@@ -239,6 +241,24 @@ class PointCloud(Shape):
         copy of self, with only the requested dims
         """
         return WithDims(dims).apply(self)
+
+    @property
+    def lms(self):
+        """Deprecated.
+        Maintained for compatibility, will be removed in a future version.
+        Returns a copy of this object, which previously would have held
+        the 'underlying' :map:`PointCloud` subclass.
+
+        :type: self
+        """
+        from menpo.base import MenpoDeprecationWarning
+        warnings.warn('The .lms property is deprecated. LandmarkGroups are '
+                      'now shapes themselves - so you can use them directly '
+                      'anywhere you previously used .lms.'
+                      'Simply remove ".lms" from your code and things '
+                      'will work as expected (and this warning will go away)',
+                      MenpoDeprecationWarning)
+        return self.copy()
 
     @property
     def n_points(self):

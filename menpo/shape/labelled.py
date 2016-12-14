@@ -1,5 +1,6 @@
 import warnings
 from collections import OrderedDict
+
 import numpy as np
 
 from menpo.base import Copyable
@@ -336,24 +337,6 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         :type: `int`
         """
         return len(self.labels)
-
-    @property
-    def lms(self):
-        """Deprecated.
-        Maintained for compatibility, will be removed in a future version.
-        Returns a copy of this object, which previously would have held
-        the 'underlying' :map:`PointCloud` subclass.
-
-        :type: :map:`LabelledPointUndirectedGraph`
-        """
-        from menpo.base import MenpoDeprecationWarning
-        warnings.warn('The .lms property is deprecated. LandmarkGroups are now '
-                      'LabelledPointUndirectedGraphs which are subclasses of '
-                      'UndirectedPointGraph and thus may be used anywhere the '
-                      'previous .lms PointCloud objects may have been used. '
-                      'This now returns a copy.',
-                      MenpoDeprecationWarning)
-        return self.copy()
 
     @property
     def n_landmarks(self):
