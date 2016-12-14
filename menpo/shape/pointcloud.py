@@ -1076,8 +1076,7 @@ class PointCloud(Shape):
         return landmark_view
 
     @viewwrapper
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
-                    style='coloured'):
+    def view_widget(self, ):
         r"""
         Abstract method for viewing with an interactive widget. See the
         :map:`viewwrapper` documentation for an explanation of how the
@@ -1085,39 +1084,29 @@ class PointCloud(Shape):
         """
         pass
 
-    def _view_widget_2d(self, browser_style='buttons', figure_size=(10, 8)):
+    def _view_widget_2d(self, figure_size=(7, 7)):
         r"""
         Visualization of the PointCloud using an interactive widget.
 
         Parameters
         ----------
-        browser_style : {``'buttons'``, ``'slider'``}, optional
-            It defines whether the selector of the objects will have the form of
-            plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
         """
         try:
             from menpowidgets import view_widget
-            view_widget(self, figure_size=figure_size,
-                        browser_style=browser_style)
+            view_widget(self, figure_size=figure_size)
         except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
 
-    def _view_widget_3d(self, browser_style='buttons'):
+    def _view_widget_3d(self):
         r"""
         Visualization of the PointCloud using an interactive widget.
-
-        Parameters
-        ----------
-        browser_style : {``'buttons'``, ``'slider'``}, optional
-            It defines whether the selector of the objects will have the form of
-            plus/minus buttons or a slider.
         """
         try:
             from menpowidgets import view_widget
-            view_widget(self, browser_style=browser_style)
+            view_widget(self)
         except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()

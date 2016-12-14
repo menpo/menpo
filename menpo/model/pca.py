@@ -1431,6 +1431,18 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
                                  forgetting_factor=forgetting_factor,
                                  verbose=verbose)
 
+    def view_widget(self):
+        r"""
+        Visualizes the model using an interactive widget. It only works if it
+        is a 2D/3D shape or appearance model.
+        """
+        try:
+            from menpowidgets import view_widget
+            view_widget(self)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
+
     def __str__(self):
         str_out = 'PCA Model \n'                             \
                   ' - instance class:       {}\n'            \

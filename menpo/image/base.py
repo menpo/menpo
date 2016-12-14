@@ -836,22 +836,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
             axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
-    def view_widget(self, browser_style='buttons', figure_size=(7, 7)):
+    def view_widget(self, figure_size=(7, 7)):
         r"""
         Visualizes the image using an interactive widget.
 
         Parameters
         ----------
-        browser_style : {``'buttons'``, ``'slider'``}, optional
-            It defines whether the selector of the images will have the form of
-            plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
         """
         try:
             from menpowidgets import view_widget
-            view_widget(self, figure_size=figure_size,
-                        browser_style=browser_style)
+            view_widget(self, figure_size=figure_size)
         except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
