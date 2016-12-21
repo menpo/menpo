@@ -138,6 +138,50 @@ class VectorizableBackedModel(object):
         """
         return self.project_vector(instance.as_vector())
 
+    def impute_vector(self, instance_vector, mask):
+        """
+        Projects the `instance_vector` onto a subset of the linear space and
+        rebuilds from the weights found.
+
+        Parameters
+        ----------
+        instance_vector : ``(n_available_features,)`` `ndarray`
+            A vector to impute. This is a subset of the original
+            feature space, which is specified by the provided mask.
+        mask : ``(n_features,)`` `bool ndarray`
+            A boolean mask that is True where the feature exists in the input
+            vector.
+
+        Returns
+        -------
+        imputed : ``(n_features,)`` `ndarray`
+            The imputed vector.
+        """
+        raise NotImplementedError()
+
+    def impute(self, instance, mask):
+        """
+        Projects the `vector` onto a subset of the linear space and
+        rebuilds from the weights found.
+
+        Parameters
+        ----------
+        instance : :class:`Vectorizable`
+            A novel instance of :class:`Vectorizable` to impute. Contains a
+            subset of the original feature space, which is specified by the
+            provided mask.
+        mask : ``(n_features,)`` `bool ndarray`
+            A boolean mask that is True where the feature exists in the input
+            instance.
+
+        Returns
+        -------
+        imputed : `self.instance_class`
+            The imputed object.
+        """
+        imputed_vector = self.impute_vector(instance.as_vector(), mask)
+        return self.template_instance.from_vector(imputed_vector)
+
     def reconstruct_vector(self, instance_vector):
         """
         Projects an `instance_vector` onto the linear space and rebuilds from the

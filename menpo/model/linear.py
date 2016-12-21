@@ -103,7 +103,7 @@ class LinearVectorModel(Copyable):
         """
         # just call the plural version and adapt
         weights = np.asarray(weights)  # if eg a list is provided
-        return self.instance_vectors(weights[None, :]).flatten()
+        return self.instance_vectors(weights[None, :]).ravel()
 
     def instance_vectors(self, weights):
         """
@@ -207,6 +207,49 @@ class LinearVectorModel(Copyable):
             The reconstructed vectors.
         """
         return self.instance_vectors(self.project_vectors(vectors))
+
+    def impute(self, vector, mask):
+        """
+        Projects the `vector` onto a subset of the linear space and
+        rebuilds from the weights found.
+
+        Parameters
+        ----------
+        vector : ``(n_available_features,)`` `ndarray`
+            A vector to impute. This is a subset of the original
+            feature space, which is specified by the provided mask.
+        mask : ``(n_features,)`` `bool ndarray`
+            A boolean mask that is True where the feature exists in the input
+            vectors.
+
+        Returns
+        -------
+        imputed : ``(n_features,)`` `ndarray`
+            The imputed vector.
+        """
+        return self.impute_vectors(vector[None, :], mask).ravel()
+
+    def impute_vectors(self, vectors, mask):
+        """
+        Projects the `vectors` onto a subset of the linear space and
+        rebuilds vectors from the weights found.
+
+        Parameters
+        ----------
+        vectors : ``(n_vectors, n_available_features)`` `ndarray`
+            A set of vectors to impute. This is a subset of the original
+            feature space, which is specified by the provided mask.
+        mask : ``(n_features,)`` `bool ndarray`
+            A boolean mask that is True where the feature exists in the input
+            vectors.
+
+        Returns
+        -------
+        imputed : ``(n_vectors, n_features)`` `ndarray`
+            The imputed vectors.
+        """
+        imputed_weights = np.dot(vectors, self.components[:, mask].T)
+        return self.instance_vectors(imputed_weights)
 
     def project_out(self, vector):
         """
@@ -359,6 +402,29 @@ class MeanLinearVectorModel(LinearVectorModel):
         X = vectors - self._mean
         return np.dot(X, self.components.T)
 
+    def impute_vectors(self, vectors, mask):
+        """
+        Projects the `vectors` onto a subset of the linear space and
+        rebuilds vectors from the weights found.
+
+        Parameters
+        ----------
+        vectors : ``(n_vectors, n_available_features)`` `ndarray`
+            A set of vectors to project. This is a subset of the original
+            feature space, which is specified by the provided mask.
+        mask : ``(n_features,)`` `bool ndarray`
+            A boolean mask that is True where the feature exists in the input
+            vectors.
+
+        Returns
+        -------
+        imputed : ``(n_vectors, n_features)`` `ndarray`
+            The imputed vectors.
+        """
+        X = vectors - self._mean[mask]
+        imputed_weights = np.dot(X, self.components[:, mask].T)
+        return self.instance_vectors(imputed_weights)
+
     def project_out_vectors(self, vectors):
         """
         Returns a version of `vectors` where all the bases of the model have
@@ -378,7 +444,8 @@ class MeanLinearVectorModel(LinearVectorModel):
         # We don't add the mean back, in fact the residual is defined as
         # the mean subtracted.
         return ((vectors - self._mean[None, ...]) -
-                LinearVectorModel._instance_vectors_for_full_weights(self, weights))
+                LinearVectorModel._instance_vectors_for_full_weights(self,
+                                                                     weights))
 
     def _instance_vectors_for_full_weights(self, full_weights):
         x = LinearVectorModel._instance_vectors_for_full_weights(self, full_weights)
