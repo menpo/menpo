@@ -3,6 +3,21 @@
 Changelog
 #########
 
+0.7.7 (2017/01/05)
+------------------
+Minor bug fixes
+
+Github Pull Requests
+....................
+
+- `#767`_ Minor fixes (@patricksnape)
+- `#774`_ Fix pip install by properly including source files (@patricksnape)
+- `#775`_ Allow Pillow 4.x  (@patricksnape)
+
+.. _#767: https://github.com/menpo/menpo/pull/767
+.. _#774: https://github.com/menpo/menpo/pull/774
+.. _#775: https://github.com/menpo/menpo/pull/775
+
 0.7.6 (2016/12/10)
 ------------------
 Minor bug fixes and three new pieces of functionality:
