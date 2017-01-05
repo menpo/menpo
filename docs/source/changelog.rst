@@ -3,6 +3,41 @@
 Changelog
 #########
 
+0.7.6 (2016/12/10)
+------------------
+Minor bug fixes and three new pieces of functionality:
+  
+  - 3D visualization improvements (@nontas)
+  - Bounding cubiod method for 3D shapes (@nontas)
+  - New transforms to change dimensionality of shapes (@jabooth)
+
+Github Pull Requests
+....................
+
+- `#745`_ Documentation change in image gradient for int pixels dtype. (@grigorisg9gr)
+- `#750`_ Copy landmarks and path (@jabooth)
+- `#751`_ WithDims transform and with_dims method (@jabooth)
+- `#754`_ Restrict the video channels in exports(@grigorisg9gr)
+- `#755`_ fix ndarray slicing of lazylist, cleaner __add__ implementation (@jabooth)
+- `#756`_ remove duplicate import_pickles def (!) (@jabooth)
+- `#757`_ don't print_dynamic size report in as_matrix (@jabooth)
+- `#759`_ Bounding cuboid (@nontas)
+- `#760`_ Quaternions for 3D Rotations (@nontas)
+- `#762`_ 3D Visualization Upgrade (@nontas)
+- `#764`_ Fix NUMPY_INC_PATH detection for multiple dirs found (@jabooth)
+
+.. _#745: https://github.com/menpo/menpo/pull/745
+.. _#750: https://github.com/menpo/menpo/pull/750
+.. _#751: https://github.com/menpo/menpo/pull/751
+.. _#754: https://github.com/menpo/menpo/pull/754
+.. _#755: https://github.com/menpo/menpo/pull/755
+.. _#756: https://github.com/menpo/menpo/pull/756
+.. _#757: https://github.com/menpo/menpo/pull/757
+.. _#759: https://github.com/menpo/menpo/pull/759
+.. _#760: https://github.com/menpo/menpo/pull/760
+.. _#762: https://github.com/menpo/menpo/pull/762
+.. _#764: https://github.com/menpo/menpo/pull/764
+
 0.7.5 (2016/11/17)
 ------------------
 Minor bug fixes and three new pieces of functionality:
