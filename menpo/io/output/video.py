@@ -13,8 +13,8 @@ _FFMPEG_CMD = lambda: str(Path(os.environ.get('MENPO_FFMPEG_CMD', 'ffmpeg')))
 
 
 def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
-                          preset='medium', bitrate=None, verbose=False,
-                          **kwargs):
+                          preset='medium', bitrate=None,
+                          out_pix_fmt='yuv420p', verbose=False, **kwargs):
     r"""
     Uses subprocess PIPE to export the images using FFMPEG.
 
@@ -45,6 +45,8 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
         https://trac.ffmpeg.org/wiki/Encode/H.264#a2.Chooseapreset
     bitrate: `str`, optional
         The output video bitrate.
+    out_pix_fmt : `str`, optional
+        The output pixel format.
     verbose : `bool`, optional
         If ``True``, print a progress bar.
     **kwargs : `dict`, optional
@@ -77,6 +79,8 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
            '-i', '-']
     if codec:
         cmd.extend(['-vcodec', codec])
+    if out_pix_fmt:
+        cmd.extend(['-pix_fmt', out_pix_fmt])
     if preset:
         cmd.extend(['-preset', preset])
     if bitrate:
