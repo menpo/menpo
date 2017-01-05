@@ -10,6 +10,7 @@ SYS_PLATFORM = platform.system().lower()
 IS_LINUX = 'linux' in SYS_PLATFORM
 IS_OSX = 'darwin' == SYS_PLATFORM
 IS_WIN = 'windows' == SYS_PLATFORM
+
 # Get Numpy include path without importing it
 NUMPY_INC_PATHS = [os.path.join(r, 'numpy', 'core', 'include') 
                    for r in site.getsitepackages() if 
@@ -105,7 +106,6 @@ setup(name='menpo',
       ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=install_requires,
-      package_data={'menpo': ['data/*'],
-                    '': ['*.pxd', '*.pyx', '*.h', '*.cpp']},
+      package_data={'menpo': ['data/*']},
       tests_require=['nose', 'mock']
 )
