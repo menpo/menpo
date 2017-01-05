@@ -92,7 +92,7 @@ cython_exts = cythonize(cython_modules, quiet=True)
 install_requires = ['numpy>=1.10,<2.0',
                     'scipy>=0.16,<1.0',
                     'matplotlib>=1.4,<2.0',
-                    'pillow>=3.0,<4.0']
+                    'pillow>=3.0,<5.0']
 
 if sys.version_info.major == 2:
     install_requires.append('pathlib==1.0')
