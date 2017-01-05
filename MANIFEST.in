@@ -1,3 +1,7 @@
 include LICENSE.txt
 include AUTHORS.txt
 include versioneer.py
+include menpo *.h
+include menpo *.cpp
+include menpo *.pyx
+include menpo *.pxd
