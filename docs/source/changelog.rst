@@ -13,10 +13,12 @@ Github Pull Requests
 - `#767`_ Minor fixes (@patricksnape)
 - `#774`_ Fix pip install by properly including source files (@patricksnape)
 - `#775`_ Allow Pillow 4.x  (@patricksnape)
+- `#776`_ Manifest includes should be recursive (@jabooth)
 
 .. _#767: https://github.com/menpo/menpo/pull/767
 .. _#774: https://github.com/menpo/menpo/pull/774
 .. _#775: https://github.com/menpo/menpo/pull/775
+.. _#776: https://github.com/menpo/menpo/pull/776
 
 0.7.6 (2016/12/10)
 ------------------
