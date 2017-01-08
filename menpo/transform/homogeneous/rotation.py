@@ -172,9 +172,9 @@ class Rotation(DiscreteAffine, Similarity):
         if degrees:
             # convert to radians
             theta = theta * np.pi / 180.0
-        return Rotation(np.array([[1, 0, 0],
-                                  [0, np.cos(theta), -np.sin(theta)],
-                                  [0, np.sin(theta), np.cos(theta)]]),
+        return Rotation(np.array([[ 1,             0,              0],
+                                  [ 0, np.cos(theta), -np.sin(theta)],
+                                  [ 0, np.sin(theta), np.cos(theta)]]),
                         skip_checks=True)
 
     @classmethod
@@ -198,8 +198,8 @@ class Rotation(DiscreteAffine, Similarity):
         if degrees:
             # convert to radians
             theta = theta * np.pi / 180.0
-        return Rotation(np.array([[np.cos(theta), 0, np.sin(theta)],
-                                  [0, 1, 0],
+        return Rotation(np.array([[ np.cos(theta), 0, np.sin(theta)],
+                                  [             0, 1,             0],
                                   [-np.sin(theta), 0, np.cos(theta)]]),
                         skip_checks=True)
 
@@ -224,9 +224,9 @@ class Rotation(DiscreteAffine, Similarity):
         if degrees:
             # convert to radians
             theta = theta * np.pi / 180.0
-        return Rotation(np.array([[np.cos(theta), -np.sin(theta), 0],
-                                  [np.sin(theta), np.cos(theta), 0],
-                                  [0, 0, 1]]),
+        return Rotation(np.array([[ np.cos(theta), -np.sin(theta), 0],
+                                  [ np.sin(theta),  np.cos(theta), 0],
+                                  [             0,              0, 1]]),
                         skip_checks=True)
 
     @property
