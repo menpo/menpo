@@ -151,6 +151,84 @@ class Rotation(DiscreteAffine, Similarity):
         r = cls.init_identity(n_dims=3)
         return r.from_vector(q)
 
+    @classmethod
+    def init_from_3d_ccw_angle_around_x(cls, theta, degrees=True):
+        r"""
+        Convenience constructor for 3D CCW rotations around the x axis
+
+        Parameters
+        ----------
+        theta : `float`
+            The angle of rotation about the origin
+        degrees : `bool`, optional
+            If ``True`` theta is interpreted as a degree. If ``False``, theta is
+            interpreted as radians.
+
+        Returns
+        -------
+        rotation : :map:`Rotation`
+            A 3D rotation transform.
+        """
+        if degrees:
+            # convert to radians
+            theta = theta * np.pi / 180.0
+        return Rotation(np.array([[1, 0, 0],
+                                  [0, np.cos(theta), -np.sin(theta)],
+                                  [0, np.sin(theta), np.cos(theta)]]),
+                        skip_checks=True)
+
+    @classmethod
+    def init_from_3d_ccw_angle_around_y(cls, theta, degrees=True):
+        r"""
+        Convenience constructor for 3D CCW rotations around the y axis
+
+        Parameters
+        ----------
+        theta : `float`
+            The angle of rotation about the origin
+        degrees : `bool`, optional
+            If ``True`` theta is interpreted as a degree. If ``False``, theta is
+            interpreted as radians.
+
+        Returns
+        -------
+        rotation : :map:`Rotation`
+            A 3D rotation transform.
+        """
+        if degrees:
+            # convert to radians
+            theta = theta * np.pi / 180.0
+        return Rotation(np.array([[np.cos(theta), 0, np.sin(theta)],
+                                  [0, 1, 0],
+                                  [-np.sin(theta), 0, np.cos(theta)]]),
+                        skip_checks=True)
+
+    @classmethod
+    def init_from_3d_ccw_angle_around_z(cls, theta, degrees=True):
+        r"""
+        Convenience constructor for 3D CCW rotations around the z axis
+
+        Parameters
+        ----------
+        theta : `float`
+            The angle of rotation about the origin
+        degrees : `bool`, optional
+            If ``True`` theta is interpreted as a degree. If ``False``, theta is
+            interpreted as radians.
+
+        Returns
+        -------
+        rotation : :map:`Rotation`
+            A 3D rotation transform.
+        """
+        if degrees:
+            # convert to radians
+            theta = theta * np.pi / 180.0
+        return Rotation(np.array([[np.cos(theta), -np.sin(theta), 0],
+                                  [np.sin(theta), np.cos(theta), 0],
+                                  [0, 0, 1]]),
+                        skip_checks=True)
+
     @property
     def rotation_matrix(self):
         r"""
