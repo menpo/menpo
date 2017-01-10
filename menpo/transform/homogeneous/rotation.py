@@ -127,8 +127,7 @@ class Rotation(DiscreteAffine, Similarity):
             A 2D rotation transform.
         """
         if degrees:
-            # convert to radians
-            theta = theta * np.pi / 180.0
+            theta = np.deg2rad(theta)
         return Rotation(np.array([[np.cos(theta), -np.sin(theta)],
                                   [np.sin(theta),  np.cos(theta)]]),
                         skip_checks=True)
@@ -170,8 +169,7 @@ class Rotation(DiscreteAffine, Similarity):
             A 3D rotation transform.
         """
         if degrees:
-            # convert to radians
-            theta = theta * np.pi / 180.0
+            theta = np.deg2rad(theta)
         return Rotation(np.array([[ 1,             0,              0],
                                   [ 0, np.cos(theta), -np.sin(theta)],
                                   [ 0, np.sin(theta), np.cos(theta)]]),
@@ -196,8 +194,7 @@ class Rotation(DiscreteAffine, Similarity):
             A 3D rotation transform.
         """
         if degrees:
-            # convert to radians
-            theta = theta * np.pi / 180.0
+            theta = np.deg2rad(theta)
         return Rotation(np.array([[ np.cos(theta), 0, np.sin(theta)],
                                   [             0, 1,             0],
                                   [-np.sin(theta), 0, np.cos(theta)]]),
@@ -222,8 +219,7 @@ class Rotation(DiscreteAffine, Similarity):
             A 3D rotation transform.
         """
         if degrees:
-            # convert to radians
-            theta = theta * np.pi / 180.0
+            theta = np.deg2rad(theta)
         return Rotation(np.array([[ np.cos(theta), -np.sin(theta), 0],
                                   [ np.sin(theta),  np.cos(theta), 0],
                                   [             0,              0, 1]]),
@@ -262,12 +258,12 @@ class Rotation(DiscreteAffine, Similarity):
         self._h_matrix[:-1, :-1] = value
 
     def _transform_str(self):
-        axis, rad_angle_of_rotation = self.axis_and_angle_of_rotation()
+        axis, radians_of_rotation = self.axis_and_angle_of_rotation()
         if axis is None:
             return "NO OP"
-        angle_of_rot = (rad_angle_of_rotation * 180.0) / np.pi
+        degrees_of_rotation = np.rad2deg(radians_of_rotation)
         message = ('CCW Rotation of {:.1f} degrees '
-                   'about {}'.format(angle_of_rot,axis))
+                   'about {}'.format(degrees_of_rotation, axis))
         return message
 
     def axis_and_angle_of_rotation(self):

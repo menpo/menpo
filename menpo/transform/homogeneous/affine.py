@@ -62,8 +62,8 @@ class Affine(Homogeneous):
             A 2D shear transform.
         """
         if degrees:
-            phi = phi * np.pi / 180.
-            psi = psi * np.pi / 180.
+            phi = np.deg2rad(phi)
+            psi = np.deg2rad(psi)
         # Create shear matrix
         h_matrix = np.eye(3)
         h_matrix[0, 1] = np.tan(phi)
