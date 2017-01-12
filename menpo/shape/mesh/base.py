@@ -3,6 +3,8 @@ from collections import Counter
 import numpy as np
 from warnings import warn
 
+from menpo.base import copy_landmarks_and_path
+
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .normals import compute_vertex_normals, compute_face_normals
@@ -216,6 +218,54 @@ class TriMesh(PointCloud):
                    trilist=new_tmesh.trilist,
                    copy=False)
 
+    def as_pointgraph(self, copy=True, skip_checks=False):
+        """
+        Converts the TriMesh to a :map:`PointUndirectedGraph`.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            If ``True``, the graph will be a copy.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
+
+        Returns
+        -------
+        pointgraph : :map:`PointUndirectedGraph`
+            The point graph.
+        """
+        from .. import PointUndirectedGraph
+        from ..graph import _convert_edges_to_symmetric_adjacency_matrix
+        # Since we have triangles we need the last connection
+        # that 'completes' the triangle
+        adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
+            trilist_to_adjacency_array(self.trilist), self.points.shape[0])
+        pg = PointUndirectedGraph(self.points, adjacency_matrix, copy=copy,
+                                  skip_checks=skip_checks)
+        return copy_landmarks_and_path(self, pg)
+
+    def as_colouredtrimesh(self, colours=None, copy=True):
+        """
+        Converts this to a :map:`ColouredTriMesh`.
+
+        Parameters
+        ----------
+        colours : ``(N, 3)`` `ndarray`, optional
+            The floating point RGB colour per vertex. If not given,
+            grey will be assigned to each vertex.
+        copy : `bool`, optional
+            Only recommend for internal use.
+
+        Returns
+        -------
+        coloured : :map:`ColouredTriMesh`
+            A version of this mesh with per-vertex colour assigned.
+        """
+        from .coloured import ColouredTriMesh
+        ctm = ColouredTriMesh(self.points, trilist=self.trilist,
+                              colours=colours, copy=copy)
+        return copy_landmarks_and_path(self, ctm)
+
     def __str__(self):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),
                                        self.n_tris)
@@ -314,34 +364,6 @@ class TriMesh(PointCloud):
         new_mask = mask.copy()
         new_mask[isolated_indices] = False
         return new_mask
-
-    def as_pointgraph(self, copy=True, skip_checks=False):
-        """
-        Converts the TriMesh to a :map:`PointUndirectedGraph`.
-
-        Parameters
-        ----------
-        copy : `bool`, optional
-            If ``True``, the graph will be a copy.
-        skip_checks : `bool`, optional
-            If ``True``, no checks will be performed.
-
-        Returns
-        -------
-        pointgraph : :map:`PointUndirectedGraph`
-            The point graph.
-        """
-        from .. import PointUndirectedGraph
-        from ..graph import _convert_edges_to_symmetric_adjacency_matrix
-        # Since we have triangles we need the last connection
-        # that 'completes' the triangle
-        adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
-            trilist_to_adjacency_array(self.trilist), self.points.shape[0])
-        pg = PointUndirectedGraph(self.points, adjacency_matrix, copy=copy,
-                                  skip_checks=skip_checks)
-        # This is always a copy
-        pg.landmarks = self.landmarks
-        return pg
 
     def vertex_normals(self):
         r"""

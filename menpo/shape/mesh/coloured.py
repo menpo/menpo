@@ -1,5 +1,7 @@
 import numpy as np
 
+from menpo.base import copy_landmarks_and_path
+
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .base import TriMesh
 
@@ -126,6 +128,28 @@ class ColouredTriMesh(TriMesh):
                    colours=new_tmesh.colours,
                    trilist=new_tmesh.trilist,
                    copy=False)
+
+    def as_colouredtrimesh(self, colours=None, copy=True):
+        """
+        Converts this to a :map:`ColouredTriMesh`.
+
+        Parameters
+        ----------
+        colours : ``(N, 3)`` `ndarray`, optional
+            The floating point RGB colour per vertex. If not given,
+            the current colours will be used.
+        copy : `bool`, optional
+            Only recommend for internal use.
+
+        Returns
+        -------
+        coloured : :map:`ColouredTriMesh`
+            A version of this mesh with per-vertex colour assigned.
+        """
+        if colours is None:
+            colours = self.colours
+        # delegate to super implementation
+        return TriMesh.as_colouredtrimesh(colours, copy=copy)
 
     @property
     def n_channels(self):

@@ -5,6 +5,7 @@ from warnings import warn
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
+from menpo.base import copy_landmarks_and_path
 from menpo.transform import WithDims
 
 from .base import Shape
@@ -222,6 +223,24 @@ class PointCloud(Shape):
         return cls(np.hstack([new_pcloud.points,
                               depth_image.as_vector(keep_channels=True).T]),
                    copy=False)
+
+    def as_pointcloud(self, copy=True):
+        r"""
+        Convert this shape to a basic pointcloud.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            If ``False``, the produced :map:`PointCloud` will share points with
+            ``self``. Only suggested to be used for performance.
+
+        Returns
+        -------
+        pointcloud : :map:`PointCloud`
+            An pointcloud with the same points and landmarks as this shape.
+        """
+        return copy_landmarks_and_path(self,
+                                       PointCloud(self.points, copy=copy))
 
     def with_dims(self, dims):
         r"""

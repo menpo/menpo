@@ -1,6 +1,7 @@
 import numpy as np
 
 from menpo.shape import PointCloud
+from menpo.base import copy_landmarks_and_path
 from menpo.transform import tcoords_to_image_coords
 
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
