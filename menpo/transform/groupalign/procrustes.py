@@ -46,6 +46,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         self.converged = self._recursive_procrustes()
         if target is not None:
             self.target = initial_target
+        if not self.converged:
+            print(self)
 
     def _recursive_procrustes(self):
         r"""
