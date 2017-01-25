@@ -1,4 +1,5 @@
 import numpy as np
+from warnings import catch_warnings, simplefilter
 
 from ..homogeneous import AlignmentSimilarity
 from .base import MultipleAlignment
@@ -31,23 +32,36 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     Raises
     ------
     ValueError
-        Need at least two sources to align
+        Need at least two sources to align.
+    ValueError
+        If the preliminary alignment similarity fails for some pointcloud from
+        sources (or target).
     """
     def __init__(self, sources, target=None, allow_mirror=False):
         super(GeneralizedProcrustesAnalysis, self).__init__(sources,
                                                             target=target)
         initial_target = self.target
-        self.transforms = [AlignmentSimilarity(source, self.target,
-                                               allow_mirror=allow_mirror)
-                           for source in self.sources]
+        self.transforms = []
+        # a bit more elaborate code to catch the case of problematic
+        # source/target.
+        with catch_warnings():
+            simplefilter('error', RuntimeWarning)
+            try:
+                for source in self.sources:
+                    sim = AlignmentSimilarity(source, self.target,
+                                              allow_mirror=allow_mirror)
+                    self.transforms.append(sim)
+            except RuntimeWarning:
+                m1 = ('Probably the pointcloud with centre {} and range {}\n'
+                      'cannot be aligned. Please also check the target.')
+                raise ValueError(m1.format(source.centre(), source.range()))
+
         self.initial_target_scale = self.target.norm()
         self.n_iterations = 1
         self.max_iterations = 100
         self.converged = self._recursive_procrustes()
         if target is not None:
             self.target = initial_target
-        if not self.converged:
-            print(self)
 
     def _recursive_procrustes(self):
         r"""
