@@ -292,8 +292,8 @@ def _ljson_parse_null_values(points_list):
 def _parse_ljson_v1(lms_dict):
     from menpo.base import MenpoDeprecationWarning
     warnings.warn('LJSON v1 is deprecated. export_landmark_file{s}() will '
-                  'only save out LJSON v2 files. Please convert all LJSON '
-                  'files to v2 by importing into Menpo and re-exporting to '
+                  'only save out LJSON v3 files. Please convert all LJSON '
+                  'files to v3 by importing into Menpo and re-exporting to '
                   'overwrite the files.', MenpoDeprecationWarning)
     all_points = []
     labels = []  # label per group
@@ -329,6 +329,11 @@ def _parse_ljson_v1(lms_dict):
 
 
 def _parse_ljson_v2(lms_dict):
+    from menpo.base import MenpoDeprecationWarning
+    warnings.warn('LJSON v1 is deprecated. export_landmark_file{s}() will '
+                  'only save out LJSON v3 files. Please convert all LJSON '
+                  'files to v3 by importing into Menpo and re-exporting to '
+                  'overwrite the files.', MenpoDeprecationWarning)
     points = _ljson_parse_null_values(lms_dict['landmarks']['points'])
     connectivity = lms_dict['landmarks'].get('connectivity')
 
@@ -352,9 +357,10 @@ def _parse_ljson_v3(lms_dict):
     for key, lms_dict_group in lms_dict['groups'].items():
         points = _ljson_parse_null_values(lms_dict_group['landmarks']['points'])
         connectivity = lms_dict_group['landmarks'].get('connectivity')
+        # TODO: create the metadata label!
 
         if connectivity is None and len(lms_dict_group['labels']) == 0:
-            all_lms.append(PointCloud(points))
+            all_lms[key] = PointCloud(points)
         else:
             labels_to_mask = OrderedDict()  # masks into the pointcloud per label
             n_points = points.shape[0]
@@ -364,8 +370,8 @@ def _parse_ljson_v3(lms_dict):
                 labels_to_mask[label['label']] = mask
             # Note that we can pass connectivity as None here and the edges will be
             # empty.
-            all_lms.append(LabelledPointUndirectedGraph.init_from_edges(
-                    points, connectivity, labels_to_mask))
+            all_lms[key] = LabelledPointUndirectedGraph.init_from_edges(
+                    points, connectivity, labels_to_mask)
     return all_lms
 
 
