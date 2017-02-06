@@ -347,9 +347,32 @@ def _parse_ljson_v2(lms_dict):
             points, connectivity, labels_to_mask)
 
 
+def _parse_ljson_v3(lms_dict):
+    all_lms = {}
+    for key, lms_dict_group in lms_dict['groups'].items():
+        points = _ljson_parse_null_values(lms_dict_group['landmarks']['points'])
+        connectivity = lms_dict_group['landmarks'].get('connectivity')
+
+        if connectivity is None and len(lms_dict_group['labels']) == 0:
+            all_lms.append(PointCloud(points))
+        else:
+            labels_to_mask = OrderedDict()  # masks into the pointcloud per label
+            n_points = points.shape[0]
+            for label in lms_dict_group['labels']:
+                mask = np.zeros(n_points, dtype=np.bool)
+                mask[label['mask']] = True
+                labels_to_mask[label['label']] = mask
+            # Note that we can pass connectivity as None here and the edges will be
+            # empty.
+            all_lms.append(LabelledPointUndirectedGraph.init_from_edges(
+                    points, connectivity, labels_to_mask))
+    return all_lms
+
+
 _ljson_parser_for_version = {
     1: _parse_ljson_v1,
-    2: _parse_ljson_v2
+    2: _parse_ljson_v2,
+    3: _parse_ljson_v3
 }
 
 
@@ -386,6 +409,6 @@ def ljson_importer(filepath, asset=None, **kwargs):
 
     if parser is None:
         raise ValueError("{} has unknown version {} must be "
-                         "1, or 2".format(filepath, v))
+                         "1, or 2 or 3.".format(filepath, v))
     else:
         return parser(lms_dict)
