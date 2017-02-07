@@ -144,4 +144,4 @@ def test_constrain_landmarks_to_bounds():
         warnings.simplefilter('ignore')
         im.constrain_landmarks_to_bounds()
     assert not im.has_landmarks_outside_bounds()
-    assert_allclose(im.landmarks['test'].lms.bounds(), im.bounds())
+    assert_allclose(im.landmarks['test'].bounds(), im.bounds())

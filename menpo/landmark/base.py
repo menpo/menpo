@@ -1,3 +1,4 @@
+import warnings
 from collections import OrderedDict, MutableMapping
 import fnmatch
 
@@ -5,7 +6,6 @@ import numpy as np
 
 from menpo.base import Copyable
 from menpo.transform.base import Transformable
-from menpo.visualize.base import Viewable
 
 
 class Landmarkable(Copyable):
@@ -15,9 +15,7 @@ class Landmarkable(Copyable):
     managed by a :map:`LandmarkManager`. This means that
     different sets of landmarks can be attached to the same object.
     Landmarks can be N-dimensional and are expected to be some
-    subclass of :map:`PointCloud`. These landmarks
-    are wrapped inside a :map:`LandmarkGroup` object that performs
-    useful tasks like label filtering and viewing.
+    subclass of :map:`PointCloud` or :map:`LabelledPointUndirectedGraph`.
     """
 
     def __init__(self):
@@ -80,19 +78,25 @@ class Landmarkable(Copyable):
 
 
 class LandmarkManager(MutableMapping, Transformable):
-    """Store for :map:`LandmarkGroup` instances associated with an object.
+    """Store for :map:`PointCloud` or ::map:`LabelledPointUndirectedGraph`
+    instances associated with an object.
 
     Every :map:`Landmarkable` instance has an instance of this class available
     at the ``.landmarks`` property.  It is through this class that all access
     to landmarks attached to instances is handled. In general the
     :map:`LandmarkManager` provides a dictionary-like interface for storing
-    landmarks. :map:`LandmarkGroup` instances are stored under string keys -
-    these keys are refereed to as the **group name**. A special case is
-    where there is a single unambiguous :map:`LandmarkGroup` attached to a
+    landmarks. The LandmarkManager will contain instances of :map:`PointCloud`
+    or :map:`LabelledPointUndirectedGraph` or subclasses thereof.
+    :map:`LabelledPointUndirectedGraph` is unique in it's ability to
+    include labels that refer to subsets of the underlying points that represent
+    interesting semantic *labels*. These :map:`PointCloud` or
+    :map:`LabelledPointUndirectedGraph` (or subclasses) are stored under
+    string keys - these keys are refereed to as the **group name**. A special
+    case is where there is a single unambiguous group attached to a
     :map:`LandmarkManager` - in this case ``None`` can be used as a key to
-    access the sole group.
+    access this sole group.
 
-    Note that all landmarks stored on a :map:`Landmarkable` in it's attached
+    Note that all groups stored on a :map:`Landmarkable` in it's attached
     :map:`LandmarkManager` are automatically transformed and copied with their
     parent object.
     """
@@ -122,9 +126,8 @@ class LandmarkManager(MutableMapping, Transformable):
         -------
         ``type(self)``
             A copy of this object
-
         """
-        # do a normal copy. The dict will be shallow copied - rectify that here
+        # The dict will be shallow copied - rectify that here
         new = Copyable.copy(self)
         for k, v in new._landmark_groups.items():
             new._landmark_groups[k] = v.copy()
@@ -139,16 +142,14 @@ class LandmarkManager(MutableMapping, Transformable):
     def __setitem__(self, group, value):
         """
         Sets a new landmark group for the given label. This can be set using
-        an existing landmark group, or using a PointCloud. Existing landmark
-        groups will have their target reset. If a PointCloud is provided then
-        all landmarks belong to a single label `all`.
+        an any :map`PointCloud` subclass. Existing landmark groups will be
+        replaced.
 
         Parameters
         ----------
         group : `string`
             Label of new group.
-
-        value : :map:`LandmarkGroup` or :map:`PointCloud`
+        value : :map:`PointCloud` or subclass
             The new landmark group to set.
 
         Raises
@@ -156,30 +157,22 @@ class LandmarkManager(MutableMapping, Transformable):
         DimensionalityError
             If the landmarks and the shape are not of the same dimensionality.
         """
+        from menpo.shape import PointCloud
         if group is None:
             raise ValueError('Cannot set using the key `None`. `None` has a '
                              'reserved meaning for landmark groups.')
 
-        from menpo.shape import PointCloud
         # firstly, make sure the dim is correct
         n_dims = self.n_dims
         if n_dims is not None and value.n_dims != n_dims:
             raise ValueError(
                 "Trying to set {}D landmarks on a "
                 "{}D LandmarkManager".format(value.n_dims, self.n_dims))
-        if isinstance(value, PointCloud):
-            # Copy the PointCloud so that we take ownership of the memory
-            lmark_group = LandmarkGroup(
-                value,
-                OrderedDict([('all', np.ones(value.n_points, dtype=np.bool))]))
-        elif isinstance(value, LandmarkGroup):
-            # Copy the landmark group so that we now own it
-            lmark_group = value.copy()
-            # check the target is set correctly
-            lmark_group._group_label = group
-        else:
-            raise ValueError('Valid types are PointCloud or LandmarkGroup')
+        if not isinstance(value, PointCloud):
+            raise ValueError('Valid types are any subclass of PointCloud')
 
+        # Copy the landmark group so that we now own it
+        lmark_group = value.copy()
         self._landmark_groups[group] = lmark_group
 
     def __getitem__(self, group=None):
@@ -191,10 +184,11 @@ class LandmarkManager(MutableMapping, Transformable):
         group : `string`, optional
             The label of the group. If None is provided, and if there is only
             one group, the unambiguous group will be returned.
+
         Returns
         -------
-        lmark_group : :map:`LandmarkGroup`
-            The matching landmark group.
+        lmark_group : :map:`PointCloud` or :map:`LabelledPointUndirectedGraph`
+            The matching landmarks.
         """
         if group is None:
             if self.n_groups == 1:
@@ -272,7 +266,7 @@ class LandmarkManager(MutableMapping, Transformable):
 
     def items_matching(self, glob_pattern):
         r"""
-        Yield only items ``(group, LandmarkGroup)`` where the key matches a
+        Yield only items ``(group, PointCloud)`` where the key matches a
         given glob.
 
         Parameters
@@ -282,8 +276,8 @@ class LandmarkManager(MutableMapping, Transformable):
 
         Yields
         ------
-        item : ``(group, LandmarkGroup)``
-            Tuple of group, LandmarkGroup where the group matches the glob
+        item : ``(group, PointCloud)``
+            Tuple of (str, PointCloud) where the group matches the glob.
         """
         for k, v in self.items():
             if fnmatch.fnmatch(k, glob_pattern):
@@ -291,7 +285,7 @@ class LandmarkManager(MutableMapping, Transformable):
 
     def _transform_inplace(self, transform):
         for group in self._landmark_groups.values():
-            group.lms._transform_inplace(transform)
+            group._transform_inplace(transform)
         return self
 
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
@@ -329,792 +323,13 @@ class LandmarkManager(MutableMapping, Transformable):
         return out_string
 
 
-class LandmarkGroup(MutableMapping, Copyable, Viewable):
-    r"""
-    An immutable object that holds a :map:`PointCloud` (or a subclass) and
-    stores labels for each point. These labels are defined via masks on the
-    :map:`PointCloud`. For this reason, the :map:`PointCloud` is considered to
-    be immutable.
-
-    The labels to masks must be within an `OrderedDict` so that semantic
-    ordering can be maintained.
-
-    Parameters
-    ----------
-    pointcloud : :map:`PointCloud`
-        The pointcloud representing the landmarks.
-    labels_to_masks : `ordereddict` {`str` -> `bool ndarray`}
-        For each label, the mask that specifies the indices in to the
-        pointcloud that belong to the label.
-    copy : `bool`, optional
-        If ``True``, a copy of the :map:`PointCloud` is stored on the group.
-
-    Raises
-    ------
-    ValueError
-        If `dict` passed instead of `OrderedDict`
-    ValueError
-        If no set of label masks is passed.
-    ValueError
-        If any of the label masks differs in size to the pointcloud.
-    ValueError
-        If there exists any point in the pointcloud that is not covered
-        by a label.
-    """
-    def __init__(self, pointcloud, labels_to_masks, copy=True):
-        super(LandmarkGroup, self).__init__()
-
-        if not labels_to_masks:
-            raise ValueError('Landmark groups are designed for their internal '
-                             'state, other than owernship, to be immutable. '
-                             'Empty label sets are not permitted.')
-        if np.vstack(labels_to_masks.values()).shape[1] != pointcloud.n_points:
-            raise ValueError('Each mask must have the same number of points '
-                             'as the landmark pointcloud.')
-        if not isinstance(labels_to_masks, OrderedDict):
-            raise ValueError('Must provide an OrderedDict to maintain the '
-                             'semantic meaning of the labels.')
-
-        # Another sanity check
-        self._labels_to_masks = labels_to_masks
-        self._verify_all_labels_masked()
-
-        if copy:
-            self._pointcloud = pointcloud.copy()
-            self._labels_to_masks = OrderedDict([(l, m.copy()) for l, m in
-                                                 labels_to_masks.items()])
-        else:
-            self._pointcloud = pointcloud
-            self._labels_to_masks = labels_to_masks
-
-    @classmethod
-    def init_with_all_label(cls, pointcloud, copy=True):
-        r"""
-        Static constructor to create a :map:`LandmarkGroup` with a single
-        default 'all' label that covers all points.
-
-        Parameters
-        ----------
-        pointcloud : :map:`PointCloud`
-            The pointcloud representing the landmarks.
-        copy : `boolean`, optional
-            If ``True``, a copy of the :map:`PointCloud` is stored on the group.
-
-        Returns
-        -------
-        lmark_group : :map:`LandmarkGroup`
-            Landmark group wrapping the given pointcloud with a single label
-            called 'all' that is ``True`` for all points.
-        """
-        labels_to_masks = OrderedDict(
-            [('all', np.ones(pointcloud.n_points, dtype=np.bool))])
-        return LandmarkGroup(pointcloud, labels_to_masks, copy=copy)
-
-    @classmethod
-    def init_from_indices_mapping(cls, pointcloud, labels_to_indices,
-                                  copy=True):
-        r"""
-        Static constructor to create a :map:`LandmarkGroup` from an ordered
-        dictionary that maps a set of indices .
-
-        Parameters
-        ----------
-        pointcloud : :map:`PointCloud`
-            The pointcloud representing the landmarks.
-        labels_to_indices : `ordereddict` {`str` -> `int ndarray`}
-            For each label, the indices in to the pointcloud that belong to the
-            label.
-        copy : `boolean`, optional
-            If ``True``, a copy of the :map:`PointCloud` is stored on the group.
-
-        Returns
-        -------
-        lmark_group : :map:`LandmarkGroup`
-            Landmark group wrapping the given pointcloud with the given
-            semantic labels applied.
-
-        Raises
-        ------
-        ValueError
-            If `dict` passed instead of `OrderedDict`
-        ValueError
-            If any of the label masks differs in size to the pointcloud.
-        ValueError
-            If there exists any point in the pointcloud that is not covered
-            by a label.
-        """
-        labels_to_masks = indices_to_masks(labels_to_indices,
-                                           pointcloud.n_points)
-        return LandmarkGroup(pointcloud, labels_to_masks, copy=copy)
-
-    def copy(self):
-        r"""
-        Generate an efficient copy of this :map:`LandmarkGroup`.
-
-        Returns
-        -------
-        ``type(self)``
-            A copy of this object
-        """
-        new = Copyable.copy(self)
-        for k, v in new._labels_to_masks.items():
-            new._labels_to_masks[k] = v.copy()
-        return new
-
-    def __iter__(self):
-        """
-        Iterate over the internal label dictionary
-        """
-        return iter(self._labels_to_masks)
-
-    def __setitem__(self, label, indices):
-        """
-        Add a new label to the landmark group by adding a new set of indices
-
-        Parameters
-        ----------
-        label : `string`
-            Label of landmark.
-
-        indices : ``(K,)`` `ndarray`
-            Array of indices in to the pointcloud. Each index implies
-            membership to the label.
-        """
-        mask = np.zeros(self._pointcloud.n_points, dtype=np.bool)
-        mask[indices] = True
-        self._labels_to_masks[label] = mask
-
-    def __getitem__(self, label=None):
-        """
-        Returns the PointCloud that contains this label represents on the group.
-        This will be a subset of the total landmark group PointCloud.
-
-        Parameters
-        ----------
-        label : `string`
-            Label to filter on.
-
-        Returns
-        -------
-        pcloud : :map:`PointCloud`
-            The PointCloud that this label represents. Will be a subset of the
-            entire group's landmarks.
-        """
-        if label is None:
-            return self.lms.copy()
-        return self._pointcloud.from_mask(self._labels_to_masks[label])
-
-    def __delitem__(self, label):
-        """
-        Delete the semantic labelling for the provided label.
-
-         .. note::
-
-             You cannot delete a semantic label and leave the landmark group
-             partially unlabelled. Landmark groups must contain labels for
-             every point.
-
-        Parameters
-        ---------
-        label : `string`
-            The label to remove.
-
-        Raises
-        ------
-        ValueError
-            If deleting the label would leave some points unlabelled
-        """
-        # Pop the value off, which is akin to deleting it (removes it from the
-        # underlying dict). However, we keep it around so we can check if
-        # removing it causes an unlabelled point
-        value_to_delete = self._labels_to_masks.pop(label)
-
-        try:
-            self._verify_all_labels_masked()
-        except ValueError as e:
-            # Catch the error, restore the value and re-raise the exception!
-            self._labels_to_masks[label] = value_to_delete
-            raise e
-
-    def __len__(self):
-        return len(self._labels_to_masks)
-
-    @property
-    def labels(self):
-        """
-        The list of labels that belong to this group.
-
-        :type: `list` of `str`
-        """
-        # Convert to list so that we can index immediately, as keys()
-        # is a generator in Python 3
-        return list(self._labels_to_masks.keys())
-
-    @property
-    def n_labels(self):
-        """
-        Number of labels in the group.
-
-        :type: `int`
-        """
-        return len(self.labels)
-
-    @property
-    def lms(self):
-        """
-        The pointcloud representing all the landmarks in the group.
-
-        :type: :map:`PointCloud`
-        """
-        return self._pointcloud
-
-    @property
-    def n_landmarks(self):
-        """
-        The total number of landmarks in the group.
-
-        :type: `int`
-        """
-        return self._pointcloud.n_points
-
-    @property
-    def n_dims(self):
-        """
-        The dimensionality of these landmarks.
-
-        :type: `int`
-        """
-        return self._pointcloud.n_dims
-
-    def with_labels(self, labels=None):
-        """A new landmark group that contains only the certain labels
-
-        Parameters
-        ----------
-        labels : `str` or `list` of `str`, optional
-            Labels that should be kept in the returned landmark group. If
-            ``None`` is passed, and if there is only one label on this group,
-            the label will be substituted automatically.
-
-        Returns
-        -------
-        landmark_group : :map:`LandmarkGroup`
-            A new landmark group with the same group label but containing only
-            the given label.
-        """
-        # make it easier by allowing None when there is only one label
-        if labels is None:
-            if self.n_labels == 1:
-                labels = self.labels
-            else:
-                raise ValueError("Cannot use None as there are "
-                                 "{} labels".format(self.n_labels))
-        # Make it easier to use by accepting a single string as well as a list
-        if isinstance(labels, str):
-            labels = [labels]
-        return self._new_group_with_only_labels(labels)
-
-    def without_labels(self, labels):
-        """A new landmark group that excludes certain labels
-        label.
-
-        Parameters
-        ----------
-        labels : `str` or `list` of `str`
-            Labels that should be excluded in the returned landmark group.
-
-        Returns
-        -------
-        landmark_group : :map:`LandmarkGroup`
-            A new landmark group with the same group label but containing all
-            labels except the given label.
-        """
-        # Make it easier to use by accepting a single string as well as a list
-        if isinstance(labels, str):
-            labels = [labels]
-        labels_to_keep = list(set(self.labels).difference(labels))
-        return self._new_group_with_only_labels(labels_to_keep)
-
-    def _verify_all_labels_masked(self):
-        """
-        Verify that every point in the pointcloud is associated with a label.
-        If any one point is not covered by a label, then raise a
-        ``ValueError``.
-        """
-        # values is a generator in Python 3, so convert to list
-        labels_values = list(self._labels_to_masks.values())
-        unlabelled_points = np.sum(labels_values, axis=0) == 0
-        if np.any(unlabelled_points):
-            nonzero = np.nonzero(unlabelled_points)
-            raise ValueError(
-                'Every point in the landmark pointcloud must be labelled. '
-                'Points {0} were unlabelled.'.format(nonzero))
-
-    def _new_group_with_only_labels(self, labels):
-        """
-        Deal with changing indices when you add and remove points. In this case
-        we only deal with building a new dataset that keeps masks.
-
-        Parameters
-        ----------
-        labels : list of `string`
-            List of strings of the labels to keep
-
-        Returns
-        -------
-        lmark_group : :map:`LandmarkGroup`
-            The new landmark group with only the requested labels.
-        """
-        set_difference = set(labels).difference(self.labels)
-        if len(set_difference) > 0:
-            raise ValueError('Labels {0} do not exist in the landmark '
-                             'group. Available labels are: {1}'.format(
-                list(set_difference), self.labels))
-
-        masks_to_keep = [self._labels_to_masks[l] for l in labels
-                         if l in self._labels_to_masks]
-        overlap = np.sum(masks_to_keep, axis=0) > 0
-        masks_to_keep = [l[overlap] for l in masks_to_keep]
-
-        return LandmarkGroup(self._pointcloud.from_mask(overlap),
-                             OrderedDict(zip(labels, masks_to_keep)))
-
-    def tojson(self):
-        r"""
-        Convert this `LandmarkGroup` to a dictionary JSON representation.
-
-        Returns
-        -------
-        json : ``dict``
-            Dictionary conforming to the LJSON v2 specification.
-        """
-        labels = [{'mask': mask.nonzero()[0].tolist(),
-                   'label': label}
-                  for label, mask in self._labels_to_masks.items()]
-
-        return {'landmarks': self.lms.tojson(),
-                'labels': labels}
-
-    def has_nan_values(self):
-        """
-        Tests if the LandmarkGroup contains ``nan`` values or
-        not. This is particularly useful for annotations with unknown values or
-        non-visible landmarks that have been mapped to ``nan`` values.
-
-        Returns
-        -------
-        has_nan_values : `bool`
-            If the LandmarkGroup contains ``nan`` values.
-        """
-        return self._pointcloud.has_nan_values()
-
-    def _view_2d(self, with_labels=None, without_labels=None, group='group',
-                 figure_id=None, new_figure=False, image_view=True,
-                 render_lines=True, line_colour=None, line_style='-',
-                 line_width=1, render_markers=True, marker_style='o',
-                 marker_size=5, marker_face_colour=None,
-                 marker_edge_colour=None, marker_edge_width=1.,
-                 render_numbering=False, numbers_horizontal_align='center',
-                 numbers_vertical_align='bottom',
-                 numbers_font_name='sans-serif', numbers_font_size=10,
-                 numbers_font_style='normal', numbers_font_weight='normal',
-                 numbers_font_colour='k', render_legend=True, legend_title='',
-                 legend_font_name='sans-serif', legend_font_style='normal',
-                 legend_font_size=10, legend_font_weight='normal',
-                 legend_marker_scale=None, legend_location=2,
-                 legend_bbox_to_anchor=(1.05, 1.), legend_border_axes_pad=None,
-                 legend_n_columns=1, legend_horizontal_spacing=None,
-                 legend_vertical_spacing=None, legend_border=True,
-                 legend_border_padding=None, legend_shadow=False,
-                 legend_rounded_corners=False, render_axes=True,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8)):
-        """
-        Visualize the landmark group.
-
-        Parameters
-        ----------
-        with_labels : ``None`` or `str` or `list` of `str`, optional
-            If not ``None``, only show the given label(s). Should **not** be
-            used with the ``without_labels`` kwarg.
-        without_labels : ``None`` or `str` or `list` of `str`, optional
-            If not ``None``, show all except the given label(s). Should **not**
-            be used with the ``with_labels`` kwarg.
-        group : `str` or `None`, optional
-            The landmark group to be visualized. If ``None`` and there are more
-            than one landmark groups, an error is raised.
-        figure_id : `object`, optional
-            The id of the figure to be used.
-        new_figure : `bool`, optional
-            If ``True``, a new figure is created.
-        image_view : `bool`, optional
-            If ``True``, the x and y axes are flipped.
-        render_lines : `bool`, optional
-            If ``True``, the edges will be rendered.
-        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
-                      ``(3, )`` `ndarray` or ``None``, optional
-            The colour of the lines. If ``None``, a different colour will be
-            automatically selected for each label.
-        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
-            The style of the lines.
-        line_width : `float`, optional
-            The width of the lines.
-        render_markers : `bool`, optional
-            If ``True``, the markers will be rendered.
-        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
-                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
-                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
-            The style of the markers.
-        marker_size : `int`, optional
-            The size of the markers in points.
-        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
-            The face (filling) colour of the markers.
-        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                             or ``(3, )`` `ndarray`, optional
-            The edge colour of the markers.
-        marker_edge_width : `float`, optional
-            The width of the markers' edge.
-        render_numbering : `bool`, optional
-            If ``True``, the landmarks will be numbered.
-        numbers_horizontal_align : {``center``, ``right``, ``left``}, optional
-            The horizontal alignment of the numbers' texts.
-        numbers_vertical_align : {``center``, ``top``, ``bottom``,
-                                  ``baseline``}, optional
-            The vertical alignment of the numbers' texts.
-        numbers_font_name : {``serif``, ``sans-serif``, ``cursive``,
-                             ``fantasy``, ``monospace``}, optional
-            The font of the numbers.
-        numbers_font_size : `int`, optional
-            The font size of the numbers.
-        numbers_font_style : {``normal``, ``italic``, ``oblique``}, optional
-            The font style of the numbers.
-        numbers_font_weight : {``ultralight``, ``light``, ``normal``,
-                               ``regular``, ``book``, ``medium``, ``roman``,
-                               ``semibold``, ``demibold``, ``demi``, ``bold``,
-                               ``heavy``, ``extra bold``, ``black``}, optional
-            The font weight of the numbers.
-        numbers_font_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                              or ``(3, )`` `ndarray`, optional
-            The font colour of the numbers.
-        render_legend : `bool`, optional
-            If ``True``, the legend will be rendered.
-        legend_title : `str`, optional
-            The title of the legend.
-        legend_font_name : {``serif``, ``sans-serif``, ``cursive``,
-                            ``fantasy``, ``monospace``}, optional
-            The font of the legend.
-        legend_font_style : {``normal``, ``italic``, ``oblique``}, optional
-            The font style of the legend.
-        legend_font_size : `int`, optional
-            The font size of the legend.
-        legend_font_weight : {``ultralight``, ``light``, ``normal``,
-                              ``regular``, ``book``, ``medium``, ``roman``,
-                              ``semibold``, ``demibold``, ``demi``, ``bold``,
-                              ``heavy``, ``extra bold``, ``black``}, optional
-            The font weight of the legend.
-        legend_marker_scale : `float`, optional
-            The relative size of the legend markers with respect to the original
-        legend_location : `int`, optional
-            The location of the legend. The predefined values are:
-
-            =============== ===
-            'best'          0
-            'upper right'   1
-            'upper left'    2
-            'lower left'    3
-            'lower right'   4
-            'right'         5
-            'center left'   6
-            'center right'  7
-            'lower center'  8
-            'upper center'  9
-            'center'        10
-            =============== ===
-
-        legend_bbox_to_anchor : (`float`, `float`), optional
-            The bbox that the legend will be anchored.
-        legend_border_axes_pad : `float`, optional
-            The pad between the axes and legend border.
-        legend_n_columns : `int`, optional
-            The number of the legend's columns.
-        legend_horizontal_spacing : `float`, optional
-            The spacing between the columns.
-        legend_vertical_spacing : `float`, optional
-            The vertical space between the legend entries.
-        legend_border : `bool`, optional
-            If ``True``, a frame will be drawn around the legend.
-        legend_border_padding : `float`, optional
-            The fractional whitespace inside the legend border.
-        legend_shadow : `bool`, optional
-            If ``True``, a shadow will be drawn behind legend.
-        legend_rounded_corners : `bool`, optional
-            If ``True``, the frame's corners will be rounded (fancybox).
-        render_axes : `bool`, optional
-            If ``True``, the axes will be rendered.
-        axes_font_name : {``serif``, ``sans-serif``, ``cursive``, ``fantasy``,
-                          ``monospace``}, optional
-            The font of the axes.
-        axes_font_size : `int`, optional
-            The font size of the axes.
-        axes_font_style : {``normal``, ``italic``, ``oblique``}, optional
-            The font style of the axes.
-        axes_font_weight : {``ultralight``, ``light``, ``normal``, ``regular``,
-                            ``book``, ``medium``, ``roman``, ``semibold``,
-                            ``demibold``, ``demi``, ``bold``, ``heavy``,
-                            ``extra bold``, ``black``}, optional
-            The font weight of the axes.
-        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
-            The limits of the x axis. If `float`, then it sets padding on the
-            right and left of the LandmarkGroup as a percentage of the
-            LandmarkGroup's width. If `tuple` or `list`, then it defines the axis
-            limits. If ``None``, then the limits are set automatically.
-        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the y axis. If `float`, then it sets padding on the
-            top and bottom of the LandmarkGroup as a percentage of the
-            LandmarkGroup's height. If `tuple` or `list`, then it defines the
-            axis limits. If ``None``, then the limits are set automatically.
-        axes_x_ticks : `list` or `tuple` or ``None``, optional
-            The ticks of the x axis.
-        axes_y_ticks : `list` or `tuple` or ``None``, optional
-            The ticks of the y axis.
-        figure_size : (`float`, `float`) or `None`, optional
-            The size of the figure in inches.
-
-        Raises
-        ------
-        ValueError
-            If both ``with_labels`` and ``without_labels`` are passed.
-        """
-        from menpo.visualize import LandmarkViewer2d
-        if with_labels is not None and without_labels is not None:
-            raise ValueError('You may only pass one of `with_labels` or '
-                             '`without_labels`.')
-        elif with_labels is not None:
-            lmark_group = self.with_labels(with_labels)
-        elif without_labels is not None:
-            lmark_group = self.without_labels(without_labels)
-        else:
-            lmark_group = self  # Fall through
-        landmark_viewer = LandmarkViewer2d(figure_id, new_figure,
-                                           group, lmark_group._pointcloud,
-                                           lmark_group._labels_to_masks)
-        return landmark_viewer.render(
-            image_view=image_view, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
-            marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width,
-            render_numbering=render_numbering,
-            numbers_horizontal_align=numbers_horizontal_align,
-            numbers_vertical_align=numbers_vertical_align,
-            numbers_font_name=numbers_font_name,
-            numbers_font_size=numbers_font_size,
-            numbers_font_style=numbers_font_style,
-            numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour,
-            render_legend=render_legend, legend_title=legend_title,
-            legend_font_name=legend_font_name,
-            legend_font_style=legend_font_style,
-            legend_font_size=legend_font_size,
-            legend_font_weight=legend_font_weight,
-            legend_marker_scale=legend_marker_scale,
-            legend_location=legend_location,
-            legend_bbox_to_anchor=legend_bbox_to_anchor,
-            legend_border_axes_pad=legend_border_axes_pad,
-            legend_n_columns=legend_n_columns,
-            legend_horizontal_spacing=legend_horizontal_spacing,
-            legend_vertical_spacing=legend_vertical_spacing,
-            legend_border=legend_border,
-            legend_border_padding=legend_border_padding,
-            legend_shadow=legend_shadow,
-            legend_rounded_corners=legend_rounded_corners,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
-
-    def _view_3d(self, with_labels=None, without_labels=None, group='group',
-                 figure_id=None, new_figure=True, render_lines=True,
-                 line_colour=None, line_width=4, render_markers=True,
-                 marker_style='sphere', marker_size=None, marker_colour=None,
-                 marker_resolution=8, step=None, alpha=1.0,
-                 render_numbering=False, numbers_colour='k', numbers_size=None):
-        """
-        Visualize the landmark group in 3D.
-
-        Parameters
-        ----------
-        with_labels : ``None`` or `str` or `list` of `str`, optional
-            If not ``None``, only show the given label(s). Should **not** be
-            used with the ``without_labels`` kwarg.
-        without_labels : ``None`` or `str` or `list` of `str`, optional
-            If not ``None``, show all except the given label(s). Should **not**
-            be used with the ``with_labels`` kwarg.
-        group : `str` or `None`, optional
-            The landmark group to be visualized. If ``None`` and there are more
-            than one landmark groups, an error is raised.
-        figure_id : `object`, optional
-            The id of the figure to be used.
-        new_figure : `bool`, optional
-            If ``True``, a new figure is created.
-        render_lines : `bool`, optional
-            If ``True``, then the lines will be rendered.
-        line_colour : See Below, optional
-            The colour of the lines. If ``None``, a different colour will be
-            automatically selected for each label.
-            Example options ::
-
-                {r, g, b, c, m, k, w}
-                or
-                (3, ) ndarray
-                or
-                None
-
-        line_width : `float`, optional
-            The width of the lines.
-        render_markers : `bool`, optional
-            If ``True``, then the markers will be rendered.
-        marker_style : `str`, optional
-            The style of the markers.
-            Example options ::
-
-                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
-                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
-                 arrow, axes, cone, cube, cylinder, point, sphere}
-
-        marker_size : `float` or ``None``, optional
-            The size of the markers. This size can be seen as a scale factor
-            applied to the size markers, which is by default calculated from
-            the inter-marker spacing. If ``None``, then an optimal marker size
-            value will be set automatically.
-        marker_colour : See Below, optional
-            The colour of the markers. If ``None``, a different colour will be
-            automatically selected for each label.
-            Example options ::
-
-                {r, g, b, c, m, k, w}
-                or
-                (3, ) ndarray
-                or
-                None
-
-        marker_resolution : `int`, optional
-            The resolution of the markers. For spheres, for instance, this is
-            the number of divisions along theta and phi.
-        step : `int` or ``None``, optional
-            If `int`, then one every `step` vertexes will be rendered.
-            If ``None``, then all vertexes will be rendered.
-        alpha : `float`, optional
-            Defines the transparency (opacity) of the object.
-        render_numbering : `bool`, optional
-            If ``True``, the points will be numbered.
-        numbers_colour : See Below, optional
-            The colour of the numbers.
-            Example options ::
-
-                {r, g, b, c, m, k, w}
-                or
-                (3, ) ndarray
-
-        numbers_size : `float` or ``None``, optional
-            The size of the numbers. This size can be seen as a scale factor
-            applied to the numbers, which is by default calculated from
-            the inter-marker spacing. If ``None``, then an optimal numbers size
-            value will be set automatically.
-
-        Returns
-        -------
-        renderer : `menpo3d.visualize.LandmarkViewer3d`
-            The Menpo3D rendering object.
-
-        Raises
-        ------
-        ValueError
-            If both ``with_labels`` and ``without_labels`` are passed.
-        """
-        try:
-            from menpo3d.visualize import LandmarkViewer3d
-            if with_labels is not None and without_labels is not None:
-                raise ValueError('You may only pass one of `with_labels` or '
-                                 '`without_labels`.')
-            elif with_labels is not None:
-                lmark_group = self.with_labels(with_labels)
-            elif without_labels is not None:
-                lmark_group = self.without_labels(without_labels)
-            else:
-                lmark_group = self  # Fall through
-            landmark_viewer = LandmarkViewer3d(figure_id, new_figure,
-                                               group, lmark_group._pointcloud,
-                                               lmark_group._labels_to_masks)
-            return landmark_viewer.render(
-                render_lines=render_lines, line_colour=line_colour,
-                line_width=line_width, render_markers=render_markers,
-                marker_style=marker_style, marker_size=marker_size,
-                marker_colour=marker_colour,
-                marker_resolution=marker_resolution, step=step, alpha=alpha,
-                render_numbering=render_numbering,
-                numbers_colour=numbers_colour, numbers_size=numbers_size)
-        except ImportError:
-            from menpo.visualize import Menpo3dMissingError
-            raise Menpo3dMissingError()
-
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
-                    style='coloured'):
-        r"""
-        Visualizes the landmark group object using an interactive widget.
-
-        Parameters
-        ----------
-        browser_style : {``'buttons'``, ``'slider'``}, optional
-            It defines whether the selector of the landmark managers will have
-            the form of plus/minus buttons or a slider.
-        figure_size : (`int`, `int`), optional
-            The initial size of the rendered figure.
-        style : {``'coloured'``, ``'minimal'``}, optional
-            If ``'coloured'``, then the style of the widget will be coloured. If
-            ``minimal``, then the style is simple using black and white colours.
-        """
-        try:
-            from menpowidgets import visualize_landmarkgroups
-            visualize_landmarkgroups(self, figure_size=figure_size, style=style,
-                                     browser_style=browser_style)
-        except ImportError:
-            from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
-
-    def __str__(self):
-        return '{}: n_labels: {}, n_points: {}'.format(
-            type(self).__name__, self.n_labels, self.n_landmarks)
-
-
-def indices_to_masks(labels_to_indices, n_points):
-    r"""
-    Take a dictionary of labels to indices and convert it to a dictionary
-    that maps labels to masks. This dictionary is the correct format for
-    constructing a :map:`LandmarkGroup`.
-
-    Parameters
-    ----------
-    labels_to_indices : `ordereddict` {`str` -> `int ndarray`}
-        For each label, the indices in to the pointcloud that belong to the
-        label.
-    n_points : `int`
-        Number of points in the pointcloud that is being masked.
-    """
-    if not isinstance(labels_to_indices, OrderedDict):
-        raise ValueError('Must provide an OrderedDict to maintain the '
-                         'semantic meaning of the labels.')
-
-    masks = OrderedDict()
-    for label in labels_to_indices:
-        indices = labels_to_indices[label]
-        mask = np.zeros(n_points, dtype=np.bool)
-        mask[indices] = True
-        masks[label] = mask
-    return masks
+# TODO: Deprecate this - this handles importing old-style LandmarkGroup
+class LandmarkGroup(object):
+
+    def __new__(cls, *args, **kwargs):
+        # This is a crazy hack that means when old style LandmarkGroup
+        # objects are imported it is actually new-style
+        # LabelledPointUndirectedGraph objects that are created.
+        from menpo.shape import LabelledPointUndirectedGraph
+        return LabelledPointUndirectedGraph.__new__(
+            LabelledPointUndirectedGraph, *args, **kwargs)

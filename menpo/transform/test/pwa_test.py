@@ -8,7 +8,7 @@ b = b.crop_to_landmarks_proportion(0.1)
 b = b.rescale_landmarks_to_diagonal_range(120)
 b = b.constrain_mask_to_landmarks()
 points = b.mask.true_indices()
-src = b.landmarks['PTS'][None]
+src = b.landmarks['PTS']
 tgt = src.copy()
 
 
