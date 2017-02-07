@@ -420,8 +420,7 @@ class MaskedImage(Image):
             pixels_per_channel = vector.reshape((n_channels, -1))
             image_data[..., self.mask.mask] = pixels_per_channel
         new_image = MaskedImage(image_data, mask=self.mask)
-        new_image.landmarks = self.landmarks
-        return new_image
+        return copy_landmarks_and_path(self, new_image)
 
     def _from_vector_inplace(self, vector, copy=True):
         r"""

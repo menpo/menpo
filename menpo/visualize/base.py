@@ -239,7 +239,14 @@ class ImageViewer(object):
 
     def __init__(self, figure_id, new_figure, dimensions, pixels,
                  channels=None, mask=None):
-        pixels = pixels.copy()
+        if len(pixels.shape) == 3 and pixels.shape[0] == 3:
+            # then probably an RGB image, so ensure the clipped pixels.
+            from menpo.image import Image
+            image = Image(pixels, copy=False)
+            image_clipped = image.clip_pixels()
+            pixels = image_clipped.pixels
+        else:
+            pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
         self.dimensions = dimensions

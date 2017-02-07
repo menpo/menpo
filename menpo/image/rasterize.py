@@ -221,6 +221,7 @@ def rasterize_landmarks_2d(image, group=None, render_lines=True, line_style='-',
     -------
     rasterized_image : :map:`Image`
         The image with the landmarks rasterized directly into the pixels.
+        The pixels of the image returned are of uint8 type.
 
     Raises
     ------
