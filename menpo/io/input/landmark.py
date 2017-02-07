@@ -110,7 +110,7 @@ def asf_importer(filepath, asset=None, **kwargs):
                                                         labels_to_masks)
 
 
-def pts_importer(filepath, image_origin=True, **kwargs):
+def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
     r"""
     Importer for the PTS file format. Assumes version 1 of the format.
 
@@ -142,6 +142,9 @@ def pts_importer(filepath, image_origin=True, **kwargs):
     ----------
     filepath : `Path`
         Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
     image_origin : `bool`, optional
         If ``True``, assume that the landmarks exist within an image and thus
         the origin is the image origin.
@@ -175,7 +178,7 @@ def pts_importer(filepath, image_origin=True, **kwargs):
     return PointCloud(points, copy=False)
 
 
-def lm2_importer(filepath, **kwargs):
+def lm2_importer(filepath, asset=None, **kwargs):
     r"""
     Importer for the LM2 file format from the bosphorus dataset. This is a 2D
     landmark type and so it is assumed it only applies to images.
@@ -215,6 +218,9 @@ def lm2_importer(filepath, **kwargs):
     ----------
     filepath : `Path`
         Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
 
@@ -348,7 +354,7 @@ _ljson_parser_for_version = {
 }
 
 
-def ljson_importer(filepath, **kwargs):
+def ljson_importer(filepath, asset=None, **kwargs):
     r"""
     Importer for the Menpo JSON format. This is an n-dimensional
     landmark type for both images and meshes that encodes semantic labels in
@@ -362,6 +368,9 @@ def ljson_importer(filepath, **kwargs):
     ----------
     filepath : `Path`
         Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
 
@@ -383,7 +392,7 @@ def ljson_importer(filepath, **kwargs):
         return parser(lms_dict)
 
 
-def tem_importer(filepath, **kwargs):
+def tem_importer(filepath, asset=None, **kwargs):
     """
     Import the PsychoMorph .tem template/landmark format. Builds a PointGraph.
 
@@ -391,6 +400,9 @@ def tem_importer(filepath, **kwargs):
     ----------
     filepath : `Path`
         Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
 
