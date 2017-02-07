@@ -420,8 +420,7 @@ class MaskedImage(Image):
             pixels_per_channel = vector.reshape((n_channels, -1))
             image_data[..., self.mask.mask] = pixels_per_channel
         new_image = MaskedImage(image_data, mask=self.mask)
-        new_image.landmarks = self.landmarks
-        return new_image
+        return copy_landmarks_and_path(self, new_image)
 
     def _from_vector_inplace(self, vector, copy=True):
         r"""
@@ -1158,7 +1157,7 @@ class MaskedImage(Image):
         """
         copy = self.copy()
         copy.mask = copy.mask.constrain_to_pointcloud(
-            copy.landmarks[group].lms, batch_size=batch_size,
+            copy.landmarks[group], batch_size=batch_size,
             point_in_pointcloud=point_in_pointcloud)
         return copy
 
@@ -1198,7 +1197,7 @@ class MaskedImage(Image):
         """
         copy = self.copy()
         # get the selected pointcloud
-        pc = copy.landmarks[group].lms
+        pc = copy.landmarks[group]
         # temporarily set all mask values to False
         copy.mask.pixels[:] = False
         # create a patches array of the correct size, full of True values

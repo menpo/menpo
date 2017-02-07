@@ -2,9 +2,11 @@ from collections import OrderedDict
 from mock import patch, MagicMock
 import numpy as np
 from nose.tools import raises
+from scipy.sparse import csr_matrix
+
 from menpo.image import Image
-from menpo.landmark import LandmarkGroup
-from menpo.shape import TriMesh, TexturedTriMesh, ColouredTriMesh, PointCloud
+from menpo.shape import (TriMesh, TexturedTriMesh, ColouredTriMesh, PointCloud,
+                         LabelledPointUndirectedGraph)
 from menpo.visualize import Menpo3dMissingError
 from menpo.testing import surrogate
 
@@ -53,6 +55,8 @@ def pointcloud3d_viewer_test():
 @patch('menpo3d.visualize.LandmarkViewer3d', menpo3d_visualize_mock)
 @raises(Menpo3dMissingError)
 def landmark3d_viewer_test():
-    LandmarkGroup(PointCloud(fake_triangle),
-                  OrderedDict([('all', np.ones(3, dtype=np.bool))]),
-                  copy=False).view()
+    adj_matrix = csr_matrix((3, 3))
+    LabelledPointUndirectedGraph(fake_triangle,
+                                 adj_matrix,
+                                 OrderedDict([('all', np.ones(3, dtype=np.bool))]),
+                                 copy=False).view()
