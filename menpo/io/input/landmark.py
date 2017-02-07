@@ -16,7 +16,7 @@ ASFPath = namedtuple('ASFPath', ['path_num', 'path_type', 'xpos', 'ypos',
 
 def asf_importer(filepath, asset=None, **kwargs):
     r"""
-    Abstract base class for an importer for the ASF file format.
+    Importer for the ASF file format.
 
     For images, the `x` and `y` axes are flipped such that the first axis is
     `y` (height in the image domain).
