@@ -47,7 +47,7 @@ test:
     - menpo
 
   commands:
-    - nosetests menpo -v --with-coverage --cover-package=menpo
+    - nosetests menpo -v --with-coverage --cover-package=menpo --with-xunit
 
 about:
   home: https://github.com/menpo/menpo/
