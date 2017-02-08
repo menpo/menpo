@@ -219,6 +219,11 @@ class LandmarkManager(MutableMapping, Transformable):
 
         self.__dict__ = state
 
+    def _ipython_key_completions_(self):
+        # Opt in to IPython tab completion - see
+        # https://github.com/ipython/ipython/blob/5.2.2/docs/source/config/integrating.rst
+        return list(self)
+
     @property
     def n_groups(self):
         """
