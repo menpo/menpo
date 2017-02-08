@@ -37,6 +37,14 @@ class Copyable(object):
                 new.__dict__[k] = v
         return new
 
+    def __repr__(self):
+        # Most classes in Menpo derive from Copyable, so it's a handy place
+        # to implement Menpo-wide behavior. For use in the notebook, we find
+        # __repr__ representations not of very much use, so we default to
+        # showing the string representation for this case. See
+        # https://github.com/menpo/menpo/issues/752 for discussion.
+        return self.__str__()
+
 
 class Vectorizable(Copyable):
     """
