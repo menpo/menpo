@@ -330,7 +330,7 @@ def _parse_ljson_v1(lms_dict):
 
 def _parse_ljson_v2(lms_dict):
     from menpo.base import MenpoDeprecationWarning
-    warnings.warn('LJSON v1 is deprecated. export_landmark_file{s}() will '
+    warnings.warn('LJSON v2 is deprecated. export_landmark_file{s}() will '
                   'only save out LJSON v3 files. Please convert all LJSON '
                   'files to v3 by importing into Menpo and re-exporting to '
                   'overwrite the files.', MenpoDeprecationWarning)
@@ -340,7 +340,7 @@ def _parse_ljson_v2(lms_dict):
     if connectivity is None and len(lms_dict['labels']) == 0:
         return PointCloud(points)
     else:
-        labels_to_mask = OrderedDict() # masks into the pointcloud per label
+        labels_to_mask = OrderedDict()  # masks into the pointcloud per label
         n_points = points.shape[0]
         for label in lms_dict['labels']:
             mask = np.zeros(n_points, dtype=np.bool)

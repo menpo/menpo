@@ -13,7 +13,7 @@ from ..utils import (_norm_path, _possible_extensions_from_filepath,
 gzip_open = partial(gzip.open, compresslevel=3)
 
 
-def export_landmark_file(pointcloud, fp, extension=None, overwrite=False):
+def export_landmark_file(landmarks_object, fp, extension=None, overwrite=False):
     r"""
     Exports a given shape. The ``fp`` argument can be either or a `str` or
     any Python type that acts like a file. If a file is provided, the
@@ -26,10 +26,11 @@ def export_landmark_file(pointcloud, fp, extension=None, overwrite=False):
 
     Parameters
     ----------
-    pointcloud : :map:`PointCloud` or subclass
-        The landmarks to export. It can be any of :map:`PointCloud`,
-        :map:`PointUndirectedGraph`, :map:`PointDirectedGraph`,
-        :map:`PointTree` or :map:`LabelledPointUndirectedGraph`.
+    landmarks_object : dict or :map:`LandmarkManager`  or
+        :map:`PointCloud` or subclass of :map:`PointCloud`
+        The landmarks to export. The type of :map:`PointCloud` or
+        subclass of it are supported by all exporters, while the
+        rest are available only for the LJSON format.
     fp : `Path` or `file`-like object
         The Path or file-like object to save the object at/into.
     extension : `str` or None, optional
@@ -51,8 +52,20 @@ def export_landmark_file(pointcloud, fp, extension=None, overwrite=False):
     ValueError
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
+    ValueError
+        The provided type for landmarks_object is not supported.
     """
-    _export(pointcloud, fp, landmark_types, extension, overwrite)
+    try:
+        landmarks_object.n_points
+    except AttributeError:
+        # unless this is LJSON, this is not correct.
+        if extension != 'LJSON' and Path(fp).suffix != 'LJSON':
+            m1 = ('Only the LJSON extension supports different '
+                  'options for landmarks_object. \nIn any other '
+                  'case your input should be of PointCloud or'
+                  'subclass.')
+            raise ValueError(m1)
+    _export(landmarks_object, fp, landmark_types, extension, overwrite)
 
 
 def export_image(image, fp, extension=None, overwrite=False):
