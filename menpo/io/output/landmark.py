@@ -35,7 +35,7 @@ def ljson_exporter(landmarks_object, file_handle, **kwargs):
         landmark_dict = landmarks_object
     # Add version string
     ljson = {'version': 3}
-    for key, pointcloud in landmarks_object.items():
+    for key, pointcloud in landmark_dict.items():
         lg_json = pointcloud.tojson()
 
         # Convert nan values to None so that json correctly maps them to 'null'
