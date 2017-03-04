@@ -741,10 +741,14 @@ def _import_object_attach_landmarks(built_objects, landmark_resolver,
             if lm_paths is None:
                 continue
             for group_name, lm_path in lm_paths.items():
-                lms = _import(lm_path, landmark_ext_map, asset=x)
-                if x.n_dims == lms.n_dims:
-                    x.landmarks[group_name] = lms
-
+                lms_d = _import(lm_path, landmark_ext_map, asset=x)
+                # Temporary hack: Convert all to a dictionary and iterate
+                # over the key values. 
+                if not isinstance(lms_d, dict):
+                    lms_d = {group_name : lms_d}
+                for key, lms in lms_d.items():
+                    if x.n_dims == lms.n_dims:
+                        x.landmarks[key] = lms
 
 def _import_lazylist_attach_landmarks(built_objects, landmark_resolver,
                                       landmark_ext_map=None):
