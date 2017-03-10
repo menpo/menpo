@@ -214,7 +214,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
             if type(_pointcloud) == PointCloud:
                 adj_mat = _convert_edges_to_symmetric_adjacency_matrix(
-                    [], _pointcloud.shape[0])
+                    [], _pointcloud.n_points)
             elif isinstance(_pointcloud, PointGraph):
                 a = _pointcloud.adjacency_matrix
                 # Ensure that the matrix is symmetric
