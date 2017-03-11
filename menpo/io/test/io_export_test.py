@@ -200,7 +200,7 @@ def test_export_landmark_ljson_3d(mock_open, exists, json_dump):
         mio.export_landmark_file(test3d_lg, f, extension='ljson')
 
     assert json_dump.call_count == 1
-    json_points = np.array(json_dump.call_args[0][0]['LJSON']['landmarks']['points'])
+    json_points = np.array(json_dump.call_args[0][0]['groups']['LJSON']['landmarks']['points'])
     assert_allclose(json_points[:, -1], fake_z_points)
 
 
