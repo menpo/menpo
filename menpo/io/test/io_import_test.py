@@ -49,12 +49,12 @@ def test_lenna_import():
 
 
 def test_import_builtin_ljson():
-    lmarks = mio.import_builtin_asset('lenna.ljson')
+    lmarks = mio.import_builtin_asset('lenna.ljson')['LJSON']
     assert(lmarks.n_points == 68)
 
 
 def test_import_builtin_pts():
-    lmarks = mio.import_builtin_asset('einstein.pts')
+    lmarks = mio.import_builtin_asset('einstein.pts')['PTS']
     assert(lmarks.n_points == 68)
 
 
@@ -118,13 +118,13 @@ def test_import_image():
 
 def test_custom_landmark_resolver():
     def lmark_resolver(path):
-        return {'PTS': mio.data_path_to('takeo.pts')}
+        return mio.import_landmark_file(mio.data_path_to('takeo.pts'))
 
     img = mio.import_image(mio.data_path_to('lenna.png'),
                            landmark_resolver=lmark_resolver)
     assert(img.has_landmarks)
 
-    takeo_lmarks = mio.import_builtin_asset.takeo_pts()
+    takeo_lmarks = mio.import_builtin_asset.takeo_pts()['PTS']
     np.allclose(img.landmarks['PTS'].points,
                 takeo_lmarks.points)
 
@@ -421,7 +421,8 @@ def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
     is_file.return_value = True
 
     with warnings.catch_warnings(record=True) as w:
-        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson',
+                                         group='LJSON')
     nan_points = np.isnan(lmark.points)
 
     # Should raise deprecation warning

@@ -17,7 +17,8 @@ from menpo.io.output.pickle import pickle_paths_as_pure
 
 builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
-test_lg = mio.import_landmark_file(mio.data_path_to('lenna.ljson'))
+test_lg = mio.import_landmark_file(mio.data_path_to('lenna.ljson'),
+                                   group='LJSON')
 nan_lg = test_lg.copy()
 nan_lg.points[0, :] = np.nan
 test_img = Image(np.random.random([100, 100]))

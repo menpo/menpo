@@ -55,14 +55,18 @@ def export_landmark_file(landmarks_object, fp, extension=None, overwrite=False):
     ValueError
         The provided type for landmarks_object is not supported.
     """
+    extension = _normalize_extension(extension)
+
     try:
         landmarks_object.n_points
     except AttributeError:
         # unless this is LJSON, this is not correct.
-        if extension != 'LJSON' and Path(fp).suffix != 'LJSON':
-            m1 = ('Only the LJSON extension supports different '
-                  'options for landmarks_object. \nIn any other '
-                  'case your input should be of PointCloud or'
+        fp_is_path = isinstance(fp, basestring) or isinstance(fp, Path)
+        if (extension is not None and extension != '.ljson') or \
+                (fp_is_path and Path(fp).suffix != '.ljson'):
+            m1 = ('Only the LJSON format supports multiple '
+                  'keys for exporting. \nIn any other '
+                  'case your input should be a PointCloud or '
                   'subclass.')
             raise ValueError(m1)
     _export(landmarks_object, fp, landmark_types, extension, overwrite)
