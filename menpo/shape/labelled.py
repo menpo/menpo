@@ -212,6 +212,14 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             _pointcloud = state_dict.pop('_pointcloud')
             state_dict['points'] = _pointcloud.points
 
+            # the shape on old landmarks *itself* was allowed to have landmarks
+            # (of course it was very frequently None though, see
+            # https://github.com/menpo/menpo/blob/v0.7.7/menpo/landmark/base.py#L24)
+            # In the new word, self has the same behavior, so move the
+            # landmarks across here.
+            # In the vast majority of cases, this will simply be None.
+            state_dict['_landmarks'] = _pointcloud._landmarks
+
             if type(_pointcloud) == PointCloud:
                 adj_mat = _convert_edges_to_symmetric_adjacency_matrix(
                     [], _pointcloud.n_points)
