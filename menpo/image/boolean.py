@@ -605,7 +605,7 @@ class BooleanImage(Image):
         constrained : :map:`BooleanImage`
             The new boolean image, constrained by the given landmark group.
         """
-        return self.constrain_to_pointcloud(self.landmarks[group].lms,
+        return self.constrain_to_pointcloud(self.landmarks[group],
                                             batch_size=batch_size)
 
     def constrain_to_pointcloud(self, pointcloud, batch_size=None,

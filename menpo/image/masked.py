@@ -1157,7 +1157,7 @@ class MaskedImage(Image):
         """
         copy = self.copy()
         copy.mask = copy.mask.constrain_to_pointcloud(
-            copy.landmarks[group].lms, batch_size=batch_size,
+            copy.landmarks[group], batch_size=batch_size,
             point_in_pointcloud=point_in_pointcloud)
         return copy
 
@@ -1197,7 +1197,7 @@ class MaskedImage(Image):
         """
         copy = self.copy()
         # get the selected pointcloud
-        pc = copy.landmarks[group].lms
+        pc = copy.landmarks[group]
         # temporarily set all mask values to False
         copy.mask.pixels[:] = False
         # create a patches array of the correct size, full of True values

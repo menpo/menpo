@@ -29,8 +29,8 @@ Landmarks & Labeller
   :maxdepth: 2
 
   LandmarkManager
-  LandmarkGroup
   labeller
+
 
 Bounding Box Labels
 -------------------
@@ -40,6 +40,7 @@ Bounding Box Labels
 
   bounding_box_mirrored_to_bounding_box
   bounding_box_to_bounding_box
+
 
 Labels
 ------

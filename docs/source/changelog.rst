@@ -427,7 +427,7 @@ Breaking Changes
     not been deprecated due to the changes. However, the new changes mean
     that the naming scheme of labels is now much more intuitive. Practically,
     the usage of labelling has only changed in that now it is possible to label
-    not only :map:`LandmarkGroup` but also :map:`PointCloud` and numpy arrays
+    not only `LandmarkGroup` but also :map:`PointCloud` and numpy arrays
     directly.
   - Landmarks are now warped by default, where previously they were not.
   - All vlfeat features have now become optional and will not appear if

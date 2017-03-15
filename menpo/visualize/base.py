@@ -192,7 +192,6 @@ class LandmarkableViewable(object):
     def _view_landmarks_3d(self, **kwargs):
         raise NotImplementedError('3D Landmark Viewing is not supported.')
 
-
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
     MatplotlibLandmarkViewer2d, MatplotlibAlignmentViewer2d,
@@ -1129,7 +1128,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
     if render_patches_bboxes:
         patch_shape = [patches.shape[3], patches.shape[4]]
         render_rectangles_around_patches(
-            patches_image.landmarks['selected_patch_centers'].lms.points,
+            patches_image.landmarks['selected_patch_centers'].points,
             patch_shape, image_view=True, line_colour=bboxes_line_colour,
             line_style=bboxes_line_style, line_width=bboxes_line_width,
             interpolation=interpolation)
