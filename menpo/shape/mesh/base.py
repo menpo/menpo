@@ -220,7 +220,7 @@ class TriMesh(PointCloud):
 
     def as_pointgraph(self, copy=True, skip_checks=False):
         """
-        Converts the TriMesh to a :map:`PointUndirectedGraph`.
+        Returns a copy of self as a :map:`PointUndirectedGraph`.
 
         Parameters
         ----------
@@ -244,9 +244,26 @@ class TriMesh(PointCloud):
                                   skip_checks=skip_checks)
         return copy_landmarks_and_path(self, pg)
 
+    def as_trimesh(self, copy=True):
+        """
+        Returns a copy of self as a :map:`TriMesh`.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            Only recommend for internal use.
+
+        Returns
+        -------
+        mesh : :map:`TriMesh`
+            A version of this mesh with no specialization.
+        """
+        tm = ColouredTriMesh(self.points, trilist=self.trilist, copy=copy)
+        return copy_landmarks_and_path(self, tm)
+
     def as_colouredtrimesh(self, colours=None, copy=True):
         """
-        Converts this to a :map:`ColouredTriMesh`.
+        Returns a copy of self as a :map:`ColouredTriMesh`.
 
         Parameters
         ----------

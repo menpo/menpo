@@ -131,7 +131,7 @@ class ColouredTriMesh(TriMesh):
 
     def as_colouredtrimesh(self, colours=None, copy=True):
         """
-        Converts this to a :map:`ColouredTriMesh`.
+        Returns a copy of self as a :map:`ColouredTriMesh`.
 
         Parameters
         ----------
