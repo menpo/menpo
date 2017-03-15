@@ -228,7 +228,7 @@ class PointCloud(Shape):
 
     def as_pointcloud(self, copy=True):
         r"""
-        Convert this shape to a basic pointcloud.
+        Returns a copy of self as a :map:`PointCloud`.
 
         Parameters
         ----------
@@ -243,6 +243,24 @@ class PointCloud(Shape):
         """
         return copy_landmarks_and_path(self,
                                        PointCloud(self.points, copy=copy))
+
+    def as_trimesh(self, trilist=None, copy=True):
+        """
+        Returns a copy of self as a :map:`TriMesh`.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            Only recommend for internal use.
+
+        Returns
+        -------
+        mesh : :map:`TriMesh`
+            A copy of this object as a triangulated mesh
+        """
+        from .mesh import TriMesh
+        tm = TriMesh(self.points, trilist=trilist, copy=copy)
+        return copy_landmarks_and_path(self, tm)
 
     def with_dims(self, dims):
         r"""

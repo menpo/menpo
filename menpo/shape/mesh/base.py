@@ -258,8 +258,8 @@ class TriMesh(PointCloud):
         mesh : :map:`TriMesh`
             A version of this mesh with no specialization.
         """
-        tm = ColouredTriMesh(self.points, trilist=self.trilist, copy=copy)
-        return copy_landmarks_and_path(self, tm)
+        # delegate to super implementation
+        return PointCloud.as_trimesh(trilist=self.trilist, copy=copy)
 
     def as_colouredtrimesh(self, colours=None, copy=True):
         """
