@@ -259,7 +259,7 @@ class TriMesh(PointCloud):
             A version of this mesh with no specialization.
         """
         # delegate to super implementation
-        return PointCloud.as_trimesh(trilist=self.trilist, copy=copy)
+        return PointCloud.as_trimesh(self, trilist=self.trilist, copy=copy)
 
     def as_colouredtrimesh(self, colours=None, copy=True):
         """

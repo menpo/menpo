@@ -149,7 +149,7 @@ class ColouredTriMesh(TriMesh):
         if colours is None:
             colours = self.colours
         # delegate to super implementation
-        return TriMesh.as_colouredtrimesh(colours, copy=copy)
+        return TriMesh.as_colouredtrimesh(self, colours, copy=copy)
 
     @property
     def n_channels(self):
