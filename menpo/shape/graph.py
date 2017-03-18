@@ -10,15 +10,12 @@ class Graph(object):
 
     Parameters
     ----------
-    adjacency_matrix : ``(n_vertices, n_vertices, )`` `ndarray` or `csr_matrix`
+    adjacency_matrix : ``(n_vertices, n_vertices)`` `ndarray` or `csr_matrix`
         The adjacency matrix of the graph in which the rows represent source
         vertices and columns represent destination vertices. The non-edges must
         be represented with zeros and the edges can have a weight value.
 
         The adjacency matrix of an undirected graph must be symmetric.
-    directed : `bool`
-        If ``True``, the graph is considered directed. If ``False``, the graph
-        is considered undirected.
     copy : `bool`, optional
         If ``False``, the ``adjacency_matrix`` will not be copied on assignment.
     skip_checks : `bool`, optional
@@ -1778,7 +1775,7 @@ class PointGraph(Graph, PointCloud):
             Dictionary with ``points`` and ``connectivity`` keys.
         """
         json_dict = PointCloud.tojson(self)
-        json_dict['connectivity'] = self.edges.tolist()
+        json_dict['landmarks']['connectivity'] = self.edges.tolist()
         return json_dict
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
@@ -1795,7 +1792,7 @@ class PointGraph(Graph, PointCloud):
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(7, 7), label=None):
+                 axes_y_ticks=None, figure_size=(7, 7), label=None, **kwargs):
         r"""
         Visualization of the PointGraph in 2D.
 
@@ -2590,7 +2587,8 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
                              'PointUndirectedGraph.')
 
         if np.all(mask):  # Shortcut for all true masks
-            return self.copy()
+            return PointUndirectedGraph(self.points, self.adjacency_matrix,
+                                        copy=True, skip_checks=True)
         else:
             # Get new adjacency_matrix and points
             (adjacency_matrix, points) = _mask_adjacency_matrix_and_points(
@@ -3292,11 +3290,6 @@ def _mask_adjacency_matrix_and_points(mask, adjacency_matrix, points):
         The masked adjacency matrix.
     points : `ndarray`
         The masked points array.
-
-    Raises
-    ------
-    ValueError
-        The provided mask deletes all edges.
     """
     # Find the indices that have been asked to be removed
     indices_to_keep = np.nonzero(mask)[0]
