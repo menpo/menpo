@@ -6,10 +6,7 @@ import numpy as np
 
 from menpo.base import Copyable
 from menpo.transform.base import Transformable
-<<<<<<< HEAD
 from menpo.visualize.base import Viewable, viewwrapper
-=======
->>>>>>> upstream/master
 
 
 class Landmarkable(Copyable):
