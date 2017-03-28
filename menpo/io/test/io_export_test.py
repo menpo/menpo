@@ -17,7 +17,8 @@ from menpo.io.output.pickle import pickle_paths_as_pure
 
 builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
-test_lg = mio.import_landmark_file(mio.data_path_to('lenna.ljson'))
+test_lg = mio.import_landmark_file(mio.data_path_to('lenna.ljson'),
+                                   group='LJSON')
 nan_lg = test_lg.copy()
 nan_lg.points[0, :] = np.nan
 test_img = Image(np.random.random([100, 100]))
@@ -200,7 +201,7 @@ def test_export_landmark_ljson_3d(mock_open, exists, json_dump):
         mio.export_landmark_file(test3d_lg, f, extension='ljson')
 
     assert json_dump.call_count == 1
-    json_points = np.array(json_dump.call_args[0][0]['LJSON']['landmarks']['points'])
+    json_points = np.array(json_dump.call_args[0][0]['groups']['LJSON']['landmarks']['points'])
     assert_allclose(json_points[:, -1], fake_z_points)
 
 

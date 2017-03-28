@@ -33,8 +33,10 @@ def ljson_exporter(landmarks_object, file_handle, **kwargs):
     except AttributeError:
         # This should be a dict or a Landmark Manager.
         landmark_dict = landmarks_object
+
     # Add version string
     ljson = {'version': 3}
+    groups = {}
     for key, pointcloud in landmark_dict.items():
         lg_json = pointcloud.tojson()
 
@@ -58,8 +60,9 @@ def ljson_exporter(landmarks_object, file_handle, **kwargs):
         else:
             lg_json['landmarks']['points'] = []
         # append to the final ljson dict.
-        ljson[key] = lg_json
+        groups[key] = lg_json
 
+    ljson['groups'] = groups
     return json.dump(ljson, file_handle, indent=4, separators=(',', ': '),
                      sort_keys=True, allow_nan=False, cls=_UTF8Encoder)
 

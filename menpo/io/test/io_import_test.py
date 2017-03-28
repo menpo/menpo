@@ -49,12 +49,12 @@ def test_lenna_import():
 
 
 def test_import_builtin_ljson():
-    lmarks = mio.import_builtin_asset('lenna.ljson')
+    lmarks = mio.import_builtin_asset('lenna.ljson')['LJSON']
     assert(lmarks.n_points == 68)
 
 
 def test_import_builtin_pts():
-    lmarks = mio.import_builtin_asset('einstein.pts')
+    lmarks = mio.import_builtin_asset('einstein.pts')['PTS']
     assert(lmarks.n_points == 68)
 
 
@@ -118,13 +118,13 @@ def test_import_image():
 
 def test_custom_landmark_resolver():
     def lmark_resolver(path):
-        return {'PTS': mio.data_path_to('takeo.pts')}
+        return mio.import_landmark_file(mio.data_path_to('takeo.pts'))
 
     img = mio.import_image(mio.data_path_to('lenna.png'),
                            landmark_resolver=lmark_resolver)
     assert(img.has_landmarks)
 
-    takeo_lmarks = mio.import_builtin_asset.takeo_pts()
+    takeo_lmarks = mio.import_builtin_asset.takeo_pts()['PTS']
     np.allclose(img.landmarks['PTS'].points,
                 takeo_lmarks.points)
 
@@ -421,7 +421,8 @@ def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
     is_file.return_value = True
 
     with warnings.catch_warnings(record=True) as w:
-        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson',
+                                         group='LJSON')
     nan_points = np.isnan(lmark.points)
 
     # Should raise deprecation warning
@@ -450,12 +451,47 @@ def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
 
     mock_dict.return_value = v2_ljson
     is_file.return_value = True
-
-    lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+    with warnings.catch_warnings(record=True) as w:
+        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson',
+                                         group='LJSON')
     nan_points = np.isnan(lmark.points)
     assert nan_points[0, 0]  # y-coord None point is nan
     assert not nan_points[0, 1]  # x-coord point is not nan
-    assert np.all(nan_points[1, :]) # all of leye label is nan
+    assert np.all(nan_points[1, :])  # all of leye label is nan
+
+
+@patch('menpo.io.input.landmark.json.load')
+@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_v3_ljson_null_values(is_file, mock_open, mock_dict):
+    v3_ljson = {
+        "groups": {
+            "LJSON": {
+                "labels": [
+                    { "label": "left_eye", "mask": [0, 1, 2] },
+                    { "label": "right_eye", "mask": [3, 4, 5] }
+                ],
+                "landmarks": {
+                    "connectivity": [ [0, 1], [1, 2], [2, 0], [3, 4],
+                                      [4, 5],  [5, 3] ],
+                    "points": [ [None, 200.5], [None, None],
+                                [316.8, 199.15], [339.48, 205.0],
+                                [358.54, 217.82], [375.0, 233.4]]
+                }
+            }
+        },
+        "version": 3
+    }
+
+    mock_dict.return_value = v3_ljson
+    is_file.return_value = True
+    lmark_dict = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+    assert isinstance(lmark_dict, dict)
+    lmark = lmark_dict['LJSON']
+    nan_points = np.isnan(lmark.points)
+    assert nan_points[0, 0]  # y-coord None point is nan
+    assert not nan_points[0, 1]  # x-coord point is not nan
+    assert np.all(nan_points[1, :])  # all of leye label is nan
 
 
 @patch('random.shuffle')
