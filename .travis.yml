@@ -1,7 +1,10 @@
 sudo: false
+language: generic
 
 os:
-- linux
+  - osx
+  - linux
+osx_image: xcode6.4
 
 git:
   depth: 200
@@ -28,8 +31,3 @@ notifications:
     on_success: :change
     on_failure: :change
   email: false
-
-after_success:
-  - ~/miniconda/bin/conda install coveralls -y
-  - cp ~/miniconda/conda-bld/test-tmp_dir/.coverage ./.coverage
-  - ~/miniconda/bin/coveralls
