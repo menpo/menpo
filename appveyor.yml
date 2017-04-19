@@ -19,7 +19,7 @@ init:
 
 install:
   - ps: $env:MINICONDA_DIR = python C:\\condaci.py miniconda_dir
-  - ps: $MINICONDA_PATH = "${env:MINICONDA_DIR}"" + "\\python"; $MINICONDA_PATH C:\\condaci.py build conda
+  - ps: $MINICONDA_PATH = "${env:MINICONDA_DIR}" + "\\python"; $MINICONDA_PATH C:\\condaci.py build conda
 
 after_test:
   - ps: $wc = New-Object 'System.Net.WebClient'; $wc.UploadFile("https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path C:\\menpo.xml))
