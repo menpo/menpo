@@ -2,6 +2,7 @@ import collections
 from itertools import chain
 from functools import partial, wraps
 import os.path
+from pprint import pformat
 import warnings
 
 
@@ -36,6 +37,12 @@ class Copyable(object):
             except AttributeError:
                 new.__dict__[k] = v
         return new
+
+    def __str__(self):
+        # We have to be sure that we implement __str__ otherwise the __repr__
+        # implementation below will lead to an infinite recursion.
+        return 'Copyable Menpo Object with keys:\n{}'.format(
+            pformat(self.__dict__))
 
     def __repr__(self):
         # Most classes in Menpo derive from Copyable, so it's a handy place
