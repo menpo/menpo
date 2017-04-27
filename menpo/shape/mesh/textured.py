@@ -1,7 +1,7 @@
 import numpy as np
 
 from menpo.shape import PointCloud
-from menpo.transform import Scale
+from menpo.transform import tcoords_to_image_coords
 
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .base import TriMesh, grid_tcoords
@@ -37,6 +37,15 @@ class TexturedTriMesh(TriMesh):
             self.texture = texture
         else:
             self.texture = texture.copy()
+
+    @property
+    def n_channels(self):
+        r"""
+        The number of channels of colour used (e.g. 3 for RGB).
+
+        :type: `int`
+        """
+        return self.texture.n_channels
 
     @classmethod
     def init_2d_grid(cls, shape, spacing=None, tcoords=None, texture=None):
@@ -162,15 +171,7 @@ class TexturedTriMesh(TriMesh):
         >>> tc_ps = texturedtrimesh.tcoords_pixel_scaled()
         >>> pixel_values_at_tcs = texture.sample(tc_ps)
         """
-        scale = Scale(np.array(self.texture.shape)[::-1])
-        tcoords = self.tcoords.points.copy()
-        # flip the 'y' st 1 -> 0 and 0 -> 1, moving the axis to upper left
-        tcoords[:, 1] = 1 - tcoords[:, 1]
-        # apply the scale to get the units correct
-        tcoords = scale.apply(tcoords)
-        # flip axis 0 and axis 1 so indexing is as expected
-        tcoords = tcoords[:, ::-1]
-        return PointCloud(tcoords)
+        return tcoords_to_image_coords(self.texture.shape).apply(self.tcoords)
 
     def from_vector(self, flattened):
         r"""
@@ -226,10 +227,58 @@ class TexturedTriMesh(TriMesh):
             ttm.tcoords.points = ttm.tcoords.points[isolated_mask, :]
             return ttm
 
-    def _view_3d(self, figure_id=None, new_figure=False, textured=True,
-                 **kwargs):
+    def clip_texture(self, range=(0., 1.)):
+        """
+        Method that returns a copy of the object with the texture values
+        clipped in range ``(0, 1)``.
+
+        Parameters
+        ----------
+        range : ``(float, float)``, optional
+            The clipping range.
+
+        Returns
+        -------
+        self : :map:`ColouredTriMesh`
+            A copy of self with its texture clipped.
+        """
+        instance = self.copy()
+        instance.texture.pixels = np.clip(self.texture.pixels, *range)
+        return instance
+
+    def rescale_texture(self, minimum, maximum, per_channel=True):
         r"""
-        Visualize the :map:`TexturedTriMesh` in 3D.
+        A copy of this mesh with texture linearly rescaled to fit a range.
+
+        Parameters
+        ----------
+        minimum: `float`
+            The minimal value of the rescaled colours
+        maximum: `float`
+            The maximal value of the rescaled colours
+        per_channel: `boolean`, optional
+            If ``True``, each channel will be rescaled independently. If
+            ``False``, the scaling will be over all channels.
+
+        Returns
+        -------
+        textured_mesh : ``type(self)``
+            A copy of this mesh with texture linearly rescaled to fit in the
+            range provided.
+        """
+        instance = self.copy()
+        instance.texture = instance.texture.rescale_pixels(
+            minimum, maximum, per_channel=per_channel)
+        return instance
+
+    def _view_3d(self, figure_id=None, new_figure=True, render_texture=True,
+                 mesh_type='surface', ambient_light=0.0, specular_light=0.0,
+                 colour='r', line_width=2, normals=None, normals_colour='k',
+                 normals_line_width=2, normals_marker_style='2darrow',
+                 normals_marker_resolution=8, normals_marker_size=None,
+                 step=None, alpha=1.0):
+        r"""
+        Visualize the Textured TriMesh in 3D.
 
         Parameters
         ----------
@@ -237,28 +286,108 @@ class TexturedTriMesh(TriMesh):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
-        textured : `bool`, optional
-            If `True`, render the texture.
+        render_texture : `bool`, optional
+            If ``True``, then the texture is rendered. If ``False``, then only
+            the TriMesh is rendered with the specified `colour`.
+        mesh_type : ``{'surface', 'wireframe'}``, optional
+            The representation type to be used for the mesh.
+        ambient_light : `float`, optional
+            The ambient light intensity. It must be in range ``[0., 1.]``.
+        specular_light : `float`, optional
+            The specular light intensity. It must be in range ``[0., 1.]``.
+        colour : See Below, optional
+            The colour of the mesh if `render_texture` is ``False``.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_width : `float`, optional
+            The width of the lines, if there are any.
+        normals : ``(n_points, 3)`` `ndarray` or ``None``, optional
+            If ``None``, then the normals will not be rendered. If `ndarray`,
+            then the provided normals will be rendered as well. Note that a
+            normal must be provided for each point in the TriMesh.
+        normals_colour : See Below, optional
+            The colour of the normals.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        normals_line_width : `float`, optional
+            The width of the lines of the normals. It only applies if `normals`
+            is not ``None``.
+        normals_marker_style : `str`, optional
+            The style of the markers of the normals. It only applies if `normals`
+            is not ``None``.
+            Example options ::
+
+                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
+                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
+                 arrow, axes, cone, cube, cylinder, point, sphere}
+
+        normals_marker_resolution : `int`, optional
+            The resolution of the markers of the normals. For spheres, for
+            instance, this is the number of divisions along theta and phi. It
+            only applies if `normals` is not ``None``.
+        normals_marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically. It only applies if `normals` is not
+            ``None``.
+        step : `int` or ``None``, optional
+            If `int`, then one every `step` normals will be rendered.
+            If ``None``, then all vertexes will be rendered. It only applies if
+            `normals` is not ``None``.
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
 
         Returns
         -------
-        viewer : :map:`Renderer`
-            The viewer object.
+        renderer : `menpo3d.visualize.TexturedTriMeshViewer3D`
+            The Menpo3D rendering object.
         """
-        if textured:
+        if render_texture:
             try:
                 from menpo3d.visualize import TexturedTriMeshViewer3d
-                return TexturedTriMeshViewer3d(
-                    figure_id, new_figure, self.points,
-                    self.trilist, self.texture,
-                    self.tcoords.points).render(**kwargs)
+                renderer = TexturedTriMeshViewer3d(figure_id, new_figure,
+                                                   self.points, self.trilist,
+                                                   self.texture,
+                                                   self.tcoords.points)
+                renderer.render(
+                    mesh_type=mesh_type, ambient_light=ambient_light,
+                    specular_light=specular_light, normals=normals,
+                    normals_colour=normals_colour,
+                    normals_line_width=normals_line_width,
+                    normals_marker_style=normals_marker_style,
+                    normals_marker_resolution=normals_marker_resolution,
+                    normals_marker_size=normals_marker_size, step=step,
+                    alpha=alpha)
+                return renderer
             except ImportError:
                 from menpo.visualize import Menpo3dMissingError
                 raise Menpo3dMissingError()
         else:
-            return super(TexturedTriMesh, self).view(figure_id=figure_id,
-                                                     new_figure=new_figure,
-                                                     **kwargs)
+            try:
+                from menpo3d.visualize import TriMeshViewer3d
+                renderer = TriMeshViewer3d(figure_id, new_figure, self.points,
+                                           self.trilist)
+                renderer.render(
+                    mesh_type=mesh_type, line_width=line_width, colour=colour,
+                    normals=normals, normals_colour=normals_colour,
+                    normals_line_width=normals_line_width,
+                    normals_marker_style=normals_marker_style,
+                    normals_marker_resolution=normals_marker_resolution,
+                    normals_marker_size=normals_marker_size, step=step,
+                    alpha=alpha)
+                return renderer
+            except ImportError:
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError()
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r', line_style='-',
@@ -274,7 +403,7 @@ class TexturedTriMesh(TriMesh):
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
                  axes_y_ticks=None, figure_size=(10, 8),
-                 label=None):
+                 label=None, **kwargs):
         r"""
         Visualization of the TriMesh in 2D. Currently, explicit textured TriMesh
         viewing is not supported, and therefore viewing falls back to untextured

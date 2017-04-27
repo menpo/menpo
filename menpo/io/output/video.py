@@ -13,8 +13,8 @@ _FFMPEG_CMD = lambda: str(Path(os.environ.get('MENPO_FFMPEG_CMD', 'ffmpeg')))
 
 
 def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
-                          preset='medium', bitrate=None, verbose=False,
-                          **kwargs):
+                          preset='medium', bitrate=None,
+                          out_pix_fmt='yuv420p', verbose=False, **kwargs):
     r"""
     Uses subprocess PIPE to export the images using FFMPEG.
 
@@ -45,6 +45,8 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
         https://trac.ffmpeg.org/wiki/Encode/H.264#a2.Chooseapreset
     bitrate: `str`, optional
         The output video bitrate.
+    out_pix_fmt : `str`, optional
+        The output pixel format.
     verbose : `bool`, optional
         If ``True``, print a progress bar.
     **kwargs : `dict`, optional
@@ -59,11 +61,15 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
     #   https://github.com/Zulko/moviepy/blob/master/moviepy/video/io/ffmpeg_writer.py
     # and is used under the terms of the MIT license which can be found at
     #   https://github.com/Zulko/moviepy/blob/master/LICENCE.txt
-    first_image = images[0]
-    frame_shape = first_image.shape
+    im = images[0]
+    frame_shape = im.shape
+    if im.n_channels != 3 and im.n_channels != 1:
+        m = ('Currently only images of 1 or 3 channels are expected, '
+             'while {} channels were found in the first frame.')
+        raise ValueError(m.format(im.n_channels))
     # If the first image is gray then all the images will be assumed to be
     # gray
-    colour = 'rgb24' if images[0].n_channels == 3 else 'gray8'
+    colour = 'rgb24' if im.n_channels == 3 else 'gray8'
     cmd = [_FFMPEG_CMD(), '-y',
            '-s', '{}x{}'.format(frame_shape[1], frame_shape[0]),
            '-r', str(fps),
@@ -73,6 +79,8 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
            '-i', '-']
     if codec:
         cmd.extend(['-vcodec', codec])
+    if out_pix_fmt:
+        cmd.extend(['-pix_fmt', out_pix_fmt])
     if preset:
         cmd.extend(['-preset', preset])
     if bitrate:

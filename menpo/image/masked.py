@@ -5,7 +5,7 @@ import numpy as np
 binary_erosion = None  # expensive, from scipy.ndimage
 binary_dilation = None  # expensive, from scipy.ndimage
 
-from menpo.base import MenpoDeprecationWarning
+from menpo.base import MenpoDeprecationWarning, copy_landmarks_and_path
 from menpo.transform import Translation
 from menpo.visualize.base import ImageViewer
 
@@ -149,7 +149,10 @@ class MaskedImage(Image):
             A new image from the given pixels, with the FIRST axis as the
             channels.
         """
-        return cls(np.rollaxis(pixels, -1), mask=mask)
+        im = Image.init_from_channels_at_back(pixels)
+        if mask is not None:
+            mask = mask.copy()
+        return MaskedImage(im.pixels, mask=mask, copy=False)
 
     @classmethod
     def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,
@@ -242,12 +245,7 @@ class MaskedImage(Image):
             if not np.isscalar(fill):
                 fill = np.array(fill).reshape(self.n_channels, -1)
             img.pixels[..., ~self.mask.mask] = fill
-
-        if self.has_landmarks:
-            img.landmarks = self.landmarks
-        if hasattr(self, 'path'):
-            img.path = self.path
-        return img
+        return copy_landmarks_and_path(self, img)
 
     def n_true_pixels(self):
         r"""
@@ -422,8 +420,7 @@ class MaskedImage(Image):
             pixels_per_channel = vector.reshape((n_channels, -1))
             image_data[..., self.mask.mask] = pixels_per_channel
         new_image = MaskedImage(image_data, mask=self.mask)
-        new_image.landmarks = self.landmarks
-        return new_image
+        return copy_landmarks_and_path(self, new_image)
 
     def _from_vector_inplace(self, vector, copy=True):
         r"""
@@ -1160,7 +1157,7 @@ class MaskedImage(Image):
         """
         copy = self.copy()
         copy.mask = copy.mask.constrain_to_pointcloud(
-            copy.landmarks[group].lms, batch_size=batch_size,
+            copy.landmarks[group], batch_size=batch_size,
             point_in_pointcloud=point_in_pointcloud)
         return copy
 
@@ -1200,7 +1197,7 @@ class MaskedImage(Image):
         """
         copy = self.copy()
         # get the selected pointcloud
-        pc = copy.landmarks[group].lms
+        pc = copy.landmarks[group]
         # temporarily set all mask values to False
         copy.mask.pixels[:] = False
         # create a patches array of the correct size, full of True values

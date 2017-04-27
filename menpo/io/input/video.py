@@ -81,7 +81,7 @@ class FFMpegVideoReader(object):
     normalize : `bool`, optional
         If ``True``, the resulting range of the pixels of the returned
         frames is normalized.
-    exact_frame_count: `bool`, optional
+    exact_frame_count : `bool`, optional
         If True, the import fails if ffmprobe is not available
         (reading from ffmpeg's output returns inexact frame count)
     """
@@ -334,10 +334,13 @@ def video_infos_ffprobe(filepath):
     kv_dict['height'] = int(kv_dict['height'])
     # Some videos may not have a valid duration
     if kv_dict['duration'] == 'N/A':
-        kv_dict['duration'] = np.nan
+        kv_dict['duration'] = None
     else:
         kv_dict['duration'] = float(kv_dict['duration'])
     fps = kv_dict.pop('avg_frame_rate').split('/')
-    kv_dict['fps'] = float(fps[0]) / float(fps[1])
+    try:
+        kv_dict['fps'] = float(fps[0]) / float(fps[1])
+    except ZeroDivisionError:
+        kv_dict['fps'] = None
 
     return kv_dict

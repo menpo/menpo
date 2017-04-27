@@ -102,6 +102,18 @@ class Renderer(object):
         """
         pass
 
+    def clear_figure(self):
+        r"""
+        Abstract method for clearing the current figure.
+        """
+        pass
+
+    def force_draw(self):
+        r"""
+        Abstract method for forcing the current figure to render.
+        """
+        pass
+
 
 class viewwrapper(object):
     r"""
@@ -180,7 +192,6 @@ class LandmarkableViewable(object):
     def _view_landmarks_3d(self, **kwargs):
         raise NotImplementedError('3D Landmark Viewing is not supported.')
 
-
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
     MatplotlibLandmarkViewer2d, MatplotlibAlignmentViewer2d,
@@ -228,7 +239,14 @@ class ImageViewer(object):
 
     def __init__(self, figure_id, new_figure, dimensions, pixels,
                  channels=None, mask=None):
-        pixels = pixels.copy()
+        if len(pixels.shape) == 3 and pixels.shape[0] == 3:
+            # then probably an RGB image, so ensure the clipped pixels.
+            from menpo.image import Image
+            image = Image(pixels, copy=False)
+            image_clipped = image.clip_pixels()
+            pixels = image_clipped.pixels
+        else:
+            pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
         self.dimensions = dimensions
@@ -1110,7 +1128,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
     if render_patches_bboxes:
         patch_shape = [patches.shape[3], patches.shape[4]]
         render_rectangles_around_patches(
-            patches_image.landmarks['selected_patch_centers'].lms.points,
+            patches_image.landmarks['selected_patch_centers'].points,
             patch_shape, image_view=True, line_colour=bboxes_line_colour,
             line_style=bboxes_line_style, line_width=bboxes_line_width,
             interpolation=interpolation)

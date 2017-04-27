@@ -587,7 +587,7 @@ class TriMesh(PointCloud):
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8), label=None):
+                 axes_y_ticks=None, figure_size=(10, 8), label=None, **kwargs):
         r"""
         Visualization of the TriMesh in 2D.
 
@@ -740,7 +740,12 @@ class TriMesh(PointCloud):
                 axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
                 axes_y_ticks=axes_y_ticks, figure_size=figure_size, label=label)
 
-    def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
+    def _view_3d(self, figure_id=None, new_figure=True, mesh_type='wireframe',
+                 line_width=2, colour='r', marker_style='sphere',
+                 marker_size=None, marker_resolution=8, normals=None,
+                 normals_colour='k', normals_line_width=2,
+                 normals_marker_style='2darrow', normals_marker_resolution=8,
+                 normals_marker_size=None, step=None, alpha=1.0):
         r"""
         Visualization of the TriMesh in 3D.
 
@@ -750,16 +755,100 @@ class TriMesh(PointCloud):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
+        mesh_type : `str`, optional
+            The representation type to be used for the mesh.
+            Example options ::
+
+                {surface, wireframe, points, mesh, fancymesh}
+
+        line_width : `float`, optional
+            The width of the lines, if there are any.
+        colour : See Below, optional
+            The colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_style : `str`, optional
+            The style of the markers.
+            Example options ::
+
+                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
+                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
+                 arrow, axes, cone, cube, cylinder, point, sphere}
+
+        marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically. It only applies for the
+            'fancymesh'.
+        marker_resolution : `int`, optional
+            The resolution of the markers. For spheres, for instance, this is
+            the number of divisions along theta and phi. It only applies for
+            the 'fancymesh'.
+        normals : ``(n_points, 3)`` `ndarray` or ``None``, optional
+            If ``None``, then the normals will not be rendered. If `ndarray`,
+            then the provided normals will be rendered as well. Note that a
+            normal must be provided for each point in the TriMesh.
+        normals_colour : See Below, optional
+            The colour of the normals.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        normals_line_width : `float`, optional
+            The width of the lines of the normals. It only applies if `normals`
+            is not ``None``.
+        normals_marker_style : `str`, optional
+            The style of the markers of the normals. It only applies if `normals`
+            is not ``None``.
+            Example options ::
+
+                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
+                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
+                 arrow, axes, cone, cube, cylinder, point, sphere}
+
+        normals_marker_resolution : `int`, optional
+            The resolution of the markers of the normals. For spheres, for
+            instance, this is the number of divisions along theta and phi. It
+            only applies if `normals` is not ``None``.
+        normals_marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically. It only applies if `normals` is not
+            ``None``.
+        step : `int` or ``None``, optional
+            If `int`, then one every `step` markers will be rendered.
+            If ``None``, then all vertexes will be rendered. It only applies for
+            the 'fancymesh' and if `normals` is not ``None``.
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
 
         Returns
         -------
-        viewer : TriMeshViewer3D
-            The Menpo3D viewer object.
+        renderer : `menpo3d.visualize.TriMeshViewer3D`
+            The Menpo3D rendering object.
         """
         try:
             from menpo3d.visualize import TriMeshViewer3d
-            return TriMeshViewer3d(figure_id, new_figure,
-                                   self.points, self.trilist).render(**kwargs)
+            renderer = TriMeshViewer3d(figure_id, new_figure, self.points,
+                                       self.trilist)
+            renderer.render(
+                mesh_type=mesh_type, line_width=line_width, colour=colour,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_resolution=marker_resolution, normals=normals,
+                normals_colour=normals_colour,
+                normals_line_width=normals_line_width,
+                normals_marker_style=normals_marker_style,
+                normals_marker_resolution=normals_marker_resolution,
+                normals_marker_size=normals_marker_size, step=step, alpha=alpha)
+            return renderer
         except ImportError:
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()

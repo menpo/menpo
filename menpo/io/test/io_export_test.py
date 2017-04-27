@@ -17,9 +17,9 @@ from menpo.io.output.pickle import pickle_paths_as_pure
 
 builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
-test_lg = mio.import_landmark_file(mio.data_path_to('breakingbad.pts'))
+test_lg = mio.import_landmark_file(mio.data_path_to('lenna.ljson'))
 nan_lg = test_lg.copy()
-nan_lg.lms.points[0, :] = np.nan
+nan_lg.points[0, :] = np.nan
 test_img = Image(np.random.random([100, 100]))
 colour_test_img = Image(np.random.random([3, 100, 100]))
 fake_path = '/tmp/test.fake'
@@ -191,9 +191,9 @@ def test_export_landmark_ljson_3d(mock_open, exists, json_dump):
     exists.return_value = False
     fake_path = '/fake/fake3d.ljson'
     test3d_lg = test_lg.copy()
-    fake_z_points = np.random.random(test3d_lg.lms.points.shape[0])
-    test3d_lg.lms.points = np.concatenate([
-        test3d_lg.lms.points, fake_z_points[..., None]], axis=-1)
+    fake_z_points = np.random.random(test3d_lg.points.shape[0])
+    test3d_lg.points = np.concatenate([
+        test3d_lg.points, fake_z_points[..., None]], axis=-1)
 
     with open(fake_path) as f:
         type(f).name = PropertyMock(return_value=fake_path)
@@ -208,17 +208,15 @@ def test_export_landmark_ljson_3d(mock_open, exists, json_dump):
 @patch('{}.open'.format(__name__), create=True)
 def test_export_landmark_ljson_nan_values(mock_open, exists):
     exists.return_value = False
+    mock_writer = MagicMock()
+    mock_open.return_value.__enter__.return_value = mock_writer
     fake_path = '/fake/fake.ljson'
     with open(fake_path) as f:
         type(f).name = PropertyMock(return_value=fake_path)
         mio.export_landmark_file(nan_lg, f, extension='ljson')
 
-    # This is a bit ugly, but we parse the write calls to check that json
-    # wrote null values
-    first_null = mock_open.mock_calls[97][1][0][1:].strip()
-    second_null = mock_open.mock_calls[98][1][0][1:].strip()
-    assert first_null == 'null'
-    assert second_null == 'null'
+    # yeah this is grim, but it should work.
+    assert 'null' in '{}'.format(mock_open.mock_calls)
 
 
 @patch('menpo.io.output.landmark.np.savetxt')

@@ -12,7 +12,7 @@ build:
 requirements:
   build:
     - python
-    - setuptools 23.*
+    - setuptools
     - numpy >=1.10,<2.0
     - cython >=0.23
 
@@ -23,7 +23,7 @@ requirements:
     # Scientific Python Stack
     - numpy >=1.10,<2.0
     - scipy >=0.16,<1.0
-    - pillow >=3.0,<4.0
+    - pillow >=3.0,<5.0
     - ffmpeg >=2.7,<3.0
 
     # Features
@@ -47,7 +47,8 @@ test:
     - menpo
 
   commands:
-    - nosetests menpo -v --with-coverage --cover-package=menpo
+    - nosetests menpo -v --with-coverage --cover-package=menpo --with-xunit --xunit-file=/tmp/menpo.xml --xunit-testsuite-name=menpo  # [unix]
+    - nosetests menpo -v --with-coverage --cover-package=menpo --with-xunit --xunit-file=C:\\menpo.xml --xunit-testsuite-name=menpo   # [win]
 
 about:
   home: https://github.com/menpo/menpo/

@@ -3,6 +3,96 @@
 Changelog
 #########
 
+0.7.7 (2017/01/05)
+------------------
+Minor bug fixes
+
+Github Pull Requests
+....................
+
+- `#767`_ Minor fixes (@patricksnape)
+- `#774`_ Fix pip install by properly including source files (@patricksnape)
+- `#775`_ Allow Pillow 4.x  (@patricksnape)
+- `#776`_ Manifest includes should be recursive (@jabooth)
+
+.. _#767: https://github.com/menpo/menpo/pull/767
+.. _#774: https://github.com/menpo/menpo/pull/774
+.. _#775: https://github.com/menpo/menpo/pull/775
+.. _#776: https://github.com/menpo/menpo/pull/776
+
+0.7.6 (2016/12/10)
+------------------
+Minor bug fixes and three new pieces of functionality:
+  
+  - 3D visualization improvements (@nontas)
+  - Bounding cubiod method for 3D shapes (@nontas)
+  - New transforms to change dimensionality of shapes (@jabooth)
+
+Github Pull Requests
+....................
+
+- `#745`_ Documentation change in image gradient for int pixels dtype. (@grigorisg9gr)
+- `#750`_ Copy landmarks and path (@jabooth)
+- `#751`_ WithDims transform and with_dims method (@jabooth)
+- `#754`_ Restrict the video channels in exports(@grigorisg9gr)
+- `#755`_ fix ndarray slicing of lazylist, cleaner __add__ implementation (@jabooth)
+- `#756`_ remove duplicate import_pickles def (!) (@jabooth)
+- `#757`_ don't print_dynamic size report in as_matrix (@jabooth)
+- `#759`_ Bounding cuboid (@nontas)
+- `#760`_ Quaternions for 3D Rotations (@nontas)
+- `#762`_ 3D Visualization Upgrade (@nontas)
+- `#764`_ Fix NUMPY_INC_PATH detection for multiple dirs found (@jabooth)
+
+.. _#745: https://github.com/menpo/menpo/pull/745
+.. _#750: https://github.com/menpo/menpo/pull/750
+.. _#751: https://github.com/menpo/menpo/pull/751
+.. _#754: https://github.com/menpo/menpo/pull/754
+.. _#755: https://github.com/menpo/menpo/pull/755
+.. _#756: https://github.com/menpo/menpo/pull/756
+.. _#757: https://github.com/menpo/menpo/pull/757
+.. _#759: https://github.com/menpo/menpo/pull/759
+.. _#760: https://github.com/menpo/menpo/pull/760
+.. _#762: https://github.com/menpo/menpo/pull/762
+.. _#764: https://github.com/menpo/menpo/pull/764
+
+0.7.5 (2016/11/17)
+------------------
+Minor bug fixes and three new pieces of functionality:
+  
+  - Fix bug in video importing when importing long videos (closed pipe) (@patricksnape)
+  - Update `MANIFEST.in` to include the `LICENSE.txt` and `AUTHORS.txt`
+  - Add new `transform_about_centre` method on images. Allow easily performing operations such as
+    rotating an image about it's centre or shearing an image about it's centre.
+  - Allow path only exporters (rather than hard requiring a buffer). The exporting
+    logic was also updated to support multiple kwargs to be passed through to the
+    exporters easily.
+  - New transforms to move between image and texture coordinates. (@jabooth).
+
+Github Pull Requests
+....................
+
+- `#724`_ add transforms for tcoords -> image coords (@jabooth)
+- `#733`_ Remove user guide as it now lives at www.menpo.org (@nontas)
+- `#729`_ Fix PCA docs w.r.t `centre` parameter (@jabooth)
+- `#736`_ Fix bug importing boolean images with pillow (@grigorisg9gr)
+- `#739`_ Fix PointGraph printing to mention dimensionality (@nontas)
+- `#737`_ Allow path only exporters. Fix landmarking exporting on Python 3. (@patricksnape)
+- `#735`_ Fix `init_from_channels_at_back` to support 2D arrays. (@grigorisg9gr, @patricksnape)
+- `#738`_ Add `transform_about_centre` to images (@nontas, @patricksnape)
+- `#743`_ Set `nan` values to `None` in video importing (@JeanKossaifi)
+- `#744`_ Fix Regression: Allow `None` for `landmark_resolver` (@grigorisg9gr, @patricksnape)
+
+.. _#724: https://github.com/menpo/menpo/pull/724
+.. _#733: https://github.com/menpo/menpo/pull/733
+.. _#729: https://github.com/menpo/menpo/pull/729
+.. _#736: https://github.com/menpo/menpo/pull/736
+.. _#739: https://github.com/menpo/menpo/pull/739
+.. _#737: https://github.com/menpo/menpo/pull/737
+.. _#735: https://github.com/menpo/menpo/pull/735
+.. _#738: https://github.com/menpo/menpo/pull/738
+.. _#743: https://github.com/menpo/menpo/pull/743
+.. _#744: https://github.com/menpo/menpo/pull/744
+
 0.7.4 (2016/08/18)
 ------------------
 Minor fixes and additions including improved compatibility with loading older menpo PCAModel pickles and importing Python 2 pickles in Python 3.
@@ -337,7 +427,7 @@ Breaking Changes
     not been deprecated due to the changes. However, the new changes mean
     that the naming scheme of labels is now much more intuitive. Practically,
     the usage of labelling has only changed in that now it is possible to label
-    not only :map:`LandmarkGroup` but also :map:`PointCloud` and numpy arrays
+    not only `LandmarkGroup` but also :map:`PointCloud` and numpy arrays
     directly.
   - Landmarks are now warped by default, where previously they were not.
   - All vlfeat features have now become optional and will not appear if

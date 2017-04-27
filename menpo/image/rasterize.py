@@ -221,6 +221,7 @@ def rasterize_landmarks_2d(image, group=None, render_lines=True, line_style='-',
     -------
     rasterized_image : :map:`Image`
         The image with the landmarks rasterized directly into the pixels.
+        The pixels of the image returned are of uint8 type.
 
     Raises
     ------
@@ -236,9 +237,9 @@ def rasterize_landmarks_2d(image, group=None, render_lines=True, line_style='-',
 
     if backend in _RASTERIZE_BACKENDS:
         if isinstance(group, list):
-            landmarks = [image.landmarks[g].lms for g in group]
+            landmarks = [image.landmarks[g] for g in group]
         else:
-            landmarks = [image.landmarks[group].lms]
+            landmarks = [image.landmarks[group]]
 
         # Validate all the parameters for multiple landmark groups being
         # passed in

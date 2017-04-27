@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import numbers
 import collections
@@ -5,7 +7,9 @@ from warnings import warn
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
-from menpo.shape.base import Shape
+from menpo.transform import WithDims
+
+from .base import Shape
 
 
 def bounding_box(closest_to_origin, opposite_corner):
@@ -62,6 +66,54 @@ def bounding_box(closest_to_origin, opposite_corner):
                     opposite_corner,
                     [closest_to_origin[0], opposite_corner[1]]], dtype=np.float)
     return PointDirectedGraph(box, adjacency_matrix, copy=False)
+
+
+def bounding_cuboid(near_closest_to_origin, far_opposite_corner):
+    r"""
+    Return a bounding cuboid from the near closest and far opposite
+    corners as a directed graph.
+
+    Parameters
+    ----------
+    near_closest_to_origin : (`float`, `float`, `float`)
+        Three floats representing the coordinates of the near corner closest to
+        the origin.
+    far_opposite_corner  : (`float`, `float`, `float`)
+        Three floats representing the coordinates of the far opposite corner
+        compared to near_closest_to_origin.
+
+    Returns
+    -------
+    bounding_box : :map:`PointDirectedGraph`
+        The axis aligned bounding cuboid from the two given corners.
+    """
+    from .graph import PointDirectedGraph
+
+    if len(near_closest_to_origin) != 3 or len(far_opposite_corner) != 3:
+        raise ValueError('Only 3D bounding cuboids can be created.')
+
+    adjacency_matrix = csr_matrix(
+        ([1] * 12,
+         ([0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7],
+          [1, 2, 3, 0, 4, 5, 6, 7, 5, 6, 7, 4])), shape=(8, 8))
+    cuboid = np.array(
+        [near_closest_to_origin, [far_opposite_corner[0],
+                                  near_closest_to_origin[1],
+                                  near_closest_to_origin[2]],
+         [far_opposite_corner[0],
+          far_opposite_corner[1],
+          near_closest_to_origin[2]], [near_closest_to_origin[0],
+                                       far_opposite_corner[1],
+                                       near_closest_to_origin[2]],
+         [near_closest_to_origin[0],
+          near_closest_to_origin[1],
+          far_opposite_corner[2]], [far_opposite_corner[0],
+                                    near_closest_to_origin[1],
+                                    far_opposite_corner[2]],
+         far_opposite_corner, [near_closest_to_origin[0],
+                               far_opposite_corner[1],
+                               far_opposite_corner[2]]], dtype=np.float)
+    return PointDirectedGraph(cuboid, adjacency_matrix, copy=False)
 
 
 class PointCloud(Shape):
@@ -173,6 +225,41 @@ class PointCloud(Shape):
                               depth_image.as_vector(keep_channels=True).T]),
                    copy=False)
 
+    def with_dims(self, dims):
+        r"""
+        Return a copy of this shape with only particular dimensions retained.
+
+        Parameters
+        ----------
+        dims : valid numpy array slice
+            The slice that will be used on the dimensionality axis of the shape
+            under transform. For example, to go from a 3D shape to a 2D one,
+            [0, 1] could be provided or np.array([True, True, False]).
+
+        Returns
+        -------
+        copy of self, with only the requested dims
+        """
+        return WithDims(dims).apply(self)
+
+    @property
+    def lms(self):
+        """Deprecated.
+        Maintained for compatibility, will be removed in a future version.
+        Returns a copy of this object, which previously would have held
+        the 'underlying' :map:`PointCloud` subclass.
+
+        :type: self
+        """
+        from menpo.base import MenpoDeprecationWarning
+        warnings.warn('The .lms property is deprecated. LandmarkGroups are '
+                      'now shapes themselves - so you can use them directly '
+                      'anywhere you previously used .lms.'
+                      'Simply remove ".lms" from your code and things '
+                      'will work as expected (and this warning will go away)',
+                      MenpoDeprecationWarning)
+        return self.copy()
+
     @property
     def n_points(self):
         r"""
@@ -248,7 +335,12 @@ class PointCloud(Shape):
         json : `dict`
             Dictionary with ``points`` keys.
         """
-        return {'points': self.points.tolist()}
+        return {
+            'labels': [],
+            'landmarks': {
+                'points': self.points.tolist()
+            }
+        }
 
     def _from_vector_inplace(self, vector):
         r"""
@@ -315,8 +407,8 @@ class PointCloud(Shape):
     def bounding_box(self):
         r"""
         Return a bounding box from two corner points as a directed graph.
-        The the first point (0) should be nearest the origin.
-        In the case of an image, this ordering would appear as:
+        In the case of a 2D pointcloud, first point (0) should be nearest the
+        origin. In the case of an image, this ordering would appear as:
 
         ::
 
@@ -336,16 +428,23 @@ class PointCloud(Shape):
             v   |
             0-->1
 
+        In the case of a 3D pointcloud, the first point (0) should be the
+        near closest to the origin and the second point is the far opposite
+        corner.
+
         Returns
         -------
         bounding_box : :map:`PointDirectedGraph`
             The axis aligned bounding box of the PointCloud.
         """
-        if self.n_dims != 2:
-            raise ValueError('Bounding boxes are only supported for 2D '
+        if self.n_dims != 2 and self.n_dims != 3:
+            raise ValueError('Bounding boxes are only supported for 2D or 3D '
                              'pointclouds.')
         min_p, max_p = self.bounds()
-        return bounding_box(min_p, max_p)
+        if self.n_dims == 2:
+            return bounding_box(min_p, max_p)
+        elif self.n_dims == 3:
+            return bounding_cuboid(min_p, max_p)
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_markers=True, marker_style='o', marker_size=5,
@@ -475,8 +574,7 @@ class PointCloud(Shape):
         from menpo.visualize.base import PointGraphViewer2d
         adjacency_array = np.empty(0)
         renderer = PointGraphViewer2d(figure_id, new_figure,
-                                      self.points,
-                                      adjacency_array)
+                                      self.points, adjacency_array)
         renderer.render(
             image_view=image_view, render_lines=False, line_colour='b',
             line_style='-', line_width=1., render_markers=render_markers,
@@ -767,7 +865,11 @@ class PointCloud(Shape):
 
         return landmark_view
 
-    def _view_3d(self, figure_id=None, new_figure=False):
+    def _view_3d(self, figure_id=None, new_figure=True, render_markers=True,
+                 marker_style='sphere', marker_size=None, marker_colour='r',
+                 marker_resolution=8, step=None, alpha=1.0,
+                 render_numbering=False, numbers_colour='k', numbers_size=None,
+                 **kwargs):
         r"""
         Visualization of the PointCloud in 3D.
 
@@ -777,49 +879,185 @@ class PointCloud(Shape):
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : `str`, optional
+            The style of the markers.
+            Example options ::
+
+                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
+                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
+                 arrow, axes, cone, cube, cylinder, point, sphere}
+
+        marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically.
+        marker_colour : See Below, optional
+            The colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_resolution : `int`, optional
+            The resolution of the markers. For spheres, for instance, this is
+            the number of divisions along theta and phi.
+        step : `int` or ``None``, optional
+            If `int`, then one every `step` vertexes will be rendered.
+            If ``None``, then all vertexes will be rendered.
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
+        render_numbering : `bool`, optional
+            If ``True``, the points will be numbered.
+        numbers_colour : See Below, optional
+            The colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        numbers_size : `float` or ``None``, optional
+            The size of the numbers. This size can be seen as a scale factor
+            applied to the numbers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal numbers size
+            value will be set automatically.
 
         Returns
         -------
-        viewer : PointCloudViewer3d
-            The Menpo3D viewer object.
+        renderer : `menpo3d.visualize.PointGraphViewer3d`
+            The Menpo3D rendering object.
         """
         try:
-            from menpo3d.visualize import PointCloudViewer3d
-            return PointCloudViewer3d(figure_id, new_figure,
-                                      self.points).render()
+            from menpo3d.visualize import PointGraphViewer3d
+            edges = np.empty(0)
+            renderer = PointGraphViewer3d(figure_id, new_figure,
+                                          self.points, edges)
+            renderer.render(
+                render_lines=False, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_colour=marker_colour, marker_resolution=marker_resolution,
+                step=step, alpha=alpha, render_numbering=render_numbering,
+                numbers_colour=numbers_colour, numbers_size=numbers_size)
+            return renderer
         except ImportError:
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()
 
-    def _view_landmarks_3d(self, figure_id=None, new_figure=False,
-                           group=None):
+    def _view_landmarks_3d(self, group=None, with_labels=None,
+                           without_labels=None, figure_id=None,
+                           new_figure=True, render_lines=True,
+                           line_colour=None, line_width=4, render_markers=True,
+                           marker_style='sphere', marker_size=None,
+                           marker_colour=None, marker_resolution=8,
+                           step=None, alpha=1.0, render_numbering=False,
+                           numbers_colour='k', numbers_size=None):
         r"""
         Visualization of the PointCloud landmarks in 3D.
 
         Parameters
         ----------
+        with_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, only show the given label(s). Should **not** be
+            used with the ``without_labels`` kwarg.
+        without_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, show all except the given label(s). Should **not**
+            be used with the ``with_labels`` kwarg.
+        group : `str` or `None`, optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
         figure_id : `object`, optional
             The id of the figure to be used.
         new_figure : `bool`, optional
             If ``True``, a new figure is created.
-        group : `str`
-            The landmark group to visualize. If ``None`` is passed, the first
-            and only landmark group on the object will be visualized.
+        render_lines : `bool`, optional
+            If ``True``, then the lines will be rendered.
+        line_colour : See Below, optional
+            The colour of the lines. If ``None``, a different colour will be
+            automatically selected for each label.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+                or
+                None
+
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, then the markers will be rendered.
+        marker_style : `str`, optional
+            The style of the markers.
+            Example options ::
+
+                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
+                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
+                 arrow, axes, cone, cube, cylinder, point, sphere}
+
+        marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically.
+        marker_colour : See Below, optional
+            The colour of the markers. If ``None``, a different colour will be
+            automatically selected for each label.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+                or
+                None
+
+        marker_resolution : `int`, optional
+            The resolution of the markers. For spheres, for instance, this is
+            the number of divisions along theta and phi.
+        step : `int` or ``None``, optional
+            If `int`, then one every `step` vertexes will be rendered.
+            If ``None``, then all vertexes will be rendered.
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
+        render_numbering : `bool`, optional
+            If ``True``, the points will be numbered.
+        numbers_colour : See Below, optional
+            The colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        numbers_size : `float` or ``None``, optional
+            The size of the numbers. This size can be seen as a scale factor
+            applied to the numbers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal numbers size
+            value will be set automatically.
 
         Returns
         -------
-        viewer : LandmarkViewer3d
-            The Menpo3D viewer object.
+        renderer : `menpo3d.visualize.LandmarkViewer3d`
+            The Menpo3D rendering object.
         """
-        try:
-            from menpo3d.visualize import LandmarkViewer3d
-            self_renderer = self.view(figure_id=figure_id,
-                                      new_figure=new_figure)
-            return LandmarkViewer3d(self_renderer.figure, False,  self,
-                                    self.landmarks[group]).render()
-        except ImportError:
-            from menpo.visualize import Menpo3dMissingError
-            raise Menpo3dMissingError()
+        if not self.has_landmarks:
+            raise ValueError('PointCloud does not have landmarks attached, '
+                             'unable to view landmarks.')
+        self_view = self.view(figure_id=figure_id, new_figure=new_figure)
+        landmark_view = self.landmarks[group].view(
+            with_labels=with_labels, without_labels=without_labels,
+            figure_id=self_view.figure_id, new_figure=False,
+            render_lines=render_lines, line_colour=line_colour,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_colour=marker_colour, marker_resolution=marker_resolution,
+            step=step, alpha=alpha, render_numbering=render_numbering,
+            numbers_colour=numbers_colour, numbers_size=numbers_size)
+
+        return landmark_view
 
     def view_widget(self, browser_style='buttons', figure_size=(10, 8),
                     style='coloured'):

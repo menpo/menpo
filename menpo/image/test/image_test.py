@@ -146,6 +146,40 @@ def test_image_from_vector_custom_channels_no_copy():
     assert(is_same_array(image2.pixels, pixels2))
 
 
+def test_image_clip_pixels_no_args():
+    pixels = np.random.rand(3, 10, 20)
+    # add the noise of increased values
+    pixels *= 2.0
+    pixels[0, 0, 0] = 3.0
+    pixels[0, 0, 1] = - 0.1
+    image = Image(pixels, copy=False)
+    assert(image.pixels.max() > 1.0)
+    image2 = image.clip_pixels()
+    assert(image2.pixels.max() <= 1.0)
+    assert(image2.pixels.min() >= 0.0)
+
+
+def test_image_clip_pixels_cutom_max():
+    pixels = np.random.rand(3, 10, 20)
+    # add the noise of increased values
+    pixels *= 2.0
+    pixels[0, 0, 0] = 3.0
+    pixels[0, 0, 1] = - 0.1
+    image = Image(pixels, copy=False)
+    assert(image.pixels.max() > 1.0)
+    image2 = image.clip_pixels(maximum=0.9)
+    assert(image2.pixels.max() <= 0.9)
+    assert(image2.pixels.min() >= 0.0)
+
+
+def test_image_clip_pixels_cutom_max_uint():
+    pixels = (np.random.rand(3, 10, 20) * 255).astype(np.uint8)
+    # add the noise of increased values
+    pixels[0, 0, 0] = 255
+    image = Image(pixels, copy=False)
+    image2 = image.clip_pixels(maximum=200)
+    assert(image2.pixels.max() <= 200)
+
 @raises(ValueError)
 def test_boolean_image_wrong_round():
     BooleanImage.init_blank((12, 12), round='ads')

@@ -132,8 +132,8 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
 
     data = np.zeros((length, n_features), dtype=template_vector.dtype)
     if verbose:
-        print_dynamic('Allocated data matrix of size {} '
-                      '({} samples)'.format(bytes_str(data.nbytes), length))
+        print('Allocated data matrix of size {} '
+              '({} samples)'.format(bytes_str(data.nbytes), length))
 
     # now we can fill in the first element from the template
     data[0] = template_vector
