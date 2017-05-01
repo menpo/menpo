@@ -451,7 +451,7 @@ class MaskedImage(Image):
                  axes_font_size=10, axes_font_style='normal',
                  axes_font_weight='normal', axes_x_limits=None,
                  axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-                 figure_size=(10, 8)):
+                 figure_size=(7, 7)):
         r"""
         View the image using the default image viewer. This method will appear
         on the Image as ``view`` if the Image is 2D.
@@ -565,7 +565,7 @@ class MaskedImage(Image):
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
                            axes_x_ticks=None, axes_y_ticks=None,
-                           figure_size=(10, 8)):
+                           figure_size=(7, 7)):
         """
         Visualize the landmarks. This method will appear on the Image as
         ``view_landmarks`` if the Image is 2D.
