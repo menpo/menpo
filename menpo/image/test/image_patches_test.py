@@ -229,4 +229,4 @@ def test_create_patches_image():
     patches_image = _create_patches_image(patches, pc, patches_indices=range(17))
     assert(patches_image.n_channels == patches.shape[2])
     assert(patches_image.landmarks.n_groups == 1)
-    assert(patches_image.landmarks['patch_centers'].lms.n_points == 17)
+    assert(patches_image.landmarks['patch_centers'].n_points == 17)
