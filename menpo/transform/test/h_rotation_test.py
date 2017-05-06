@@ -105,3 +105,21 @@ def test_rotation2d_identity():
 
 def test_rotation3d_identity():
     assert_allclose(Rotation.init_identity(3).h_matrix, np.eye(4))
+
+
+def test_rotation3d_init_from_3d_ccw_angle_around_x():
+    assert_allclose(
+        Rotation.init_from_3d_ccw_angle_around_x(90).apply(np.array([0, 0, 1])),
+        np.array([0, -1, 0]), atol=1e-6)
+
+
+def test_rotation3d_init_from_3d_ccw_angle_around_y():
+    assert_allclose(
+        Rotation.init_from_3d_ccw_angle_around_y(90).apply(np.array([0, 0, 1])),
+        np.array([1, 0, 0]), atol=1e-6)
+
+
+def test_rotation3d_init_from_3d_ccw_angle_around_z():
+    assert_allclose(
+        Rotation.init_from_3d_ccw_angle_around_z(90).apply(np.array([0, 1, 0])),
+        np.array([-1, 0, 0]), atol=1e-6)
