@@ -15,6 +15,7 @@ env:
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.5
+    - PYTHON_VERSION: 3.6
 
 install:
 - wget https://raw.githubusercontent.com/menpo/condaci/v0.4.x/condaci.py -O condaci.py
