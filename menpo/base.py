@@ -684,11 +684,6 @@ class LazyList(collections.Sequence, Copyable):
         The type of the first item will be used to determine an appropriate
         visualization for the list of items.
 
-        Parameters
-        ----------
-        other : `collections.Sequence`
-            Sequence to concatenate with this list.
-
         Returns
         -------
         widget
@@ -704,12 +699,12 @@ class LazyList(collections.Sequence, Copyable):
             for the type of items in this :map:`LazyList`
         """
         try:
-            from menpowidgets import visualize_list
+            from menpowidgets import view_widget
         except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
         else:
-            return visualize_list(self)
+            return view_widget(self)
 
 
 def partial_doc(func, *args, **kwargs):
