@@ -13,21 +13,23 @@ from ..utils import (_norm_path, _possible_extensions_from_filepath,
 gzip_open = partial(gzip.open, compresslevel=3)
 
 
-def export_landmark_file(landmark_group, fp, extension=None, overwrite=False):
+def export_landmark_file(pointcloud, fp, extension=None, overwrite=False):
     r"""
-    Exports a given landmark group. The ``fp`` argument can be either
-    or a `str` or any Python type that acts like a file. If a file is provided,
-    the ``extension`` kwarg **must** be provided. If no
-    ``extension`` is provided and a `str` filepath is provided, then
-    the export type is calculated based on the filepath extension.
+    Exports a given shape. The ``fp`` argument can be either or a `str` or
+    any Python type that acts like a file. If a file is provided, the
+    ``extension`` kwarg **must** be provided. If no ``extension`` is provided
+    and a `str` filepath is provided, then the export type is calculated
+    based on the filepath extension.
 
     Due to the mix in string and file types, an explicit overwrite argument is
     used which is ``False`` by default.
 
     Parameters
     ----------
-    landmark_group : :map:`LandmarkGroup`
-        The landmark group to export.
+    pointcloud : :map:`PointCloud` or subclass
+        The landmarks to export. It can be any of :map:`PointCloud`,
+        :map:`PointUndirectedGraph`, :map:`PointDirectedGraph`,
+        :map:`PointTree` or :map:`LabelledPointUndirectedGraph`.
     fp : `Path` or `file`-like object
         The Path or file-like object to save the object at/into.
     extension : `str` or None, optional
@@ -50,7 +52,7 @@ def export_landmark_file(landmark_group, fp, extension=None, overwrite=False):
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    _export(landmark_group, fp, landmark_types, extension, overwrite)
+    _export(pointcloud, fp, landmark_types, extension, overwrite)
 
 
 def export_image(image, fp, extension=None, overwrite=False):

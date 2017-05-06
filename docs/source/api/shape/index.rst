@@ -46,6 +46,18 @@ Mix-ins of Graphs and :map:`PointCloud` for graphs with geometry.
   PointTree
 
 
+LabelledPointGraph
+------------------
+
+A subclass of :map:`PointUndirectedGraph` that allows the attaching of
+`labels` associated with semantic parts of the object.
+
+.. toctree::
+  :maxdepth: 2
+
+  LabelledPointUndirectedGraph
+
+
 Predefined Graphs
 -----------------
 
@@ -87,3 +99,4 @@ Shape Building
   :maxdepth: 2
 
   bounding_box
+  bounding_cuboid

@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.sparse as sparse
 
-from menpo.landmark import LandmarkGroup
 from . import (PointCloud, UndirectedGraph, DirectedGraph, Tree, TriMesh,
                PointUndirectedGraph, PointDirectedGraph, PointTree)
 
@@ -184,13 +183,10 @@ def stencil_grid(stencil, shape, dtype=None, format=None):
 
 
 def _get_points_and_number_of_vertices(shape):
-    if isinstance(shape, LandmarkGroup):
-        return shape.lms.points, shape.n_landmarks
-    elif isinstance(shape, PointCloud):
+    if isinstance(shape, PointCloud):
         return shape.points, shape.n_points
     else:
-        raise ValueError("shape must be either a LandmarkGroup or a "
-                         "PointCloud instance.")
+        raise ValueError("shape must be PointCloud instance.")
 
 
 def _get_star_graph_edges(vertices_list, root_vertex):
@@ -235,7 +231,7 @@ def empty_graph(shape, return_pointgraph=True):
 
     Parameters
     ----------
-    shape : :map:`PointCloud` or :map:`LandmarkGroup` or subclass
+    shape : :map:`PointCloud` or subclass
         The shape instance that defines the landmarks configuration based on
         which the graph will be created.
     return_pointgraph : `bool`, optional
@@ -269,7 +265,7 @@ def star_graph(shape, root_vertex, graph_cls=PointTree):
 
     Parameters
     ----------
-    shape : :map:`PointCloud` or :map:`LandmarkGroup` or subclass
+    shape : :map:`PointCloud` or subclass
         The shape instance that defines the landmarks configuration based on
         which the graph will be created.
     root_vertex : `int`
@@ -327,7 +323,7 @@ def complete_graph(shape, graph_cls=PointUndirectedGraph):
 
     Parameters
     ----------
-    shape : :map:`PointCloud` or :map:`LandmarkGroup` or subclass
+    shape : :map:`PointCloud` or subclass
         The shape instance that defines the landmarks configuration based on
         which the graph will be created.
     graph_cls : `Graph` or `PointGraph` subclass
@@ -372,7 +368,7 @@ def chain_graph(shape, graph_cls=PointDirectedGraph, closed=False):
 
     Parameters
     ----------
-    shape : :map:`PointCloud` or :map:`LandmarkGroup` or subclass
+    shape : :map:`PointCloud` or subclass
         The shape instance that defines the landmarks configuration based on
         which the graph will be created.
     graph_cls : `Graph` or `PointGraph` subclass
@@ -439,7 +435,7 @@ def delaunay_graph(shape, return_pointgraph=True):
 
     Parameters
     ----------
-    shape : :map:`PointCloud` or :map:`LandmarkGroup` or subclass
+    shape : :map:`PointCloud` or subclass
         The shape instance that defines the landmarks configuration based on
         which the graph will be created.
     return_pointgraph : `bool`, optional
@@ -453,17 +449,12 @@ def delaunay_graph(shape, return_pointgraph=True):
         The generated graph.
     """
     # get TriMesh instance that estimates the Delaunay triangulation
-    if isinstance(shape, LandmarkGroup):
-        trimesh = TriMesh(shape.lms.points)
-        n_vertices = shape.n_landmarks
-        points = shape.lms.points
-    elif isinstance(shape, PointCloud):
+    if isinstance(shape, PointCloud):
         trimesh = TriMesh(shape.points)
         n_vertices = shape.n_points
         points = shape.points
     else:
-        raise ValueError("shape must be either a LandmarkGroup or a "
-                         "PointCloud instance.")
+        raise ValueError("shape must be a PointCloud instance or subclass.")
 
     # get edges
     edges = trimesh.edge_indices()

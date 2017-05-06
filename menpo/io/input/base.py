@@ -84,7 +84,8 @@ def _import_builtin_asset(data_path_to, object_types, landmark_types,
     Returns
     -------
     asset :
-        An instantiated :map:`Image` or :map:`LandmarkGroup` asset.
+        An instantiated :map:`Image`, :map:`PointCloud` or
+        :map:`LabelledPointUndirectedGraph` asset.
     """
     if kwargs != {}:
         normalize = _parse_deprecated_normalise(kwargs.get('normalise'),
@@ -342,10 +343,11 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
 
 
 def import_landmark_file(filepath, asset=None):
-    r"""Single landmark group importer.
+    r"""Single landmark file importer.
 
-    If a landmark file is found at ``filepath``, returns a
-    :map:`LandmarkGroup` representing it.
+    If a landmark file is found at ``filepath``, returns a :map:`PointCloud` or
+    :map:`LabelledPointUndirectedGraph` depending on the format of the
+    landmark file.
 
     Parameters
     ----------
@@ -354,8 +356,8 @@ def import_landmark_file(filepath, asset=None):
 
     Returns
     -------
-    landmark_group : :map:`LandmarkGroup`
-        The :map:`LandmarkGroup` that the file format represents.
+    landmarks : :map:`LabelledPointUndirectedGraph` or :map:`PointCloud`
+        The shape that the file format represents.
     """
     return _import(filepath, image_landmark_types, asset=asset)
 
@@ -645,8 +647,8 @@ def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
                           as_generator=False, verbose=False):
     r"""Import Multiple landmark files.
 
-    For each landmark file found returns an importer than
-    returns a :map:`LandmarkGroup`.
+    For each landmark file found returns an importer then
+    returns a :map:`LabelledPointUndirectedGraph` or a :map:`PointCloud`.
 
     Note that this is a function returns a :map:`LazyList`. Therefore, the
     function will return immediately and indexing into the returned list
@@ -675,9 +677,10 @@ def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
 
     Returns
     -------
-    lazy_list : :map:`LazyList` or generator of :map:`LandmarkGroup`
-        A :map:`LazyList` or generator yielding :map:`LandmarkGroup` instances
-        found to match the glob pattern provided.
+    lazy_list : :map:`LazyList` or generator
+        A :map:`LazyList` or generator yielding :map:`PointCloud` or
+        :map:`LabelledPointUndirectedGraph` instances found to match the glob
+        pattern provided.
 
     Raises
     ------
@@ -686,54 +689,6 @@ def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
     """
     return _import_glob_lazy_list(pattern, image_landmark_types,
                                   max_assets=max_landmarks, shuffle=shuffle,
-                                  as_generator=as_generator, verbose=verbose)
-
-
-def import_pickles(pattern, max_pickles=None, shuffle=False, as_generator=False,
-                   verbose=False):
-    r"""Import multiple pickle files.
-
-    Menpo unambiguously uses ``.pkl`` as it's choice of extension for pickle
-    files. Menpo also supports automatic importing of gzip compressed pickle
-    files - matching files with extension ``pkl.gz`` will be automatically
-    un-gzipped and imported.
-
-    Note that this is a function returns a :map:`LazyList`. Therefore, the
-    function will return immediately and indexing into the returned list
-    will load the landmarks at run time. If all pickles should be loaded, then
-    simply wrap the returned :map:`LazyList` in a Python `list`.
-
-    Parameters
-    ----------
-    pattern : `str`
-        The glob path pattern to search for pickles. Every pickle file found
-        to match the glob will be imported one by one.
-    max_pickles : positive `int`, optional
-        If not ``None``, only import the first ``max_pickles`` found.
-        Else, import all.
-    shuffle : `bool`, optional
-        If ``True``, the order of the returned pickles will be randomised. If
-        ``False``, the order of the returned pickles will be alphanumerically
-        ordered.
-    as_generator : `bool`, optional
-        If ``True``, the function returns a generator and assets will be yielded
-        one after another when the generator is iterated over.
-    verbose : `bool`, optional
-        If ``True`` progress of the importing will be dynamically reported.
-
-    Returns
-    -------
-    lazy_list : :map:`LazyList` or generator of Python objects
-        A :map:`LazyList` or generator yielding Python objects inside the
-        pickle files found to match the glob pattern provided.
-
-    Raises
-    ------
-    ValueError
-        If no pickles are found at the provided glob.
-    """
-    return _import_glob_lazy_list(pattern, pickle_types,
-                                  max_assets=max_pickles, shuffle=shuffle,
                                   as_generator=as_generator, verbose=verbose)
 
 

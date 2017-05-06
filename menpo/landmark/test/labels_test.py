@@ -1,8 +1,7 @@
 import menpo.landmark.labels as labels
-from menpo.landmark import LandmarkGroup
 import inspect
 import numpy as np
-from menpo.shape import PointCloud, bounding_box
+from menpo.shape import PointCloud
 
 
 EXEMPT_FUNCTIONS = {'labeller', 'bounding_box_to_bounding_box',
@@ -13,7 +12,6 @@ def check_label_func(func, input_n_points, output_n_points):
     # Could be any dimensionality
     array = np.zeros([input_n_points, 2])
     pcloud = PointCloud(array)
-    lmark_g = LandmarkGroup.init_with_all_label(pcloud)
 
     array_result = func(array)
     assert isinstance(array_result, PointCloud)
@@ -23,12 +21,9 @@ def check_label_func(func, input_n_points, output_n_points):
     assert isinstance(pcloud_result, PointCloud)
     assert pcloud_result.n_points == output_n_points
 
-    lmark_g_result = func(lmark_g)
-    assert isinstance(lmark_g_result, LandmarkGroup)
-    assert lmark_g_result.lms.n_points == output_n_points
-
 
 def test_labels():
+    assert 1
     for fname, func in inspect.getmembers(labels,
                                           predicate=inspect.isfunction):
         if fname not in EXEMPT_FUNCTIONS:

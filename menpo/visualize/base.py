@@ -102,6 +102,18 @@ class Renderer(object):
         """
         pass
 
+    def clear_figure(self):
+        r"""
+        Abstract method for clearing the current figure.
+        """
+        pass
+
+    def force_draw(self):
+        r"""
+        Abstract method for forcing the current figure to render.
+        """
+        pass
+
 
 class viewwrapper(object):
     r"""
@@ -180,7 +192,6 @@ class LandmarkableViewable(object):
     def _view_landmarks_3d(self, **kwargs):
         raise NotImplementedError('3D Landmark Viewing is not supported.')
 
-
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
     MatplotlibLandmarkViewer2d, MatplotlibAlignmentViewer2d,
@@ -228,7 +239,14 @@ class ImageViewer(object):
 
     def __init__(self, figure_id, new_figure, dimensions, pixels,
                  channels=None, mask=None):
-        pixels = pixels.copy()
+        if len(pixels.shape) == 3 and pixels.shape[0] == 3:
+            # then probably an RGB image, so ensure the clipped pixels.
+            from menpo.image import Image
+            image = Image(pixels, copy=False)
+            image_clipped = image.clip_pixels()
+            pixels = image_clipped.pixels
+        else:
+            pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
         self.dimensions = dimensions
@@ -507,7 +525,7 @@ def plot_curve(x_axis, y_axis, figure_id=None, new_figure=True,
                legend_shadow=False, legend_rounded_corners=False,
                render_axes=True, axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
-               figure_size=(10, 8), render_grid=True, grid_line_style='--',
+               figure_size=(7, 7), render_grid=True, grid_line_style='--',
                grid_line_width=1):
     r"""
     Plot a single or multiple curves on the same figure.
@@ -859,7 +877,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8)):
+                 axes_y_ticks=None, figure_size=(7, 7)):
     r"""
     Method that renders the provided `patches` on a canvas. The user can
     choose whether to render the patch centers (`render_centers`) as well as
@@ -1073,7 +1091,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
     # Render patches image
     if render_centers:
         patch_view = patches_image.view_landmarks(
-            channels=channels, group='selected_patch_centers', figure_id=figure_id,
+            channels=channels, group='patch_centers', figure_id=figure_id,
             new_figure=new_figure, interpolation=interpolation,
             cmap_name=cmap_name, alpha=alpha, render_lines=render_lines,
             line_colour=line_colour, line_style=line_style,
@@ -1110,7 +1128,7 @@ def view_patches(patches, patch_centers, patches_indices=None,
     if render_patches_bboxes:
         patch_shape = [patches.shape[3], patches.shape[4]]
         render_rectangles_around_patches(
-            patches_image.landmarks['selected_patch_centers'].lms.points,
+            patches_image.landmarks['patch_centers'].points,
             patch_shape, image_view=True, line_colour=bboxes_line_colour,
             line_style=bboxes_line_style, line_width=bboxes_line_width,
             interpolation=interpolation)
@@ -1128,7 +1146,7 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
                            marker_style='o', render_axes=False,
                            axes_font_name='sans-serif', axes_font_size=10,
                            axes_font_style='normal', axes_font_weight='normal',
-                           crop_proportion=0.1, figure_size=(10, 8)):
+                           crop_proportion=0.1, figure_size=(7, 7)):
     r"""
     Method that renders the Gaussian ellipses that correspond to a set of
     covariance matrices and mean vectors. Naturally, this only works for

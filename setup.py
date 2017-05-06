@@ -10,16 +10,21 @@ SYS_PLATFORM = platform.system().lower()
 IS_LINUX = 'linux' in SYS_PLATFORM
 IS_OSX = 'darwin' == SYS_PLATFORM
 IS_WIN = 'windows' == SYS_PLATFORM
+
 # Get Numpy include path without importing it
 NUMPY_INC_PATHS = [os.path.join(r, 'numpy', 'core', 'include') 
                    for r in site.getsitepackages() if 
                    os.path.isdir(os.path.join(r, 'numpy', 'core', 'include'))]
-if len(NUMPY_INC_PATHS) != 1:
-    print("Warning expected a single numpy include dir and found "
-          "{}: {}".format(len(NUMPY_INC_PATHS), ', '.join(NUMPY_INC_PATHS)))
-    NUMPY_INC_PATH = ''
-else:
-    NUMPY_INC_PATH = NUMPY_INC_PATHS[0]
+if len(NUMPY_INC_PATHS) == 0:
+    raise ValueError("Could not find numpy include dir - cannot proceed with "
+                     "compilation of cython modules.")
+elif len(NUMPY_INC_PATHS) > 1:
+    print("Found {} numpy include dirs: "
+          "{}".format(len(NUMPY_INC_PATHS), ', '.join(NUMPY_INC_PATHS)))
+    print("Taking first (highest precedence on path): {}".format(
+        NUMPY_INC_PATHS[0]))
+NUMPY_INC_PATH = NUMPY_INC_PATHS[0]
+
 
 # ---- C/C++ EXTENSIONS ---- #
 # Stolen (and modified) from the Cython documentation:
@@ -87,7 +92,7 @@ cython_exts = cythonize(cython_modules, quiet=True)
 install_requires = ['numpy>=1.10,<2.0',
                     'scipy>=0.16,<1.0',
                     'matplotlib>=1.4,<2.0',
-                    'pillow>=3.0,<4.0']
+                    'pillow>=3.0,<5.0']
 
 if sys.version_info.major == 2:
     install_requires.append('pathlib==1.0')
@@ -101,7 +106,6 @@ setup(name='menpo',
       ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=install_requires,
-      package_data={'menpo': ['data/*'],
-                    '': ['*.pxd', '*.pyx', '*.h', '*.cpp']},
+      package_data={'menpo': ['data/*']},
       tests_require=['nose', 'mock']
 )

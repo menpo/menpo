@@ -19,7 +19,7 @@ def test_breaking_bad_import():
     img = mio.import_builtin_asset('breakingbad.jpg')
     assert(img.shape == (1080, 1920))
     assert(img.n_channels == 3)
-    assert(img.landmarks['PTS'].n_landmarks == 68)
+    assert(img.landmarks['PTS'].n_points == 68)
 
 
 def test_breaking_bad_import_kwargs():
@@ -31,31 +31,31 @@ def test_takeo_import():
     img = mio.import_builtin_asset('takeo.ppm')
     assert(img.shape == (225, 150))
     assert(img.n_channels == 3)
-    assert(img.landmarks['PTS'].n_landmarks == 68)
+    assert(img.landmarks['PTS'].n_points == 68)
 
 
 def test_einstein_import():
     img = mio.import_builtin_asset('einstein.jpg')
     assert(img.shape == (1024, 817))
     assert(img.n_channels == 1)
-    assert(img.landmarks['PTS'].n_landmarks == 68)
+    assert(img.landmarks['PTS'].n_points == 68)
 
 
 def test_lenna_import():
     img = mio.import_builtin_asset('lenna.png')
     assert(img.shape == (512, 512))
     assert(img.n_channels == 3)
-    assert(img.landmarks['LJSON'].n_landmarks == 68)
+    assert(img.landmarks['LJSON'].n_points == 68)
 
 
 def test_import_builtin_ljson():
     lmarks = mio.import_builtin_asset('lenna.ljson')
-    assert(lmarks.n_landmarks == 68)
+    assert(lmarks.n_points == 68)
 
 
 def test_import_builtin_pts():
     lmarks = mio.import_builtin_asset('einstein.pts')
-    assert(lmarks.n_landmarks == 68)
+    assert(lmarks.n_points == 68)
 
 
 def test_path():
@@ -125,8 +125,8 @@ def test_custom_landmark_resolver():
     assert(img.has_landmarks)
 
     takeo_lmarks = mio.import_builtin_asset.takeo_pts()
-    np.allclose(img.landmarks['PTS'].lms.points,
-                takeo_lmarks.lms.points)
+    np.allclose(img.landmarks['PTS'].points,
+                takeo_lmarks.points)
 
 
 def test_landmark_resolver_none():
@@ -422,7 +422,7 @@ def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
 
     with warnings.catch_warnings(record=True) as w:
         lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
-    nan_points = np.isnan(lmark.lms.points)
+    nan_points = np.isnan(lmark.points)
 
     # Should raise deprecation warning
     assert len(w) == 1
@@ -452,7 +452,7 @@ def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
     is_file.return_value = True
 
     lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
-    nan_points = np.isnan(lmark.lms.points)
+    nan_points = np.isnan(lmark.points)
     assert nan_points[0, 0]  # y-coord None point is nan
     assert not nan_points[0, 1]  # x-coord point is not nan
     assert np.all(nan_points[1, :]) # all of leye label is nan
@@ -671,8 +671,7 @@ def test_register_image_importer(is_file):
 @patch('menpo.io.input.base.Path.is_file')
 def test_register_landmark_importer(is_file):
     from menpo.shape import PointCloud
-    from menpo.landmark import LandmarkGroup
-    lmark = LandmarkGroup.init_with_all_label(PointCloud.init_2d_grid((1, 1)))
+    lmark = PointCloud.init_2d_grid((1, 1))
 
     def foo_importer(filepath, **kwargs):
         return lmark

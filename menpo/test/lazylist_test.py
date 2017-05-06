@@ -1,5 +1,5 @@
 import collections
-
+import numpy as np
 from mock import Mock
 from nose.tools import raises
 
@@ -161,3 +161,15 @@ def test_lazylist_add_list():
     assert new_ll._callables[0] is a
     assert new_ll._callables[1] is not b
     assert new_ll[1] is b
+
+
+@raises(ValueError)
+def test_lazylist_add_non_iterable_non_lazy_list_rases_value_error():
+    LazyList([1]) + None
+
+
+def test_lazylist_slice_with_ndarray():
+    index = np.array([1, 0, 3], dtype=np.int)
+    l = LazyList.init_from_iterable(['a', 'b', 'c', 'd', 'e'])
+    l_indexed = l[index]
+    assert list(l_indexed) == ['b', 'a', 'd']

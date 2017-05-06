@@ -2,6 +2,7 @@ import collections
 from itertools import chain
 from functools import partial, wraps
 import os.path
+from pprint import pformat
 import warnings
 
 
@@ -36,6 +37,20 @@ class Copyable(object):
             except AttributeError:
                 new.__dict__[k] = v
         return new
+
+    def __str__(self):
+        # We have to be sure that we implement __str__ otherwise the __repr__
+        # implementation below will lead to an infinite recursion.
+        return 'Copyable Menpo Object with keys:\n{}'.format(
+            pformat(self.__dict__))
+
+    def __repr__(self):
+        # Most classes in Menpo derive from Copyable, so it's a handy place
+        # to implement Menpo-wide behavior. For use in the notebook, we find
+        # __repr__ representations not of very much use, so we default to
+        # showing the string representation for this case. See
+        # https://github.com/menpo/menpo/issues/752 for discussion.
+        return self.__str__()
 
 
 class Vectorizable(Copyable):
@@ -472,12 +487,14 @@ class LazyList(collections.Sequence, Copyable):
         self._callables = callables
 
     def __getitem__(self, slice_):
-        if isinstance(slice_, int) or hasattr(slice_, '__index__'):
-            # PEP 357 and single integer index access - returns element
-            return self._callables[slice_]()
-        elif isinstance(slice_, collections.Iterable):
+        # note that we have to check for iterable *before* __index__ as ndarray
+        # has both (but we expect the iteration behavior when slicing)
+        if isinstance(slice_, collections.Iterable):
             # An iterable object is passed - return a new LazyList
             return LazyList([self._callables[s] for s in slice_])
+        elif isinstance(slice_, int) or hasattr(slice_, '__index__'):
+            # PEP 357 and single integer index access - returns element
+            return self._callables[slice_]()
         else:
             # A slice or unknown type is passed - let List handle it
             return LazyList(self._callables[slice_])
@@ -645,16 +662,20 @@ class LazyList(collections.Sequence, Copyable):
         lazy : `LazyList`
             A new LazyList formed of the concatenation of this list and
             the ``other`` list.
+
+        Raises
+        ------
+        ValueError
+            If other is not a LazyList or an Iterable
         """
-        new = self.copy()
-        # If the passed Sequence was not lazy then fake it being lazy by
-        # wrapping it in a function that just returns the value.
-        if not isinstance(other, LazyList):
-            new_callables = LazyList.init_from_iterable(other)._callables
+        if isinstance(other, LazyList):
+            return LazyList(self._callables + other._callables)
+        elif isinstance(other, collections.Iterable):
+            return self + LazyList.init_from_iterable(other)
         else:
-            new_callables = other._callables
-        new._callables = new._callables + new_callables
-        return new
+            raise ValueError(
+                'Can only add another LazyList or an Iterable to a LazyList '
+                '- {} is neither'.format(type(other)))
 
     def view_widget(self):
         r"""
@@ -714,3 +735,29 @@ def partial_doc(func, *args, **kwargs):
     p = partial(func, *args, **kwargs)
     p.__doc__ = func.__doc__
     return p
+
+
+def copy_landmarks_and_path(source, target):
+    r"""
+    Transfers over the landmarks and path, if any, from one object to another.
+    This should be called in conversion and copy functions.
+
+    See `.as_masked()` on :map:`Image` as an example of usage.
+
+    Parameters
+    ----------
+    source : :map:`Landmarkable`
+        The object who's landmarks and path, if any, will be copied
+    target : :map:`Landmarkable`
+        The object who will have landmarks and path set on
+
+    Returns
+    -------
+    target : :map:`Landmarkable`
+        The updated target.
+    """
+    if source.has_landmarks:
+        target.landmarks = source.landmarks
+    if hasattr(source, 'path'):
+        target.path = source.path
+    return target

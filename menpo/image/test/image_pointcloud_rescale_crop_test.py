@@ -35,8 +35,8 @@ def test_rescale_to_diagonal_return_transform():
     img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
-    assert_allclose(img_back.landmarks['test'].lms.points,
-                    img.landmarks['test'].lms.points)
+    assert_allclose(img_back.landmarks['test'].points,
+                    img.landmarks['test'].points)
 
 
 def test_crop_to_pointcloud():
@@ -79,5 +79,5 @@ def test_crop_to_landmarks_return_transform():
     img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
-    assert_allclose(img_back.landmarks['test'].lms.points,
-                    img.landmarks['test'].lms.points)
+    assert_allclose(img_back.landmarks['test'].points,
+                    img.landmarks['test'].points)

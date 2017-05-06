@@ -93,8 +93,8 @@ def test_pointcloud_copy_method():
     p_copy = p.copy()
 
     assert (not is_same_array(p_copy.points, p.points))
-    assert (not is_same_array(p_copy.landmarks['test'].lms.points,
-                              p.landmarks['test'].lms.points))
+    assert (not is_same_array(p_copy.landmarks['test'].points,
+                              p.landmarks['test'].points))
 
 
 def test_pointcloud_copy_false():
@@ -185,12 +185,14 @@ def test_pointcloud_bounding_box():
     assert_allclose(bb_bounds[1], [1., 2.])
 
 
-@raises(ValueError)
-def test_pointcloud_bounding_box_3d_fail():
-    points = np.array([[0, 0, 0],
-                       [1, 1, 1]])
+def test_pointcloud_bounding_box_3d():
+    points = np.array([[1., 2., 3.],
+                       [3., 2., 1.]])
     pc = PointCloud(points)
-    pc.bounding_box()
+    bb = pc.bounding_box()
+    bb_bounds = bb.bounds()
+    assert_allclose(bb_bounds[0], [1., 2., 1.])
+    assert_allclose(bb_bounds[1], [3., 2., 3.])
 
 
 def test_bounding_box_creation():
