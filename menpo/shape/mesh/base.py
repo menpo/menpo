@@ -626,7 +626,7 @@ class TriMesh(PointCloud):
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8), label=None, **kwargs):
+                 axes_y_ticks=None, figure_size=(7, 7), label=None, **kwargs):
         r"""
         Visualization of the TriMesh in 2D.
 
@@ -779,6 +779,333 @@ class TriMesh(PointCloud):
                 axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
                 axes_y_ticks=axes_y_ticks, figure_size=figure_size, label=label)
 
+    def _view_landmarks_2d(self, group=None, with_labels=None,
+                           without_labels=None, figure_id=None,
+                           new_figure=False, image_view=True,
+                           render_lines=True, line_colour='k',
+                           line_style='-', line_width=2,
+                           render_markers=True, marker_style='s', marker_size=7,
+                           marker_face_colour='k', marker_edge_colour='k',
+                           marker_edge_width=1., render_lines_lms=True,
+                           line_colour_lms=None, line_style_lms='-',
+                           line_width_lms=1, render_markers_lms=True,
+                           marker_style_lms='o', marker_size_lms=5,
+                           marker_face_colour_lms=None,
+                           marker_edge_colour_lms=None,
+                           marker_edge_width_lms=1., render_numbering=False,
+                           numbers_horizontal_align='center',
+                           numbers_vertical_align='bottom',
+                           numbers_font_name='sans-serif', numbers_font_size=10,
+                           numbers_font_style='normal',
+                           numbers_font_weight='normal',
+                           numbers_font_colour='k', render_legend=False,
+                           legend_title='', legend_font_name='sans-serif',
+                           legend_font_style='normal', legend_font_size=10,
+                           legend_font_weight='normal',
+                           legend_marker_scale=None, legend_location=2,
+                           legend_bbox_to_anchor=(1.05, 1.),
+                           legend_border_axes_pad=None, legend_n_columns=1,
+                           legend_horizontal_spacing=None,
+                           legend_vertical_spacing=None, legend_border=True,
+                           legend_border_padding=None, legend_shadow=False,
+                           legend_rounded_corners=False, render_axes=False,
+                           axes_font_name='sans-serif', axes_font_size=10,
+                           axes_font_style='normal', axes_font_weight='normal',
+                           axes_x_limits=None, axes_y_limits=None,
+                           axes_x_ticks=None, axes_y_ticks=None,
+                           figure_size=(7, 7)):
+        """
+        Visualize the landmarks. This method will appear on the `TriMesh` as
+        ``view_landmarks``.
+
+        Parameters
+        ----------
+        group : `str` or``None`` optional
+            The landmark group to be visualized. If ``None`` and there are more
+            than one landmark groups, an error is raised.
+        with_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, only show the given label(s). Should **not** be
+            used with the ``without_labels`` kwarg.
+        without_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, show all except the given label(s). Should **not**
+            be used with the ``with_labels`` kwarg.
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        image_view : `bool`, optional
+            If ``True`` the PointCloud will be viewed as if it is in the image
+            coordinate system.
+        render_lines : `bool`, optional
+            If ``True``, the edges will be rendered.
+        line_colour : See Below, optional
+            The colour of the lines.
+            Example options::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_style : ``{-, --, -., :}``, optional
+            The style of the lines.
+        line_width : `float`, optional
+            The width of the lines.
+        render_markers : `bool`, optional
+            If ``True``, the markers will be rendered.
+        marker_style : See Below, optional
+            The style of the markers. Example options ::
+
+                {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
+        marker_size : `int`, optional
+            The size of the markers in points.
+        marker_face_colour : See Below, optional
+            The face (filling) colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_colour : See Below, optional
+            The edge colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+        render_lines_lms : `bool`, optional
+            If ``True``, the edges of the landmarks will be rendered.
+        line_colour_lms : See Below, optional
+            The colour of the lines of the landmarks.
+            Example options::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        line_style_lms : ``{-, --, -., :}``, optional
+            The style of the lines of the landmarks.
+        line_width_lms : `float`, optional
+            The width of the lines of the landmarks.
+        render_markers : `bool`, optional
+            If ``True``, the markers of the landmarks will be rendered.
+        marker_style : See Below, optional
+            The style of the markers of the landmarks. Example options ::
+
+                {., ,, o, v, ^, <, >, +, x, D, d, s, p, *, h, H, 1, 2, 3, 4, 8}
+
+        marker_size : `int`, optional
+            The size of the markers of the landmarks in points.
+        marker_face_colour : See Below, optional
+            The face (filling) colour of the markers of the landmarks.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_colour : See Below, optional
+            The edge colour of the markers of the landmarks.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        marker_edge_width : `float`, optional
+            The width of the markers' edge of the landmarks.
+        render_numbering : `bool`, optional
+            If ``True``, the landmarks will be numbered.
+        numbers_horizontal_align : ``{center, right, left}``, optional
+            The horizontal alignment of the numbers' texts.
+        numbers_vertical_align : ``{center, top, bottom, baseline}``, optional
+            The vertical alignment of the numbers' texts.
+        numbers_font_name : See Below, optional
+            The font of the numbers. Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        numbers_font_size : `int`, optional
+            The font size of the numbers.
+        numbers_font_style : ``{normal, italic, oblique}``, optional
+            The font style of the numbers.
+        numbers_font_weight : See Below, optional
+            The font weight of the numbers.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        numbers_font_colour : See Below, optional
+            The font colour of the numbers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+
+        render_legend : `bool`, optional
+            If ``True``, the legend will be rendered.
+        legend_title : `str`, optional
+            The title of the legend.
+        legend_font_name : See below, optional
+            The font of the legend. Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        legend_font_style : ``{normal, italic, oblique}``, optional
+            The font style of the legend.
+        legend_font_size : `int`, optional
+            The font size of the legend.
+        legend_font_weight : See Below, optional
+            The font weight of the legend.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold, demibold, demi, bold, heavy, extra bold, black}
+
+        legend_marker_scale : `float`, optional
+            The relative size of the legend markers with respect to the original
+        legend_location : `int`, optional
+            The location of the legend. The predefined values are:
+
+            =============== ==
+            'best'          0
+            'upper right'   1
+            'upper left'    2
+            'lower left'    3
+            'lower right'   4
+            'right'         5
+            'center left'   6
+            'center right'  7
+            'lower center'  8
+            'upper center'  9
+            'center'        10
+            =============== ==
+
+        legend_bbox_to_anchor : (`float`, `float`) `tuple`, optional
+            The bbox that the legend will be anchored.
+        legend_border_axes_pad : `float`, optional
+            The pad between the axes and legend border.
+        legend_n_columns : `int`, optional
+            The number of the legend's columns.
+        legend_horizontal_spacing : `float`, optional
+            The spacing between the columns.
+        legend_vertical_spacing : `float`, optional
+            The vertical space between the legend entries.
+        legend_border : `bool`, optional
+            If ``True``, a frame will be drawn around the legend.
+        legend_border_padding : `float`, optional
+            The fractional whitespace inside the legend border.
+        legend_shadow : `bool`, optional
+            If ``True``, a shadow will be drawn behind legend.
+        legend_rounded_corners : `bool`, optional
+            If ``True``, the frame's corners will be rounded (fancybox).
+        render_axes : `bool`, optional
+            If ``True``, the axes will be rendered.
+        axes_font_name : See Below, optional
+            The font of the axes. Example options ::
+
+                {serif, sans-serif, cursive, fantasy, monospace}
+
+        axes_font_size : `int`, optional
+            The font size of the axes.
+        axes_font_style : ``{normal, italic, oblique}``, optional
+            The font style of the axes.
+        axes_font_weight : See Below, optional
+            The font weight of the axes.
+            Example options ::
+
+                {ultralight, light, normal, regular, book, medium, roman,
+                semibold,demibold, demi, bold, heavy, extra bold, black}
+
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left of the PointCloud as a percentage of the PointCloud's
+            width. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom of the PointCloud as a percentage of the PointCloud's
+            height. If `tuple` or `list`, then it defines the axis limits. If
+            ``None``, then the limits are set automatically.
+        axes_x_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the x axis.
+        axes_y_ticks : `list` or `tuple` or ``None``, optional
+            The ticks of the y axis.
+        figure_size : (`float`, `float`) `tuple` or ``None`` optional
+            The size of the figure in inches.
+
+        Raises
+        ------
+        ValueError
+            If both ``with_labels`` and ``without_labels`` are passed.
+        ValueError
+            If the landmark manager doesn't contain the provided group label.
+        """
+        if not self.has_landmarks:
+            raise ValueError('PointGraph does not have landmarks attached, '
+                             'unable to view landmarks.')
+        self_view = self.view(figure_id=figure_id, new_figure=new_figure,
+                              image_view=image_view, figure_size=figure_size,
+                              render_markers=render_markers,
+                              marker_style=marker_style,
+                              marker_size=marker_size,
+                              marker_face_colour=marker_face_colour,
+                              marker_edge_colour=marker_edge_colour,
+                              marker_edge_width=marker_edge_width,
+                              render_lines=render_lines,
+                              line_colour=line_colour, line_style=line_style,
+                              line_width=line_width)
+        # correct group label in legend
+        if group is None:
+            group = self.landmarks.group_labels[0]
+        landmark_view = self.landmarks[group].view(
+            with_labels=with_labels, without_labels=without_labels,
+            figure_id=self_view.figure_id, new_figure=False, group=group,
+            image_view=image_view, render_lines=render_lines_lms,
+            line_colour=line_colour_lms, line_style=line_style_lms,
+            line_width=line_width_lms, render_markers=render_markers_lms,
+            marker_style=marker_style_lms, marker_size=marker_size_lms,
+            marker_face_colour=marker_face_colour_lms,
+            marker_edge_colour=marker_edge_colour_lms,
+            marker_edge_width=marker_edge_width_lms,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_legend=render_legend, legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
+
+        return landmark_view
+
     def _view_3d(self, figure_id=None, new_figure=True, mesh_type='wireframe',
                  line_width=2, colour='r', marker_style='sphere',
                  marker_size=None, marker_resolution=8, normals=None,
@@ -891,27 +1218,3 @@ class TriMesh(PointCloud):
         except ImportError:
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()
-
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
-                    style='coloured'):
-        r"""
-        Visualization of the TriMesh using an interactive widget.
-
-        Parameters
-        ----------
-        browser_style : {``'buttons'``, ``'slider'``}, optional
-            It defines whether the selector of the objects will have the form of
-            plus/minus buttons or a slider.
-        figure_size : (`int`, `int`) `tuple`, optional
-            The initial size of the rendered figure.
-        style : {``'coloured'``, ``'minimal'``}, optional
-            If ``'coloured'``, then the style of the widget will be coloured. If
-            ``minimal``, then the style is simple using black and white colours.
-        """
-        try:
-            from menpowidgets import visualize_pointclouds
-            visualize_pointclouds(self, figure_size=figure_size, style=style,
-                                  browser_style=browser_style)
-        except ImportError:
-            from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()

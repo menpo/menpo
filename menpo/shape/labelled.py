@@ -7,6 +7,7 @@ from menpo.base import Copyable
 from menpo.shape import PointUndirectedGraph, PointCloud, TriMesh
 from menpo.shape.graph import (_convert_edges_to_symmetric_adjacency_matrix,
                                PointGraph)
+from menpo.visualize import viewwrapper
 
 
 def indices_to_masks(labels_to_indices, n_points):
@@ -747,27 +748,40 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
-                    style='coloured'):
+    @viewwrapper
+    def view_widget(self, ):
         r"""
-        Visualizes the labelled point undirected graph object using an
-        interactive widget.
+        Abstract method for viewing with an interactive widget. See the
+        :map:`viewwrapper` documentation for an explanation of how the
+        `view_widget` method works.
+        """
+        pass
+
+    def _view_widget_2d(self, figure_size=(7, 7)):
+        r"""
+        Visualization of the LabelledPointUndirectedGraph using an interactive 
+        widget.
 
         Parameters
         ----------
-        browser_style : {``'buttons'``, ``'slider'``}, optional
-            It defines whether the selector of the landmark managers will have
-            the form of plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
-        style : {``'coloured'``, ``'minimal'``}, optional
-            If ``'coloured'``, then the style of the widget will be coloured. If
-            ``minimal``, then the style is simple using black and white colours.
         """
         try:
-            from menpowidgets import visualize_pointclouds
-            visualize_pointclouds(self, figure_size=figure_size, style=style,
-                                  browser_style=browser_style)
+            from menpowidgets import view_widget
+            view_widget(self, figure_size=figure_size)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
+
+    def _view_widget_3d(self):
+        r"""
+        Visualization of the LabelledPointUndirectedGraph using an interactive 
+        widget.
+        """
+        try:
+            from menpowidgets import view_widget
+            view_widget(self)
         except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()

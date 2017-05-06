@@ -42,14 +42,18 @@ def labelledpointundirectedgraph_view_widget_test():
 @patch('menpowidgets.visualize_landmarks', menpowidgets_mock)
 @raises(MenpowidgetsMissingError)
 def landmarkmanager_view_widget_test():
-    LandmarkManager().view_widget()
+    l = LandmarkManager()
+    l['test'] = PointCloud(pcloud2d)
+    l.view_widget()
 
 
 @surrogate('menpowidgets.visualize_patches')
 @patch('menpowidgets.visualize_patches', menpowidgets_mock)
 @raises(MenpowidgetsMissingError)
 def landmarkmanager_view_widget_test():
-    LandmarkManager().view_widget()
+    l = LandmarkManager()
+    l['test'] = PointCloud(pcloud2d)
+    l.view_widget()
     assert 1
 
 

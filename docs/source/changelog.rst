@@ -3,6 +3,56 @@
 Changelog
 #########
 
+0.8.0 (2017/05/04)
+------------------
+
+Menpo 0.8.0 includes a variety of minor bug fixes and a few major features:
+
+A large simplification is made to how Menpo handles landmarks. In the past, Landmarks were a
+special type in Menpo, they weren't shapes. That meant we frequently had to access the underlying
+shape information (at `.lms`), which was always a litle clunky and confusing, especailly to
+newcomers.
+
+In this release, we instead change the dynamic so that any shape can be attached as a landmark
+directly. If you only need to store a list of points with no groups or labels, you can now
+just use a PointCloud, which is totally natural in Menpo. The traditional features of LandmarkGroup
+(handling groups etc) are now available in a speciailization Shape called `LabelledPointUndirectedGraph`.
+
+The migration is simple - just remove `.lms` anywhere from your codebase (a warning will be raised when
+you do use `.lms` - this will be deprecated in the future).
+
+A smaller set of additional features in 0.8:
+
+1. Most menpo objects print a sensible string for their __repr__, which is helpful in the notebook.
+2. you can now tab complete landmark keys in the notebook.
+
+Github Pull Requests
+....................
+
+- `#766`_ upgrades for menpowidgets (ipywidgets 6) (@nontas)
+- `#798`_ move back to making macOS builds with travis (@patricksnape)
+- `#799`_ move back to making Win builds with appveyor (@patricksnape)
+- `#792`_ add throttling to print_progress for fast iterations (@jabooth)
+- `#790`_ fix __setstate__ for old landmarks (@jabooth)
+- `#787`_ add a default __str__ implementation to avoid inf recursion on __repr__ (@jabooth)
+- `#782`_ __repr__ return __str__ for all Copyable objects (@jabooth)
+- `#780`_ add support for ipython tab complete landmarks (@jabooth)
+- `#675`_ LandmarkGroups are now Shapes (@patricksnape, @jabooth, @nontas)
+- `#778`_ Minor documentation clarification in image rasterize utility (@grigorisg9gr)
+- `#761`_ Add clip_pixels to Image and automatically clip RGB visualisations (@grigorisg9gr)
+
+.. _#766: https://github.com/menpo/menpo/pull/766
+.. _#798: https://github.com/menpo/menpo/pull/798
+.. _#799: https://github.com/menpo/menpo/pull/799
+.. _#792: https://github.com/menpo/menpo/pull/792
+.. _#790: https://github.com/menpo/menpo/pull/790
+.. _#787: https://github.com/menpo/menpo/pull/787
+.. _#782: https://github.com/menpo/menpo/pull/782
+.. _#780: https://github.com/menpo/menpo/pull/780
+.. _#675: https://github.com/menpo/menpo/pull/675
+.. _#778: https://github.com/menpo/menpo/pull/778
+.. _#761: https://github.com/menpo/menpo/pull/761
+
 0.7.7 (2017/01/05)
 ------------------
 Minor bug fixes
@@ -23,7 +73,7 @@ Github Pull Requests
 0.7.6 (2016/12/10)
 ------------------
 Minor bug fixes and three new pieces of functionality:
-  
+
   - 3D visualization improvements (@nontas)
   - Bounding cubiod method for 3D shapes (@nontas)
   - New transforms to change dimensionality of shapes (@jabooth)
@@ -58,7 +108,7 @@ Github Pull Requests
 0.7.5 (2016/11/17)
 ------------------
 Minor bug fixes and three new pieces of functionality:
-  
+
   - Fix bug in video importing when importing long videos (closed pipe) (@patricksnape)
   - Update `MANIFEST.in` to include the `LICENSE.txt` and `AUTHORS.txt`
   - Add new `transform_about_centre` method on images. Allow easily performing operations such as
