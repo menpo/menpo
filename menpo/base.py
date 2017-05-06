@@ -677,6 +677,35 @@ class LazyList(collections.Sequence, Copyable):
                 'Can only add another LazyList or an Iterable to a LazyList '
                 '- {} is neither'.format(type(other)))
 
+    def view_widget(self):
+        r"""
+        Visualize this lazy collection of items using menpowidgets.
+
+        The type of the first item will be used to determine an appropriate
+        visualization for the list of items.
+
+        Returns
+        -------
+        widget
+            The appropriate menpowidget to view these items
+
+
+        Raises
+        ------
+        MenpowidgetsMissingError
+            If menpowidgets is not installed
+        ValueError
+            If menpowidgets cannot locate an appropriate items-visualization
+            for the type of items in this :map:`LazyList`
+        """
+        try:
+            from menpowidgets import view_widget
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
+        else:
+            return view_widget(self)
+
 
 def partial_doc(func, *args, **kwargs):
     r"""
