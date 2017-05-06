@@ -113,7 +113,7 @@ def bytes_str(num):
 
 def print_progress(iterable, prefix='', n_items=None, offset=0,
                    show_bar=True, show_count=True, show_eta=True,
-                   end_with_newline=True):
+                   end_with_newline=True, min_seconds_between_updates=0.1):
     r"""
     Print the remaining time needed to compute over an iterable.
 
@@ -152,6 +152,11 @@ def print_progress(iterable, prefix='', n_items=None, offset=0,
         dynamic report presented here. Useful if you want to follow up a
         print_progress with a second print_progress, where the second
         overwrites the first on the same line.
+    min_seconds_between_updates : `float`, optional
+        The number of seconds that have to pass between two print updates.
+        This allows ``print_progress`` to be used on fast iterations without
+        incurring a significant overhead. Set to ``0`` to disable this
+        throttling.
 
     Raises
     ------
@@ -174,7 +179,7 @@ def print_progress(iterable, prefix='', n_items=None, offset=0,
         raise ValueError('offset can only be set when n_items has been'
                          ' manually provided.')
     if prefix != '':
-        prefix = prefix + ': '
+        prefix += ': '
         bar_length = 10
     else:
         bar_length = 20
@@ -182,19 +187,23 @@ def print_progress(iterable, prefix='', n_items=None, offset=0,
 
     timings = deque([], 100)
     time1 = time()
+    last_update_time = 0
     for i, x in enumerate(iterable, 1 + offset):
         yield x
         time2 = time()
         timings.append(time2 - time1)
         time1 = time2
         remaining = n - i
+        if time2 - last_update_time < min_seconds_between_updates:
+            continue
+        last_update_time = time2
         duration = datetime.utcfromtimestamp(sum(timings) / len(timings) *
                                              remaining)
         bar_str = progress_bar_str(i / n, bar_length=bar_length,
                                    show_bar=show_bar)
         count_str = ' ({}/{})'.format(i, n) if show_count else ''
-        eta_str = " - {} remaining".format(duration.strftime('%H:%M:%S')) \
-            if show_eta else ''
+        eta_str = (" - {} remaining".format(duration.strftime('%H:%M:%S'))
+                   if show_eta else '')
         print_dynamic('{}{}{}{}'.format(prefix, bar_str, count_str, eta_str))
 
     # the iterable has now finished - to make it clear redraw the progress with

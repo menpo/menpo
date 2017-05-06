@@ -756,7 +756,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                  axes_font_size=10, axes_font_style='normal',
                  axes_font_weight='normal', axes_x_limits=None,
                  axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-                 figure_size=(10, 8)):
+                 figure_size=(7, 7)):
         r"""
         View the image using the default image viewer. This method will appear 
         on the Image as ``view`` if the Image is 2D.
@@ -836,27 +836,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
             axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
-                    style='coloured'):
+    def view_widget(self, figure_size=(7, 7)):
         r"""
-        Visualizes the image object using an interactive widget. Currently
-        only supports the rendering of 2D images.
+        Visualizes the image using an interactive widget.
 
         Parameters
         ----------
-        browser_style : {``'buttons'``, ``'slider'``}, optional
-            It defines whether the selector of the images will have the form of
-            plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
-        style : {``'coloured'``, ``'minimal'``}, optional
-            If ``'coloured'``, then the style of the widget will be coloured. If
-            ``minimal``, then the style is simple using black and white colours.
         """
         try:
-            from menpowidgets import visualize_images
-            visualize_images(self, figure_size=figure_size, style=style,
-                             browser_style=browser_style)
+            from menpowidgets import view_widget
+            view_widget(self, figure_size=figure_size)
         except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
@@ -890,7 +881,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                            axes_font_style='normal', axes_font_weight='normal',
                            axes_x_limits=None, axes_y_limits=None,
                            axes_x_ticks=None, axes_y_ticks=None,
-                           figure_size=(10, 8)):
+                           figure_size=(7, 7)):
         """
         Visualize the landmarks. This method will appear on the Image as
         ``view_landmarks`` if the Image is 2D.
@@ -1256,7 +1247,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group].lms
+        pc = self.landmarks[group]
         return self.crop_to_pointcloud(
             pc, boundary=boundary, constrain_to_boundary=constrain_to_boundary,
             return_transform=return_transform)
@@ -1359,7 +1350,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Raised if ``constrain_to_boundary=False``, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group].lms
+        pc = self.landmarks[group]
         return self.crop_to_pointcloud_proportion(
             pc, boundary_proportion, minimum=minimum,
             constrain_to_boundary=constrain_to_boundary,
@@ -1493,7 +1484,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ValueError
             If image is not 2D
         """
-        return self.extract_patches(self.landmarks[group].lms,
+        return self.extract_patches(self.landmarks[group],
                                     patch_shape=patch_shape,
                                     sample_offsets=sample_offsets,
                                     as_single_array=as_single_array)
@@ -1610,7 +1601,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ValueError
             If offset does not have shape (1, 2)
         """
-        return self.set_patches(patches, self.landmarks[group].lms,
+        return self.set_patches(patches, self.landmarks[group],
                                 offset=offset, offset_index=offset_index)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
@@ -2035,7 +2026,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The transform that was used. It only applies if
             `return_transform` is ``True``.
         """
-        pc = self.landmarks[group].lms
+        pc = self.landmarks[group]
         scale = AlignmentUniformScale(pc, pointcloud).as_vector().copy()
         return self.rescale(scale, round=round, order=order,
                             return_transform=return_transform)
@@ -2084,7 +2075,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The transform that was used. It only applies if
             `return_transform` is ``True``.
         """
-        x, y = self.landmarks[group].lms.range()
+        x, y = self.landmarks[group].range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
         return self.rescale(scale, round=round, order=order,
                             return_transform=return_transform)
@@ -2723,7 +2714,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         if self.has_landmarks:
             for l_group in self.landmarks:
-                pc = self.landmarks[l_group].lms.points
+                pc = self.landmarks[l_group].points
                 if np.any(np.logical_or(self.shape - pc < 1, pc < 0)):
                     return True
         return False
@@ -2735,7 +2726,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         method. For example:
 
             >>> im.constrain_landmarks_to_bounds()  # Equivalent to below
-            >>> im.landmarks['test'] = im.landmarks['test'].lms.constrain_to_bounds(im.bounds())
+            >>> im.landmarks['test'] = im.landmarks['test'].constrain_to_bounds(im.bounds())
         """
         warn('This method is no longer supported and will be removed in a '
              'future version of Menpo. '
@@ -2744,11 +2735,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         for l_group in self.landmarks:
             l = self.landmarks[l_group]
-            for k in range(l.lms.points.shape[1]):
-                tmp = l.lms.points[:, k]
+            for k in range(l.points.shape[1]):
+                tmp = l.points[:, k]
                 tmp[tmp < 0] = 0
                 tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
-                l.lms.points[:, k] = tmp
+                l.points[:, k] = tmp
             self.landmarks[l_group] = l
 
     def normalize_std(self, mode='all', **kwargs):
@@ -2808,7 +2799,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
     def rescale_pixels(self, minimum, maximum, per_channel=True):
         r"""A copy of this image with pixels linearly rescaled to fit a range.
 
-        Note that the only pixels that will considered and rescaled are those
+        Note that the only pixels that will be considered and rescaled are those
         that feature in the vectorized form of this image. If you want to use
         this routine on all the pixels in a :map:`MaskedImage`, consider
         using `as_unmasked()` prior to this call.
@@ -2837,6 +2828,42 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         sf = ((maximum - minimum) * 1.0) / (max_ - min_)
         v_new = ((v - min_) * sf) + minimum
         return self.from_vector(v_new.T.ravel())
+
+    def clip_pixels(self, minimum=None, maximum=None):
+        r"""A copy of this image with pixels linearly clipped to fit a range.
+
+        Parameters
+        ----------
+        minimum: `float`, optional
+            The minimal value of the clipped pixels. If None is provided, the
+            default value will be 0.
+        maximum: `float`, optional
+            The maximal value of the clipped pixels. If None is provided, the
+            default value will depend on the dtype.
+
+        Returns
+        -------
+        rescaled_image: ``type(self)``
+            A copy of this image with pixels linearly rescaled to fit in the
+            range provided.
+        """
+        if minimum is None:
+            minimum = 0
+        if maximum is None:
+            dtype = self.pixels.dtype
+            if dtype == np.uint8:
+                maximum = 255
+            elif dtype == np.uint16:
+                maximum = 65535
+            elif dtype in [np.float32, np.float64]:
+                maximum = 1.0
+            else:
+                m1 = 'Could not recognise the dtype ({}) to set the maximum.'
+                raise ValueError(m1.format(dtype))
+
+        copy = self.copy()
+        copy.pixels = copy.pixels.clip(min=minimum, max=maximum)
+        return copy
 
     def rasterize_landmarks(self, group=None, render_lines=True, line_style='-',
                             line_colour='b', line_width=1, render_markers=True,
@@ -2959,10 +2986,9 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     r"""
     Creates an :map:`Image` object in which the patches are located on the
     correct regions based on the centers. Thus, the image is a block-sparse
-    matrix. It has also two attached :map:`LandmarkGroup` objects. The
-    `all_patch_centers` one contains all the patch centers, while the
-    `selected_patch_centers` one contains only the centers that correspond to
-    the patches that the user selected to set.
+    matrix. It has also attached a `patch_Centers` :map:`PointCloud`
+    object with the centers that correspond to the patches that the user
+    selected to set.
 
     The patches argument can have any of the two formats that are returned
     from the `extract_patches()` and `extract_patches_around_landmarks()`
@@ -3033,9 +3059,6 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     new_patch_centers = patch_centers.copy()
     new_patch_centers.points = patch_centers.points - np.array([[min_0, min_1]])
 
-    # Create temporary pointcloud with the selected patch centers
-    tmp_centers = PointCloud(new_patch_centers.points[patches_indices])
-
     # Create new image with the correct background values
     if background == 'black':
         patches_image = Image.init_blank(
@@ -3050,11 +3073,15 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     else:
         raise ValueError('Background must be either ''black'' or ''white''.')
 
-    # Attach the corrected patch centers
-    patches_image.landmarks['all_patch_centers'] = new_patch_centers
-    patches_image.landmarks['selected_patch_centers'] = tmp_centers
+    # If there was no slicing on the patches, then attach the original patch
+    # centers. Otherwise, attach the sliced ones.
+    if set(patches_indices) == set(range(patches.shape[0])):
+        patches_image.landmarks['patch_centers'] = new_patch_centers
+    else:
+        tmp_centers = PointCloud(new_patch_centers.points[patches_indices])
+        patches_image.landmarks['patch_centers'] = tmp_centers
 
     # Set the patches
     return patches_image.set_patches_around_landmarks(
-        patches[patches_indices], group='selected_patch_centers',
+        patches[patches_indices], group='patch_centers',
         offset_index=offset_index)

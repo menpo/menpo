@@ -14,7 +14,7 @@ from menpo.shape import PointCloud
 def test_double_type():
     image = mio.import_builtin_asset('breakingbad.jpg')
     patch_shape = (16, 16)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
     assert(patches[0].pixels.dtype == np.float64)
@@ -24,7 +24,7 @@ def test_float_type():
     image = mio.import_builtin_asset('breakingbad.jpg')
     image.pixels = image.pixels.astype(np.float32)
     patch_shape = (16, 16)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
     assert(patches[0].pixels.dtype == np.float32)
@@ -33,7 +33,7 @@ def test_float_type():
 def test_uint8_type():
     image = mio.import_builtin_asset('breakingbad.jpg', normalize=False)
     patch_shape = (16, 16)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
     assert(patches[0].pixels.dtype == np.uint8)
@@ -62,7 +62,7 @@ def test_int_pointcloud():
 def test_uint8_type_single_array():
     image = mio.import_builtin_asset('breakingbad.jpg', normalize=False)
     patch_shape = (16, 16)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=True)
     assert(patches.dtype == np.uint8)
@@ -71,7 +71,7 @@ def test_uint8_type_single_array():
 def test_squared_even_patches():
     image = mio.import_builtin_asset('breakingbad.jpg')
     patch_shape = (16, 16)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
     assert_equals(len(patches), 68)
@@ -80,7 +80,7 @@ def test_squared_even_patches():
 def test_squared_odd_patches():
     image = mio.import_builtin_asset('breakingbad.jpg')
     patch_shape = (15, 15)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
     assert_equals(len(patches), 68)
@@ -89,7 +89,7 @@ def test_squared_odd_patches():
 def test_nonsquared_even_patches():
     image = mio.import_builtin_asset('breakingbad.jpg')
     patch_shape = (16, 18)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
     assert_equals(len(patches), 68)
@@ -98,7 +98,7 @@ def test_nonsquared_even_patches():
 def test_nonsquared_odd_patches():
     image = mio.import_builtin_asset('breakingbad.jpg')
     patch_shape = (15, 17)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
     assert_equals(len(patches), 68)
@@ -107,7 +107,7 @@ def test_nonsquared_odd_patches():
 def test_nonsquared_even_odd_patches():
     image = mio.import_builtin_asset('breakingbad.jpg')
     patch_shape = (15, 16)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
     assert_equals(len(patches), 68)
@@ -125,7 +125,7 @@ def test_squared_even_patches_landmarks():
 def test_squared_even_patches_single_array():
     image = mio.import_builtin_asset('breakingbad.jpg')
     patch_shape = (16, 16)
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     as_single_array=True,
                                     patch_shape=patch_shape)
     assert_equals(patches.shape, ((68, 1, 3) + patch_shape))
@@ -134,7 +134,7 @@ def test_squared_even_patches_single_array():
 def test_squared_even_patches_sample_offsets():
     image = mio.import_builtin_asset('breakingbad.jpg')
     sample_offsets = np.array([[0, 0], [1, 0]])
-    patches = image.extract_patches(image.landmarks['PTS'].lms,
+    patches = image.extract_patches(image.landmarks['PTS'],
                                     sample_offsets=sample_offsets,
                                     as_single_array=False)
     assert_equals(len(patches), 136)
@@ -225,9 +225,8 @@ def test_create_patches_image():
     image = mio.import_builtin_asset.lenna_png()
     patches = image.extract_patches_around_landmarks(
         patch_shape=patch_shape, as_single_array=True)
-    pc = image.landmarks['LJSON'].lms
+    pc = image.landmarks['LJSON']
     patches_image = _create_patches_image(patches, pc, patches_indices=range(17))
     assert(patches_image.n_channels == patches.shape[2])
-    assert(patches_image.landmarks.n_groups == 2)
-    assert(patches_image.landmarks['selected_patch_centers'].lms.n_points == 17)
-    assert(patches_image.landmarks['all_patch_centers'].lms.n_points == 68)
+    assert(patches_image.landmarks.n_groups == 1)
+    assert(patches_image.landmarks['patch_centers'].lms.n_points == 17)

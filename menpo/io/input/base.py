@@ -84,7 +84,8 @@ def _import_builtin_asset(data_path_to, object_types, landmark_types,
     Returns
     -------
     asset :
-        An instantiated :map:`Image` or :map:`LandmarkGroup` asset.
+        An instantiated :map:`Image`, :map:`PointCloud` or
+        :map:`LabelledPointUndirectedGraph` asset.
     """
     if kwargs != {}:
         normalize = _parse_deprecated_normalise(kwargs.get('normalise'),
@@ -342,10 +343,11 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
 
 
 def import_landmark_file(filepath, asset=None):
-    r"""Single landmark group importer.
+    r"""Single landmark file importer.
 
-    If a landmark file is found at ``filepath``, returns a
-    :map:`LandmarkGroup` representing it.
+    If a landmark file is found at ``filepath``, returns a :map:`PointCloud` or
+    :map:`LabelledPointUndirectedGraph` depending on the format of the
+    landmark file.
 
     Parameters
     ----------
@@ -354,8 +356,8 @@ def import_landmark_file(filepath, asset=None):
 
     Returns
     -------
-    landmark_group : :map:`LandmarkGroup`
-        The :map:`LandmarkGroup` that the file format represents.
+    landmarks : :map:`LabelledPointUndirectedGraph` or :map:`PointCloud`
+        The shape that the file format represents.
     """
     return _import(filepath, image_landmark_types, asset=asset)
 
@@ -645,8 +647,8 @@ def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
                           as_generator=False, verbose=False):
     r"""Import Multiple landmark files.
 
-    For each landmark file found returns an importer than
-    returns a :map:`LandmarkGroup`.
+    For each landmark file found returns an importer then
+    returns a :map:`LabelledPointUndirectedGraph` or a :map:`PointCloud`.
 
     Note that this is a function returns a :map:`LazyList`. Therefore, the
     function will return immediately and indexing into the returned list
@@ -675,9 +677,10 @@ def import_landmark_files(pattern, max_landmarks=None, shuffle=False,
 
     Returns
     -------
-    lazy_list : :map:`LazyList` or generator of :map:`LandmarkGroup`
-        A :map:`LazyList` or generator yielding :map:`LandmarkGroup` instances
-        found to match the glob pattern provided.
+    lazy_list : :map:`LazyList` or generator
+        A :map:`LazyList` or generator yielding :map:`PointCloud` or
+        :map:`LabelledPointUndirectedGraph` instances found to match the glob
+        pattern provided.
 
     Raises
     ------

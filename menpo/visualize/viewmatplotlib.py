@@ -297,7 +297,7 @@ def _set_grid_options(render_grid=True, grid_line_style='--', grid_line_width=2)
         plt.grid('off')
 
 
-def _set_figure_size(fig, figure_size=(10, 8)):
+def _set_figure_size(fig, figure_size=(7, 7)):
     if figure_size is not None:
         fig.set_size_inches(np.asarray(figure_size))
 
@@ -356,7 +356,7 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
                axes_font_size=10, axes_font_style='normal',
                axes_font_weight='normal', axes_x_limits=None,
                axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-               figure_size=(10, 8)):
+               figure_size=(7, 7)):
         import matplotlib.pyplot as plt
 
         # parse colour map argument
@@ -404,7 +404,7 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
                axes_font_size=10, axes_font_style='normal',
                axes_font_weight='normal', axes_x_limits=None,
                axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-               figure_size=(10, 8)):
+               figure_size=(7, 7)):
         import matplotlib.pyplot as plt
 
         # parse colour map argument
@@ -459,7 +459,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
                axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-               axes_y_ticks=None, figure_size=(10, 8), label=None):
+               axes_y_ticks=None, figure_size=(7, 7), label=None):
         from matplotlib import collections as mc
         import matplotlib.pyplot as plt
 
@@ -529,12 +529,10 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, group, pointcloud,
-                 labels_to_masks):
+    def __init__(self, figure_id, new_figure, group, landmark_group):
         super(MatplotlibLandmarkViewer2d, self).__init__(figure_id, new_figure)
         self.group = group
-        self.pointcloud = pointcloud
-        self.labels_to_masks = labels_to_masks
+        self.landmark_group = landmark_group
 
     def render(self, image_view=False, render_lines=True, line_colour='r',
                line_style='-', line_width=1, render_markers=True,
@@ -557,17 +555,15 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
                axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-               axes_y_ticks=None, figure_size=(10, 8)):
+               axes_y_ticks=None, figure_size=(7, 7)):
         import matplotlib.lines as mlines
-        from menpo.shape import TriMesh
-        from menpo.shape.graph import PointGraph
         import matplotlib.pyplot as plt
 
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
         # TODO: All marker and line options could be defined as lists...
-        n_labels = len(self.labels_to_masks)
+        n_labels = self.landmark_group.n_labels
         line_colour = _check_colours_list(
             render_lines, line_colour, n_labels,
             'Must pass a list of line colours with length n_labels or a single '
@@ -582,12 +578,13 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             'a single marker edge colour for all labels.')
 
         # check axes limits
+        points = self.landmark_group.points
         if image_view:
-            min_y, min_x = np.min(self.pointcloud.points, axis=0)
-            max_y, max_x = np.max(self.pointcloud.points, axis=0)
+            min_y, min_x = np.min(points, axis=0)
+            max_y, max_x = np.max(points, axis=0)
         else:
-            min_x, min_y = np.min(self.pointcloud.points, axis=0)
-            max_x, max_y = np.max(self.pointcloud.points, axis=0)
+            min_x, min_y = np.min(points, axis=0)
+            max_x, max_y = np.max(points, axis=0)
         axes_x_limits, axes_y_limits = _parse_axes_limits(
             min_x, max_x, min_y, max_y, axes_x_limits, axes_y_limits)
 
@@ -626,10 +623,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
 
             # set legend entry
             if render_legend:
-                tmp_line = 'None'
-                if (render_lines and
-                        (isinstance(pc, PointGraph) or isinstance(pc, TriMesh))):
-                    tmp_line = line_style
+                tmp_line = line_style
                 tmp_marker = marker_style if render_markers else 'None'
                 legend_handles.append(
                     mlines.Line2D([], [], linewidth=line_width,
@@ -668,11 +662,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         return self
 
     def _build_sub_pointclouds(self):
-        sub_pointclouds = []
-        for label, indices in self.labels_to_masks.items():
-            mask = self.labels_to_masks[label]
-            sub_pointclouds.append((label, self.pointcloud.from_mask(mask)))
-        return sub_pointclouds
+        return [(label, self.landmark_group.get_label(label))
+                for label in self.landmark_group.labels]
 
 
 class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
@@ -778,7 +769,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
                legend_rounded_corners=False, render_axes=True,
                axes_font_name='sans-serif', axes_font_size=10,
                axes_font_style='normal', axes_font_weight='normal',
-               figure_size=(10, 8), render_grid=True, grid_line_style='--',
+               figure_size=(7, 7), render_grid=True, grid_line_style='--',
                grid_line_width=1):
         import matplotlib.pyplot as plt
 

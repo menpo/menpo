@@ -1,26 +1,27 @@
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 import json
 import warnings
 import itertools
 
 import numpy as np
+from scipy.sparse import csr_matrix
 
-from menpo.landmark.base import LandmarkGroup
-from menpo.shape import PointCloud, PointUndirectedGraph
+from menpo.shape import PointCloud, LabelledPointUndirectedGraph
 from menpo.transform import Scale
 
 
-def asf_importer(filepath, asset=None, image_origin=True, **kwargs):
+ASFPath = namedtuple('ASFPath', ['path_num', 'path_type', 'xpos', 'ypos',
+                                 'point_num', 'connects_from', 'connects_to'])
+
+
+def asf_importer(filepath, asset=None, **kwargs):
     r"""
-    Abstract base class for an importer for the ASF file format.
-    Currently **does not support the connectivity specified in the format**.
+    Importer for the ASF file format.
 
-    Implementations of this class should override the :meth:`_build_points`
-    which determines the ordering of axes. For example, for images, the
-    `x` and `y` axes are flipped such that the first axis is `y` (height
-    in the image domain).
+    For images, the `x` and `y` axes are flipped such that the first axis is
+    `y` (height in the image domain).
 
-    Landmark set label: ASF
+    Currently only open and closed path types are supported.
 
     Landmark labels:
 
@@ -37,15 +38,12 @@ def asf_importer(filepath, asset=None, image_origin=True, **kwargs):
     asset : `object`, optional
         An optional asset that may help with loading. This is unused for this
         implementation.
-    image_origin : `bool`, optional
-        If ``True``, assume that the landmarks exist within an image and thus
-        the origin is the image origin.
     \**kwargs : `dict`, optional
         Any other keyword arguments.
 
     Returns
     -------
-    landmarks : :map:`LandmarkGroup`
+    landmarks : :map:`LabelledPointUndirectedGraph`
         The landmarks including appropriate labels if available.
 
     References
@@ -66,31 +64,49 @@ def asf_importer(filepath, asset=None, image_origin=True, **kwargs):
 
     xs = np.empty([count, 1])
     ys = np.empty([count, 1])
-    connectivity = np.empty([count, 2], dtype=np.int)
-    for i in range(count):
-        # Though unpacked, they are still all strings
-        # Only unpack the first 7
-        (path_num, path_type, xpos, ypos,
-         point_num, connects_from, connects_to) = landmarks[i].split()[:7]
-        xs[i, ...] = float(xpos)
-        ys[i, ...] = float(ypos)
-        connectivity[i, ...] = [int(connects_from), int(connects_to)]
+    connectivity = []
 
-    if image_origin:
-        points = np.hstack([ys, xs])
-    else:
-        points = np.hstack([xs, ys])
+    # Only unpack the first 7 (the last 3 are always 0)
+    split_landmarks = [ASFPath(*landmarks[i].split()[:7])
+                       for i in range(count)]
+    paths = [list(g)
+             for k, g in itertools.groupby(split_landmarks, lambda x: x[0])]
+    vert_index = 0
+    for path in paths:
+        if path:
+            path_type = path[0].path_type
+        for vertex in path:
+            # Relative coordinates, will be scaled by the image size
+            xs[vert_index, ...] = float(vertex.xpos)
+            ys[vert_index, ...] = float(vertex.ypos)
+            vert_index += 1
+            # If True, isolated point
+            if not (vertex.connects_from == vertex.connects_to and
+                    vertex.connects_to == vertex.point_num):
+                # Connectivity is defined by connects_from and connects_to
+                # as well as the path_type:
+                #   Bit 1: Outer edge point/Inside point
+                #   Bit 2: Original annotated point/Artificial point
+                #   Bit 3: Closed path point/Open path point
+                #   Bit 4: Non-hole/Hole point
+                # For now we only parse cases 0 and 4 (closed or open)
+                connectivity.append((int(vertex.point_num),
+                                     int(vertex.connects_to)))
+        if path_type == '0':
+            connectivity.append((int(path[-1].point_num),
+                                 int(path[0].point_num)))
+
+    connectivity = np.vstack(connectivity)
+    points = np.hstack([ys, xs])
     if asset is not None:
         # we've been given an asset. As ASF files are normalized,
         # fix that here
         points = Scale(np.array(asset.shape)).apply(points)
 
-    # TODO: Use connectivity and create a graph type instead of PointCloud
-    # edges = scaled_points[connectivity]
-
-    return LandmarkGroup(PointCloud(points, copy=False),
-                         OrderedDict([('all', np.ones(points.shape[0],
-                                                      dtype=np.bool))]))
+    labels_to_masks = OrderedDict(
+        [('all', np.ones(points.shape[0], dtype=np.bool))])
+    return LabelledPointUndirectedGraph.init_from_edges(points, connectivity,
+                                                        labels_to_masks)
 
 
 def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
@@ -136,7 +152,7 @@ def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
 
     Returns
     -------
-    landmarks : :map:`LandmarkGroup`
+    landmarks : :map:`PointCloud`
         The landmarks including appropriate labels if available.
     """
     f = open(str(filepath), 'r')
@@ -158,9 +174,7 @@ def pts_importer(filepath, asset=None, image_origin=True, **kwargs):
     else:
         points = np.hstack([xs - 1, ys - 1])
 
-    return LandmarkGroup(PointCloud(points, copy=False),
-                         OrderedDict([('all', np.ones(points.shape[0],
-                                                      dtype=np.bool))]))
+    return PointCloud(points, copy=False)
 
 
 def lm2_importer(filepath, asset=None, **kwargs):
@@ -211,7 +225,7 @@ def lm2_importer(filepath, asset=None, **kwargs):
 
     Returns
     -------
-    landmarks : :map:`LandmarkGroup`
+    landmarks : :map:`LabelledPointUndirectedGraph`
         The landmarks including appropriate labels if available.
     """
     with open(str(filepath), 'r') as f:
@@ -256,7 +270,7 @@ def lm2_importer(filepath, asset=None, **kwargs):
     ys = np.array(ys, dtype=np.float).reshape((-1, 1))
 
     # Flip the x and y
-    pointcloud = PointCloud(np.hstack([ys, xs]), copy=False)
+    points = np.hstack([ys, xs])
     # Create the mask whereby there is one landmark per label
     # (identity matrix)
     masks = np.eye(num_points).astype(np.bool)
@@ -264,7 +278,8 @@ def lm2_importer(filepath, asset=None, **kwargs):
     masks = [np.squeeze(m) for m in masks]
     labels_to_masks = OrderedDict(zip(labels, masks))
 
-    return LandmarkGroup(pointcloud, labels_to_masks)
+    empty_adj_matrix = csr_matrix((num_points, num_points))
+    return LabelledPointUndirectedGraph(points, empty_adj_matrix, labels_to_masks)
 
 
 def _ljson_parse_null_values(points_list):
@@ -301,37 +316,35 @@ def _parse_ljson_v1(lms_dict):
 
     # Don't create a PointUndirectedGraph with no connectivity
     points = _ljson_parse_null_values(all_points)
-    if len(connectivity) == 0:
-        pcloud = PointCloud(points)
-    else:
-        pcloud = PointUndirectedGraph.init_from_edges(points, connectivity)
+    n_points = points.shape[0]
+
     labels_to_masks = OrderedDict()
     # go through each label and build the appropriate boolean array
     for label, l_slice in zip(labels, labels_slices):
-        mask = np.zeros(pcloud.n_points, dtype=np.bool)
+        mask = np.zeros(n_points, dtype=np.bool)
         mask[l_slice] = True
         labels_to_masks[label] = mask
-    return pcloud, labels_to_masks
+
+    return LabelledPointUndirectedGraph.init_from_edges(points, connectivity, labels_to_masks)
 
 
 def _parse_ljson_v2(lms_dict):
-    labels_to_mask = OrderedDict()  # masks into the full pointcloud per label
-
     points = _ljson_parse_null_values(lms_dict['landmarks']['points'])
     connectivity = lms_dict['landmarks'].get('connectivity')
 
-    # Don't create a PointUndirectedGraph with no connectivity
-    if connectivity is None or len(connectivity) == 0:
-        pcloud = PointCloud(points)
+    if connectivity is None and len(lms_dict['labels']) == 0:
+        return PointCloud(points)
     else:
-        pcloud = PointUndirectedGraph.init_from_edges(points, connectivity)
-
-    for label in lms_dict['labels']:
-        mask = np.zeros(pcloud.n_points, dtype=np.bool)
-        mask[label['mask']] = True
-        labels_to_mask[label['label']] = mask
-
-    return pcloud, labels_to_mask
+        labels_to_mask = OrderedDict() # masks into the pointcloud per label
+        n_points = points.shape[0]
+        for label in lms_dict['labels']:
+            mask = np.zeros(n_points, dtype=np.bool)
+            mask[label['mask']] = True
+            labels_to_mask[label['label']] = mask
+        # Note that we can pass connectivity as None here and the edges will be
+        # empty.
+        return LabelledPointUndirectedGraph.init_from_edges(
+            points, connectivity, labels_to_mask)
 
 
 _ljson_parser_for_version = {
@@ -362,7 +375,7 @@ def ljson_importer(filepath, asset=None, **kwargs):
 
     Returns
     -------
-    landmarks : :map:`LandmarkGroup`
+    landmarks : :map:`LabelledPointUndirectedGraph`
         The landmarks including appropriate labels if available.
     """
     with open(str(filepath), 'r') as f:
@@ -373,5 +386,6 @@ def ljson_importer(filepath, asset=None, **kwargs):
 
     if parser is None:
         raise ValueError("{} has unknown version {} must be "
-                         "1, or 2".format(self.filepath, v))
-    return LandmarkGroup(*parser(lms_dict))
+                         "1, or 2".format(filepath, v))
+    else:
+        return parser(lms_dict)

@@ -138,8 +138,8 @@ def test_rescale_return_transform():
     img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
-    assert_allclose(img_back.landmarks['test'].lms.points,
-                    img.landmarks['test'].lms.points)
+    assert_allclose(img_back.landmarks['test'].points,
+                    img.landmarks['test'].points)
 
 
 def test_sample_image():
@@ -238,7 +238,7 @@ def test_mirror_horizontal_image():
                     np.array([[[9., 10., 11., 12.],
                                [5., 6., 7., 8.],
                                [1., 2., 3., 4.]]]))
-    assert_allclose(mirrored_img.landmarks['temp'].lms.points,
+    assert_allclose(mirrored_img.landmarks['temp'].points,
                     np.array([[1., 1.], [1., 2.], [0., 1.], [0., 2.]]))
 
 
@@ -253,7 +253,7 @@ def test_mirror_vertical_image():
                     np.array([[[4., 3., 2., 1.],
                                [8., 7., 6., 5.],
                                [12., 11., 10., 9.]]]))
-    assert_allclose(mirrored_img.landmarks['temp'].lms.points,
+    assert_allclose(mirrored_img.landmarks['temp'].points,
                     np.array([[1., 3.], [1., 2.], [2., 2.], [2., 1.]]))
 
 
@@ -275,8 +275,8 @@ def test_mirror_return_transform():
     img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
-    assert_allclose(img_back.landmarks['test'].lms.points,
-                    img.landmarks['test'].lms.points)
+    assert_allclose(img_back.landmarks['test'].points,
+                    img.landmarks['test'].points)
 
 
 def test_rotate_image_90_180():
@@ -287,23 +287,23 @@ def test_rotate_image_90_180():
                                                    [2., 1.], [2., 2.]]))
     # rotate 90 degrees
     rotated_img = image.rotate_ccw_about_centre(theta=90, order=0)
-    rotated_img.landmarks['temp'] = rotated_img.landmarks['temp'].lms.constrain_to_bounds(
+    rotated_img.landmarks['temp'] = rotated_img.landmarks['temp'].constrain_to_bounds(
         rotated_img.bounds())
     assert_allclose(rotated_img.pixels, np.array([[[4., 8., 12.],
                                                    [3., 7., 11.],
                                                    [2., 6., 10.],
                                                    [1., 5., 9.]]]))
-    assert_almost_equal(rotated_img.landmarks['temp'].lms.points,
+    assert_almost_equal(rotated_img.landmarks['temp'].points,
                         np.array([[2., 1.], [1., 1.], [2., 2.], [1., 2.]]))
 
     # rotate 180 degrees
     rotated_img = image.rotate_ccw_about_centre(theta=180, order=0)
-    rotated_img.landmarks['temp'] = rotated_img.landmarks['temp'].lms.constrain_to_bounds(
+    rotated_img.landmarks['temp'] = rotated_img.landmarks['temp'].constrain_to_bounds(
         rotated_img.bounds())
     assert_allclose(rotated_img.pixels, np.array([[[12., 11., 10., 9.],
                                                    [8., 7., 6., 5.],
                                                    [4., 3., 2., 1.]]]))
-    assert_almost_equal(rotated_img.landmarks['temp'].lms.points,
+    assert_almost_equal(rotated_img.landmarks['temp'].points,
                         np.array([[1., 2.], [1., 1.], [0., 2.], [0., 1.]]))
 
 
@@ -321,7 +321,7 @@ def test_rotate_image_45():
                                [1., 6., 7., 11., 16.],
                                [0., 5., 10., 15., 15.],
                                [0., 0., 13., 14., 0.]]]))
-    assert_almost_equal(rotated_img.landmarks['temp'].lms.points,
+    assert_almost_equal(rotated_img.landmarks['temp'].points,
                         np.array([[2.121, 1.414], [1.414, 2.121],
                                   [2.828, 2.121], [2.121, 2.828]]), decimal=3)
 
@@ -334,8 +334,8 @@ def test_rotate_return_transform():
     img_back = cropped_img.warp_to_shape(img.shape, transform.pseudoinverse())
     assert_allclose(img_back.shape, img.shape)
     assert_allclose(img_back.pixels, img.pixels)
-    assert_allclose(img_back.landmarks['test'].lms.points,
-                    img.landmarks['test'].lms.points)
+    assert_allclose(img_back.landmarks['test'].points,
+                    img.landmarks['test'].points)
 
 
 def test_maskedimage_retain_shape():

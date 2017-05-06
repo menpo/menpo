@@ -350,7 +350,7 @@ class ColouredTriMesh(TriMesh):
                  axes_font_name='sans-serif', axes_font_size=10,
                  axes_font_style='normal', axes_font_weight='normal',
                  axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8), label=None):
+                 axes_y_ticks=None, figure_size=(7, 7), label=None, **kwargs):
         r"""
         Visualization of the TriMesh in 2D. Currently, explicit coloured TriMesh
         viewing is not supported, and therefore viewing falls back to uncoloured
