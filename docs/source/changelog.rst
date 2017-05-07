@@ -3,6 +3,20 @@
 Changelog
 #########
 
+0.8.1 (2017/05/06)
+------------------
+
+Menpo 0.8.1 includes a few new minor features, and Python 3.6 support.
+
+Github Pull Requests
+....................
+
+- `#753`_ .view_widget() on LazyList (@jabooth)
+- `#777`_ convienience constructors for 3D rotations (@jabooth)
+
+.. _#753: https://github.com/menpo/menpo/pull/753
+.. _#777: https://github.com/menpo/menpo/pull/777
+
 0.8.0 (2017/05/04)
 ------------------
 
