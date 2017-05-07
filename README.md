@@ -8,7 +8,7 @@
   <br>
   <img src="https://img.shields.io/badge/Python-2.7-green.svg" alt="Python 2.7 Support"/>
   <img src="https://img.shields.io/badge/Python-3.5-green.svg" alt="Python 3.5 Support"/>
-  <img src="https://img.shields.io/badge/Python-3.5-green.svg" alt="Python 3.6 Support"/>
+  <img src="https://img.shields.io/badge/Python-3.6-green.svg" alt="Python 3.6 Support"/>
 </p>
 
 
