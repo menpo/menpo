@@ -143,7 +143,7 @@ class LandmarkManager(MutableMapping, Transformable):
     def __setitem__(self, group, value):
         """
         Sets a new landmark group for the given label. This can be set using
-        an any :map`PointCloud` subclass. Existing landmark groups will be
+        any :map`PointCloud` subclass. Existing landmark groups will be
         replaced.
 
         Parameters
