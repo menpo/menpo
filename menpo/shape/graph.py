@@ -2273,7 +2273,7 @@ class PointGraph(Graph, PointCloud):
         return landmark_view
 
     def _view_3d(self, figure_id=None, new_figure=True, render_lines=True,
-                 line_colour='r', line_width=4, render_markers=True,
+                 line_colour='r', line_width=2, render_markers=True,
                  marker_style='sphere', marker_size=None, marker_colour='k',
                  marker_resolution=8, step=None, alpha=1.0,
                  render_numbering=False, numbers_colour='k', numbers_size=None):
