@@ -5,7 +5,6 @@ import numbers
 import collections
 from warnings import warn
 from scipy.sparse import csr_matrix
-from scipy.spatial.distance import cdist
 
 from menpo.transform import WithDims
 from menpo.visualize import viewwrapper
@@ -1161,6 +1160,10 @@ class PointCloud(Shape):
             point of this PointCloud and the j'th point of the input
             PointCloud.
         """
+        # Inline import as it imports multiprocessing which might fail during CI
+        # due to not being able to determine the number of available CPUs
+        from scipy.spatial.distance import cdist
+
         if self.n_dims != pointcloud.n_dims:
             raise ValueError("The two PointClouds must be of the same "
                              "dimensionality.")
