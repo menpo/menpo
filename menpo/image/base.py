@@ -1258,7 +1258,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                                       return_transform=False):
         r"""
         Return a copy of this image cropped so that it is bounded around a
-        pointcloud with an optional ``n_pixel`` boundary.
+        pointcloud with a border proportional to the pointcloud spread or range.
 
         Parameters
         ----------
