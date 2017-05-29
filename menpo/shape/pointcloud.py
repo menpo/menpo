@@ -149,6 +149,10 @@ class PointCloud(Shape):
             points = np.array(points, copy=True, order='C')
         self.points = points
 
+    @property
+    def shape(self):
+        return self.points.shape
+
     @classmethod
     def init_2d_grid(cls, shape, spacing=None):
         r"""
