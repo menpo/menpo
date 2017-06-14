@@ -2,6 +2,7 @@ import collections
 from itertools import chain
 from functools import partial, wraps
 import os.path
+from pprint import pformat
 import warnings
 
 
@@ -36,6 +37,12 @@ class Copyable(object):
             except AttributeError:
                 new.__dict__[k] = v
         return new
+
+    def __str__(self):
+        # We have to be sure that we implement __str__ otherwise the __repr__
+        # implementation below will lead to an infinite recursion.
+        return 'Copyable Menpo Object with keys:\n{}'.format(
+            pformat(self.__dict__))
 
     def __repr__(self):
         # Most classes in Menpo derive from Copyable, so it's a handy place
@@ -669,6 +676,35 @@ class LazyList(collections.Sequence, Copyable):
             raise ValueError(
                 'Can only add another LazyList or an Iterable to a LazyList '
                 '- {} is neither'.format(type(other)))
+
+    def view_widget(self):
+        r"""
+        Visualize this lazy collection of items using menpowidgets.
+
+        The type of the first item will be used to determine an appropriate
+        visualization for the list of items.
+
+        Returns
+        -------
+        widget
+            The appropriate menpowidget to view these items
+
+
+        Raises
+        ------
+        MenpowidgetsMissingError
+            If menpowidgets is not installed
+        ValueError
+            If menpowidgets cannot locate an appropriate items-visualization
+            for the type of items in this :map:`LazyList`
+        """
+        try:
+            from menpowidgets import view_widget
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
+        else:
+            return view_widget(self)
 
 
 def partial_doc(func, *args, **kwargs):

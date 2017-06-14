@@ -47,7 +47,8 @@ test:
     - menpo
 
   commands:
-    - nosetests menpo -v --with-coverage --cover-package=menpo
+    - nosetests menpo -v --with-coverage --cover-package=menpo --with-xunit --xunit-file=/tmp/menpo.xml --xunit-testsuite-name=menpo  # [unix]
+    - nosetests menpo -v --with-coverage --cover-package=menpo --with-xunit --xunit-file=C:\\menpo.xml --xunit-testsuite-name=menpo   # [win]
 
 about:
   home: https://github.com/menpo/menpo/

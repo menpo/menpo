@@ -7,6 +7,7 @@ from menpo.base import Copyable
 from menpo.shape import PointUndirectedGraph, PointCloud, TriMesh
 from menpo.shape.graph import (_convert_edges_to_symmetric_adjacency_matrix,
                                PointGraph)
+from menpo.visualize import viewwrapper
 
 
 def indices_to_masks(labels_to_indices, n_points):
@@ -212,9 +213,17 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             _pointcloud = state_dict.pop('_pointcloud')
             state_dict['points'] = _pointcloud.points
 
+            # the shape on old landmarks *itself* was allowed to have landmarks
+            # (of course it was very frequently None though, see
+            # https://github.com/menpo/menpo/blob/v0.7.7/menpo/landmark/base.py#L24)
+            # In the new word, self has the same behavior, so move the
+            # landmarks across here.
+            # In the vast majority of cases, this will simply be None.
+            state_dict['_landmarks'] = _pointcloud._landmarks
+
             if type(_pointcloud) == PointCloud:
                 adj_mat = _convert_edges_to_symmetric_adjacency_matrix(
-                    [], _pointcloud.shape[0])
+                    [], _pointcloud.n_points)
             elif isinstance(_pointcloud, PointGraph):
                 a = _pointcloud.adjacency_matrix
                 # Ensure that the matrix is symmetric
@@ -730,36 +739,70 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
             axes_y_ticks=axes_y_ticks, figure_size=figure_size)
 
-    def _view_3d(self, figure_id=None, new_figure=False, **kwargs):
+    def _view_3d(self, with_labels=None, without_labels=None, group='group',
+                 figure_id=None, new_figure=False, render_lines=True,
+                 line_colour=None, line_width=2, render_markers=True,
+                 marker_style='sphere', marker_size=None, marker_colour=None,
+                 marker_resolution=8, step=None, alpha=1.0,
+                 render_numbering=False, numbers_colour='k', numbers_size=None):
         try:
             from menpo3d.visualize import LandmarkViewer3d
-            return LandmarkViewer3d(
-                figure_id, new_figure, self).render(**kwargs)
+            if with_labels is not None and without_labels is not None:
+                raise ValueError('You may only pass one of `with_labels` or '
+                                 '`without_labels`.')
+            elif with_labels is not None:
+                lmark_group = self.with_labels(with_labels)
+            elif without_labels is not None:
+                lmark_group = self.without_labels(without_labels)
+            else:
+                lmark_group = self  # Fall through
+            landmark_viewer = LandmarkViewer3d(figure_id, new_figure,
+                                               group, lmark_group)
+            return landmark_viewer.render(
+                render_lines=render_lines, line_colour=line_colour,
+                line_width=line_width, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_colour=marker_colour, marker_resolution=marker_resolution,
+                step=step, alpha=alpha, render_numbering=render_numbering,
+                numbers_colour=numbers_colour, numbers_size=numbers_size)
         except ImportError:
             from menpo.visualize import Menpo3dMissingError
             raise Menpo3dMissingError()
 
-    def view_widget(self, browser_style='buttons', figure_size=(10, 8),
-                    style='coloured'):
+    @viewwrapper
+    def view_widget(self, ):
         r"""
-        Visualizes the labelled point undirected graph object using an
-        interactive widget.
+        Abstract method for viewing with an interactive widget. See the
+        :map:`viewwrapper` documentation for an explanation of how the
+        `view_widget` method works.
+        """
+        pass
+
+    def _view_widget_2d(self, figure_size=(7, 7)):
+        r"""
+        Visualization of the LabelledPointUndirectedGraph using an interactive 
+        widget.
 
         Parameters
         ----------
-        browser_style : {``'buttons'``, ``'slider'``}, optional
-            It defines whether the selector of the landmark managers will have
-            the form of plus/minus buttons or a slider.
         figure_size : (`int`, `int`), optional
             The initial size of the rendered figure.
-        style : {``'coloured'``, ``'minimal'``}, optional
-            If ``'coloured'``, then the style of the widget will be coloured. If
-            ``minimal``, then the style is simple using black and white colours.
         """
         try:
-            from menpowidgets import visualize_pointclouds
-            visualize_pointclouds(self, figure_size=figure_size, style=style,
-                                  browser_style=browser_style)
+            from menpowidgets import view_widget
+            view_widget(self, figure_size=figure_size)
+        except ImportError:
+            from menpo.visualize.base import MenpowidgetsMissingError
+            raise MenpowidgetsMissingError()
+
+    def _view_widget_3d(self):
+        r"""
+        Visualization of the LabelledPointUndirectedGraph using an interactive 
+        widget.
+        """
+        try:
+            from menpowidgets import view_widget
+            view_widget(self)
         except ImportError:
             from menpo.visualize.base import MenpowidgetsMissingError
             raise MenpowidgetsMissingError()
