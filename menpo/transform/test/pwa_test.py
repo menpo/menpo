@@ -1,5 +1,5 @@
 import menpo
-from numpy.testing import assert_equal
+from numpy.testing import assert_allclose
 from menpo.transform.piecewiseaffine.base import (CythonPWA, CachedPWA,
                                                   PythonPWA)
 
@@ -15,25 +15,25 @@ tgt = src.copy()
 def test_cached_pwa_same_as_python_pwa():
     cached_pwa = CythonPWA(src, tgt)
     python_pwa = PythonPWA(src, tgt)
-    assert_equal(python_pwa.apply(points), cached_pwa.apply(points))
+    assert_allclose(cached_pwa.apply(points), python_pwa.apply(points))
 
 
 def test_cython_pwa_batch_same():
     cached_pwa = CythonPWA(src, tgt)
-    assert_equal(cached_pwa.apply(points),
-                 cached_pwa.apply(points, batch_size=10))
+    assert_allclose(cached_pwa.apply(points),
+                    cached_pwa.apply(points, batch_size=10))
 
 
 def test_python_pwa_batch_same():
     cached_pwa = PythonPWA(src, tgt)
-    assert_equal(cached_pwa.apply(points),
-                 cached_pwa.apply(points, batch_size=10))
+    assert_allclose(cached_pwa.apply(points),
+                    cached_pwa.apply(points, batch_size=10))
 
 
 def test_cython_pwa_same_as_python_pwa():
     python = PythonPWA(src, tgt)
     cython = CythonPWA(src, tgt)
-    assert_equal(python.apply(points), cython.apply(points))
+    assert_allclose(python.apply(points), cython.apply(points))
 
 
 def test_cached_pwa_same_twice():
@@ -41,7 +41,7 @@ def test_cached_pwa_same_twice():
     r1 = cached_pwa.apply(points)
     # now using cache
     r2 = cached_pwa.apply(points)
-    assert_equal(r1, r2)
+    assert_allclose(r1, r2)
 
 
 def test_cached_pwa_forgets_cache():
@@ -51,4 +51,4 @@ def test_cached_pwa_forgets_cache():
     # cache is now set to something other than points
     # should clear cache and be fine
     r2 = cached_pwa.apply(points)
-    assert_equal(r1, r2)
+    assert_allclose(r1, r2)
