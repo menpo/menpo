@@ -12,12 +12,19 @@ IS_OSX = 'darwin' == SYS_PLATFORM
 IS_WIN = 'windows' == SYS_PLATFORM
 
 # Get Numpy include path without importing it
-NUMPY_INC_PATHS = [os.path.join(r, 'numpy', 'core', 'include') 
-                   for r in site.getsitepackages() if 
+NUMPY_INC_PATHS = [os.path.join(r, 'numpy', 'core', 'include')
+                   for r in site.getsitepackages() if
                    os.path.isdir(os.path.join(r, 'numpy', 'core', 'include'))]
 if len(NUMPY_INC_PATHS) == 0:
-    raise ValueError("Could not find numpy include dir - cannot proceed with "
-                     "compilation of cython modules.")
+    try:
+        import numpy as np
+    except ImportError:
+        raise ValueError("Could not find numpy include dir and numpy not installed before build - "
+                         "cannot proceed with compilation of cython modules.")
+    else:
+        # just ask numpy for it's include dir
+        NUMPY_INC_PATHS = [np.get_include()]
+
 elif len(NUMPY_INC_PATHS) > 1:
     print("Found {} numpy include dirs: "
           "{}".format(len(NUMPY_INC_PATHS), ', '.join(NUMPY_INC_PATHS)))
