@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
+from nose.tools import raises
 
 from menpo.shape import PointCloud
 from menpo.transform import GeneralizedProcrustesAnalysis
@@ -58,3 +59,17 @@ def test_procrustes_with_target():
     mean = np.array([[2.0, -0.5], [4.5, 1.8], [6.0, 0.5], [3.5, -1.8]])
     assert_allclose(np.around(gpa.mean_aligned_shape().points, decimals=1),
                     mean)
+
+@raises(ValueError)
+def test_procrustes_with_zero_source_area():
+    # square
+    src_1 = PointCloud(np.array([[1.0, 1.0], [1.0, -1.0],
+                                 [-1.0, -1.0], [-1.0, 1.0]]))
+    # trapezoid
+    src_2 = PointCloud(np.array([[-0.5, -1.5], [2.5, -1.5],
+                                 [2.8, -2.5], [-0.2, -2.5]]))
+    # zero area (single line)
+    src_3 = PointCloud(np.array([[1.0, -1.0], [1.0, -1.0],
+                                 [1.0, -1.0], [1.0, -1.0]]))
+    gpa = GeneralizedProcrustesAnalysis([src_1, src_2, src_3],
+                                        allow_mirror=False)
