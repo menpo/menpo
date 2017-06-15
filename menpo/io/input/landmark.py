@@ -6,7 +6,8 @@ import itertools
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from menpo.shape import PointCloud, LabelledPointUndirectedGraph
+from menpo.shape import (PointCloud, PointUndirectedGraph,
+                         LabelledPointUndirectedGraph)
 from menpo.transform import Scale
 
 
@@ -389,3 +390,42 @@ def ljson_importer(filepath, asset=None, **kwargs):
                          "1, or 2".format(filepath, v))
     else:
         return parser(lms_dict)
+
+
+def tem_importer(filepath, asset=None, **kwargs):
+    """
+    Import the PsychoMorph .tem template/landmark format. Builds a PointGraph.
+
+    Parameters
+    ----------
+    filepath : `Path`
+        Absolute filepath of the file.
+    asset : `object`, optional
+        An optional asset that may help with loading. This is unused for this
+        implementation.
+    \**kwargs : `dict`, optional
+        Any other keyword arguments.
+
+    Returns
+    -------
+    landmarks : :map:`LandmarkGroup`
+        The landmarks including appropriate labels if available.
+    """
+    with open(str(filepath), 'rt') as f:
+        data = [l.strip() for l in f.readlines()]
+    n_points = int(data.pop(0))
+    points, rest = data[:n_points], data[n_points:]
+    points = np.array([tuple(map(float, l.split())) for l in points])
+
+    n_connectivities = int(rest.pop(0))
+    # Skip the first two entries (a zero and then the number of connections in
+    # the first set) and then skip all the subsequent 0s and connectivity
+    # counts since we don't need them
+    connectivities = rest[2::3]
+    assert len(connectivities) == n_connectivities
+    connectivities = [tuple(map(int, c.split())) for c in connectivities]
+
+    edges = np.vstack([connectivity_from_array(c) for c in connectivities])
+
+    # Swap x and y axes for Menpo ordering
+    return PointUndirectedGraph.init_from_edges(points[:, ::-1], edges)
