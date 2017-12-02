@@ -1,12 +1,11 @@
 import numpy as np
 from numpy.testing import assert_array_equal
-from nose.tools import assert_equals
 
 import menpo.io as mio
-from menpo.landmark import labeller, face_ibug_68_to_face_ibug_68
 from menpo.image.base import (Image, _convert_patches_list_to_single_array,
                               _create_patches_image)
 from menpo.shape import PointCloud
+
 
 #######################
 # EXTRACT PATCHES TESTS
@@ -74,7 +73,7 @@ def test_squared_even_patches():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert_equals(len(patches), 68)
+    assert len(patches) == 68
 
 
 def test_squared_odd_patches():
@@ -83,7 +82,7 @@ def test_squared_odd_patches():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert_equals(len(patches), 68)
+    assert len(patches) == 68
 
 
 def test_nonsquared_even_patches():
@@ -92,7 +91,7 @@ def test_nonsquared_even_patches():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert_equals(len(patches), 68)
+    assert len(patches) == 68
 
 
 def test_nonsquared_odd_patches():
@@ -101,7 +100,7 @@ def test_nonsquared_odd_patches():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert_equals(len(patches), 68)
+    assert len(patches) == 68
 
 
 def test_nonsquared_even_odd_patches():
@@ -110,7 +109,7 @@ def test_nonsquared_even_odd_patches():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert_equals(len(patches), 68)
+    assert len(patches) == 68
 
 
 def test_squared_even_patches_landmarks():
@@ -119,7 +118,7 @@ def test_squared_even_patches_landmarks():
     patches = image.extract_patches_around_landmarks('PTS',
                                                      patch_shape=patch_shape,
                                                      as_single_array=False)
-    assert_equals(len(patches), 68)
+    assert len(patches) == 68
 
 
 def test_squared_even_patches_single_array():
@@ -128,7 +127,7 @@ def test_squared_even_patches_single_array():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     as_single_array=True,
                                     patch_shape=patch_shape)
-    assert_equals(patches.shape, ((68, 1, 3) + patch_shape))
+    assert patches.shape, ((68, 1 == 3) + patch_shape)
 
 
 def test_squared_even_patches_sample_offsets():
@@ -137,7 +136,7 @@ def test_squared_even_patches_sample_offsets():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     sample_offsets=sample_offsets,
                                     as_single_array=False)
-    assert_equals(len(patches), 136)
+    assert len(patches) == 136
 
 
 #######################

@@ -114,5 +114,5 @@ setup(name='menpo',
       packages=find_packages(),
       install_requires=install_requires,
       package_data={'menpo': ['data/*']},
-      tests_require=['nose', 'mock']
+      tests_require=['pytest', 'mock']
 )

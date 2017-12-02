@@ -4,7 +4,6 @@ import random
 import warnings
 
 import numpy as np
-from nose.plugins.attrib import attr
 from numpy.testing import assert_allclose
 from pytest import raises
 
@@ -154,7 +153,6 @@ def test_hog_channels_zhuramanan():
         assert_allclose(hog_img.n_channels, n_channels)
 
 
-@attr('cyvlfeat')
 def test_dsift_channels():
     from menpo.feature import dsift
     n_cases = 3
@@ -265,7 +263,6 @@ def test_daisy_values():
     assert_allclose(np.around(daisy_img.pixels[40, 1, 1], 6), 0.000163)
 
 
-@attr('cyvlfeat')
 def test_dsift_values():
     from menpo.feature import dsift
     # Equivalent to the transpose of image in Matlab
