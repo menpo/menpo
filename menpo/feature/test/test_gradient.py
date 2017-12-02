@@ -1,4 +1,4 @@
-from nose.tools import raises
+from pytest import raises
 import numpy as np
 from numpy.testing import assert_allclose
 from menpo.image import Image
@@ -58,10 +58,10 @@ def test_gradient_takeo_double():
     assert_allclose(grad_image.pixels, np_grad)
 
 
-@raises(TypeError)
 def test_gradient_uint8_exception():
     image = Image(example_image.astype(np.uint8))
-    gradient(image)
+    with raises(TypeError):
+        gradient(image)
 
 
 def _check_assertions(actual_image, expected_shape, expected_n_channels,

@@ -66,7 +66,10 @@ def build_extension_from_pyx(pyx_path, extra_sources_paths=None):
                     language='c++')
     if IS_LINUX or IS_OSX:
         ext.extra_compile_args.append('-Wno-unused-function')
+    if IS_OSX:
+        ext.extra_link_args.append('-headerpad_max_install_names')
     return ext
+
 
 try:
     from Cython.Build import cythonize
@@ -98,7 +101,7 @@ cython_exts = cythonize(cython_modules, quiet=True)
 # Please see conda/meta.yaml for other binary dependencies
 install_requires = ['numpy>=1.10,<2.0',
                     'scipy>=0.16,<1.0',
-                    'matplotlib>=1.4,<2.0',
+                    'matplotlib>=1.4,<3.0',
                     'pillow>=3.0,<5.0']
 
 if sys.version_info.major == 2:
@@ -114,5 +117,5 @@ setup(name='menpo',
       packages=find_packages(),
       install_requires=install_requires,
       package_data={'menpo': ['data/*']},
-      tests_require=['nose', 'mock']
+      tests_require=['pytest>=3.0', 'mock']
 )
