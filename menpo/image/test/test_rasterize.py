@@ -12,7 +12,7 @@ line = PointUndirectedGraph(np.array([[2, 4.5], [8, 4.5]]),
                             adjacency_matrix=np.array([[0, 1], [1, 0]]))
 
 
-@unittest.skipIf(os.environ.get('TRAVIS'), 'Skipping due to lack of DISPLAY on Travis')
+# @unittest.skipIf(os.environ.get('TRAVIS'), 'Skipping due to lack of DISPLAY on Travis')
 def test_rasterize_matplotlib_basic():
     im = Image.init_blank([11, 11], fill=0, n_channels=1)
     im.landmarks['test'] = centre
