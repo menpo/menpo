@@ -30,15 +30,12 @@ requirements:
     - cyvlfeat >=0.4.3,<0.5
 
     # Visualization
-    - matplotlib >=1.4,<2.0
-
-    # Test dependencies
-    - mock
-    - pytest
+    - matplotlib >=1.4,<3.0
 
 test:
   requires:
-    - coverage
+    - pytest-cov
+    - mock
 
   files:
     - .coveragerc
@@ -47,8 +44,8 @@ test:
     - menpo
 
   commands:
-    - nosetests menpo -v --with-coverage --cover-package=menpo --with-xunit --xunit-file=/tmp/menpo.xml --xunit-testsuite-name=menpo  # [unix]
-    - nosetests menpo -v --with-coverage --cover-package=menpo --with-xunit --xunit-file=C:\\menpo.xml --xunit-testsuite-name=menpo   # [win]
+    - MPLBACKEND=Agg pytest menpo -v --cov=menpo --cov-config .coveragerc    # [linux]
+    - MPLBACKEND=TKAgg pytest menpo -v --cov=menpo --cov-config .coveragerc  # [osx]
 
 about:
   home: https://github.com/menpo/menpo/
