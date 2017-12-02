@@ -34,6 +34,7 @@ requirements:
 
 test:
   requires:
+    - pytest >=3.0
     - pytest-cov
     - mock
 
