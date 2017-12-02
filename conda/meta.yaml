@@ -47,7 +47,7 @@ test:
   commands:
     - MPLBACKEND=Agg pytest $SP_DIR/menpo -v --cov=menpo --cov-config .coveragerc            # [linux]
     - MPLBACKEND=TKAgg pytest $SP_DIR/menpo -v --cov=menpo --cov-config .coveragerc          # [osx]
-    - pytest $SP_DIR/menpo -v --cov=menpo --cov-config .coveragerc --junitxml=C:\\menpo.xml  # [win]
+    - pytest %SP_DIR%\\menpo -v --cov=menpo --cov-config .coveragerc --junitxml=C:\\menpo.xml  # [win]
 
 
 about:
