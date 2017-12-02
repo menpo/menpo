@@ -66,7 +66,10 @@ def build_extension_from_pyx(pyx_path, extra_sources_paths=None):
                     language='c++')
     if IS_LINUX or IS_OSX:
         ext.extra_compile_args.append('-Wno-unused-function')
+    if IS_OSX:
+        ext.extra_link_args.append('-headerpad_max_install_names')
     return ext
+
 
 try:
     from Cython.Build import cythonize
