@@ -44,8 +44,8 @@ test:
     - menpo
 
   commands:
-    - MPLBACKEND=Agg pytest menpo -v --cov=menpo --cov-config .coveragerc    # [linux]
-    - MPLBACKEND=TKAgg pytest menpo -v --cov=menpo --cov-config .coveragerc  # [osx]
+    - MPLBACKEND=Agg pytest -v --cov=menpo --cov-config .coveragerc    # [linux]
+    - MPLBACKEND=TKAgg pytest -v --cov=menpo --cov-config .coveragerc  # [osx]
 
 about:
   home: https://github.com/menpo/menpo/
