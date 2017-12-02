@@ -1,7 +1,7 @@
 import collections
 import numpy as np
 from mock import Mock
-from nose.tools import raises
+from pytest import raises
 
 from menpo.base import LazyList
 
@@ -55,15 +55,14 @@ def test_lazylist_multi_map():
     assert all(x == 4 for x in ll_mapped)
 
 
-@raises(ValueError)
 def test_lazylist_multi_map_unequal_lengths():
     two_func = lambda: 2
     double_func = [lambda x: x * 2] * 2
     ll = LazyList([two_func])
-    ll.map(double_func)
+    with raises(ValueError):
+        ll.map(double_func)
 
 
-@raises(ValueError)
 def test_lazylist_multi_map_iterable_and_callable():
     class double_func(collections.Iterable):
         def __call__(self, x, **kwargs):
@@ -75,8 +74,8 @@ def test_lazylist_multi_map_iterable_and_callable():
     f = double_func()
     two_func = lambda: 2
     ll = LazyList([two_func])
-    ll.map(f)
-    assert 1
+    with raises(ValueError):
+        ll.map(f)
 
 
 def test_lazylist_repeat():
@@ -134,10 +133,10 @@ def test_lazylist_init_from_index_callable():
     assert ll[-1] == 4
 
 
-@raises(TypeError)
 def test_lazylist_immutable():
     ll = LazyList([])
-    ll[0] = 1
+    with raises(TypeError):
+        ll[0] = 1
 
 
 def test_lazylist_add_lazylist():
@@ -163,9 +162,9 @@ def test_lazylist_add_list():
     assert new_ll[1] is b
 
 
-@raises(ValueError)
 def test_lazylist_add_non_iterable_non_lazy_list_rases_value_error():
-    LazyList([1]) + None
+    with raises(ValueError):
+        LazyList([1]) + None
 
 
 def test_lazylist_slice_with_ndarray():

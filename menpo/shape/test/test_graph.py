@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from nose.tools import raises
+from pytest import raises
 from scipy.sparse import csr_matrix, lil_matrix
 from menpo.image import Image, MaskedImage
 from menpo.shape import (UndirectedGraph, DirectedGraph, Tree,
@@ -53,30 +53,30 @@ g_single = DirectedGraph(adj_single)
 pg_single = PointDirectedGraph(point, adj_single)
 
 
-@raises(ValueError)
 def test_create_graph_exception():
     adj = np.array([[0, 1, 3],
                     [0, 2, 4]])
-    UndirectedGraph(adj)
+    with raises(ValueError):
+        UndirectedGraph(adj)
 
 
-@raises(ValueError)
 def test_create_tree_exception_1():
-    adj = csr_matrix(([1] * 8, ([0, 0, 1, 1, 2, 3, 4, 5, 0],
+    adj = csr_matrix(([1] * 9, ([0, 0, 1, 1, 2, 3, 4, 5, 0],
                                 [1, 2, 3, 4, 5, 6, 7, 8, 4])), shape=(9, 9))
-    Tree(adj, 0)
+    with raises(ValueError):
+        Tree(adj, 0)
 
 
-@raises(ValueError)
 def test_create_tree_exception_2():
-    Tree(adj_tree, 20)
+    with raises(ValueError):
+        Tree(adj_tree, 20)
 
 
-@raises(ValueError)
 def test_create_tree_exception_3():
     adj = csr_matrix(([1] * 8, ([0, 0, 1, 1, 2, 3, 4, 5],
                                 [1, 2, 3, 4, 5, 6, 7, 8])), shape=(10, 10))
-    Tree(adj, 0)
+    with raises(ValueError):
+        Tree(adj, 0)
 
 
 def test_init_from_edges():
@@ -366,14 +366,21 @@ def test_from_mask():
     assert (pg_single.from_mask(np.array([True])).get_adjacency_list() == [[]])
 
 
-@raises(ValueError)
 def test_from_mask_errors():
-    pg_directed.from_mask(np.array([False, False, False, False, False, False]))
-    pg_undirected.from_mask(np.array([False, False, False, False, False, True]))
-    pg_tree.from_mask(np.array([False, True, True, True, True, True, True,
-                                True, True]))
-    pg_isolated.from_mask(np.array([True, True, False, True, False, True]))
-    pg_single.from_mask(np.array([False]))
+    with raises(ValueError):
+        pg_directed.from_mask(np.array([False, False, False, False, False,
+                                        False]))
+    with raises(ValueError):
+        pg_undirected.from_mask(np.array([False, False, False, False, False,
+                                          False]))
+    with raises(ValueError):
+        pg_tree.from_mask(np.array([False, True, True, True, True, True, True,
+                                    True, True]))
+    with raises(ValueError):
+        pg_isolated.from_mask(np.array([False, False, False, False, False,
+                                        False]))
+    with raises(ValueError):
+        pg_single.from_mask(np.array([False]))
 
 
 def test_relative_locations():
@@ -388,7 +395,8 @@ def test_relative_locations():
                                                             [0, -10]]))
 
 
-@raises(ValueError)
 def test_relative_locations():
-    pg_tree.relative_location_edge(8, 5)
-    pg_tree.relative_location_edge(0, 6)
+    with raises(ValueError):
+        pg_tree.relative_location_edge(8, 5)
+    with raises(ValueError):
+        pg_tree.relative_location_edge(0, 6)

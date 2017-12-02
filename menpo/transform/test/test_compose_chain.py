@@ -7,7 +7,7 @@ from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.transform.piecewiseaffine import PiecewiseAffine
 
 
-def chain_tps_before_tps_test():
+def test_chain_tps_before_tps():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     tps_one = ThinPlateSplines(a, b)
@@ -20,7 +20,7 @@ def chain_tps_before_tps_test():
     assert (np.all(chain_res.points == manual_res.points))
 
 
-def chain_tps_after_tps_test():
+def test_chain_tps_after_tps():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     tps_one = ThinPlateSplines(a, b)
@@ -33,7 +33,7 @@ def chain_tps_after_tps_test():
     assert (np.all(chain_res.points == manual_res.points))
 
 
-def chain_pwa_before_tps_test():
+def test_chain_pwa_before_tps():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     pwa = PiecewiseAffine(a_tm, b)
@@ -42,7 +42,7 @@ def chain_pwa_before_tps_test():
     assert(isinstance(chain, TransformChain))
 
 
-def chain_pwa_after_tps_test():
+def test_chain_pwa_after_tps():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     pwa = PiecewiseAffine(a_tm, b)
@@ -51,7 +51,7 @@ def chain_pwa_after_tps_test():
     assert(isinstance(chain, TransformChain))
 
 
-def chain_tps_before_pwa_test():
+def test_chain_tps_before_pwa():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     pwa = PiecewiseAffine(a_tm, b)
@@ -60,7 +60,7 @@ def chain_tps_before_pwa_test():
     assert(isinstance(chain, TransformChain))
 
 
-def chain_tps_after_pwa_test():
+def test_chain_tps_after_pwa():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     pwa = PiecewiseAffine(a_tm, b)
@@ -69,7 +69,7 @@ def chain_tps_after_pwa_test():
     assert(isinstance(chain, TransformChain))
 
 
-def compose_tps_after_translation_test():
+def test_compose_tps_after_translation():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     t = Translation([3, 4])
@@ -78,7 +78,7 @@ def compose_tps_after_translation_test():
     assert(isinstance(chain, TransformChain))
 
 
-def manual_no_op_chain_test():
+def test_manual_no_op_chain():
     points = PointCloud(np.random.random([10, 2]))
     t = Translation([3, 4])
     chain = TransformChain([t, t.pseudoinverse()])
@@ -86,7 +86,7 @@ def manual_no_op_chain_test():
     assert(np.allclose(points_applied.points, points.points))
 
 
-def chain_compose_before_tps_test():
+def test_chain_compose_before_tps():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     tps = ThinPlateSplines(a, b)
@@ -103,7 +103,7 @@ def chain_compose_before_tps_test():
     assert(np.all(manual_res.points == chain_res.points))
 
 
-def chain_compose_after_tps_test():
+def test_chain_compose_after_tps():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     tps = ThinPlateSplines(a, b)
@@ -120,7 +120,7 @@ def chain_compose_after_tps_test():
     assert(np.all(manual_res.points == chain_res.points))
 
 
-def chain_compose_before_inplace_tps_test():
+def test_chain_compose_before_inplace_tps():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     tps = ThinPlateSplines(a, b)
@@ -137,7 +137,7 @@ def chain_compose_before_inplace_tps_test():
     assert(np.all(manual_res.points == chain_res.points))
 
 
-def chain_compose_after_inplace_tps_test():
+def test_chain_compose_after_inplace_tps():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     tps = ThinPlateSplines(a, b)
@@ -154,7 +154,7 @@ def chain_compose_after_inplace_tps_test():
     assert(np.all(manual_res.points == chain_res.points))
 
 
-def chain_compose_after_inplace_chain_test():
+def test_chain_compose_after_inplace_chain():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
 

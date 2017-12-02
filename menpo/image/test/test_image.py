@@ -1,7 +1,7 @@
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
-from nose.tools import raises
+from pytest import raises
 from menpo.testing import is_same_array
 from menpo.image import BooleanImage, MaskedImage, Image
 
@@ -11,9 +11,9 @@ from PIL import PILLOW_VERSION
 from distutils.version import LooseVersion
 
 
-@raises(ValueError)
 def test_create_1d_error():
-    Image(np.ones(1))
+    with raises(ValueError):
+        Image(np.ones(1))
 
 
 def test_image_n_elements():
@@ -180,9 +180,10 @@ def test_image_clip_pixels_cutom_max_uint():
     image2 = image.clip_pixels(maximum=200)
     assert(image2.pixels.max() <= 200)
 
-@raises(ValueError)
+
 def test_boolean_image_wrong_round():
-    BooleanImage.init_blank((12, 12), round='ads')
+    with raises(ValueError):
+        BooleanImage.init_blank((12, 12), round='ads')
 
 
 def test_boolean_image_proportion_true():
@@ -261,10 +262,10 @@ def test_boolean_bounds_false():
     assert(np.all(max_b == np.array([5, 4])))
 
 
-@raises(TypeError)
 def test_boolean_prevent_order_kwarg():
     mask = BooleanImage.init_blank((8, 8), fill=True)
-    mask.warp_to_mask(mask, None, order=4)
+    with raises(TypeError):
+        mask.warp_to_mask(mask, None, order=4)
 
 
 def test_create_image_copy_false():
@@ -287,7 +288,7 @@ def test_create_image_copy_false_not_c_contiguous():
         assert(len(w) == 1)
 
 
-def mask_image_3d_test():
+def test_mask_image_3d():
     mask_shape = (13, 120, 121)
     mask_region = np.ones(mask_shape)
     return BooleanImage(mask_region)
@@ -475,7 +476,6 @@ def test_normalize_norm_image():
     assert_allclose(np.linalg.norm(new_image.pixels), 1)
 
 
-@raises(ValueError)
 def test_normalize_std_no_variance_exception():
     pixels = np.ones((3, 120, 120))
     pixels[0] = 0.5
@@ -483,16 +483,17 @@ def test_normalize_std_no_variance_exception():
     image = MaskedImage(pixels)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        image.normalize_std(mode='per_channel')
+        with raises(ValueError):
+            image.normalize_std(mode='per_channel')
 
 
-@raises(ValueError)
 def test_normalize_norm_zero_norm_exception():
     pixels = np.zeros((3, 120, 120))
     image = MaskedImage(pixels)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        image.normalize_norm(mode='per_channel')
+        with raises(ValueError):
+            image.normalize_norm(mode='per_channel')
 
 
 def test_normalize_std_masked_per_channel():
@@ -606,16 +607,16 @@ def test_rescale_tuple():
     assert_allclose(new_image.shape, (60, 240))
 
 
-@raises(ValueError)
 def test_rescale_negative():
     image = MaskedImage(np.random.randn(3, 120, 120), copy=False)
-    image.rescale([0.5, -0.5])
+    with raises(ValueError):
+        image.rescale([0.5, -0.5])
 
 
-@raises(ValueError)
 def test_rescale_negative_single_num():
     image = MaskedImage(np.random.randn(3, 120, 120), copy=False)
-    image.rescale(-0.5)
+    with raises(ValueError):
+        image.rescale(-0.5)
 
 
 def test_rescale_boundaries_interpolation():
@@ -670,12 +671,10 @@ def test_as_greyscale_average():
     assert_allclose(new_image.pixels[0], ones[0] * 0.83333333)
 
 
-@raises(ValueError)
 def test_as_greyscale_channels_no_index():
     image = Image.init_blank((120, 120), n_channels=3)
-    new_image = image.as_greyscale(mode='channel')
-    assert (new_image.shape == image.shape)
-    assert (new_image.n_channels == 1)
+    with raises(ValueError):
+        image.as_greyscale(mode='channel')
 
 
 def test_as_greyscale_channels():
@@ -701,10 +700,10 @@ def test_as_rolled_channels_1channel():
     assert new_im.ndim == 2
 
 
-@raises(ValueError)
 def test_as_rolled_channels_float_out_range():
     im = Image.init_blank((120, 120), n_channels=1, fill=2.0)
-    im.pixels_with_channels_at_back(out_dtype=np.uint8)
+    with raises(ValueError):
+        im.pixels_with_channels_at_back(out_dtype=np.uint8)
 
 
 def test_as_rolled_channels_3channels():
@@ -728,10 +727,10 @@ def test_as_rolled_channels_1channel_float32_out():
     assert_allclose(np.ones([120, 120]), new_im)
 
 
-@raises(ValueError)
 def test_as_pil_image_bad_range():
     im = MaskedImage(np.random.randn(1, 120, 120), copy=False)
-    im.as_PILImage()
+    with raises(ValueError):
+        im.as_PILImage()
 
 
 def test_as_pil_image_float32():

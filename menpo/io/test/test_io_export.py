@@ -6,7 +6,7 @@ from numpy.testing import assert_allclose
 import os
 from pathlib import PosixPath, WindowsPath, Path
 from mock import patch, PropertyMock, MagicMock
-from nose.tools import raises
+from pytest import raises
 
 
 import menpo.io as mio
@@ -51,14 +51,13 @@ def test_export_filepath_no_overwrite(mock_open, exists, landmark_types):
     assert export_function.call_count == 1
 
 
-@raises(ValueError)
 @patch('menpo.io.output.base.landmark_types')
 @patch('menpo.io.output.base.Path.exists')
 @patch('menpo.io.output.base.Path.open')
 def test_export_filepath_wrong_extension(mock_open, exists, landmark_types):
     exists.return_value = False
-    mio.export_landmark_file(test_lg, fake_path, extension='pts')
-    mock_open.assert_called_with('wb')
+    with raises(ValueError):
+        mio.export_landmark_file(test_lg, fake_path, extension='pts')
 
 
 @patch('menpo.io.output.base.landmark_types')
@@ -87,59 +86,57 @@ def test_export_filepath_explicit_ext_dot(mock_open, exists, landmark_types):
     assert export_function.call_count == 1
 
 
-@raises(mio.OverwriteError)
 @patch('menpo.io.output.base.Path.exists')
 def test_export_filepath_no_overwrite_exists(exists):
     exists.return_value = True
-    mio.export_landmark_file(test_lg, fake_path)
+    with raises(ValueError):
+        mio.export_landmark_file(test_lg, fake_path)
 
 
-@raises(ValueError)
 @patch('menpo.io.output.base.landmark_types')
 @patch('menpo.io.output.base.Path.exists')
 def test_export_unsupported_extension(exists, landmark_types):
     exists.return_value = False
     landmark_types.get.side_effect = KeyError
-    mio.export_landmark_file(test_lg, fake_path)
+    with raises(ValueError):
+        mio.export_landmark_file(test_lg, fake_path)
 
 
-@raises(ValueError)
 @patch('{}.open'.format(__name__), create=True)
 def test_export_file_handle_file_extension_None(mock_open):
     with open(fake_path) as f:
-        mio.export_landmark_file(test_lg, f)
+        with raises(ValueError):
+            mio.export_landmark_file(test_lg, f)
 
 
-@raises(ValueError)
 @patch('menpo.io.output.base.Path.exists')
 @patch('{}.open'.format(__name__), create=True)
 def test_export_file_handle_file_extension_not_match_no_dot(mock_open, exists):
     exists.return_value = False
     with open(fake_path) as f:
         type(f).name = PropertyMock(return_value=fake_path)
-        mio.export_landmark_file(test_lg, f, extension='pts')
-    assert mock_open.name.call_count == 1
+        with raises(ValueError):
+            mio.export_landmark_file(test_lg, f, extension='pts')
 
 
-@raises(ValueError)
 @patch('menpo.io.output.base.Path.exists')
 @patch('{}.open'.format(__name__), create=True)
 def test_export_file_handle_file_extension_not_match_dot(mock_open, exists):
     exists.return_value = False
     with open(fake_path) as f:
         type(f).name = PropertyMock(return_value=fake_path)
-        mio.export_landmark_file(test_lg, f, extension='.pts')
-    assert mock_open.name.call_count == 1
+        with raises(ValueError):
+            mio.export_landmark_file(test_lg, f, extension='.pts')
 
 
-@raises(ValueError)
 @patch('menpo.io.output.base.Path.exists')
 @patch('{}.open'.format(__name__), create=True)
 def test_export_file_handle_file_exists(mock_open, exists):
     exists.return_value = True
     with open(fake_path) as f:
         type(f).name = PropertyMock(return_value=fake_path)
-        mio.export_landmark_file(test_lg, f, extension='fake')
+        with raises(ValueError):
+            mio.export_landmark_file(test_lg, f, extension='fake')
 
 
 @patch('menpo.io.output.base.landmark_types')

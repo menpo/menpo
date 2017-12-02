@@ -1,5 +1,5 @@
 import numpy as np
-from nose.tools import raises
+from pytest import raises
 from numpy.testing import assert_allclose
 
 from menpo.transform import Affine, NonUniformScale
@@ -80,22 +80,22 @@ def test_affine_3d_n_parameters():
     assert (t.n_parameters == 12)
 
 
-@raises(ValueError)
 def test_affine_non_square_h_matrix():
     homo = np.random.rand(4, 6)
-    Affine(homo)
+    with raises(ValueError):
+        Affine(homo)
 
 
-@raises(ValueError)
 def test_affine_incorrect_bottom_row():
     homo = np.random.rand(4, 4)
-    Affine(homo)
+    with raises(ValueError):
+        Affine(homo)
 
 
-@raises(ValueError)
 def test_affine_non_square_h_matrix():
     homo = np.random.rand(4, 6)
-    Affine(homo)
+    with raises(ValueError):
+        Affine(homo)
 
 
 def test_affine_compose_inplace_affine():

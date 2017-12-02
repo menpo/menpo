@@ -1,6 +1,6 @@
 import numpy as np
 from mock import patch, MagicMock
-from nose.tools import raises
+from pytest import raises
 from scipy.sparse import csr_matrix
 
 from menpo.image import Image
@@ -17,57 +17,55 @@ menpowidgets_mock.side_effect = ImportError
 
 @surrogate('menpowidgets.visualize_images')
 @patch('menpowidgets.visualize_images', menpowidgets_mock)
-@raises(MenpowidgetsMissingError)
-def image_view_widget_test():
-    Image.init_blank((5, 5)).view_widget()
+def test_image_view_widget():
+    with raises(MenpowidgetsMissingError):
+        Image.init_blank((5, 5)).view_widget()
 
 
 @surrogate('menpowidgets.visualize_pointclouds')
 @patch('menpowidgets.visualize_pointclouds', menpowidgets_mock)
-@raises(MenpowidgetsMissingError)
-def pointcloud_view_widget_test():
-    PointCloud(pcloud2d).view_widget()
+def test_pointcloud_view_widget():
+    with raises(MenpowidgetsMissingError):
+        PointCloud(pcloud2d).view_widget()
 
 
 @surrogate('menpowidgets.visualize_landmarkgroups')
 @patch('menpowidgets.visualize_landmarkgroups', menpowidgets_mock)
-@raises(MenpowidgetsMissingError)
-def labelledpointundirectedgraph_view_widget_test():
+def test_labelledpointundirectedgraph_view_widget():
     adj_matrix = csr_matrix((1, 1))
-    LabelledPointUndirectedGraph.init_with_all_label(
-        pcloud2d, adj_matrix).view_widget()
+    with raises(MenpowidgetsMissingError):
+        LabelledPointUndirectedGraph.init_with_all_label(
+            pcloud2d, adj_matrix).view_widget()
 
 
 @surrogate('menpowidgets.visualize_landmarks')
 @patch('menpowidgets.visualize_landmarks', menpowidgets_mock)
-@raises(MenpowidgetsMissingError)
-def landmarkmanager_view_widget_test():
+def test_landmarkmanager_view_widget():
     l = LandmarkManager()
     l['test'] = PointCloud(pcloud2d)
-    l.view_widget()
+    with raises(MenpowidgetsMissingError):
+        l.view_widget()
 
 
 @surrogate('menpowidgets.visualize_patches')
 @patch('menpowidgets.visualize_patches', menpowidgets_mock)
-@raises(MenpowidgetsMissingError)
-def landmarkmanager_view_widget_test():
+def test_landmarkmanager_view_widget():
     l = LandmarkManager()
     l['test'] = PointCloud(pcloud2d)
-    l.view_widget()
-    assert 1
+    with raises(MenpowidgetsMissingError):
+        l.view_widget()
 
 
 @surrogate('menpowidgets.visualize_pointclouds')
 @patch('menpowidgets.visualize_pointclouds', menpowidgets_mock)
-@raises(MenpowidgetsMissingError)
-def trimesh_view_widget_test():
-    TriMesh(triangle_pcloud2d).view_widget()
-    assert 1
+def test_trimesh_view_widget():
+    with raises(MenpowidgetsMissingError):
+        TriMesh(triangle_pcloud2d).view_widget()
 
 
 @surrogate('menpowidgets.visualize_pointclouds')
 @patch('menpowidgets.visualize_pointclouds', menpowidgets_mock)
-@raises(MenpowidgetsMissingError)
-def pointgraph_view_widget_test():
-    PointDirectedGraph.init_from_edges(triangle_pcloud2d,
-                                       [[0, 1], [1, 2]]).view_widget()
+def test_pointgraph_view_widget():
+    with raises(MenpowidgetsMissingError):
+        PointDirectedGraph.init_from_edges(triangle_pcloud2d,
+                                           [[0, 1], [1, 2]]).view_widget()

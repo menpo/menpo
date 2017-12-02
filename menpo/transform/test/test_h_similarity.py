@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
-from nose.tools import raises
+from pytest import raises
 
 from menpo.transform import Similarity
 
@@ -60,12 +60,11 @@ def test_similarity_2d_n_parameters():
     assert (t.n_parameters == 4)
 
 
-@raises(NotImplementedError)
 def test_similarity_3d_n_parameters_raises_notimplementederror():
     homo = np.eye(4)
     t = Similarity(homo)
-    # Raises exception
-    t.n_parameters
+    with raises(NotImplementedError):
+        t.n_parameters
 
 
 def test_similarity_identity_2d():

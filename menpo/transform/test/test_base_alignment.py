@@ -1,5 +1,5 @@
 from mock import Mock
-from nose.tools import raises
+from pytest import raises
 import numpy as np
 from numpy.testing import assert_equal
 
@@ -30,47 +30,47 @@ class MockedAlignment(Alignment):
         return x
 
 
-def alignment_init_test():
+def test_alignment_init():
     MockedAlignment(source, target)
 
 
-@raises(ValueError)
-def alignment_init_n_dims_mismatch_test():
-    MockedAlignment(source, target_3d)
+def test_alignment_init_n_dims_mismatch():
+    with raises(ValueError):
+        MockedAlignment(source, target_3d)
 
 
-@raises(ValueError)
-def alignment_init_n_dims_mismatch_test():
-    MockedAlignment(source, target_3d)
+def test_alignment_init_n_dims_mismatch():
+    with raises(ValueError):
+        MockedAlignment(source, target_3d)
 
 
-@raises(ValueError)
-def alignment_init_n_points_mismatch_test():
-    MockedAlignment(source, target_mismatch)
+def test_alignment_init_n_points_mismatch():
+    with raises(ValueError):
+        MockedAlignment(source, target_mismatch)
 
 
-def alignment_source_test():
+def test_alignment_source():
     al = MockedAlignment(source, target)
     assert (al.source is source)
 
 
-def alignment_target_test():
+def test_alignment_target():
     al = MockedAlignment(source, target)
     assert (al.target is target)
 
 
-def alignment_aligned_source_test():
+def test_alignment_aligned_source():
     al = MockedAlignment(source, target)
     assert (al.aligned_source() is source)
 
 
-def alignment_alignment_error_test():
+def test_alignment_alignment_error():
     al = MockedAlignment(source, target)
     error = al.alignment_error()
     assert_equal(error, np.linalg.norm(al.source.points - al.target.points))
 
 
-@raises(NotImplementedError)
-def alignment_view_non_2d_test():
+def test_alignment_view_non_2d():
     al = MockedAlignment(target_3d, target_3d)
-    al.view()
+    with raises(NotImplementedError):
+        al.view()

@@ -1,5 +1,5 @@
 from mock import Mock
-from nose.tools import raises
+from pytest import raises
 
 from menpo.transform import TransformChain
 
@@ -28,7 +28,7 @@ class MockedComposable(ComposableTransform):
         return x
 
 
-def composable_compose_before_not_composes_with_test():
+def test_composable_compose_before_not_composes_with():
     mocked = Mock()
     co = MockedComposable()
     new_co = co.compose_before(mocked)
@@ -36,7 +36,7 @@ def composable_compose_before_not_composes_with_test():
     assert (isinstance(new_co, TransformChain))
 
 
-def composable_compose_before_composes_with_test():
+def test_composable_compose_before_composes_with():
     mocked = Mock(spec=OtherMockedComposable)
     co = MockedComposable()
     new_co = co.compose_before(mocked)
@@ -44,7 +44,7 @@ def composable_compose_before_composes_with_test():
     assert (new_co.transforms[1] is mocked)
 
 
-def composable_compose_before_inplace_composes_with_test():
+def test_composable_compose_before_inplace_composes_with():
     mocked = Mock(spec=OtherMockedComposable)
     co = MockedComposable()
     ref = co
@@ -54,14 +54,14 @@ def composable_compose_before_inplace_composes_with_test():
     assert (co.transforms[1] is mocked)
 
 
-@raises(ValueError)
-def composable_compose_before_inplace_not_composes_with_test():
+def test_composable_compose_before_inplace_not_composes_with():
     mocked = Mock()
     co = MockedComposable()
-    co.compose_before_inplace(mocked)
+    with raises(ValueError):
+        co.compose_before_inplace(mocked)
 
 
-def composable_compose_after_not_composes_with_test():
+def test_composable_compose_after_not_composes_with():
     mocked = Mock()
     co = MockedComposable()
     new_co = co.compose_after(mocked)
@@ -69,7 +69,7 @@ def composable_compose_after_not_composes_with_test():
     assert (isinstance(new_co, TransformChain))
 
 
-def composable_compose_after_composes_with_test():
+def test_composable_compose_after_composes_with():
     mocked = Mock(spec=OtherMockedComposable)
     co = MockedComposable()
     new_co = co.compose_after(mocked)
@@ -77,7 +77,7 @@ def composable_compose_after_composes_with_test():
     assert (new_co.transforms[0] is mocked)
 
 
-def composable_compose_after_inplace_composes_with_test():
+def test_composable_compose_after_inplace_composes_with():
     mocked = Mock(spec=OtherMockedComposable)
     co = MockedComposable()
     ref = co
@@ -87,8 +87,8 @@ def composable_compose_after_inplace_composes_with_test():
     assert (co.transforms[0] is mocked)
 
 
-@raises(ValueError)
-def composable_compose_after_inplace_not_composes_with_test():
+def test_composable_compose_after_inplace_not_composes_with():
     mocked = Mock()
     co = MockedComposable()
-    co.compose_after_inplace(mocked)
+    with raises(ValueError):
+        co.compose_after_inplace(mocked)

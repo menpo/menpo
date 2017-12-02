@@ -819,7 +819,7 @@ def normalize(img, scale_func=None, mode='all',
         centered_pixels = pixels - np.mean(pixels)
         scale_factor = scale_func(centered_pixels)
     elif mode == 'per_channel':
-        centered_pixels = pixels - np.mean(pixels, axis=1, keepdims=1)
+        centered_pixels = pixels - np.mean(pixels, axis=1, keepdims=True)
         scale_factor = scale_func(centered_pixels, axis=1).reshape([-1, 1])
     else:
         raise ValueError("Supported modes are {{'all', 'per_channel'}} - '{}' "

@@ -40,7 +40,7 @@ eigenvalues_no_centre_f = np.array([80.79646326, 0.44353674])
 eigenvalues_centered_f = np.array([0.51])
 
 
-def pcd_samples_nocentre_test():
+def test_pcd_samples_nocentre():
     output = pca(large_samples_data_matrix, centre=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -49,7 +49,7 @@ def pcd_samples_nocentre_test():
     assert_almost_equal(mean_vector, [0.0, 0.0])
 
 
-def pcd_samples_yescentre_test():
+def test_pcd_samples_yescentre():
     output = pca(large_samples_data_matrix, centre=True)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -58,7 +58,7 @@ def pcd_samples_yescentre_test():
     assert_almost_equal(mean_vector, mean_vector_s)
 
 
-def pcd_features_nocentre_test():
+def test_pcd_features_nocentre():
     output = pca(large_samples_data_matrix.T, centre=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -67,7 +67,7 @@ def pcd_features_nocentre_test():
     assert_almost_equal(mean_vector, np.zeros(10))
 
 
-def pcd_features_nocentre_inplace_test():
+def test_pcd_features_nocentre_inplace():
     # important to copy as this will now destructively effect the input data
     # matrix (due to inplace)
     output = pca(large_samples_data_matrix.T.copy(), centre=False,
@@ -79,7 +79,7 @@ def pcd_features_nocentre_inplace_test():
     assert_almost_equal(mean_vector, np.zeros(10))
 
 
-def pcd_features_yescentre_test():
+def test_pcd_features_yescentre():
     output = pca(large_samples_data_matrix.T, centre=True)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -88,7 +88,7 @@ def pcd_features_yescentre_test():
     assert_almost_equal(mean_vector, mean_vector_f)
 
 
-def eigenvalue_decomposition_default_epsilon_test():
+def test_eigenvalue_decomposition_default_epsilon():
     pos_eigenvectors, pos_eigenvalues = eigenvalue_decomposition(cov_matrix)
 
     assert_almost_equal(pos_eigenvalues, [4.0, 2.0])
@@ -97,7 +97,7 @@ def eigenvalue_decomposition_default_epsilon_test():
                                            [sqrt_one_over_2, sqrt_one_over_2]])
 
 
-def eigenvalue_decomposition_large_epsilon_test():
+def test_eigenvalue_decomposition_large_epsilon():
     pos_eigenvectors, pos_eigenvalues = eigenvalue_decomposition(cov_matrix,
                                                                  eps=0.5)
 
@@ -107,7 +107,7 @@ def eigenvalue_decomposition_large_epsilon_test():
                         [[sqrt_one_over_2], [sqrt_one_over_2]])
 
 
-def ipca_samples_yescentre_test():
+def test_ipca_samples_yescentre():
     n_a = large_samples_data_matrix.shape[0] // 2
     A = large_samples_data_matrix[:n_a, :]
     U_a, l_a, m_a = pca(A, centre=True)
@@ -122,7 +122,7 @@ def ipca_samples_yescentre_test():
     assert_almost_equal(i_m, b_m)
 
 
-def ipca_samples_nocentre_test():
+def test_ipca_samples_nocentre():
     n_a = large_samples_data_matrix.shape[0] // 2
     A = large_samples_data_matrix[:n_a, :]
     U_a, l_a, m_a = pca(A, centre=False)
@@ -137,7 +137,7 @@ def ipca_samples_nocentre_test():
     assert_almost_equal(i_m, b_m)
 
 
-def ipca_features_yescentre_test():
+def test_ipca_features_yescentre():
     C = np.vstack((large_samples_data_matrix.T, large_samples_data_matrix.T))
 
     n_a = C.shape[0] // 2
@@ -154,7 +154,7 @@ def ipca_features_yescentre_test():
     assert_almost_equal(i_m, b_m)
 
 
-def ipca_features_nocentre_test():
+def test_ipca_features_nocentre():
     C = np.vstack((large_samples_data_matrix.T, large_samples_data_matrix.T))
 
     n_a = C.shape[0] // 2

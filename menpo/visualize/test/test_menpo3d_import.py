@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from mock import patch, MagicMock
 import numpy as np
-from nose.tools import raises
+from pytest import raises
 from scipy.sparse import csr_matrix
 
 from menpo.image import Image
@@ -23,40 +23,41 @@ menpo3d_visualize_mock.side_effect = ImportError
 
 @surrogate('menpo3d.visualize.TriMeshViewer3d')
 @patch('menpo3d.visualize.TriMeshViewer3d', menpo3d_visualize_mock)
-@raises(Menpo3dMissingError)
-def trimesh_viewer_test():
-    TriMesh(fake_triangle, trilist=fake_trilist, copy=False).view()
+def test_trimesh_viewer():
+    with raises(Menpo3dMissingError):
+        TriMesh(fake_triangle, trilist=fake_trilist, copy=False).view()
 
 
 @surrogate('menpo3d.visualize.TexturedTriMeshViewer3d')
 @patch('menpo3d.visualize.TexturedTriMeshViewer3d', menpo3d_visualize_mock)
-@raises(Menpo3dMissingError)
-def textured_trimesh_viewer_test():
-    TexturedTriMesh(fake_triangle, fake_tcoords, fake_texture,
-                    trilist=fake_trilist, copy=False).view()
+def test_textured_trimesh_viewer():
+    with raises(Menpo3dMissingError):
+        TexturedTriMesh(fake_triangle, fake_tcoords, fake_texture,
+                        trilist=fake_trilist, copy=False).view()
 
 
 @surrogate('menpo3d.visualize.ColouredTriMeshViewer3d')
 @patch('menpo3d.visualize.ColouredTriMeshViewer3d', menpo3d_visualize_mock)
-@raises(Menpo3dMissingError)
-def coloured_trimesh_viewer_test():
-    ColouredTriMesh(fake_triangle, colours=fake_tcoords,
-                    trilist=fake_trilist, copy=False).view()
+def test_coloured_trimesh_viewer():
+    with raises(Menpo3dMissingError):
+        ColouredTriMesh(fake_triangle, colours=fake_tcoords,
+                        trilist=fake_trilist, copy=False).view()
 
 
 @surrogate('menpo3d.visualize.PointCloudViewer3d')
 @patch('menpo3d.visualize.PointCloudViewer3d', menpo3d_visualize_mock)
-@raises(Menpo3dMissingError)
-def pointcloud3d_viewer_test():
-    PointCloud(fake_triangle, copy=False).view()
+def test_pointcloud3d_viewer():
+    with raises(Menpo3dMissingError):
+        PointCloud(fake_triangle, copy=False).view()
 
 
 @surrogate('menpo3d.visualize.LandmarkViewer3d')
 @patch('menpo3d.visualize.LandmarkViewer3d', menpo3d_visualize_mock)
-@raises(Menpo3dMissingError)
-def landmark3d_viewer_test():
+def test_landmark3d_viewer():
     adj_matrix = csr_matrix((3, 3))
-    LabelledPointUndirectedGraph(fake_triangle,
-                                 adj_matrix,
-                                 OrderedDict([('all', np.ones(3, dtype=np.bool))]),
-                                 copy=False).view()
+    labels_map = OrderedDict([('all', np.ones(3, dtype=np.bool))])
+    with raises(Menpo3dMissingError):
+        LabelledPointUndirectedGraph(fake_triangle,
+                                     adj_matrix,
+                                     labels_map,
+                                     copy=False).view()

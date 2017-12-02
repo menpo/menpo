@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import numpy as np
 from scipy.sparse import csr_matrix
-from nose.tools import raises
+from pytest import raises
 from numpy.testing import assert_allclose, assert_equal
 
 from menpo.landmark import LandmarkManager
@@ -24,12 +24,12 @@ def test_LandmarkManager_set_LabelledPointUndirectedGraph():
     assert man['test_set']._labels_to_masks is not lgroup._labels_to_masks
 
 
-@raises(ValueError)
 def test_LandmarkManager_set_None_key():
     lgroup = LabelledPointUndirectedGraph.init_with_all_label(points, adjacency_matrix)
 
     man = LandmarkManager()
-    man[None] = lgroup
+    with raises(ValueError):
+        man[None] = lgroup
 
 
 def test_LandmarkManager_set_pointcloud():

@@ -1,5 +1,5 @@
 import numpy as np
-from nose.tools import raises
+from pytest import raises
 from numpy.testing import assert_allclose
 
 from menpo.shape import PointCloud
@@ -71,18 +71,18 @@ def test_constrain_mask_to_landmarks_callable():
     assert_allclose(new_img.mask.pixels, example_mask.pixels)
 
 
-@raises(ValueError)
 def test_constrain_mask_to_landmarks_non_2d():
     img = MaskedImage.init_blank((10, 10, 10))
     img.landmarks['box'] = PointCloud(np.array([[0., 0., 0.]]))
-    img.constrain_mask_to_landmarks()
+    with raises(ValueError):
+        img.constrain_mask_to_landmarks()
 
 
-@raises(ValueError)
 def test_constrain_mask_to_landmarks_unknown_key():
     img = MaskedImage.init_blank((10, 10))
     img.landmarks['box'] = PointCloud(np.array([[0., 0., 0.]]))
-    img.constrain_mask_to_landmarks(point_in_pointcloud='unknown')
+    with raises(ValueError):
+        img.constrain_mask_to_landmarks(point_in_pointcloud='unknown')
 
 
 def test_erode():

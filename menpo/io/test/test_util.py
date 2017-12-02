@@ -1,7 +1,7 @@
 from os.path import sep as PATH_SEP
 from mock import patch
 from pathlib import Path
-from nose.tools import raises
+from pytest import raises
 
 
 from menpo.io.input.base import _pathlib_glob_for_pattern
@@ -100,13 +100,13 @@ def test_parse_period_in_name_double_no_extension():
     assert parsed_extension == extension
 
 
-@raises(ValueError)
 def test_parse_unknown_extension_raises_ValueError():
     filepath = 'test.1.fake'
-    _parse_and_validate_extension(Path(filepath), None, {'.jpg': None})
+    with raises(ValueError):
+        _parse_and_validate_extension(Path(filepath), None, {'.jpg': None})
 
 
-@raises(ValueError)
 def test_parse_mot_matching_extension_raises_ValueError():
     filepath = 'test.jpg2'
-    _parse_and_validate_extension(Path(filepath), '.jpg', {'.jpg': None})
+    with raises(ValueError):
+        _parse_and_validate_extension(Path(filepath), '.jpg', {'.jpg': None})

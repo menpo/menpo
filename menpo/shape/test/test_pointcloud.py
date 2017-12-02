@@ -1,6 +1,6 @@
 import warnings
 import numpy as np
-from nose.tools import raises
+from pytest import raises
 from numpy.testing import assert_allclose
 from menpo.image import Image, MaskedImage
 from menpo.shape import PointCloud, bounding_box
@@ -57,19 +57,19 @@ def test_pointcloud_init_2d_grid_unequal_spacing():
     assert_allclose(pc.range(), [18, 27])
 
 
-@raises(ValueError)
 def test_pointcloud_init_2d_grid_3d_raises():
-    PointCloud.init_2d_grid([10, 10, 10])
+    with raises(ValueError):
+        PointCloud.init_2d_grid([10, 10, 10])
 
 
-@raises(ValueError)
 def test_pointcloud_init_2d_grid_3d_spacing_raises():
-    PointCloud.init_2d_grid([10, 10], spacing=[1, 1, 1])
+    with raises(ValueError):
+        PointCloud.init_2d_grid([10, 10], spacing=[1, 1, 1])
 
 
-@raises(ValueError)
 def test_pointcloud_init_2d_grid_incorrect_type_spacing_raises():
-    PointCloud.init_2d_grid([10, 10], spacing={})
+    with raises(ValueError):
+        PointCloud.init_2d_grid([10, 10], spacing={})
 
 
 def test_pointcloud_has_nan_values():

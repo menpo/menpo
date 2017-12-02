@@ -27,13 +27,13 @@ class MockedVInvertable(VInvertible, Vectorizable):
         return True
 
 
-def vinertable_pseudoinverse_test():
+def test_vinertable_pseudoinverse():
     v = MockedVInvertable()
     inv = v.pseudoinverse()
     assert_allclose(inv.vector, -ones_vector)
 
 
-def vinertable_pseudoinverse_vector_test():
+def test_vinertable_pseudoinverse_vector():
     v = MockedVInvertable()
     arr = np.array([1, 2])
     vec = v.pseudoinverse_vector(arr)

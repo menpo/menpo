@@ -1,4 +1,4 @@
-from nose.tools import raises
+from pytest import raises
 import numpy as np
 from numpy.testing import assert_equal, assert_allclose
 from menpo.math import (dot_inplace_left, dot_inplace_right, as_matrix,
@@ -46,18 +46,18 @@ def test_dot_inplace_right():
     assert_equal(a_r_tmp, a_r)
 
 
-@raises(ValueError)
 def test_dot_inplace_left_n_small_too_big_raises_value_error():
     a = np.zeros((10000, 100))
     b = np.zeros((100, 101))
-    dot_inplace_left(a, b)
+    with raises(ValueError):
+        dot_inplace_left(a, b)
 
 
-@raises(ValueError)
 def test_dot_inplace_right_n_small_too_big_raises_value_error():
     a = np.zeros((101, 100))
     b = np.zeros((100, 10000))
-    dot_inplace_right(a, b)
+    with raises(ValueError):
+        dot_inplace_right(a, b)
 
 
 def test_as_matrix_list():
@@ -79,9 +79,9 @@ def test_as_matrix_short_length():
     assert_equal(data.shape, (1, 20))
 
 
-@raises(ValueError)
 def test_as_matrix_long_length_raises_value_error():
-    as_matrix((template.copy() for _ in range(4)), length=5)
+    with raises(ValueError):
+        as_matrix((template.copy() for _ in range(4)), length=5)
 
 
 def test_as_matrix_return_template():

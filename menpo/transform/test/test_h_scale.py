@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
-from nose.tools import raises
+from pytest import raises
 
 from menpo.transform import UniformScale, NonUniformScale, Scale
 
@@ -126,9 +126,9 @@ def test_uniformscale_build_3d():
     assert_almost_equal(tr.h_matrix, homo)
 
 
-@raises(ValueError)
 def test_uniformscale_build_4d_raise_dimensionalityerror():
-    UniformScale(1, 4)
+    with raises(ValueError):
+        UniformScale(1, 4)
 
 
 def test_uniformscale_2d_pseudoinverse():
@@ -171,9 +171,9 @@ def test_scale_build_2d_uniform_from_vec():
     assert (isinstance(tr, UniformScale))
 
 
-@raises(ValueError)
 def test_scale_zero_scale_raise_valuerror():
-    Scale(np.array([1, 0]))
+    with raises(ValueError):
+        Scale(np.array([1, 0]))
 
 
 def test_uniformscale_identity_2d():

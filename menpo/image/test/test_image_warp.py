@@ -1,6 +1,6 @@
 import numpy as np
 import menpo
-from nose.tools import raises
+from pytest import raises
 from numpy.testing import assert_allclose, assert_almost_equal
 from menpo.image import BooleanImage, Image, MaskedImage, OutOfMaskSampleError
 from menpo.shape import PointCloud, bounding_box
@@ -158,12 +158,12 @@ def test_sample_maskedimage():
     assert_allclose(arr, [[2., 2.]])
 
 
-@raises(OutOfMaskSampleError)
 def test_sample_maskedimage_error():
     m = np.zeros([100, 100], dtype=np.bool)
     im = MaskedImage.init_blank((100, 100), mask=m, fill=2)
     p = PointCloud(np.array([[0, 0], [1, 0]]))
-    im.sample(p)
+    with raises(OutOfMaskSampleError):
+        im.sample(p)
 
 
 def test_sample_maskedimage_error_values():
@@ -257,9 +257,9 @@ def test_mirror_vertical_image():
                     np.array([[1., 3.], [1., 2.], [2., 2.], [2., 1.]]))
 
 
-@raises(ValueError)
 def test_mirror_image_axis_error():
-    Image(np.array([[1., 2., 3., 4.], [5., 6., 7., 8.]])).mirror(axis=2)
+    with raises(ValueError):
+        Image(np.array([[1., 2., 3., 4.], [5., 6., 7., 8.]])).mirror(axis=2)
 
 
 def test_mirror_masked_image():

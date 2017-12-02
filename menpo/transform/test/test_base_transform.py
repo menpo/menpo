@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from nose.tools import raises
+from pytest import raises
 from mock import Mock
 
 from menpo.transform import Transform
@@ -14,19 +14,19 @@ class MockTransform(Transform):
         return np.array(x)
 
 
-def transform_n_dims_return_None_test():
+def test_transform_n_dims_return_None():
     tr = MockTransform()
     n_dims = tr.n_dims
     assert (n_dims is None)
 
 
-def transform_n_dims_output_return_None_test():
+def test_transform_n_dims_output_return_None():
     tr = MockTransform()
     n_dims = tr.n_dims_output
     assert (n_dims is None)
 
 
-def transform_apply_x_not_transformable_test():
+def test_transform_apply_x_not_transformable():
     tr = MockTransform()
     new_x = tr.apply(x)
 
@@ -34,7 +34,7 @@ def transform_apply_x_not_transformable_test():
     assert_allclose(new_x, x)
 
 
-def transform_apply_x_transformable_test():
+def test_transform_apply_x_transformable():
     mocked = Mock()
     mocked._transform.return_value = mocked
     tr = MockTransform()
@@ -44,7 +44,7 @@ def transform_apply_x_transformable_test():
     assert mocked._transform.called
 
 
-def transform_apply_inplace_x_transformable_test():
+def test_transform_apply_inplace_x_transformable():
     mocked = Mock()
     mocked._transform_inplace.return_value = mocked
     tr = MockTransform()
@@ -54,13 +54,13 @@ def transform_apply_inplace_x_transformable_test():
     assert mocked._transform_inplace.called
 
 
-@raises(ValueError)
-def transform_apply_inplace_x_not_transformable_test():
+def test_transform_apply_inplace_x_not_transformable():
     tr = MockTransform()
-    tr._apply_inplace(x)
+    with raises(ValueError):
+        tr._apply_inplace(x)
 
 
-def transform_compose_before_test():
+def test_transform_compose_before():
     mocked = Mock()
     mocked._apply.return_value = x
     tr = MockTransform()
@@ -71,7 +71,7 @@ def transform_compose_before_test():
     assert (chain.transforms[1] is mocked)
 
 
-def transform_compose_after_test():
+def test_transform_compose_after():
     mocked = Mock()
     mocked._apply.return_value = x
     tr = MockTransform()

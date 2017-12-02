@@ -34,7 +34,7 @@ requirements:
 
     # Test dependencies
     - mock
-    - nose
+    - pytest
 
 test:
   requires:

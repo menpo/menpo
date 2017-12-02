@@ -5,19 +5,19 @@ from numpy.testing import assert_allclose, assert_equal
 from menpo.transform import (Affine, Similarity, Rotation, Scale,
                              NonUniformScale, UniformScale, Translation,
                              Homogeneous)
-from nose.tools import raises
+from pytest import raises
 
 
-@raises(ValueError)
 def test_1d_translation():
     t_vec = np.array([1])
-    Translation(t_vec)
+    with raises(ValueError):
+        Translation(t_vec)
 
 
-@raises(ValueError)
 def test_5d_translation():
     t_vec = np.ones(5)
-    Translation(t_vec)
+    with raises(ValueError):
+        Translation(t_vec)
 
 
 def test_translation():
@@ -307,9 +307,9 @@ def test_uniformscale_build_3d():
     assert_equal(tr.h_matrix, homo)
 
 
-@raises(ValueError)
 def test_uniformscale_build_4d_raise_dimensionalityerror():
-    UniformScale(1, 4)
+    with raises(ValueError):
+        UniformScale(1, 4)
 
 
 def test_scale_build_2d_uniform_pass_dim():
@@ -342,21 +342,21 @@ def test_scale_build_2d_uniform_from_vec():
     assert(isinstance(tr, UniformScale))
 
 
-@raises(ValueError)
 def test_scale_zero_scale_raise_valuerror():
-    Scale(np.array([1, 0]))
+    with raises(ValueError):
+        Scale(np.array([1, 0]))
 
 
 # Vectorizable interface tests
 
-@raises(NotImplementedError)
 def test_rotation2d_from_vector_raises_notimplementederror():
-    Rotation.init_identity(2).from_vector(0)
+    with raises(NotImplementedError):
+        Rotation.init_identity(2).from_vector(0)
 
 
-@raises(NotImplementedError)
 def test_rotation2d_as_vector_raises_notimplementederror():
-    Rotation.init_identity(2).as_vector()
+    with raises(NotImplementedError):
+        Rotation.init_identity(2).as_vector()
 
 
 def test_affine_2d_n_parameters():
@@ -383,12 +383,11 @@ def test_similarity_2d_n_parameters():
     assert(t.n_parameters == 4)
 
 
-@raises(NotImplementedError)
 def test_similarity_3d_n_parameters_raises_notimplementederror():
     homo = np.eye(4)
     t = Similarity(homo)
-    # Raises exception
-    t.n_parameters
+    with raises(NotImplementedError):
+        t.n_parameters
 
 
 def test_uniformscale2d_n_parameters():
@@ -421,11 +420,11 @@ def test_translation_3d_n_parameters():
     assert(t.n_parameters == 3)
 
 
-@raises(NotImplementedError)
 def test_rotation2d_n_parameters_raises_notimplementederror():
     rot_matrix = np.eye(2)
     t = Rotation(rot_matrix)
-    t.n_parameters
+    with raises(NotImplementedError):
+        t.n_parameters
 
 
 # Test list construction is equivalent to ndarray construction
@@ -444,12 +443,12 @@ def test_nonuniformscale_from_list():
 
 # Test set_h_matrix is deprecated (and disabled)
 
-@raises(NotImplementedError)
 def test_homogenous_set_h_matrix_raises_notimplementederror():
     s = Homogeneous(np.eye(4))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        s.set_h_matrix(s.h_matrix)
+        with raises(NotImplementedError):
+            s.set_h_matrix(s.h_matrix)
 
 
 def test_homogeneous_print():

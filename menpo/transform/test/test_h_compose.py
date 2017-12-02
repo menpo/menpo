@@ -1,9 +1,9 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from nose.tools import raises
+from pytest import raises
 from menpo.shape import PointCloud
 
-from menpo.transform import (Homogeneous, Scale, TransformChain,
+from menpo.transform import (Homogeneous, Scale,
                              NonUniformScale,
                              UniformScale, Translation, Similarity, Rotation,
                              AlignmentUniformScale, AlignmentRotation)
@@ -13,7 +13,7 @@ from menpo.transform import (Homogeneous, Scale, TransformChain,
 
 # 1a. Homogenous before/after with subclasses. All should promote to Homogeneous
 
-def homog_compose_before_nonuniformscale_test():
+def test_homog_compose_before_nonuniformscale():
     homog = Homogeneous(np.array([[0, 1, 0],
                                   [1, 0, 0],
                                   [0, 0, 1]]))
@@ -25,7 +25,7 @@ def homog_compose_before_nonuniformscale_test():
                                             [0, 0, 1]]))
 
 
-def homog_compose_after_uniformscale_test():
+def test_homog_compose_after_uniformscale():
     homog = Homogeneous(np.array([[0, 1, 0],
                                   [1, 0, 0],
                                   [0, 0, 1]]))
@@ -37,7 +37,7 @@ def homog_compose_after_uniformscale_test():
                                             [0, 0, 1]]))
 
 
-def rotation_compose_before_homog_test():
+def test_rotation_compose_before_homog():
     # can't do this inplace - so should just give transform chain
     rotation = Rotation(np.array([[1, 0],
                                   [0, 1]]))
@@ -48,7 +48,7 @@ def rotation_compose_before_homog_test():
     assert(type(res) == Homogeneous)
 
 
-def translation_compose_after_homog_test():
+def test_translation_compose_after_homog():
     # can't do this inplace - so should just give transform chain
     homog = Homogeneous(np.array([[0, 1, 0],
                                   [1, 0, 0],
@@ -61,7 +61,7 @@ def translation_compose_after_homog_test():
 # 1b. Homogeneous composed with Alignment subclasses. Should loose alignment
 # traits.
 
-def homog_compose_before_alignment_nonuniformscale_test():
+def test_homog_compose_before_alignment_nonuniformscale():
     homog = Homogeneous(np.array([[0, 1, 0],
                                   [1, 0, 0],
                                   [0, 0, 1]]))
@@ -77,7 +77,7 @@ def homog_compose_before_alignment_nonuniformscale_test():
     assert(type(res) == Homogeneous)
 
 
-def homog_compose_after_alignment_rotation_test():
+def test_homog_compose_after_alignment_rotation():
     homog = Homogeneous(np.array([[0, 1, 0],
                                   [1, 0, 0],
                                   [0, 0, 1]]))
@@ -90,18 +90,17 @@ def homog_compose_after_alignment_rotation_test():
     assert(type(res) == Homogeneous)
 
 
-
-@raises(ValueError)
-def scale_compose_after_inplace_homog_test():
+def test_scale_compose_after_inplace_homog():
     # can't do this inplace - so should just give transform chain
     homog = Homogeneous(np.array([[0, 1, 0],
                                   [1, 0, 0],
                                   [0, 0, 1]]))
     s = Scale([3, 4])
-    s.compose_after_inplace(homog)
+    with raises(ValueError):
+        s.compose_after_inplace(homog)
 
 
-def homog_compose_after_inplace_scale_test():
+def test_homog_compose_after_inplace_scale():
     # this should be fine
     homog = Homogeneous(np.array([[0, 1, 0],
                                   [1, 0, 0],
@@ -113,14 +112,14 @@ def homog_compose_after_inplace_scale_test():
                                               [0, 0, 1]]))
 
 
-def uniformscale_compose_after_translation_test():
+def test_uniformscale_compose_after_translation():
     t = Translation([3, 4])
     s = UniformScale(2, 2)
     res = s.compose_after(t)
     assert(type(res) == Similarity)
 
 
-def translation_compose_after_uniformscale_test():
+def test_translation_compose_after_uniformscale():
     t = Translation([3, 4])
     s = UniformScale(2, 2)
     res = t.compose_after(s)

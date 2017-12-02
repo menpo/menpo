@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from nose.tools import raises
+from pytest import raises
 
 from menpo.transform import Rotation
 
@@ -82,21 +82,21 @@ def test_3d_rotation_n_parameters():
     assert Rotation.init_identity(3).n_parameters == 4
 
 
-@raises(NotImplementedError)
 def test_rotation2d_from_vector_raises_notimplementederror():
-    Rotation.init_identity(2).from_vector(0)
+    with raises(NotImplementedError):
+        Rotation.init_identity(2).from_vector(0)
 
 
-@raises(NotImplementedError)
 def test_rotation2d_as_vector_raises_notimplementederror():
-    Rotation.init_identity(2).as_vector()
+    with raises(NotImplementedError):
+        Rotation.init_identity(2).as_vector()
 
 
-@raises(NotImplementedError)
 def test_rotation2d_n_parameters_raises_notimplementederror():
     rot_matrix = np.eye(2)
     t = Rotation(rot_matrix)
-    t.n_parameters
+    with raises(NotImplementedError):
+        t.n_parameters
 
 
 def test_rotation2d_identity():

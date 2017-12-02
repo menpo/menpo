@@ -2,7 +2,7 @@ import warnings
 
 import numpy as np
 from numpy.testing import assert_allclose
-from nose.tools import raises
+from pytest import raises
 from pathlib import Path
 
 import menpo
@@ -54,10 +54,10 @@ def test_masked_image_as_unmasked_fill_tuple():
     assert_allclose(img.pixels[:, 0, 0], (1, 2, 3))
 
 
-@raises(NotImplementedError)
 def test_boolean_image_as_masked_raises_not_implemented_error():
     b_img = BooleanImage.init_blank((4, 5))
-    b_img.as_masked()
+    with raises(NotImplementedError):
+        b_img.as_masked()
 
 
 def test_warp_to_shape_preserves_path():

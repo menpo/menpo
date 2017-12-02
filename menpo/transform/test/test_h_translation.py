@@ -1,20 +1,20 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
-from nose.tools import raises
+from pytest import raises
 
 from menpo.transform import Translation
 
 
-@raises(ValueError)
 def test_1d_translation():
     t_vec = np.array([1])
-    Translation(t_vec)
+    with raises(ValueError):
+        Translation(t_vec)
 
 
-@raises(ValueError)
 def test_5d_translation():
     t_vec = np.ones(5)
-    Translation(t_vec)
+    with raises(ValueError):
+        Translation(t_vec)
 
 
 def test_translation():

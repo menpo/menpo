@@ -1,16 +1,18 @@
 from __future__ import division
+
 import random
 import warnings
 
 import numpy as np
-from numpy.testing import assert_allclose, raises
 from nose.plugins.attrib import attr
+from numpy.testing import assert_allclose
+from pytest import raises
 
-from menpo.testing import is_same_array
-from menpo.image import Image, MaskedImage
+import menpo.io as mio
 from menpo.feature import (hog, lbp, es, igo, daisy, no_op, normalize,
                            normalize_norm, normalize_std, normalize_var)
-import menpo.io as mio
+from menpo.image import Image, MaskedImage
+from menpo.testing import is_same_array
 
 
 def test_imagewindowiterator_hog_padding():
@@ -411,17 +413,17 @@ def test_normalize_scale_per_channel():
     assert_allclose(new_image.pixels[2], (pixels[2] - 22.) / 2.0)
 
 
-@raises(ValueError)
 def test_normalize_unknown_mode_raises():
     image = Image.init_blank((2, 2))
-    normalize(image, mode='fake')
+    with raises(ValueError):
+        normalize(image, mode='fake')
 
 
-@raises(ValueError)
 def test_normalize_0_variance_raises():
     image = Image.init_blank((2, 2))
     dummy_scale = lambda *a, **kwargs: np.array(0.0)
-    normalize(image, scale_func=dummy_scale)
+    with raises(ValueError):
+        normalize(image, scale_func=dummy_scale)
 
 
 def test_normalize_0_variance_warning():

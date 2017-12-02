@@ -1,18 +1,19 @@
 import sys
 import warnings
-import numpy as np
-from mock import patch, MagicMock
-from nose.tools import raises
-from PIL import Image as PILImage
-import menpo.io as mio
 
+import numpy as np
+from PIL import Image as PILImage
+from mock import patch, MagicMock
+from pytest import raises
+
+import menpo.io as mio
 
 builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
 
-@raises(ValueError)
 def test_import_incorrect_built_in():
-    mio.import_builtin_asset('adskljasdlkajd.obj')
+    with raises(ValueError):
+        mio.import_builtin_asset('adskljasdlkajd.obj')
 
 
 def test_breaking_bad_import():
@@ -178,14 +179,14 @@ def test_image_paths():
     assert(len(list(ls)) == 6)
 
 
-@raises(ValueError)
 def test_import_images_wrong_path_raises_value_error():
-    list(mio.import_images('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))
+    with raises(ValueError):
+        list(mio.import_images('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))
 
 
-@raises(ValueError)
 def test_import_landmark_files_wrong_path_raises_value_error():
-    list(mio.import_landmark_files('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))
+    with raises(ValueError):
+        list(mio.import_landmark_files('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))
 
 
 @patch('PIL.Image.open')
@@ -198,21 +199,6 @@ def test_importing_PIL_no_normalize(is_file, mock_image):
     assert im.shape == (15, 10)
     assert im.n_channels == 4
     assert im.pixels.dtype == np.uint8
-
-
-@patch('PIL.Image.open')
-@patch('menpo.io.input.base.Path.is_file')
-def test_importing_pil_RGBA_normalize(is_file, mock_image):
-    from menpo.image import MaskedImage
-
-    mock_image.return_value = PILImage.new('RGBA', (10, 15))
-    is_file.return_value = True
-
-    im = mio.import_image('fake_image_being_mocked.png', normalize=True)
-    assert im.shape == (15, 10)
-    assert im.n_channels == 3
-    assert im.pixels.dtype == np.float
-    assert type(im) == MaskedImage
 
 
 @patch('PIL.Image.open')
@@ -269,12 +255,11 @@ def test_importing_PIL_L_normalize(is_file, mock_image):
 
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
-@raises
 def test_importing_PIL_I_normalize(is_file, mock_image):
     mock_image.return_value = PILImage.new('I', (10, 15))
     is_file.return_value = True
-
-    mio.import_image('fake_image_being_mocked.ppm', normalize=True)
+    with raises(ValueError):
+        mio.import_image('fake_image_being_mocked.ppm', normalize=True)
 
 
 @patch('PIL.Image.open')
@@ -597,15 +582,14 @@ def test_importing_ffmpeg_avi_normalize(is_file, video_infos_ffprobe, pipe):
     assert image.pixels.dtype == np.float
 
 
-@raises(ValueError)
 @patch('menpo.io.input.video.video_infos_ffprobe')
 @patch('menpo.io.input.base.Path.is_file')
-def test_importing_ffmpeg_exact_frame_count_no_ffprobe(
-        is_file, video_infos_ffprobe):
+def test_importing_ffmpeg_exact_frame_count_no_ffprobe(is_file, video_infos_ffprobe):
     video_infos_ffprobe.side_effect = ValueError
     is_file.return_value = True
-    mio.import_video('fake_image_being_mocked.avi', normalize=True,
-                     exact_frame_count=True)
+    with raises(ValueError):
+        mio.import_video('fake_image_being_mocked.avi', normalize=True,
+                         exact_frame_count=True)
 
 
 @patch('subprocess.Popen')
@@ -631,17 +615,16 @@ def test_importing_ffmpeg_no_exact_frame_count_no_ffprobe(
     assert image.pixels.dtype == np.float
 
 
-
-@raises(ValueError)
 def test_import_images_negative_max_images():
-    list(mio.import_images(mio.data_dir_path(), max_images=-2))
+    with raises(ValueError):
+        list(mio.import_images(mio.data_dir_path(), max_images=-2))
 
 
-@raises(ValueError)
 def test_import_images_zero_max_images():
-    # different since the conditional 'if max_assets' is skipped,
-    # thus all images might be imported.
-    list(mio.import_images(mio.data_dir_path(), max_images=0))
+    with raises(ValueError):
+        # different since the conditional 'if max_assets' is skipped,
+        # thus all images might be imported.
+        list(mio.import_images(mio.data_dir_path(), max_images=0))
 
 
 # TODO: remove once the normalise argument is removed.
