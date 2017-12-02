@@ -1,3 +1,5 @@
+import pytest
+
 import menpo.landmark.labels as labels
 import inspect
 import numpy as np
@@ -6,6 +8,11 @@ from menpo.shape import PointCloud
 
 EXEMPT_FUNCTIONS = {'labeller', 'bounding_box_to_bounding_box',
                     'bounding_box_mirrored_to_bounding_box'}
+
+valid_label_functions = filter(
+    lambda x: x[0] not in EXEMPT_FUNCTIONS,
+    inspect.getmembers(labels, predicate=inspect.isfunction)
+)
 
 
 def check_label_func(func, input_n_points, output_n_points):
@@ -22,30 +29,26 @@ def check_label_func(func, input_n_points, output_n_points):
     assert pcloud_result.n_points == output_n_points
 
 
-def test_labels():
-    assert 1
-    for fname, func in inspect.getmembers(labels,
-                                          predicate=inspect.isfunction):
-        if fname not in EXEMPT_FUNCTIONS:
-            parts = fname.split('_')
-            to_index = parts.index('to')
-            input_n_points = parts[to_index - 1]
-            output_n_points = parts[-1]
-            try:
-                input_n_points = int(input_n_points)
-            except ValueError:
-                # If it isn't the element before 'to', there must be
-                # a modifier - so try the element before that
-                input_n_points = int(parts[to_index - 2])
-            try:
-                output_n_points = int(output_n_points)
-            except ValueError:
-                # If it isn't the last element, there must be
-                # a modifier - so try the second to last element
-                output_n_points = int(parts[-2])
+@pytest.mark.parametrize('fname, func', valid_label_functions)
+def test_labels(fname, func):
+    parts = fname.split('_')
+    to_index = parts.index('to')
+    input_n_points = parts[to_index - 1]
+    output_n_points = parts[-1]
+    try:
+        input_n_points = int(input_n_points)
+    except ValueError:
+        # If it isn't the element before 'to', there must be
+        # a modifier - so try the element before that
+        input_n_points = int(parts[to_index - 2])
+    try:
+        output_n_points = int(output_n_points)
+    except ValueError:
+        # If it isn't the last element, there must be
+        # a modifier - so try the second to last element
+        output_n_points = int(parts[-2])
 
-            yield (check_label_func,
-                   func, input_n_points, output_n_points)
+    check_label_func(func, input_n_points, output_n_points)
 
 
 def test_bounding_box_to_bounding_box():
