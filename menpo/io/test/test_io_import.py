@@ -43,7 +43,9 @@ def test_lenna_import():
     img = mio.import_builtin_asset('lenna.png')
     assert(img.shape == (512, 512))
     assert(img.n_channels == 3)
+    assert (img.landmarks.n_groups == 2)
     assert(img.landmarks['LJSON'].n_points == 68)
+    assert (img.landmarks['pupils'].n_points == 2)
 
 
 def test_import_builtin_ljson():
