@@ -767,7 +767,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
                 numbers_colour=numbers_colour, numbers_size=numbers_size)
         except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
-            raise Menpo3dMissingError(e.name)
+            raise Menpo3dMissingError(e)
 
     @viewwrapper
     def view_widget(self, ):
@@ -793,7 +793,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             view_widget(self, figure_size=figure_size)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError(e.name)
+            raise MenpowidgetsMissingError(e)
 
     def _view_widget_3d(self):
         r"""
@@ -805,7 +805,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             view_widget(self)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError(e.name)
+            raise MenpowidgetsMissingError(e)
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}, n_edges: {}'.format(

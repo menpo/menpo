@@ -2365,7 +2365,7 @@ class PointGraph(Graph, PointCloud):
             return renderer
         except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
-            raise Menpo3dMissingError(e.name)
+            raise Menpo3dMissingError(e)
 
 
 class PointUndirectedGraph(PointGraph, UndirectedGraph):

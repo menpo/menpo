@@ -338,6 +338,9 @@ class MenpoMissingDependencyError(ImportError):
     """
     def __init__(self, package_name):
         super(MenpoMissingDependencyError, self).__init__()
+        if isinstance(package_name, ImportError):
+            package_name = self._handle_importerror(package_name)
+
         self.message = textwrap.dedent("""
             You need to install the '{pname}' package in order to use this
             functionality. We recommend that you use conda to achieve this -
@@ -350,9 +353,29 @@ class MenpoMissingDependencyError(ImportError):
             Failing that, try installing use pip:
 
                 pip install {pname}
+                
+            Note that some packages (e.g. scikit-image) may have a different
+            name on pypi/conda than their import (skimage) and thus the above 
+            commands may fail.
         """.format(pname=package_name))
 
         self.missing_name = package_name
+
+    def _handle_importerror(self, error):
+        if hasattr(error, 'name'):
+            return error.name
+        else:
+            try:
+                # Python 2 doesn't have ModuleNotFoundError
+                # (so doesn't have the name attribute)
+                base_name = error.message.split('No module named ')[1]
+                # Furthermore - the default ImportError includes the full path
+                # so we split the name and return just the first part
+                # (presumably the name of the package)
+                return base_name.split('.')[0]
+            except:
+                # Worst case, just stringify the error
+                return str(error)
 
     def __str__(self):
         return self.message
@@ -713,7 +736,7 @@ class LazyList(collections.Sequence, Copyable):
             from menpowidgets import view_widget
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError(e.name)
+            raise MenpowidgetsMissingError(e)
         else:
             return view_widget(self)
 
