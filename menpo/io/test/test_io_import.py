@@ -1,14 +1,11 @@
 import sys
 import warnings
 
+import menpo.io as mio
 import numpy as np
 from PIL import Image as PILImage
 from mock import patch, MagicMock
 from pytest import raises
-
-import menpo.io as mio
-
-builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
 
 def test_import_incorrect_built_in():
@@ -399,7 +396,7 @@ def test_importing_ffmpeg_GIF_no_normalize(is_file, video_infos_ffprobe, pipe):
 
 
 @patch('menpo.io.input.landmark.json.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
     v1_ljson = { "groups": [
@@ -428,7 +425,7 @@ def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
 
 
 @patch('menpo.io.input.landmark.json.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
     v2_ljson = { "labels": [
@@ -456,7 +453,7 @@ def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
 
 
 @patch('menpo.io.input.landmark.json.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_v3_ljson_null_values(is_file, mock_open, mock_dict):
     v3_ljson = {
@@ -513,7 +510,7 @@ def test_import_lazy_list():
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_pickle(is_file, mock_open, mock_pickle):
     mock_pickle.return_value = {'test': 1}
@@ -526,7 +523,7 @@ def test_importing_pickle(is_file, mock_open, mock_pickle):
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 @patch('sys.version_info')
 def test_importing_pickle_encoding_py3(version_info, is_file, mock_open,
@@ -540,7 +537,7 @@ def test_importing_pickle_encoding_py3(version_info, is_file, mock_open,
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 @patch('sys.version_info')
 def test_importing_pickle_encoding_ignored_py2(version_info, is_file, mock_open,
@@ -554,7 +551,7 @@ def test_importing_pickle_encoding_ignored_py2(version_info, is_file, mock_open,
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.glob')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_pickles(is_file, glob, mock_open, mock_pickle):
@@ -572,7 +569,7 @@ def test_importing_pickles(is_file, glob, mock_open, mock_pickle):
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.glob')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_pickles_as_generator(is_file, glob, mock_open, mock_pickle):
