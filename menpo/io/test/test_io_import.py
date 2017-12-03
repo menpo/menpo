@@ -1,14 +1,11 @@
 import sys
 import warnings
 
+import menpo.io as mio
 import numpy as np
 from PIL import Image as PILImage
 from mock import patch, MagicMock
 from pytest import raises
-
-import menpo.io as mio
-
-builtins_str = '__builtin__' if sys.version_info[0] == 2 else 'builtins'
 
 
 def test_import_incorrect_built_in():
@@ -46,17 +43,39 @@ def test_lenna_import():
     img = mio.import_builtin_asset('lenna.png')
     assert(img.shape == (512, 512))
     assert(img.n_channels == 3)
+    assert (img.landmarks.n_groups == 2)
     assert(img.landmarks['LJSON'].n_points == 68)
+    assert (img.landmarks['pupils'].n_points == 2)
 
 
 def test_import_builtin_ljson():
-    lmarks = mio.import_builtin_asset('lenna.ljson')
+    lmarks = mio.import_builtin_asset('lenna.ljson')['LJSON']
     assert(lmarks.n_points == 68)
 
 
 def test_import_builtin_pts():
-    lmarks = mio.import_builtin_asset('einstein.pts')
+    lmarks = mio.import_builtin_asset('einstein.pts')['PTS']
     assert(lmarks.n_points == 68)
+
+
+def test_resolve_from_paths_single_group():
+    def resolver(path):
+        test_dict = {'test': path.with_name('takeo.pts')}
+        return mio.input.resolve_from_paths(test_dict)
+    image = mio.import_image(mio.data_path_to('einstein.jpg'),
+                             landmark_resolver=resolver)
+    assert(image.landmarks.n_groups == 1)
+    assert(image.landmarks['test'].path == mio.data_path_to('takeo.pts'))
+
+
+def test_resolve_from_paths_multi_group():
+    def resolver(path):
+        test_dict = {'test': path.with_name('lenna.ljson')}
+        return mio.input.resolve_from_paths(test_dict)
+    image = mio.import_image(mio.data_path_to('einstein.jpg'),
+                             landmark_resolver=resolver)
+    assert(image.landmarks.n_groups == 2)
+    assert(set(image.landmarks.keys()) == {'test_LJSON', 'test_pupils'})
 
 
 def test_path():
@@ -119,13 +138,13 @@ def test_import_image():
 
 def test_custom_landmark_resolver():
     def lmark_resolver(path):
-        return {'PTS': mio.data_path_to('takeo.pts')}
+        return mio.import_landmark_file(mio.data_path_to('takeo.pts'))
 
     img = mio.import_image(mio.data_path_to('lenna.png'),
                            landmark_resolver=lmark_resolver)
     assert(img.has_landmarks)
 
-    takeo_lmarks = mio.import_builtin_asset.takeo_pts()
+    takeo_lmarks = mio.import_builtin_asset.takeo_pts()['PTS']
     np.allclose(img.landmarks['PTS'].points,
                 takeo_lmarks.points)
 
@@ -389,7 +408,7 @@ def test_importing_ffmpeg_GIF_no_normalize(is_file, video_infos_ffprobe, pipe):
 
 
 @patch('menpo.io.input.landmark.json.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
     v1_ljson = { "groups": [
@@ -406,7 +425,8 @@ def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
     is_file.return_value = True
 
     with warnings.catch_warnings(record=True) as w:
-        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson',
+                                         group='LJSON')
     nan_points = np.isnan(lmark.points)
 
     # Should raise deprecation warning
@@ -417,7 +437,7 @@ def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
 
 
 @patch('menpo.io.input.landmark.json.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
     v2_ljson = { "labels": [
@@ -435,12 +455,47 @@ def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
 
     mock_dict.return_value = v2_ljson
     is_file.return_value = True
-
-    lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+    with warnings.catch_warnings(record=True) as w:
+        lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson',
+                                         group='LJSON')
     nan_points = np.isnan(lmark.points)
     assert nan_points[0, 0]  # y-coord None point is nan
     assert not nan_points[0, 1]  # x-coord point is not nan
-    assert np.all(nan_points[1, :]) # all of leye label is nan
+    assert np.all(nan_points[1, :])  # all of leye label is nan
+
+
+@patch('menpo.io.input.landmark.json.load')
+@patch('menpo.io.input.base.Path.open')
+@patch('menpo.io.input.base.Path.is_file')
+def test_importing_v3_ljson_null_values(is_file, mock_open, mock_dict):
+    v3_ljson = {
+        "groups": {
+            "LJSON": {
+                "labels": [
+                    { "label": "left_eye", "mask": [0, 1, 2] },
+                    { "label": "right_eye", "mask": [3, 4, 5] }
+                ],
+                "landmarks": {
+                    "connectivity": [ [0, 1], [1, 2], [2, 0], [3, 4],
+                                      [4, 5],  [5, 3] ],
+                    "points": [ [None, 200.5], [None, None],
+                                [316.8, 199.15], [339.48, 205.0],
+                                [358.54, 217.82], [375.0, 233.4]]
+                }
+            }
+        },
+        "version": 3
+    }
+
+    mock_dict.return_value = v3_ljson
+    is_file.return_value = True
+    lmark_dict = mio.import_landmark_file('fake_lmark_being_mocked.ljson')
+    assert isinstance(lmark_dict, dict)
+    lmark = lmark_dict['LJSON']
+    nan_points = np.isnan(lmark.points)
+    assert nan_points[0, 0]  # y-coord None point is nan
+    assert not nan_points[0, 1]  # x-coord point is not nan
+    assert np.all(nan_points[1, :])  # all of leye label is nan
 
 
 @patch('random.shuffle')
@@ -467,7 +522,7 @@ def test_import_lazy_list():
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_pickle(is_file, mock_open, mock_pickle):
     mock_pickle.return_value = {'test': 1}
@@ -480,7 +535,7 @@ def test_importing_pickle(is_file, mock_open, mock_pickle):
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 @patch('sys.version_info')
 def test_importing_pickle_encoding_py3(version_info, is_file, mock_open,
@@ -494,7 +549,7 @@ def test_importing_pickle_encoding_py3(version_info, is_file, mock_open,
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 @patch('sys.version_info')
 def test_importing_pickle_encoding_ignored_py2(version_info, is_file, mock_open,
@@ -508,7 +563,7 @@ def test_importing_pickle_encoding_ignored_py2(version_info, is_file, mock_open,
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.glob')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_pickles(is_file, glob, mock_open, mock_pickle):
@@ -526,7 +581,7 @@ def test_importing_pickles(is_file, glob, mock_open, mock_pickle):
 
 
 @patch('menpo.io.input.pickle.pickle.load')
-@patch('{}.open'.format(builtins_str))
+@patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.glob')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_pickles_as_generator(is_file, glob, mock_open, mock_pickle):

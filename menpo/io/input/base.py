@@ -1,3 +1,6 @@
+import collections
+from collections import OrderedDict
+
 import warnings
 from functools import partial
 import os
@@ -85,7 +88,7 @@ def _import_builtin_asset(data_path_to, object_types, landmark_types,
     -------
     asset :
         An instantiated :map:`Image`, :map:`PointCloud` or
-        :map:`LabelledPointUndirectedGraph` asset.
+        :map:`PointCloud` asset.
     """
     if kwargs != {}:
         normalize = _parse_deprecated_normalise(kwargs.get('normalise'),
@@ -194,6 +197,33 @@ def pickle_paths(pattern):
     return glob_with_suffix(pattern, pickle_types)
 
 
+def merge_all_dicts(dicts):
+    """
+    Use dict.update to build a single dictionary from a list of dictionaries.
+    If any keys will be overwritten as the dictionary is built then a warning
+    is emitted.
+
+    Parameters
+    ----------
+    dicts : `list` of `dict`
+        The list of dictionaries to merge
+
+    Returns
+    -------
+    new_dict : `dict`
+        New single dictionary formed from merging the list of dictionaries
+    """
+    new_dict = OrderedDict()
+    for d in dicts:
+        intersection = set(d.keys()) & set(new_dict.keys())
+        # Are there any overlapping keys?
+        if intersection:
+            warnings.warn('Found a keys that will be '
+                          'overwritten - {}'.format(intersection))
+        new_dict.update(d)
+    return new_dict
+
+
 def same_name(path, paths_callable=landmark_file_paths):
     r"""
     Default image landmark resolver. Returns all landmarks found to have
@@ -201,8 +231,10 @@ def same_name(path, paths_callable=landmark_file_paths):
     """
     # pattern finding all landmarks with the same stem
     pattern = path.with_suffix('.*')
-    # find all the assets we can with this name. Key is extension.
-    return {p.suffix[1:].upper(): p for p in paths_callable(pattern)}
+    # find all the assets we can with this name
+    lmarks = [import_landmark_file(p) for p in paths_callable(pattern)]
+    # now we have to merge all the dictionaries into a single dictionary
+    return merge_all_dicts(lmarks)
 
 
 def same_name_video(path, frame_number,
@@ -213,8 +245,61 @@ def same_name_video(path, frame_number,
     """
     # pattern finding all landmarks with the same stem
     pattern = path.with_name('{}_{}.*'.format(path.stem, frame_number))
-    # find all the assets we can with this name. Key is extension
-    return {p.suffix[1:].upper(): p for p in paths_callable(pattern)}
+    # find all the assets we can with this name
+    lmarks = [import_landmark_file(p) for p in paths_callable(pattern)]
+    # now we have to merge all the dictionaries into a single dictionary
+    return merge_all_dicts(lmarks)
+
+
+def resolve_from_paths(names_to_path):
+    r"""Landmark Resolver
+
+    Helper function for landmark resolvers which functions similarly to the
+    landmark resolving in menpo before 0.9. Given a dictionary of keys
+    (landmark group names) to paths - import each landmark at the given path.
+    Since landmark importing may return more than one group the recovered
+    groups are merged into a single dictionary and any clashing keys are
+    reported.
+
+    Since landmark importing now returns a dictionary, to maintain the previous
+    functionality single key dictionaries have their key replaced by the key
+    provided by the user. In the case of a multi-key result, the key given
+    by the user is *prepended* to the key returned by the importer.
+
+    Parameters
+    ----------
+    names_to_path : `dict` {`str`: `Path`}
+        Old-style landmark resolver output - a dictionary mapping landmark
+        group names to paths to import from.
+
+    Returns
+    -------
+    landmarks_dict : `dict` {`str`: :map:`PointCloud`}
+        Dictionary mapping landmark group names to :map:`PointCloud` instances
+        or their subclasses
+
+    Examples
+    --------
+    ::
+
+        def landmark_resolver(path):
+            expected = {'new_key': path.with_name(path.stem + '_new.ljson')}
+            return menpo.io.input.resolve_from_paths(expected)
+
+        image = menpo.io.import_image('/some/image.png',
+                                      landmark_resolver=landmark_resolver)
+        print(image.landmarks.keys())  # Expect one key -> "new_key"
+    """
+    dicts_to_merge = []
+    for k, path in names_to_path.items():
+        new_dict = import_landmark_file(path)
+        if len(new_dict) == 1:
+            new_dict = OrderedDict([(k, list(new_dict.values())[0])])
+        else:
+            new_dict = OrderedDict(('{}_{}'.format(k, new_k), v)
+                                   for new_k, v in new_dict.items())
+        dicts_to_merge.append(new_dict)
+    return merge_all_dicts(dicts_to_merge)
 
 
 def import_image(filepath, landmark_resolver=same_name, normalize=None,
@@ -342,24 +427,38 @@ def import_video(filepath, landmark_resolver=same_name_video, normalize=None,
                    importer_kwargs=kwargs)
 
 
-def import_landmark_file(filepath, asset=None):
+def import_landmark_file(filepath, group=None, asset=None):
     r"""Single landmark file importer.
 
-    If a landmark file is found at ``filepath``, returns a :map:`PointCloud` or
-    :map:`LabelledPointUndirectedGraph` depending on the format of the
-    landmark file.
+    If a landmark file is found at ``filepath``, returns a dictionary
+    of landmarks where keys are the group names and the values are 
+    :map:`PointCloud` or subclasses. If the optional ``group`` argument is
+    supplied then a single group with the given name is returned rather than
+    a dictionary
 
     Parameters
     ----------
     filepath : `pathlib.Path` or `str`
         A relative or absolute filepath to an landmark file.
+    group : `str`, optional
+        The name of the landmark group to return from the landmark dictionary.
+        If None, then a dictionary is returned where keys are the group names
+        and the values are :map:`PointCloud` or subclasses.
+    asset : `object`, optional
+        The object the landmark belongs to (useful for things like rescaling)
 
     Returns
     -------
-    landmarks : :map:`LabelledPointUndirectedGraph` or :map:`PointCloud`
-        The shape that the file format represents.
+    landmarks : `dict` {`str`: :map:`PointCloud`} or :map:`PointCloud`
+        Dictionary mapping landmark groups to :map:`PointCloud` or subclasses
+        OR
+        :map:`PointCloud` or subclass if ``group == None``
     """
-    return _import(filepath, image_landmark_types, asset=asset)
+    lmark_dict = _import(filepath, image_landmark_types, asset=asset)
+    if group:
+        return lmark_dict[group]
+    else:
+        return lmark_dict
 
 
 def import_pickle(filepath, **kwargs):
@@ -737,13 +836,12 @@ def _import_object_attach_landmarks(built_objects, landmark_resolver,
     # handle landmarks
     if landmark_ext_map is not None and landmark_resolver is not None:
         for x in built_objects:
-            lm_paths = landmark_resolver(x.path)
-            if lm_paths is None:
+            lm_dict = landmark_resolver(x.path)
+            if lm_dict is None:
                 continue
-            for group_name, lm_path in lm_paths.items():
-                lms = _import(lm_path, landmark_ext_map, asset=x)
-                if x.n_dims == lms.n_dims:
-                    x.landmarks[group_name] = lms
+            for group_name, lm_obj in lm_dict.items():
+                if x.n_dims == lm_obj.n_dims:
+                    x.landmarks[group_name] = lm_obj
 
 
 def _import_lazylist_attach_landmarks(built_objects, landmark_resolver,
@@ -758,11 +856,11 @@ def _import_lazylist_attach_landmarks(built_objects, landmark_resolver,
                             for i in range(len(x))]
 
             def wrap_landmarks(lm_resolver, obj):
-                lm_paths = lm_resolver()
-                for group_name, lm_path in lm_paths.items():
-                    lms = _import(lm_path, landmark_ext_map, asset=obj)
-                    if obj.n_dims == lms.n_dims:
-                        obj.landmarks[group_name] = lms
+                lm_dict = lm_resolver()
+                if lm_dict is not None:
+                    for group_name, lm_obj in lm_dict.items():
+                        if obj.n_dims == lm_obj.n_dims:
+                            obj.landmarks[group_name] = lm_obj
                 return obj
 
             # Provide the lm_resolver for each wrap_landmarks function and then
@@ -824,12 +922,23 @@ def _import(filepath, extensions_map, landmark_resolver=same_name,
         built_objects = [built_objects]
 
     # attach path if there is no x.path already.
-    for x in built_objects:
-        if not hasattr(x, 'path'):
+    def attach_path(obj):
+        if not hasattr(obj, 'path'):
             try:
-                x.path = path
+                obj.path = path
             except AttributeError:
                 pass  # that's fine! Probably a dict/list from PickleImporter.
+
+    for x in built_objects:
+        # Handle lazy lists differently
+        if isinstance(x, collections.Sequence) and not isinstance(x, LazyList):
+            for subx in x:
+                attach_path(subx)
+        elif isinstance(x, collections.Mapping):
+            for subx in x.values():
+                attach_path(subx)
+        else:
+            attach_path(x)
 
     if landmark_attach_func is not None and landmark_resolver is not None:
         landmark_attach_func(built_objects, landmark_resolver,

@@ -54,9 +54,11 @@ def _normalize_extension(extension):
     norm_extension : `str`
         The normalized extension, lower case with '.' prefix.
     """
-    # Account for the fact the user may only have passed the extension
-    # without the proceeding period
-    if extension[0] is not '.':
+    if extension is None:
+        return None
+    elif extension[0] is not '.':
+        # Account for the fact the user may only have passed the extension
+        # without the proceeding period
         extension = '.' + extension
     return extension.lower()
 
