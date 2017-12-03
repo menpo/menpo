@@ -1,3 +1,4 @@
+import collections
 from collections import OrderedDict
 
 import warnings
@@ -400,7 +401,7 @@ def import_landmark_file(filepath, group=None, asset=None):
     landmarks : `dict` {`str`: :map:`PointCloud`} or :map:`PointCloud`
         Dictionary mapping landmark groups to :map:`PointCloud` or subclasses
         OR
-        :map:`PointCloud` or subclass is ``group == None``
+        :map:`PointCloud` or subclass if ``group == None``
     """
     lmark_dict = _import(filepath, image_landmark_types, asset=asset)
     if group:
@@ -870,12 +871,22 @@ def _import(filepath, extensions_map, landmark_resolver=same_name,
         built_objects = [built_objects]
 
     # attach path if there is no x.path already.
-    for x in built_objects:
-        if not hasattr(x, 'path'):
+    def attach_path(obj):
+        if not hasattr(obj, 'path'):
             try:
-                x.path = path
+                obj.path = path
             except AttributeError:
                 pass  # that's fine! Probably a dict/list from PickleImporter.
+
+    for x in built_objects:
+        if isinstance(x, collections.Sequence):
+            for subx in x:
+                attach_path(subx)
+        elif isinstance(x, collections.Mapping):
+            for subx in x.values():
+                attach_path(subx)
+        else:
+            attach_path(x)
 
     if landmark_attach_func is not None and landmark_resolver is not None:
         landmark_attach_func(built_objects, landmark_resolver,
