@@ -50,7 +50,7 @@ def asf_importer(filepath, asset=None, **kwargs):
     ----------
     .. [1] http://www2.imm.dtu.dk/~aam/datasets/datasets.html
     """
-    with open(str(filepath), 'r') as f:
+    with filepath.open('r') as f:
         landmarks = f.read()
 
     # Remove comments and blank lines
@@ -92,7 +92,7 @@ def asf_importer(filepath, asset=None, **kwargs):
                 # For now we only parse cases 0 and 4 (closed or open)
                 connectivity.append((int(vertex.point_num),
                                      int(vertex.connects_to)))
-        if path_type == '0':
+        if path and path_type == '0':
             connectivity.append((int(path[-1].point_num),
                                  int(path[0].point_num)))
 
@@ -144,19 +144,24 @@ def pts_importer(filepath, image_origin=True, **kwargs):
     landmarks : `dict` {`str`: :map:`PointCloud`}
         Dictionary mapping landmark groups to menpo shapes
     """
-    f = open(str(filepath), 'r')
-    for line in f:
-        if line.split()[0] == '{':
-            break
+    with filepath.open('r') as f:
+        lines = [l.strip() for l in f.readlines()]
+
+    line = lines[0]
+    while not line.startswith('{'):
+        line = lines.pop(0)
+
     xs = []
     ys = []
-    for line in f:
-        if line.split()[0] != '}':
-            xpos, ypos = line.split()[0:2]
+    for line in lines:
+        if not line.strip().startswith('}'):
+            xpos, ypos = line.split()[:2]
             xs.append(xpos)
             ys.append(ypos)
+
     xs = np.array(xs, dtype=np.float).reshape((-1, 1))
     ys = np.array(ys, dtype=np.float).reshape((-1, 1))
+
     # PTS landmarks are 1-based, need to convert to 0-based (subtract 1)
     if image_origin:
         points = np.hstack([ys - 1, xs - 1])
@@ -214,7 +219,7 @@ def lm2_importer(filepath, **kwargs):
     landmarks : `dict` {`str`: :map:`PointCloud`}
         Dictionary mapping landmark groups to menpo shapes
     """
-    with open(str(filepath), 'r') as f:
+    with filepath.open('r') as f:
         landmarks = f.read()
 
     # Remove comments and blank lines
@@ -386,7 +391,7 @@ def ljson_importer(filepath, **kwargs):
     landmarks : `dict` {`str`: :map:`PointCloud`}
         Dictionary mapping landmark groups to menpo shapes
     """
-    with open(str(filepath), 'r') as f:
+    with filepath.open('r') as f:
         lms_dict = json.load(f, object_pairs_hook=OrderedDict)
     version = lms_dict.get('version')
     parser = _ljson_parser_for_version.get(version)
