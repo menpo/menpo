@@ -717,6 +717,9 @@ class LazyList(collections.Sequence, Copyable):
         else:
             return view_widget(self)
 
+    def __str__(self):
+        return 'LazyList containing {} items'.format(len(self))
+
 
 def partial_doc(func, *args, **kwargs):
     r"""
