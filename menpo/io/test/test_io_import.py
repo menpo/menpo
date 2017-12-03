@@ -75,7 +75,7 @@ def test_resolve_from_paths_multi_group():
     image = mio.import_image(mio.data_path_to('einstein.jpg'),
                              landmark_resolver=resolver)
     assert(image.landmarks.n_groups == 2)
-    assert(tuple(image.landmarks.keys()) == ('test_LJSON', 'test_pupils'))
+    assert(set(image.landmarks.keys()) == {'test_LJSON', 'test_pupils'})
 
 
 def test_path():

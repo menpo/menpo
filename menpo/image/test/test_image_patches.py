@@ -204,28 +204,29 @@ def test_convert_patches_list_to_single_array():
 
 def test_set_patches_around_landmarks():
     patch_shape = (21, 12)
-    image = mio.import_builtin_asset.lenna_png()
+    image = mio.import_builtin_asset.takeo_ppm()
     patches1 = image.extract_patches_around_landmarks(
         patch_shape=patch_shape, as_single_array=True)
     new_image1 = Image.init_blank(image.shape, image.n_channels)
-    new_image1.landmarks['LJSON'] = image.landmarks['LJSON']
+    new_image1.landmarks['PTS'] = image.landmarks['PTS']
     extracted1 = new_image1.set_patches_around_landmarks(patches1)
 
     patches2 = image.extract_patches_around_landmarks(
         patch_shape=patch_shape, as_single_array=False)
     new_image2 = Image.init_blank(image.shape, image.n_channels)
-    new_image2.landmarks['LJSON'] = image.landmarks['LJSON']
+    new_image2.landmarks['PTS'] = image.landmarks['PTS']
     extracted2 = new_image2.set_patches_around_landmarks(patches2)
     assert_array_equal(extracted1.pixels, extracted2.pixels)
 
 
 def test_create_patches_image():
     patch_shape = (7, 14)
-    image = mio.import_builtin_asset.lenna_png()
+    image = mio.import_builtin_asset.takeo_ppm()
     patches = image.extract_patches_around_landmarks(
         patch_shape=patch_shape, as_single_array=True)
-    pc = image.landmarks['LJSON']
-    patches_image = _create_patches_image(patches, pc, patches_indices=range(17))
+    pc = image.landmarks['PTS']
+    patches_image = _create_patches_image(patches, pc,
+                                          patches_indices=list(range(17)))
     assert(patches_image.n_channels == patches.shape[2])
     assert(patches_image.landmarks.n_groups == 1)
     assert(patches_image.landmarks['patch_centers'].n_points == 17)
