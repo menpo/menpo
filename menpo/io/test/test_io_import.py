@@ -56,14 +56,24 @@ def test_import_builtin_pts():
     assert(lmarks.n_points == 68)
 
 
-def test_resolve_from_paths():
+def test_resolve_from_paths_single_group():
+    def resolver(path):
+        test_dict = {'test': path.with_name('takeo.pts')}
+        return mio.input.resolve_from_paths(test_dict)
+    image = mio.import_image(mio.data_path_to('einstein.jpg'),
+                             landmark_resolver=resolver)
+    assert(image.landmarks.n_groups == 1)
+    assert(image.landmarks['test'].path == mio.data_path_to('takeo.pts'))
+
+
+def test_resolve_from_paths_multi_group():
     def resolver(path):
         test_dict = {'test': path.with_name('lenna.ljson')}
         return mio.input.resolve_from_paths(test_dict)
     image = mio.import_image(mio.data_path_to('einstein.jpg'),
                              landmark_resolver=resolver)
-    assert(image.landmarks.n_groups == 1)
-    assert(image.landmarks['test'].path == 'poo')
+    assert(image.landmarks.n_groups == 2)
+    assert(tuple(image.landmarks.keys()) == ('test_LJSON', 'test_pupils'))
 
 
 def test_path():

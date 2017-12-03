@@ -636,6 +636,35 @@
                     ]
                 ]
             }
+        },
+        "pupils": {
+            "labels": [
+                {
+                    "label": "left_pupil",
+                    "mask": [
+                        0
+                    ]
+                },
+                {
+                    "label": "right_pupil",
+                    "mask": [
+                        1
+                    ]
+                }
+            ],
+            "landmarks": {
+                "connectivity": [],
+                "points": [
+                    [
+                        265.0,
+                        265.0
+                    ],
+                    [
+                        265.0,
+                        328.0
+                    ]
+                ]
+            }
         }
     },
     "version": 3
