@@ -1176,6 +1176,6 @@ class TriMesh(PointCloud):
                 normals_marker_resolution=normals_marker_resolution,
                 normals_marker_size=normals_marker_size, step=step, alpha=alpha)
             return renderer
-        except ImportError:
+        except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
-            raise Menpo3dMissingError()
+            raise Menpo3dMissingError(e.name)
