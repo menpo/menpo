@@ -6,8 +6,8 @@ from ..base import winitfeature
 
 try:
     from cyvlfeat.sift.dsift import dsift as cyvlfeat_dsift
-except ImportError:
-    raise MenpoMissingDependencyError('cyvlfeat')
+except ImportError as e:
+    raise MenpoMissingDependencyError(e.name)
 
 
 @winitfeature

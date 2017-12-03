@@ -4,6 +4,7 @@ from functools import partial, wraps
 import os.path
 from pprint import pformat
 import warnings
+import textwrap
 
 
 class Copyable(object):
@@ -330,18 +331,28 @@ class MenpoDeprecationWarning(Warning):
     pass
 
 
-class MenpoMissingDependencyError(Exception):
+class MenpoMissingDependencyError(ImportError):
     r"""
     An exception that a dependency required for the requested functionality
     was not detected.
     """
     def __init__(self, package_name):
         super(MenpoMissingDependencyError, self).__init__()
-        self.message = "You need to install the '{pname}' package in order " \
-                       "to use this functionality. We recommend that you " \
-                       "use conda to achieve this - try the command " \
-                       "'conda install -c menpo {pname}' " \
-                       "in your terminal.".format(pname=package_name)
+        self.message = textwrap.dedent("""
+            You need to install the '{pname}' package in order to use this
+            functionality. We recommend that you use conda to achieve this -
+            try the command
+
+                conda install {pname}
+
+            in your terminal. Note that this package may be provided by another
+            channel such as the "menpo" channel or the "conda-forge" channel.
+            Failing that, try installing use pip:
+
+                pip install {pname}
+        """.format(pname=package_name))
+
+        self.missing_name = package_name
 
     def __str__(self):
         return self.message
@@ -700,9 +711,9 @@ class LazyList(collections.Sequence, Copyable):
         """
         try:
             from menpowidgets import view_widget
-        except ImportError:
+        except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
+            raise MenpowidgetsMissingError(e.name)
         else:
             return view_widget(self)
 
