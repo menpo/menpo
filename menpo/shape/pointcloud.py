@@ -986,7 +986,7 @@ class PointCloud(Shape):
             return renderer
         except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
-            raise Menpo3dMissingError(e.name)
+            raise Menpo3dMissingError(e)
 
     def _view_landmarks_3d(self, group=None, with_labels=None,
                            without_labels=None, figure_id=None,
@@ -1123,7 +1123,7 @@ class PointCloud(Shape):
             view_widget(self, figure_size=figure_size)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError(e.name)
+            raise MenpowidgetsMissingError(e)
 
     def _view_widget_3d(self):
         r"""
@@ -1134,7 +1134,7 @@ class PointCloud(Shape):
             view_widget(self)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError(e.name)
+            raise MenpowidgetsMissingError(e)
 
     def _transform_self_inplace(self, transform):
         self.points = transform(self.points)
