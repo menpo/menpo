@@ -251,6 +251,57 @@ def same_name_video(path, frame_number,
     return merge_all_dicts(lmarks)
 
 
+def resolve_from_paths(names_to_path):
+    r"""Landmark Resolver
+
+    Helper function for landmark resolvers which functions similarly to the
+    landmark resolving in menpo before 0.9. Given a dictionary of keys
+    (landmark group names) to paths - import each landmark at the given path.
+    Since landmark importing may return more than one group the recovered
+    groups are merged into a single dictionary and any clashing keys are
+    reported.
+
+    Since landmark importing now returns a dictionary, to maintain the previous
+    functionality single key dictionaries have their key replaced by the key
+    provided by the user. In the case of a multi-key result, the key given
+    by the user is *prepended* to the key returned by the importer.
+
+    Parameters
+    ----------
+    names_to_path : `dict` {`str`: `Path`}
+        Old-style landmark resolver output - a dictionary mapping landmark
+        group names to paths to import from.
+
+    Returns
+    -------
+    landmarks_dict : `dict` {`str`: :map:`PointCloud`}
+        Dictionary mapping landmark group names to :map:`PointCloud` instances
+        or their subclasses
+
+    Examples
+    --------
+    ::
+
+        def landmark_resolver(path):
+            expected = {'new_key': path.with_name(path.stem + '_new.ljson')}
+            return menpo.io.input.resolve_from_paths(expected)
+
+        image = menpo.io.import_image('/some/image.png',
+                                      landmark_resolver=landmark_resolver)
+        print(image.landmarks.keys())  # Expect one key -> "new_key"
+    """
+    dicts_to_merge = []
+    for k, path in names_to_path.items():
+        new_dict = import_landmark_file(path)
+        if len(new_dict) == 1:
+            new_dict = OrderedDict([(k, list(new_dict.values())[0])])
+        else:
+            new_dict = OrderedDict(('{}_{}'.format(k, new_k), v)
+                                   for new_k, v in new_dict.items())
+        dicts_to_merge.append(new_dict)
+    return merge_all_dicts(dicts_to_merge)
+
+
 def import_image(filepath, landmark_resolver=same_name, normalize=None,
                  normalise=None):
     r"""Single image (and associated landmarks) importer.
@@ -879,7 +930,8 @@ def _import(filepath, extensions_map, landmark_resolver=same_name,
                 pass  # that's fine! Probably a dict/list from PickleImporter.
 
     for x in built_objects:
-        if isinstance(x, collections.Sequence):
+        # Handle lazy lists differently
+        if isinstance(x, collections.Sequence) and not isinstance(x, LazyList):
             for subx in x:
                 attach_path(subx)
         elif isinstance(x, collections.Mapping):

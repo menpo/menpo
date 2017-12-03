@@ -59,6 +59,16 @@ def test_import_builtin_pts():
     assert(lmarks.n_points == 68)
 
 
+def test_resolve_from_paths():
+    def resolver(path):
+        test_dict = {'test': path.with_name('lenna.ljson')}
+        return mio.input.resolve_from_paths(test_dict)
+    image = mio.import_image(mio.data_path_to('einstein.jpg'),
+                             landmark_resolver=resolver)
+    assert(image.landmarks.n_groups == 1)
+    assert(image.landmarks['test'].path == 'poo')
+
+
 def test_path():
     # choose a random asset (all should have it!)
     img = mio.import_builtin_asset('einstein.jpg')
