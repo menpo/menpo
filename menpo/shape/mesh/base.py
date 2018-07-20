@@ -7,6 +7,9 @@ from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .normals import compute_vertex_normals, compute_face_normals
 
+from mayavi import mlab
+from scipy.spatial import  cKDTree
+from matplotlib import cm
 
 Delaunay = None  # expensive, from scipy.spatial
 
@@ -114,6 +117,7 @@ def subsampled_grid_triangulation(shape, subsampling=1):
          indices_grid[:-1, 1:].ravel()[..., None]], axis=-1)
 
     return np.vstack([tri_down_left, tri_up_right]).astype(np.uint32)
+
 
 
 class TriMesh(PointCloud):
@@ -228,6 +232,100 @@ class TriMesh(PointCloud):
         :type: `int`
         """
         return len(self.trilist)
+
+    def heatmap(self,target_mesh,camera_settings,scalar_range=(0,2),
+                     scale_value=100,size=(1200,1200),type_cmap='hot',show_statistics=False):
+        r"""
+        Creates a heatmap of euclidean differences between two meshes with the same number of vertices
+        Parameters
+        ----------
+        source_mesh : `TriMesh`
+            A TriMesh from which differences are calculated and where the heatmap will be projected, the 'minuend'
+        target_mesh :   `TriMesh`
+            A TriMesh whose points are used to find the differences, the subtrahend
+        camera_settings : `tuple'
+            A list of parameters for move, view and roll of camera
+        scalar_range : `tuple'
+            The scalar range of  the colorbar, default=(0,2)
+        scale_value : `int'
+            The scale value of the differences, in order to go to mm, default : 100
+        size : `Tuple'
+            Size of the window, default: (1200,1200)
+
+        type_cmap : `cmap'
+            Type of the colormap, default : hot'
+        show_statistics : `bool'
+            If statistics like mean and max error will be shown in the window, default:False
+
+        Returns
+        -------
+        v : `Scene`
+            Handle to  mayavi scene
+        scaled_distances_between_meshes : `np.array'
+            An array with the scaled distances between the correspoding vertices.
+        Raises
+        ------
+        ValueError
+            If the two meshes don't have the same number of vertices.
+        """
+        source_mesh = self
+        source_n_vertices=source_mesh.points.shape[0]
+        target_mesh_n_vertices=target_mesh.points.shape[0]
+
+        if not source_n_vertices == target_mesh_n_vertices:
+            first_part_string='Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices, target_mesh_n_vertices)
+            print(first_part_string)
+            subject= source_mesh.points
+            template = target_mesh
+            X = template.points
+
+            tree = cKDTree(X)
+            dist, indx = tree.query(subject, k=1)
+
+            target_mesh = TriMesh(X[indx],source_mesh.trilist)
+
+            #raise ValueError("{}.\nThe two meshes should have the same number of vertices".format(first_part_string, target_mesh_n_vertices))
+
+        #figure_name='Source registered'
+        v=mlab.figure(size=size,bgcolor=(1,1,1),fgcolor=(0,0,0))
+       # set_camera(*camera_settings)
+
+        #data=create_heatmap(source_mesh,target_mesh,scale_value)
+        diff=(source_mesh.points-target_mesh.points)**2
+        distances_between_meshes=np.sqrt(diff.sum(axis=1))
+        #distances_between_meshes[source_mesh.points[:,2]>target_mesh.points[:,2]]*=-1
+        scaled_distances_between_meshes=distances_between_meshes*scale_value
+
+        # to speed things up
+        #v.scene.disable_render = True
+
+        src = mlab.pipeline.triangular_mesh_source(source_mesh.points[:,0],source_mesh.points[:,1],
+                                                  source_mesh.points[:,2],source_mesh.trilist,
+                                                   scalars=scaled_distances_between_meshes)
+
+        surf=mlab.pipeline.surface(src,colormap=type_cmap)
+
+        #When font size bug resolved, uncomment
+        #cb=mlab.colorbar(title='Distances in mm', orientation='vertical', nb_labels=5)
+        #cb.title_text_property.font_size = 20
+        #cb.label_text_property.font_family = 'times'
+        #cb.label_text_property.font_size=10
+        cb=mlab.colorbar( orientation='vertical', nb_labels=5)
+        cb.data_range = scalar_range
+
+        cb.scalar_bar_representation.position = [0.8, 0.15]
+        cb.scalar_bar_representation.position2 = [0.15, 0.7]
+        text = mlab.text(0.8,0.85,'Distances in mm')
+        text.width = 0.20
+        if show_statistics:
+            text2 = mlab.text(0.5,0.02,'Mean error {:.3}mm \nMax error {:.3}mm \
+                          '.format(scaled_distances_between_meshes.mean(),
+                                   scaled_distances_between_meshes.max()))
+            text2.width = 0.20
+        surf.module_manager.scalar_lut_manager.reverse_lut = True
+
+        return v,scaled_distances_between_meshes
+
 
     def tojson(self):
         r"""
