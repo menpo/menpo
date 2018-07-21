@@ -233,7 +233,7 @@ class TriMesh(PointCloud):
         """
         return len(self.trilist)
 
-    def heatmap(self,target_mesh,camera_settings,scalar_range=(0,2),
+    def heatmap(self,target_mesh,camera_settings=None,scalar_range=(0,2),
                      scale_value=100,size=(1200,1200),type_cmap='hot',show_statistics=False):
         r"""
         Creates a heatmap of euclidean differences between two meshes with the same number of vertices
@@ -323,6 +323,8 @@ class TriMesh(PointCloud):
                                    scaled_distances_between_meshes.max()))
             text2.width = 0.20
         surf.module_manager.scalar_lut_manager.reverse_lut = True
+        if camera_settings is None:
+            mlab.gcf().scene.z_plus_view()
 
         return v,scaled_distances_between_meshes
 
