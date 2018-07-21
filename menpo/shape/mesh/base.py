@@ -244,7 +244,7 @@ class TriMesh(PointCloud):
         target_mesh :   `TriMesh`
             A TriMesh whose points are used to find the differences, the subtrahend
         camera_settings : `tuple'
-            A list of parameters for move, view and roll of camera
+            A list of parameters for move, view and roll of camera, default value = None, Oz axis normal to the scene
         scalar_range : `tuple'
             The scalar range of  the colorbar, default=(0,2)
         scale_value : `int'
