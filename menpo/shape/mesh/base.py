@@ -236,11 +236,12 @@ class TriMesh(PointCloud):
     def heatmap(self,target_mesh,camera_settings=None,scalar_range=(0,2),
                      scale_value=100,size=(1200,1200),type_cmap='hot',show_statistics=False):
         r"""
-        Creates a heatmap of euclidean differences between two meshes with the same number of vertices
+        Creates a heatmap of euclidean differences between the current mesh and the target meshh.
+        If the two meshes have the same number of vertices, a corresponence of them is considered. 
+        If the two meshes don't have the number of vertices, a KDTree is constructed for the current 
+        mesh and the difference of the closest points is calculated
         Parameters
         ----------
-        source_mesh : `TriMesh`
-            A TriMesh from which differences are calculated and where the heatmap will be projected, the 'minuend'
         target_mesh :   `TriMesh`
             A TriMesh whose points are used to find the differences, the subtrahend
         camera_settings : `tuple'
@@ -251,9 +252,20 @@ class TriMesh(PointCloud):
             The scale value of the differences, in order to go to mm, default : 100
         size : `Tuple'
             Size of the window, default: (1200,1200)
-
         type_cmap : `cmap'
-            Type of the colormap, default : hot'
+            Type of the colormap, default : 'hot', it can be: 
+            'Accent','Blues','BrBG','BuGn','BuPu','CMRmap','Dark2', 'GnBu', 
+            'Greens','Greys', 'OrRd', 'Oranges', 'PRGn', 'Paired', 'Pastel1',
+            'Pastel2', 'PiYG', 'PuBu', 'PuBuGn', 'PuOr', 'PuRd', 'Purples', 
+            'RdBu', 'RdGy', 'RdPu', 'RdYlBu', 'RdYlGn', 'Reds', 'Set1', 
+            'Set2', 'Set3', 'Spectral', 'Vega10', 'Vega20', 'Vega20b', 
+            'Vega20c', 'Wistia', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd', 'afmhot', 
+            'autumn', 'binary', 'black-white', 'blue-red', 'bone', 'brg', 'bwr', 
+            'cool' or 'coolwarm' or 'copper', 'cubehelix', 'file', 'flag', 'gist_earth',
+            'gist_gray', 'gist_heat', 'gist_ncar', 'gist_rainbow', 'gist_stern', 'gist_yarg', 
+            'gnuplot', 'gnuplot2', 'gray', 'hot', 'hsv', 'inferno', 'jet', 'magma', 'nipy_spectral', 
+            'ocean', 'pink', 'plasma', 'prism', 'rainbow', 'seismic', 'spectral' 'spring', 
+            'summer', 'terrain', 'viridis', 'winter'
         show_statistics : `bool'
             If statistics like mean and max error will be shown in the window, default:False
 
@@ -266,7 +278,6 @@ class TriMesh(PointCloud):
         Raises
         ------
         ValueError
-            If the two meshes don't have the same number of vertices.
         """
         source_mesh = self
         source_n_vertices=source_mesh.points.shape[0]
@@ -286,8 +297,16 @@ class TriMesh(PointCloud):
 
             #raise ValueError("{}.\nThe two meshes should have the same number of vertices".format(first_part_string, target_mesh_n_vertices))
 
-        #figure_name='Source registered'
-        v=mlab.figure(size=size,bgcolor=(1,1,1),fgcolor=(0,0,0))
+        if hasattr(self,'path'):
+            source_name = self.path.stem
+        else:
+            source_name = 'Source' 
+        if hasattr(target_mesh,'path'):
+            target_name = target_mesh.path.stem
+        else:
+            target_name = 'Target' 
+        figure_name = 'Heatmap between {} and {}'.format(source_name,target_name)
+        v=mlab.figure(figure=figure_name,size=size,bgcolor=(1,1,1),fgcolor=(0,0,0))
        # set_camera(*camera_settings)
 
         #data=create_heatmap(source_mesh,target_mesh,scale_value)
