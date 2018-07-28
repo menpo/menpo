@@ -58,34 +58,45 @@ def _rasterize_matplotlib(image, pclouds, render_lines=True, line_style='-',
                           marker_face_colour='b', marker_edge_colour='b',
                           marker_edge_width=1):
     import matplotlib.pyplot as plt
+    # TODO: Since upgrading to Matplotlib 2.0 it seems that the rendering acts
+    #       strangely with respect to pixel accurate rendering. The lines
+    #       appear to be rendering too short - but seem correct when we reset
+    #       to the classic style - so obviously there is some matplotlib setting
+    #       we could just manually set to get the correct behaviour but it is
+    #       a chore to find so I'm pragmatically maintaining the old behaviour
+    #       here with this contextmanager.
+    with plt.style.context('classic'):
+        # Convert image shape into 100 DPI inches
+        # This makes sure we maintain the original image size
+        image_shape = np.array(image.shape)[::-1] / 100.0
+        f = plt.figure(figsize=image_shape, frameon=False, dpi=100)
 
-    # Convert image shape into 100 DPI inches
-    # This makes sure we maintain the original image size
-    image_shape = np.array(image.shape)[::-1] / 100.0
-    f = plt.figure(figsize=image_shape, frameon=False, dpi=100)
+        image.view(figure_id=f.number, figure_size=image_shape)
+        for k, p in enumerate(pclouds):
+            p.view(figure_id=f.number, render_axes=False,
+                   figure_size=image_shape,
+                   render_lines=render_lines[k], line_style=line_style[k],
+                   line_colour=line_colour[k], line_width=line_width[k],
+                   render_markers=render_markers[k],
+                   marker_style=marker_style[k],
+                   marker_size=marker_size[k],
+                   marker_face_colour=marker_face_colour[k],
+                   marker_edge_colour=marker_edge_colour[k],
+                   marker_edge_width=marker_edge_width[k])
 
-    image.view(figure_id=f.number, figure_size=image_shape)
-    for k, p in enumerate(pclouds):
-        p.view(figure_id=f.number, render_axes=False, figure_size=image_shape,
-               render_lines=render_lines[k], line_style=line_style[k],
-               line_colour=line_colour[k], line_width=line_width[k],
-               render_markers=render_markers[k], marker_style=marker_style[k],
-               marker_size=marker_size[k],
-               marker_face_colour=marker_face_colour[k],
-               marker_edge_colour=marker_edge_colour[k],
-               marker_edge_width=marker_edge_width[k])
-
-    # Make sure the layout is tight so that the image is of the original size
-    f.tight_layout(pad=0)
-    # Get the pixels directly from the canvas buffer which is fast
-    c_buffer, shape = f.canvas.print_to_buffer()
-    # Turn buffer into numpy array and reshape to image
-    pixels_buffer = np.fromstring(c_buffer,
-                                  dtype=np.uint8).reshape(shape[::-1] + (-1,))
-    # Prevent matplotlib from rendering
-    plt.close(f)
-    # Ignore the Alpha channel
-    return Image.init_from_channels_at_back(pixels_buffer[..., :3])
+        # Make sure the layout is tight so that the image is of the original size
+        f.tight_layout(pad=0)
+        # Get the pixels directly from the canvas buffer which is fast
+        c_buffer, shape = f.canvas.print_to_buffer()
+        # Turn buffer into numpy array and reshape to image
+        shape = shape[::-1] + (-1,)
+        pixels_buffer = np.fromstring(c_buffer, dtype=np.uint8).reshape(shape)
+        # Prevent matplotlib from rendering
+        plt.close(f)
+        # We have to apply the alpha channel to get the correct colour
+        mask = pixels_buffer[..., 3:] * (1.0 / 255.0)
+        pixels = (pixels_buffer[..., :3] * mask).astype(np.uint8)
+        return Image.init_from_channels_at_back(pixels)
 
 
 def _parse_colour(x):

@@ -316,9 +316,9 @@ class ColouredTriMesh(TriMesh):
                     normals_marker_size=normals_marker_size, step=step,
                     alpha=alpha)
                 return renderer
-            except ImportError:
+            except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
-                raise Menpo3dMissingError()
+                raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import TriMeshViewer3d
@@ -333,9 +333,9 @@ class ColouredTriMesh(TriMesh):
                     normals_marker_size=normals_marker_size, step=step,
                     alpha=alpha)
                 return renderer
-            except ImportError:
+            except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
-                raise Menpo3dMissingError()
+                raise Menpo3dMissingError(e)
 
     def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
                  render_lines=True, line_colour='r', line_style='-',
