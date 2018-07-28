@@ -5,7 +5,11 @@ from warnings import warn
 
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from .normals import compute_vertex_normals, compute_face_normals
+try:
+    from .normals import compute_vertex_normals, compute_face_normals
+except IOError:
+    print('Falling back to pure-Python normal calculation')
+    from .pynormals import compute_vertex_normals, compute_face_normals
 
 
 Delaunay = None  # expensive, from scipy.spatial

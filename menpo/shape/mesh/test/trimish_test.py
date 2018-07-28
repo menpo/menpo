@@ -325,3 +325,27 @@ def test_trimesh_vertex_normals():
     trimesh.points = trimesh.points.astype(np.float32)
     vertex_normals = trimesh.vertex_normals()
     assert_allclose(vertex_normals, expected_normals)
+
+
+def test_cython_face_normals_same_as_pure_python():
+    from .. import normals, pynormals
+    points = np.array([[0.0, 0.0, -1.0],
+                       [1.0, 0.0, 0.0],
+                       [1.0, 1.0, 0.0],
+                       [0.0, 1.0, 0.0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    assert_allclose(normals.compute_face_normals(points, trilist),
+                    pynormals.compute_face_normals(points, trilist))
+
+
+def test_cython_vertex_normals_same_as_pure_python():
+    from .. import normals, pynormals
+    points = np.array([[0.0, 0.0, -1.0],
+                       [1.0, 0.0, 0.0],
+                       [1.0, 1.0, 0.0],
+                       [0.0, 1.0, 0.0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    assert_allclose(normals.compute_vertex_normals(points, trilist),
+                    pynormals.compute_vertex_normals(points, trilist))
