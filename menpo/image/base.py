@@ -15,7 +15,12 @@ from menpo.transform import (Translation, NonUniformScale, Rotation,
                              transform_about_centre)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 
-from .interpolation import scipy_interpolation, cython_interpolation
+from .interpolation import scipy_interpolation
+try:
+    from .interpolation import cython_interpolation
+except ImportError:
+    print('Falling back to scipy interpolation for affine warps')
+    cython_interpolation = None
 from .patches import extract_patches, set_patches
 
 
@@ -1805,7 +1810,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         template_shape = np.array(template_shape, dtype=np.int)
         if (isinstance(transform, Affine) and order in range(4) and
-            self.n_dims == 2):
+            self.n_dims == 2 and cython_interpolation is not None):
 
             # we are going to be able to go fast.
 
