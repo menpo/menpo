@@ -2363,9 +2363,9 @@ class PointGraph(Graph, PointCloud):
                 render_numbering=render_numbering,
                 numbers_colour=numbers_colour, numbers_size=numbers_size)
             return renderer
-        except ImportError:
+        except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
-            raise Menpo3dMissingError()
+            raise Menpo3dMissingError(e)
 
 
 class PointUndirectedGraph(PointGraph, UndirectedGraph):

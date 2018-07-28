@@ -9,8 +9,10 @@ class Menpo3dMissingError(MenpoMissingDependencyError):
     Exception that is thrown when an attempt is made to import a 3D
     visualisation method, but 'menpo3d' is not installed.
     """
-    def __init__(self):
-        super(Menpo3dMissingError, self).__init__('menpo3d')
+    def __init__(self, actual_missing_import_name):
+        super(Menpo3dMissingError, self).__init__(actual_missing_import_name)
+        self.message += ("\nThis import is required in order to use the "
+                         "'menpo3d' package")
 
 
 class MenpowidgetsMissingError(MenpoMissingDependencyError):
@@ -18,8 +20,10 @@ class MenpowidgetsMissingError(MenpoMissingDependencyError):
     Exception that is thrown when an attempt is made to import a widget, but
     'menpowidgets' is not installed.
     """
-    def __init__(self):
-        super(MenpowidgetsMissingError, self).__init__('menpowidgets')
+    def __init__(self, actual_missing_import_name):
+        super(MenpowidgetsMissingError, self).__init__(actual_missing_import_name)
+        self.message += ("\nThis import is required in order to use the "
+                         "'menpowidgets' package")
 
 
 class Renderer(object):

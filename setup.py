@@ -12,12 +12,19 @@ IS_OSX = 'darwin' == SYS_PLATFORM
 IS_WIN = 'windows' == SYS_PLATFORM
 
 # Get Numpy include path without importing it
-NUMPY_INC_PATHS = [os.path.join(r, 'numpy', 'core', 'include') 
-                   for r in site.getsitepackages() if 
+NUMPY_INC_PATHS = [os.path.join(r, 'numpy', 'core', 'include')
+                   for r in site.getsitepackages() if
                    os.path.isdir(os.path.join(r, 'numpy', 'core', 'include'))]
 if len(NUMPY_INC_PATHS) == 0:
-    raise ValueError("Could not find numpy include dir - cannot proceed with "
-                     "compilation of cython modules.")
+    try:
+        import numpy as np
+    except ImportError:
+        raise ValueError("Could not find numpy include dir and numpy not installed before build - "
+                         "cannot proceed with compilation of cython modules.")
+    else:
+        # just ask numpy for it's include dir
+        NUMPY_INC_PATHS = [np.get_include()]
+
 elif len(NUMPY_INC_PATHS) > 1:
     print("Found {} numpy include dirs: "
           "{}".format(len(NUMPY_INC_PATHS), ', '.join(NUMPY_INC_PATHS)))
@@ -59,7 +66,10 @@ def build_extension_from_pyx(pyx_path, extra_sources_paths=None):
                     language='c++')
     if IS_LINUX or IS_OSX:
         ext.extra_compile_args.append('-Wno-unused-function')
+    if IS_OSX:
+        ext.extra_link_args.append('-headerpad_max_install_names')
     return ext
+
 
 try:
     from Cython.Build import cythonize
@@ -107,5 +117,5 @@ setup(name='menpo',
       packages=find_packages(),
       install_requires=install_requires,
       package_data={'menpo': ['data/*']},
-      tests_require=['nose', 'mock']
+      tests_require=['pytest>=3.0', 'mock']
 )

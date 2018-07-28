@@ -4,6 +4,7 @@ from functools import partial, wraps
 import os.path
 from pprint import pformat
 import warnings
+import textwrap
 
 
 class Copyable(object):
@@ -330,18 +331,51 @@ class MenpoDeprecationWarning(Warning):
     pass
 
 
-class MenpoMissingDependencyError(Exception):
+class MenpoMissingDependencyError(ImportError):
     r"""
     An exception that a dependency required for the requested functionality
     was not detected.
     """
     def __init__(self, package_name):
         super(MenpoMissingDependencyError, self).__init__()
-        self.message = "You need to install the '{pname}' package in order " \
-                       "to use this functionality. We recommend that you " \
-                       "use conda to achieve this - try the command " \
-                       "'conda install -c menpo {pname}' " \
-                       "in your terminal.".format(pname=package_name)
+        if isinstance(package_name, ImportError):
+            package_name = self._handle_importerror(package_name)
+
+        self.message = textwrap.dedent("""
+            You need to install the '{pname}' package in order to use this
+            functionality. We recommend that you use conda to achieve this -
+            try the command
+
+                conda install {pname}
+
+            in your terminal. Note that this package may be provided by another
+            channel such as the "menpo" channel or the "conda-forge" channel.
+            Failing that, try installing use pip:
+
+                pip install {pname}
+                
+            Note that some packages (e.g. scikit-image) may have a different
+            name on pypi/conda than their import (skimage) and thus the above 
+            commands may fail.
+        """.format(pname=package_name))
+
+        self.missing_name = package_name
+
+    def _handle_importerror(self, error):
+        if hasattr(error, 'name'):
+            return error.name
+        else:
+            try:
+                # Python 2 doesn't have ModuleNotFoundError
+                # (so doesn't have the name attribute)
+                base_name = error.message.split('No module named ')[1]
+                # Furthermore - the default ImportError includes the full path
+                # so we split the name and return just the first part
+                # (presumably the name of the package)
+                return base_name.split('.')[0]
+            except:
+                # Worst case, just stringify the error
+                return str(error)
 
     def __str__(self):
         return self.message
@@ -700,11 +734,14 @@ class LazyList(collections.Sequence, Copyable):
         """
         try:
             from menpowidgets import view_widget
-        except ImportError:
+        except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
+            raise MenpowidgetsMissingError(e)
         else:
             return view_widget(self)
+
+    def __str__(self):
+        return 'LazyList containing {} items'.format(len(self))
 
 
 def partial_doc(func, *args, **kwargs):

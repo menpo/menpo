@@ -848,9 +848,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         try:
             from menpowidgets import view_widget
             view_widget(self, figure_size=figure_size)
-        except ImportError:
+        except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
+            raise MenpowidgetsMissingError(e)
 
     def _view_landmarks_2d(self, channels=None, group=None,
                            with_labels=None, without_labels=None,

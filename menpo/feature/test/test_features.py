@@ -1,16 +1,17 @@
 from __future__ import division
+
 import random
 import warnings
 
 import numpy as np
-from numpy.testing import assert_allclose, raises
-from nose.plugins.attrib import attr
+from numpy.testing import assert_allclose
+from pytest import raises
 
-from menpo.testing import is_same_array
-from menpo.image import Image, MaskedImage
+import menpo.io as mio
 from menpo.feature import (hog, lbp, es, igo, daisy, no_op, normalize,
                            normalize_norm, normalize_std, normalize_var)
-import menpo.io as mio
+from menpo.image import Image, MaskedImage
+from menpo.testing import is_same_array
 
 
 def test_imagewindowiterator_hog_padding():
@@ -152,7 +153,6 @@ def test_hog_channels_zhuramanan():
         assert_allclose(hog_img.n_channels, n_channels)
 
 
-@attr('cyvlfeat')
 def test_dsift_channels():
     from menpo.feature import dsift
     n_cases = 3
@@ -263,7 +263,6 @@ def test_daisy_values():
     assert_allclose(np.around(daisy_img.pixels[40, 1, 1], 6), 0.000163)
 
 
-@attr('cyvlfeat')
 def test_dsift_values():
     from menpo.feature import dsift
     # Equivalent to the transpose of image in Matlab
@@ -411,17 +410,17 @@ def test_normalize_scale_per_channel():
     assert_allclose(new_image.pixels[2], (pixels[2] - 22.) / 2.0)
 
 
-@raises(ValueError)
 def test_normalize_unknown_mode_raises():
     image = Image.init_blank((2, 2))
-    normalize(image, mode='fake')
+    with raises(ValueError):
+        normalize(image, mode='fake')
 
 
-@raises(ValueError)
 def test_normalize_0_variance_raises():
     image = Image.init_blank((2, 2))
     dummy_scale = lambda *a, **kwargs: np.array(0.0)
-    normalize(image, scale_func=dummy_scale)
+    with raises(ValueError):
+        normalize(image, scale_func=dummy_scale)
 
 
 def test_normalize_0_variance_warning():
