@@ -7,7 +7,7 @@ from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 try:
     from .normals import compute_vertex_normals, compute_face_normals
-except (IOError, ImportError):
+except ImportError:
     from .pynormals import compute_vertex_normals, compute_face_normals
 
 
