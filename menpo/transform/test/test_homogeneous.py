@@ -451,13 +451,6 @@ def test_homogenous_set_h_matrix_raises_notimplementederror():
             s.set_h_matrix(s.h_matrix)
 
 
-def test_homogeneous_print():
-    e = np.eye(3)
-    h = Homogeneous(e)
-    assert(str(h) == 'Homogeneous\n[[ 1.  0.  0.]\n [ 0.  1.  0.]'
-                     '\n [ 0.  0.  1.]]')
-
-
 def test_homogeneous_eye():
     e = np.eye(3)
     h = Homogeneous.init_identity(2)

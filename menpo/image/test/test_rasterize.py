@@ -22,20 +22,6 @@ def test_rasterize_matplotlib_basic():
     assert_allclose(new_im.pixels[:, 5, 5], [255, 0, 0])
 
 
-def test_rasterize_matplotlib_basic_line():
-    im = Image.init_blank([11, 11], fill=0, n_channels=1)
-    im.landmarks['test'] = line
-    new_im = rasterize_landmarks_2d(im, group='test', render_lines=True,
-                                    marker_style='.', marker_face_colour='r',
-                                    marker_size=2, marker_edge_width=0,
-                                    backend='matplotlib')
-    assert new_im.n_channels == 3
-    assert new_im.shape == (11, 11)
-    assert_allclose(new_im.pixels[0, 3, 5], [255])
-    assert_allclose(new_im.pixels[0, 9, 5], [255])
-    assert_allclose(new_im.pixels[2, 5:8, 5], [255, 255, 255])
-
-
 def test_rasterize_pillow_basic():
     im = Image.init_blank([11, 11], fill=0, n_channels=3)
     im.landmarks['test'] = centre
