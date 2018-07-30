@@ -832,9 +832,9 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         try:
             from menpowidgets import plot_graph
-        except:
+        except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
+            raise MenpowidgetsMissingError(e)
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues], legend_entries=['Eigenvalues'],
                    figure_size=figure_size, style=style)
@@ -981,9 +981,9 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         try:
             from menpowidgets import plot_graph
-        except:
+        except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
+            raise MenpowidgetsMissingError(e)
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues_ratio()],
                    legend_entries=['Eigenvalues ratio'],
@@ -1137,9 +1137,9 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         try:
             from menpowidgets import plot_graph
-        except:
+        except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
+            raise MenpowidgetsMissingError(e)
         plot_graph(x_axis=range(self.n_active_components),
                    y_axis=[self.eigenvalues_cumulative_ratio()],
                    legend_entries=['Eigenvalues cumulative ratio'],
@@ -1444,9 +1444,9 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         try:
             from menpowidgets import view_widget
             view_widget(self, figure_size=figure_size)
-        except ImportError:
+        except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
+            raise MenpowidgetsMissingError(e)
 
     def __str__(self):
         str_out = 'PCA Model \n'                             \

@@ -143,7 +143,7 @@ class LandmarkManager(MutableMapping, Transformable):
     def __setitem__(self, group, value):
         """
         Sets a new landmark group for the given label. This can be set using
-        an any :map`PointCloud` subclass. Existing landmark groups will be
+        any :map`PointCloud` subclass. Existing landmark groups will be
         replaced.
 
         Parameters
@@ -315,9 +315,9 @@ class LandmarkManager(MutableMapping, Transformable):
         try:
             from menpowidgets import view_widget
             view_widget(self, figure_size=figure_size)
-        except ImportError:
+        except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
+            raise MenpowidgetsMissingError(e)
 
     def _view_widget_3d(self):
         r"""
@@ -326,9 +326,9 @@ class LandmarkManager(MutableMapping, Transformable):
         try:
             from menpowidgets import view_widget
             view_widget(self)
-        except ImportError:
+        except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError()
+            raise MenpowidgetsMissingError(e)
 
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,

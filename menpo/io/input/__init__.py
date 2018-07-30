@@ -9,5 +9,5 @@ from .base import (
     menpo_ls_builtin_assets as ls_builtin_assets,
     register_image_importer, register_landmark_importer,
     register_pickle_importer, register_video_importer,
-    same_name, same_name_video
+    same_name, same_name_video, resolve_from_paths
 )

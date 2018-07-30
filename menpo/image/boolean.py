@@ -706,8 +706,8 @@ class BooleanImage(Image):
         # Slice all the channels, only inside the bounding box (for setting
         # the new mask values).
         all_channels = [slice(0, 1)]
-        slices = all_channels + [slice(bounds[0][k], bounds[1][k] + 1)
-                                 for k in range(self.n_dims)]
+        slices = tuple(all_channels + [slice(bounds[0][k], bounds[1][k] + 1)
+                                       for k in range(self.n_dims)])
         copy.pixels[slices].flat = point_in_pointcloud(pointcloud, indices)
         return copy
 
