@@ -2,7 +2,7 @@ import numpy as np
 
 
 def _normalize(v):
-    return v / np.sqrt((v ** 2).sum(axis=1)[:, None])
+    return np.nan_to_num(v / np.sqrt((v ** 2).sum(axis=1, keepdims=True)))
 
 
 def compute_face_normals(points, trilist):
@@ -12,9 +12,9 @@ def compute_face_normals(points, trilist):
 
     Parameters
     ----------
-    vertex : (N, 3) float32/float64 ndarray
+    points : (N, 3) float32/float64 ndarray
         The list of points to compute normals for.
-    face : (M, 3) int16/int32/int64 ndarray
+    trilist : (M, 3) int16/int32/int64 ndarray
         The list of faces (triangle list).
 
     Returns
@@ -36,25 +36,21 @@ def compute_vertex_normals(points, trilist):
 
     Parameters
     ----------
-    vertex : (N, 3) float32/float64 ndarray
+    points : (N, 3) float32/float64 ndarray
         The list of points to compute normals for.
-    face : (M, 3) int16/int32/int64 ndarray
+    trilist : (M, 3) int16/int32/int64 ndarray
         The list of faces (triangle list).
 
     Returns
     -------
     vertex_normal : (N, 3) float32/float64 ndarray
         The normal per vertex.
-    :return:
     """
-    tri_normals = compute_face_normals(points, trilist)
+    face_normals = compute_face_normals(points, trilist)
 
-    tris_per_vertex = [[] for _ in points]
+    vertex_normals = np.zeros(points.shape, dtype=points.dtype)
+    np.add.at(vertex_normals, trilist[:, 0], face_normals)
+    np.add.at(vertex_normals, trilist[:, 1], face_normals)
+    np.add.at(vertex_normals, trilist[:, 2], face_normals)
 
-    for i, vertices in enumerate(trilist):
-        for v in vertices:
-            tris_per_vertex[v].append(i)
-
-    return _normalize(np.array(
-        [np.mean([tri_normals[t] for t in tris], axis=0)
-         for tris in tris_per_vertex]))
+    return _normalize(vertex_normals)
