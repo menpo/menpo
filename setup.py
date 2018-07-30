@@ -83,9 +83,6 @@ except ImportError:
 cython_modules = [
     build_extension_from_pyx('menpo/external/skimage/_warps_cy.pyx'),
     build_extension_from_pyx(
-        'menpo/transform/piecewiseaffine/fastpwa.pyx',
-        extra_sources_paths=['menpo/transform/piecewiseaffine/fastpwa/pwa.cpp']),
-    build_extension_from_pyx(
         'menpo/feature/windowiterator.pyx',
         extra_sources_paths=['menpo/feature/cpp/ImageWindowIterator.cpp',
                              'menpo/feature/cpp/WindowFeature.cpp',
