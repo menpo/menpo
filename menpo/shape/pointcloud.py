@@ -7,6 +7,7 @@ from warnings import warn
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
+from menpo.base import copy_landmarks_and_path
 from menpo.transform import WithDims
 from menpo.visualize import viewwrapper
 
@@ -225,6 +226,42 @@ class PointCloud(Shape):
         return cls(np.hstack([new_pcloud.points,
                               depth_image.as_vector(keep_channels=True).T]),
                    copy=False)
+
+    def as_pointcloud(self, copy=True):
+        r"""
+        Returns a copy of self as a :map:`PointCloud`.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            If ``False``, the produced :map:`PointCloud` will share points with
+            ``self``. Only suggested to be used for performance.
+
+        Returns
+        -------
+        pointcloud : :map:`PointCloud`
+            An pointcloud with the same points and landmarks as this shape.
+        """
+        return copy_landmarks_and_path(self,
+                                       PointCloud(self.points, copy=copy))
+
+    def as_trimesh(self, trilist=None, copy=True):
+        """
+        Returns a copy of self as a :map:`TriMesh`.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            Only recommend for internal use.
+
+        Returns
+        -------
+        mesh : :map:`TriMesh`
+            A copy of this object as a triangulated mesh
+        """
+        from .mesh import TriMesh
+        tm = TriMesh(self.points, trilist=trilist, copy=copy)
+        return copy_landmarks_and_path(self, tm)
 
     def with_dims(self, dims):
         r"""
