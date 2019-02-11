@@ -1464,3 +1464,45 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             self.noise_variance_ratio(), self.n_components,
             self.components.shape)
         return str_out
+    def render_components(self, camera_settings, export_path, filename='',
+                      size=(600,600), range_std = [-2,2],
+                      n_components=5, bgcolor=(1,1,1)):
+        r"""
+        Visualizes the model using an interactive widget. It only works if it
+        is a 2D/3D shape or appearance model.
+        
+        Parameters
+        ----------
+        figure_size : (`int`, `int`), optional
+            The initial size of the rendered figure.
+        """
+        try:
+            from mayavi import mlab
+        except ImportError as e:
+            print('Cannot import mlab')
+            return 1
+
+        fig = mlab.figure(bgcolor=bgcolor, size=size)
+        if camera_settings is not None:
+             mlab.move(*camera_settings[0])
+             mlab.view(*camera_settings[1])
+             mlab.roll(camera_settings[2])
+
+        stds = np.sqrt(self.eigenvalues)
+        mesh = self.mean()
+        s = mlab.triangular_mesh(mesh.points[:, 0], mesh.points[:, 1],
+                                     mesh.points[:, 2], mesh.trilist,color=(.5,.5,.5))
+        mlab.savefig(str(export_path / 'Mean face.{}'.format('png')))
+    
+        for i,std in enumerate(stds[:n_components]):
+                parameters = np.zeros(n_components)
+                for factor_std in range_std:
+                    if factor_std<0:
+                        sign = -1
+                    else:
+                        sign = +1
+                    parameters[i] = sign*std*np.sqrt(np.abs(factor_std))
+                    s.mlab_source.points = self.instance(parameters*2).points
+                    mlab.savefig(str(export_path / '{}_{}_{}.{}'.format(filename,
+                                                                       i,factor_std,
+                                                                       'png')))
