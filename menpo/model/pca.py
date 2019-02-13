@@ -5,6 +5,7 @@ from menpo.base import doc_inherit, name_of_callable
 from menpo.math import pca, pcacov, ipca, as_matrix
 from .linear import MeanLinearVectorModel
 from .vectorizable import VectorizableBackedModel
+from pathlib import Path
 
 
 class PCAVectorModel(MeanLinearVectorModel):
@@ -1467,23 +1468,29 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             self.components.shape)
         return str_out
 
-    def render_components(self, camera_settings, export_path, filename='',
-                          size=(600, 600), range_std=[-2, 2],
-                          n_components=5, bgcolor=(1, 1, 1)):
+    def render_components(self,  export_path=None, filename='',
+                          size=(600, 600), list_weights=[-2, 2],
+                          n_components=5, bgcolor=(1, 1, 1),
+                          camera_settings=None,
+                          mesh_color=(.5, .5, .5)):
         r"""
         Render and save various components of the  model
 
         Parameters
         ----------
-        figure_size : (`int`, `int`), optional
-        camera_settings : camera settings of the rendering
-        export_path : the path where the images will be saved
-        filename : the prefix of the filename
-        size: the size of the image
-        range_std : the factors that std will be multipied with
+        export_path : str or Path where the images will be saved,
+                      default: current directory
+        filename : str, the prefix of the filename,
+                   default: ''
+        size: tuple of two ints, the size of the image,
+              default:(600, 600)
+        list_weights: list of weights that std will be multipied with
+                      default: [-2, 2]
         n_components : number of the components that will be rendering,
                        [0, n_components)
         bgcolor : the background color of the rendering
+        camera_settings : camera settings of the rendering
+        mesh_color : tuple of three floats between 0-1 that defines mesh color
         """
         try:
             from mayavi import mlab
@@ -1496,24 +1503,27 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             mlab.move(*camera_settings[0])
             mlab.view(*camera_settings[1])
             mlab.roll(camera_settings[2])
+        else:
+            fig.scene.z_plus_view()
 
-        stds = np.sqrt(self.eigenvalues)
+        stds = np.sqrt(self.eigenvalues[:n_components])
         mesh = self.mean()
         s = mlab.triangular_mesh(mesh.points[:, 0], mesh.points[:, 1],
                                  mesh.points[:, 2], mesh.trilist,
-                                 color=(.5, .5, .5))
+                                 color=mesh_color)
+        if export_path is None:
+            export_path = Path.cwd()
+        elif isinstance(export_path, str):
+            export_path = Path(export_path)
+
         mlab.savefig(str(export_path / 'Mean face.{}'.format('png')))
-        for i, std in enumerate(stds[:n_components]):
+        for i, std in enumerate(stds):
 
                 parameters = np.zeros(n_components)
-                for factor_std in range_std:
-                    if factor_std < 0:
-                        sign = -1
-                    else:
-                        sign = +1
-                    parameters[i] = sign*std*np.sqrt(np.abs(factor_std))
-                    s.mlab_source.points = self.instance(parameters*2).points
+                for weight in list_weights:
+                    parameters[i] = std*weight
+                    s.mlab_source.points = self.instance(parameters).points
                     full_filename = '{}_{}_{}.{}'.format(filename,
-                                                         i, factor_std,
+                                                         i, weight,
                                                          'png')
                     mlab.savefig(str(export_path / full_filename))
