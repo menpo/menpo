@@ -1470,7 +1470,8 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
 
     def render_components(self,  export_path=None, filename='',
                           size=(600, 600), list_weights=[-2, 2],
-                          n_components=5, bgcolor=(1, 1, 1),
+                          list_components=np.arange(5),
+                          bgcolor=(1, 1, 1),
                           camera_settings=None,
                           mesh_color=(.5, .5, .5)):
         r"""
@@ -1486,8 +1487,8 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
               default:(600, 600)
         list_weights: list of weights that std will be multipied with
                       default: [-2, 2]
-        n_components : number of the components that will be rendering,
-                       [0, n_components)
+        list_components : int, list or ndarray of the components to be rendered
+                         default: np.arange(5)
         bgcolor : the background color of the rendering
         camera_settings : camera settings of the rendering
         mesh_color : tuple of three floats between 0-1 that defines mesh color
@@ -1498,6 +1499,18 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             print('Cannot import mlab')
             return 1
 
+        if export_path is None:
+            export_path = Path.cwd()
+        elif isinstance(export_path, str):
+            export_path = Path(export_path)
+
+        if not export_path.exists():
+            try:
+                export_path.mkdir(parents=True)
+            except OSError:
+                print('Cannot create directory')
+                return -1
+
         fig = mlab.figure(bgcolor=bgcolor, size=size)
         if camera_settings is not None:
             mlab.move(*camera_settings[0])
@@ -1506,24 +1519,31 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         else:
             fig.scene.z_plus_view()
 
-        stds = np.sqrt(self.eigenvalues[:n_components])
+        if isinstance(list_weights, int):
+            list_weights = [list_weights]
+
+        if isinstance(list_components, int):
+            list_components = [list_components]
+        list_components = np.asarray(list_components)
+        are_components = list_components < self.n_components
+        components_to_be_rendered = list_components[are_components]
+        for not_exist_component in list_components[~are_components]:
+            print('Component {} does not exist'.format(not_exist_component))
+
         mesh = self.mean()
         s = mlab.triangular_mesh(mesh.points[:, 0], mesh.points[:, 1],
                                  mesh.points[:, 2], mesh.trilist,
                                  color=mesh_color)
-        if export_path is None:
-            export_path = Path.cwd()
-        elif isinstance(export_path, str):
-            export_path = Path(export_path)
 
         mlab.savefig(str(export_path / 'Mean face.{}'.format('png')))
-        for i, std in enumerate(stds):
-
-                parameters = np.zeros(n_components)
+        for component in components_to_be_rendered:
+                parameters = np.zeros(component+1)
+                std = self.eigenvalues[component] ** 0.5
                 for weight in list_weights:
-                    parameters[i] = std*weight
+                    parameters[component] = std*weight
                     s.mlab_source.points = self.instance(parameters).points
                     full_filename = '{}_{}_{}.{}'.format(filename,
-                                                         i, weight,
+                                                         component,
+                                                         weight,
                                                          'png')
                     mlab.savefig(str(export_path / full_filename))
