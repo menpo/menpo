@@ -83,9 +83,6 @@ except ImportError:
 cython_modules = [
     build_extension_from_pyx('menpo/external/skimage/_warps_cy.pyx'),
     build_extension_from_pyx(
-        'menpo/transform/piecewiseaffine/fastpwa.pyx',
-        extra_sources_paths=['menpo/transform/piecewiseaffine/fastpwa/pwa.cpp']),
-    build_extension_from_pyx(
         'menpo/feature/windowiterator.pyx',
         extra_sources_paths=['menpo/feature/cpp/ImageWindowIterator.cpp',
                              'menpo/feature/cpp/WindowFeature.cpp',
@@ -99,10 +96,10 @@ cython_exts = cythonize(cython_modules, quiet=True)
 
 
 # Please see conda/meta.yaml for other binary dependencies
-install_requires = ['numpy>=1.10,<2.0',
-                    'scipy>=0.16,<1.0',
-                    'matplotlib>=1.4,<3.0',
-                    'pillow>=3.0,<5.0']
+install_requires = ['numpy>=1.10',
+                    'scipy>=0.16',
+                    'matplotlib>=1.4',
+                    'pillow>=3.0']
 
 if sys.version_info.major == 2:
     install_requires.append('pathlib==1.0')

@@ -153,11 +153,11 @@ def stencil_grid(stencil, shape, dtype=None, format=None):
             if i > 0:
                 s = [slice(None)] * len(shape)
                 s[n] = slice(0, i)
-                diag[s] = 0
+                diag[tuple(s)] = 0
             elif i < 0:
                 s = [slice(None)]*len(shape)
                 s[n] = slice(i, None)
-                diag[s] = 0
+                diag[tuple(s)] = 0
 
     # remove diagonals that lie outside matrix
     mask = abs(diags) < N_v
