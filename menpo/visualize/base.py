@@ -1,6 +1,9 @@
-from collections import Iterable
-
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 import numpy as np
+
 from menpo.base import MenpoMissingDependencyError
 
 
@@ -9,6 +12,7 @@ class Menpo3dMissingError(MenpoMissingDependencyError):
     Exception that is thrown when an attempt is made to import a 3D
     visualisation method, but 'menpo3d' is not installed.
     """
+
     def __init__(self, actual_missing_import_name):
         super(Menpo3dMissingError, self).__init__(actual_missing_import_name)
         self.message += ("\nThis import is required in order to use the "
@@ -20,6 +24,7 @@ class MenpowidgetsMissingError(MenpoMissingDependencyError):
     Exception that is thrown when an attempt is made to import a widget, but
     'menpowidgets' is not installed.
     """
+
     def __init__(self, actual_missing_import_name):
         super(MenpowidgetsMissingError, self).__init__(actual_missing_import_name)
         self.message += ("\nThis import is required in order to use the "
@@ -155,6 +160,7 @@ class viewwrapper(object):
                 """
                 raise ValueError('Viewing of objects with greater than 3 '
                                  'dimensions is not currently possible.')
+
             return raise_not_supported
 
 
@@ -195,6 +201,7 @@ class LandmarkableViewable(object):
 
     def _view_landmarks_3d(self, **kwargs):
         raise NotImplementedError('3D Landmark Viewing is not supported.')
+
 
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,

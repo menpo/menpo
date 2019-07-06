@@ -1,10 +1,14 @@
-import collections
-from itertools import chain
-from functools import partial, wraps
-import os.path
-from pprint import pformat
-import warnings
+import os
+
+try:
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import textwrap
+import warnings
+from functools import partial, wraps
+from itertools import chain
+from pprint import pformat
 
 
 class Copyable(object):
@@ -336,6 +340,7 @@ class MenpoMissingDependencyError(ImportError):
     An exception that a dependency required for the requested functionality
     was not detected.
     """
+
     def __init__(self, package_name):
         super(MenpoMissingDependencyError, self).__init__()
         if isinstance(package_name, ImportError):
@@ -500,7 +505,7 @@ class doc_inherit(object):
         return func
 
 
-class LazyList(collections.Sequence, Copyable):
+class LazyList(collections_abc.Sequence, Copyable):
     r"""
     An immutable sequence that provides the ability to lazily access objects.
     In truth, this sequence simply wraps a list of callables which are then
@@ -523,7 +528,7 @@ class LazyList(collections.Sequence, Copyable):
     def __getitem__(self, slice_):
         # note that we have to check for iterable *before* __index__ as ndarray
         # has both (but we expect the iteration behavior when slicing)
-        if isinstance(slice_, collections.Iterable):
+        if isinstance(slice_, collections_abc.Iterable):
             # An iterable object is passed - return a new LazyList
             return LazyList([self._callables[s] for s in slice_])
         elif isinstance(slice_, int) or hasattr(slice_, '__index__'):
@@ -613,17 +618,18 @@ class LazyList(collections.Sequence, Copyable):
         lazy : `LazyList`
             A new LazyList where each element is wrapped by (each) ``f``.
         """
+
         # We need this delayed helper function in order to ensure that f
         # is passed the actual instantiated object and not the callable itself.
         def delayed(delay_f, delay_x):
             return delay_f(delay_x())
 
-        if isinstance(f, collections.Iterable) and callable(f):
+        if isinstance(f, collections_abc.Iterable) and callable(f):
             raise ValueError('It is ambiguous whether the provided argument '
                              'is an iterable object or a callable.')
 
         new = self.copy()
-        if isinstance(f, collections.Iterable):
+        if isinstance(f, collections_abc.Iterable):
             if len(f) != len(new):
                 raise ValueError('A callable per element of the LazyList must '
                                  'be passed.')
@@ -704,7 +710,7 @@ class LazyList(collections.Sequence, Copyable):
         """
         if isinstance(other, LazyList):
             return LazyList(self._callables + other._callables)
-        elif isinstance(other, collections.Iterable):
+        elif isinstance(other, collections_abc.Iterable):
             return self + LazyList.init_from_iterable(other)
         else:
             raise ValueError(

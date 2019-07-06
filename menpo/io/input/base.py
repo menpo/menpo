@@ -1,21 +1,22 @@
-import collections
-from collections import OrderedDict
-
-import warnings
-from functools import partial
+try:
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import os
-from pathlib import Path
 import random
+import warnings
+from collections import OrderedDict
+from functools import partial
+from pathlib import Path
 
 from menpo.base import (menpo_src_dir_path, LazyList, partial_doc,
                         MenpoDeprecationWarning)
 from menpo.compatibility import basestring
 from menpo.visualize import print_progress
-
-from ..utils import (_norm_path, _possible_extensions_from_filepath,
-                     _normalize_extension)
 from .extensions import (image_landmark_types, image_types, pickle_types,
                          ffmpeg_video_types)
+from ..utils import (_norm_path, _possible_extensions_from_filepath,
+                     _normalize_extension)
 
 
 # TODO: Remove once deprecated
@@ -153,7 +154,6 @@ register_landmark_importer = partial_doc(_register_importer,
                                          image_landmark_types)
 
 register_pickle_importer = partial_doc(_register_importer, pickle_types)
-
 
 menpo_data_dir_path = partial_doc(_data_dir_path, menpo_src_dir_path)
 
@@ -724,7 +724,7 @@ def import_videos(pattern, max_videos=None, shuffle=False,
     """
     normalize = _parse_deprecated_normalise(normalise, normalize)
 
-    kwargs = {'normalize': normalize, 'exact_frame_count':exact_frame_count}
+    kwargs = {'normalize': normalize, 'exact_frame_count': exact_frame_count}
     video_importer_methods = {'ffmpeg': ffmpeg_video_types}
     if importer_method not in video_importer_methods:
         raise ValueError('Unsupported importer method requested. Valid values '
@@ -931,10 +931,11 @@ def _import(filepath, extensions_map, landmark_resolver=same_name,
 
     for x in built_objects:
         # Handle lazy lists differently
-        if isinstance(x, collections.Sequence) and not isinstance(x, LazyList):
+        if (isinstance(x, collections_abc.Sequence) and
+                not isinstance(x, LazyList)):
             for subx in x:
                 attach_path(subx)
-        elif isinstance(x, collections.Mapping):
+        elif isinstance(x, collections_abc.Mapping):
             for subx in x.values():
                 attach_path(subx)
         else:
@@ -1073,6 +1074,7 @@ class BuiltinAssets(object):
 
     def __call__(self, asset_name, **kwargs):
         return self.import_builtin_asset(asset_name, **kwargs)
+
 
 import_builtin_asset = BuiltinAssets(_menpo_import_builtin_asset)
 
