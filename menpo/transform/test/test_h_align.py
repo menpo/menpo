@@ -28,7 +28,7 @@ def test_align_2d_affine():
     # estimate the transform from source and target
     estimate = AlignmentAffine(source, target)
     # check the estimates is correct
-    assert_allclose(affine.h_matrix, estimate.h_matrix)
+    assert_allclose(affine.h_matrix, estimate.h_matrix, atol=1e-3, rtol=1e-3)
 
 
 def test_align_2d_affine_compose_target():
@@ -67,7 +67,7 @@ def test_align_2d_affine_set_target():
     # and set the target
     estimate.set_target(target)
     # check the estimates is correct
-    assert_allclose(affine.h_matrix, estimate.h_matrix)
+    assert_allclose(affine.h_matrix, estimate.h_matrix, atol=1e-3, rtol=1e-3)
 
 
 def test_align_2d_affine_as_non_alignment():
