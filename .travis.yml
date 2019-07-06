@@ -19,7 +19,7 @@ env:
 
 install:
 - wget https://raw.githubusercontent.com/menpo/condaci/v0.4.x/condaci.py -O condaci.py
-- python condaci.py setup
+- python condaci.py setup --channels conda-forge
 
 script:
 - ~/miniconda/bin/python condaci.py build ./conda
