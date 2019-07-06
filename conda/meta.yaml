@@ -50,7 +50,6 @@ test:
 about:
   home: https://github.com/menpo/menpo/
   license: BSD
-  license_file: ../License.txt
   summary: The Menpo Project Python package for handling annotated data
   description: |
     Menpo is a Menpo Project package designed from the ground up to make
