@@ -1,10 +1,11 @@
 import os
 import platform
-import sys
 import site
-from setuptools import setup, find_packages, Extension
-import versioneer
+import sys
 
+from setuptools import setup, find_packages, Extension
+
+import versioneer
 
 SYS_PLATFORM = platform.system().lower()
 IS_LINUX = 'linux' in SYS_PLATFORM
@@ -75,10 +76,10 @@ try:
     from Cython.Build import cythonize
 except ImportError:
     import warnings
+
     cythonize = no_cythonize
     warnings.warn('Unable to import Cython - attempting to build using the '
                   'pre-compiled C++ files.')
-
 
 cython_modules = [
     build_extension_from_pyx('menpo/external/skimage/_warps_cy.pyx'),
@@ -115,4 +116,4 @@ setup(name='menpo',
       install_requires=install_requires,
       package_data={'menpo': ['data/*']},
       tests_require=['pytest>=3.0', 'mock']
-)
+      )
