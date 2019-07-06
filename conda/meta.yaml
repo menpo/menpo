@@ -10,14 +10,8 @@ build:
   script: python setup.py install --single-version-externally-managed --record=record.txt
 
 requirements:
-  build:
-    - conda-forge-pinning 2019.07.01
-
   host:
     - python
-    - libblas
-    - libcblas
-    - liblapack
     - setuptools
     - numpy
     - cython
