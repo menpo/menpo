@@ -1,4 +1,5 @@
 from __future__ import division
+
 from warnings import warn
 from collections import Iterable
 
@@ -19,7 +20,7 @@ from .interpolation import scipy_interpolation
 try:
     from .interpolation import cython_interpolation
 except ImportError:
-    print('Falling back to scipy interpolation for affine warps')
+    warn('Falling back to scipy interpolation for affine warps')
     cython_interpolation = None
 from .patches import extract_patches, set_patches
 
