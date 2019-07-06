@@ -390,8 +390,9 @@ class CachedPWA(PythonPWA):
         self._applied_points, self._iab = None, None
 
     def index_alpha_beta(self, points):
-        if (self._applied_points is None or not
-                np.all(points == self._applied_points)):
+        if (self._applied_points is None or
+                not points.shape == self._applied_points.shape or
+                not np.allclose(points, self._applied_points)):
             # This must happen first in case index_alpha_beta throws a
             # TriangleContainmentError
             self._iab = PythonPWA.index_alpha_beta(self, points)
