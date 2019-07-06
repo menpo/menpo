@@ -23,7 +23,7 @@ perturbed_tgt_landmarks = np.array([[-0.6, -1.3],
 x = np.arange(-1, 1, 0.01)
 y = np.arange(-1, 1, 0.01)
 xx, yy = np.meshgrid(x, y)
-square_sample_points = np.array([xx.flatten(1), yy.flatten(1)]).T
+square_sample_points = np.array([xx.ravel(), yy.ravel()]).T
 
 src = PointCloud(square_src_landmarks)
 tgt = PointCloud(square_tgt_landmarks)
