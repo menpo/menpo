@@ -210,7 +210,7 @@ class FFMpegVideoReader(object):
             Image of shape ``(self.height, self.width, 3)``
         """
         raw_data = self._pipe.stdout.read(self.height*self.width*3)
-        frame = np.fromstring(raw_data, dtype=np.uint8)
+        frame = np.frombuffer(raw_data, dtype=np.uint8)
         frame = frame.reshape((self.height, self.width, 3))
         self._pipe.stdout.flush()
         self.index += 1

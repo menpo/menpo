@@ -90,7 +90,7 @@ def _rasterize_matplotlib(image, pclouds, render_lines=True, line_style='-',
         c_buffer, shape = f.canvas.print_to_buffer()
         # Turn buffer into numpy array and reshape to image
         shape = shape[::-1] + (-1,)
-        pixels_buffer = np.fromstring(c_buffer, dtype=np.uint8).reshape(shape)
+        pixels_buffer = np.frombuffer(c_buffer, dtype=np.uint8).reshape(shape)
         # Prevent matplotlib from rendering
         plt.close(f)
         # We have to apply the alpha channel to get the correct colour
