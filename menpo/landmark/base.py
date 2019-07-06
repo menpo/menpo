@@ -1,12 +1,13 @@
-import warnings
-from collections import OrderedDict, MutableMapping
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 import fnmatch
-
-import numpy as np
+from collections import OrderedDict
 
 from menpo.base import Copyable
 from menpo.transform.base import Transformable
-from menpo.visualize.base import Viewable, viewwrapper
+from menpo.visualize.base import viewwrapper
 
 
 class Landmarkable(Copyable):
@@ -101,6 +102,7 @@ class LandmarkManager(MutableMapping, Transformable):
     :map:`LandmarkManager` are automatically transformed and copied with their
     parent object.
     """
+
     def __init__(self):
         super(LandmarkManager, self).__init__()
         self._landmark_groups = OrderedDict()

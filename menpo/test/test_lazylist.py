@@ -1,4 +1,7 @@
-import collections
+try:
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import numpy as np
 from mock import Mock
 from pytest import raises
@@ -64,7 +67,7 @@ def test_lazylist_multi_map_unequal_lengths():
 
 
 def test_lazylist_multi_map_iterable_and_callable():
-    class double_func(collections.Iterable):
+    class double_func(collections_abc.Iterable):
         def __call__(self, x, **kwargs):
             return x * 2
 
