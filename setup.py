@@ -93,8 +93,8 @@ cython_modules = [
     build_extension_from_pyx('menpo/image/patches.pyx'),
     build_extension_from_pyx('menpo/shape/mesh/normals.pyx')
 ]
-cython_exts = cythonize(cython_modules, quiet=True)
-
+cython_exts = cythonize(cython_modules, quiet=True,
+                        language_level=sys.version_info[0])
 
 # Please see conda/meta.yaml for other binary dependencies
 install_requires = ['numpy>=1.10',
