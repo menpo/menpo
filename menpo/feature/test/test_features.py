@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 from numpy.testing import assert_allclose
-from pytest import raises
+from pytest import raises, skip
 
 import menpo.io as mio
 from menpo.feature import (hog, lbp, es, igo, daisy, no_op, normalize,
@@ -154,7 +154,10 @@ def test_hog_channels_zhuramanan():
 
 
 def test_dsift_channels():
-    from menpo.feature import dsift
+    try:
+        from menpo.feature import dsift
+    except ImportError:
+        skip("Cyvlfeat must be installed to run this unit test")
     n_cases = 3
     num_bins_horizontal = np.random.randint(1, 3, [n_cases, 1])
     num_bins_vertical = np.random.randint(1, 3, [n_cases, 1])
@@ -226,7 +229,7 @@ def test_daisy_channels():
                           histograms=histograms[i, 0])
         assert_allclose(daisy_img.shape, (3, 3))
         assert_allclose(daisy_img.n_channels,
-                        ((rings[i, 0]*histograms[i, 0]+1)*orientations[i, 0]))
+                        ((rings[i, 0] * histograms[i, 0] + 1) * orientations[i, 0]))
 
 
 def test_igo_values():
@@ -264,8 +267,11 @@ def test_daisy_values():
 
 
 def test_dsift_values():
-    from menpo.feature import dsift
-    # Equivalent to the transpose of image in Matlab
+    try:
+        from menpo.feature import dsift
+    except ImportError:
+        skip("Cyvlfeat must be installed to run this unit test")
+        # Equivalent to the transpose of image in Matlab
     image = Image([[1, 2, 3, 4], [2, 1, 3, 4], [1, 2, 3, 4], [2, 1, 3, 4]])
     sift_img = dsift(image, cell_size_horizontal=2, cell_size_vertical=2)
     assert_allclose(np.around(sift_img.pixels[0, 0, 0], 6), 19.719786,
@@ -330,48 +336,48 @@ def test_normalize_norm_all():
     pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_norm(image, mode='all')
-    assert_allclose(np.linalg.norm(new_image.pixels),  1.)
+    assert_allclose(np.linalg.norm(new_image.pixels), 1.)
 
 
 def test_normalize_norm_channels():
     pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_norm(image, mode='per_channel')
-    assert_allclose(np.linalg.norm(new_image.pixels[0]),  1.)
-    assert_allclose(np.linalg.norm(new_image.pixels[1]),  1.)
-    assert_allclose(np.linalg.norm(new_image.pixels[2]),  1.)
+    assert_allclose(np.linalg.norm(new_image.pixels[0]), 1.)
+    assert_allclose(np.linalg.norm(new_image.pixels[1]), 1.)
+    assert_allclose(np.linalg.norm(new_image.pixels[2]), 1.)
 
 
 def test_normalize_std_all():
     pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_std(image, mode='all')
-    assert_allclose(np.std(new_image.pixels),  1.)
+    assert_allclose(np.std(new_image.pixels), 1.)
 
 
 def test_normalize_std_channels():
     pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_std(image, mode='per_channel')
-    assert_allclose(np.std(new_image.pixels[0]),  1.)
-    assert_allclose(np.std(new_image.pixels[1]),  1.)
-    assert_allclose(np.std(new_image.pixels[2]),  1.)
+    assert_allclose(np.std(new_image.pixels[0]), 1.)
+    assert_allclose(np.std(new_image.pixels[1]), 1.)
+    assert_allclose(np.std(new_image.pixels[2]), 1.)
 
 
 def test_normalize_var_all():
     pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_var(image, mode='all')
-    assert_allclose(np.var(new_image.pixels),  0.01648, atol=1e-3)
+    assert_allclose(np.var(new_image.pixels), 0.01648, atol=1e-3)
 
 
 def test_normalize_var_channels():
     pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_var(image, mode='per_channel')
-    assert_allclose(np.var(new_image.pixels[0]),  0.15, atol=1e-5)
-    assert_allclose(np.var(new_image.pixels[1]),  0.15, atol=1e-5)
-    assert_allclose(np.var(new_image.pixels[2]),  0.15, atol=1e-5)
+    assert_allclose(np.var(new_image.pixels[0]), 0.15, atol=1e-5)
+    assert_allclose(np.var(new_image.pixels[1]), 0.15, atol=1e-5)
+    assert_allclose(np.var(new_image.pixels[2]), 0.15, atol=1e-5)
 
 
 def test_normalize_no_scale_per_channel():
