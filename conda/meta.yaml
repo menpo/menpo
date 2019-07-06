@@ -11,32 +11,35 @@ build:
 
 requirements:
   build:
+    - conda-forge-pinning 2019.07.01
+
+  host:
     - python
+    - libblas
+    - libcblas
+    - liblapack
     - setuptools
-    - numpy >=1.10,<2.0
-    - cython >=0.23
+    - numpy
+    - cython
 
   run:
     - python
-    - pathlib 1.0  # [py2k]
+    - pathlib 1.0*  # [py2k]
 
     # Scientific Python Stack
-    - numpy >=1.10,<2.0
-    - scipy >=0.16,<1.0
-    - pillow >=3.0,<5.0
-    - ffmpeg >=2.7,<3.0
-
-    # Features
-    - cyvlfeat >=0.4.3,<0.5
+    - {{ pin_compatible('numpy') }}
+    - scipy >=1.0,<2.0
+    - pillow >=4.0,<6.0
+    - ffmpeg >=2.7,<5.0
 
     # Visualization
-    - matplotlib >=1.4,<3.0
+    - matplotlib >=3,<4.0
 
 test:
   requires:
-    - pytest >=3.0
-    - pytest-cov
-    - mock
+    - pytest >=5.0,<6.0
+    - pytest-cov >=2.0,<3.0
+    - mock >=3.0,<4.0
 
   files:
     - .coveragerc
@@ -45,11 +48,20 @@ test:
     - menpo
 
   commands:
-    - MPLBACKEND=Agg pytest $SP_DIR/menpo -v --cov=menpo --cov-config .coveragerc            # [linux]
-    - MPLBACKEND=TKAgg pytest $SP_DIR/menpo -v --cov=menpo --cov-config .coveragerc          # [osx]
+    - MPLBACKEND=Agg pytest $SP_DIR/menpo -v --cov=menpo --cov-config .coveragerc              # [linux]
+    - MPLBACKEND=TKAgg pytest $SP_DIR/menpo -v --cov=menpo --cov-config .coveragerc            # [osx]
     - pytest %SP_DIR%\\menpo -v --cov=menpo --cov-config .coveragerc --junitxml=C:\\menpo.xml  # [win]
 
 
 about:
   home: https://github.com/menpo/menpo/
   license: BSD
+  license_file: ../License.txt
+  summary: The Menpo Project Python package for handling annotated data
+  description: |
+    Menpo is a Menpo Project package designed from the ground up to make
+    importing, manipulating and visualizing image and mesh data as simple as
+    possible. In particular, we focus on annotated data which is common within
+    the fields of Machine Learning and Computer Vision.
+  doc_url: https://menpo.readthedocs.io/en/stable/
+  dev_url: https://github.com/menpo/menpo
