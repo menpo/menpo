@@ -1284,8 +1284,8 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
     r = pc.range()
     x_rr = r[0] * crop_proportion
     y_rr = r[1] * crop_proportion
-    axes_x_limits=[bounds[0][1] - x_rr, bounds[1][1] + x_rr]
-    axes_y_limits=[bounds[0][0] - y_rr, bounds[1][0] + y_rr]
+    axes_x_limits = [bounds[0][1] - x_rr, bounds[1][1] + x_rr]
+    axes_y_limits = [bounds[0][0] - y_rr, bounds[1][0] + y_rr]
     normalizer = np.sum(r) / 2.
 
     # compute height, width, theta and std
