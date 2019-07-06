@@ -2,13 +2,11 @@
 <p align="center">
   <img src="menpo-logo.png" alt="menpo" width="30%"></center>
   <br><br>
-  <a href="https://coveralls.io/r/menpo/menpo"><img src="http://img.shields.io/coveralls/menpo/menpo.svg?style=flat" alt="Coverage Status"/></a>
   <a href="https://pypi.python.org/pypi/menpo"><img src="http://img.shields.io/pypi/v/menpo.svg?style=flat" alt="PyPI Release"/></a>
   <a href="https://github.com/menpo/menpo/blob/master/LICENSE.txt"><img src="http://img.shields.io/badge/License-BSD-green.svg" alt="BSD License"/></a>
   <br>
-  <img src="https://img.shields.io/badge/Python-2.7-green.svg" alt="Python 2.7 Support"/>
-  <img src="https://img.shields.io/badge/Python-3.5-green.svg" alt="Python 3.5 Support"/>
   <img src="https://img.shields.io/badge/Python-3.6-green.svg" alt="Python 3.6 Support"/>
+  <img src="https://img.shields.io/badge/Python-3.7-green.svg" alt="Python 3.7 Support"/>
 </p>
 
 
@@ -70,8 +68,7 @@ packages such as SciPy and Numpy as Menpo also makes use of these packages.
 
 |  CI Host |                     OS                    |                      Build Status                     |
 |:--------:|:-----------------------------------------:|:-----------------------------------------------------:|
-| Travis   | Ubuntu 12.04 (x64)                        | [![Travis Build Status][travis_shield]][travis]       |
-| Jenkins  | OSX 10.10 (x64) and Windows 10 (x86, x64) | [![Jenkins Build Status][jenkins_shield]][jenkins]    |
+| Travis   | Ubuntu 16.04 (x64) and OSX 10.12 (x64)    | [![Travis Build Status][travis_shield]][travis]       |
 
 
 [travis]: https://travis-ci.org/menpo/menpo
