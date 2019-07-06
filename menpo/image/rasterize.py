@@ -118,6 +118,8 @@ def _rasterize_pillow(image, pclouds, render_lines=True, line_style='-',
                       marker_edge_colour='b', marker_edge_width=1):
     from PIL import ImageDraw
 
+    if image.n_channels != 3:
+        raise ValueError('The Pillow rasterizer only supports colour images')
     if any(x != '-'for x in line_style):
         raise ValueError("The Pillow rasterizer only supports the '-' "
                          "line style.")
