@@ -6,6 +6,7 @@ git:
 
 env:
   global:
+    - CONDACI_PYPI_SDIST_UPLOAD_PY_VER=3.7
     - BINSTAR_USER=menpo
 
 matrix:
