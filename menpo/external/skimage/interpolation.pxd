@@ -259,7 +259,7 @@ cdef inline IMAGE_TYPES get_pixel2d(IMAGE_TYPES* image, Py_ssize_t rows,
     value : double
         Pixel value at given position.
     """
-    if mode == 'C':
+    if mode == b'C':
         if (r < 0) or (r > rows - 1) or (c < 0) or (c > cols - 1):
             return <IMAGE_TYPES>cval
         else:
@@ -283,7 +283,7 @@ cdef inline Py_ssize_t coord_map(Py_ssize_t dim, Py_ssize_t coord, char mode):
         falls outside [0, dim).
     """
     dim = dim - 1
-    if mode == 'R': # reflect
+    if mode == b'R': # reflect
         if coord < 0:
             # How many times times does the coordinate wrap?
             if <Py_ssize_t>(-coord / dim) % 2 != 0:
@@ -295,12 +295,12 @@ cdef inline Py_ssize_t coord_map(Py_ssize_t dim, Py_ssize_t coord, char mode):
                 return <Py_ssize_t>(dim - (coord % dim))
             else:
                 return <Py_ssize_t>(coord % dim)
-    elif mode == 'W': # wrap
+    elif mode == b'W': # wrap
         if coord < 0:
             return <Py_ssize_t>(dim - (-coord % dim))
         elif coord > dim:
             return <Py_ssize_t>(coord % dim)
-    elif mode == 'N': # nearest
+    elif mode == b'N': # nearest
         if coord < 0:
             return 0
         elif coord > dim:
