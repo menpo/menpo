@@ -1,9 +1,16 @@
-formats:
-  - pdf
+version: 2
+
+# Build documentation in the docs/ directory with Sphinx
+sphinx:
+  configuration: docs/source/conf.py
+
+formats: all
 
 conda:
-  file: docs/rtd_environment.yml
+  environment: docs/rtd_environment.yml
 
 python:
-   setup_py_install: true
-
+  version: 3.7
+  install:
+    - method: pip
+      path: .

@@ -97,10 +97,10 @@ cython_exts = cythonize(cython_modules, quiet=True,
                         language_level=sys.version_info[0])
 
 # Please see conda/meta.yaml for other binary dependencies
-install_requires = ['numpy>=1.10',
-                    'scipy>=0.16',
-                    'matplotlib>=1.4',
-                    'pillow>=3.0']
+install_requires = ['numpy>=1.14',
+                    'scipy>=1.0',
+                    'matplotlib>=3.0',
+                    'pillow>=4.0']
 
 if sys.version_info.major == 2:
     install_requires.append('pathlib==1.0')
@@ -115,5 +115,5 @@ setup(name='menpo',
       packages=find_packages(),
       install_requires=install_requires,
       package_data={'menpo': ['data/*']},
-      tests_require=['pytest>=3.0', 'mock']
+      tests_require=['pytest>=5.0', 'mock>=3.0']
       )

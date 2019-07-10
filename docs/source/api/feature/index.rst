@@ -70,7 +70,6 @@ Visualization
 .. toctree::
   :maxdepth: 2
 
-  glyph
   sum_channels
 
 
