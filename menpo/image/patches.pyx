@@ -99,8 +99,8 @@ cpdef extract_patches(IMAGE_TYPES[:, :, :] image,
         Py_ssize_t n_augmented_centres = n_centres * n_offsets
         object extents_size = [n_augmented_centres, 2]
 
-        Py_ssize_t half_patch_shape0 = patch_shape[0] / 2
-        Py_ssize_t half_patch_shape1 = patch_shape[1] / 2
+        Py_ssize_t half_patch_shape0 = patch_shape[0] // 2
+        Py_ssize_t half_patch_shape1 = patch_shape[1] // 2
         Py_ssize_t add_to_patch0 = patch_shape[0] % 2
         Py_ssize_t add_to_patch1 = patch_shape[1] % 2
         Py_ssize_t patch_shape0 = patch_shape[0]
@@ -160,8 +160,8 @@ cpdef void set_patches(IMAGE_TYPES[:, :, :, :, :] patches,
 
         Py_ssize_t patch_shape0 = patches.shape[3]
         Py_ssize_t patch_shape1 = patches.shape[4]
-        Py_ssize_t half_patch_shape0 = patch_shape0 / 2
-        Py_ssize_t half_patch_shape1 = patch_shape1 / 2
+        Py_ssize_t half_patch_shape0 = patch_shape0 // 2
+        Py_ssize_t half_patch_shape1 = patch_shape1 // 2
         Py_ssize_t add_to_patch0 = patch_shape0 % 2
         Py_ssize_t add_to_patch1 = patch_shape1 % 2
         Py_ssize_t image_shape0 = image.shape[1]
