@@ -15,8 +15,6 @@ Features
   gaussian_filter
   igo
   es
-  lbp
-  hog
   daisy
 
 
@@ -50,7 +48,6 @@ already been made that provides a unique set of properties.
   :maxdepth: 2
 
   double_igo
-  sparse_hog
 
 Normalization
 -------------
