@@ -84,7 +84,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         if not labels_to_masks:
             raise ValueError('Labelled point graphs are designed to be '
                              'immutable. Empty label sets are not permitted.')
-        if np.vstack(labels_to_masks.values()).shape[1] != points.shape[0]:
+        if np.vstack(list(labels_to_masks.values())).shape[1] != points.shape[0]:
             raise ValueError('Each mask must have the same number of points '
                              'as the given points.')
         if not isinstance(labels_to_masks, OrderedDict):

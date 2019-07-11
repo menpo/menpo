@@ -1,10 +1,11 @@
 import os
 import platform
-import sys
 import site
-from setuptools import setup, find_packages, Extension
-import versioneer
+import sys
 
+from setuptools import setup, find_packages, Extension
+
+import versioneer
 
 SYS_PLATFORM = platform.system().lower()
 IS_LINUX = 'linux' in SYS_PLATFORM
@@ -75,10 +76,10 @@ try:
     from Cython.Build import cythonize
 except ImportError:
     import warnings
+
     cythonize = no_cythonize
     warnings.warn('Unable to import Cython - attempting to build using the '
                   'pre-compiled C++ files.')
-
 
 cython_modules = [
     build_extension_from_pyx('menpo/external/skimage/_warps_cy.pyx'),
@@ -89,17 +90,16 @@ cython_modules = [
                              'menpo/feature/cpp/HOG.cpp',
                              'menpo/feature/cpp/LBP.cpp']),
     build_extension_from_pyx('menpo/feature/_gradient.pyx'),
-    build_extension_from_pyx('menpo/image/patches.pyx'),
-    build_extension_from_pyx('menpo/shape/mesh/normals.pyx')
+    build_extension_from_pyx('menpo/image/patches.pyx')
 ]
-cython_exts = cythonize(cython_modules, quiet=True)
-
+cython_exts = cythonize(cython_modules, quiet=True,
+                        language_level=sys.version_info[0])
 
 # Please see conda/meta.yaml for other binary dependencies
-install_requires = ['numpy>=1.10',
-                    'scipy>=0.16',
-                    'matplotlib>=1.4',
-                    'pillow>=3.0']
+install_requires = ['numpy>=1.14',
+                    'scipy>=1.0',
+                    'matplotlib>=3.0',
+                    'pillow>=4.0']
 
 if sys.version_info.major == 2:
     install_requires.append('pathlib==1.0')
@@ -114,5 +114,5 @@ setup(name='menpo',
       packages=find_packages(),
       install_requires=install_requires,
       package_data={'menpo': ['data/*']},
-      tests_require=['pytest>=3.0', 'mock']
-)
+      tests_require=['pytest>=5.0', 'mock>=3.0']
+      )

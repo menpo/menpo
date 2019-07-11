@@ -90,7 +90,7 @@ def _rasterize_matplotlib(image, pclouds, render_lines=True, line_style='-',
         c_buffer, shape = f.canvas.print_to_buffer()
         # Turn buffer into numpy array and reshape to image
         shape = shape[::-1] + (-1,)
-        pixels_buffer = np.fromstring(c_buffer, dtype=np.uint8).reshape(shape)
+        pixels_buffer = np.frombuffer(c_buffer, dtype=np.uint8).reshape(shape)
         # Prevent matplotlib from rendering
         plt.close(f)
         # We have to apply the alpha channel to get the correct colour
@@ -118,6 +118,9 @@ def _rasterize_pillow(image, pclouds, render_lines=True, line_style='-',
                       marker_edge_colour='b', marker_edge_width=1):
     from PIL import ImageDraw
 
+    if image.n_channels not in {1, 3}:
+        raise ValueError('The Pillow rasterizer only supports grayscale or '
+                         'colour images')
     if any(x != '-'for x in line_style):
         raise ValueError("The Pillow rasterizer only supports the '-' "
                          "line style.")
@@ -127,6 +130,10 @@ def _rasterize_pillow(image, pclouds, render_lines=True, line_style='-',
     if any(x > 1 for x in marker_edge_width):
         raise ValueError('The Pillow rasterizer only supports '
                          'marker_edge_width of 1 or 0.')
+
+    if image.n_channels == 1:
+        # Make the image RGB
+        image = image.extract_channels([0, 0, 0])
 
     pil_im = image.as_PILImage()
     draw = ImageDraw.Draw(pil_im)

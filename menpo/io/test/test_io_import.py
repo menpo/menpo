@@ -1,11 +1,11 @@
-import sys
 import warnings
 
-import menpo.io as mio
 import numpy as np
 from PIL import Image as PILImage
 from mock import patch, MagicMock
 from pytest import raises
+
+import menpo.io as mio
 
 
 def test_import_incorrect_built_in():
@@ -15,78 +15,80 @@ def test_import_incorrect_built_in():
 
 def test_breaking_bad_import():
     img = mio.import_builtin_asset('breakingbad.jpg')
-    assert(img.shape == (1080, 1920))
-    assert(img.n_channels == 3)
-    assert(img.landmarks['PTS'].n_points == 68)
+    assert (img.shape == (1080, 1920))
+    assert (img.n_channels == 3)
+    assert (img.landmarks['PTS'].n_points == 68)
 
 
 def test_breaking_bad_import_kwargs():
     img = mio.import_builtin_asset('breakingbad.jpg', normalize=False)
-    assert(img.pixels.dtype == np.uint8)
+    assert (img.pixels.dtype == np.uint8)
 
 
 def test_takeo_import():
     img = mio.import_builtin_asset('takeo.ppm')
-    assert(img.shape == (225, 150))
-    assert(img.n_channels == 3)
-    assert(img.landmarks['PTS'].n_points == 68)
+    assert (img.shape == (225, 150))
+    assert (img.n_channels == 3)
+    assert (img.landmarks['PTS'].n_points == 68)
 
 
 def test_einstein_import():
     img = mio.import_builtin_asset('einstein.jpg')
-    assert(img.shape == (1024, 817))
-    assert(img.n_channels == 1)
-    assert(img.landmarks['PTS'].n_points == 68)
+    assert (img.shape == (1024, 817))
+    assert (img.n_channels == 1)
+    assert (img.landmarks['PTS'].n_points == 68)
 
 
 def test_lenna_import():
     img = mio.import_builtin_asset('lenna.png')
-    assert(img.shape == (512, 512))
-    assert(img.n_channels == 3)
+    assert (img.shape == (512, 512))
+    assert (img.n_channels == 3)
     assert (img.landmarks.n_groups == 2)
-    assert(img.landmarks['LJSON'].n_points == 68)
+    assert (img.landmarks['LJSON'].n_points == 68)
     assert (img.landmarks['pupils'].n_points == 2)
 
 
 def test_import_builtin_ljson():
     lmarks = mio.import_builtin_asset('lenna.ljson')['LJSON']
-    assert(lmarks.n_points == 68)
+    assert (lmarks.n_points == 68)
 
 
 def test_import_builtin_pts():
     lmarks = mio.import_builtin_asset('einstein.pts')['PTS']
-    assert(lmarks.n_points == 68)
+    assert (lmarks.n_points == 68)
 
 
 def test_resolve_from_paths_single_group():
     def resolver(path):
         test_dict = {'test': path.with_name('takeo.pts')}
         return mio.input.resolve_from_paths(test_dict)
+
     image = mio.import_image(mio.data_path_to('einstein.jpg'),
                              landmark_resolver=resolver)
-    assert(image.landmarks.n_groups == 1)
-    assert(image.landmarks['test'].path == mio.data_path_to('takeo.pts'))
+    assert (image.landmarks.n_groups == 1)
+    assert (image.landmarks['test'].path == mio.data_path_to('takeo.pts'))
 
 
 def test_resolve_from_paths_multi_group():
     def resolver(path):
         test_dict = {'test': path.with_name('lenna.ljson')}
         return mio.input.resolve_from_paths(test_dict)
+
     image = mio.import_image(mio.data_path_to('einstein.jpg'),
                              landmark_resolver=resolver)
-    assert(image.landmarks.n_groups == 2)
-    assert(set(image.landmarks.keys()) == {'test_LJSON', 'test_pupils'})
+    assert (image.landmarks.n_groups == 2)
+    assert (set(image.landmarks.keys()) == {'test_LJSON', 'test_pupils'})
 
 
 def test_path():
     # choose a random asset (all should have it!)
     img = mio.import_builtin_asset('einstein.jpg')
     path = mio.data_path_to('einstein.jpg')
-    assert(img.path == path)
-    assert(img.path.stem == 'einstein')
-    assert(img.path.suffix == '.jpg')
-    assert(img.path.parent == mio.data_dir_path())
-    assert(img.path.name == 'einstein.jpg')
+    assert (img.path == path)
+    assert (img.path.stem == 'einstein')
+    assert (img.path.suffix == '.jpg')
+    assert (img.path.parent == mio.data_dir_path())
+    assert (img.path.name == 'einstein.jpg')
 
 
 @patch('menpo.io.input.base._pathlib_glob_for_pattern')
@@ -142,7 +144,7 @@ def test_custom_landmark_resolver():
 
     img = mio.import_image(mio.data_path_to('lenna.png'),
                            landmark_resolver=lmark_resolver)
-    assert(img.has_landmarks)
+    assert (img.has_landmarks)
 
     takeo_lmarks = mio.import_builtin_asset.takeo_pts()['PTS']
     np.allclose(img.landmarks['PTS'].points,
@@ -152,7 +154,7 @@ def test_custom_landmark_resolver():
 def test_landmark_resolver_none():
     img = mio.import_image(mio.data_path_to('lenna.png'),
                            landmark_resolver=None)
-    assert(not img.has_landmarks)
+    assert (not img.has_landmarks)
 
 
 def test_import_image_no_norm():
@@ -184,18 +186,18 @@ def test_import_images_are_ordered_and_unduplicated():
 
 
 def test_lsimgs_filenamess():
-    assert(set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
-                                            'einstein.jpg', 'einstein.pts',
-                                            'lenna.png', 'breakingbad.pts',
-                                            'lenna.ljson', 'takeo.ppm',
-                                            'takeo.pts', 'tongue.jpg',
-                                            'tongue.pts',
-                                            'menpo_thumbnail.jpg'})
+    assert (set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
+                                             'einstein.jpg', 'einstein.pts',
+                                             'lenna.png', 'breakingbad.pts',
+                                             'lenna.ljson', 'takeo.ppm',
+                                             'takeo.pts', 'tongue.jpg',
+                                             'tongue.pts',
+                                             'menpo_thumbnail.jpg'})
 
 
 def test_image_paths():
     ls = mio.image_paths(mio.data_dir_path())
-    assert(len(list(ls)) == 6)
+    assert (len(list(ls)) == 6)
 
 
 def test_import_images_wrong_path_raises_value_error():
@@ -238,7 +240,6 @@ def test_importing_PIL_RGBA_normalize(is_file, mock_image):
 @patch('PIL.Image.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_PIL_RGBA_no_normalize(is_file, mock_image):
-
     mock_image.return_value = PILImage.new('RGBA', (10, 15))
     is_file.return_value = True
 
@@ -327,7 +328,7 @@ def test_importing_PIL_1_no_normalize(is_file, mock_image):
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_PIL_1_proper_conversion(is_file, mock_image):
     from menpo.image import BooleanImage
- 
+
     arr = np.zeros((10, 10), dtype=np.uint8)
     arr[4, 4] = 255
     mock_image.return_value = PILImage.fromarray(arr).convert('1')
@@ -371,7 +372,7 @@ def test_importing_PIL_P_no_normalize(is_file, mock_image):
 def test_importing_ffmpeg_GIF_normalize(is_file, video_infos_ffprobe, pipe):
     video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
                                         'height': 150, 'n_frames': 10, 'fps': 5}
-    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
     pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
@@ -392,7 +393,7 @@ def test_importing_ffmpeg_GIF_normalize(is_file, video_infos_ffprobe, pipe):
 def test_importing_ffmpeg_GIF_no_normalize(is_file, video_infos_ffprobe, pipe):
     video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
                                         'height': 150, 'n_frames': 10, 'fps': 5}
-    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
     pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
@@ -411,47 +412,47 @@ def test_importing_ffmpeg_GIF_no_normalize(is_file, video_infos_ffprobe, pipe):
 @patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_v1_ljson_null_values(is_file, mock_open, mock_dict):
-    v1_ljson = { "groups": [
-        { "connectivity": [ [ 0, 1 ], [ 1, 2 ], [ 2, 3 ] ],
-          "label": "chin", "landmarks": [
-            { "point": [ 987.9, 1294.1 ] }, { "point": [ 96.78, 1246.8 ] },
-            { "point": [ None, 0.1 ] }, { "point": [303.22, 167.2 ] } ] },
-        { "connectivity": [ [ 0, 1 ] ],
-          "label": "leye", "landmarks": [
-            { "point": [ None, None ] },
-            { "point": [ None, None ] }] }
-        ], "version": 1 }
+    v1_ljson = {"groups": [
+        {"connectivity": [[0, 1], [1, 2], [2, 3]],
+         "label": "chin", "landmarks": [
+            {"point": [987.9, 1294.1]}, {"point": [96.78, 1246.8]},
+            {"point": [None, 0.1]}, {"point": [303.22, 167.2]}]},
+        {"connectivity": [[0, 1]],
+         "label": "leye", "landmarks": [
+            {"point": [None, None]},
+            {"point": [None, None]}]}
+    ], "version": 1}
     mock_dict.return_value = v1_ljson
     is_file.return_value = True
 
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as found_warnings:
         lmark = mio.import_landmark_file('fake_lmark_being_mocked.ljson',
                                          group='LJSON')
     nan_points = np.isnan(lmark.points)
 
     # Should raise deprecation warning
-    assert len(w) == 1
+    assert len(found_warnings) == 1, [w.message for w in found_warnings]
     assert nan_points[2, 0]  # y-coord None point is nan
     assert not nan_points[2, 1]  # x-coord point is not nan
-    assert np.all(nan_points[4:, :]) # all of leye label is nan
+    assert np.all(nan_points[4:, :])  # all of leye label is nan
 
 
 @patch('menpo.io.input.landmark.json.load')
 @patch('menpo.io.input.base.Path.open')
 @patch('menpo.io.input.base.Path.is_file')
 def test_importing_v2_ljson_null_values(is_file, mock_open, mock_dict):
-    v2_ljson = { "labels": [
-                    { "label": "left_eye", "mask": [0, 1, 2] },
-                    { "label": "right_eye", "mask": [3, 4, 5] }
-                 ],
-                 "landmarks": {
-                     "connectivity": [ [0, 1], [1, 2], [2, 0], [3, 4],
-                                       [4, 5],  [5, 3] ],
-                     "points": [ [None, 200.5], [None, None],
-                                 [316.8, 199.15], [339.48, 205.0],
-                                 [358.54, 217.82], [375.0, 233.4]]
-                 },
-                 "version": 2 }
+    v2_ljson = {"labels": [
+        {"label": "left_eye", "mask": [0, 1, 2]},
+        {"label": "right_eye", "mask": [3, 4, 5]}
+    ],
+        "landmarks": {
+            "connectivity": [[0, 1], [1, 2], [2, 0], [3, 4],
+                             [4, 5], [5, 3]],
+            "points": [[None, 200.5], [None, None],
+                       [316.8, 199.15], [339.48, 205.0],
+                       [358.54, 217.82], [375.0, 233.4]]
+        },
+        "version": 2}
 
     mock_dict.return_value = v2_ljson
     is_file.return_value = True
@@ -472,15 +473,15 @@ def test_importing_v3_ljson_null_values(is_file, mock_open, mock_dict):
         "groups": {
             "LJSON": {
                 "labels": [
-                    { "label": "left_eye", "mask": [0, 1, 2] },
-                    { "label": "right_eye", "mask": [3, 4, 5] }
+                    {"label": "left_eye", "mask": [0, 1, 2]},
+                    {"label": "right_eye", "mask": [3, 4, 5]}
                 ],
                 "landmarks": {
-                    "connectivity": [ [0, 1], [1, 2], [2, 0], [3, 4],
-                                      [4, 5],  [5, 3] ],
-                    "points": [ [None, 200.5], [None, None],
-                                [316.8, 199.15], [339.48, 205.0],
-                                [358.54, 217.82], [375.0, 233.4]]
+                    "connectivity": [[0, 1], [1, 2], [2, 0], [3, 4],
+                                     [4, 5], [5, 3]],
+                    "points": [[None, 200.5], [None, None],
+                               [316.8, 199.15], [339.48, 205.0],
+                               [358.54, 217.82], [375.0, 233.4]]
                 }
             }
         },
@@ -606,12 +607,12 @@ def test_importing_ffmpeg_avi_no_normalize(is_file, video_infos_ffprobe, pipe):
     video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
                                         'height': 150, 'n_frames': 10, 'fps': 5}
     is_file.return_value = True
-    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
     pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video('fake_image_being_mocked.avi', normalize=False)
     assert ll.path.name == 'fake_image_being_mocked.avi'
     assert ll.fps == 5
-    assert len(ll) == 5*2
+    assert len(ll) == 5 * 2
     image = ll[0]
     assert image.shape == ((150, 100))
     assert image.n_channels == 3
@@ -625,12 +626,12 @@ def test_importing_ffmpeg_avi_normalize(is_file, video_infos_ffprobe, pipe):
     video_infos_ffprobe.return_value = {'duration': 2, 'width': 100,
                                         'height': 150, 'n_frames': 10, 'fps': 5}
     is_file.return_value = True
-    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
     pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video('fake_image_being_mocked.avi', normalize=True)
     assert ll.path.name == 'fake_image_being_mocked.avi'
     assert ll.fps == 5
-    assert len(ll) == 5*2
+    assert len(ll) == 5 * 2
     image = ll[0]
     assert image.shape == (150, 100)
     assert image.n_channels == 3
@@ -657,13 +658,13 @@ def test_importing_ffmpeg_no_exact_frame_count_no_ffprobe(
     video_infos_ffmpeg.return_value = {'duration': 2, 'width': 100,
                                        'height': 150, 'n_frames': 10, 'fps': 5}
     is_file.return_value = True
-    empty_frame = np.zeros(150*100*3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
     pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video('fake_image_being_mocked.avi', normalize=True,
                           exact_frame_count=False)
     assert ll.path.name == 'fake_image_being_mocked.avi'
     assert ll.fps == 5
-    assert len(ll) == 5*2
+    assert len(ll) == 5 * 2
     image = ll[0]
     assert image.shape == (150, 100)
     assert image.n_channels == 3
