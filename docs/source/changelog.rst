@@ -3,6 +3,22 @@
 Changelog
 #########
 
+0.9.1 (2019/07/12)
+------------------
+
+Remove the Cython version of the normal method and just use the Python version
+as the two have similar performance. Also make the Cython interpolation module
+optional.
+
+Github Pull Requests
+....................
+
+- `#816`_ Make skimage interpolation optional (@jabooth)
+- `#820`_ remove cython normals module (@jabooth)
+
+.. _#816: https://github.com/menpo/menpo/pull/816
+.. _#820: https://github.com/menpo/menpo/pull/820
+
 0.9.0 (2019/07/10)
 ------------------
 
