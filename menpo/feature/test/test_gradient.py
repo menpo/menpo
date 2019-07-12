@@ -4,7 +4,6 @@ from numpy.testing import assert_allclose
 from menpo.image import Image
 from menpo.feature import gradient
 
-from menpo.feature.features import _np_gradient
 import menpo.io as mio
 
 
@@ -26,17 +25,6 @@ def test_gradient_float():
     assert_allclose(grad_image.pixels[1], np_grad[1])
 
 
-def test_gradient_takeo_float32():
-    dtype = np.float32
-    t = takeo.copy()
-    t.pixels = t.pixels.astype(dtype)
-    grad_image = gradient(t)
-    _check_assertions(grad_image, t.shape, t.n_channels * 2,
-                      dtype)
-    np_grad = _np_gradient(t.pixels)
-    assert_allclose(grad_image.pixels, np_grad)
-
-
 def test_gradient_double():
     dtype = np.float64
     p = example_image.astype(dtype)
@@ -47,15 +35,6 @@ def test_gradient_double():
     np_grad = np.gradient(p)
     assert_allclose(grad_image.pixels[0], np_grad[0])
     assert_allclose(grad_image.pixels[1], np_grad[1])
-
-
-def test_gradient_takeo_double():
-    t = takeo.copy()
-    t.pixels = t.pixels.astype(np.float64)
-    grad_image = gradient(t)
-
-    np_grad = _np_gradient(t.pixels)
-    assert_allclose(grad_image.pixels, np_grad)
 
 
 def test_gradient_uint8_exception():

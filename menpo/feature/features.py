@@ -8,36 +8,6 @@ import numpy as np
 scipy_gaussian_filter = None  # expensive
 
 from .base import ndfeature, imgfeature
-from ._gradient import gradient_cython
-
-
-def _np_gradient(pixels):
-    """
-    This method is used in the case of multi-channel images (not 2D images).
-    The output ordering is identical to the gradient() method, returning
-    a 2 * n_channels image with gradients in order of the first axis derivative
-    over all the channels, then the second etc. For example, in the case of
-    a 3D image with 2 channels, the ordering would be:
-        I[:, 0, 0, 0] = [A_0, B_0, A_1, B_1, A_2, B_2]
-    where A and B are the 'channel' labels (synonymous with RGB for a colour
-    image) and 0,1,2 are the axis labels (synonymous with y,x for a 2D image).
-    """
-    n_dims = pixels.ndim - 1
-    grad_per_dim_per_channel = [np.gradient(g, edge_order=1)
-                                for g in pixels]
-    # Flatten out the separate dims
-    grad_per_channel = list(itertools.chain.from_iterable(
-        grad_per_dim_per_channel))
-    # Add a channel axis for broadcasting
-    grad_per_channel = [g[None, ...] for g in grad_per_channel]
-
-    # Permute the list so it is first axis, second axis, etc
-    grad_per_channel = [grad_per_channel[i::n_dims]
-                        for i in range(n_dims)]
-    grad_per_channel = list(itertools.chain.from_iterable(grad_per_channel))
-
-    # Concatenate gradient list into an array (the new_image)
-    return np.concatenate(grad_per_channel, axis=0)
 
 
 @ndfeature
@@ -71,10 +41,24 @@ def gradient(pixels):
         all the ``y``-gradients are returned over each channel, then all
         the ``x``-gradients.
     """
-    if (pixels.ndim - 1) == 2:  # 2D Image
-        return gradient_cython(pixels)
-    else:
-        return _np_gradient(pixels)
+    if pixels.dtype == np.uint8:
+        raise TypeError("Attempting to take the gradient on a uint8 image.")
+    n_dims = pixels.ndim - 1
+    grad_per_dim_per_channel = [np.gradient(g, edge_order=1)
+                                for g in pixels]
+    # Flatten out the separate dims
+    grad_per_channel = list(itertools.chain.from_iterable(
+        grad_per_dim_per_channel))
+    # Add a channel axis for broadcasting
+    grad_per_channel = [g[None, ...] for g in grad_per_channel]
+
+    # Permute the list so it is first axis, second axis, etc
+    grad_per_channel = [grad_per_channel[i::n_dims]
+                        for i in range(n_dims)]
+    grad_per_channel = list(itertools.chain.from_iterable(grad_per_channel))
+
+    # Concatenate gradient list into an array (the new_image)
+    return np.concatenate(grad_per_channel, axis=0)
 
 
 @ndfeature
