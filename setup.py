@@ -89,7 +89,6 @@ cython_modules = [
                              'menpo/feature/cpp/WindowFeature.cpp',
                              'menpo/feature/cpp/HOG.cpp',
                              'menpo/feature/cpp/LBP.cpp']),
-    build_extension_from_pyx('menpo/feature/_gradient.pyx'),
     build_extension_from_pyx('menpo/image/patches.pyx')
 ]
 cython_exts = cythonize(cython_modules, quiet=True,
