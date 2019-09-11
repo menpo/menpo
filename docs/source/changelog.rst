@@ -3,6 +3,23 @@
 Changelog
 #########
 
+0.9.2 (2019/08/19)
+------------------
+
+Remove more Cython code, in this case the gradient computation as the per Python
+code gives identical results. Fix the `Trimesh.boundary_tri_index()` method
+and add a unit test checking it's behaviour. Fix was required for correct
+non-rigid ICP computation.
+
+Github Pull Requests
+....................
+
+- `#821`_ remove cython gradient implementation (@jabooth)
+- `#832`_ Fix boundary_tri_index (@patricksnape)
+
+.. _#821: https://github.com/menpo/menpo/pull/821
+.. _#832: https://github.com/menpo/menpo/pull/832
+
 0.9.1 (2019/07/12)
 ------------------
 
