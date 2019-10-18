@@ -1315,6 +1315,10 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
     def project_vector(self, instance_vector):
         return PCAVectorModel.project(self, instance_vector)
 
+    @doc_inherit(name='impute')
+    def impute_vector(self, instance_vector, mask):
+        return PCAVectorModel.impute(self, instance_vector, mask)
+
     @doc_inherit(name='instance')
     def instance_vector(self, weights, normalized_weights=False):
         return PCAVectorModel.instance(self, weights,
