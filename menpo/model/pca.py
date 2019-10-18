@@ -3,6 +3,7 @@ import numpy as np
 
 from menpo.base import doc_inherit, name_of_callable
 from menpo.math import pca, pcacov, ipca, as_matrix
+from menpo.visualize import print_progress, bytes_str
 from .linear import MeanLinearVectorModel
 from .vectorizable import VectorizableBackedModel
 
@@ -36,9 +37,10 @@ class PCAVectorModel(MeanLinearVectorModel):
         matrix is copied.
     """
     def __init__(self, samples, centre=True, n_samples=None,
-                 max_n_components=None, inplace=True):
+                 max_n_components=None, inplace=True, verbose=False):
         # Generate data matrix
-        data, self.n_samples = self._data_to_matrix(samples, n_samples)
+        data, self.n_samples = self._data_to_matrix(samples, n_samples,
+                                                    verbose=verbose)
 
         # Compute pca
         e_vectors, e_values, mean = pca(data, centre=centre, inplace=inplace)
@@ -50,7 +52,8 @@ class PCAVectorModel(MeanLinearVectorModel):
 
     @classmethod
     def init_from_covariance_matrix(cls, C, mean, n_samples, centred=True,
-                                    is_inverse=False, max_n_components=None):
+                                    is_inverse=False, max_n_components=None,
+                                    verbose=False):
         r"""
         Build the Principal Component Analysis (PCA) by eigenvalue
         decomposition of the provided covariance/scatter matrix. For details
@@ -141,15 +144,41 @@ class PCAVectorModel(MeanLinearVectorModel):
         if max_n_components is not None:
             self.trim_components(max_n_components)
 
-    def _data_to_matrix(self, data, n_samples):
-        # build a data matrix from all the samples
-        if n_samples is None:
-            n_samples = len(data)
-        # Assumed data is ndarray of (n_samples, n_features) or list of samples
+    def _data_to_matrix(self, data, n_samples, verbose=False):
+        # Assumed data is one of:
+        #  - ndarray of shape (n_samples, n_features)
+        #  - list or lazy list of ndarray's each of shape (n_features,)
         if not isinstance(data, np.ndarray):
-            # Make sure we have an array, slice of the number of requested
-            # samples
-            data = np.array(data)[:n_samples]
+            # Data is an iterable (potentially lazy)
+            if n_samples is None:
+                n_samples = len(data)
+            # Look at the first item to learn the shape of a sample
+            sample = data[0]
+            n_features = sample.shape[0]
+            # Allocate a data matrix once and fill it in (very memory efficient
+            # in the common case of a LazyList)
+            data_matrix = np.empty((n_samples, n_features), dtype=sample.dtype)
+            if verbose:
+                print('Allocated data matrix of size {} '
+                      '({} samples)'.format(bytes_str(data_matrix.nbytes),
+                                            n_samples))
+            if n_samples != len(data):
+                # slice the array if needed
+                data = data[:n_samples]
+            if verbose:
+                data = print_progress(data, n_items=n_samples, offset=1,
+                                      prefix='Building data matrix')
+            for i, s in enumerate(data):
+                data_matrix[i] = s
+            # This data matrix is the data we need to return
+            data = data_matrix
+        else:
+            # Data is an ndarray, just check n_samples is respected
+            if n_samples is None:
+                n_samples = data.shape[0]
+            if n_samples != data.shape[0]:
+                # slice the data matrix only if needed.
+                data = data[:n_samples]
         return data, n_samples
 
     def __setstate__(self, state):
@@ -1203,6 +1232,52 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
                                 max_n_components=max_n_components,
                                 n_samples=n_samples, inplace=inplace)
         VectorizableBackedModel.__init__(self, template)
+
+    @classmethod
+    def init_from_data_matrix(cls, data, template, centre=True,
+                              max_n_components=None, inplace=True,
+                              verbose=False):
+        r"""
+        Initialize this PCAModel from an existing data matrix and a template
+        instance.
+
+        For details of the implementation of PCA, see :map:`pca`.
+
+        Parameters
+        ----------
+        data : ``(n_samples, n_features)`` `ndarray`
+            The data matrix, as produced by calling :map:`as_matrix` on an
+            iterable of vectorizables.
+        template : :map:`Vectorizable`
+            The template instance. It must be a :map:`Vectorizable` and *not* an
+            `ndarray`.
+        centre : `bool`, optional
+            When ``True`` (default) PCA is performed after mean centering the
+            data. If ``False`` the data is assumed to be centred, and the
+            mean will be ``0``.
+        max_n_components : `int`, optional
+            The maximum number of components to keep in the model. Any
+            components above and beyond this one are discarded.
+        inplace : `bool`, optional
+            If ``True`` the data matrix is modified in place. Otherwise, the
+            data matrix is copied.
+        verbose : `bool`, optional
+            Whether to print building information or not.
+        """
+        # manually instantiate the instance with new
+        self = PCAModel.__new__(cls)
+
+        n_samples = data.shape[0]
+
+        # perform the PCAVectorModel initialization
+        PCAVectorModel.__init__(self, data, centre=centre,
+                                max_n_components=max_n_components,
+                                n_samples=n_samples, inplace=inplace,
+                                verbose=verbose)
+        # manually instantiate the VectorizableBackedModel state.
+        VectorizableBackedModel.__init__(self, template)
+
+        return self
 
     @classmethod
     def init_from_covariance_matrix(cls, C, mean, n_samples, centred=True,
