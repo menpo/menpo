@@ -356,10 +356,62 @@ class PointCloud(Shape):
         """
         self.points = vector.reshape([-1, self.n_dims])
 
+    def same_space(self, other):
+        r"""
+        Check if two PointClouds have the same shapes 
+
+        Parameters
+        ----------
+        other : PointCloud
+            The PointCloud to compare.
+        Returns
+        -------
+        Boolean : True if they have the same shape
+        """
+        return self.points.shape == other.points.shape
+
     def __str__(self):
         return '{}: n_points: {}, n_dims: {}'.format(type(self).__name__,
                                                      self.n_points,
                                                      self.n_dims)
+    
+    def __add__(self, other):
+        r"""
+        Overload the add operator
+
+        Parameters
+        ----------
+        other : PointCloud
+            The PointCloud to compare.
+        Returns
+        -------
+        PointCloud : A PointCloud with points the sum of 
+                     the points of the two PointCloud
+        """
+        if self.same_space(other):
+            new_points = self.points + other.points
+            return PointCloud(new_points)  
+        else:
+            raise ValueError('The two PointClouds dont have the same shape')
+
+    def __sub__(self, other):
+        r"""
+        Overload the add operator
+
+        Parameters
+        ----------
+        other : PointCloud
+            The PointCloud to compare.
+        Returns
+        -------
+        PointCloud : A PointCloud with points the difference
+                     the points of the two PointCloud
+        """
+        if self.same_space(other):
+            new_points = self.points - other.points
+            return PointCloud(new_points)  
+        else:
+            raise ValueError('The two PointClouds dont have the same shape')
 
     def bounds(self, boundary=0):
         r"""
