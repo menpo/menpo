@@ -226,6 +226,77 @@ class TriMesh(PointCloud):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),
                                        self.n_tris)
 
+    def __add__(self, other):
+        r"""
+        Overload the add operator
+
+        Parameters
+        ----------
+        other : TriMesh
+
+        Returns
+        -------
+        TriMesh : A TriMesh with points the sum of 
+                     the points of the two TriMesh
+        """
+        if self.same_space(other):
+            new_points = self.points + other.points
+            return TriMesh(new_points, self.trilist)  
+        else:
+            raise ValueError('The two meshes dont have the same shape')
+
+    def __sub__(self, other):
+        r"""
+        Overload the add operator
+
+        Parameters
+        ----------
+        other : TriMesh 
+
+        Returns
+        -------
+        TriMesh: A TriMesh with points the difference
+                     the points of the two meshes
+        """
+        if self.same_space(other):
+            new_points = self.points - other.points
+            return TriMesh(new_points, self.trilist)  
+        else:
+            raise ValueError('The two meshes dont have the same shape')
+
+    def __mul__(self, multiplier):
+        r"""
+        Overload the multiplication  operator
+
+        Parameters
+        ----------
+        multiplier:  A scalar that every point is multiplied with
+
+        Returns
+        -------
+        TriMesh : A TriMesh with points multiplied by the multiplier
+        """
+        new_points = self.points * multiplier
+        return TriMesh(new_points, self.trilist)  
+
+    def __truediv__(self, divisor):
+        r"""
+        Overload the add operator
+
+        Parameters
+        ----------
+        divisor:  A scalar that divides every point in TriMesh 
+
+        Returns
+        -------
+        TriMesh : A TriMesh with points divided by the divisor 
+        """
+        if divisor:
+            new_points = self.points / divisor
+            return TriMesh(new_points, self.trilist)  
+        else:
+            raise ValueError('Divisor cannot be zero')
+
     @property
     def n_tris(self):
         r"""
