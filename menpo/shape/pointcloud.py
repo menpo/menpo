@@ -65,7 +65,8 @@ def bounding_box(closest_to_origin, opposite_corner):
     box = np.array([closest_to_origin,
                     [opposite_corner[0], closest_to_origin[1]],
                     opposite_corner,
-                    [closest_to_origin[0], opposite_corner[1]]], dtype=np.float)
+                    [closest_to_origin[0], opposite_corner[1]]],
+                   dtype=np.float)
     return PointDirectedGraph(box, adjacency_matrix, copy=False)
 
 
@@ -119,10 +120,10 @@ def bounding_cuboid(near_closest_to_origin, far_opposite_corner):
 
 class PointCloud(Shape):
     r"""
-    An N-dimensional point cloud. This is internally represented as an `ndarray`
-    of shape ``(n_points, n_dims)``. This class is important for dealing
-    with complex functionality such as viewing and representing metadata such
-    as landmarks.
+    An N-dimensional point cloud. This is internally represented as an
+    `ndarray` of shape ``(n_points, n_dims)``. This class is important for
+    dealing with complex functionality such as viewing and representing
+    metadata such as landmarks.
 
     Currently only 2D and 3D pointclouds are viewable.
 
@@ -358,7 +359,7 @@ class PointCloud(Shape):
 
     def same_space(self, other):
         r"""
-        Check if two PointClouds have the same shapes 
+        Check if two PointClouds have the same shapes
 
         Parameters
         ----------
@@ -374,9 +375,9 @@ class PointCloud(Shape):
         return '{}: n_points: {}, n_dims: {}'.format(type(self).__name__,
                                                      self.n_points,
                                                      self.n_dims)
-    
+
     def __add__(self, other):
-        r"""
+        """
         Overload the add operator
 
         Parameters
@@ -385,12 +386,12 @@ class PointCloud(Shape):
             The PointCloud to compare.
         Returns
         -------
-        PointCloud : A PointCloud with points the sum of 
+        PointCloud : A PointCloud with points the sum of
                      the points of the two PointCloud
         """
         if self.same_space(other):
             new_points = self.points + other.points
-            return PointCloud(new_points)  
+            return PointCloud(new_points)
         else:
             raise ValueError('The two PointClouds dont have the same shape')
 
@@ -409,7 +410,7 @@ class PointCloud(Shape):
         """
         if self.same_space(other):
             new_points = self.points - other.points
-            return PointCloud(new_points)  
+            return PointCloud(new_points)
         else:
             raise ValueError('The two PointClouds dont have the same shape')
 
@@ -1032,7 +1033,8 @@ class PointCloud(Shape):
             renderer.render(
                 render_lines=False, render_markers=render_markers,
                 marker_style=marker_style, marker_size=marker_size,
-                marker_colour=marker_colour, marker_resolution=marker_resolution,
+                marker_colour=marker_colour,
+                marker_resolution=marker_resolution,
                 step=step, alpha=alpha, render_numbering=render_numbering,
                 numbers_colour=numbers_colour, numbers_size=numbers_size)
             return renderer

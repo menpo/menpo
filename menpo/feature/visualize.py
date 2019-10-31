@@ -1,6 +1,7 @@
 import numpy as np
-from scipy.misc import imrotate
-
+# Deprecated
+#from scipy.misc import imrotate
+from skimage.transform import rotate
 from .base import ndfeature
 
 
@@ -101,7 +102,7 @@ def _create_feature_glyph(feature, vbs):
     block_im[:, :, 0] = block_image_temp
     # Number of bins rotations to create an 'asterisk' shape
     for i in range(1, num_bins):
-        block_im[:, :, i] = imrotate(block_image_temp, -i * vbs)
+        block_im[:, :, i] = rotate(block_image_temp, -i * vbs)
 
     # make pictures of positive feature_data by adding up weighted glyphs
     feature[feature < 0] = 0
