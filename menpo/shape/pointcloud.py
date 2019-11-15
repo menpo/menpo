@@ -1,9 +1,13 @@
+import numbers
 import warnings
+from warnings import warn
 
 import numpy as np
-import numbers
-import collections
-from warnings import warn
+
+try:
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
@@ -187,11 +191,11 @@ class PointCloud(Shape):
 
         if spacing is not None:
             if not (isinstance(spacing, numbers.Number) or
-                    isinstance(spacing, collections.Sequence)):
+                    isinstance(spacing, collections_abc.Sequence)):
                 raise ValueError('spacing must be either a single number '
                                  'to be applied over each dimension, or a 2D '
                                  'sequence of numbers.')
-            if isinstance(spacing, collections.Sequence) and len(spacing) != 2:
+            if isinstance(spacing, collections_abc.Sequence) and len(spacing) != 2:
                 raise ValueError('spacing must be 2D.')
 
             points *= np.asarray(spacing, dtype=np.float64)

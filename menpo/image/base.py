@@ -1,7 +1,11 @@
 from __future__ import division
-from warnings import warn
-from collections import Iterable
 
+from warnings import warn
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 import numpy as np
 import PIL.Image as PILImage
 
@@ -15,9 +19,13 @@ from menpo.transform import (Translation, NonUniformScale, Rotation,
                              transform_about_centre)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 
-from .interpolation import scipy_interpolation, cython_interpolation
+from .interpolation import scipy_interpolation
+try:
+    from .interpolation import cython_interpolation
+except ImportError:
+    warn('Falling back to scipy interpolation for affine warps')
+    cython_interpolation = None
 from .patches import extract_patches, set_patches
-
 
 # Cache the greyscale luminosity coefficients as they are invariant.
 _greyscale_luminosity_coef = None
@@ -41,6 +49,7 @@ class ImageBoundaryError(ValueError):
         The per-dimension maximum index that could be used if the crop was
         constrained to the image boundaries.
     """
+
     def __init__(self, requested_min, requested_max, snapped_min,
                  snapped_max):
         super(ImageBoundaryError, self).__init__()
@@ -1744,7 +1753,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if isinstance(points_to_sample, PointCloud):
             points_to_sample = points_to_sample.points
         return scipy_interpolation(self.pixels, points_to_sample,
-                                   order=order,  mode=mode, cval=cval)
+                                   order=order, mode=mode, cval=cval)
 
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
                       order=1, mode='constant', cval=0.0, batch_size=None,
@@ -1805,7 +1814,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         template_shape = np.array(template_shape, dtype=np.int)
         if (isinstance(transform, Affine) and order in range(4) and
-            self.n_dims == 2):
+                self.n_dims == 2 and cython_interpolation is not None):
 
             # we are going to be able to go fast.
 

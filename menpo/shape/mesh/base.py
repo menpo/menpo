@@ -1,18 +1,14 @@
 # coding=utf-8
-from collections import Counter
-import numpy as np
 from warnings import warn
 
+import numpy as np
+
+from .normals import compute_vertex_normals, compute_face_normals
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-try:
-    from .normals import compute_vertex_normals, compute_face_normals
-except ImportError:
-    from .pynormals import compute_vertex_normals, compute_face_normals
 
 from mayavi import mlab
-from scipy.spatial import  cKDTree
-from matplotlib import cm
+from scipy.spatial import cKDTree
 
 Delaunay = None  # expensive, from scipy.spatial
 
@@ -139,6 +135,7 @@ class TriMesh(PointCloud):
         Any trilist will also not be copied.
         In general this should only be used if you know what you are doing.
     """
+
     def __init__(self, points, trilist=None, copy=True):
         super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
@@ -236,12 +233,12 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        TriMesh : A TriMesh with points the sum of 
+        TriMesh : A TriMesh with points the sum of
                      the points of the two TriMesh
         """
         if self.same_space(other):
             new_points = self.points + other.points
-            return TriMesh(new_points, self.trilist)  
+            return TriMesh(new_points, self.trilist)
         else:
             raise ValueError('The two meshes dont have the same shape')
 
@@ -251,7 +248,7 @@ class TriMesh(PointCloud):
 
         Parameters
         ----------
-        other : TriMesh 
+        other : TriMesh
 
         Returns
         -------
@@ -260,7 +257,7 @@ class TriMesh(PointCloud):
         """
         if self.same_space(other):
             new_points = self.points - other.points
-            return TriMesh(new_points, self.trilist)  
+            return TriMesh(new_points, self.trilist)
         else:
             raise ValueError('The two meshes dont have the same shape')
 
@@ -277,7 +274,7 @@ class TriMesh(PointCloud):
         TriMesh : A TriMesh with points multiplied by the multiplier
         """
         new_points = self.points * multiplier
-        return TriMesh(new_points, self.trilist)  
+        return TriMesh(new_points, self.trilist)
 
     def __truediv__(self, divisor):
         r"""
@@ -285,15 +282,15 @@ class TriMesh(PointCloud):
 
         Parameters
         ----------
-        divisor:  A scalar that divides every point in TriMesh 
+        divisor:  A scalar that divides every point in TriMesh
 
         Returns
         -------
-        TriMesh : A TriMesh with points divided by the divisor 
+        TriMesh : A TriMesh with points divided by the divisor
         """
         if divisor:
             new_points = self.points / divisor
-            return TriMesh(new_points, self.trilist)  
+            return TriMesh(new_points, self.trilist)
         else:
             raise ValueError('Divisor cannot be zero')
 
@@ -377,8 +374,6 @@ class TriMesh(PointCloud):
 
             target_mesh = TriMesh(X[indx], source_mesh.trilist)
 
-            # raise ValueError("{}.\nThe two meshes should have the same number of vertices".format(first_part_string, target_mesh_n_vertices))
-
         if figure_id is None:
             if hasattr(self, 'path'):
                 source_name = self.path.stem
@@ -395,16 +390,10 @@ class TriMesh(PointCloud):
 
         v = mlab.figure(figure=figure_name, size=size,
                         bgcolor=(1, 1, 1), fgcolor=(0, 0, 0))
-        # set_camera(*camera_settings)
 
-        # data=create_heatmap(source_mesh,target_mesh,scale_value)
         diff = (source_mesh.points-target_mesh.points)**2
         distances_between_meshes = np.sqrt(diff.sum(axis=1))
-        # distances_between_meshes[source_mesh.points[:,2]>target_mesh.points[:,2]]*=-1
         scaled_distances_between_meshes = distances_between_meshes*scale_value
-
-        # to speed things up
-        # v.scene.disable_render = True
 
         src = mlab.pipeline.triangular_mesh_source(source_mesh.points[:, 0],
                                                    source_mesh.points[:, 1],
@@ -438,7 +427,6 @@ class TriMesh(PointCloud):
             mlab.gcf().scene.z_plus_view()
 
         return v, scaled_distances_between_meshes
-
 
     def tojson(self):
         r"""
@@ -631,7 +619,14 @@ class TriMesh(PointCloud):
         return np.mean(self.tri_areas())
 
     def boundary_tri_index(self):
-        r"""Boolean index into triangles that are at the edge of the TriMesh
+        r"""Boolean index into triangles that are at the edge of the TriMesh.
+        The boundary vertices can be visualized as follows
+        ::
+
+            tri_mask = mesh.boundary_tri_index()
+            boundary_points = mesh.points[mesh.trilist[tri_mask].ravel()]
+            pc = menpo.shape.PointCloud(boundary_points)
+            pc.view()
 
         Returns
         -------
@@ -640,20 +635,35 @@ class TriMesh(PointCloud):
             also an edge of another triangle (and so this triangle exists on
             the boundary of the TriMesh)
         """
-        trilist = self.trilist
-        # Get a sorted list of edge pairs
-        edge_pairs = np.sort(np.vstack((trilist[:, [0, 1]],
-                                        trilist[:, [0, 2]],
-                                        trilist[:, [1, 2]])))
+        # Compute the edge indices so that we can find duplicated edges
+        edge_indices = self.edge_indices()
+        # Compute the triangle indices and repeat them so that when we loop
+        # over the edges we get the correct triangle index per edge
+        # (e.g. [0, 0, 0, 1, 1, 1, ...])
+        tri_indices = np.arange(self.trilist.shape[0]).repeat(3)
 
-        # convert to a tuple per edge pair
-        edges = [tuple(x) for x in edge_pairs]
-        # count the occurrences of the ordered edge pairs - edge pairs that
-        # occur once are at the edge of the whole mesh
-        mesh_edges = (e for e, i in Counter(edges).items() if i == 1)
-        # index back into the edges to find which triangles contain these edges
-        return np.array(list(set(edges.index(e) % trilist.shape[0]
-                                 for e in mesh_edges)))
+        # Loop over the edges to find the "lonely" triangles that have an edge
+        # that isn't shared with another triangle. Due to the definition of a
+        # triangle and the careful ordering chosen above, each edge will be
+        # seen either exactly once or exactly twice.
+        # Note that some triangles may appear more than once as it's possible
+        # for a triangle to only share one edge with the rest of the mesh (so
+        # it would have two "lonely" edges
+        lonely_triangles = {}
+        for edge, t_i in zip(edge_indices, tri_indices):
+            # Sorted the edge indices since we may see an edge (0, 1) and then
+            # see it again as (1, 0) when in fact that is the same edge
+            sorted_edge = tuple(sorted(edge))
+            if sorted_edge not in lonely_triangles:
+                lonely_triangles[sorted_edge] = t_i
+            else:
+                # If we've already seen the edge the we will never see it again
+                # so we can just remove it from the candidate set
+                del lonely_triangles[sorted_edge]
+
+        mask = np.zeros(self.n_tris, dtype=np.bool)
+        mask[np.array(list(lonely_triangles.values()))] = True
+        return mask
 
     def edge_vectors(self):
         r"""A vector of edges of each triangle face.
@@ -666,14 +676,14 @@ class TriMesh(PointCloud):
         -------
         edges : ``(n_tris * 3, n_dims)`` `ndarray`
             For each triangle (ABC), returns the edge vectors AB, BC, CA. All
-            edges are concatenated for a total of ``n_tris * 3`` edges. The
-            ordering is done so that all AB vectors are first in the returned
-            list, followed by BC, then CA.
+            edges are concatenated for a total of ``n_tris * 3`` edges.
+            The ordering is done so that each triangle is returned in order
+            e.g. [AB_1, BC_1, CA_1, AB_2, BC_2, CA_2, ...]
         """
         t = self.points[self.trilist]
-        return np.vstack((t[:, 1] - t[:, 0],
+        return np.hstack((t[:, 1] - t[:, 0],
                           t[:, 2] - t[:, 1],
-                          t[:, 2] - t[:, 0]))
+                          t[:, 2] - t[:, 0])).reshape(-1, 2)
 
     def edge_indices(self):
         r"""An unordered index into points that rebuilds the edges of this
@@ -687,14 +697,15 @@ class TriMesh(PointCloud):
         -------
         edge_indices : ``(n_tris * 3, 2)`` `ndarray`
             For each triangle (ABC), returns the pair of point indices that
-            rebuild AB, AC, BC. All edge indices are concatenated for a total
-            of ``n_tris * 3`` edge_indices. The ordering is done so that all
-            AB vectors are first in the returned list, followed by BC, then CA.
+            rebuild AB, BC, CA. All edge indices are concatenated for a total
+            of ``n_tris * 3`` edge_indices. The ordering is done so that each
+            triangle is returned in order
+            e.g. [AB_1, BC_1, CA_1, AB_2, BC_2, CA_2, ...]
         """
         tl = self.trilist
-        return np.vstack((tl[:, [0, 1]],
+        return np.hstack((tl[:, [0, 1]],
                           tl[:, [1, 2]],
-                          tl[:, [2, 0]]))
+                          tl[:, [2, 0]])).reshape(-1, 2)
 
     def unique_edge_indices(self):
         r"""An unordered index into points that rebuilds the unique edges of
@@ -930,26 +941,26 @@ class TriMesh(PointCloud):
         return PointGraphViewer2d(
             figure_id, new_figure, self.points,
             trilist_to_adjacency_array(self.trilist)).render(
-                image_view=image_view, render_lines=render_lines,
-                line_colour=line_colour, line_style=line_style,
-                line_width=line_width, render_markers=render_markers,
-                marker_style=marker_style, marker_size=marker_size,
-                marker_face_colour=marker_face_colour,
-                marker_edge_colour=marker_edge_colour,
-                marker_edge_width=marker_edge_width,
-                render_numbering=render_numbering,
-                numbers_horizontal_align=numbers_horizontal_align,
-                numbers_vertical_align=numbers_vertical_align,
-                numbers_font_name=numbers_font_name,
-                numbers_font_size=numbers_font_size,
-                numbers_font_style=numbers_font_style,
-                numbers_font_weight=numbers_font_weight,
-                numbers_font_colour=numbers_font_colour, render_axes=render_axes,
-                axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-                axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-                axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-                axes_y_ticks=axes_y_ticks, figure_size=figure_size, label=label)
+            image_view=image_view, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks, figure_size=figure_size, label=label)
 
     def _view_landmarks_2d(self, group=None, with_labels=None,
                            without_labels=None, figure_id=None,

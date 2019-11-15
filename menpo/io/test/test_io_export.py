@@ -285,10 +285,10 @@ def test_export_video_avi_colour_first_mixed(exists, pipe):
                      extension='avi')
     assert pipe.return_value.stdin.write.call_count == 2
     recon_0 = pipe.return_value.stdin.write.mock_calls[0][1][0]
-    assert np.fromstring(recon_0, dtype=np.uint8).size == 30000
+    assert np.frombuffer(recon_0, dtype=np.uint8).size == 30000
     # Ensure that the second frame is converted to gray
     recon_1 = pipe.return_value.stdin.write.mock_calls[1][1][0]
-    assert np.fromstring(recon_1, dtype=np.uint8).size == 30000
+    assert np.frombuffer(recon_1, dtype=np.uint8).size == 30000
     assert 'rgb24' in pipe.call_args[0][0]
 
 

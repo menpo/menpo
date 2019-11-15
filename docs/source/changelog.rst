@@ -3,6 +3,80 @@
 Changelog
 #########
 
+0.9.2 (2019/08/19)
+------------------
+
+Remove more Cython code, in this case the gradient computation as the per Python
+code gives identical results. Fix the `Trimesh.boundary_tri_index()` method
+and add a unit test checking it's behaviour. Fix was required for correct
+non-rigid ICP computation.
+
+Github Pull Requests
+....................
+
+- `#821`_ remove cython gradient implementation (@jabooth)
+- `#832`_ Fix boundary_tri_index (@patricksnape)
+
+.. _#821: https://github.com/menpo/menpo/pull/821
+.. _#832: https://github.com/menpo/menpo/pull/832
+
+0.9.1 (2019/07/12)
+------------------
+
+Remove the Cython version of the normal method and just use the Python version
+as the two have similar performance. Also make the Cython interpolation module
+optional.
+
+Github Pull Requests
+....................
+
+- `#816`_ Make skimage interpolation optional (@jabooth)
+- `#820`_ remove cython normals module (@jabooth)
+
+.. _#816: https://github.com/menpo/menpo/pull/816
+.. _#820: https://github.com/menpo/menpo/pull/820
+
+0.9.0 (2019/07/10)
+------------------
+
+Remove Python 2.x from the build matrix as it is to difficult to continue
+support as all major packages are sunsetting Python 2.x support in 2020. At this
+time no regressions have been added but Python 2.x compatibility will not be
+guaranteed from this release onwards. This release also adds Python 3.7 support
+and builds.
+
+Furthermore, the build system has moved to using conda-forge as its package
+repository. This is in preparation for adding Menpo to conda-forge. Many
+requirements were updated in turn and this the major version bump.
+
+This also adds support for the LJSONv3 format
+(https://github.com/menpo/landmarker.io/wiki/LEP-0001:-LJSON-v3)
+
+Github Pull Requests
+....................
+
+- `#785`_ Migrate towards LJSONv3. (@grigorisg9gr)
+- `#802`_ minor .lms fix in test (@jabooth)
+- `#803`_ 3D LabelledPointUndirectedGraph visualization (@nontas)
+- `#805`_ Update base.py (@georgesterpu)
+- `#807`_ Fall-back to querying numpy for inc dir (@jabooth)
+- `#811`_ Pytest and upgrade to Matplotlib 2.x (@patricksnape)
+- `#814`_ Bump deps, fix or disable problematic tests (@jabooth)
+- `#815`_ Pure-Python mesh normal calculation fallback (@jabooth)
+- `#817`_ remove (unused) Cython PWA (@jabooth)
+- `#829`_ Move to conda-forge, update dependencies and drop Python 2.7 from build config (@patricksnape)
+
+.. _#785: https://github.com/menpo/menpo/pull/785
+.. _#802: https://github.com/menpo/menpo/pull/802
+.. _#803: https://github.com/menpo/menpo/pull/803
+.. _#805: https://github.com/menpo/menpo/pull/805
+.. _#807: https://github.com/menpo/menpo/pull/807
+.. _#811: https://github.com/menpo/menpo/pull/811
+.. _#814: https://github.com/menpo/menpo/pull/814
+.. _#815: https://github.com/menpo/menpo/pull/815
+.. _#817: https://github.com/menpo/menpo/pull/817
+.. _#829: https://github.com/menpo/menpo/pull/829
+
 0.8.1 (2017/05/06)
 ------------------
 
@@ -12,7 +86,7 @@ Github Pull Requests
 ....................
 
 - `#753`_ .view_widget() on LazyList (@jabooth)
-- `#777`_ convienience constructors for 3D rotations (@jabooth)
+- `#777`_ convenience constructors for 3D rotations (@jabooth)
 
 .. _#753: https://github.com/menpo/menpo/pull/753
 .. _#777: https://github.com/menpo/menpo/pull/777
