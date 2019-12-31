@@ -20,12 +20,13 @@ from menpo.transform import (Translation, NonUniformScale, Rotation,
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 
 from .interpolation import scipy_interpolation
+
 try:
     from .interpolation import cython_interpolation
 except ImportError:
     warn('Falling back to scipy interpolation for affine warps')
     cython_interpolation = None
-from .patches import extract_patches, set_patches
+from .patches import extract_patches_with_slice, set_patches, extract_patches_by_sampling
 
 # Cache the greyscale luminosity coefficients as they are invariant.
 _greyscale_luminosity_coef = None
@@ -1389,7 +1390,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return bounded_points
 
     def extract_patches(self, patch_centers, patch_shape=(16, 16),
-                        sample_offsets=None, as_single_array=True):
+                        sample_offsets=None, as_single_array=True,
+                        order=0, mode='constant', cval=0.0):
         r"""
         Extract a set of patches from an image. Given a set of patch centers
         and a patch size, patches are extracted from within the image, centred
@@ -1403,6 +1405,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         offset patches would be ``patches[:2]``.
 
         Currently only 2D images are supported.
+
+        Note that the default is nearest neighbour sampling for the patches
+        which is achieved via slicing and is much more efficient than using
+        sampling/interpolation. Note that a significant performance decrease
+        will be measured if the ``order`` or ``mode`` parameters are modified
+        from ``order = 0`` and ``mode = 'constant'`` as internally sampling
+        will be used rather than slicing.
 
         Parameters
         ----------
@@ -1420,6 +1429,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             `ndarray`, thus a single numpy array is returned containing each
             patch. If ``False``, a `list` of ``n_center * n_offset``
             :map:`Image` objects is returned representing each patch.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range [0,5].
+            See warp_to_shape for more information.
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according to
+            the given mode.
+        cval : `float`, optional
+            Used in conjunction with mode ``constant``, the value outside the
+            image boundaries.
 
         Returns
         -------
@@ -1437,16 +1455,21 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             raise ValueError('Only two dimensional patch extraction is '
                              'currently supported.')
 
-        if sample_offsets is None:
-            sample_offsets = np.zeros([1, 2], dtype=np.intp)
+        if order == 0 and mode == 'constant':
+            # Fast path using slicing
+            single_array = extract_patches_with_slice(self.pixels,
+                                                      patch_centers.points,
+                                                      patch_shape,
+                                                      offsets=sample_offsets,
+                                                      cval=cval)
         else:
-            sample_offsets = np.require(sample_offsets, dtype=np.intp)
-
-        patch_centers = np.require(patch_centers.points, dtype=np.float,
-                                   requirements=['C'])
-        single_array = extract_patches(self.pixels, patch_centers,
-                                       np.asarray(patch_shape, dtype=np.intp),
-                                       sample_offsets)
+            single_array = extract_patches_by_sampling(self.pixels,
+                                                       patch_centers.points,
+                                                       patch_shape,
+                                                       offsets=sample_offsets,
+                                                       order=order,
+                                                       mode=mode,
+                                                       cval=cval)
 
         if as_single_array:
             return single_array
@@ -1775,7 +1798,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             as self, but with each landmark updated to the warped position.
         order : `int`, optional
             The order of interpolation. The order has to be in the range [0,5]
-            
+
             ========= ====================
             Order     Interpolation
             ========= ====================

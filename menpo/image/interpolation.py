@@ -1,4 +1,5 @@
 import numpy as np
+
 map_coordinates = None  # expensive, from scipy.ndimage
 from menpo.transform import Homogeneous
 
@@ -38,23 +39,26 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
     global map_coordinates
     if map_coordinates is None:
         from scipy.ndimage import map_coordinates  # expensive
-    sampled_pixel_values = []
+    sampled_pixel_values = np.empty((pixels.shape[0], points_to_sample.shape[0]),
+                                    dtype=pixels.dtype)
+
     # Loop over every channel in image - we know first axis is always channels
     # Note that map_coordinates uses the opposite (dims, points) convention
     # to us so we transpose
     points_to_sample_t = points_to_sample.T
     for i in range(pixels.shape[0]):
-        sampled_pixel_values.append(map_coordinates(pixels[i],
-                                                    points_to_sample_t,
-                                                    mode=mode,
-                                                    order=order,
-                                                    cval=cval))
-    sampled_pixel_values = [v.reshape([1, -1]) for v in sampled_pixel_values]
-    return np.concatenate(sampled_pixel_values, axis=0)
+        map_coordinates(pixels[i],
+                        points_to_sample_t,
+                        mode=mode,
+                        order=order,
+                        cval=cval,
+                        output=sampled_pixel_values[i])
+    return sampled_pixel_values
 
 
 try:
     from menpo.external.skimage._warps_cy import _warp_fast
+
 
     def cython_interpolation(pixels, template_shape, h_transform, mode='constant',
                              order=1, cval=0.):
