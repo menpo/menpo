@@ -1,9 +1,12 @@
 import numpy as np
-from numpy.testing import assert_array_equal
+import pytest
+from numpy.testing import assert_array_equal, assert_allclose
 
 import menpo.io as mio
 from menpo.image.base import (Image, _convert_patches_list_to_single_array,
                               _create_patches_image)
+from menpo.image.patches import (extract_patches_with_slice,
+                                 extract_patches_by_sampling)
 from menpo.shape import PointCloud
 
 
@@ -16,7 +19,7 @@ def test_double_type():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert(patches[0].pixels.dtype == np.float64)
+    assert (patches[0].pixels.dtype == np.float64)
 
 
 def test_float_type():
@@ -26,7 +29,7 @@ def test_float_type():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert(patches[0].pixels.dtype == np.float32)
+    assert (patches[0].pixels.dtype == np.float32)
 
 
 def test_uint8_type():
@@ -35,7 +38,7 @@ def test_uint8_type():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert(patches[0].pixels.dtype == np.uint8)
+    assert (patches[0].pixels.dtype == np.uint8)
 
 
 def test_uint16_type():
@@ -45,7 +48,7 @@ def test_uint16_type():
     patches = image.extract_patches(landmarks,
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert(patches[0].pixels.dtype == np.uint16)
+    assert (patches[0].pixels.dtype == np.uint16)
 
 
 def test_int_pointcloud():
@@ -55,7 +58,7 @@ def test_int_pointcloud():
     patches = image.extract_patches(landmarks,
                                     patch_shape=patch_shape,
                                     as_single_array=False)
-    assert(patches[0].pixels.dtype == np.float)
+    assert (patches[0].pixels.dtype == np.float)
 
 
 def test_uint8_type_single_array():
@@ -64,7 +67,7 @@ def test_uint8_type_single_array():
     patches = image.extract_patches(image.landmarks['PTS'],
                                     patch_shape=patch_shape,
                                     as_single_array=True)
-    assert(patches.dtype == np.uint8)
+    assert (patches.dtype == np.uint8)
 
 
 def test_squared_even_patches():
@@ -139,34 +142,99 @@ def test_squared_even_patches_sample_offsets():
     assert len(patches) == 136
 
 
+@pytest.mark.parametrize('patch_shape,expected_valid', [((15, 13), (8, 7)),
+                                                        ((16, 12), (8, 6))],
+                         ids=str)
+def test_slicing_out_of_bounds(patch_shape, expected_valid):
+    image = mio.import_builtin_asset('breakingbad.jpg')
+    sample_offsets = np.array([[0, 0], [1, 0]])
+    cval = -100
+    points = np.array([[0, 0.]])
+    sliced_patches = extract_patches_with_slice(
+        image.pixels, points, patch_shape, sample_offsets, cval=cval)
+
+    offset = (patch_shape[0] // 2, patch_shape[1] // 2)
+    assert_allclose(sliced_patches[0, 0, :, offset[0]:, offset[1]:],
+                    image.pixels[:, :expected_valid[0], :expected_valid[1]],
+                    rtol=1e-4)
+    assert_allclose(sliced_patches[0, 0, :, :offset[0], :offset[1]], -100)
+
+
+@pytest.mark.parametrize('patch_shape,expected_valid', [((15, 13), (8, 7)),
+                                                        ((16, 12), (8, 6))],
+                         ids=str)
+def test_sampling_out_of_bounds(patch_shape, expected_valid):
+    image = mio.import_builtin_asset('breakingbad.jpg')
+    sample_offsets = np.array([[0, 0], [1, 0]])
+    cval = -100
+    points = np.array([[0, 0.]])
+    sliced_patches = extract_patches_by_sampling(
+        image.pixels, points, patch_shape, sample_offsets, cval=cval)
+
+    offset = (patch_shape[0] // 2, patch_shape[1] // 2)
+    assert_allclose(sliced_patches[0, 0, :, offset[0]:, offset[1]:],
+                    image.pixels[:, :expected_valid[0], :expected_valid[1]],
+                    rtol=1e-4)
+    assert_allclose(sliced_patches[0, 0, :, :offset[0], :offset[1]], -100)
+
+    # Offset in row direction by 1
+    assert_allclose(sliced_patches[0, 1, :, offset[0]:, offset[1]:],
+                    image.pixels[:, 1:expected_valid[0] + 1, :expected_valid[1]],
+                    rtol=1e-4)
+    assert_allclose(sliced_patches[0, 1, :, :offset[0], :offset[1]], -100)
+
+
+@pytest.mark.parametrize('patch_shape', [(15, 13), (16, 12)], ids=str)
+def test_slicing_equals_sampling(patch_shape):
+    image = mio.import_builtin_asset('breakingbad.jpg')
+    sample_offsets = np.array([[0, 0], [1, 0]])
+    points = image.landmarks['PTS'].points
+    cval = -100
+    # Add an extra point that is partially out of bounds
+    points = np.concatenate([points, [[0, 0]]])
+    sliced_patches = extract_patches_with_slice(
+        image.pixels, points, patch_shape, sample_offsets, cval=cval)
+    sampled_patches = extract_patches_by_sampling(
+        image.pixels, points, patch_shape, sample_offsets, order=0, cval=cval)
+
+    assert_allclose(sliced_patches, sampled_patches, rtol=1e-4)
+    assert_allclose(sliced_patches[-1, 0, 0, 0, 0], -100)
+
+
 #######################
 # SET PATCHES TESTS
 #######################
 def test_single_ndarray_patch():
-    patch_shape = (21, 7)
+    patch_shape = (8, 7)
     n_channels = 4
-    im = Image.init_blank(patch_shape, n_channels)
+    im = Image.init_blank((32, 32), n_channels)
     patch = np.zeros((2, 2, n_channels) + patch_shape)
-    patch[1, 0, ...] = np.ones((n_channels,) + patch_shape)
-    patch[1, 1, ...] = 2 * np.ones((n_channels,) + patch_shape)
-    patch_center = PointCloud(np.array([[10., 3.], [11., 3.]]))
-    new_im = im.set_patches(patch, patch_center, offset=(0, 0), offset_index=1)
-    res = np.zeros(patch_shape)
-    res[1:-1, :] = 2
-    assert_array_equal(new_im.pixels[2, ...], res)
+    patch[0, 0, ...] = np.full((n_channels,) + patch_shape, 1)  # Should be unused
+    patch[0, 1, ...] = np.full((n_channels,) + patch_shape, 2)
+    patch[1, 0, ...] = np.full((n_channels,) + patch_shape, 3)  # Should be unused
+    patch[1, 1, ...] = np.full((n_channels,) + patch_shape, 4)
+    patch_center = PointCloud(np.array([[4., 4.], [16., 16.]]))
+    new_im = im.set_patches(patch, patch_center, offset_index=1)
+    res = np.zeros((32, 32))
+    res[:8, 1:8] = 2
+    res[12:20, 13:20] = 4
+    assert_array_equal(new_im.pixels[2], res)
 
 
 def test_single_list_patch():
-    patch_shape = (21, 7)
+    patch_shape = (8, 7)
     n_channels = 4
-    im = Image.init_blank(patch_shape, n_channels)
-    patch = [Image(np.ones((n_channels,) + patch_shape)),
-             Image(2 * np.ones((n_channels,) + patch_shape))]
-    patch_center = PointCloud(np.array([[10., 3.], [11., 3.]]))
-    new_im = im.set_patches(patch, patch_center, offset=(0, 0), offset_index=0)
-    res = np.ones(patch_shape)
-    res[1:-1, :] = 2
-    assert_array_equal(new_im.pixels[2, ...], res)
+    im = Image.init_blank((32, 32), n_channels)
+    patch = [Image(np.full((n_channels,) + patch_shape, 1)),
+             Image(np.full((n_channels,) + patch_shape, 2)),  # Should be unused
+             Image(np.full((n_channels,) + patch_shape, 3)),
+             Image(np.full((n_channels,) + patch_shape, 4))]  # Should be unused
+    patch_center = PointCloud(np.array([[4., 4.], [16., 16.]]))
+    new_im = im.set_patches(patch, patch_center, offset_index=0)
+    res = np.zeros((32, 32))
+    res[:8, 1:8] = 1
+    res[12:20, 13:20] = 3
+    assert_array_equal(new_im.pixels[0], res)
 
 
 def test_offset_argument():
@@ -227,6 +295,6 @@ def test_create_patches_image():
     pc = image.landmarks['PTS']
     patches_image = _create_patches_image(patches, pc,
                                           patches_indices=list(range(17)))
-    assert(patches_image.n_channels == patches.shape[2])
-    assert(patches_image.landmarks.n_groups == 1)
-    assert(patches_image.landmarks['patch_centers'].n_points == 17)
+    assert (patches_image.n_channels == patches.shape[2])
+    assert (patches_image.landmarks.n_groups == 1)
+    assert (patches_image.landmarks['patch_centers'].n_points == 17)
