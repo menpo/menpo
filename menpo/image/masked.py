@@ -1016,7 +1016,7 @@ class MaskedImage(Image):
                                            warp_landmarks=warp_landmarks,
                                            order=order, mode=mode, cval=cval,
                                            batch_size=batch_size)
-        # warp the mask separately and reattach.
+        # Warp the mask separately and reattach
         mask = self.mask.warp_to_shape(template_shape, transform,
                                        warp_landmarks=warp_landmarks,
                                        mode=mode, cval=cval)
