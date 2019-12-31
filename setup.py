@@ -83,7 +83,6 @@ except ImportError:
 
 cython_modules = [
     build_extension_from_pyx('menpo/external/skimage/_warps_cy.pyx'),
-    build_extension_from_pyx('menpo/image/patches.pyx'),
 ]
 cython_exts = cythonize(cython_modules, quiet=True,
                         language_level=sys.version_info[0])
