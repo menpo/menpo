@@ -15,14 +15,14 @@ from menpo.base import (Vectorizable, MenpoDeprecationWarning,
 from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale, Rotation,
-                             AlignmentUniformScale, Affine, scale_about_centre,
-                             transform_about_centre)
+                             AlignmentUniformScale, scale_about_centre,
+                             transform_about_centre, Homogeneous)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 
 from .interpolation import scipy_interpolation
 
 try:
-    from .interpolation import cython_interpolation
+    from .interpolation import cv2_perspective_interpolation
 except ImportError:
     warn('Falling back to scipy interpolation for affine warps')
     cython_interpolation = None
@@ -1836,35 +1836,14 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             `return_transform` is ``True``.
         """
         template_shape = np.array(template_shape, dtype=np.int)
-        if (isinstance(transform, Affine) and order in range(4) and
-                self.n_dims == 2 and cython_interpolation is not None):
-
-            # we are going to be able to go fast.
-
-            if isinstance(transform, Translation) and order == 0:
-                # an integer translation (e.g. a crop) If this lies entirely
-                # in the bounds then we can just do a copy. We need to match
-                # the behavior of cython_interpolation exactly, which means
-                # matching its rounding behavior too:
-                t = transform.translation_component.copy()
-                pos_t = t > 0.0
-                t[pos_t] += 0.5
-                t[~pos_t] -= 0.5
-                min_ = t.astype(np.int)
-                max_ = template_shape + min_
-                if np.all(max_ <= np.array(self.shape)) and np.all(min_ >= 0):
-                    # we have a crop - slice the pixels.
-                    warped_pixels = self.pixels[:,
-                                    int(min_[0]):int(max_[0]),
-                                    int(min_[1]):int(max_[1])].copy()
-                    return self._build_warp_to_shape(warped_pixels, transform,
-                                                     warp_landmarks,
-                                                     return_transform)
-            # we couldn't do the crop, but skimage has an optimised Cython
-            # interpolation for 2D affine warps - let's use that
-            sampled = cython_interpolation(self.pixels, template_shape,
-                                           transform, order=order,
-                                           mode=mode, cval=cval)
+        if (isinstance(transform, Homogeneous) and order in range(2) and
+                self.n_dims == 2 and cv2_perspective_interpolation is not None):
+            # we couldn't do the crop, but OpenCV has an optimised
+            # interpolation for 2D perspective warps - let's use that
+            warped_pixels = cv2_perspective_interpolation(
+                self.pixels, template_shape, transform,
+                order=order, mode=mode, cval=cval
+            )
         else:
             template_points = indices_for_image_of_shape(template_shape)
             points_to_sample = transform.apply(template_points,
@@ -1872,11 +1851,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             sampled = self.sample(points_to_sample,
                                   order=order, mode=mode, cval=cval)
 
-        # set any nan values to 0
-        sampled[np.isnan(sampled)] = 0
-        # build a warped version of the image
-        warped_pixels = sampled.reshape(
-            (self.n_channels,) + tuple(template_shape))
+            # set any nan values to 0
+            # (seems that map_coordinates can produce nan values)
+            sampled[np.isnan(sampled)] = 0
+            # build a warped version of the image
+            warped_pixels = sampled.reshape(
+                (self.n_channels,) + tuple(template_shape))
 
         return self._build_warp_to_shape(warped_pixels, transform,
                                          warp_landmarks, return_transform)
