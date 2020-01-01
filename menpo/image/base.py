@@ -1882,7 +1882,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             return warped_image
 
     def rescale(self, scale, round='ceil', order=1,
-                return_transform=False):
+                warp_landmarks=True, return_transform=False):
         r"""
         Return a copy of this image, rescaled by a given factor.
         Landmarks are rescaled appropriately.
@@ -1909,6 +1909,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+        warp_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the rescale is also returned.
@@ -1963,12 +1966,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         inverse_transform = NonUniformScale(scale_factors).pseudoinverse()
         # for rescaling we enforce that mode is nearest to avoid num. errors
         return self.warp_to_shape(template_shape, inverse_transform,
-                                  warp_landmarks=True, order=order,
+                                  warp_landmarks=warp_landmarks, order=order,
                                   mode='nearest',
                                   return_transform=return_transform)
 
     def rescale_to_diagonal(self, diagonal, round='ceil',
-                            return_transform=False):
+                            warp_landmarks=True, return_transform=False):
         r"""
         Return a copy of this image, rescaled so that the it's diagonal is a
         new size.
@@ -1979,6 +1982,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The diagonal size of the new image.
         round: ``{ceil, floor, round}``, optional
             Rounding function to be applied to floating point shapes.
+        warp_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the rescale is also returned.
@@ -1992,10 +1998,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             `return_transform` is ``True``.
         """
         return self.rescale(diagonal / self.diagonal(), round=round,
+                            warp_landmarks=warp_landmarks,
                             return_transform=return_transform)
 
     def rescale_to_pointcloud(self, pointcloud, group=None,
                               round='ceil', order=1,
+                              warp_landmarks=True,
                               return_transform=False):
         r"""
         Return a copy of this image, rescaled so that the scale of a
@@ -2026,6 +2034,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+        warp_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the rescale is also returned.
@@ -2041,10 +2052,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         pc = self.landmarks[group]
         scale = AlignmentUniformScale(pc, pointcloud).as_vector().copy()
         return self.rescale(scale, round=round, order=order,
+                            warp_landmarks=warp_landmarks,
                             return_transform=return_transform)
 
     def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
                                             round='ceil', order=1,
+                                            warp_landmarks=True,
                                             return_transform=False):
         r"""
         Return a copy of this image, rescaled so that the ``diagonal_range`` of
@@ -2075,6 +2088,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= =====================
 
+        warp_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the rescale is also returned.
@@ -2090,9 +2106,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         x, y = self.landmarks[group].range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
         return self.rescale(scale, round=round, order=order,
+                            warp_landmarks=warp_landmarks,
                             return_transform=return_transform)
 
-    def resize(self, shape, order=1, return_transform=False):
+    def resize(self, shape, order=1, warp_landmarks=True,
+               return_transform=False):
         r"""
         Return a copy of this image, resized to a particular shape.
         All image information (landmarks, and mask in the case of
@@ -2116,6 +2134,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= =====================
 
+        warp_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the resize is also returned.
@@ -2146,9 +2167,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # we get (250, 250) even if the number we obtain is 250 to some
         # floating point inaccuracy.
         return self.rescale(scales, round='round', order=order,
+                            warp_landmarks=warp_landmarks,
                             return_transform=return_transform)
 
-    def zoom(self, scale, cval=0.0, return_transform=False):
+    def zoom(self, scale, order=1, warp_landmarks=True, return_transform=False):
         r"""
         Return a copy of this image, zoomed about the centre point. ``scale``
         values greater than 1.0 denote zooming **in** to the image and values
@@ -2163,8 +2185,23 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             larger and areas at the edge of the zoom will be 'cropped' out.
             ``scale < 1.0`` denotes zooming out. The image will be padded
             by the value of ``cval``.
-        cval : ``float``, optional
-            The value to be set outside the zoomed image boundaries.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range [0,5]
+
+            ========= =====================
+            Order     Interpolation
+            ========= =====================
+            0         Nearest-neighbor
+            1         Bi-linear *(default)*
+            2         Bi-quadratic
+            3         Bi-cubic
+            4         Bi-quartic
+            5         Bi-quintic
+            ========= =====================
+
+        warp_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the zooming is also returned.
@@ -2178,11 +2215,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             `return_transform` is ``True``.
         """
         t = scale_about_centre(self, 1.0 / scale)
-        return self.warp_to_shape(self.shape, t, cval=cval,
+        return self.warp_to_shape(self.shape, t, order=order,
+                                  mode='nearest', warp_landmarks=warp_landmarks,
                                   return_transform=return_transform)
 
     def rotate_ccw_about_centre(self, theta, degrees=True, retain_shape=False,
-                                cval=0.0, round='round', order=1,
+                                mode='constant', cval=0.0, round='round',
+                                order=1, warp_landmarks=True,
                                 return_transform=False):
         r"""
         Return a copy of this image, rotated counter-clockwise about its centre.
@@ -2206,6 +2245,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             the one of current image, so some regions will probably be cropped.
             If ``False``, then the returned image has the correct size so that
             the whole area of the current image is included.
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
         cval : `float`, optional
             The value to be set outside the rotated image boundaries.
         round : ``{'ceil', 'floor', 'round'}``, optional
@@ -2226,6 +2268,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+        warp_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as ``self``, but with each landmark updated to the warped position.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the rotation is also returned.
@@ -2248,12 +2293,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                              '2D images')
 
         rotation = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
-        return self.transform_about_centre(rotation, retain_shape=retain_shape,
-                                           cval=cval, round=round, order=order,
-                                           return_transform=return_transform)
+        return self.transform_about_centre(
+            rotation,
+            retain_shape=retain_shape, mode=mode, cval=cval, round=round,
+            order=order, warp_landmarks=warp_landmarks,
+            return_transform=return_transform
+        )
 
     def transform_about_centre(self, transform, retain_shape=False,
-                               cval=0.0, round='round', order=1,
+                               mode='constant', cval=0.0, round='round',
+                               order=1, warp_landmarks=True,
                                return_transform=False):
         r"""
         Return a copy of this image, transformed about its centre.
@@ -2288,6 +2337,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             the one of current image, so some regions will probably be cropped.
             If ``False``, then the returned image has the correct size so that
             the whole area of the current image is included.
+        mode : ``{constant, nearest, reflect, wrap}``, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode.
         cval : `float`, optional
             The value to be set outside the sheared image boundaries.
         round : ``{'ceil', 'floor', 'round'}``, optional
@@ -2308,6 +2360,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+        warp_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as ``self``, but with each landmark updated to the warped position.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the shearing is also returned.
@@ -2402,9 +2457,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # Warp image
         return self.warp_to_shape(
             shape, applied_transform.pseudoinverse(), order=order,
-            warp_landmarks=True, cval=cval, return_transform=return_transform)
+            warp_landmarks=warp_landmarks, mode=mode, cval=cval,
+            return_transform=return_transform
+        )
 
-    def mirror(self, axis=1, return_transform=False):
+    def mirror(self, axis=1, order=1, warp_landmarks=True,
+               return_transform=False):
         r"""
         Return a copy of this image, mirrored/flipped about a certain axis.
 
@@ -2412,6 +2470,24 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ----------
         axis : `int`, optional
             The axis about which to mirror the image.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range
+            ``[0,5]``.
+
+            ========= ====================
+            Order     Interpolation
+            ========= ====================
+            0         Nearest-neighbor
+            1         Bi-linear *(default)*
+            2         Bi-quadratic
+            3         Bi-cubic
+            4         Bi-quartic
+            5         Bi-quintic
+            ========= ====================
+
+        warp_landmarks : `bool`, optional
+            If ``True``, result will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
         return_transform : `bool`, optional
             If ``True``, then the :map:`Transform` object that was used to
             perform the mirroring is also returned.
@@ -2452,7 +2528,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         # Warp image
         return self.warp_to_shape(self.shape, trans.pseudoinverse(),
-                                  warp_landmarks=True,
+                                  mode='nearest',
+                                  order=order,
+                                  warp_landmarks=warp_landmarks,
                                   return_transform=return_transform)
 
     def pyramid(self, n_levels=3, downscale=2):
