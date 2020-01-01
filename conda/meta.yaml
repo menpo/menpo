@@ -30,6 +30,7 @@ requirements:
 
     # Optional Dependencies
     - cyvlfeat >=0.5.0,<0.6.0
+    - opencv >=3.0,<5.0
 
 test:
   requires:
