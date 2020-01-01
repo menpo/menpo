@@ -3,6 +3,53 @@
 Changelog
 #########
 
+0.10.0 (2020/01/01)
+-------------------
+
+Remove the last of the Cython code. This is in an effort to make supporting the
+package easier and also installing the package easier. Although we no longer
+support Windows in the open source builds - installing the package using
+pypi should now be trivial and thus essentially re-enable installation on
+Windows.
+
+The breaking changes are possible differences in pixel outputs due to changing
+sampling methodologies.
+
+  - **Patch extraction now uses a pure Python fallback.** In particular in the
+    case where out of bounds patch extraction happens this now falls back to
+    a sampling based strategy. The upside is that it is now possible to extract
+    patches at subpixel locations using strategies such as cubic interpolation.
+    The downside is that the nominal case of in bounds nearest neighbour
+    sampling is now around 2x slower.
+  - **Remove Cython based image warping.** Previously we maintained a fork of
+    scikit-image's fast interpolation code for Affine transforms. Since warping
+    is one of the key capabilities of Menpo, we have added a fast OpenCV based
+    fallback for Homogeneous transforms (actually more general transforms than
+    previously). If OpenCV is not available then a Scipy fallback is used. The
+    OpenCV fast path is actually around 3 times faster for common operations
+    such as rescaling an image by 2x. The scipy fallback, however, remains
+    around 4 times slower so having OpenCV installed is recommended. Note that
+    OpenCV does appear to have minor differences in behaviour to scikit-image
+    particularly on the boundaries so this is considered a breaking change.
+  - **Remove hog and lbp features.** The HoG and LBP features were difficult
+    to maintain and underutilized in the package. According to
+    `Antonakos et al <https://ibug.doc.ic.ac.uk/media/uploads/documents/antonakos2015feature.pdf>`_
+    Dense-Sift features outperform all other features. For this reason, we have
+    removed the old features as a number of bugs were identified when using them
+    that could cause Python to segfault.
+
+.. _antonakos2015feature:
+
+Github Pull Requests
+....................
+- `#818`_ Pure-Python implementations of patch extraction (@jabooth, @patricksnape)
+- `#822`_ remove native image features (hog/lbp) (@jabooth)
+- `#839`_ Remove Cython image warping (@patricksnape)
+
+.. _#818: https://github.com/menpo/menpo/pull/818
+.. _#822: https://github.com/menpo/menpo/pull/822
+.. _#839: https://github.com/menpo/menpo/pull/839
+
 0.9.2 (2019/08/19)
 ------------------
 
