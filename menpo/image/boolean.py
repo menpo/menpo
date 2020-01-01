@@ -1,10 +1,10 @@
 from functools import partial
 from warnings import warn
+
 import numpy as np
 
 from menpo.transform import Translation
-from .base import Image, _convert_patches_list_to_single_array
-from .patches import set_patches
+from .base import Image
 
 
 def pwa_point_in_pointcloud(pcloud, indices, batch_size=None):
@@ -686,7 +686,7 @@ class BooleanImage(Image):
                              'take two arguments: the Menpo PointCloud as a '
                              'boundary and the ndarray of pixel indices '
                              'to test. {} is an unknown option.'.format(
-                             point_in_pointcloud))
+                point_in_pointcloud))
 
         # Only consider indices inside the bounding box of the PointCloud
         bounds = pointcloud.bounds()

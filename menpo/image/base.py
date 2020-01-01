@@ -25,7 +25,7 @@ try:
     from .interpolation import cv2_perspective_interpolation
 except ImportError:
     warn('Falling back to scipy interpolation for affine warps')
-    cython_interpolation = None
+    cv2_perspective_interpolation = None
 from .patches import extract_patches_with_slice, set_patches, extract_patches_by_sampling
 
 # Cache the greyscale luminosity coefficients as they are invariant.
