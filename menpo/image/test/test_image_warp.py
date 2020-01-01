@@ -1,55 +1,87 @@
 import numpy as np
+import pytest
+from mock import PropertyMock
 from numpy.testing import assert_allclose, assert_almost_equal
 from pytest import raises
 
 import menpo
 import menpo.io as mio
 from menpo.image import BooleanImage, Image, MaskedImage, OutOfMaskSampleError
+from menpo.image.interpolation import cv2_perspective_interpolation
 from menpo.shape import PointCloud, bounding_box
 from menpo.transform import Affine, Rotation, UniformScale
 
-# do the import to generate the expected outputs
-rgb_image = mio.import_builtin_asset('takeo.ppm')
-gray_image = rgb_image.as_greyscale()
-gray_template = gray_image.crop(np.array([70, 30]),
-                                np.array([169, 129]))
-rgb_template = rgb_image.crop(np.array([70, 30]),
-                              np.array([169, 129]))
-template_mask = BooleanImage.init_blank(gray_template.shape)
-
-initial_params = np.array([0, 0, 0, 0, 70, 30])
-row_indices, col_indices = np.meshgrid(np.arange(50, 100), np.arange(50, 100),
-                                       indexing='ij')
-row_indices, col_indices = row_indices.flatten(), col_indices.flatten()
-multi_expected = rgb_image.crop([50, 50],
-                                [100, 100]).pixels.flatten()
+CROP_COORDS = (np.array([70, 30]), np.array([169, 129]))
 
 
-def test_warp_gray():
-    rgb_image = mio.import_builtin_asset('takeo.ppm')
-    gray_image = rgb_image.as_greyscale()
-    target_transform = Affine.init_identity(2).from_vector(initial_params)
-    warped_im = gray_image.warp_to_mask(template_mask, target_transform)
+@pytest.fixture()
+def interpolation_method(mocker, method):
+    # This uses the pytest-mock package in order to provide a fixture that will
+    # mock the global variable in the image module that determines if OpenCV
+    # should be used or not. Useful for running the unit tests with and without
+    # opencv
+    interp = PropertyMock()
+    interp.return_value = method
+    mocker.patch('menpo.image.base.cv2_perspective_interpolation',
+                 new_callable=interp)
+
+
+def opencv_and_scipy_interpolation(func):
+    # This decorator combines the "interpolation_method" fixture from above
+    # with a parameterize decorator to run unit tests with and without OpenCV
+    parameterize = pytest.mark.parametrize(
+        "method",
+        [None, cv2_perspective_interpolation],
+        ids=lambda x: 'opencv' if x is not None else 'scipy'
+    )
+    use_fixtures = pytest.mark.usefixtures('interpolation_method')
+    return use_fixtures(parameterize(func))
+
+
+@pytest.fixture()
+def rgb_image():
+    return mio.import_builtin_asset('takeo.ppm')
+
+
+@pytest.fixture()
+def gray_image():
+    return mio.import_builtin_asset('takeo.ppm').as_greyscale()
+
+
+@pytest.fixture()
+def gray_template(gray_image):
+    gray_template = gray_image.crop(*CROP_COORDS)
+    mask = BooleanImage.init_blank(gray_template.shape)
+    return gray_template, mask
+
+
+@pytest.fixture()
+def target_transform():
+    initial_params = np.array([0, 0, 0, 0, 70, 30])
+    return Affine.init_identity(2).from_vector(initial_params)
+
+
+def test_warp_gray(gray_image, gray_template, target_transform):
+    gray_template, mask = gray_template
+    warped_im = gray_image.warp_to_mask(mask, target_transform)
 
     assert (warped_im.shape == gray_template.shape)
     assert_allclose(warped_im.pixels, gray_template.pixels)
 
 
-def test_warp_gray_batch():
-    rgb_image = mio.import_builtin_asset('takeo.ppm')
-    gray_image = rgb_image.as_greyscale()
-    target_transform = Affine.init_identity(2).from_vector(initial_params)
-    warped_im = gray_image.warp_to_mask(template_mask, target_transform,
+def test_warp_gray_batch(gray_image, gray_template, target_transform):
+    gray_template, mask = gray_template
+    warped_im = gray_image.warp_to_mask(mask, target_transform,
                                         batch_size=100)
 
     assert (warped_im.shape == gray_template.shape)
     assert_allclose(warped_im.pixels, gray_template.pixels)
 
 
-def test_warp_multi():
-    rgb_image = mio.import_builtin_asset('takeo.ppm')
-    target_transform = Affine.init_identity(2).from_vector(initial_params)
-    warped_im = rgb_image.warp_to_mask(template_mask, target_transform)
+def test_warp_multi(rgb_image, target_transform):
+    rgb_template = rgb_image.crop(*CROP_COORDS)
+    mask = BooleanImage.init_blank(rgb_template.shape)
+    warped_im = rgb_image.warp_to_mask(mask, target_transform)
 
     assert (warped_im.shape == rgb_template.shape)
     assert_allclose(warped_im.pixels, rgb_template.pixels)
@@ -192,22 +224,26 @@ def test_sample_booleanimage():
     assert_allclose(arr, [[True, False]])
 
 
-def test_transform_about_centre():
+@opencv_and_scipy_interpolation
+def test_transform_about_centre(method):
     pixels_16 = np.arange(16, dtype=np.float)
     image = Image(pixels_16.reshape(4, 4))
     transform = Rotation.init_from_2d_ccw_angle(180).compose_before(
         UniformScale(2, n_dims=2))
     # rotate 180 + scale degrees
-    transformed_img = image.transform_about_centre(transform, order=1)
+    transformed_img = image.transform_about_centre(transform, mode='nearest',
+                                                   order=1)
     expected_pixels = np.concatenate([
         np.linspace(15 - 2 * i, 12 - 2 * i, num=7)[None]
         for i in range(7)
     ])
 
     assert transformed_img.shape == (7, 7)
-    assert_allclose(transformed_img.pixels[0], expected_pixels)
+    assert_allclose(transformed_img.pixels[0], expected_pixels,
+                    rtol=1e-8, atol=1e-8)
 
 
+@opencv_and_scipy_interpolation
 def test_zoom_image():
     im = Image.init_blank((100, 100), fill=0)
     # White square in the centre of size 10x10
@@ -229,6 +265,7 @@ def test_zoom_booleanimage():
     assert np.all(zim.pixels)
 
 
+@opencv_and_scipy_interpolation
 def test_mirror_horizontal_image():
     image = Image(np.array([[1., 2., 3., 4.],
                             [5., 6., 7., 8.],
@@ -244,6 +281,7 @@ def test_mirror_horizontal_image():
                     np.array([[1., 1.], [1., 2.], [0., 1.], [0., 2.]]))
 
 
+@opencv_and_scipy_interpolation
 def test_mirror_vertical_image():
     image = Image(np.array([[1., 2., 3., 4.],
                             [5., 6., 7., 8.],
@@ -281,6 +319,7 @@ def test_mirror_return_transform():
                     img.landmarks['test'].points)
 
 
+@opencv_and_scipy_interpolation
 def test_rotate_image_90_180():
     image = Image(np.array([[1., 2., 3., 4.],
                             [5., 6., 7., 8.],
@@ -288,7 +327,8 @@ def test_rotate_image_90_180():
     image.landmarks['temp'] = PointCloud(np.array([[1., 1.], [1., 2.],
                                                    [2., 1.], [2., 2.]]))
     # rotate 90 degrees
-    rotated_img = image.rotate_ccw_about_centre(theta=90, order=0)
+    rotated_img = image.rotate_ccw_about_centre(theta=90, order=1,
+                                                mode='nearest')
     rotated_img.landmarks['temp'] = rotated_img.landmarks['temp'].constrain_to_bounds(
         rotated_img.bounds())
     assert_allclose(rotated_img.pixels, np.array([[[4., 8., 12.],
@@ -299,7 +339,8 @@ def test_rotate_image_90_180():
                         np.array([[2., 1.], [1., 1.], [2., 2.], [1., 2.]]))
 
     # rotate 180 degrees
-    rotated_img = image.rotate_ccw_about_centre(theta=180, order=0)
+    rotated_img = image.rotate_ccw_about_centre(theta=180, order=1,
+                                                mode='nearest')
     rotated_img.landmarks['temp'] = rotated_img.landmarks['temp'].constrain_to_bounds(
         rotated_img.bounds())
     assert_allclose(rotated_img.pixels, np.array([[[12., 11., 10., 9.],
@@ -340,6 +381,7 @@ def test_rotate_return_transform():
                     img.landmarks['test'].points)
 
 
+@opencv_and_scipy_interpolation
 def test_maskedimage_retain_shape():
     image = mio.import_builtin_asset('takeo.ppm')
     image = image.as_masked()
