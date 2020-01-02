@@ -64,6 +64,8 @@ master_doc = 'index'
 
 # Sort attributes by type (functions separate from properties)
 autodoc_member_order = 'groupwise'
+# Make the imports less heavy on readthedocs by mocking them
+autodoc_mock_imports = ['numpy', 'scipy', 'pillow', 'matplotlib', 'cyvlfeat']
 
 # General information about the project.
 project = u'Menpo'

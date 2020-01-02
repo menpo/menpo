@@ -4,24 +4,6 @@ channels:
 dependencies:
   - python 3.7.*
   - setuptools
-  - cython>=0.23
-
-  # Scientific Python Stack
-  - numpy >=1.14,<2.0
-  - scipy >=1.0,<2.0
-  - pillow >=4.0,<6.0
-  - ffmpeg >=2.7,<5.0
-
-  # Visualization
-  - matplotlib >=3.0,<4.0
-
-  # Optional Dependencies
-  - cyvlfeat >=0.5.0,<0.6.0
-
-  # Testing
-  - pytest >=5.0,<6.0
-  - pytest-cov >=2.0,<3.0
-  - mock >=3.0,<4.0
 
   # Docs Only
   - sphinx >=2,<3
