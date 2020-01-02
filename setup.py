@@ -23,5 +23,5 @@ setup(
     packages=find_packages(),
     install_requires=install_requires,
     package_data={'menpo': ['data/*']},
-    tests_require=['pytest>=5.0', 'mock>=3.0']
+    tests_require=['pytest>=5.0', 'pytest-mock>=1.0', 'mock>=3.0']
 )
