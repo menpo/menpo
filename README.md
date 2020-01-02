@@ -48,18 +48,15 @@ package management system, `pip`, then you should be able to install
 Menpo as follows:
 
 ```
-> pip install cython numpy
 > pip install menpo
 ```
 
-However, this may be difficult to achieve on platforms such as Windows where
-a compiler would need to be correctly configured. Therefore, we strongly
-advocate the use of [conda](http://conda.pydata.org/docs/) which does
-not require compilation for installing Menpo (or Numpy, SciPy or Matplotlib
-for that matter). Installation via `conda` is as simple as
+We strongly advocate the use of [conda](http://conda.pydata.org/docs/) which does
+not require compilation for installing Menpo or it's dependencies such as Numpy, 
+SciPy or Matplotlib. Installation via `conda` is as simple as
 
 ```
-> conda install -c menpo menpo
+> conda install -c conda-forge menpo
 ```
 
 #### Build Status
@@ -126,11 +123,11 @@ See our documentation on [ReadTheDocs](http://menpo.readthedocs.org)
 
 Testing
 -------
-We use [nose](https://nose.readthedocs.org/en/latest/) for unit tests.
+We use [pytest](http://pytest.org/en/latest/) for unit tests.
 
-After installing `nose` and `mock`, running
+After installing `pytest`, `mock` and `pytest-mock`, running
 
-    >> nosetests .
+    >> pytest .
 
 from the top of the repository will run all of the unit tests.
 
@@ -139,4 +136,5 @@ dependency installed. These are:
 
 - 3D viewing methods, only available if `menpo3d` is installed
 - `menpo.feature.dsift` only available if `cyvlfeat` is installed
+- Some warping unit tests are only available if `opencv` is installed
 - Widgets are only available if `menpowidgets` is installed
