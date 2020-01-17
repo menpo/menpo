@@ -8,7 +8,8 @@ import versioneer
 install_requires = ['numpy>=1.14',
                     'scipy>=1.0',
                     'matplotlib>=3.0',
-                    'pillow>=4.0']
+                    'pillow>=4.0',
+                    'scikit-image>=0.15']
 
 if sys.version_info.major == 2:
     install_requires.append('pathlib==1.0')
