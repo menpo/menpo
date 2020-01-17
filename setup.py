@@ -98,7 +98,6 @@ cython_exts = cythonize(cython_modules, quiet=True,
 install_requires = ['numpy>=1.14',
                     'scipy>=1.0',
                     'matplotlib>=3.0',
-                    'mayavi>=4.7.0',
                     'pillow>=4.0']
 
 if sys.version_info.major == 2:

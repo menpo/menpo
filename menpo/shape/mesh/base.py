@@ -7,7 +7,6 @@ from .normals import compute_vertex_normals, compute_face_normals
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 
-from mayavi import mlab
 from scipy.spatial import cKDTree
 
 Delaunay = None  # expensive, from scipy.spatial
@@ -357,76 +356,82 @@ class TriMesh(PointCloud):
         ------
         ValueError
         """
-        source_mesh = self
-        source_n_vertices = source_mesh.points.shape[0]
-        target_mesh_n_vertices = target_mesh.points.shape[0]
+        try:
+            from mayavi import mlab
+            source_mesh = self
+            source_n_vertices = source_mesh.points.shape[0]
+            target_mesh_n_vertices = target_mesh.points.shape[0]
 
-        if not source_n_vertices == target_mesh_n_vertices:
-            first_part_string = 'Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices,
-                                                                                              target_mesh_n_vertices)
-            print(first_part_string)
-            subject = source_mesh.points
-            template = target_mesh
-            X = template.points
+            if not source_n_vertices == target_mesh_n_vertices:
+                first_part_string = 'Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices,
+                                                                                                  target_mesh_n_vertices)
+                print(first_part_string)
+                subject = source_mesh.points
+                template = target_mesh
+                X = template.points
 
-            tree = cKDTree(X)
-            dist, indx = tree.query(subject, k=1)
+                tree = cKDTree(X)
+                dist, indx = tree.query(subject, k=1)
 
-            target_mesh = TriMesh(X[indx], source_mesh.trilist)
+                target_mesh = TriMesh(X[indx], source_mesh.trilist)
 
-        if figure_id is None:
-            if hasattr(self, 'path'):
-                source_name = self.path.stem
+            if figure_id is None:
+                if hasattr(self, 'path'):
+                    source_name = self.path.stem
+                else:
+                    source_name = 'Source'
+                if hasattr(target_mesh, 'path'):
+                    target_name = target_mesh.path.stem
+                else:
+                    target_name = 'Target'
+                figure_name = 'Heatmap between {} and {}'.format(source_name,
+                                                                 target_name)
             else:
-                source_name = 'Source'
-            if hasattr(target_mesh, 'path'):
-                target_name = target_mesh.path.stem
-            else:
-                target_name = 'Target'
-            figure_name = 'Heatmap between {} and {}'.format(source_name,
-                                                             target_name)
-        else:
-            figure_name = figure_id
+                figure_name = figure_id
 
-        v = mlab.figure(figure=figure_name, size=size,
-                        bgcolor=(1, 1, 1), fgcolor=(0, 0, 0))
+            v = mlab.figure(figure=figure_name, size=size,
+                            bgcolor=(1, 1, 1), fgcolor=(0, 0, 0))
 
-        diff = (source_mesh.points-target_mesh.points)**2
-        distances_between_meshes = np.sqrt(diff.sum(axis=1))
-        scaled_distances_between_meshes = distances_between_meshes*scale_value
+            diff = (source_mesh.points-target_mesh.points)**2
+            distances_between_meshes = np.sqrt(diff.sum(axis=1))
+            scaled_distances_between_meshes = distances_between_meshes*scale_value
 
-        src = mlab.pipeline.triangular_mesh_source(source_mesh.points[:, 0],
-                                                   source_mesh.points[:, 1],
-                                                   source_mesh.points[:, 2],
-                                                   source_mesh.trilist,
-                                                   scalars=scaled_distances_between_meshes)
+            src = mlab.pipeline.triangular_mesh_source(source_mesh.points[:, 0],
+                                                       source_mesh.points[:, 1],
+                                                       source_mesh.points[:, 2],
+                                                       source_mesh.trilist,
+                                                       scalars=scaled_distances_between_meshes)
 
-        surf = mlab.pipeline.surface(src, colormap=type_cmap)
+            surf = mlab.pipeline.surface(src, colormap=type_cmap)
 
-        # When font size bug resolved, uncomment
-        # cb=mlab.colorbar(title='Distances in mm',
-        # orientation='vertical', nb_labels=5)
-        # cb.title_text_property.font_size = 20
-        # cb.label_text_property.font_family = 'times'
-        # cb.label_text_property.font_size=10
-        cb = mlab.colorbar(orientation='vertical', nb_labels=5)
-        cb.data_range = scalar_range
+            # When font size bug resolved, uncomment
+            # cb=mlab.colorbar(title='Distances in mm',
+            # orientation='vertical', nb_labels=5)
+            # cb.title_text_property.font_size = 20
+            # cb.label_text_property.font_family = 'times'
+            # cb.label_text_property.font_size=10
+            cb = mlab.colorbar(orientation='vertical', nb_labels=5)
+            cb.data_range = scalar_range
 
-        cb.scalar_bar_representation.position = [0.8, 0.15]
-        cb.scalar_bar_representation.position2 = [0.15, 0.7]
-        text = mlab.text(0.8, 0.85, 'Distances in mm')
-        text.width = 0.20
-        if show_statistics:
-            text2 = mlab.text(0.5, 0.02,
-                              'Mean error {:.3}mm \nMax error {:.3}mm \
-                          '.format(scaled_distances_between_meshes.mean(),
-                                   scaled_distances_between_meshes.max()))
-            text2.width = 0.20
-        surf.module_manager.scalar_lut_manager.reverse_lut = True
-        if camera_settings is None:
-            mlab.gcf().scene.z_plus_view()
+            cb.scalar_bar_representation.position = [0.8, 0.15]
+            cb.scalar_bar_representation.position2 = [0.15, 0.7]
+            text = mlab.text(0.8, 0.85, 'Distances in mm')
+            text.width = 0.20
+            if show_statistics:
+                text2 = mlab.text(0.5, 0.02,
+                                  'Mean error {:.3}mm \nMax error {:.3}mm \
+                              '.format(scaled_distances_between_meshes.mean(),
+                                       scaled_distances_between_meshes.max()))
+                text2.width = 0.20
+            surf.module_manager.scalar_lut_manager.reverse_lut = True
+            if camera_settings is None:
+                mlab.gcf().scene.z_plus_view()
 
-        return v, scaled_distances_between_meshes
+            return v, scaled_distances_between_meshes
+
+        except ImportError as e:
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError(e)
 
     def tojson(self):
         r"""
