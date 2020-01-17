@@ -833,7 +833,8 @@ class MaskedImage(Image):
                          constrain_to_boundary=constrain_to_boundary,
                          return_transform=return_transform)
 
-    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
+    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0,
+               verify_mask=False):
         r"""
         Sample this image at the given sub-pixel accurate points. The input
         PointCloud should have the same number of dimensions as the image e.g.
@@ -841,10 +842,12 @@ class MaskedImage(Image):
         returned the has the values for every given point across each channel
         of the image.
 
-        If the points to sample are *outside* of the mask (fall on a ``False``
-        value in the mask), an exception is raised. This exception contains
-        the information of which points were outside of the mask (``False``)
-        and *also* returns the sampled points.
+        If verify_mask is True and the points to sample are *outside* of the
+        mask (fall on a ``False`` value in the mask), an exception is raised.
+        This exception contains the information of which points were outside
+        of the mask (``False``) and *also* returns the sampled points. Note this
+        is more expensive and thus may be disabled by setting verify_mask
+        to False.
 
         Parameters
         ----------
@@ -860,6 +863,11 @@ class MaskedImage(Image):
         cval : `float`, optional
             Used in conjunction with mode ``constant``, the value outside
             the image boundaries.
+        verify_mask : `bool`, optional
+            If True, also sample the mask at the given points and check the
+            mask is valid at all points. Note that sampling masks with higher
+            order splines may cause interpolated mask values that are rounded
+            to zero and thus cause false positives.
 
         Returns
         -------
@@ -872,13 +880,16 @@ class MaskedImage(Image):
             One of the points to sample was outside of the valid area of the
             mask (``False`` in the mask). This exception contains both the
             mask of valid sample points, **as well as** the sampled points
-            themselves, in case you want to ignore the error.
+            themselves, in case you want to ignore the error. Only raised
+            if verify_mask is True.
         """
-        sampled_mask = self.mask.sample(points_to_sample, mode=mode, cval=cval)
         sampled_values = Image.sample(self, points_to_sample, order=order,
                                       mode=mode, cval=cval)
-        if not np.all(sampled_mask):
-            raise OutOfMaskSampleError(sampled_mask, sampled_values)
+        if verify_mask:
+            sampled_mask = self.mask.sample(points_to_sample, mode=mode,
+                                            cval=cval)
+            if not np.all(sampled_mask):
+                raise OutOfMaskSampleError(sampled_mask, sampled_values)
         return sampled_values
 
     # noinspection PyMethodOverriding
@@ -1016,7 +1027,7 @@ class MaskedImage(Image):
                                            warp_landmarks=warp_landmarks,
                                            order=order, mode=mode, cval=cval,
                                            batch_size=batch_size)
-        # warp the mask separately and reattach.
+        # Warp the mask separately and reattach
         mask = self.mask.warp_to_shape(template_shape, transform,
                                        warp_landmarks=warp_landmarks,
                                        mode=mode, cval=cval)

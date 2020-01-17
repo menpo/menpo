@@ -1,1 +1,1 @@
-from .skimage import _daisy, _warp_fast
+from .skimage import _daisy

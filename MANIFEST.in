@@ -1,7 +1,3 @@
 include LICENSE.txt
 include AUTHORS.txt
 include versioneer.py
-recursive-include menpo *.h
-recursive-include menpo *.cpp
-recursive-include menpo *.pyx
-recursive-include menpo *.pxd
