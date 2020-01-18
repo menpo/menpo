@@ -106,15 +106,16 @@ class BooleanImage(Image):
         # If we are trying not to copy, but the data we have isn't boolean,
         # then unfortunately, we forced to copy anyway!
         if mask_data.dtype != np.bool:
-            mask_data = np.array(mask_data, dtype=np.bool, copy=True,
-                                 order='C')
+            mask_data = np.array(mask_data, dtype=np.bool, copy=True, order="C")
             if not copy:
-                warn('The copy flag was NOT honoured. A copy HAS been made. '
-                     'Please ensure the data you pass is C-contiguous.')
+                warn(
+                    "The copy flag was NOT honoured. A copy HAS been made. "
+                    "Please ensure the data you pass is C-contiguous."
+                )
         super(BooleanImage, self).__init__(mask_data, copy=copy)
 
     @classmethod
-    def init_blank(cls, shape, fill=True, round='ceil', **kwargs):
+    def init_blank(cls, shape, fill=True, round="ceil", **kwargs):
         r"""
         Returns a blank :map:`BooleanImage` of the requested shape
 
@@ -135,6 +136,7 @@ class BooleanImage(Image):
 
         """
         from .base import round_image_shape
+
         shape = round_image_shape(shape, round)
         if fill:
             mask = np.ones(shape, dtype=np.bool)
@@ -161,8 +163,9 @@ class BooleanImage(Image):
         return cls(pixels)
 
     @classmethod
-    def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,
-                             constrain=True, fill=True):
+    def init_from_pointcloud(
+        cls, pointcloud, group=None, boundary=0, constrain=True, fill=True
+    ):
         r"""
         Create an Image that is big enough to contain the given pointcloud.
         The pointcloud will be translated to the origin and then translated
@@ -217,8 +220,7 @@ class BooleanImage(Image):
         Impossible for a :map:`BooleanImage` to be transformed to a
         :map:`MaskedImage`.
         """
-        raise NotImplementedError("as_masked cannot be invoked on a "
-                                  "BooleanImage.")
+        raise NotImplementedError("as_masked cannot be invoked on a " "BooleanImage.")
 
     @property
     def mask(self):
@@ -292,9 +294,9 @@ class BooleanImage(Image):
         return np.vstack(np.nonzero(~self.pixels[0])).T
 
     def __str__(self):
-        return ('{} {}D mask, {:.1%} '
-                'of which is True'.format(self._str_shape(), self.n_dims,
-                                          self.proportion_true()))
+        return "{} {}D mask, {:.1%} " "of which is True".format(
+            self._str_shape(), self.n_dims, self.proportion_true()
+        )
 
     def from_vector(self, vector, copy=True):
         r"""
@@ -326,7 +328,7 @@ class BooleanImage(Image):
         mask = BooleanImage(vector.reshape(self.shape), copy=copy)
         if self.has_landmarks:
             mask.landmarks = self.landmarks
-        if hasattr(self, 'path'):
+        if hasattr(self, "path"):
             mask.path = self.path
         return mask
 
@@ -407,10 +409,11 @@ class BooleanImage(Image):
             is clipped to legal image bounds.
         """
         return self.invert().bounds_true(
-            boundary=boundary, constrain_to_bounds=constrain_to_bounds)
+            boundary=boundary, constrain_to_bounds=constrain_to_bounds
+        )
 
     # noinspection PyMethodOverriding
-    def sample(self, points_to_sample, mode='constant', cval=False, **kwargs):
+    def sample(self, points_to_sample, mode="constant", cval=False, **kwargs):
         r"""
         Sample this image at the given sub-pixel accurate points. The input
         PointCloud should have the same number of dimensions as the image e.g.
@@ -436,13 +439,19 @@ class BooleanImage(Image):
             The interpolated values taken across every channel of the image.
         """
         # enforce the order as 0, as this is boolean data, then call super
-        return Image.sample(self, points_to_sample, order=0, mode=mode,
-                            cval=cval)
+        return Image.sample(self, points_to_sample, order=0, mode=mode, cval=cval)
 
     # noinspection PyMethodOverriding
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     mode='constant', cval=False, batch_size=None,
-                     return_transform=False):
+    def warp_to_mask(
+        self,
+        template_mask,
+        transform,
+        warp_landmarks=True,
+        mode="constant",
+        cval=False,
+        batch_size=None,
+        return_transform=False,
+    ):
         r"""
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -489,14 +498,29 @@ class BooleanImage(Image):
         """
         # enforce the order as 0, as this is boolean data, then call super
         return Image.warp_to_mask(
-            self, template_mask, transform, warp_landmarks=warp_landmarks,
-            order=0, mode=mode, cval=cval, batch_size=batch_size,
-            return_transform=return_transform)
+            self,
+            template_mask,
+            transform,
+            warp_landmarks=warp_landmarks,
+            order=0,
+            mode=mode,
+            cval=cval,
+            batch_size=batch_size,
+            return_transform=return_transform,
+        )
 
     # noinspection PyMethodOverriding
-    def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      mode='constant', cval=False, order=None,
-                      batch_size=None, return_transform=False):
+    def warp_to_shape(
+        self,
+        template_shape,
+        transform,
+        warp_landmarks=True,
+        mode="constant",
+        cval=False,
+        order=None,
+        batch_size=None,
+        return_transform=False,
+    ):
         """
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -544,16 +568,22 @@ class BooleanImage(Image):
         """
         # call the super variant and get ourselves an Image back
         # note that we force the use of order=0 for BooleanImages.
-        warped = Image.warp_to_shape(self, template_shape, transform,
-                                     warp_landmarks=warp_landmarks, order=0,
-                                     mode=mode, cval=cval,
-                                     batch_size=batch_size)
+        warped = Image.warp_to_shape(
+            self,
+            template_shape,
+            transform,
+            warp_landmarks=warp_landmarks,
+            order=0,
+            mode=mode,
+            cval=cval,
+            batch_size=batch_size,
+        )
         # unfortunately we can't escape copying here, let BooleanImage
         # convert us to np.bool
         boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
         if warped.has_landmarks:
             boolean_image.landmarks = warped.landmarks
-        if hasattr(warped, 'path'):
+        if hasattr(warped, "path"):
             boolean_image.path = warped.path
         # optionally return the transform
         if return_transform:
@@ -561,8 +591,7 @@ class BooleanImage(Image):
         else:
             return boolean_image
 
-    def _build_warp_to_mask(self, template_mask, sampled_pixel_values,
-                            **kwargs):
+    def _build_warp_to_mask(self, template_mask, sampled_pixel_values, **kwargs):
         r"""
         Builds the warped image from the template mask and sampled pixel values.
         """
@@ -570,8 +599,7 @@ class BooleanImage(Image):
         warped_img = template_mask.copy()
         if warped_img.all_true():
             # great, just reshape the sampled_pixel_values
-            warped_img.pixels = sampled_pixel_values.reshape(
-                (1,) + warped_img.shape)
+            warped_img.pixels = sampled_pixel_values.reshape((1,) + warped_img.shape)
         else:
             # we have to fill out mask with the sampled mask..
             warped_img.pixels[:, warped_img.mask] = sampled_pixel_values
@@ -605,11 +633,13 @@ class BooleanImage(Image):
         constrained : :map:`BooleanImage`
             The new boolean image, constrained by the given landmark group.
         """
-        return self.constrain_to_pointcloud(self.landmarks[group],
-                                            batch_size=batch_size)
+        return self.constrain_to_pointcloud(
+            self.landmarks[group], batch_size=batch_size
+        )
 
-    def constrain_to_pointcloud(self, pointcloud, batch_size=None,
-                                point_in_pointcloud='pwa'):
+    def constrain_to_pointcloud(
+        self, pointcloud, batch_size=None, point_in_pointcloud="pwa"
+    ):
         r"""
         Returns a copy of this image whereby the ``True`` values in the image
         are restricted to be equal to the convex hull around a pointcloud. The
@@ -668,25 +698,29 @@ class BooleanImage(Image):
             If the chosen ``point_in_pointcloud`` is unknown.
         """
         copy = self.copy()
-        if point_in_pointcloud in {'pwa', 'convex_hull'} and self.n_dims != 2:
-            raise ValueError('Can only constrain mask on 2D images with the '
-                             'default point_in_pointcloud implementations.'
-                             'Please provide a custom callable for calculating '
-                             'the new mask in this '
-                             '{}D image'.format(self.n_dims))
+        if point_in_pointcloud in {"pwa", "convex_hull"} and self.n_dims != 2:
+            raise ValueError(
+                "Can only constrain mask on 2D images with the "
+                "default point_in_pointcloud implementations."
+                "Please provide a custom callable for calculating "
+                "the new mask in this "
+                "{}D image".format(self.n_dims)
+            )
 
-        if point_in_pointcloud == 'pwa':
-            point_in_pointcloud = partial(pwa_point_in_pointcloud,
-                                          batch_size=batch_size)
-        elif point_in_pointcloud == 'convex_hull':
+        if point_in_pointcloud == "pwa":
+            point_in_pointcloud = partial(
+                pwa_point_in_pointcloud, batch_size=batch_size
+            )
+        elif point_in_pointcloud == "convex_hull":
             point_in_pointcloud = convex_hull_point_in_pointcloud
         elif not callable(point_in_pointcloud):
             # Not a function, or a string, so we have an error!
-            raise ValueError('point_in_pointcloud must be a callable that '
-                             'take two arguments: the Menpo PointCloud as a '
-                             'boundary and the ndarray of pixel indices '
-                             'to test. {} is an unknown option.'.format(
-                point_in_pointcloud))
+            raise ValueError(
+                "point_in_pointcloud must be a callable that "
+                "take two arguments: the Menpo PointCloud as a "
+                "boundary and the ndarray of pixel indices "
+                "to test. {} is an unknown option.".format(point_in_pointcloud)
+            )
 
         # Only consider indices inside the bounding box of the PointCloud
         bounds = pointcloud.bounds()
@@ -706,7 +740,9 @@ class BooleanImage(Image):
         # Slice all the channels, only inside the bounding box (for setting
         # the new mask values).
         all_channels = [slice(0, 1)]
-        slices = tuple(all_channels + [slice(bounds[0][k], bounds[1][k] + 1)
-                                       for k in range(self.n_dims)])
+        slices = tuple(
+            all_channels
+            + [slice(bounds[0][k], bounds[1][k] + 1) for k in range(self.n_dims)]
+        )
         copy.pixels[slices].flat = point_in_pointcloud(pointcloud, indices)
         return copy

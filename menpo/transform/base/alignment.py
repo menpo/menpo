@@ -23,6 +23,7 @@ class Alignment(Targetable, Viewable):
     target : :map:`PointCloud`
         A PointCloud that the alignment is targeted towards
     """
+
     def __init__(self, source, target):
         self._verify_source_and_target(source, target)
         self._source = source
@@ -49,11 +50,9 @@ class Alignment(Targetable, Viewable):
             Source and target must have the same number of points
         """
         if source.n_dims != target.n_dims:
-            raise ValueError("Source and target must have the same "
-                             "dimensionality")
+            raise ValueError("Source and target must have the same " "dimensionality")
         elif source.n_points != target.n_points:
-            raise ValueError("Source and target must have the same number of"
-                             " points")
+            raise ValueError("Source and target must have the same number of" " points")
 
     @property
     def source(self):
@@ -133,4 +132,5 @@ class Alignment(Targetable, Viewable):
             The options passed to the rendered
         """
         from menpo.visualize import AlignmentViewer2d
+
         return AlignmentViewer2d(figure_id, new_figure, self).render(**kwargs)

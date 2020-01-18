@@ -10,6 +10,7 @@ class OverwriteError(ValueError):
     Raised when an IO action would lead to the overwriting of an existing file
     without explit intention.
     """
+
     def __init__(self, message, path, *args):
         self.message = message  # without this you may get DeprecationWarning
         self.path = path

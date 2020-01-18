@@ -28,9 +28,9 @@ class TexturedTriMesh(TriMesh):
         assignment.
         In general this should only be used if you know what you are doing.
     """
+
     def __init__(self, points, tcoords, texture, trilist=None, copy=True):
-        super(TexturedTriMesh, self).__init__(points, trilist=trilist,
-                                              copy=copy)
+        super(TexturedTriMesh, self).__init__(points, trilist=trilist, copy=copy)
         self.tcoords = PointCloud(tcoords, copy=copy)
 
         if not copy:
@@ -97,10 +97,10 @@ class TexturedTriMesh(TriMesh):
             texture = texture.copy()
         else:
             from menpo.image import Image
+
             # Default texture is all black
             texture = Image.init_blank(shape)
-        return TexturedTriMesh(points, tcoords, texture, trilist=trilist,
-                               copy=False)
+        return TexturedTriMesh(points, tcoords, texture, trilist=trilist, copy=False)
 
     @classmethod
     def init_from_depth_image(cls, depth_image, tcoords=None, texture=None):
@@ -134,16 +134,18 @@ class TexturedTriMesh(TriMesh):
         """
         from menpo.image import MaskedImage
 
-        new_tmesh = cls.init_2d_grid(depth_image.shape, tcoords=tcoords,
-                                     texture=texture)
+        new_tmesh = cls.init_2d_grid(
+            depth_image.shape, tcoords=tcoords, texture=texture
+        )
         if isinstance(depth_image, MaskedImage):
             new_tmesh = new_tmesh.from_mask(depth_image.mask.as_vector())
-        return cls(np.hstack([new_tmesh.points,
-                              depth_image.as_vector(keep_channels=True).T]),
-                   new_tmesh.tcoords.points,
-                   new_tmesh.texture,
-                   trilist=new_tmesh.trilist,
-                   copy=False)
+        return cls(
+            np.hstack([new_tmesh.points, depth_image.as_vector(keep_channels=True).T]),
+            new_tmesh.tcoords.points,
+            new_tmesh.texture,
+            trilist=new_tmesh.trilist,
+            copy=False,
+        )
 
     def tcoords_pixel_scaled(self):
         r"""
@@ -188,9 +190,12 @@ class TexturedTriMesh(TriMesh):
         trimesh : :map:`TriMesh`
             A new trimesh created from the vector with ``self`` trilist.
         """
-        return TexturedTriMesh(flattened.reshape([-1, self.n_dims]),
-                               self.tcoords.points, self.texture,
-                               trilist=self.trilist)
+        return TexturedTriMesh(
+            flattened.reshape([-1, self.n_dims]),
+            self.tcoords.points,
+            self.texture,
+            trilist=self.trilist,
+        )
 
     def from_mask(self, mask):
         """
@@ -210,9 +215,11 @@ class TexturedTriMesh(TriMesh):
             A new mesh that has been masked.
         """
         if mask.shape[0] != self.n_points:
-            raise ValueError('Mask must be a 1D boolean array of the same '
-                             'number of entries as points in this '
-                             'TexturedTriMesh.')
+            raise ValueError(
+                "Mask must be a 1D boolean array of the same "
+                "number of entries as points in this "
+                "TexturedTriMesh."
+            )
 
         ttm = self.copy()
         if np.all(mask):  # Fast path for all true
@@ -227,7 +234,7 @@ class TexturedTriMesh(TriMesh):
             ttm.tcoords.points = ttm.tcoords.points[isolated_mask, :]
             return ttm
 
-    def clip_texture(self, range=(0., 1.)):
+    def clip_texture(self, range=(0.0, 1.0)):
         """
         Method that returns a copy of the object with the texture values
         clipped in range ``(0, 1)``.
@@ -268,15 +275,29 @@ class TexturedTriMesh(TriMesh):
         """
         instance = self.copy()
         instance.texture = instance.texture.rescale_pixels(
-            minimum, maximum, per_channel=per_channel)
+            minimum, maximum, per_channel=per_channel
+        )
         return instance
 
-    def _view_3d(self, figure_id=None, new_figure=True, render_texture=True,
-                 mesh_type='surface', ambient_light=0.0, specular_light=0.0,
-                 colour='r', line_width=2, normals=None, normals_colour='k',
-                 normals_line_width=2, normals_marker_style='2darrow',
-                 normals_marker_resolution=8, normals_marker_size=None,
-                 step=None, alpha=1.0):
+    def _view_3d(
+        self,
+        figure_id=None,
+        new_figure=True,
+        render_texture=True,
+        mesh_type="surface",
+        ambient_light=0.0,
+        specular_light=0.0,
+        colour="r",
+        line_width=2,
+        normals=None,
+        normals_colour="k",
+        normals_line_width=2,
+        normals_marker_style="2darrow",
+        normals_marker_resolution=8,
+        normals_marker_size=None,
+        step=None,
+        alpha=1.0,
+    ):
         r"""
         Visualize the Textured TriMesh in 3D.
 
@@ -354,56 +375,95 @@ class TexturedTriMesh(TriMesh):
         if render_texture:
             try:
                 from menpo3d.visualize import TexturedTriMeshViewer3d
-                renderer = TexturedTriMeshViewer3d(figure_id, new_figure,
-                                                   self.points, self.trilist,
-                                                   self.texture,
-                                                   self.tcoords.points)
+
+                renderer = TexturedTriMeshViewer3d(
+                    figure_id,
+                    new_figure,
+                    self.points,
+                    self.trilist,
+                    self.texture,
+                    self.tcoords.points,
+                )
                 renderer.render(
-                    mesh_type=mesh_type, ambient_light=ambient_light,
-                    specular_light=specular_light, normals=normals,
+                    mesh_type=mesh_type,
+                    ambient_light=ambient_light,
+                    specular_light=specular_light,
+                    normals=normals,
                     normals_colour=normals_colour,
                     normals_line_width=normals_line_width,
                     normals_marker_style=normals_marker_style,
                     normals_marker_resolution=normals_marker_resolution,
-                    normals_marker_size=normals_marker_size, step=step,
-                    alpha=alpha)
+                    normals_marker_size=normals_marker_size,
+                    step=step,
+                    alpha=alpha,
+                )
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import TriMeshViewer3d
-                renderer = TriMeshViewer3d(figure_id, new_figure, self.points,
-                                           self.trilist)
+
+                renderer = TriMeshViewer3d(
+                    figure_id, new_figure, self.points, self.trilist
+                )
                 renderer.render(
-                    mesh_type=mesh_type, line_width=line_width, colour=colour,
-                    normals=normals, normals_colour=normals_colour,
+                    mesh_type=mesh_type,
+                    line_width=line_width,
+                    colour=colour,
+                    normals=normals,
+                    normals_colour=normals_colour,
                     normals_line_width=normals_line_width,
                     normals_marker_style=normals_marker_style,
                     normals_marker_resolution=normals_marker_resolution,
-                    normals_marker_size=normals_marker_size, step=step,
-                    alpha=alpha)
+                    normals_marker_size=normals_marker_size,
+                    step=step,
+                    alpha=alpha,
+                )
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
 
-    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
-                 render_lines=True, line_colour='r', line_style='-',
-                 line_width=1., render_markers=True, marker_style='o',
-                 marker_size=5, marker_face_colour='k', marker_edge_colour='k',
-                 marker_edge_width=1., render_numbering=False,
-                 numbers_horizontal_align='center',
-                 numbers_vertical_align='bottom',
-                 numbers_font_name='sans-serif', numbers_font_size=10,
-                 numbers_font_style='normal', numbers_font_weight='normal',
-                 numbers_font_colour='k', render_axes=True,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(7, 7),
-                 label=None, **kwargs):
+    def _view_2d(
+        self,
+        figure_id=None,
+        new_figure=False,
+        image_view=True,
+        render_lines=True,
+        line_colour="r",
+        line_style="-",
+        line_width=1.0,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour="k",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+        label=None,
+        **kwargs,
+    ):
         r"""
         Visualization of the TriMesh in 2D. Currently, explicit textured TriMesh
         viewing is not supported, and therefore viewing falls back to untextured
@@ -539,14 +599,25 @@ class TexturedTriMesh(TriMesh):
             falls back to 2D :map:`TriMesh` viewing.
         """
         import warnings
-        warnings.warn(Warning('2D Viewing of Textured TriMeshes is not '
-                              'supported, falling back to TriMesh viewing.'))
+
+        warnings.warn(
+            Warning(
+                "2D Viewing of Textured TriMeshes is not "
+                "supported, falling back to TriMesh viewing."
+            )
+        )
         return TriMesh._view_2d(
-            self, figure_id=figure_id, new_figure=new_figure,
-            image_view=image_view, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            self,
+            figure_id=figure_id,
+            new_figure=new_figure,
+            image_view=image_view,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
             marker_edge_width=marker_edge_width,
@@ -557,13 +628,21 @@ class TexturedTriMesh(TriMesh):
             numbers_font_size=numbers_font_size,
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
-            figure_size=figure_size, label=label)
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+            label=label,
+        )
 
     def __str__(self):
-        return '{}\ntexture_shape: {}, n_texture_channels: {}'.format(
-            TriMesh.__str__(self), self.texture.shape, self.texture.n_channels)
+        return "{}\ntexture_shape: {}, n_texture_channels: {}".format(
+            TriMesh.__str__(self), self.texture.shape, self.texture.n_channels
+        )

@@ -2,12 +2,12 @@ import menpo
 from numpy.testing import assert_equal
 from menpo.transform.piecewiseaffine.base import CachedPWA, PythonPWA
 
-b = menpo.io.import_builtin_asset('breakingbad.jpg').as_masked()
+b = menpo.io.import_builtin_asset("breakingbad.jpg").as_masked()
 b = b.crop_to_landmarks_proportion(0.1)
 b = b.rescale_landmarks_to_diagonal_range(120)
 b = b.constrain_mask_to_landmarks()
 points = b.mask.true_indices()
-src = b.landmarks['PTS']
+src = b.landmarks["PTS"]
 tgt = src.copy()
 
 
@@ -19,8 +19,7 @@ def test_cached_pwa_same_as_python_pwa():
 
 def test_python_pwa_batch_same():
     python_pwa = PythonPWA(src, tgt)
-    assert_equal(python_pwa.apply(points),
-                 python_pwa.apply(points, batch_size=10))
+    assert_equal(python_pwa.apply(points), python_pwa.apply(points, batch_size=10))
 
 
 def test_cached_pwa_same_twice():

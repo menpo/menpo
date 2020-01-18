@@ -27,9 +27,7 @@ def test_translation():
 
 def test_translation_2d_from_vector():
     params = np.array([1, 2])
-    homo = np.array([[1, 0, params[0]],
-                     [0, 1, params[1]],
-                     [0, 0, 1]])
+    homo = np.array([[1, 0, params[0]], [0, 1, params[1]], [0, 0, 1]])
 
     tr = Translation.init_identity(2).from_vector(params)
 
@@ -44,10 +42,9 @@ def test_translation_2d_as_vector():
 
 def test_translation_3d_from_vector():
     params = np.array([1, 2, 3])
-    homo = np.array([[1, 0, 0, params[0]],
-                     [0, 1, 0, params[1]],
-                     [0, 0, 1, params[2]],
-                     [0, 0, 0, 1]])
+    homo = np.array(
+        [[1, 0, 0, params[0]], [0, 1, 0, params[1]], [0, 0, 1, params[2]], [0, 0, 0, 1]]
+    )
 
     tr = Translation.init_identity(3).from_vector(params)
 
@@ -63,19 +60,19 @@ def test_translation_3d_as_vector():
 def test_translation_2d_n_parameters():
     trans = np.array([1, 2])
     t = Translation(trans)
-    assert (t.n_parameters == 2)
+    assert t.n_parameters == 2
 
 
 def test_translation_3d_n_parameters():
     trans = np.array([1, 2, 3])
     t = Translation(trans)
-    assert (t.n_parameters == 3)
+    assert t.n_parameters == 3
 
 
 def test_translation_from_list():
     t_a = Translation([3, 4])
     t_b = Translation(np.array([3, 4]))
-    assert (np.all(t_a.h_matrix == t_b.h_matrix))
+    assert np.all(t_a.h_matrix == t_b.h_matrix)
 
 
 def test_translation_identity_2d():

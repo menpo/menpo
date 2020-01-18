@@ -17,40 +17,55 @@ def _covariance_matrix_inverse(cov_mat, n_components):
             s = s[:, :n_components]
             v = v[:n_components]
             d = d[:n_components, :]
-            return s.dot(np.diag(1/v)).dot(d)
+            return s.dot(np.diag(1 / v)).dot(d)
         except:
             return np.linalg.inv(cov_mat)
 
 
-def _create_sparse_precision(X, graph, n_features, n_features_per_vertex,
-                             mode='concatenation', dtype=np.float32,
-                             n_components=None, bias=0,
-                             return_covariances=False, verbose=False):
+def _create_sparse_precision(
+    X,
+    graph,
+    n_features,
+    n_features_per_vertex,
+    mode="concatenation",
+    dtype=np.float32,
+    n_components=None,
+    bias=0,
+    return_covariances=False,
+    verbose=False,
+):
     # check mode argument
-    if mode not in ['concatenation', 'subtraction']:
-        raise ValueError("mode must be either ''concatenation'' "
-                         "or ''subtraction''; {} is given.".format(mode))
+    if mode not in ["concatenation", "subtraction"]:
+        raise ValueError(
+            "mode must be either ''concatenation'' "
+            "or ''subtraction''; {} is given.".format(mode)
+        )
 
     # Initialize arrays
-    all_blocks = np.zeros((graph.n_edges * 4,
-                           n_features_per_vertex, n_features_per_vertex),
-                          dtype=dtype)
+    all_blocks = np.zeros(
+        (graph.n_edges * 4, n_features_per_vertex, n_features_per_vertex), dtype=dtype
+    )
     if return_covariances:
-        if mode == 'concatenation':
-            cov_shape = (graph.n_edges,
-                         2 * n_features_per_vertex, 2 * n_features_per_vertex)
+        if mode == "concatenation":
+            cov_shape = (
+                graph.n_edges,
+                2 * n_features_per_vertex,
+                2 * n_features_per_vertex,
+            )
         else:
-            cov_shape = (graph.n_edges,
-                         n_features_per_vertex, n_features_per_vertex)
+            cov_shape = (graph.n_edges, n_features_per_vertex, n_features_per_vertex)
         all_covariances = np.zeros(cov_shape, dtype=dtype)
     columns = np.zeros(graph.n_edges * 4)
     rows = np.zeros(graph.n_edges * 4)
 
     # Print information if asked
     if verbose:
-        edges = print_progress(range(graph.n_edges), n_items=graph.n_edges,
-                               prefix='Precision per edge',
-                               end_with_newline=False)
+        edges = print_progress(
+            range(graph.n_edges),
+            n_items=graph.n_edges,
+            prefix="Precision per edge",
+            end_with_newline=False,
+        )
     else:
         edges = range(graph.n_edges)
 
@@ -68,9 +83,8 @@ def _create_sparse_precision(X, graph, n_features, n_features_per_vertex,
         v2_to = (v2 + 1) * n_features_per_vertex
 
         # data concatenation
-        if mode == 'concatenation':
-            edge_data = X[:, list(range(v1_from, v1_to)) +
-                             list(range(v2_from, v2_to))]
+        if mode == "concatenation":
+            edge_data = X[:, list(range(v1_from, v1_to)) + list(range(v2_from, v2_to))]
         else:
             edge_data = X[:, v1_from:v1_to] - X[:, v2_from:v2_to]
 
@@ -83,29 +97,25 @@ def _create_sparse_precision(X, graph, n_features, n_features_per_vertex,
         covmat = _covariance_matrix_inverse(covmat, n_components)
 
         # store it
-        if mode == 'concatenation':
+        if mode == "concatenation":
             # v1, v1
             count += 1
-            all_blocks[count] = \
-                covmat[:n_features_per_vertex, :n_features_per_vertex]
+            all_blocks[count] = covmat[:n_features_per_vertex, :n_features_per_vertex]
             rows[count] = v1
             columns[count] = v1
             # v2, v2
             count += 1
-            all_blocks[count] = \
-                covmat[n_features_per_vertex::, n_features_per_vertex::]
+            all_blocks[count] = covmat[n_features_per_vertex::, n_features_per_vertex::]
             rows[count] = v2
             columns[count] = v2
             # v1, v2
             count += 1
-            all_blocks[count] = \
-                covmat[:n_features_per_vertex, n_features_per_vertex::]
+            all_blocks[count] = covmat[:n_features_per_vertex, n_features_per_vertex::]
             rows[count] = v1
             columns[count] = v2
             # v2, v1
             count += 1
-            all_blocks[count] = \
-                covmat[n_features_per_vertex::, :n_features_per_vertex]
+            all_blocks[count] = covmat[n_features_per_vertex::, :n_features_per_vertex]
             rows[count] = v2
             columns[count] = v1
         else:
@@ -140,7 +150,7 @@ def _create_sparse_precision(X, graph, n_features, n_features_per_vertex,
     n_rows = graph.n_vertices
     indptr = np.zeros(n_rows + 1)
     for i in range(n_rows):
-        inds, = np.where(rows == i)
+        (inds,) = np.where(rows == i)
         if inds.size == 0:
             indptr[i + 1] = indptr[i]
         else:
@@ -149,41 +159,63 @@ def _create_sparse_precision(X, graph, n_features, n_features_per_vertex,
 
     # create block sparse matrix
     if return_covariances:
-        return (bsr_matrix((all_blocks, columns, indptr),
-                           shape=(n_features, n_features), dtype=dtype),
-                all_covariances)
+        return (
+            bsr_matrix(
+                (all_blocks, columns, indptr),
+                shape=(n_features, n_features),
+                dtype=dtype,
+            ),
+            all_covariances,
+        )
     else:
-        return bsr_matrix((all_blocks, columns, indptr),
-                          shape=(n_features, n_features), dtype=dtype)
+        return bsr_matrix(
+            (all_blocks, columns, indptr), shape=(n_features, n_features), dtype=dtype
+        )
 
 
-def _create_dense_precision(X, graph, n_features, n_features_per_vertex,
-                            mode='concatenation', dtype=np.float32,
-                            n_components=None, bias=0,
-                            return_covariances=False, verbose=False):
+def _create_dense_precision(
+    X,
+    graph,
+    n_features,
+    n_features_per_vertex,
+    mode="concatenation",
+    dtype=np.float32,
+    n_components=None,
+    bias=0,
+    return_covariances=False,
+    verbose=False,
+):
     # check mode argument
-    if mode not in ['concatenation', 'subtraction']:
-        raise ValueError("mode must be either ''concatenation'' "
-                         "or ''subtraction''; {} is given.".format(mode))
+    if mode not in ["concatenation", "subtraction"]:
+        raise ValueError(
+            "mode must be either ''concatenation'' "
+            "or ''subtraction''; {} is given.".format(mode)
+        )
 
     # Initialize precision
     precision = np.zeros((n_features, n_features), dtype=dtype)
     if return_covariances:
-        if mode == 'concatenation':
-            cov_shape = (graph.n_edges,
-                         2 * n_features_per_vertex, 2 * n_features_per_vertex)
+        if mode == "concatenation":
+            cov_shape = (
+                graph.n_edges,
+                2 * n_features_per_vertex,
+                2 * n_features_per_vertex,
+            )
         else:
-            cov_shape = (graph.n_edges,
-                         n_features_per_vertex, n_features_per_vertex)
+            cov_shape = (graph.n_edges, n_features_per_vertex, n_features_per_vertex)
         all_covariances = np.zeros(cov_shape, dtype=dtype)
 
     # Print information if asked
     if verbose:
-        print_dynamic('Allocated precision matrix of size {}'.format(
-            bytes_str(precision.nbytes)))
-        edges = print_progress(range(graph.n_edges), n_items=graph.n_edges,
-                               prefix='Precision per edge',
-                               end_with_newline=False)
+        print_dynamic(
+            "Allocated precision matrix of size {}".format(bytes_str(precision.nbytes))
+        )
+        edges = print_progress(
+            range(graph.n_edges),
+            n_items=graph.n_edges,
+            prefix="Precision per edge",
+            end_with_newline=False,
+        )
     else:
         edges = range(graph.n_edges)
 
@@ -200,9 +232,8 @@ def _create_dense_precision(X, graph, n_features, n_features_per_vertex,
         v2_to = (v2 + 1) * n_features_per_vertex
 
         # data concatenation
-        if mode == 'concatenation':
-            edge_data = X[:, list(range(v1_from, v1_to)) +
-                             list(range(v2_from, v2_to))]
+        if mode == "concatenation":
+            edge_data = X[:, list(range(v1_from, v1_to)) + list(range(v2_from, v2_to))]
         else:
             edge_data = X[:, v1_from:v1_to] - X[:, v2_from:v2_to]
 
@@ -215,20 +246,24 @@ def _create_dense_precision(X, graph, n_features, n_features_per_vertex,
         covmat = _covariance_matrix_inverse(covmat, n_components)
 
         # store it
-        if mode == 'concatenation':
+        if mode == "concatenation":
             # v1, v1
-            precision[v1_from:v1_to, v1_from:v1_to] += \
-                covmat[:n_features_per_vertex, :n_features_per_vertex]
+            precision[v1_from:v1_to, v1_from:v1_to] += covmat[
+                :n_features_per_vertex, :n_features_per_vertex
+            ]
             # v2, v2
-            precision[v2_from:v2_to, v2_from:v2_to] += \
-                covmat[n_features_per_vertex::, n_features_per_vertex::]
+            precision[v2_from:v2_to, v2_from:v2_to] += covmat[
+                n_features_per_vertex::, n_features_per_vertex::
+            ]
             # v1, v2
-            precision[v1_from:v1_to, v2_from:v2_to] = \
-                covmat[:n_features_per_vertex, n_features_per_vertex::]
+            precision[v1_from:v1_to, v2_from:v2_to] = covmat[
+                :n_features_per_vertex, n_features_per_vertex::
+            ]
             # v2, v1
-            precision[v2_from:v2_to, v1_from:v1_to] = \
-                covmat[n_features_per_vertex::, :n_features_per_vertex]
-        elif mode == 'subtraction':
+            precision[v2_from:v2_to, v1_from:v1_to] = covmat[
+                n_features_per_vertex::, :n_features_per_vertex
+            ]
+        elif mode == "subtraction":
             # v1, v2
             precision[v1_from:v1_to, v2_from:v2_to] = -covmat
             # v2, v1
@@ -245,27 +280,37 @@ def _create_dense_precision(X, graph, n_features, n_features_per_vertex,
         return precision
 
 
-def _create_sparse_diagonal_precision(X, graph, n_features,
-                                      n_features_per_vertex,
-                                      dtype=np.float32, n_components=None,
-                                      bias=0, return_covariances=False,
-                                      verbose=False):
+def _create_sparse_diagonal_precision(
+    X,
+    graph,
+    n_features,
+    n_features_per_vertex,
+    dtype=np.float32,
+    n_components=None,
+    bias=0,
+    return_covariances=False,
+    verbose=False,
+):
     # initialize covariances matrix
-    all_blocks = np.zeros((graph.n_vertices,
-                           n_features_per_vertex, n_features_per_vertex),
-                          dtype=dtype)
+    all_blocks = np.zeros(
+        (graph.n_vertices, n_features_per_vertex, n_features_per_vertex), dtype=dtype
+    )
     if return_covariances:
         all_covariances = np.zeros(
             (graph.n_vertices, n_features_per_vertex, n_features_per_vertex),
-            dtype=dtype)
+            dtype=dtype,
+        )
     columns = np.zeros(graph.n_vertices)
     rows = np.zeros(graph.n_vertices)
 
     # Print information if asked
     if verbose:
         vertices = print_progress(
-            range(graph.n_vertices), n_items=graph.n_vertices,
-            prefix='Precision per vertex', end_with_newline=False)
+            range(graph.n_vertices),
+            n_items=graph.n_vertices,
+            prefix="Precision per vertex",
+            end_with_newline=False,
+        )
     else:
         vertices = range(graph.n_vertices)
 
@@ -297,7 +342,7 @@ def _create_sparse_diagonal_precision(X, graph, n_features,
     n_rows = graph.n_vertices
     indptr = np.zeros(n_rows + 1)
     for i in range(n_rows):
-        inds, = np.where(rows == i)
+        (inds,) = np.where(rows == i)
         if inds.size == 0:
             indptr[i + 1] = indptr[i]
         else:
@@ -306,34 +351,51 @@ def _create_sparse_diagonal_precision(X, graph, n_features,
 
     # create block sparse matrix
     if return_covariances:
-        return (bsr_matrix((all_blocks, columns, indptr),
-                           shape=(n_features, n_features), dtype=dtype),
-                all_covariances)
+        return (
+            bsr_matrix(
+                (all_blocks, columns, indptr),
+                shape=(n_features, n_features),
+                dtype=dtype,
+            ),
+            all_covariances,
+        )
     else:
-        return bsr_matrix((all_blocks, columns, indptr),
-                          shape=(n_features, n_features), dtype=dtype)
+        return bsr_matrix(
+            (all_blocks, columns, indptr), shape=(n_features, n_features), dtype=dtype
+        )
 
 
-def _create_dense_diagonal_precision(X, graph, n_features,
-                                     n_features_per_vertex,
-                                     dtype=np.float32, n_components=None,
-                                     bias=0, return_covariances=False,
-                                     verbose=False):
+def _create_dense_diagonal_precision(
+    X,
+    graph,
+    n_features,
+    n_features_per_vertex,
+    dtype=np.float32,
+    n_components=None,
+    bias=0,
+    return_covariances=False,
+    verbose=False,
+):
     # Initialize precision
     precision = np.zeros((n_features, n_features), dtype=dtype)
     if return_covariances:
         all_covariances = np.zeros(
             (graph.n_vertices, n_features_per_vertex, n_features_per_vertex),
-            dtype=dtype)
+            dtype=dtype,
+        )
     if verbose:
-        print_dynamic('Allocated precision matrix of size {}'.format(
-            bytes_str(precision.nbytes)))
+        print_dynamic(
+            "Allocated precision matrix of size {}".format(bytes_str(precision.nbytes))
+        )
 
     # Print information if asked
     if verbose:
         vertices = print_progress(
-            range(graph.n_vertices), n_items=graph.n_vertices,
-            prefix='Precision per vertex', end_with_newline=False)
+            range(graph.n_vertices),
+            n_items=graph.n_vertices,
+            prefix="Precision per vertex",
+            end_with_newline=False,
+        )
     else:
         vertices = range(graph.n_vertices)
 
@@ -361,27 +423,42 @@ def _create_dense_diagonal_precision(X, graph, n_features,
         return precision
 
 
-def _increment_sparse_precision(X, mean_vector, covariances, n, graph,
-                                n_features, n_features_per_vertex,
-                                mode='concatenation', dtype=np.float32,
-                                n_components=None, bias=0, verbose=False):
+def _increment_sparse_precision(
+    X,
+    mean_vector,
+    covariances,
+    n,
+    graph,
+    n_features,
+    n_features_per_vertex,
+    mode="concatenation",
+    dtype=np.float32,
+    n_components=None,
+    bias=0,
+    verbose=False,
+):
     # check mode argument
-    if mode not in ['concatenation', 'subtraction']:
-        raise ValueError("mode must be either ''concatenation'' "
-                         "or ''subtraction''; {} is given.".format(mode))
+    if mode not in ["concatenation", "subtraction"]:
+        raise ValueError(
+            "mode must be either ''concatenation'' "
+            "or ''subtraction''; {} is given.".format(mode)
+        )
 
     # Initialize arrays
-    all_blocks = np.zeros((graph.n_edges * 4,
-                           n_features_per_vertex, n_features_per_vertex),
-                          dtype=dtype)
+    all_blocks = np.zeros(
+        (graph.n_edges * 4, n_features_per_vertex, n_features_per_vertex), dtype=dtype
+    )
     columns = np.zeros(graph.n_edges * 4)
     rows = np.zeros(graph.n_edges * 4)
 
     # Print information if asked
     if verbose:
-        edges = print_progress(range(graph.n_edges), n_items=graph.n_edges,
-                               prefix='Precision per edge',
-                               end_with_newline=False)
+        edges = print_progress(
+            range(graph.n_edges),
+            n_items=graph.n_edges,
+            prefix="Precision per edge",
+            end_with_newline=False,
+        )
     else:
         edges = range(graph.n_edges)
 
@@ -399,46 +476,41 @@ def _increment_sparse_precision(X, mean_vector, covariances, n, graph,
         v2_to = (v2 + 1) * n_features_per_vertex
 
         # data concatenation
-        if mode == 'concatenation':
-            edge_data = X[:, list(range(v1_from, v1_to)) +
-                             list(range(v2_from, v2_to))]
-            m = mean_vector[list(range(v1_from, v1_to)) +
-                            list(range(v2_from, v2_to))]
+        if mode == "concatenation":
+            edge_data = X[:, list(range(v1_from, v1_to)) + list(range(v2_from, v2_to))]
+            m = mean_vector[list(range(v1_from, v1_to)) + list(range(v2_from, v2_to))]
         else:
             edge_data = X[:, v1_from:v1_to] - X[:, v2_from:v2_to]
             m = mean_vector[v1_from:v1_to] - mean_vector[v2_from:v2_to]
 
         # increment
         _, covariances[e] = _increment_multivariate_gaussian_cov(
-            edge_data, m, covariances[e], n, bias=bias)
+            edge_data, m, covariances[e], n, bias=bias
+        )
 
         # invert it
         covmat = _covariance_matrix_inverse(covariances[e], n_components)
 
         # store it
-        if mode == 'concatenation':
+        if mode == "concatenation":
             # v1, v1
             count += 1
-            all_blocks[count] = \
-                covmat[:n_features_per_vertex, :n_features_per_vertex]
+            all_blocks[count] = covmat[:n_features_per_vertex, :n_features_per_vertex]
             rows[count] = v1
             columns[count] = v1
             # v2, v2
             count += 1
-            all_blocks[count] = \
-                covmat[n_features_per_vertex::, n_features_per_vertex::]
+            all_blocks[count] = covmat[n_features_per_vertex::, n_features_per_vertex::]
             rows[count] = v2
             columns[count] = v2
             # v1, v2
             count += 1
-            all_blocks[count] = \
-                covmat[:n_features_per_vertex, n_features_per_vertex::]
+            all_blocks[count] = covmat[:n_features_per_vertex, n_features_per_vertex::]
             rows[count] = v1
             columns[count] = v2
             # v2, v1
             count += 1
-            all_blocks[count] = \
-                covmat[n_features_per_vertex::, :n_features_per_vertex]
+            all_blocks[count] = covmat[n_features_per_vertex::, :n_features_per_vertex]
             rows[count] = v2
             columns[count] = v1
         else:
@@ -473,7 +545,7 @@ def _increment_sparse_precision(X, mean_vector, covariances, n, graph,
     n_rows = graph.n_vertices
     indptr = np.zeros(n_rows + 1)
     for i in range(n_rows):
-        inds, = np.where(rows == i)
+        (inds,) = np.where(rows == i)
         if inds.size == 0:
             indptr[i + 1] = indptr[i]
         else:
@@ -481,30 +553,49 @@ def _increment_sparse_precision(X, mean_vector, covariances, n, graph,
             indptr[i + 1] = inds[-1] + 1
 
     # create block sparse matrix
-    return (bsr_matrix((all_blocks, columns, indptr),
-                       shape=(n_features, n_features), dtype=dtype),
-            covariances)
+    return (
+        bsr_matrix(
+            (all_blocks, columns, indptr), shape=(n_features, n_features), dtype=dtype
+        ),
+        covariances,
+    )
 
 
-def _increment_dense_precision(X, mean_vector, covariances, n, graph,
-                               n_features, n_features_per_vertex,
-                               mode='concatenation', dtype=np.float32,
-                               n_components=None, bias=0, verbose=False):
+def _increment_dense_precision(
+    X,
+    mean_vector,
+    covariances,
+    n,
+    graph,
+    n_features,
+    n_features_per_vertex,
+    mode="concatenation",
+    dtype=np.float32,
+    n_components=None,
+    bias=0,
+    verbose=False,
+):
     # check mode argument
-    if mode not in ['concatenation', 'subtraction']:
-        raise ValueError("mode must be either ''concatenation'' "
-                         "or ''subtraction''; {} is given.".format(mode))
+    if mode not in ["concatenation", "subtraction"]:
+        raise ValueError(
+            "mode must be either ''concatenation'' "
+            "or ''subtraction''; {} is given.".format(mode)
+        )
 
     # Initialize precision
     precision = np.zeros((n_features, n_features), dtype=dtype)
 
     # Print information if asked
     if verbose:
-        print_dynamic('Allocated precision matrix of size {}'.format(
-            bytes_str(precision.nbytes)))
-        edges = print_progress(range(graph.n_edges), n_items=graph.n_edges,
-                               prefix='Precision per edge',
-                               end_with_newline=False)
+        print_dynamic(
+            "Allocated precision matrix of size {}".format(bytes_str(precision.nbytes))
+        )
+        edges = print_progress(
+            range(graph.n_edges),
+            n_items=graph.n_edges,
+            prefix="Precision per edge",
+            end_with_newline=False,
+        )
     else:
         edges = range(graph.n_edges)
 
@@ -521,37 +612,40 @@ def _increment_dense_precision(X, mean_vector, covariances, n, graph,
         v2_to = (v2 + 1) * n_features_per_vertex
 
         # data concatenation
-        if mode == 'concatenation':
-            edge_data = X[:, list(range(v1_from, v1_to)) +
-                             list(range(v2_from, v2_to))]
-            m = mean_vector[list(range(v1_from, v1_to)) +
-                            list(range(v2_from, v2_to))]
+        if mode == "concatenation":
+            edge_data = X[:, list(range(v1_from, v1_to)) + list(range(v2_from, v2_to))]
+            m = mean_vector[list(range(v1_from, v1_to)) + list(range(v2_from, v2_to))]
         else:
             edge_data = X[:, v1_from:v1_to] - X[:, v2_from:v2_to]
             m = mean_vector[v1_from:v1_to] - mean_vector[v2_from:v2_to]
 
         # increment
         _, covariances[e] = _increment_multivariate_gaussian_cov(
-            edge_data, m, covariances[e], n, bias=bias)
+            edge_data, m, covariances[e], n, bias=bias
+        )
 
         # invert it
         covmat = _covariance_matrix_inverse(covariances[e], n_components)
 
         # store it
-        if mode == 'concatenation':
+        if mode == "concatenation":
             # v1, v1
-            precision[v1_from:v1_to, v1_from:v1_to] += \
-                covmat[:n_features_per_vertex, :n_features_per_vertex]
+            precision[v1_from:v1_to, v1_from:v1_to] += covmat[
+                :n_features_per_vertex, :n_features_per_vertex
+            ]
             # v2, v2
-            precision[v2_from:v2_to, v2_from:v2_to] += \
-                covmat[n_features_per_vertex::, n_features_per_vertex::]
+            precision[v2_from:v2_to, v2_from:v2_to] += covmat[
+                n_features_per_vertex::, n_features_per_vertex::
+            ]
             # v1, v2
-            precision[v1_from:v1_to, v2_from:v2_to] = \
-                covmat[:n_features_per_vertex, n_features_per_vertex::]
+            precision[v1_from:v1_to, v2_from:v2_to] = covmat[
+                :n_features_per_vertex, n_features_per_vertex::
+            ]
             # v2, v1
-            precision[v2_from:v2_to, v1_from:v1_to] = \
-                covmat[n_features_per_vertex::, :n_features_per_vertex]
-        elif mode == 'subtraction':
+            precision[v2_from:v2_to, v1_from:v1_to] = covmat[
+                n_features_per_vertex::, :n_features_per_vertex
+            ]
+        elif mode == "subtraction":
             # v1, v2
             precision[v1_from:v1_to, v2_from:v2_to] = -covmat
             # v2, v1
@@ -565,22 +659,34 @@ def _increment_dense_precision(X, mean_vector, covariances, n, graph,
     return precision, covariances
 
 
-def _increment_sparse_diagonal_precision(X, mean_vector, covariances, n, graph,
-                                         n_features, n_features_per_vertex,
-                                         dtype=np.float32, n_components=None,
-                                         bias=0, verbose=False):
+def _increment_sparse_diagonal_precision(
+    X,
+    mean_vector,
+    covariances,
+    n,
+    graph,
+    n_features,
+    n_features_per_vertex,
+    dtype=np.float32,
+    n_components=None,
+    bias=0,
+    verbose=False,
+):
     # initialize covariances matrix
-    all_blocks = np.zeros((graph.n_vertices,
-                           n_features_per_vertex, n_features_per_vertex),
-                          dtype=dtype)
+    all_blocks = np.zeros(
+        (graph.n_vertices, n_features_per_vertex, n_features_per_vertex), dtype=dtype
+    )
     columns = np.zeros(graph.n_vertices)
     rows = np.zeros(graph.n_vertices)
 
     # Print information if asked
     if verbose:
         vertices = print_progress(
-            range(graph.n_vertices), n_items=graph.n_vertices,
-            prefix='Precision per vertex', end_with_newline=False)
+            range(graph.n_vertices),
+            n_items=graph.n_vertices,
+            prefix="Precision per vertex",
+            end_with_newline=False,
+        )
     else:
         vertices = range(graph.n_vertices)
 
@@ -596,7 +702,8 @@ def _increment_sparse_diagonal_precision(X, mean_vector, covariances, n, graph,
 
         # increment
         _, covariances[v] = _increment_multivariate_gaussian_cov(
-            edge_data, m, covariances[v], n, bias=bias)
+            edge_data, m, covariances[v], n, bias=bias
+        )
 
         # invert it
         all_blocks[v] = _covariance_matrix_inverse(covariances[v], n_components)
@@ -615,7 +722,7 @@ def _increment_sparse_diagonal_precision(X, mean_vector, covariances, n, graph,
     n_rows = graph.n_vertices
     indptr = np.zeros(n_rows + 1)
     for i in range(n_rows):
-        inds, = np.where(rows == i)
+        (inds,) = np.where(rows == i)
         if inds.size == 0:
             indptr[i + 1] = indptr[i]
         else:
@@ -623,25 +730,41 @@ def _increment_sparse_diagonal_precision(X, mean_vector, covariances, n, graph,
             indptr[i + 1] = inds[-1] + 1
 
     # create block sparse matrix
-    return (bsr_matrix((all_blocks, columns, indptr),
-                       shape=(n_features, n_features), dtype=dtype),
-            covariances)
+    return (
+        bsr_matrix(
+            (all_blocks, columns, indptr), shape=(n_features, n_features), dtype=dtype
+        ),
+        covariances,
+    )
 
 
-def _increment_dense_diagonal_precision(X, mean_vector, covariances, n, graph,
-                                        n_features, n_features_per_vertex,
-                                        dtype=np.float32, n_components=None,
-                                        bias=0, verbose=False):
+def _increment_dense_diagonal_precision(
+    X,
+    mean_vector,
+    covariances,
+    n,
+    graph,
+    n_features,
+    n_features_per_vertex,
+    dtype=np.float32,
+    n_components=None,
+    bias=0,
+    verbose=False,
+):
     # Initialize precision
     precision = np.zeros((n_features, n_features), dtype=dtype)
 
     # Print information if asked
     if verbose:
-        print_dynamic('Allocated precision matrix of size {}'.format(
-            bytes_str(precision.nbytes)))
+        print_dynamic(
+            "Allocated precision matrix of size {}".format(bytes_str(precision.nbytes))
+        )
         vertices = print_progress(
-            range(graph.n_vertices), n_items=graph.n_vertices,
-            prefix='Precision per vertex', end_with_newline=False)
+            range(graph.n_vertices),
+            n_items=graph.n_vertices,
+            prefix="Precision per vertex",
+            end_with_newline=False,
+        )
     else:
         vertices = range(graph.n_vertices)
 
@@ -657,11 +780,13 @@ def _increment_dense_diagonal_precision(X, mean_vector, covariances, n, graph,
 
         # increment
         _, covariances[v] = _increment_multivariate_gaussian_cov(
-            edge_data, m, covariances[v], n, bias=bias)
+            edge_data, m, covariances[v], n, bias=bias
+        )
 
         # invert it
         precision[i_from:i_to, i_from:i_to] = _covariance_matrix_inverse(
-            covariances[v], n_components)
+            covariances[v], n_components
+        )
 
     # return covariances
     return precision, covariances
@@ -800,9 +925,20 @@ class GMRFVectorModel(object):
        Pictorial Structures", IEEE International Conference on Computer Vision
        & Pattern Recognition (CVPR), Boston, MA, USA, pp. 5435-5444, June 2015.
     """
-    def __init__(self, samples, graph, n_samples=None, mode='concatenation',
-                 n_components=None, dtype=np.float64, sparse=True, bias=0,
-                 incremental=False, verbose=False):
+
+    def __init__(
+        self,
+        samples,
+        graph,
+        n_samples=None,
+        mode="concatenation",
+        n_components=None,
+        dtype=np.float64,
+        sparse=True,
+        bias=0,
+        incremental=False,
+        verbose=False,
+    ):
         # Generate data matrix
         # (n_samples, n_features)
         data, self.n_samples = self._data_to_matrix(samples, n_samples)
@@ -840,15 +976,29 @@ class GMRFVectorModel(object):
         # matrices
         if self.is_incremental:
             self.precision, self._covariance_matrices = constructor(
-                data, self.graph, self.n_features, self.n_features_per_vertex,
-                dtype=self.dtype, n_components=self.n_components, bias=self.bias,
-                return_covariances=self.is_incremental, verbose=verbose)
+                data,
+                self.graph,
+                self.n_features,
+                self.n_features_per_vertex,
+                dtype=self.dtype,
+                n_components=self.n_components,
+                bias=self.bias,
+                return_covariances=self.is_incremental,
+                verbose=verbose,
+            )
         else:
             self._covariance_matrices = None
             self.precision = constructor(
-                data, self.graph, self.n_features, self.n_features_per_vertex,
-                dtype=self.dtype, n_components=self.n_components, bias=self.bias,
-                return_covariances=self.is_incremental, verbose=verbose)
+                data,
+                self.graph,
+                self.n_features,
+                self.n_features_per_vertex,
+                dtype=self.dtype,
+                n_components=self.n_components,
+                bias=self.bias,
+                return_covariances=self.is_incremental,
+                verbose=verbose,
+            )
 
     def _data_to_matrix(self, data, n_samples):
         # build a data matrix from all the samples
@@ -890,7 +1040,7 @@ class GMRFVectorModel(object):
         """
         # Check if it can be incrementally updated
         if not self.is_incremental:
-            raise ValueError('GMRF cannot be incrementally updated.')
+            raise ValueError("GMRF cannot be incrementally updated.")
 
         # Build a data matrix from the new samples
         data, _ = self._data_to_matrix(samples, n_samples)
@@ -911,27 +1061,33 @@ class GMRFVectorModel(object):
                 constructor = _increment_dense_diagonal_precision
         else:
             if self.sparse:
-                constructor = partial(_increment_sparse_precision,
-                                      mode=self.mode)
+                constructor = partial(_increment_sparse_precision, mode=self.mode)
             else:
-                constructor = partial(_increment_dense_precision,
-                                      mode=self.mode)
+                constructor = partial(_increment_dense_precision, mode=self.mode)
 
         # Create the precision matrix and optionally store the covariance
         # matrices
         self.precision, self._covariance_matrices = constructor(
-            data, self.mean_vector, self._covariance_matrices, self.n_samples,
-            self.graph, self.n_features, self.n_features_per_vertex,
-            dtype=self.dtype, n_components=self.n_components, bias=self.bias,
-            verbose=verbose)
+            data,
+            self.mean_vector,
+            self._covariance_matrices,
+            self.n_samples,
+            self.graph,
+            self.n_features,
+            self.n_features_per_vertex,
+            dtype=self.dtype,
+            n_components=self.n_components,
+            bias=self.bias,
+            verbose=verbose,
+        )
 
         # Update mean and number of samples
         self.mean_vector = _increment_multivariate_gaussian_mean(
-            data, self.mean_vector, self.n_samples)
+            data, self.mean_vector, self.n_samples
+        )
         self.n_samples += data.shape[0]
 
-    def mahalanobis_distance(self, samples, subtract_mean=True,
-                             square_root=False):
+    def mahalanobis_distance(self, samples, subtract_mean=True, square_root=False):
         r"""
         Compute the mahalanobis distance given a sample :math:`\mathbf{x}` or an
         array of samples :math:`\mathbf{X}`, i.e.
@@ -953,9 +1109,9 @@ class GMRFVectorModel(object):
         samples, _ = self._data_to_matrix(samples, None)
         if len(samples.shape) == 1:
             samples = samples[..., None].T
-        return self._mahalanobis_distance(samples=samples,
-                                          subtract_mean=subtract_mean,
-                                          square_root=square_root)
+        return self._mahalanobis_distance(
+            samples=samples, subtract_mean=subtract_mean, square_root=square_root
+        )
 
     def _mahalanobis_distance(self, samples, subtract_mean, square_root):
         # we assume that samples is an ndarray of n_samples x n_features
@@ -963,8 +1119,7 @@ class GMRFVectorModel(object):
         # create data matrix
         if subtract_mean:
             n_samples = samples.shape[0]
-            samples = samples - np.tile(self.mean_vector[..., None],
-                                        n_samples).T
+            samples = samples - np.tile(self.mean_vector[..., None], n_samples).T
 
         # compute mahalanobis per sample
         if self.sparse:
@@ -974,7 +1129,7 @@ class GMRFVectorModel(object):
             d = np.diag(d)
         else:
             # if dense, then the einstein sum is much faster
-            d = np.einsum('ij,ij->i', np.dot(samples, self.precision), samples)
+            d = np.einsum("ij,ij->i", np.dot(samples, self.precision), samples)
 
         # if only one sample, then return a scalar
         if d.shape[0] == 1:
@@ -1005,9 +1160,15 @@ class GMRFVectorModel(object):
             The PCA model.
         """
         from .pca import PCAVectorModel
+
         return PCAVectorModel.init_from_covariance_matrix(
-            C=self.precision, mean=self.mean_vector, n_samples=self.n_samples,
-            centred=True, is_inverse=True, max_n_components=max_n_components)
+            C=self.precision,
+            mean=self.mean_vector,
+            n_samples=self.n_samples,
+            centred=True,
+            is_inverse=True,
+            max_n_components=max_n_components,
+        )
 
     @property
     def _str_title(self):
@@ -1016,35 +1177,49 @@ class GMRFVectorModel(object):
 
         :type: `str`
         """
-        tmp = 'a'
+        tmp = "a"
         if isinstance(self.graph, UndirectedGraph):
-            tmp = 'an'
+            tmp = "an"
         return "GMRF model on {} {}".format(tmp, self.graph)
 
     def __str__(self):
-        incremental_str = (' - Can be incrementally updated.' if
-                           self.is_incremental else ' - Cannot be '
-                                                    'incrementally updated.')
-        svd_str = (' - # SVD components:        {}'.format(self.n_components)
-                   if self.n_components is not None else ' - No ' 'SVD used.')
-        _Q_sparse = 'scipy.sparse' if self.sparse else 'numpy.array'
-        q_str = ' - Q is stored as {} with {} precision'.format(
-            _Q_sparse, name_of_callable(self.dtype))
-        mode_str = ('concatenated' if self.mode == 'concatenation' else
-                    'subtracted')
-        str_out = 'Gaussian MRF Model \n' \
-                  ' - {}\n' \
-                  ' - The data of the vertexes of each edge are {}.\n' \
-                  '{}\n' \
-                  ' - # variables (vertexes):  {}\n' \
-                  ' - # features per variable: {}\n' \
-                  ' - # features in total:     {}\n' \
-                  '{}\n' \
-                  ' - # samples:               {}\n' \
-                  '{}\n'.format(
-            self.graph.__str__(), mode_str, q_str, self.graph.n_vertices,
-            self.n_features_per_vertex, self.n_features, svd_str,
-            self.n_samples, incremental_str)
+        incremental_str = (
+            " - Can be incrementally updated."
+            if self.is_incremental
+            else " - Cannot be " "incrementally updated."
+        )
+        svd_str = (
+            " - # SVD components:        {}".format(self.n_components)
+            if self.n_components is not None
+            else " - No " "SVD used."
+        )
+        _Q_sparse = "scipy.sparse" if self.sparse else "numpy.array"
+        q_str = " - Q is stored as {} with {} precision".format(
+            _Q_sparse, name_of_callable(self.dtype)
+        )
+        mode_str = "concatenated" if self.mode == "concatenation" else "subtracted"
+        str_out = (
+            "Gaussian MRF Model \n"
+            " - {}\n"
+            " - The data of the vertexes of each edge are {}.\n"
+            "{}\n"
+            " - # variables (vertexes):  {}\n"
+            " - # features per variable: {}\n"
+            " - # features in total:     {}\n"
+            "{}\n"
+            " - # samples:               {}\n"
+            "{}\n".format(
+                self.graph.__str__(),
+                mode_str,
+                q_str,
+                self.graph.n_vertices,
+                self.n_features_per_vertex,
+                self.n_features,
+                svd_str,
+                self.n_samples,
+                incremental_str,
+            )
+        )
         return str_out
 
 
@@ -1136,18 +1311,39 @@ class GMRFModel(GMRFVectorModel):
        Pictorial Structures", IEEE International Conference on Computer Vision
        & Pattern Recognition (CVPR), Boston, MA, USA, pp. 5435-5444, June 2015.
     """
-    def __init__(self, samples, graph, mode='concatenation', n_components=None,
-                 dtype=np.float64, sparse=True, n_samples=None, bias=0,
-                 incremental=False, verbose=False):
+
+    def __init__(
+        self,
+        samples,
+        graph,
+        mode="concatenation",
+        n_components=None,
+        dtype=np.float64,
+        sparse=True,
+        n_samples=None,
+        bias=0,
+        incremental=False,
+        verbose=False,
+    ):
         # Build a data matrix from all the samples
         data, self.template_instance = as_matrix(
-            samples, length=n_samples, return_template=True, verbose=verbose)
+            samples, length=n_samples, return_template=True, verbose=verbose
+        )
         n_samples = data.shape[0]
 
-        GMRFVectorModel.__init__(self, data, graph, mode=mode,
-                                 n_components=n_components, dtype=dtype,
-                                 sparse=sparse, n_samples=n_samples, bias=bias,
-                                 incremental=incremental, verbose=verbose)
+        GMRFVectorModel.__init__(
+            self,
+            data,
+            graph,
+            mode=mode,
+            n_components=n_components,
+            dtype=dtype,
+            sparse=sparse,
+            n_samples=n_samples,
+            bias=bias,
+            incremental=incremental,
+            verbose=verbose,
+        )
 
     def mean(self):
         r"""
@@ -1176,7 +1372,7 @@ class GMRFModel(GMRFVectorModel):
         """
         # Check if it can be incrementally updated
         if not self.is_incremental:
-            raise ValueError('GMRF cannot be incrementally updated.')
+            raise ValueError("GMRF cannot be incrementally updated.")
 
         # Build a data matrix from the new samples
         data = as_matrix(samples, length=n_samples, verbose=verbose)
@@ -1184,8 +1380,7 @@ class GMRFModel(GMRFVectorModel):
         # Increment the model
         self._increment(data=data, verbose=verbose)
 
-    def mahalanobis_distance(self, samples, subtract_mean=True,
-                             square_root=False):
+    def mahalanobis_distance(self, samples, subtract_mean=True, square_root=False):
         r"""
         Compute the mahalanobis distance given a sample :math:`\mathbf{x}` or an
         array of samples :math:`\mathbf{X}`, i.e.
@@ -1205,13 +1400,14 @@ class GMRFModel(GMRFVectorModel):
             If ``False``, the mahalanobis distance gets squared.
         """
         if isinstance(samples, list):
-            samples = as_matrix(samples, length=None,
-                                return_template=False, verbose=False)
+            samples = as_matrix(
+                samples, length=None, return_template=False, verbose=False
+            )
         else:
             samples = samples.as_vector()[..., None].T
-        return self._mahalanobis_distance(samples=samples,
-                                          subtract_mean=subtract_mean,
-                                          square_root=square_root)
+        return self._mahalanobis_distance(
+            samples=samples, subtract_mean=subtract_mean, square_root=square_root
+        )
 
     def principal_components_analysis(self, max_n_components=None):
         r"""
@@ -1232,6 +1428,12 @@ class GMRFModel(GMRFVectorModel):
             The PCA model.
         """
         from .pca import PCAModel
+
         return PCAModel.init_from_covariance_matrix(
-            C=self.precision, mean=self.mean(), n_samples=self.n_samples,
-            centred=True, is_inverse=True, max_n_components=max_n_components)
+            C=self.precision,
+            mean=self.mean(),
+            n_samples=self.n_samples,
+            centred=True,
+            is_inverse=True,
+            max_n_components=max_n_components,
+        )

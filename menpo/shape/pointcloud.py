@@ -62,14 +62,18 @@ def bounding_box(closest_to_origin, opposite_corner):
     from .graph import PointDirectedGraph
 
     if len(closest_to_origin) != 2 or len(opposite_corner) != 2:
-        raise ValueError('Only 2D bounding boxes can be created.')
+        raise ValueError("Only 2D bounding boxes can be created.")
 
-    adjacency_matrix = csr_matrix(([1] * 4, ([0, 1, 2, 3], [1, 2, 3, 0])),
-                                  shape=(4, 4))
-    box = np.array([closest_to_origin,
-                    [opposite_corner[0], closest_to_origin[1]],
-                    opposite_corner,
-                    [closest_to_origin[0], opposite_corner[1]]], dtype=np.float)
+    adjacency_matrix = csr_matrix(([1] * 4, ([0, 1, 2, 3], [1, 2, 3, 0])), shape=(4, 4))
+    box = np.array(
+        [
+            closest_to_origin,
+            [opposite_corner[0], closest_to_origin[1]],
+            opposite_corner,
+            [closest_to_origin[0], opposite_corner[1]],
+        ],
+        dtype=np.float,
+    )
     return PointDirectedGraph(box, adjacency_matrix, copy=False)
 
 
@@ -95,29 +99,43 @@ def bounding_cuboid(near_closest_to_origin, far_opposite_corner):
     from .graph import PointDirectedGraph
 
     if len(near_closest_to_origin) != 3 or len(far_opposite_corner) != 3:
-        raise ValueError('Only 3D bounding cuboids can be created.')
+        raise ValueError("Only 3D bounding cuboids can be created.")
 
     adjacency_matrix = csr_matrix(
-        ([1] * 12,
-         ([0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7],
-          [1, 2, 3, 0, 4, 5, 6, 7, 5, 6, 7, 4])), shape=(8, 8))
+        (
+            [1] * 12,
+            (
+                [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7],
+                [1, 2, 3, 0, 4, 5, 6, 7, 5, 6, 7, 4],
+            ),
+        ),
+        shape=(8, 8),
+    )
     cuboid = np.array(
-        [near_closest_to_origin, [far_opposite_corner[0],
-                                  near_closest_to_origin[1],
-                                  near_closest_to_origin[2]],
-         [far_opposite_corner[0],
-          far_opposite_corner[1],
-          near_closest_to_origin[2]], [near_closest_to_origin[0],
-                                       far_opposite_corner[1],
-                                       near_closest_to_origin[2]],
-         [near_closest_to_origin[0],
-          near_closest_to_origin[1],
-          far_opposite_corner[2]], [far_opposite_corner[0],
-                                    near_closest_to_origin[1],
-                                    far_opposite_corner[2]],
-         far_opposite_corner, [near_closest_to_origin[0],
-                               far_opposite_corner[1],
-                               far_opposite_corner[2]]], dtype=np.float)
+        [
+            near_closest_to_origin,
+            [
+                far_opposite_corner[0],
+                near_closest_to_origin[1],
+                near_closest_to_origin[2],
+            ],
+            [far_opposite_corner[0], far_opposite_corner[1], near_closest_to_origin[2]],
+            [
+                near_closest_to_origin[0],
+                far_opposite_corner[1],
+                near_closest_to_origin[2],
+            ],
+            [
+                near_closest_to_origin[0],
+                near_closest_to_origin[1],
+                far_opposite_corner[2],
+            ],
+            [far_opposite_corner[0], near_closest_to_origin[1], far_opposite_corner[2]],
+            far_opposite_corner,
+            [near_closest_to_origin[0], far_opposite_corner[1], far_opposite_corner[2]],
+        ],
+        dtype=np.float,
+    )
     return PointDirectedGraph(cuboid, adjacency_matrix, copy=False)
 
 
@@ -146,11 +164,13 @@ class PointCloud(Shape):
         super(PointCloud, self).__init__()
         if not copy:
             if not points.flags.c_contiguous:
-                warn('The copy flag was NOT honoured. A copy HAS been made. '
-                     'Please ensure the data you pass is C-contiguous.')
-                points = np.array(points, copy=True, order='C')
+                warn(
+                    "The copy flag was NOT honoured. A copy HAS been made. "
+                    "Please ensure the data you pass is C-contiguous."
+                )
+                points = np.array(points, copy=True, order="C")
         else:
-            points = np.array(points, copy=True, order='C')
+            points = np.array(points, copy=True, order="C")
         self.points = points
 
     @classmethod
@@ -181,21 +201,27 @@ class PointCloud(Shape):
             A PointCloud or subclass arranged in a grid.
         """
         if len(shape) != 2:
-            raise ValueError('shape must be 2D.')
+            raise ValueError("shape must be 2D.")
 
-        grid = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]),
-                           indexing='ij')
-        points = np.require(np.concatenate(grid).reshape([2, -1]).T,
-                            dtype=np.float64, requirements=['C'])
+        grid = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing="ij")
+        points = np.require(
+            np.concatenate(grid).reshape([2, -1]).T,
+            dtype=np.float64,
+            requirements=["C"],
+        )
 
         if spacing is not None:
-            if not (isinstance(spacing, numbers.Number) or
-                    isinstance(spacing, collections_abc.Sequence)):
-                raise ValueError('spacing must be either a single number '
-                                 'to be applied over each dimension, or a 2D '
-                                 'sequence of numbers.')
+            if not (
+                isinstance(spacing, numbers.Number)
+                or isinstance(spacing, collections_abc.Sequence)
+            ):
+                raise ValueError(
+                    "spacing must be either a single number "
+                    "to be applied over each dimension, or a 2D "
+                    "sequence of numbers."
+                )
             if isinstance(spacing, collections_abc.Sequence) and len(spacing) != 2:
-                raise ValueError('spacing must be 2D.')
+                raise ValueError("spacing must be 2D.")
 
             points *= np.asarray(spacing, dtype=np.float64)
         return cls(points, copy=False)
@@ -226,9 +252,10 @@ class PointCloud(Shape):
         new_pcloud = cls.init_2d_grid(depth_image.shape)
         if isinstance(depth_image, MaskedImage):
             new_pcloud = new_pcloud.from_mask(depth_image.mask.as_vector())
-        return cls(np.hstack([new_pcloud.points,
-                              depth_image.as_vector(keep_channels=True).T]),
-                   copy=False)
+        return cls(
+            np.hstack([new_pcloud.points, depth_image.as_vector(keep_channels=True).T]),
+            copy=False,
+        )
 
     def with_dims(self, dims):
         r"""
@@ -257,12 +284,15 @@ class PointCloud(Shape):
         :type: self
         """
         from menpo.base import MenpoDeprecationWarning
-        warnings.warn('The .lms property is deprecated. LandmarkGroups are '
-                      'now shapes themselves - so you can use them directly '
-                      'anywhere you previously used .lms.'
-                      'Simply remove ".lms" from your code and things '
-                      'will work as expected (and this warning will go away)',
-                      MenpoDeprecationWarning)
+
+        warnings.warn(
+            "The .lms property is deprecated. LandmarkGroups are "
+            "now shapes themselves - so you can use them directly "
+            "anywhere you previously used .lms."
+            'Simply remove ".lms" from your code and things '
+            "will work as expected (and this warning will go away)",
+            MenpoDeprecationWarning,
+        )
         return self.copy()
 
     @property
@@ -289,9 +319,9 @@ class PointCloud(Shape):
 
         :type: ``type(self)``
         """
-        return np.concatenate((self.points.T,
-                               np.ones(self.n_points,
-                                       dtype=self.points.dtype)[None, :]))
+        return np.concatenate(
+            (self.points.T, np.ones(self.n_points, dtype=self.points.dtype)[None, :])
+        )
 
     def centre(self):
         r"""
@@ -340,12 +370,7 @@ class PointCloud(Shape):
         json : `dict`
             Dictionary with ``points`` keys.
         """
-        return {
-            'labels': [],
-            'landmarks': {
-                'points': self.points.tolist()
-            }
-        }
+        return {"labels": [], "landmarks": {"points": self.points.tolist()}}
 
     def _from_vector_inplace(self, vector):
         r"""
@@ -361,9 +386,9 @@ class PointCloud(Shape):
         self.points = vector.reshape([-1, self.n_dims])
 
     def __str__(self):
-        return '{}: n_points: {}, n_dims: {}'.format(type(self).__name__,
-                                                     self.n_points,
-                                                     self.n_dims)
+        return "{}: n_points: {}, n_dims: {}".format(
+            type(self).__name__, self.n_points, self.n_dims
+        )
 
     def bounds(self, boundary=0):
         r"""
@@ -443,27 +468,47 @@ class PointCloud(Shape):
             The axis aligned bounding box of the PointCloud.
         """
         if self.n_dims != 2 and self.n_dims != 3:
-            raise ValueError('Bounding boxes are only supported for 2D or 3D '
-                             'pointclouds.')
+            raise ValueError(
+                "Bounding boxes are only supported for 2D or 3D " "pointclouds."
+            )
         min_p, max_p = self.bounds()
         if self.n_dims == 2:
             return bounding_box(min_p, max_p)
         elif self.n_dims == 3:
             return bounding_cuboid(min_p, max_p)
 
-    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
-                 render_markers=True, marker_style='o', marker_size=5,
-                 marker_face_colour='r', marker_edge_colour='k',
-                 marker_edge_width=1., render_numbering=False,
-                 numbers_horizontal_align='center',
-                 numbers_vertical_align='bottom',
-                 numbers_font_name='sans-serif', numbers_font_size=10,
-                 numbers_font_style='normal', numbers_font_weight='normal',
-                 numbers_font_colour='k', render_axes=True,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(7, 7), label=None, **kwargs):
+    def _view_2d(
+        self,
+        figure_id=None,
+        new_figure=False,
+        image_view=True,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour="r",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+        label=None,
+        **kwargs,
+    ):
         r"""
         Visualization of the PointCloud in 2D.
 
@@ -577,13 +622,20 @@ class PointCloud(Shape):
             The viewer object.
         """
         from menpo.visualize.base import PointGraphViewer2d
+
         adjacency_array = np.empty(0)
-        renderer = PointGraphViewer2d(figure_id, new_figure,
-                                      self.points, adjacency_array)
+        renderer = PointGraphViewer2d(
+            figure_id, new_figure, self.points, adjacency_array
+        )
         renderer.render(
-            image_view=image_view, render_lines=False, line_colour='b',
-            line_style='-', line_width=1., render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            image_view=image_view,
+            render_lines=False,
+            line_colour="b",
+            line_style="-",
+            line_width=1.0,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
             marker_edge_width=marker_edge_width,
@@ -594,47 +646,81 @@ class PointCloud(Shape):
             numbers_font_size=numbers_font_size,
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
-            figure_size=figure_size, label=label)
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+            label=label,
+        )
         return renderer
 
-    def _view_landmarks_2d(self, group=None, with_labels=None,
-                           without_labels=None, figure_id=None,
-                           new_figure=False, image_view=True,
-                           render_markers=True, marker_style='s', marker_size=7,
-                           marker_face_colour='k', marker_edge_colour='k',
-                           marker_edge_width=1., render_lines_lms=True,
-                           line_colour_lms=None, line_style_lms='-',
-                           line_width_lms=1, render_markers_lms=True,
-                           marker_style_lms='o', marker_size_lms=5,
-                           marker_face_colour_lms=None,
-                           marker_edge_colour_lms=None,
-                           marker_edge_width_lms=1., render_numbering=False,
-                           numbers_horizontal_align='center',
-                           numbers_vertical_align='bottom',
-                           numbers_font_name='sans-serif', numbers_font_size=10,
-                           numbers_font_style='normal',
-                           numbers_font_weight='normal',
-                           numbers_font_colour='k', render_legend=False,
-                           legend_title='', legend_font_name='sans-serif',
-                           legend_font_style='normal', legend_font_size=10,
-                           legend_font_weight='normal',
-                           legend_marker_scale=None, legend_location=2,
-                           legend_bbox_to_anchor=(1.05, 1.),
-                           legend_border_axes_pad=None, legend_n_columns=1,
-                           legend_horizontal_spacing=None,
-                           legend_vertical_spacing=None, legend_border=True,
-                           legend_border_padding=None, legend_shadow=False,
-                           legend_rounded_corners=False, render_axes=False,
-                           axes_font_name='sans-serif', axes_font_size=10,
-                           axes_font_style='normal', axes_font_weight='normal',
-                           axes_x_limits=None, axes_y_limits=None,
-                           axes_x_ticks=None, axes_y_ticks=None,
-                           figure_size=(7, 7)):
+    def _view_landmarks_2d(
+        self,
+        group=None,
+        with_labels=None,
+        without_labels=None,
+        figure_id=None,
+        new_figure=False,
+        image_view=True,
+        render_markers=True,
+        marker_style="s",
+        marker_size=7,
+        marker_face_colour="k",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_lines_lms=True,
+        line_colour_lms=None,
+        line_style_lms="-",
+        line_width_lms=1,
+        render_markers_lms=True,
+        marker_style_lms="o",
+        marker_size_lms=5,
+        marker_face_colour_lms=None,
+        marker_edge_colour_lms=None,
+        marker_edge_width_lms=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_legend=False,
+        legend_title="",
+        legend_font_name="sans-serif",
+        legend_font_style="normal",
+        legend_font_size=10,
+        legend_font_weight="normal",
+        legend_marker_scale=None,
+        legend_location=2,
+        legend_bbox_to_anchor=(1.05, 1.0),
+        legend_border_axes_pad=None,
+        legend_n_columns=1,
+        legend_horizontal_spacing=None,
+        legend_vertical_spacing=None,
+        legend_border=True,
+        legend_border_padding=None,
+        legend_shadow=False,
+        legend_rounded_corners=False,
+        render_axes=False,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         """
         Visualize the landmarks. This method will appear on the `PointCloud` as
         ``view_landmarks``.
@@ -855,26 +941,39 @@ class PointCloud(Shape):
             If the landmark manager doesn't contain the provided group label.
         """
         if not self.has_landmarks:
-            raise ValueError('PointCloud does not have landmarks attached, '
-                             'unable to view landmarks.')
-        self_view = self.view(figure_id=figure_id, new_figure=new_figure,
-                              image_view=image_view, figure_size=figure_size,
-                              render_markers=render_markers,
-                              marker_style=marker_style,
-                              marker_size=marker_size,
-                              marker_face_colour=marker_face_colour,
-                              marker_edge_colour=marker_edge_colour,
-                              marker_edge_width=marker_edge_width)
+            raise ValueError(
+                "PointCloud does not have landmarks attached, "
+                "unable to view landmarks."
+            )
+        self_view = self.view(
+            figure_id=figure_id,
+            new_figure=new_figure,
+            image_view=image_view,
+            figure_size=figure_size,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+        )
         # correct group label in legend
         if group is None:
             group = self.landmarks.group_labels[0]
         landmark_view = self.landmarks[group].view(
-            with_labels=with_labels, without_labels=without_labels,
-            figure_id=self_view.figure_id, new_figure=False, group=group,
-            image_view=image_view, render_lines=render_lines_lms,
-            line_colour=line_colour_lms, line_style=line_style_lms,
-            line_width=line_width_lms, render_markers=render_markers_lms,
-            marker_style=marker_style_lms, marker_size=marker_size_lms,
+            with_labels=with_labels,
+            without_labels=without_labels,
+            figure_id=self_view.figure_id,
+            new_figure=False,
+            group=group,
+            image_view=image_view,
+            render_lines=render_lines_lms,
+            line_colour=line_colour_lms,
+            line_style=line_style_lms,
+            line_width=line_width_lms,
+            render_markers=render_markers_lms,
+            marker_style=marker_style_lms,
+            marker_size=marker_size_lms,
             marker_face_colour=marker_face_colour_lms,
             marker_edge_colour=marker_edge_colour_lms,
             marker_edge_width=marker_edge_width_lms,
@@ -886,7 +985,8 @@ class PointCloud(Shape):
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
             numbers_font_colour=numbers_font_colour,
-            render_legend=render_legend, legend_title=legend_title,
+            render_legend=render_legend,
+            legend_title=legend_title,
             legend_font_name=legend_font_name,
             legend_font_style=legend_font_style,
             legend_font_size=legend_font_size,
@@ -902,19 +1002,36 @@ class PointCloud(Shape):
             legend_border_padding=legend_border_padding,
             legend_shadow=legend_shadow,
             legend_rounded_corners=legend_rounded_corners,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+        )
 
         return landmark_view
 
-    def _view_3d(self, figure_id=None, new_figure=True, render_markers=True,
-                 marker_style='sphere', marker_size=None, marker_colour='r',
-                 marker_resolution=8, step=None, alpha=1.0,
-                 render_numbering=False, numbers_colour='k', numbers_size=None,
-                 **kwargs):
+    def _view_3d(
+        self,
+        figure_id=None,
+        new_figure=True,
+        render_markers=True,
+        marker_style="sphere",
+        marker_size=None,
+        marker_colour="r",
+        marker_resolution=8,
+        step=None,
+        alpha=1.0,
+        render_numbering=False,
+        numbers_colour="k",
+        numbers_size=None,
+        **kwargs,
+    ):
         r"""
         Visualization of the PointCloud in 3D.
 
@@ -978,28 +1095,49 @@ class PointCloud(Shape):
         """
         try:
             from menpo3d.visualize import PointGraphViewer3d
+
             edges = np.empty(0)
-            renderer = PointGraphViewer3d(figure_id, new_figure,
-                                          self.points, edges)
+            renderer = PointGraphViewer3d(figure_id, new_figure, self.points, edges)
             renderer.render(
-                render_lines=False, render_markers=render_markers,
-                marker_style=marker_style, marker_size=marker_size,
-                marker_colour=marker_colour, marker_resolution=marker_resolution,
-                step=step, alpha=alpha, render_numbering=render_numbering,
-                numbers_colour=numbers_colour, numbers_size=numbers_size)
+                render_lines=False,
+                render_markers=render_markers,
+                marker_style=marker_style,
+                marker_size=marker_size,
+                marker_colour=marker_colour,
+                marker_resolution=marker_resolution,
+                step=step,
+                alpha=alpha,
+                render_numbering=render_numbering,
+                numbers_colour=numbers_colour,
+                numbers_size=numbers_size,
+            )
             return renderer
         except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
+
             raise Menpo3dMissingError(e)
 
-    def _view_landmarks_3d(self, group=None, with_labels=None,
-                           without_labels=None, figure_id=None,
-                           new_figure=True, render_lines=True,
-                           line_colour=None, line_width=4, render_markers=True,
-                           marker_style='sphere', marker_size=None,
-                           marker_colour=None, marker_resolution=8,
-                           step=None, alpha=1.0, render_numbering=False,
-                           numbers_colour='k', numbers_size=None):
+    def _view_landmarks_3d(
+        self,
+        group=None,
+        with_labels=None,
+        without_labels=None,
+        figure_id=None,
+        new_figure=True,
+        render_lines=True,
+        line_colour=None,
+        line_width=4,
+        render_markers=True,
+        marker_style="sphere",
+        marker_size=None,
+        marker_colour=None,
+        marker_resolution=8,
+        step=None,
+        alpha=1.0,
+        render_numbering=False,
+        numbers_colour="k",
+        numbers_size=None,
+    ):
         r"""
         Visualization of the PointCloud landmarks in 3D.
 
@@ -1089,23 +1227,35 @@ class PointCloud(Shape):
             The Menpo3D rendering object.
         """
         if not self.has_landmarks:
-            raise ValueError('PointCloud does not have landmarks attached, '
-                             'unable to view landmarks.')
+            raise ValueError(
+                "PointCloud does not have landmarks attached, "
+                "unable to view landmarks."
+            )
         self_view = self.view(figure_id=figure_id, new_figure=new_figure)
         landmark_view = self.landmarks[group].view(
-            with_labels=with_labels, without_labels=without_labels,
-            figure_id=self_view.figure_id, new_figure=False,
-            render_lines=render_lines, line_colour=line_colour,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
-            marker_colour=marker_colour, marker_resolution=marker_resolution,
-            step=step, alpha=alpha, render_numbering=render_numbering,
-            numbers_colour=numbers_colour, numbers_size=numbers_size)
+            with_labels=with_labels,
+            without_labels=without_labels,
+            figure_id=self_view.figure_id,
+            new_figure=False,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
+            marker_colour=marker_colour,
+            marker_resolution=marker_resolution,
+            step=step,
+            alpha=alpha,
+            render_numbering=render_numbering,
+            numbers_colour=numbers_colour,
+            numbers_size=numbers_size,
+        )
 
         return landmark_view
 
     @viewwrapper
-    def view_widget(self, ):
+    def view_widget(self,):
         r"""
         Abstract method for viewing with an interactive widget. See the
         :map:`viewwrapper` documentation for an explanation of how the
@@ -1124,9 +1274,11 @@ class PointCloud(Shape):
         """
         try:
             from menpowidgets import view_widget
+
             view_widget(self, figure_size=figure_size)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
 
     def _view_widget_3d(self):
@@ -1135,9 +1287,11 @@ class PointCloud(Shape):
         """
         try:
             from menpowidgets import view_widget
+
             view_widget(self)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
 
     def _transform_self_inplace(self, transform):
@@ -1166,8 +1320,9 @@ class PointCloud(Shape):
             PointCloud.
         """
         if self.n_dims != pointcloud.n_dims:
-            raise ValueError("The two PointClouds must be of the same "
-                             "dimensionality.")
+            raise ValueError(
+                "The two PointClouds must be of the same " "dimensionality."
+            )
         return cdist(self.points, pointcloud.points, **kwargs)
 
     def norm(self, **kwargs):
@@ -1209,8 +1364,10 @@ class PointCloud(Shape):
             Mask must have same number of points as pointcloud.
         """
         if mask.shape[0] != self.n_points:
-            raise ValueError('Mask must be a 1D boolean array of the same '
-                             'number of entries as points in this PointCloud.')
+            raise ValueError(
+                "Mask must be a 1D boolean array of the same "
+                "number of entries as points in this PointCloud."
+            )
         pc = self.copy()
         pc.points = pc.points[mask, :]
         return pc

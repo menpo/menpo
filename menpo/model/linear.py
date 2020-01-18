@@ -62,9 +62,10 @@ class LinearVectorModel(Copyable):
         if value.shape != self._components.shape:
             raise ValueError(
                 "Trying to replace components of shape {} with some of "
-                "shape {}".format(self.components.shape, value.shape))
+                "shape {}".format(self.components.shape, value.shape)
+            )
         else:
-            np.copyto(self._components, value, casting='safe')
+            np.copyto(self._components, value, casting="safe")
 
     def component(self, index):
         r"""
@@ -134,7 +135,8 @@ class LinearVectorModel(Copyable):
         if not n_weights == self.n_components:
             raise ValueError(
                 "Number of weightings has to match number of available "
-                "components = {}".format(self.n_components))
+                "components = {}".format(self.n_components)
+            )
         return self._instance_vectors_for_full_weights(weights)
 
     def _instance_vectors_for_full_weights(self, full_weights):
@@ -277,14 +279,16 @@ class LinearVectorModel(Copyable):
             raise ValueError(
                 "The number of features must be greater or equal than the "
                 "sum of the number of components in both linear models ({} < "
-                "{})".format(self.n_features, n_components_sum))
+                "{})".format(self.n_features, n_components_sum)
+            )
         # take the QR decomposition of the model components
-        Q = (np.linalg.qr(np.hstack((linear_model._components.T,
-                                     self._components.T)))[0]).T
+        Q = (
+            np.linalg.qr(np.hstack((linear_model._components.T, self._components.T)))[0]
+        ).T
         # set the orthonormalized components of the model being passed
-        linear_model.components = Q[:linear_model.n_components, :]
+        linear_model.components = Q[: linear_model.n_components, :]
         # set the orthonormalized components of this model
-        self.components = Q[linear_model.n_components:, :]
+        self.components = Q[linear_model.n_components :, :]
 
 
 class MeanLinearVectorModel(LinearVectorModel):
@@ -303,6 +307,7 @@ class MeanLinearVectorModel(LinearVectorModel):
     mean : ``(n_features,)`` `ndarray`
         The mean vector.
     """
+
     def __init__(self, components, mean):
         super(MeanLinearVectorModel, self).__init__(components)
         self._mean = mean
@@ -377,8 +382,9 @@ class MeanLinearVectorModel(LinearVectorModel):
         weights = self.project_vectors(vectors)
         # We don't add the mean back, in fact the residual is defined as
         # the mean subtracted.
-        return ((vectors - self._mean[None, ...]) -
-                LinearVectorModel._instance_vectors_for_full_weights(self, weights))
+        return (
+            vectors - self._mean[None, ...]
+        ) - LinearVectorModel._instance_vectors_for_full_weights(self, weights)
 
     def _instance_vectors_for_full_weights(self, full_weights):
         x = LinearVectorModel._instance_vectors_for_full_weights(self, full_weights)

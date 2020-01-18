@@ -1,5 +1,3 @@
-
-
 class Invertible(object):
     r"""
     Mix-in for invertible transforms. Provides an interface for taking the
@@ -28,6 +26,7 @@ class Invertible(object):
         """
         raise NotImplementedError()
 
+
 class VInvertible(Invertible):
     r"""
     Mix-in for :map:`Vectorizable` :map:`Invertible` :map:`Transform` s.
@@ -37,6 +36,7 @@ class VInvertible(Invertible):
     to the :map:`Invertible` interface. These can be tuned for performance,
     and are, for instance, needed by some of the machinery of fit.
     """
+
     def pseudoinverse_vector(self, vector):
         r"""
         The vectorized pseudoinverse of a provided vector instance.

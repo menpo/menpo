@@ -6,7 +6,7 @@ import numpy as np
 class _UTF8Encoder(json.JSONEncoder):
     def iterencode(self, obj, **kwargs):
         for chunk in json.JSONEncoder.iterencode(self, obj, **kwargs):
-            yield chunk.encode('utf8')
+            yield chunk.encode("utf8")
 
 
 def ljson_exporter(landmarks_object, file_handle, **kwargs):
@@ -29,42 +29,49 @@ def ljson_exporter(landmarks_object, file_handle, **kwargs):
     """
     try:
         _ = landmarks_object.n_points
-        landmark_dict = {'LJSON': landmarks_object}
+        landmark_dict = {"LJSON": landmarks_object}
     except AttributeError:
         # This should be a dict or a Landmark Manager.
         landmark_dict = landmarks_object
 
     # Add version string
-    ljson = {'version': 3}
+    ljson = {"version": 3}
     groups = {}
     for key, pointcloud in landmark_dict.items():
         lg_json = pointcloud.tojson()
 
         # Convert nan values to None so that json correctly maps them to 'null'
-        points = lg_json['landmarks']['points']
+        points = lg_json["landmarks"]["points"]
         # Flatten list
         try:
             ndim = len(points[0])
         except IndexError:
             ndim = 0
-        filtered_points = [None if np.isnan(x) else x
-                           for x in itertools.chain(*points)]
+        filtered_points = [None if np.isnan(x) else x for x in itertools.chain(*points)]
         # Recreate tuples
         if ndim == 2:
-            lg_json['landmarks']['points'] = list(zip(filtered_points[::2],
-                                                      filtered_points[1::2]))
+            lg_json["landmarks"]["points"] = list(
+                zip(filtered_points[::2], filtered_points[1::2])
+            )
         elif ndim == 3:
-            lg_json['landmarks']['points'] = list(zip(filtered_points[::3],
-                                                      filtered_points[1::3],
-                                                      filtered_points[2::3]))
+            lg_json["landmarks"]["points"] = list(
+                zip(filtered_points[::3], filtered_points[1::3], filtered_points[2::3])
+            )
         else:
-            lg_json['landmarks']['points'] = []
+            lg_json["landmarks"]["points"] = []
         # append to the final ljson dict.
         groups[key] = lg_json
 
-    ljson['groups'] = groups
-    return json.dump(ljson, file_handle, indent=4, separators=(',', ': '),
-                     sort_keys=True, allow_nan=False, cls=_UTF8Encoder)
+    ljson["groups"] = groups
+    return json.dump(
+        ljson,
+        file_handle,
+        indent=4,
+        separators=(",", ": "),
+        sort_keys=True,
+        allow_nan=False,
+        cls=_UTF8Encoder,
+    )
 
 
 def pts_exporter(pointcloud, file_handle, **kwargs):
@@ -93,6 +100,13 @@ def pts_exporter(pointcloud, file_handle, **kwargs):
     # Matlab which is 1 based
     pts = pts[:, [1, 0]] + 1
 
-    header = 'version: 1\nn_points: {}\n{{'.format(pts.shape[0])
-    np.savetxt(file_handle, pts, delimiter=' ', header=header, footer='}',
-               fmt='%.3f', comments='')
+    header = "version: 1\nn_points: {}\n{{".format(pts.shape[0])
+    np.savetxt(
+        file_handle,
+        pts,
+        delimiter=" ",
+        header=header,
+        footer="}",
+        fmt="%.3f",
+        comments="",
+    )

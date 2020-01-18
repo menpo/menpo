@@ -1,8 +1,7 @@
 from pytest import raises
 import numpy as np
 from numpy.testing import assert_equal, assert_allclose
-from menpo.math import (dot_inplace_left, dot_inplace_right, as_matrix,
-                        from_matrix)
+from menpo.math import dot_inplace_left, dot_inplace_right, as_matrix, from_matrix
 from menpo.image import MaskedImage
 
 
@@ -67,8 +66,7 @@ def test_as_matrix_list():
 
 
 def test_as_matrix_generator():
-    data = as_matrix((template.copy() for _ in range(n_images)),
-                     length=n_images)
+    data = as_matrix((template.copy() for _ in range(n_images)), length=n_images)
     # Two rows of the mask are True (10 * 2 = 20)
     assert_equal(data.shape, (n_images, 20))
 
@@ -85,8 +83,9 @@ def test_as_matrix_long_length_raises_value_error():
 
 
 def test_as_matrix_return_template():
-    data, t = as_matrix((template.copy() for _ in range(n_images)),
-                        length=1, return_template=True)
+    data, t = as_matrix(
+        (template.copy() for _ in range(n_images)), length=1, return_template=True
+    )
     # Two rows of the mask are True (10 * 2 = 20)
     assert_equal(data.shape, (1, 20))
     assert_equal(t.shape, image_shape)

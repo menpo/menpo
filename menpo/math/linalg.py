@@ -31,11 +31,13 @@ def dot_inplace_left(a, b, block_size=1000):
     """
     (n_big, k_a), (k_b, n_small) = a.shape, b.shape
     if k_a != k_b:
-        raise ValueError('Cannot dot {} * {}'.format(a.shape, b.shape))
+        raise ValueError("Cannot dot {} * {}".format(a.shape, b.shape))
     if n_small > k_a:
-        raise ValueError('Cannot dot inplace left - '
-                         'b.shape[1] ({}) > a.shape[1] '
-                         '({})'.format(n_small, k_a))
+        raise ValueError(
+            "Cannot dot inplace left - "
+            "b.shape[1] ({}) > a.shape[1] "
+            "({})".format(n_small, k_a)
+        )
     for i in range(0, n_big, block_size):
         j = i + block_size
         a[i:j, :n_small] = a[i:j].dot(b)
@@ -71,11 +73,13 @@ def dot_inplace_right(a, b, block_size=1000):
     """
     (n_small, k_a), (k_b, n_big) = a.shape, b.shape
     if k_a != k_b:
-        raise ValueError('Cannot dot {} * {}'.format(a.shape, b.shape))
+        raise ValueError("Cannot dot {} * {}".format(a.shape, b.shape))
     if n_small > k_b:
-        raise ValueError('Cannot dot inplace right - '
-                         'a.shape[1] ({}) > b.shape[0] '
-                         '({})'.format(n_small, k_b))
+        raise ValueError(
+            "Cannot dot inplace right - "
+            "a.shape[1] ({}) > b.shape[0] "
+            "({})".format(n_small, k_b)
+        )
     for i in range(0, n_big, block_size):
         j = i + block_size
         b[:n_small, i:j] = a.dot(b[:, i:j])
@@ -132,8 +136,10 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
 
     data = np.zeros((length, n_features), dtype=template_vector.dtype)
     if verbose:
-        print('Allocated data matrix of size {} '
-              '({} samples)'.format(bytes_str(data.nbytes), length))
+        print(
+            "Allocated data matrix of size {} "
+            "({} samples)".format(bytes_str(data.nbytes), length)
+        )
 
     # now we can fill in the first element from the template
     data[0] = template_vector
@@ -143,9 +149,13 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
     vectorizables = islice(vectorizables, length - 1)
 
     if verbose:
-        vectorizables = print_progress(vectorizables, n_items=length, offset=1,
-                                       prefix='Building data matrix',
-                                       end_with_newline=False)
+        vectorizables = print_progress(
+            vectorizables,
+            n_items=length,
+            offset=1,
+            prefix="Building data matrix",
+            end_with_newline=False,
+        )
 
     # 1-based as we have the template vector set already
     i = 0
@@ -154,9 +164,10 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
 
     # we have exhausted the iterable, but did we get enough items?
     if i != length - 1:  # -1
-        raise ValueError('Incomplete data matrix due to early iterator '
-                         'termination (expected {} items, got {})'.format(
-            length, i + 1))
+        raise ValueError(
+            "Incomplete data matrix due to early iterator "
+            "termination (expected {} items, got {})".format(length, i + 1)
+        )
 
     if return_template:
         return data, template

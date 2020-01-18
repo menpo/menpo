@@ -20,9 +20,9 @@ class Affine(Homogeneous):
     skip_checks : `bool`, optional
         If ``True`` avoid sanity checks on ``h_matrix`` for performance.
     """
+
     def __init__(self, h_matrix, copy=True, skip_checks=False):
-        Homogeneous.__init__(self, h_matrix, copy=copy,
-                             skip_checks=skip_checks)
+        Homogeneous.__init__(self, h_matrix, copy=copy, skip_checks=skip_checks)
 
     @classmethod
     def init_identity(cls, n_dims):
@@ -95,17 +95,17 @@ class Affine(Homogeneous):
         if not skip_checks:
             shape = value.shape
             if len(shape) != 2 or shape[0] != shape[1]:
-                raise ValueError("You need to provide a square homogeneous "
-                                 "matrix")
+                raise ValueError("You need to provide a square homogeneous " "matrix")
             if self.h_matrix is not None:
                 # already have a matrix set! The update better be the same size
                 if self.n_dims != shape[0] - 1:
-                    raise ValueError("Trying to update the homogeneous "
-                                     "matrix to a different dimension")
+                    raise ValueError(
+                        "Trying to update the homogeneous "
+                        "matrix to a different dimension"
+                    )
             if shape[0] - 1 not in [2, 3]:
                 raise ValueError("Affine Transforms can only be 2D or 3D")
-            if not (np.allclose(value[-1, :-1], 0) and
-                    np.allclose(value[-1, -1], 1)):
+            if not (np.allclose(value[-1, :-1], 0) and np.allclose(value[-1, -1], 1)):
                 raise ValueError("Bottom row must be [0 0 0 1] or [0, 0, 1]")
         if copy:
             value = value.copy()
@@ -148,6 +148,7 @@ class Affine(Homogeneous):
         from .rotation import Rotation
         from .translation import Translation
         from .scale import Scale
+
         U, S, V = np.linalg.svd(self.linear_component)
         rotation_2 = Rotation(U)
         rotation_1 = Rotation(V)
@@ -165,9 +166,9 @@ class Affine(Homogeneous):
         str : `str`
             String representation of transform.
         """
-        header = 'Affine decomposing into:'
+        header = "Affine decomposing into:"
         list_str = [t._transform_str() for t in self.decompose()]
-        return header + reduce(lambda x, y: x + '\n' + '  ' + y, list_str, '  ')
+        return header + reduce(lambda x, y: x + "\n" + "  " + y, list_str, "  ")
 
     def _apply(self, x, **kwargs):
         r"""
@@ -238,7 +239,7 @@ class Affine(Homogeneous):
             The values that parametrise the transform.
         """
         params = self.h_matrix - np.eye(self.n_dims + 1)
-        return params[:self.n_dims, :].ravel(order='F')
+        return params[: self.n_dims, :].ravel(order="F")
 
     def _from_vector_inplace(self, p):
         r"""
@@ -248,13 +249,15 @@ class Affine(Homogeneous):
         h_matrix = None
         if p.shape[0] == 6:  # 2D affine
             h_matrix = np.eye(3)
-            h_matrix[:2, :] += p.reshape((2, 3), order='F')
+            h_matrix[:2, :] += p.reshape((2, 3), order="F")
         elif p.shape[0] == 12:  # 3D affine
             h_matrix = np.eye(4)
-            h_matrix[:3, :] += p.reshape((3, 4), order='F')
+            h_matrix[:3, :] += p.reshape((3, 4), order="F")
         else:
-            ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
-                       "homogeneous matrices are supported.")
+            ValueError(
+                "Only 2D (6 parameters) or 3D (12 parameters) "
+                "homogeneous matrices are supported."
+            )
         self._set_h_matrix(h_matrix, copy=False, skip_checks=True)
 
     @property
@@ -295,6 +298,7 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
     non-singular, which generally means at least 2 corresponding points are
     required.
     """
+
     def __init__(self, source, target):
         # first, initialize the alignment
         HomogFamilyAlignment.__init__(self, source, target)

@@ -10,8 +10,18 @@ from menpo.shape import PointCloud, LabelledPointUndirectedGraph
 from menpo.transform import Scale
 
 
-ASFPath = namedtuple('ASFPath', ['path_num', 'path_type', 'xpos', 'ypos',
-                                 'point_num', 'connects_from', 'connects_to'])
+ASFPath = namedtuple(
+    "ASFPath",
+    [
+        "path_num",
+        "path_type",
+        "xpos",
+        "ypos",
+        "point_num",
+        "connects_from",
+        "connects_to",
+    ],
+)
 
 
 def asf_importer(filepath, asset=None, **kwargs):
@@ -50,12 +60,11 @@ def asf_importer(filepath, asset=None, **kwargs):
     ----------
     .. [1] http://www2.imm.dtu.dk/~aam/datasets/datasets.html
     """
-    with filepath.open('r') as f:
+    with filepath.open("r") as f:
         landmarks = f.read()
 
     # Remove comments and blank lines
-    landmarks = [l for l in landmarks.splitlines()
-                 if (l.rstrip() and not '#' in l)]
+    landmarks = [l for l in landmarks.splitlines() if (l.rstrip() and not "#" in l)]
 
     # Pop the front of the list for the number of landmarks
     count = int(landmarks.pop(0))
@@ -67,10 +76,8 @@ def asf_importer(filepath, asset=None, **kwargs):
     connectivity = []
 
     # Only unpack the first 7 (the last 3 are always 0)
-    split_landmarks = [ASFPath(*landmarks[i].split()[:7])
-                       for i in range(count)]
-    paths = [list(g)
-             for k, g in itertools.groupby(split_landmarks, lambda x: x[0])]
+    split_landmarks = [ASFPath(*landmarks[i].split()[:7]) for i in range(count)]
+    paths = [list(g) for k, g in itertools.groupby(split_landmarks, lambda x: x[0])]
     vert_index = 0
     for path in paths:
         if path:
@@ -81,8 +88,10 @@ def asf_importer(filepath, asset=None, **kwargs):
             ys[vert_index, ...] = float(vertex.ypos)
             vert_index += 1
             # If True, isolated point
-            if not (vertex.connects_from == vertex.connects_to and
-                    vertex.connects_to == vertex.point_num):
+            if not (
+                vertex.connects_from == vertex.connects_to
+                and vertex.connects_to == vertex.point_num
+            ):
                 # Connectivity is defined by connects_from and connects_to
                 # as well as the path_type:
                 #   Bit 1: Outer edge point/Inside point
@@ -90,11 +99,9 @@ def asf_importer(filepath, asset=None, **kwargs):
                 #   Bit 3: Closed path point/Open path point
                 #   Bit 4: Non-hole/Hole point
                 # For now we only parse cases 0 and 4 (closed or open)
-                connectivity.append((int(vertex.point_num),
-                                     int(vertex.connects_to)))
-        if path and path_type == '0':
-            connectivity.append((int(path[-1].point_num),
-                                 int(path[0].point_num)))
+                connectivity.append((int(vertex.point_num), int(vertex.connects_to)))
+        if path and path_type == "0":
+            connectivity.append((int(path[-1].point_num), int(path[0].point_num)))
 
     connectivity = np.vstack(connectivity)
     points = np.hstack([ys, xs])
@@ -103,10 +110,12 @@ def asf_importer(filepath, asset=None, **kwargs):
         # fix that here
         points = Scale(np.array(asset.shape)).apply(points)
 
-    labels_to_masks = OrderedDict(
-        [('all', np.ones(points.shape[0], dtype=np.bool))])
-    return {'ASF': LabelledPointUndirectedGraph.init_from_edges(
-                       points, connectivity, labels_to_masks)}
+    labels_to_masks = OrderedDict([("all", np.ones(points.shape[0], dtype=np.bool))])
+    return {
+        "ASF": LabelledPointUndirectedGraph.init_from_edges(
+            points, connectivity, labels_to_masks
+        )
+    }
 
 
 def pts_importer(filepath, image_origin=True, **kwargs):
@@ -144,17 +153,17 @@ def pts_importer(filepath, image_origin=True, **kwargs):
     landmarks : `dict` {`str`: :map:`PointCloud`}
         Dictionary mapping landmark groups to menpo shapes
     """
-    with filepath.open('r') as f:
+    with filepath.open("r") as f:
         lines = [l.strip() for l in f.readlines()]
 
     line = lines[0]
-    while not line.startswith('{'):
+    while not line.startswith("{"):
         line = lines.pop(0)
 
     xs = []
     ys = []
     for line in lines:
-        if not line.strip().startswith('}'):
+        if not line.strip().startswith("}"):
             xpos, ypos = line.split()[:2]
             xs.append(xpos)
             ys.append(ypos)
@@ -168,7 +177,7 @@ def pts_importer(filepath, image_origin=True, **kwargs):
     else:
         points = np.hstack([xs - 1, ys - 1])
 
-    return {'PTS': PointCloud(points, copy=False)}
+    return {"PTS": PointCloud(points, copy=False)}
 
 
 def lm2_importer(filepath, **kwargs):
@@ -219,12 +228,11 @@ def lm2_importer(filepath, **kwargs):
     landmarks : `dict` {`str`: :map:`PointCloud`}
         Dictionary mapping landmark groups to menpo shapes
     """
-    with filepath.open('r') as f:
+    with filepath.open("r") as f:
         landmarks = f.read()
 
     # Remove comments and blank lines
-    landmark_text = [l for l in landmarks.splitlines()
-                     if (l.rstrip() and '#' not in l)]
+    landmark_text = [l for l in landmarks.splitlines() if (l.rstrip() and "#" not in l)]
 
     # First line says how many landmarks there are: 22 Landmarks
     # So pop it off the front
@@ -233,23 +241,27 @@ def lm2_importer(filepath, **kwargs):
 
     # The next set of lines defines the labels
     labels_str = landmark_text.pop(0)
-    if not labels_str == 'Labels:':
-        raise ValueError("LM2 landmarks are incorrectly formatted. "
-                         "Expected a list of labels beginning with "
-                         "'Labels:' but found '{0}'".format(labels_str))
+    if not labels_str == "Labels:":
+        raise ValueError(
+            "LM2 landmarks are incorrectly formatted. "
+            "Expected a list of labels beginning with "
+            "'Labels:' but found '{0}'".format(labels_str)
+        )
     for i in range(num_points):
         # Lowercase, remove spaces and replace with underscores
         l = landmark_text.pop(0)
-        l = '_'.join(l.lower().split())
+        l = "_".join(l.lower().split())
         labels.append(l)
 
     # The next set of lines defines the coordinates
     coords_str = landmark_text.pop(0)
-    if not coords_str == '2D Image coordinates:':
-        raise ValueError("LM2 landmarks are incorrectly formatted. "
-                         "Expected a list of coordinates beginning with "
-                         "'2D Image coordinates:' "
-                         "but found '{0}'".format(coords_str))
+    if not coords_str == "2D Image coordinates:":
+        raise ValueError(
+            "LM2 landmarks are incorrectly formatted. "
+            "Expected a list of coordinates beginning with "
+            "'2D Image coordinates:' "
+            "but found '{0}'".format(coords_str)
+        )
     xs = []
     ys = []
     for i in range(num_points):
@@ -270,15 +282,16 @@ def lm2_importer(filepath, **kwargs):
     labels_to_masks = OrderedDict(zip(labels, masks))
 
     empty_adj_matrix = csr_matrix((num_points, num_points))
-    return {'LM2': LabelledPointUndirectedGraph(points, empty_adj_matrix,
-                                                labels_to_masks)}
+    return {
+        "LM2": LabelledPointUndirectedGraph(points, empty_adj_matrix, labels_to_masks)
+    }
 
 
 def _ljson_parse_null_values(points_list):
-    filtered_points = [np.nan if x is None else x
-                       for x in itertools.chain(*points_list)]
-    return np.array(filtered_points,
-                    dtype=np.float).reshape([-1, len(points_list[0])])
+    filtered_points = [
+        np.nan if x is None else x for x in itertools.chain(*points_list)
+    ]
+    return np.array(filtered_points, dtype=np.float).reshape([-1, len(points_list[0])])
 
 
 def _parse_ljson_v1(lms_dict):
@@ -287,18 +300,18 @@ def _parse_ljson_v1(lms_dict):
     labels_slices = []  # slices into the full pointcloud per label
     offset = 0
     connectivity = []
-    for group in lms_dict['groups']:
-        lms = group['landmarks']
-        labels.append(group['label'])
+    for group in lms_dict["groups"]:
+        lms = group["landmarks"]
+        labels.append(group["label"])
         labels_slices.append(slice(offset, len(lms) + offset))
         # Create the connectivity if it exists
-        conn = group.get('connectivity', [])
+        conn = group.get("connectivity", [])
         if conn:
             # Offset relative connectivity according to the current index
             conn = offset + np.asarray(conn)
             connectivity += conn.tolist()
         for p in lms:
-            all_points.append(p['point'])
+            all_points.append(p["point"])
         offset += len(lms)
 
     # Don't create a PointUndirectedGraph with no connectivity
@@ -312,62 +325,61 @@ def _parse_ljson_v1(lms_dict):
         mask[l_slice] = True
         labels_to_masks[label] = mask
 
-    lmarks = LabelledPointUndirectedGraph.init_from_edges(points, connectivity,
-                                                          labels_to_masks)
-    return {'LJSON': lmarks}
+    lmarks = LabelledPointUndirectedGraph.init_from_edges(
+        points, connectivity, labels_to_masks
+    )
+    return {"LJSON": lmarks}
 
 
 def _parse_ljson_v2(lms_dict):
-    points = _ljson_parse_null_values(lms_dict['landmarks']['points'])
-    connectivity = lms_dict['landmarks'].get('connectivity')
+    points = _ljson_parse_null_values(lms_dict["landmarks"]["points"])
+    connectivity = lms_dict["landmarks"].get("connectivity")
 
-    if connectivity is None and len(lms_dict['labels']) == 0:
+    if connectivity is None and len(lms_dict["labels"]) == 0:
         lmarks = PointCloud(points)
     else:
         labels_to_mask = OrderedDict()  # masks into the pointcloud per label
         n_points = points.shape[0]
-        for label in lms_dict['labels']:
+        for label in lms_dict["labels"]:
             mask = np.zeros(n_points, dtype=np.bool)
-            mask[label['mask']] = True
-            labels_to_mask[label['label']] = mask
+            mask[label["mask"]] = True
+            labels_to_mask[label["label"]] = mask
         # Note that we can pass connectivity as None here and the edges will be
         # empty.
         lmarks = LabelledPointUndirectedGraph.init_from_edges(
-            points, connectivity, labels_to_mask)
+            points, connectivity, labels_to_mask
+        )
 
-    return {'LJSON': lmarks}
+    return {"LJSON": lmarks}
 
 
 def _parse_ljson_v3(lms_dict):
     all_lms = {}
-    for key, lms_dict_group in lms_dict['groups'].items():
-        points = _ljson_parse_null_values(lms_dict_group['landmarks']['points'])
-        connectivity = lms_dict_group['landmarks'].get('connectivity')
+    for key, lms_dict_group in lms_dict["groups"].items():
+        points = _ljson_parse_null_values(lms_dict_group["landmarks"]["points"])
+        connectivity = lms_dict_group["landmarks"].get("connectivity")
         # TODO: create the metadata label!
 
-        if connectivity is None and len(lms_dict_group['labels']) == 0:
+        if connectivity is None and len(lms_dict_group["labels"]) == 0:
             all_lms[key] = PointCloud(points)
         else:
             # masks into the pointcloud per label
             labels_to_mask = OrderedDict()
             n_points = points.shape[0]
-            for label in lms_dict_group['labels']:
+            for label in lms_dict_group["labels"]:
                 mask = np.zeros(n_points, dtype=np.bool)
-                mask[label['mask']] = True
-                labels_to_mask[label['label']] = mask
+                mask[label["mask"]] = True
+                labels_to_mask[label["label"]] = mask
 
             # Note that we can pass connectivity as None here and the edges
             # will be empty.
             all_lms[key] = LabelledPointUndirectedGraph.init_from_edges(
-                    points, connectivity, labels_to_mask)
+                points, connectivity, labels_to_mask
+            )
     return all_lms
 
 
-_ljson_parser_for_version = {
-    1: _parse_ljson_v1,
-    2: _parse_ljson_v2,
-    3: _parse_ljson_v3
-}
+_ljson_parser_for_version = {1: _parse_ljson_v1, 2: _parse_ljson_v2, 3: _parse_ljson_v3}
 
 
 def ljson_importer(filepath, **kwargs):
@@ -391,20 +403,25 @@ def ljson_importer(filepath, **kwargs):
     landmarks : `dict` {`str`: :map:`PointCloud`}
         Dictionary mapping landmark groups to menpo shapes
     """
-    with filepath.open('r') as f:
+    with filepath.open("r") as f:
         lms_dict = json.load(f, object_pairs_hook=OrderedDict)
-    version = lms_dict.get('version')
+    version = lms_dict.get("version")
     parser = _ljson_parser_for_version.get(version)
 
     if parser is None:
-        raise ValueError("{} has unknown version {} - must be "
-                         "1, or 2 or 3.".format(filepath, version))
+        raise ValueError(
+            "{} has unknown version {} - must be "
+            "1, or 2 or 3.".format(filepath, version)
+        )
     if version != 3:
         from menpo.base import MenpoDeprecationWarning
-        warnings.warn('LJSON v{} is deprecated. export_landmark_file() will '
-                      'only save out LJSON v3 files. Please convert all LJSON '
-                      'files to v3 by importing into Menpo and re-exporting to '
-                      'overwrite the files.'.format(version),
-                      MenpoDeprecationWarning)
+
+        warnings.warn(
+            "LJSON v{} is deprecated. export_landmark_file() will "
+            "only save out LJSON v3 files. Please convert all LJSON "
+            "files to v3 by importing into Menpo and re-exporting to "
+            "overwrite the files.".format(version),
+            MenpoDeprecationWarning,
+        )
 
     return parser(lms_dict)

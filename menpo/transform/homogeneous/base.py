@@ -3,8 +3,12 @@ from warnings import warn
 import numpy as np
 
 from menpo.base import Vectorizable, MenpoDeprecationWarning
-from menpo.transform.base import (Alignment, ComposableTransform,
-                                  VComposable, VInvertible)
+from menpo.transform.base import (
+    Alignment,
+    ComposableTransform,
+    VComposable,
+    VInvertible,
+)
 
 
 class HomogFamilyAlignment(Alignment):
@@ -82,6 +86,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         If ``True``, avoid sanity checks on the ``h_matrix``. Useful for
         performance.
     """
+
     def __init__(self, h_matrix, copy=True, skip_checks=False):
         self._h_matrix = None
         # Delegate setting to the most specialized setter method possible
@@ -115,9 +120,12 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
         :type: `bool`
         """
-        warn('the public API for mutable operations is deprecated '
-             'and will be removed in a future version of Menpo. '
-             'Create a new transform instead.', MenpoDeprecationWarning)
+        warn(
+            "the public API for mutable operations is deprecated "
+            "and will be removed in a future version of Menpo. "
+            "Create a new transform instead.",
+            MenpoDeprecationWarning,
+        )
         return False
 
     def from_vector(self, vector):
@@ -146,7 +154,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return self_copy
 
     def __str__(self):
-        rep = self._transform_str() + '\n'
+        rep = self._transform_str() + "\n"
         rep += str(self.h_matrix)
         return rep
 
@@ -160,7 +168,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         string : `str`
             String representation of transform.
         """
-        return 'Homogeneous'
+        return "Homogeneous"
 
     @property
     def h_matrix(self):
@@ -198,14 +206,18 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         NotImplementedError
             If :attr:`h_matrix_is_mutable` returns ``False``.
         """
-        warn('the public API for mutable operations is deprecated '
-             'and will be removed in a future version of Menpo. '
-             'Create a new transform instead.', MenpoDeprecationWarning)
+        warn(
+            "the public API for mutable operations is deprecated "
+            "and will be removed in a future version of Menpo. "
+            "Create a new transform instead.",
+            MenpoDeprecationWarning,
+        )
         if self.h_matrix_is_mutable:
             self._set_h_matrix(value, copy=copy, skip_checks=skip_checks)
         else:
             raise NotImplementedError(
-                "h_matrix cannot be set on {}".format(self._transform_str()))
+                "h_matrix cannot be set on {}".format(self._transform_str())
+            )
 
     def _set_h_matrix(self, value, copy=True, skip_checks=False):
         r"""
@@ -270,8 +282,9 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         vector : ``(n_parameters,)`` `ndarray`
             Flattened representation of this object
         """
-        self._set_h_matrix(vector.reshape(self.h_matrix.shape),
-                           copy=True, skip_checks=True)
+        self._set_h_matrix(
+            vector.reshape(self.h_matrix.shape), copy=True, skip_checks=True
+        )
 
     @property
     def composes_inplace_with(self):
@@ -405,15 +418,17 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # Compose machinery will guarantee this is only invoked in the right
         # circumstances (e.g. the types will match) so we don't need to block
         # the setting of the matrix
-        self._set_h_matrix(np.dot(transform.h_matrix, self.h_matrix),
-                           copy=False, skip_checks=True)
+        self._set_h_matrix(
+            np.dot(transform.h_matrix, self.h_matrix), copy=False, skip_checks=True
+        )
 
     def _compose_after_inplace(self, transform):
         # Compose machinery will guarantee this is only invoked in the right
         # circumstances (e.g. the types will match) so we don't need to block
         # the setting of the matrix
-        self._set_h_matrix(np.dot(self.h_matrix, transform.h_matrix),
-                           copy=False, skip_checks=True)
+        self._set_h_matrix(
+            np.dot(self.h_matrix, transform.h_matrix), copy=False, skip_checks=True
+        )
 
     @property
     def has_true_inverse(self):
@@ -434,11 +449,13 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         :type: :class:`Homogeneous`
         """
         # Skip the checks as we know inverse of a homogeneous is a homogeneous
-        return self.__class__(self._h_matrix_pseudoinverse(), copy=False,
-                              skip_checks=True)
+        return self.__class__(
+            self._h_matrix_pseudoinverse(), copy=False, skip_checks=True
+        )
 
     def _h_matrix_pseudoinverse(self):
         return np.linalg.inv(self.h_matrix)
+
 
 from .affine import Affine
 from .similarity import Similarity

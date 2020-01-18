@@ -22,7 +22,8 @@ def mean_pointcloud(pointclouds):
         The mean point cloud or subclass.
     """
     # make a temporary PointCloud (with copy=False for low overhead)
-    tmp_pc = PointCloud(sum(pc.points for pc in pointclouds) /
-                        len(pointclouds), copy=False)
+    tmp_pc = PointCloud(
+        sum(pc.points for pc in pointclouds) / len(pointclouds), copy=False
+    )
     # use the type of the first element in the list to rebuild from the vector
     return pointclouds[0].from_vector(tmp_pc.as_vector())

@@ -66,7 +66,8 @@ class Landmarkable(Copyable):
         if lm_n_dims is not None and lm_n_dims != self.n_dims:
             raise ValueError(
                 "Trying to set {}D landmarks on a "
-                "{}D object".format(value.n_dims, self.n_dims))
+                "{}D object".format(value.n_dims, self.n_dims)
+            )
         self._landmarks = value.copy()
 
     @property
@@ -161,18 +162,22 @@ class LandmarkManager(MutableMapping, Transformable):
             If the landmarks and the shape are not of the same dimensionality.
         """
         from menpo.shape import PointCloud
+
         if group is None:
-            raise ValueError('Cannot set using the key `None`. `None` has a '
-                             'reserved meaning for landmark groups.')
+            raise ValueError(
+                "Cannot set using the key `None`. `None` has a "
+                "reserved meaning for landmark groups."
+            )
 
         # firstly, make sure the dim is correct
         n_dims = self.n_dims
         if n_dims is not None and value.n_dims != n_dims:
             raise ValueError(
                 "Trying to set {}D landmarks on a "
-                "{}D LandmarkManager".format(value.n_dims, self.n_dims))
+                "{}D LandmarkManager".format(value.n_dims, self.n_dims)
+            )
         if not isinstance(value, PointCloud):
-            raise ValueError('Valid types are any subclass of PointCloud')
+            raise ValueError("Valid types are any subclass of PointCloud")
 
         # Copy the landmark group so that we now own it
         lmark_group = value.copy()
@@ -197,8 +202,10 @@ class LandmarkManager(MutableMapping, Transformable):
             if self.n_groups == 1:
                 group = self.group_labels[0]
             else:
-                raise ValueError("Cannot use None as a key as there are {} "
-                                 "landmark groups".format(self.n_groups))
+                raise ValueError(
+                    "Cannot use None as a key as there are {} "
+                    "landmark groups".format(self.n_groups)
+                )
         return self._landmark_groups[group]
 
     def __delitem__(self, group):
@@ -217,8 +224,8 @@ class LandmarkManager(MutableMapping, Transformable):
 
     def __setstate__(self, state):
         # consistency with older versions imported.
-        if not isinstance(state['_landmark_groups'], OrderedDict):
-            state['_landmark_groups'] = OrderedDict(state['_landmark_groups'])
+        if not isinstance(state["_landmark_groups"], OrderedDict):
+            state["_landmark_groups"] = OrderedDict(state["_landmark_groups"])
 
         self.__dict__ = state
 
@@ -316,9 +323,11 @@ class LandmarkManager(MutableMapping, Transformable):
         """
         try:
             from menpowidgets import view_widget
+
             view_widget(self, figure_size=figure_size)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
 
     def _view_widget_3d(self):
@@ -327,29 +336,31 @@ class LandmarkManager(MutableMapping, Transformable):
         """
         try:
             from menpowidgets import view_widget
+
             view_widget(self)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
 
     def __str__(self):
-        out_string = '{}: n_groups: {}'.format(type(self).__name__,
-                                               self.n_groups)
+        out_string = "{}: n_groups: {}".format(type(self).__name__, self.n_groups)
         if self.has_landmarks:
             for label in self:
-                out_string += '\n'
-                out_string += '({}): {}'.format(label, self[label].__str__())
+                out_string += "\n"
+                out_string += "({}): {}".format(label, self[label].__str__())
 
         return out_string
 
 
 # TODO: Deprecate this - this handles importing old-style LandmarkGroup
 class LandmarkGroup(object):
-
     def __new__(cls, *args, **kwargs):
         # This is a crazy hack that means when old style LandmarkGroup
         # objects are imported it is actually new-style
         # LabelledPointUndirectedGraph objects that are created.
         from menpo.shape import LabelledPointUndirectedGraph
+
         return LabelledPointUndirectedGraph.__new__(
-            LabelledPointUndirectedGraph, *args, **kwargs)
+            LabelledPointUndirectedGraph, *args, **kwargs
+        )

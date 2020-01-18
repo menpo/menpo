@@ -53,42 +53,39 @@ def pillow_importer(filepath, asset=None, normalize=True, **kwargs):
         The imported image.
     """
     import PIL.Image as PILImage
+
     if isinstance(filepath, Path):
         filepath = str(filepath)
     pil_image = PILImage.open(filepath)
     mode = pil_image.mode
-    if mode == 'RGBA':
+    if mode == "RGBA":
         # If normalize is False, then we return the alpha as an extra
         # channel, which can be useful if the alpha channel has semantic
         # meanings!
         if normalize:
             alpha = np.array(pil_image)[..., 3].astype(np.bool)
-            image_pixels = _pil_to_numpy(pil_image, True, convert='RGB')
-            image = MaskedImage.init_from_channels_at_back(image_pixels,
-                                                           mask=alpha)
+            image_pixels = _pil_to_numpy(pil_image, True, convert="RGB")
+            image = MaskedImage.init_from_channels_at_back(image_pixels, mask=alpha)
         else:
             # With no normalisation we just return the pixels
-            image = Image.init_from_channels_at_back(
-                _pil_to_numpy(pil_image, False))
-    elif mode in ['L', 'I', 'RGB']:
+            image = Image.init_from_channels_at_back(_pil_to_numpy(pil_image, False))
+    elif mode in ["L", "I", "RGB"]:
         # Greyscale, Integer and RGB images
-        image = Image.init_from_channels_at_back(
-            _pil_to_numpy(pil_image, normalize))
-    elif mode == '1':
+        image = Image.init_from_channels_at_back(_pil_to_numpy(pil_image, normalize))
+    elif mode == "1":
         # Convert to 'L' type (http://stackoverflow.com/a/4114122/1716869).
         # Can't normalize a binary image
-        image = BooleanImage(_pil_to_numpy(pil_image, False, convert='L'),
-                             copy=True)
-    elif mode == 'P':
+        image = BooleanImage(_pil_to_numpy(pil_image, False, convert="L"), copy=True)
+    elif mode == "P":
         # Convert pallete images to RGB
         image = Image.init_from_channels_at_back(
-            _pil_to_numpy(pil_image, normalize, convert='RGB'))
-    elif mode == 'F':  # Floating point images
+            _pil_to_numpy(pil_image, normalize, convert="RGB")
+        )
+    elif mode == "F":  # Floating point images
         # Don't normalize as we don't know the scale
-        image = Image.init_from_channels_at_back(
-            _pil_to_numpy(pil_image, False))
+        image = Image.init_from_channels_at_back(_pil_to_numpy(pil_image, False))
     else:
-        raise ValueError('Unexpected mode for PIL: {}'.format(mode))
+        raise ValueError("Unexpected mode for PIL: {}".format(mode))
     return image
 
 
@@ -115,13 +112,13 @@ def abs_importer(filepath, asset=None, **kwargs):
     """
     import re
 
-    with open(str(filepath), 'r') as f:
+    with open(str(filepath), "r") as f:
         # Currently these are unused, but they are in the format
         # Could possibly store as metadata?
         # Assume first result for regexes
-        re_rows = re.compile(u'([0-9]+) rows')
+        re_rows = re.compile("([0-9]+) rows")
         n_rows = int(re_rows.findall(f.readline())[0])
-        re_cols = re.compile(u'([0-9]+) columns')
+        re_cols = re.compile("([0-9]+) columns")
         n_cols = int(re_cols.findall(f.readline())[0])
 
     # This also loads the mask
@@ -136,7 +133,8 @@ def abs_importer(filepath, asset=None, **kwargs):
     return MaskedImage(
         np.rollaxis(np.reshape(data_view, [n_rows, n_cols, 3]), -1),
         np.reshape(image_data[:, 0], [n_rows, n_cols]).astype(np.bool),
-        copy=False)
+        copy=False,
+    )
 
 
 def flo_importer(filepath, asset=None, **kwargs):
@@ -158,15 +156,14 @@ def flo_importer(filepath, asset=None, **kwargs):
     image : :map:`Image` or subclass
         The imported image.
     """
-    with open(str(filepath), 'rb') as f:
+    with open(str(filepath), "rb") as f:
         fingerprint = f.read(4)
-        if fingerprint != b'PIEH':
-            raise ValueError('Invalid FLO file.')
+        if fingerprint != b"PIEH":
+            raise ValueError("Invalid FLO file.")
 
         width, height = np.fromfile(f, dtype=np.uint32, count=2)
         # read the raw flow data (u0, v0, u1, v1, u2, v2,...)
-        rawData = np.fromfile(f, dtype=np.float32,
-                              count=width * height * 2)
+        rawData = np.fromfile(f, dtype=np.float32, count=width * height * 2)
 
     shape = (height, width)
     u_raw = rawData[::2].reshape(shape)
@@ -205,15 +202,14 @@ def imageio_importer(filepath, asset=None, normalize=True, **kwargs):
     pixels = imageio.imread(str(filepath))
     pixels = channels_to_front(pixels)
 
-    transparent_types = {'.png'}
+    transparent_types = {".png"}
     if pixels.shape[0] == 4 and filepath.suffix in transparent_types:
         # If normalize is False, then we return the alpha as an extra
         # channel, which can be useful if the alpha channel has semantic
         # meanings!
         if normalize:
             p = normalize_pixels_range(pixels[:3])
-            return MaskedImage(p, mask=pixels[-1].astype(np.bool),
-                               copy=False)
+            return MaskedImage(p, mask=pixels[-1].astype(np.bool), copy=False)
         else:
             return Image(pixels, copy=False)
 
@@ -251,7 +247,7 @@ def imageio_gif_importer(filepath, asset=None, normalize=True, **kwargs):
     """
     import imageio
 
-    reader = imageio.get_reader(str(filepath), format='gif', mode='I')
+    reader = imageio.get_reader(str(filepath), format="gif", mode="I")
 
     def imageio_to_menpo(imio_reader, index):
         pixels = imio_reader.get_data(index)
@@ -263,8 +259,7 @@ def imageio_gif_importer(filepath, asset=None, normalize=True, **kwargs):
             # meanings!
             if normalize:
                 p = normalize_pixels_range(pixels[:3])
-                return MaskedImage(p, mask=pixels[-1].astype(np.bool),
-                                   copy=False)
+                return MaskedImage(p, mask=pixels[-1].astype(np.bool), copy=False)
             else:
                 return Image(pixels, copy=False)
 
@@ -275,6 +270,5 @@ def imageio_gif_importer(filepath, asset=None, normalize=True, **kwargs):
             return Image(pixels, copy=False)
 
     index_callable = partial(imageio_to_menpo, reader)
-    ll = LazyList.init_from_index_callable(index_callable,
-                                           reader.get_length())
+    ll = LazyList.init_from_index_callable(index_callable, reader.get_length())
     return ll

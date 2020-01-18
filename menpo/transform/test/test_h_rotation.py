@@ -6,15 +6,13 @@ from menpo.transform import Rotation
 
 
 def test_basic_2d_rotation():
-    rotation_matrix = np.array([[0, 1],
-                                [-1, 0]])
+    rotation_matrix = np.array([[0, 1], [-1, 0]])
     rotation = Rotation(rotation_matrix)
     assert_allclose(np.array([0, -1]), rotation.apply(np.array([1, 0])))
 
 
 def test_basic_2d_rotation_axis_angle():
-    rotation_matrix = np.array([[0, 1],
-                                [-1, 0]])
+    rotation_matrix = np.array([[0, 1], [-1, 0]])
     rotation = Rotation(rotation_matrix)
     axis, angle = rotation.axis_and_angle_of_rotation()
     assert_allclose(axis, np.array([0, 0, 1]))
@@ -25,9 +23,7 @@ def test_basic_3d_rotation():
     a = np.sqrt(3.0) / 2.0
     b = 0.5
     # this is a rotation of -30 degrees about the x axis
-    rotation_matrix = np.array([[1, 0, 0],
-                                [0, a, b],
-                                [0, -b, a]])
+    rotation_matrix = np.array([[1, 0, 0], [0, a, b], [0, -b, a]])
     rotation = Rotation(rotation_matrix)
     starting_vector = np.array([0, 1, 0])
     transformed = rotation.apply(starting_vector)
@@ -38,9 +34,7 @@ def test_basic_3d_rotation_axis_angle():
     a = np.sqrt(3.0) / 2.0
     b = 0.5
     # this is a rotation of -30 degrees about the x axis
-    rotation_matrix = np.array([[1, 0, 0],
-                                [0, a, b],
-                                [0, -b, a]])
+    rotation_matrix = np.array([[1, 0, 0], [0, a, b], [0, -b, a]])
     rotation = Rotation(rotation_matrix)
     axis, angle = rotation.axis_and_angle_of_rotation()
     assert_allclose(axis, np.array([1, 0, 0]))
@@ -51,31 +45,27 @@ def test_3d_rotation_inverse_eye():
     a = np.sqrt(3.0) / 2.0
     b = 0.5
     # this is a rotation of -30 degrees about the x axis
-    rotation_matrix = np.array([[1, 0, 0],
-                                [0, a, b],
-                                [0, -b, a]])
+    rotation_matrix = np.array([[1, 0, 0], [0, a, b], [0, -b, a]])
     rotation = Rotation(rotation_matrix)
     transformed = rotation.compose_before(rotation.pseudoinverse())
     assert_allclose(np.eye(4), transformed.h_matrix, atol=1e-15)
 
 
 def test_init_3d_from_quaternion():
-    q = np.array([1., 0., 0.27, 0.])
+    q = np.array([1.0, 0.0, 0.27, 0.0])
     r = Rotation.init_3d_from_quaternion(q)
     axis, angle = r.axis_and_angle_of_rotation()
-    assert_allclose(r.axis_and_angle_of_rotation()[0], np.array([0., 1., 0.]))
-    assert np.round(angle * 180 / np.pi) == 30.
+    assert_allclose(r.axis_and_angle_of_rotation()[0], np.array([0.0, 1.0, 0.0]))
+    assert np.round(angle * 180 / np.pi) == 30.0
 
 
 def test_3d_rotation_as_vector():
     a = np.sqrt(3.0) / 2.0
     b = 0.5
     # this is a rotation of -30 degrees about the x axis
-    rotation_matrix = np.array([[1, 0, 0],
-                                [0, a, b],
-                                [0, -b, a]])
+    rotation_matrix = np.array([[1, 0, 0], [0, a, b], [0, -b, a]])
     rotation = Rotation(rotation_matrix)
-    assert_allclose(np.round(rotation.as_vector()[2:]), np.array([0., 0.]))
+    assert_allclose(np.round(rotation.as_vector()[2:]), np.array([0.0, 0.0]))
 
 
 def test_3d_rotation_n_parameters():
@@ -110,16 +100,22 @@ def test_rotation3d_identity():
 def test_rotation3d_init_from_3d_ccw_angle_around_x():
     assert_allclose(
         Rotation.init_from_3d_ccw_angle_around_x(90).apply(np.array([0, 0, 1])),
-        np.array([0, -1, 0]), atol=1e-6)
+        np.array([0, -1, 0]),
+        atol=1e-6,
+    )
 
 
 def test_rotation3d_init_from_3d_ccw_angle_around_y():
     assert_allclose(
         Rotation.init_from_3d_ccw_angle_around_y(90).apply(np.array([0, 0, 1])),
-        np.array([1, 0, 0]), atol=1e-6)
+        np.array([1, 0, 0]),
+        atol=1e-6,
+    )
 
 
 def test_rotation3d_init_from_3d_ccw_angle_around_z():
     assert_allclose(
         Rotation.init_from_3d_ccw_angle_around_z(90).apply(np.array([0, 1, 0])),
-        np.array([-1, 0, 0]), atol=1e-6)
+        np.array([-1, 0, 0]),
+        atol=1e-6,
+    )
