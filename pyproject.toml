@@ -12,7 +12,7 @@ exclude = '''
     | _build
     | build
     | dist
-    | menpo/_version.py
+    | _version.py
   )
 )
 '''
