@@ -1,4 +1,4 @@
-Menpo has received contributions from the following:
+Menpo was originally conceived at/by:
 
 Institutions
 ------------
@@ -13,3 +13,5 @@ Epameinondas Antonakos  <antonakosn@gmail.com> <e.antonakos@imperial.ac.uk>
 Stefanos Zafeiriou      <s.zafeiriou@imperial.ac.uk>
 Grigorios Chrysos       <grigoris.chrysos@gmail.com> <g.chrysos@imperial.ac.uk>
 
+The project remains under a BSD 3-Clause license this file is only to document
+the contributions of the original authors.
