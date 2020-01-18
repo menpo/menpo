@@ -38,6 +38,7 @@ test:
     - pytest-cov >=2.0,<3.0
     - pytest-mock >=1.0,<2.0
     - mock >=3.0,<4.0
+    - black >= 19.0
 
   files:
     - .coveragerc
