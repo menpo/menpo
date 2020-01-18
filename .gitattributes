@@ -1,1 +1,2 @@
 menpo/_version.py export-subst
+menpo/_static_version.py export-subst
