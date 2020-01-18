@@ -6,12 +6,15 @@ import numpy as np
 from menpo.shape import PointCloud
 
 
-EXEMPT_FUNCTIONS = {'labeller', 'bounding_box_to_bounding_box',
-                    'bounding_box_mirrored_to_bounding_box'}
+EXEMPT_FUNCTIONS = {
+    "labeller",
+    "bounding_box_to_bounding_box",
+    "bounding_box_mirrored_to_bounding_box",
+}
 
 valid_label_functions = filter(
     lambda x: x[0] not in EXEMPT_FUNCTIONS,
-    inspect.getmembers(labels, predicate=inspect.isfunction)
+    inspect.getmembers(labels, predicate=inspect.isfunction),
 )
 
 
@@ -29,10 +32,10 @@ def check_label_func(func, input_n_points, output_n_points):
     assert pcloud_result.n_points == output_n_points
 
 
-@pytest.mark.parametrize('fname, func', valid_label_functions)
+@pytest.mark.parametrize("fname, func", valid_label_functions)
 def test_labels(fname, func):
-    parts = fname.split('_')
-    to_index = parts.index('to')
+    parts = fname.split("_")
+    to_index = parts.index("to")
     input_n_points = parts[to_index - 1]
     output_n_points = parts[-1]
     try:

@@ -17,20 +17,20 @@ class MockTransform(Transform):
 def test_transform_n_dims_return_None():
     tr = MockTransform()
     n_dims = tr.n_dims
-    assert (n_dims is None)
+    assert n_dims is None
 
 
 def test_transform_n_dims_output_return_None():
     tr = MockTransform()
     n_dims = tr.n_dims_output
-    assert (n_dims is None)
+    assert n_dims is None
 
 
 def test_transform_apply_x_not_transformable():
     tr = MockTransform()
     new_x = tr.apply(x)
 
-    assert (new_x is not x)
+    assert new_x is not x
     assert_allclose(new_x, x)
 
 
@@ -40,7 +40,7 @@ def test_transform_apply_x_transformable():
     tr = MockTransform()
     transformed_mock = tr.apply(mocked)
 
-    assert (transformed_mock is mocked)
+    assert transformed_mock is mocked
     assert mocked._transform.called
 
 
@@ -50,7 +50,7 @@ def test_transform_apply_inplace_x_transformable():
     tr = MockTransform()
     no_return = tr._apply_inplace(mocked)
 
-    assert (no_return is None)
+    assert no_return is None
     assert mocked._transform_inplace.called
 
 
@@ -66,9 +66,9 @@ def test_transform_compose_before():
     tr = MockTransform()
     chain = tr.compose_before(mocked)
     # Check transform chain
-    assert (len(chain.transforms) == 2)
-    assert (chain.transforms[0] is tr)
-    assert (chain.transforms[1] is mocked)
+    assert len(chain.transforms) == 2
+    assert chain.transforms[0] is tr
+    assert chain.transforms[1] is mocked
 
 
 def test_transform_compose_after():
@@ -77,6 +77,6 @@ def test_transform_compose_after():
     tr = MockTransform()
     chain = tr.compose_after(mocked)
     # Check transform chain
-    assert (len(chain.transforms) == 2)
-    assert (chain.transforms[0] is mocked)
-    assert (chain.transforms[1] is tr)
+    assert len(chain.transforms) == 2
+    assert chain.transforms[0] is mocked
+    assert chain.transforms[1] is tr

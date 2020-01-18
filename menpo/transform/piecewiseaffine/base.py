@@ -2,6 +2,7 @@ import numpy as np
 from copy import deepcopy
 from menpo.base import Copyable
 from menpo.transform.base import Alignment, Invertible, Transform
+
 # TODO View is broken for PWA (TriangleContainmentError)
 
 
@@ -14,6 +15,7 @@ class TriangleContainmentError(Exception):
         A `bool` value for the ``d`` points that were attempted to be applied.
         If ``True```, the point was outside of the domain.
     """
+
     def __init__(self, points_outside_source_domain):
         super(TriangleContainmentError, self).__init__()
         self.points_outside_source_domain = points_outside_source_domain
@@ -47,9 +49,9 @@ def containment_from_alpha_beta(alpha, beta):
     """
     # (K, n_tris), boolean for whether a given triangle contains a given
     #  point
-    point_containment = np.logical_and(np.logical_and(
-        alpha >= 0, beta >= 0),
-        alpha + beta <= 1)
+    point_containment = np.logical_and(
+        np.logical_and(alpha >= 0, beta >= 0), alpha + beta <= 1
+    )
     # is each point in a triangle?
     point_in_a_triangle = np.any(point_containment, axis=1)
     if np.any(~point_in_a_triangle):
@@ -92,13 +94,13 @@ def alpha_beta(i, ij, ik, points):
         question.
     """
     ip = points[..., None] - i
-    dot_jj = np.einsum('dt, dt -> t', ij, ij)
-    dot_kk = np.einsum('dt, dt -> t', ik, ik)
-    dot_jk = np.einsum('dt, dt -> t', ij, ik)
-    dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
-    dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
+    dot_jj = np.einsum("dt, dt -> t", ij, ij)
+    dot_kk = np.einsum("dt, dt -> t", ik, ik)
+    dot_jk = np.einsum("dt, dt -> t", ij, ik)
+    dot_pj = np.einsum("vdt, dt -> vt", ip, ij)
+    dot_pk = np.einsum("vdt, dt -> vt", ip, ik)
 
-    d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
+    d = 1.0 / (dot_jj * dot_kk - dot_jk * dot_jk)
     alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
     beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
     return alpha, beta
@@ -179,7 +181,7 @@ def barycentric_vectors(points, trilist):
     """
     # we permute the axes of the indexed point set to have shape
     # [3, n_dims, n_tris] for ease of indexing in.
-    x = np.transpose(points[trilist],  axes=[1, 2, 0])
+    x = np.transpose(points[trilist], axes=[1, 2, 0])
     return x[0], x[1] - x[0], x[2] - x[0]
 
 
@@ -213,14 +215,15 @@ class AbstractPWA(Alignment, Transform, Invertible):
         All points to apply must be contained in a source triangle. Check
         `error.points_outside_source_domain` to handle this case.
     """
+
     def __init__(self, source, target):
         from menpo.shape import TriMesh  # to avoid circular import
+
         if not isinstance(source, TriMesh):
             source = TriMesh(source.points)
         Alignment.__init__(self, source, target)
         if self.n_dims != 2:
-            raise ValueError("source and target must be 2 "
-                             "dimensional")
+            raise ValueError("source and target must be 2 " "dimensional")
         self.ti, self.tij, self.tik = None, None, None
         self._rebuild_target_vectors()
 
@@ -275,9 +278,11 @@ class AbstractPWA(Alignment, Transform, Invertible):
             The transformed array.
         """
         tri_index, alpha, beta = self.index_alpha_beta(x)
-        return (self.ti[tri_index] +
-                alpha[:, None] * self.tij[tri_index] +
-                beta[:, None] * self.tik[tri_index])
+        return (
+            self.ti[tri_index]
+            + alpha[:, None] * self.tij[tri_index]
+            + beta[:, None] * self.tik[tri_index]
+        )
 
     def _apply_batched(self, x, batch_size, **kwargs):
         # This is a rare case where we need to override the batched apply
@@ -297,16 +302,15 @@ class AbstractPWA(Alignment, Transform, Invertible):
                     outputs.append(self._apply(x[lo_ind:hi_ind], **kwargs))
                 except TriangleContainmentError as e:
                     exception_thrown = True
-                    points_outside_source_domain.append(
-                        e.points_outside_source_domain)
+                    points_outside_source_domain.append(e.points_outside_source_domain)
                 else:
                     # No exception was thrown, so all points were inside
                     points_outside_source_domain.append(
-                        np.zeros(batch_size, dtype=np.bool))
+                        np.zeros(batch_size, dtype=np.bool)
+                    )
 
             if exception_thrown:
-                raise TriangleContainmentError(
-                    np.hstack(points_outside_source_domain))
+                raise TriangleContainmentError(np.hstack(points_outside_source_domain))
             else:
                 return np.vstack(outputs)
 
@@ -367,13 +371,13 @@ class AbstractPWA(Alignment, Transform, Invertible):
         :type: ``type(self)``
         """
         from menpo.shape import PointCloud, TriMesh  # to avoid circular import
+
         new_source = TriMesh(self.target.points, self.source.trilist)
         new_target = PointCloud(self.source.points)
         return type(self)(new_source, new_target)
 
 
 class PythonPWA(AbstractPWA):
-
     def __init__(self, source, target):
         super(PythonPWA, self).__init__(source, target)
         si, sij, sik = barycentric_vectors(self.source.points, self.trilist)
@@ -384,15 +388,16 @@ class PythonPWA(AbstractPWA):
 
 
 class CachedPWA(PythonPWA):
-
     def __init__(self, source, target):
         super(CachedPWA, self).__init__(source, target)
         self._applied_points, self._iab = None, None
 
     def index_alpha_beta(self, points):
-        if (self._applied_points is None or
-                not points.shape == self._applied_points.shape or
-                not np.allclose(points, self._applied_points)):
+        if (
+            self._applied_points is None
+            or not points.shape == self._applied_points.shape
+            or not np.allclose(points, self._applied_points)
+        ):
             # This must happen first in case index_alpha_beta throws a
             # TriangleContainmentError
             self._iab = PythonPWA.index_alpha_beta(self, points)

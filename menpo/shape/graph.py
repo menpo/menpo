@@ -131,30 +131,39 @@ class Graph(object):
                                                  [2, 0, 4, 2, 4, 3])),
                                       shape=(6, 6))
     """
+
     def __init__(self, adjacency_matrix, copy=True, skip_checks=False):
         # check if adjacency_matrix is numpy.ndarray or scipy.sparse.csr_matrix
         if isinstance(adjacency_matrix, np.ndarray):
             # it is numpy.ndarray, thus convert it to scipy.sparse.csr_matrix
             adjacency_matrix = csr_matrix(adjacency_matrix)
-        elif not (isinstance(adjacency_matrix, np.ndarray) or
-                  isinstance(adjacency_matrix, csr_matrix)):
-            raise ValueError('adjacency_matrix must be either a numpy.ndarray'
-                             'or a scipy.sparse.csr_matrix.')
+        elif not (
+            isinstance(adjacency_matrix, np.ndarray)
+            or isinstance(adjacency_matrix, csr_matrix)
+        ):
+            raise ValueError(
+                "adjacency_matrix must be either a numpy.ndarray"
+                "or a scipy.sparse.csr_matrix."
+            )
 
         if not skip_checks:
             # check that adjacency_matrix has expected shape
             if adjacency_matrix.shape[0] == 0:
-                raise ValueError('Graph must have at least one vertex.')
+                raise ValueError("Graph must have at least one vertex.")
             elif adjacency_matrix.shape[0] != adjacency_matrix.shape[1]:
-                raise ValueError('adjacency_matrix must be square '
-                                 '(n_vertices, n_vertices, ), ({}, {}) given '
-                                 'instead'.format(adjacency_matrix.shape[0],
-                                                  adjacency_matrix.shape[1]))
+                raise ValueError(
+                    "adjacency_matrix must be square "
+                    "(n_vertices, n_vertices, ), ({}, {}) given "
+                    "instead".format(
+                        adjacency_matrix.shape[0], adjacency_matrix.shape[1]
+                    )
+                )
 
             # check if adjacency matrix of undirected graph is symmetric
             if not self._directed and not _is_symmetric(adjacency_matrix):
-                raise ValueError('The adjacency matrix of an undirected graph '
-                                 'must be symmetric.')
+                raise ValueError(
+                    "The adjacency matrix of an undirected graph " "must be symmetric."
+                )
 
         # store adjacency_matrix
         if copy:
@@ -364,7 +373,7 @@ class Graph(object):
             self._check_vertex(vertex_2)
         return self.adjacency_matrix[vertex_1, vertex_2] != 0
 
-    def find_path(self, start, end, method='bfs', skip_checks=False):
+    def find_path(self, start, end, method="bfs", skip_checks=False):
         r"""
         Returns a `list` with the first path (without cycles) found from the
         ``start`` vertex to the ``end`` vertex. It can employ either depth-first
@@ -398,16 +407,22 @@ class Graph(object):
             self._check_vertex(end)
 
         # search
-        if method == 'bfs':
+        if method == "bfs":
             nodes, predecessors = csgraph.breadth_first_order(
-                self.adjacency_matrix, start, directed=self._directed,
-                return_predecessors=True)
-        elif method == 'dfs':
+                self.adjacency_matrix,
+                start,
+                directed=self._directed,
+                return_predecessors=True,
+            )
+        elif method == "dfs":
             nodes, predecessors = csgraph.depth_first_order(
-                self.adjacency_matrix, start, directed=self._directed,
-                return_predecessors=True)
+                self.adjacency_matrix,
+                start,
+                directed=self._directed,
+                return_predecessors=True,
+            )
         else:
-            raise ValueError('Method must be either bfs or dfs.')
+            raise ValueError("Method must be either bfs or dfs.")
 
         # get path
         if predecessors[end] == -9999:
@@ -474,7 +489,7 @@ class Graph(object):
         """
         return len(self.find_all_paths(start, end))
 
-    def find_all_shortest_paths(self, algorithm='auto', unweighted=False):
+    def find_all_shortest_paths(self, algorithm="auto", unweighted=False):
         r"""
         Returns the distances and predecessors arrays of the graph's shortest
         paths.
@@ -511,13 +526,17 @@ class Graph(object):
             ``predecessors[i, j] = -9999``.
         """
         # find costs and predecessors of all shortest paths
-        return csgraph.shortest_path(self.adjacency_matrix,
-                                     directed=self._directed, method=algorithm,
-                                     unweighted=unweighted,
-                                     return_predecessors=True)
+        return csgraph.shortest_path(
+            self.adjacency_matrix,
+            directed=self._directed,
+            method=algorithm,
+            unweighted=unweighted,
+            return_predecessors=True,
+        )
 
-    def find_shortest_path(self, start, end, algorithm='auto', unweighted=False,
-                           skip_checks=False):
+    def find_shortest_path(
+        self, start, end, algorithm="auto", unweighted=False, skip_checks=False
+    ):
         r"""
         Returns a `list` with the shortest path (without cycles) found from
         ``start`` vertex to ``end`` vertex.
@@ -563,7 +582,8 @@ class Graph(object):
 
         # find distances and predecessors of all shortest paths
         (distances, predecessors) = self.find_all_shortest_paths(
-            algorithm=algorithm, unweighted=unweighted)
+            algorithm=algorithm, unweighted=unweighted
+        )
 
         # retrieve shortest path and its distance
         if predecessors[start, end] < 0:
@@ -617,8 +637,9 @@ class Graph(object):
             The vertex must be between 0 and {n_vertices-1}.
         """
         if vertex > self.n_vertices - 1 or vertex < 0:
-            raise ValueError('The vertex must be between '
-                             '0 and {}.'.format(self.n_vertices - 1))
+            raise ValueError(
+                "The vertex must be between " "0 and {}.".format(self.n_vertices - 1)
+            )
 
 
 class UndirectedGraph(Graph):
@@ -719,10 +740,12 @@ class UndirectedGraph(Graph):
                                       shape=(6, 6))
         graph = UndirectedGraph(adjacency_matrix)
     """
+
     def __init__(self, adjacency_matrix, copy=True, skip_checks=False):
         self._directed = False
-        super(UndirectedGraph, self).__init__(adjacency_matrix, copy=copy,
-                                              skip_checks=skip_checks)
+        super(UndirectedGraph, self).__init__(
+            adjacency_matrix, copy=copy, skip_checks=skip_checks
+        )
 
     @classmethod
     def init_from_edges(cls, edges, n_vertices, skip_checks=False):
@@ -787,7 +810,8 @@ class UndirectedGraph(Graph):
 
         """
         adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
-            edges, n_vertices)
+            edges, n_vertices
+        )
         return cls(adjacency_matrix, copy=False, skip_checks=skip_checks)
 
     @property
@@ -866,21 +890,25 @@ class UndirectedGraph(Graph):
         """
         # check if graph has isolated vertices
         if self.has_isolated_vertices():
-            raise ValueError('Cannot compute minimum spanning tree of a graph '
-                             'with isolated vertices.')
+            raise ValueError(
+                "Cannot compute minimum spanning tree of a graph "
+                "with isolated vertices."
+            )
         # Compute MST. It returns an undirected graph.
         mst_adjacency = csgraph.minimum_spanning_tree(self.adjacency_matrix)
         # Get directed tree from the above undirected graph using DFS.
-        mst_adjacency = csgraph.depth_first_tree(mst_adjacency, root_vertex,
-                                                 directed=False)
+        mst_adjacency = csgraph.depth_first_tree(
+            mst_adjacency, root_vertex, directed=False
+        )
         return Tree(mst_adjacency, root_vertex, skip_checks=True)
 
     def __str__(self):
-        isolated = ''
+        isolated = ""
         if self.has_isolated_vertices():
             isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "Undirected graph of {} vertices{} and {} " \
-               "edges.".format(self.n_vertices, isolated, self.n_edges)
+        return "Undirected graph of {} vertices{} and {} " "edges.".format(
+            self.n_vertices, isolated, self.n_edges
+        )
 
 
 class DirectedGraph(Graph):
@@ -975,10 +1003,12 @@ class DirectedGraph(Graph):
                                       shape=(6, 6))
         graph = DirectedGraph(adjacency_matrix)
     """
+
     def __init__(self, adjacency_matrix, copy=True, skip_checks=False):
         self._directed = True
-        super(DirectedGraph, self).__init__(adjacency_matrix, copy=copy,
-                                            skip_checks=skip_checks)
+        super(DirectedGraph, self).__init__(
+            adjacency_matrix, copy=copy, skip_checks=skip_checks
+        )
 
     @property
     def edges(self):
@@ -1081,11 +1111,12 @@ class DirectedGraph(Graph):
         return len(self.parents(vertex, skip_checks=skip_checks))
 
     def __str__(self):
-        isolated = ''
+        isolated = ""
         if self.has_isolated_vertices():
             isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "Directed graph of {} vertices{} and {} " \
-               "edges.".format(self.n_vertices, isolated, self.n_edges)
+        return "Directed graph of {} vertices{} and {} " "edges.".format(
+            self.n_vertices, isolated, self.n_edges
+        )
 
 
 class Tree(DirectedGraph):
@@ -1163,37 +1194,40 @@ class Tree(DirectedGraph):
                                       shape=(9, 9))
         tree = Tree(adjacency_matrix, root_vertex=0)
     """
-    def __init__(self, adjacency_matrix, root_vertex, copy=True,
-                 skip_checks=False):
-        super(Tree, self).__init__(adjacency_matrix, copy=copy,
-                                   skip_checks=skip_checks)
+
+    def __init__(self, adjacency_matrix, root_vertex, copy=True, skip_checks=False):
+        super(Tree, self).__init__(adjacency_matrix, copy=copy, skip_checks=skip_checks)
 
         if not skip_checks:
             # check if the provided tree has isolated vertices
             if self.has_isolated_vertices():
-                raise ValueError('A tree cannot have isolated vertices.')
+                raise ValueError("A tree cannot have isolated vertices.")
             # check if provided adjacency_matrix represents a tree
             if not self.is_tree():
-                raise ValueError('The provided edges do not represent a tree.')
+                raise ValueError("The provided edges do not represent a tree.")
             # check if root_vertex is valid
             self._check_vertex(root_vertex)
             # check if the tree is properly defined given the root
             if not np.allclose(
-                    csgraph.breadth_first_tree(self.adjacency_matrix,
-                                               root_vertex,
-                                               directed=True).nonzero(),
-                    self.adjacency_matrix.nonzero()):
-                raise ValueError('The combination of adjacency matrix and root '
-                                 'vertex is not valid. BFS returns a different '
-                                 'tree.')
+                csgraph.breadth_first_tree(
+                    self.adjacency_matrix, root_vertex, directed=True
+                ).nonzero(),
+                self.adjacency_matrix.nonzero(),
+            ):
+                raise ValueError(
+                    "The combination of adjacency matrix and root "
+                    "vertex is not valid. BFS returns a different "
+                    "tree."
+                )
 
         # store root and predecessors list
         self.root_vertex = root_vertex
         self.predecessors_list = self._get_predecessors_list()
 
     @classmethod
-    def init_from_edges(cls, edges, n_vertices, root_vertex, copy=True,
-                        skip_checks=False):
+    def init_from_edges(
+        cls, edges, n_vertices, root_vertex, copy=True, skip_checks=False
+    ):
         r"""
         Construct a :map:`Tree` from edges array.
 
@@ -1240,8 +1274,12 @@ class Tree(DirectedGraph):
             tree = PointTree.init_from_edges(points, edges, root_vertex=0)
         """
         adjacency_matrix = _convert_edges_to_adjacency_matrix(edges, n_vertices)
-        return cls(adjacency_matrix, root_vertex=root_vertex, copy=copy,
-                   skip_checks=skip_checks)
+        return cls(
+            adjacency_matrix,
+            root_vertex=root_vertex,
+            copy=copy,
+            skip_checks=skip_checks,
+        )
 
     def _get_predecessors_list(self):
         r"""
@@ -1419,7 +1457,8 @@ class Tree(DirectedGraph):
 
     def __str__(self):
         return "Tree of depth {} with {} vertices and {} leaves.".format(
-            self.maximum_depth, self.n_vertices, self.n_leaves)
+            self.maximum_depth, self.n_vertices, self.n_leaves
+        )
 
 
 class PointGraph(Graph, PointCloud):
@@ -1554,12 +1593,12 @@ class PointGraph(Graph, PointCloud):
                                                  [2, 0, 4, 2, 4, 3])),
                                       shape=(6, 6))
     """
+
     def __init__(self, points, adjacency_matrix, copy=True, skip_checks=False):
         if not skip_checks:
             # check the number of points
             _check_n_points(points, adjacency_matrix)
-        Graph.__init__(self, adjacency_matrix, copy=copy,
-                       skip_checks=skip_checks)
+        Graph.__init__(self, adjacency_matrix, copy=copy, skip_checks=skip_checks)
         PointCloud.__init__(self, points, copy=copy)
 
     @classmethod
@@ -1653,13 +1692,13 @@ class PointGraph(Graph, PointCloud):
             graph = PointUndirectedGraph.init_from_edges(points, edges)
 
         """
-        adjacency_matrix = _convert_edges_to_adjacency_matrix(edges,
-                                                              points.shape[0])
+        adjacency_matrix = _convert_edges_to_adjacency_matrix(edges, points.shape[0])
         return cls(points, adjacency_matrix, copy=copy, skip_checks=skip_checks)
 
     @classmethod
-    def init_2d_grid(cls, shape, spacing=None, adjacency_matrix=None,
-                     skip_checks=False):
+    def init_2d_grid(
+        cls, shape, spacing=None, adjacency_matrix=None, skip_checks=False
+    ):
         r"""
         Create a PointGraph that exists on a regular 2D grid. The first
         dimension is the number of rows in the grid and the second dimension
@@ -1698,23 +1737,22 @@ class PointGraph(Graph, PointCloud):
             A pointgraph arranged in a grid.
         """
         from .graph_predefined import stencil_grid
+
         pc = PointCloud.init_2d_grid(shape, spacing=spacing)
         points = pc.points
         if adjacency_matrix is None:
-            stencil = np.array([[0, 1, 0],
-                                [1, 0, 1],
-                                [0, 1, 0]])
-            adjacency_matrix = stencil_grid(stencil, shape, format='csr')
+            stencil = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])
+            adjacency_matrix = stencil_grid(stencil, shape, format="csr")
             # Skip checks if we construct the adjacency.
             skip_checks = True
         else:
             adjacency_matrix = adjacency_matrix.copy()
-        return cls(points, adjacency_matrix, copy=False,
-                   skip_checks=skip_checks)
+        return cls(points, adjacency_matrix, copy=False, skip_checks=skip_checks)
 
     @classmethod
-    def init_from_depth_image(cls, depth_image, spacing=None,
-                              adjacency_matrix=None, skip_checks=False):
+    def init_from_depth_image(
+        cls, depth_image, spacing=None, adjacency_matrix=None, skip_checks=False
+    ):
         r"""
         Return a 3D point graph from the given depth image. The depth image
         is assumed to represent height/depth values and the XY coordinates
@@ -1755,14 +1793,19 @@ class PointGraph(Graph, PointCloud):
         from menpo.image import MaskedImage
 
         new_pcloud = cls.init_2d_grid(
-            depth_image.shape, spacing=spacing,
-            adjacency_matrix=adjacency_matrix, skip_checks=skip_checks)
+            depth_image.shape,
+            spacing=spacing,
+            adjacency_matrix=adjacency_matrix,
+            skip_checks=skip_checks,
+        )
         if isinstance(depth_image, MaskedImage):
             new_pcloud = new_pcloud.from_mask(depth_image.mask.as_vector())
-        return cls(np.hstack([new_pcloud.points,
-                              depth_image.as_vector(keep_channels=True).T]),
-                   new_pcloud.adjacency_matrix,
-                   copy=False, skip_checks=True)
+        return cls(
+            np.hstack([new_pcloud.points, depth_image.as_vector(keep_channels=True).T]),
+            new_pcloud.adjacency_matrix,
+            copy=False,
+            skip_checks=True,
+        )
 
     def tojson(self):
         r"""
@@ -1775,24 +1818,45 @@ class PointGraph(Graph, PointCloud):
             Dictionary with ``points`` and ``connectivity`` keys.
         """
         json_dict = PointCloud.tojson(self)
-        json_dict['landmarks']['connectivity'] = self.edges.tolist()
+        json_dict["landmarks"]["connectivity"] = self.edges.tolist()
         return json_dict
 
-    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
-                 render_lines=True, line_colour='r',
-                 line_style='-', line_width=1.,
-                 render_markers=True, marker_style='o', marker_size=5,
-                 marker_face_colour='k', marker_edge_colour='k',
-                 marker_edge_width=1., render_numbering=False,
-                 numbers_horizontal_align='center',
-                 numbers_vertical_align='bottom',
-                 numbers_font_name='sans-serif', numbers_font_size=10,
-                 numbers_font_style='normal', numbers_font_weight='normal',
-                 numbers_font_colour='k', render_axes=True,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(7, 7), label=None, **kwargs):
+    def _view_2d(
+        self,
+        figure_id=None,
+        new_figure=False,
+        image_view=True,
+        render_lines=True,
+        line_colour="r",
+        line_style="-",
+        line_width=1.0,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour="k",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+        label=None,
+        **kwargs,
+    ):
         r"""
         Visualization of the PointGraph in 2D.
 
@@ -1920,13 +1984,17 @@ class PointGraph(Graph, PointCloud):
             The viewer object.
         """
         from menpo.visualize import PointGraphViewer2d
-        renderer = PointGraphViewer2d(figure_id, new_figure, self.points,
-                                      self.edges)
+
+        renderer = PointGraphViewer2d(figure_id, new_figure, self.points, self.edges)
         renderer.render(
-            image_view=image_view, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            image_view=image_view,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
             marker_edge_width=marker_edge_width,
@@ -1937,49 +2005,85 @@ class PointGraph(Graph, PointCloud):
             numbers_font_size=numbers_font_size,
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
-            figure_size=figure_size, label=label)
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+            label=label,
+        )
         return renderer
 
-    def _view_landmarks_2d(self, group=None, with_labels=None,
-                           without_labels=None, figure_id=None,
-                           new_figure=False, image_view=True,
-                           render_lines=True, line_colour='k',
-                           line_style='-', line_width=2,
-                           render_markers=True, marker_style='s', marker_size=7,
-                           marker_face_colour='k', marker_edge_colour='k',
-                           marker_edge_width=1., render_lines_lms=True,
-                           line_colour_lms=None, line_style_lms='-',
-                           line_width_lms=1, render_markers_lms=True,
-                           marker_style_lms='o', marker_size_lms=5,
-                           marker_face_colour_lms=None,
-                           marker_edge_colour_lms=None,
-                           marker_edge_width_lms=1., render_numbering=False,
-                           numbers_horizontal_align='center',
-                           numbers_vertical_align='bottom',
-                           numbers_font_name='sans-serif', numbers_font_size=10,
-                           numbers_font_style='normal',
-                           numbers_font_weight='normal',
-                           numbers_font_colour='k', render_legend=False,
-                           legend_title='', legend_font_name='sans-serif',
-                           legend_font_style='normal', legend_font_size=10,
-                           legend_font_weight='normal',
-                           legend_marker_scale=None, legend_location=2,
-                           legend_bbox_to_anchor=(1.05, 1.),
-                           legend_border_axes_pad=None, legend_n_columns=1,
-                           legend_horizontal_spacing=None,
-                           legend_vertical_spacing=None, legend_border=True,
-                           legend_border_padding=None, legend_shadow=False,
-                           legend_rounded_corners=False, render_axes=False,
-                           axes_font_name='sans-serif', axes_font_size=10,
-                           axes_font_style='normal', axes_font_weight='normal',
-                           axes_x_limits=None, axes_y_limits=None,
-                           axes_x_ticks=None, axes_y_ticks=None,
-                           figure_size=(7, 7)):
+    def _view_landmarks_2d(
+        self,
+        group=None,
+        with_labels=None,
+        without_labels=None,
+        figure_id=None,
+        new_figure=False,
+        image_view=True,
+        render_lines=True,
+        line_colour="k",
+        line_style="-",
+        line_width=2,
+        render_markers=True,
+        marker_style="s",
+        marker_size=7,
+        marker_face_colour="k",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_lines_lms=True,
+        line_colour_lms=None,
+        line_style_lms="-",
+        line_width_lms=1,
+        render_markers_lms=True,
+        marker_style_lms="o",
+        marker_size_lms=5,
+        marker_face_colour_lms=None,
+        marker_edge_colour_lms=None,
+        marker_edge_width_lms=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_legend=False,
+        legend_title="",
+        legend_font_name="sans-serif",
+        legend_font_style="normal",
+        legend_font_size=10,
+        legend_font_weight="normal",
+        legend_marker_scale=None,
+        legend_location=2,
+        legend_bbox_to_anchor=(1.05, 1.0),
+        legend_border_axes_pad=None,
+        legend_n_columns=1,
+        legend_horizontal_spacing=None,
+        legend_vertical_spacing=None,
+        legend_border=True,
+        legend_border_padding=None,
+        legend_shadow=False,
+        legend_rounded_corners=False,
+        render_axes=False,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         """
         Visualize the landmarks. This method will appear on the `PointGraph` as
         ``view_landmarks``.
@@ -2214,29 +2318,43 @@ class PointGraph(Graph, PointCloud):
             If the landmark manager doesn't contain the provided group label.
         """
         if not self.has_landmarks:
-            raise ValueError('PointGraph does not have landmarks attached, '
-                             'unable to view landmarks.')
-        self_view = self.view(figure_id=figure_id, new_figure=new_figure,
-                              image_view=image_view, figure_size=figure_size,
-                              render_markers=render_markers,
-                              marker_style=marker_style,
-                              marker_size=marker_size,
-                              marker_face_colour=marker_face_colour,
-                              marker_edge_colour=marker_edge_colour,
-                              marker_edge_width=marker_edge_width,
-                              render_lines=render_lines,
-                              line_colour=line_colour, line_style=line_style,
-                              line_width=line_width)
+            raise ValueError(
+                "PointGraph does not have landmarks attached, "
+                "unable to view landmarks."
+            )
+        self_view = self.view(
+            figure_id=figure_id,
+            new_figure=new_figure,
+            image_view=image_view,
+            figure_size=figure_size,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+        )
         # correct group label in legend
         if group is None:
             group = self.landmarks.group_labels[0]
         landmark_view = self.landmarks[group].view(
-            with_labels=with_labels, without_labels=without_labels,
-            figure_id=self_view.figure_id, new_figure=False, group=group,
-            image_view=image_view, render_lines=render_lines_lms,
-            line_colour=line_colour_lms, line_style=line_style_lms,
-            line_width=line_width_lms, render_markers=render_markers_lms,
-            marker_style=marker_style_lms, marker_size=marker_size_lms,
+            with_labels=with_labels,
+            without_labels=without_labels,
+            figure_id=self_view.figure_id,
+            new_figure=False,
+            group=group,
+            image_view=image_view,
+            render_lines=render_lines_lms,
+            line_colour=line_colour_lms,
+            line_style=line_style_lms,
+            line_width=line_width_lms,
+            render_markers=render_markers_lms,
+            marker_style=marker_style_lms,
+            marker_size=marker_size_lms,
             marker_face_colour=marker_face_colour_lms,
             marker_edge_colour=marker_edge_colour_lms,
             marker_edge_width=marker_edge_width_lms,
@@ -2248,7 +2366,8 @@ class PointGraph(Graph, PointCloud):
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
             numbers_font_colour=numbers_font_colour,
-            render_legend=render_legend, legend_title=legend_title,
+            render_legend=render_legend,
+            legend_title=legend_title,
             legend_font_name=legend_font_name,
             legend_font_style=legend_font_style,
             legend_font_size=legend_font_size,
@@ -2264,19 +2383,38 @@ class PointGraph(Graph, PointCloud):
             legend_border_padding=legend_border_padding,
             legend_shadow=legend_shadow,
             legend_rounded_corners=legend_rounded_corners,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+        )
 
         return landmark_view
 
-    def _view_3d(self, figure_id=None, new_figure=True, render_lines=True,
-                 line_colour='r', line_width=2, render_markers=True,
-                 marker_style='sphere', marker_size=None, marker_colour='k',
-                 marker_resolution=8, step=None, alpha=1.0,
-                 render_numbering=False, numbers_colour='k', numbers_size=None):
+    def _view_3d(
+        self,
+        figure_id=None,
+        new_figure=True,
+        render_lines=True,
+        line_colour="r",
+        line_width=2,
+        render_markers=True,
+        marker_style="sphere",
+        marker_size=None,
+        marker_colour="k",
+        marker_resolution=8,
+        step=None,
+        alpha=1.0,
+        render_numbering=False,
+        numbers_colour="k",
+        numbers_size=None,
+    ):
         r"""
         Visualization of the PointGraph in 3D.
 
@@ -2352,19 +2490,29 @@ class PointGraph(Graph, PointCloud):
         """
         try:
             from menpo3d.visualize import PointGraphViewer3d
-            renderer = PointGraphViewer3d(figure_id, new_figure,
-                                          self.points, self.edges)
+
+            renderer = PointGraphViewer3d(
+                figure_id, new_figure, self.points, self.edges
+            )
             renderer.render(
-                render_lines=render_lines, line_colour=line_colour,
-                line_width=line_width, render_markers=render_markers,
-                marker_style=marker_style, marker_size=marker_size,
+                render_lines=render_lines,
+                line_colour=line_colour,
+                line_width=line_width,
+                render_markers=render_markers,
+                marker_style=marker_style,
+                marker_size=marker_size,
                 marker_colour=marker_colour,
-                marker_resolution=marker_resolution, step=step, alpha=alpha,
+                marker_resolution=marker_resolution,
+                step=step,
+                alpha=alpha,
                 render_numbering=render_numbering,
-                numbers_colour=numbers_colour, numbers_size=numbers_size)
+                numbers_colour=numbers_colour,
+                numbers_size=numbers_size,
+            )
             return renderer
         except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
+
             raise Menpo3dMissingError(e)
 
 
@@ -2479,11 +2627,12 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
                            [0, 0]])
         graph = PointUndirectedGraph(points, adjacency_matrix)
     """
+
     def __init__(self, points, adjacency_matrix, copy=True, skip_checks=False):
         self._directed = False
-        super(PointUndirectedGraph, self).__init__(points, adjacency_matrix,
-                                                   copy=copy,
-                                                   skip_checks=skip_checks)
+        super(PointUndirectedGraph, self).__init__(
+            points, adjacency_matrix, copy=copy, skip_checks=skip_checks
+        )
 
     @classmethod
     def init_from_edges(cls, points, edges, copy=True, skip_checks=False):
@@ -2554,7 +2703,8 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
 
         """
         adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
-            edges, points.shape[0])
+            edges, points.shape[0]
+        )
         return cls(points, adjacency_matrix, copy=copy, skip_checks=skip_checks)
 
     def from_mask(self, mask):
@@ -2582,19 +2732,24 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
             points in this PointUndirectedGraph.
         """
         if mask.shape[0] != self.n_points:
-            raise ValueError('Mask must be a 1D boolean array of the same '
-                             'number of entries as points in this '
-                             'PointUndirectedGraph.')
+            raise ValueError(
+                "Mask must be a 1D boolean array of the same "
+                "number of entries as points in this "
+                "PointUndirectedGraph."
+            )
 
         if np.all(mask):  # Shortcut for all true masks
-            return PointUndirectedGraph(self.points, self.adjacency_matrix,
-                                        copy=True, skip_checks=True)
+            return PointUndirectedGraph(
+                self.points, self.adjacency_matrix, copy=True, skip_checks=True
+            )
         else:
             # Get new adjacency_matrix and points
             (adjacency_matrix, points) = _mask_adjacency_matrix_and_points(
-                mask, self.adjacency_matrix, self.points)
-            return PointUndirectedGraph(points, adjacency_matrix, copy=True,
-                                        skip_checks=False)
+                mask, self.adjacency_matrix, self.points
+            )
+            return PointUndirectedGraph(
+                points, adjacency_matrix, copy=True, skip_checks=False
+            )
 
     def minimum_spanning_tree(self, root_vertex):
         r"""
@@ -2619,24 +2774,28 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
         """
         # check if graph has isolated vertices
         if self.has_isolated_vertices():
-            raise ValueError('Cannot compute minimum spanning tree of a graph '
-                             'with isolated vertices.')
+            raise ValueError(
+                "Cannot compute minimum spanning tree of a graph "
+                "with isolated vertices."
+            )
         # Compute MST. It returns an undirected graph.
         mst_adjacency = csgraph.minimum_spanning_tree(self.adjacency_matrix)
         # Get directed tree from the above undirected graph using DFS.
-        mst_adjacency = csgraph.depth_first_tree(mst_adjacency, root_vertex,
-                                                 directed=False)
+        mst_adjacency = csgraph.depth_first_tree(
+            mst_adjacency, root_vertex, directed=False
+        )
         # remove isolated vertices from the points
-        return PointTree(self.points, mst_adjacency, root_vertex, copy=True,
-                         skip_checks=True)
+        return PointTree(
+            self.points, mst_adjacency, root_vertex, copy=True, skip_checks=True
+        )
 
     def __str__(self):
-        isolated = ''
+        isolated = ""
         if self.has_isolated_vertices():
             isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "{}D undirected graph of {} vertices{} and {} " \
-               "edges.".format(self.n_dims, self.n_vertices, isolated,
-                               self.n_edges)
+        return "{}D undirected graph of {} vertices{} and {} " "edges.".format(
+            self.n_dims, self.n_vertices, isolated, self.n_edges
+        )
 
 
 class PointDirectedGraph(PointGraph, DirectedGraph):
@@ -2744,11 +2903,12 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
                            [0, 0]])
         graph = PointDirectedGraph(points, adjacency_matrix)
     """
+
     def __init__(self, points, adjacency_matrix, copy=True, skip_checks=False):
         self._directed = True
-        super(PointDirectedGraph, self).__init__(points, adjacency_matrix,
-                                                 copy=copy,
-                                                 skip_checks=skip_checks)
+        super(PointDirectedGraph, self).__init__(
+            points, adjacency_matrix, copy=copy, skip_checks=skip_checks
+        )
 
     def relative_location_edge(self, parent, child):
         r"""
@@ -2779,8 +2939,10 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
             Vertices ``parent`` and ``child`` are not connected with an edge.
         """
         if not self.is_edge(parent, child):
-            raise ValueError('Vertices {} and {} are not connected '
-                             'with an edge.'.format(parent, child))
+            raise ValueError(
+                "Vertices {} and {} are not connected "
+                "with an edge.".format(parent, child)
+            )
         return self.points[child, ...] - self.points[parent, ...]
 
     def relative_locations(self):
@@ -2828,26 +2990,30 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
             points in this PointDirectedGraph.
         """
         if mask.shape[0] != self.n_points:
-            raise ValueError('Mask must be a 1D boolean array of the same '
-                             'number of entries as points in this '
-                             'PointDirectedGraph.')
+            raise ValueError(
+                "Mask must be a 1D boolean array of the same "
+                "number of entries as points in this "
+                "PointDirectedGraph."
+            )
 
         if np.all(mask):  # Shortcut for all true masks
             return self.copy()
         else:
             # Get new adjacency_matrix and points
             (adjacency_matrix, points) = _mask_adjacency_matrix_and_points(
-                mask, self.adjacency_matrix, self.points)
-            return PointDirectedGraph(points, adjacency_matrix, copy=True,
-                                      skip_checks=False)
+                mask, self.adjacency_matrix, self.points
+            )
+            return PointDirectedGraph(
+                points, adjacency_matrix, copy=True, skip_checks=False
+            )
 
     def __str__(self):
-        isolated = ''
+        isolated = ""
         if self.has_isolated_vertices():
             isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "{}D directed graph of {} vertices{} and {} " \
-               "edges.".format(self.n_dims, self.n_vertices, isolated,
-                               self.n_edges)
+        return "{}D directed graph of {} vertices{} and {} " "edges.".format(
+            self.n_dims, self.n_vertices, isolated, self.n_edges
+        )
 
 
 class PointTree(PointDirectedGraph, Tree):
@@ -2934,16 +3100,19 @@ class PointTree(PointDirectedGraph, Tree):
                            [50, 10], [0, 0], [20, 0], [50, 0]])
         tree = PointTree(points, adjacency_matrix, root_vertex=0)
     """
-    def __init__(self, points, adjacency_matrix, root_vertex, copy=True,
-                 skip_checks=False):
-        super(PointTree, self).__init__(points, adjacency_matrix, copy=copy,
-                                        skip_checks=skip_checks)
-        Tree.__init__(self, adjacency_matrix, root_vertex, copy=copy,
-                      skip_checks=skip_checks)
+
+    def __init__(
+        self, points, adjacency_matrix, root_vertex, copy=True, skip_checks=False
+    ):
+        super(PointTree, self).__init__(
+            points, adjacency_matrix, copy=copy, skip_checks=skip_checks
+        )
+        Tree.__init__(
+            self, adjacency_matrix, root_vertex, copy=copy, skip_checks=skip_checks
+        )
 
     @classmethod
-    def init_from_edges(cls, points, edges, root_vertex, copy=True,
-                        skip_checks=False):
+    def init_from_edges(cls, points, edges, root_vertex, copy=True, skip_checks=False):
         r"""
         Construct a :map:`PointTree` from edges array.
 
@@ -2987,14 +3156,20 @@ class PointTree(PointDirectedGraph, Tree):
                               [4, 7], [5, 8]])
             tree = PointTree.init_from_edges(points, edges, root_vertex=0)
         """
-        adjacency_matrix = _convert_edges_to_adjacency_matrix(edges,
-                                                              points.shape[0])
-        return cls(points, adjacency_matrix, root_vertex,
-                   copy=copy, skip_checks=skip_checks)
+        adjacency_matrix = _convert_edges_to_adjacency_matrix(edges, points.shape[0])
+        return cls(
+            points, adjacency_matrix, root_vertex, copy=copy, skip_checks=skip_checks
+        )
 
     @classmethod
-    def init_2d_grid(cls, shape, spacing=None, adjacency_matrix=None,
-                     root_vertex=None, skip_checks=False):
+    def init_2d_grid(
+        cls,
+        shape,
+        spacing=None,
+        adjacency_matrix=None,
+        root_vertex=None,
+        skip_checks=False,
+    ):
         r"""
         Create a pointtree that exists on a regular 2D grid. The first
         dimension is the number of rows in the grid and the second dimension
@@ -3042,19 +3217,29 @@ class PointTree(PointDirectedGraph, Tree):
             # Default tree is a spanning tree. Create a triangular mesh
             # because it has a low average degree and is a connected graph.
             from .mesh.base import TriMesh
+
             tmesh = TriMesh.init_2d_grid(shape, spacing=spacing).as_pointgraph(
-                copy=False, skip_checks=True)
+                copy=False, skip_checks=True
+            )
             return tmesh.minimum_spanning_tree(root_vertex)
         else:
-            return cls(PointCloud.init_2d_grid(shape, spacing=spacing).points,
-                       adjacency_matrix.copy(),
-                       root_vertex,
-                       copy=False, skip_checks=skip_checks)
+            return cls(
+                PointCloud.init_2d_grid(shape, spacing=spacing).points,
+                adjacency_matrix.copy(),
+                root_vertex,
+                copy=False,
+                skip_checks=skip_checks,
+            )
 
     @classmethod
-    def init_from_depth_image(cls, depth_image, spacing=None,
-                              adjacency_matrix=None, root_vertex=None,
-                              skip_checks=False):
+    def init_from_depth_image(
+        cls,
+        depth_image,
+        spacing=None,
+        adjacency_matrix=None,
+        root_vertex=None,
+        skip_checks=False,
+    ):
         r"""
         Return a 3D point cloud from the given depth image. The depth image
         is assumed to represent height/depth values and the XY coordinates
@@ -3102,12 +3287,14 @@ class PointTree(PointDirectedGraph, Tree):
             # If the image is masked then the masked area may not contain the
             # default 'centre' root vertex, so we choose the first pixel
             # in the masked area.
-            root_vertex = np.ravel_multi_index(depth_image.indices()[0],
-                                               depth_image.shape)
+            root_vertex = np.ravel_multi_index(
+                depth_image.indices()[0], depth_image.shape
+            )
         elif root_vertex is None:
             # Otherwise the default root is the centre of the image
-            root_vertex = np.ravel_multi_index(np.array(depth_image.shape) // 2,
-                                               depth_image.shape)
+            root_vertex = np.ravel_multi_index(
+                np.array(depth_image.shape) // 2, depth_image.shape
+            )
 
         if adjacency_matrix is None:
             # Default tree is a spanning tree. Create a triangular mesh
@@ -3125,15 +3312,22 @@ class PointTree(PointDirectedGraph, Tree):
                 root_vertex = root_vertex - np.sum(~mask[:root_vertex])
             tree_2d = tmesh.minimum_spanning_tree(root_vertex)
         else:
-            points = PointCloud.init_2d_grid(depth_image.shape,
-                                             spacing=spacing).points
-            tree_2d = cls(points, adjacency_matrix.copy(), root_vertex,
-                          copy=False, skip_checks=skip_checks)
+            points = PointCloud.init_2d_grid(depth_image.shape, spacing=spacing).points
+            tree_2d = cls(
+                points,
+                adjacency_matrix.copy(),
+                root_vertex,
+                copy=False,
+                skip_checks=skip_checks,
+            )
 
-        return cls(np.hstack([tree_2d.points,
-                   depth_image.as_vector(keep_channels=True).T]),
-                   tree_2d.adjacency_matrix, tree_2d.root_vertex,
-                   copy=False, skip_checks=True)
+        return cls(
+            np.hstack([tree_2d.points, depth_image.as_vector(keep_channels=True).T]),
+            tree_2d.adjacency_matrix,
+            tree_2d.root_vertex,
+            copy=False,
+            skip_checks=True,
+        )
 
     def from_mask(self, mask):
         """
@@ -3161,36 +3355,48 @@ class PointTree(PointDirectedGraph, Tree):
             Cannot remove root vertex.
         """
         if mask.shape[0] != self.n_points:
-            raise ValueError('Mask must be a 1D boolean array of the same '
-                             'number of entries as points in this PointTree.')
+            raise ValueError(
+                "Mask must be a 1D boolean array of the same "
+                "number of entries as points in this PointTree."
+            )
 
         if np.all(mask):  # Shortcut for all true masks
             return self.copy()
         else:
             # Impossible to remove root vertex
             if not mask[self.root_vertex]:
-                raise ValueError('Cannot remove root vertex.')
+                raise ValueError("Cannot remove root vertex.")
             # Get new adjacency_matrix and points
             (adjacency_matrix, points) = _mask_adjacency_matrix_and_points(
-                mask, self.adjacency_matrix, self.points)
-            root_vertex = self.root_vertex - np.sum(~mask[:self.root_vertex])
+                mask, self.adjacency_matrix, self.points
+            )
+            root_vertex = self.root_vertex - np.sum(~mask[: self.root_vertex])
             # iteratively find isolated vertices and remove them
             n_components, labels = csgraph.connected_components(
-                adjacency_matrix, directed=True)
+                adjacency_matrix, directed=True
+            )
             while n_components > 1:
                 label_to_keep = labels[root_vertex]
                 mask = labels == label_to_keep
                 (adjacency_matrix, points) = _mask_adjacency_matrix_and_points(
-                    mask, adjacency_matrix, points)
+                    mask, adjacency_matrix, points
+                )
                 root_vertex = root_vertex - np.sum(~mask[:root_vertex])
                 n_components, labels = csgraph.connected_components(
-                    adjacency_matrix, directed=True)
-            return PointTree(points, adjacency_matrix, root_vertex=root_vertex,
-                             copy=True, skip_checks=False)
+                    adjacency_matrix, directed=True
+                )
+            return PointTree(
+                points,
+                adjacency_matrix,
+                root_vertex=root_vertex,
+                copy=True,
+                skip_checks=False,
+            )
 
     def __str__(self):
         return "{}D tree of depth {} with {} vertices and {} leaves.".format(
-            self.n_dims, self.maximum_depth, self.n_vertices, self.n_leaves)
+            self.n_dims, self.maximum_depth, self.n_vertices, self.n_leaves
+        )
 
 
 def _is_symmetric(array):
@@ -3229,10 +3435,11 @@ def _check_n_points(points, adjacency_matrix):
         of {}
     """
     if not points.shape[0] == adjacency_matrix.shape[0]:
-        raise ValueError('A point for each graph vertex needs to be passed. '
-                         'Got {} points instead '
-                         'of {}'.format(points.shape[0],
-                                        adjacency_matrix.shape[0]))
+        raise ValueError(
+            "A point for each graph vertex needs to be passed. "
+            "Got {} points instead "
+            "of {}".format(points.shape[0], adjacency_matrix.shape[0])
+        )
 
 
 def _has_cycles(adjacency_list, directed):
@@ -3252,18 +3459,24 @@ def _has_cycles(adjacency_list, directed):
     has_cycles : `bool`
         Whether the graph has cycles.
     """
+
     def dfs(node, entered, exited, tree_edges, back_edges):
         if node not in entered:
             entered.add(node)
             for y in adjacency_list[node]:
                 if y not in entered:
                     tree_edges[y] = node
-                elif (not directed and tree_edges.get(node, None) != y
-                      or directed and y not in exited):
+                elif (
+                    not directed
+                    and tree_edges.get(node, None) != y
+                    or directed
+                    and y not in exited
+                ):
                     back_edges.setdefault(y, set()).add(node)
                 dfs(y, entered, exited, tree_edges, back_edges)
             exited.add(node)
         return tree_edges, back_edges
+
     for x in range(len(adjacency_list)):
         if dfs(x, entered=set(), exited=set(), tree_edges={}, back_edges={})[1]:
             return True
@@ -3337,8 +3550,10 @@ def _convert_edges_to_adjacency_matrix(edges, n_vertices):
         return csr_matrix((n_vertices, n_vertices), dtype=np.int)
     else:
         # create sparse adjacency
-        return csr_matrix(([1] * edges.shape[0], (edges[:, 0], edges[:, 1])),
-                          shape=(n_vertices, n_vertices))
+        return csr_matrix(
+            ([1] * edges.shape[0], (edges[:, 0], edges[:, 1])),
+            shape=(n_vertices, n_vertices),
+        )
 
 
 def _convert_edges_to_symmetric_adjacency_matrix(edges, n_vertices):
@@ -3369,7 +3584,8 @@ def _convert_edges_to_symmetric_adjacency_matrix(edges, n_vertices):
     else:
         rows = np.hstack((edges[:, 0], edges[:, 1]))
         cols = np.hstack((edges[:, 1], edges[:, 0]))
-        adjacency_matrix = csr_matrix(([1] * rows.shape[0], (rows, cols)),
-                                      shape=(n_vertices, n_vertices))
+        adjacency_matrix = csr_matrix(
+            ([1] * rows.shape[0], (rows, cols)), shape=(n_vertices, n_vertices)
+        )
         adjacency_matrix[adjacency_matrix.nonzero()] = 1
     return adjacency_matrix

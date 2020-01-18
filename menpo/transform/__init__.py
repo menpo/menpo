@@ -4,8 +4,12 @@ from .thinplatesplines import ThinPlateSplines
 from .piecewiseaffine import PiecewiseAffine
 from .rbf import R2LogR2RBF, R2LogRRBF
 from .groupalign.procrustes import GeneralizedProcrustesAnalysis
-from .compositions import (scale_about_centre, rotate_ccw_about_centre,
-                           shear_about_centre, transform_about_centre)
+from .compositions import (
+    scale_about_centre,
+    rotate_ccw_about_centre,
+    shear_about_centre,
+    transform_about_centre,
+)
 from .tcoords import image_coords_to_tcoords, tcoords_to_image_coords
 
 
@@ -20,6 +24,7 @@ class WithDims(Transform):
         under transform. For example, to go from a 3D shape to a 2D one,
         [0, 1] could be provided or np.array([True, True, False]).
     """
+
     def __init__(self, dims):
         self.dims = dims
 

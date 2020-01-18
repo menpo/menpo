@@ -3,7 +3,7 @@ import numpy as np
 from menpo.visualize.base import Renderer
 
 # The colour map used for all lines and markers
-GLOBAL_CMAP = 'jet'
+GLOBAL_CMAP = "jet"
 
 
 class MatplotlibRenderer(Renderer):
@@ -27,10 +27,10 @@ class MatplotlibRenderer(Renderer):
         # Create the extensions map, have to add . in front of the extensions
         # and map every extension to the savefig method
         n_ext = len(self._supported_ext)
-        func_list = [lambda obj, fp, **kwargs:
-                     self.figure.savefig(fp, **obj)] * n_ext
-        self._extensions_map = dict(zip(['.' + s for s in self._supported_ext],
-                                    func_list))
+        func_list = [lambda obj, fp, **kwargs: self.figure.savefig(fp, **obj)] * n_ext
+        self._extensions_map = dict(
+            zip(["." + s for s in self._supported_ext], func_list)
+        )
 
     def get_figure(self):
         r"""
@@ -55,10 +55,19 @@ class MatplotlibRenderer(Renderer):
 
         return self.figure
 
-    def save_figure(self, filename, format='png', dpi=None, face_colour='w',
-                    edge_colour='w', orientation='portrait',
-                    paper_type='letter', transparent=False, pad_inches=0.1,
-                    overwrite=False):
+    def save_figure(
+        self,
+        filename,
+        format="png",
+        dpi=None,
+        face_colour="w",
+        edge_colour="w",
+        orientation="portrait",
+        paper_type="letter",
+        transparent=False,
+        pad_inches=0.1,
+        overwrite=False,
+    ):
         r"""
         Method for saving the figure of the current `figure_id` to file.
 
@@ -114,14 +123,22 @@ class MatplotlibRenderer(Renderer):
         """
         from menpo.io.output.base import _export
 
-        save_fig_args = {'dpi': dpi, 'facecolour': face_colour,
-                         'edgecolour': edge_colour, 'orientation': orientation,
-                         'papertype': paper_type, 'format': format,
-                         'transparent': transparent, 'pad_inches': pad_inches,
-                         'bbox_inches': 'tight', 'frameon': None}
+        save_fig_args = {
+            "dpi": dpi,
+            "facecolour": face_colour,
+            "edgecolour": edge_colour,
+            "orientation": orientation,
+            "papertype": paper_type,
+            "format": format,
+            "transparent": transparent,
+            "pad_inches": pad_inches,
+            "bbox_inches": "tight",
+            "frameon": None,
+        }
         # Use the export code so that we have a consistent interface
-        _export(save_fig_args, filename, self._extensions_map, format,
-                overwrite=overwrite)
+        _export(
+            save_fig_args, filename, self._extensions_map, format, overwrite=overwrite
+        )
 
     def save_figure_widget(self):
         r"""
@@ -129,6 +146,7 @@ class MatplotlibRenderer(Renderer):
         `menpowidgets.base.save_matplotlib_figure` widget.
         """
         from menpowidgets import save_matplotlib_figure
+
         save_matplotlib_figure(self)
 
     def clear_figure(self):
@@ -143,11 +161,11 @@ class MatplotlibRenderer(Renderer):
         the widgets animation.
         """
         import matplotlib.pyplot as plt
+
         plt.show()
 
 
 class MatplotlibSubplots(object):
-
     def _subplot_layout(self, num_subplots):
         if num_subplots < 2:
             return [1, 1]
@@ -210,6 +228,7 @@ class MatplotlibSubplots(object):
 
 def _parse_cmap(cmap_name=None, image_shape_len=3):
     import matplotlib.cm as cm
+
     if cmap_name is not None:
         return cm.get_cmap(cmap_name)
     else:
@@ -220,8 +239,7 @@ def _parse_cmap(cmap_name=None, image_shape_len=3):
             return None
 
 
-def _parse_axes_limits(min_x, max_x, min_y, max_y, axes_x_limits,
-                       axes_y_limits):
+def _parse_axes_limits(min_x, max_x, min_y, max_y, axes_x_limits, axes_y_limits):
     if isinstance(axes_x_limits, int):
         axes_x_limits = float(axes_x_limits)
     if isinstance(axes_y_limits, int):
@@ -235,17 +253,27 @@ def _parse_axes_limits(min_x, max_x, min_y, max_y, axes_x_limits,
     return axes_x_limits, axes_y_limits
 
 
-def _set_axes_options(ax, render_axes=True, inverted_y_axis=False,
-                      axes_font_name='sans-serif', axes_font_size=10,
-                      axes_font_style='normal', axes_font_weight='normal',
-                      axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                      axes_y_ticks=None, axes_x_label=None, axes_y_label=None,
-                      title=None):
+def _set_axes_options(
+    ax,
+    render_axes=True,
+    inverted_y_axis=False,
+    axes_font_name="sans-serif",
+    axes_font_size=10,
+    axes_font_style="normal",
+    axes_font_weight="normal",
+    axes_x_limits=None,
+    axes_y_limits=None,
+    axes_x_ticks=None,
+    axes_y_ticks=None,
+    axes_x_label=None,
+    axes_y_label=None,
+    title=None,
+):
     if render_axes:
         # render axes
         ax.set_axis_on()
         # set font options
-        for l in (ax.get_xticklabels() + ax.get_yticklabels()):
+        for l in ax.get_xticklabels() + ax.get_yticklabels():
             l.set_fontsize(axes_font_size)
             l.set_fontname(axes_font_name)
             l.set_fontstyle(axes_font_style)
@@ -257,20 +285,32 @@ def _set_axes_options(ax, render_axes=True, inverted_y_axis=False,
             ax.set_yticks(axes_y_ticks)
         # set labels and title
         if axes_x_label is None:
-            axes_x_label = ''
+            axes_x_label = ""
         if axes_y_label is None:
-            axes_y_label = ''
+            axes_y_label = ""
         if title is None:
-            title = ''
+            title = ""
         ax.set_xlabel(
-            axes_x_label, fontsize=axes_font_size, fontname=axes_font_name,
-            fontstyle=axes_font_style, fontweight=axes_font_weight)
+            axes_x_label,
+            fontsize=axes_font_size,
+            fontname=axes_font_name,
+            fontstyle=axes_font_style,
+            fontweight=axes_font_weight,
+        )
         ax.set_ylabel(
-            axes_y_label, fontsize=axes_font_size, fontname=axes_font_name,
-            fontstyle=axes_font_style, fontweight=axes_font_weight)
+            axes_y_label,
+            fontsize=axes_font_size,
+            fontname=axes_font_name,
+            fontstyle=axes_font_style,
+            fontweight=axes_font_weight,
+        )
         ax.set_title(
-            title, fontsize=axes_font_size, fontname=axes_font_name,
-            fontstyle=axes_font_style, fontweight=axes_font_weight)
+            title,
+            fontsize=axes_font_size,
+            fontname=axes_font_name,
+            fontstyle=axes_font_style,
+            fontweight=axes_font_weight,
+        )
     else:
         # do not render axes
         ax.set_axis_off()
@@ -289,12 +329,13 @@ def _set_axes_options(ax, render_axes=True, inverted_y_axis=False,
         ax.set_ylim(np.sort(axes_y_limits))
 
 
-def _set_grid_options(render_grid=True, grid_line_style='--', grid_line_width=2):
+def _set_grid_options(render_grid=True, grid_line_style="--", grid_line_width=2):
     import matplotlib.pyplot as plt
+
     if render_grid:
-        plt.grid('on', linestyle=grid_line_style, linewidth=grid_line_width)
+        plt.grid("on", linestyle=grid_line_style, linewidth=grid_line_width)
     else:
-        plt.grid('off')
+        plt.grid("off")
 
 
 def _set_figure_size(fig, figure_size=(7, 7)):
@@ -302,47 +343,80 @@ def _set_figure_size(fig, figure_size=(7, 7)):
         fig.set_size_inches(np.asarray(figure_size))
 
 
-def _set_numbering(ax, centers, render_numbering=True,
-                   numbers_horizontal_align='center',
-                   numbers_vertical_align='bottom',
-                   numbers_font_name='sans-serif', numbers_font_size=10,
-                   numbers_font_style='normal', numbers_font_weight='normal',
-                   numbers_font_colour='k'):
+def _set_numbering(
+    ax,
+    centers,
+    render_numbering=True,
+    numbers_horizontal_align="center",
+    numbers_vertical_align="bottom",
+    numbers_font_name="sans-serif",
+    numbers_font_size=10,
+    numbers_font_style="normal",
+    numbers_font_weight="normal",
+    numbers_font_colour="k",
+):
     if render_numbering:
         for k, p in enumerate(centers):
             ax.annotate(
-                str(k), xy=(p[0], p[1]),
+                str(k),
+                xy=(p[0], p[1]),
                 horizontalalignment=numbers_horizontal_align,
                 verticalalignment=numbers_vertical_align,
-                size=numbers_font_size, family=numbers_font_name,
-                fontstyle=numbers_font_style, fontweight=numbers_font_weight,
-                color=numbers_font_colour)
+                size=numbers_font_size,
+                family=numbers_font_name,
+                fontstyle=numbers_font_style,
+                fontweight=numbers_font_weight,
+                color=numbers_font_colour,
+            )
 
 
-def _set_legend(ax, legend_handles, render_legend=True, legend_title='',
-                legend_font_name='sans-serif',
-                legend_font_style='normal', legend_font_size=10,
-                legend_font_weight='normal', legend_marker_scale=None,
-                legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
-                legend_border_axes_pad=None, legend_n_columns=1,
-                legend_horizontal_spacing=None,
-                legend_vertical_spacing=None, legend_border=True,
-                legend_border_padding=None, legend_shadow=False,
-                legend_rounded_corners=False):
+def _set_legend(
+    ax,
+    legend_handles,
+    render_legend=True,
+    legend_title="",
+    legend_font_name="sans-serif",
+    legend_font_style="normal",
+    legend_font_size=10,
+    legend_font_weight="normal",
+    legend_marker_scale=None,
+    legend_location=2,
+    legend_bbox_to_anchor=(1.05, 1.0),
+    legend_border_axes_pad=None,
+    legend_n_columns=1,
+    legend_horizontal_spacing=None,
+    legend_vertical_spacing=None,
+    legend_border=True,
+    legend_border_padding=None,
+    legend_shadow=False,
+    legend_rounded_corners=False,
+):
     if render_legend:
         # Options related to legend's font
-        prop = {'family': legend_font_name, 'size': legend_font_size,
-                'style': legend_font_style, 'weight': legend_font_weight}
+        prop = {
+            "family": legend_font_name,
+            "size": legend_font_size,
+            "style": legend_font_style,
+            "weight": legend_font_weight,
+        }
 
         # Render legend
         ax.legend(
-            handles=legend_handles, title=legend_title, prop=prop,
-            loc=legend_location, bbox_to_anchor=legend_bbox_to_anchor,
-            borderaxespad=legend_border_axes_pad, ncol=legend_n_columns,
+            handles=legend_handles,
+            title=legend_title,
+            prop=prop,
+            loc=legend_location,
+            bbox_to_anchor=legend_bbox_to_anchor,
+            borderaxespad=legend_border_axes_pad,
+            ncol=legend_n_columns,
             columnspacing=legend_horizontal_spacing,
-            labelspacing=legend_vertical_spacing, frameon=legend_border,
-            borderpad=legend_border_padding, shadow=legend_shadow,
-            fancybox=legend_rounded_corners, markerscale=legend_marker_scale)
+            labelspacing=legend_vertical_spacing,
+            frameon=legend_border,
+            borderpad=legend_border_padding,
+            shadow=legend_shadow,
+            fancybox=legend_rounded_corners,
+            markerscale=legend_marker_scale,
+        )
 
 
 class MatplotlibImageViewer2d(MatplotlibRenderer):
@@ -351,26 +425,39 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         self.image = image
         self.axes_list = []
 
-    def render(self, interpolation='bilinear', cmap_name=None, alpha=1.,
-               render_axes=False, axes_font_name='sans-serif',
-               axes_font_size=10, axes_font_style='normal',
-               axes_font_weight='normal', axes_x_limits=None,
-               axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-               figure_size=(7, 7)):
+    def render(
+        self,
+        interpolation="bilinear",
+        cmap_name=None,
+        alpha=1.0,
+        render_axes=False,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         import matplotlib.pyplot as plt
 
         # parse colour map argument
-        cmap = _parse_cmap(cmap_name=cmap_name,
-                           image_shape_len=len(self.image.shape))
+        cmap = _parse_cmap(cmap_name=cmap_name, image_shape_len=len(self.image.shape))
 
         # parse axes limits
         axes_x_limits, axes_y_limits = _parse_axes_limits(
-            0., self.image.shape[1], 0., self.image.shape[0], axes_x_limits,
-            axes_y_limits)
+            0.0,
+            self.image.shape[1],
+            0.0,
+            self.image.shape[0],
+            axes_x_limits,
+            axes_y_limits,
+        )
 
         # render image
-        plt.imshow(self.image, cmap=cmap, interpolation=interpolation,
-                   alpha=alpha)
+        plt.imshow(self.image, cmap=cmap, interpolation=interpolation, alpha=alpha)
 
         # store axes object
         ax = plt.gca()
@@ -378,11 +465,18 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
 
         # set axes options
         _set_axes_options(
-            ax, render_axes=render_axes, inverted_y_axis=True,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks)
+            ax,
+            render_axes=render_axes,
+            inverted_y_axis=True,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+        )
 
         # set figure size
         _set_figure_size(self.figure, figure_size)
@@ -392,19 +486,28 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
 
 class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
     def __init__(self, figure_id, new_figure, image):
-        super(MatplotlibImageSubplotsViewer2d, self).__init__(figure_id,
-                                                              new_figure)
+        super(MatplotlibImageSubplotsViewer2d, self).__init__(figure_id, new_figure)
         self.image = image
         self.num_subplots = self.image.shape[2]
         self.plot_layout = self._subplot_layout(self.num_subplots)
         self.axes_list = []
 
-    def render(self, interpolation='bilinear', cmap_name=None, alpha=1.,
-               render_axes=False, axes_font_name='sans-serif',
-               axes_font_size=10, axes_font_style='normal',
-               axes_font_weight='normal', axes_x_limits=None,
-               axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-               figure_size=(7, 7)):
+    def render(
+        self,
+        interpolation="bilinear",
+        cmap_name=None,
+        alpha=1.0,
+        render_axes=False,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         import matplotlib.pyplot as plt
 
         # parse colour map argument
@@ -412,8 +515,13 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
 
         # parse axes limits
         axes_x_limits, axes_y_limits = _parse_axes_limits(
-            0., self.image.shape[1], 0., self.image.shape[0], axes_x_limits,
-            axes_y_limits)
+            0.0,
+            self.image.shape[1],
+            0.0,
+            self.image.shape[0],
+            axes_x_limits,
+            axes_y_limits,
+        )
 
         p = self.plot_layout
         for i in range(self.image.shape[2]):
@@ -422,17 +530,24 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
             self.axes_list.append(ax)
 
             # render image
-            plt.imshow(self.image[:, :, i], cmap=cmap,
-                       interpolation=interpolation, alpha=alpha)
+            plt.imshow(
+                self.image[:, :, i], cmap=cmap, interpolation=interpolation, alpha=alpha
+            )
 
             # set axes options
             _set_axes_options(
-                ax, render_axes=render_axes, inverted_y_axis=True,
-                axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+                ax,
+                render_axes=render_axes,
+                inverted_y_axis=True,
+                axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size,
                 axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-                axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-                axes_y_ticks=axes_y_ticks)
+                axes_font_weight=axes_font_weight,
+                axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits,
+                axes_x_ticks=axes_x_ticks,
+                axes_y_ticks=axes_y_ticks,
+            )
 
         # set figure size
         _set_figure_size(self.figure, figure_size)
@@ -442,24 +557,43 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
 
 class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
     def __init__(self, figure_id, new_figure, points, edges):
-        super(MatplotlibPointGraphViewer2d, self).__init__(figure_id,
-                                                           new_figure)
+        super(MatplotlibPointGraphViewer2d, self).__init__(figure_id, new_figure)
         self.points = points
         self.edges = edges
 
-    def render(self, image_view=False, render_lines=True, line_colour='r',
-               line_style='-', line_width=1, render_markers=True,
-               marker_style='o', marker_size=5, marker_face_colour='r',
-               marker_edge_colour='k', marker_edge_width=1.,
-               render_numbering=False, numbers_horizontal_align='center',
-               numbers_vertical_align='bottom',
-               numbers_font_name='sans-serif', numbers_font_size=10,
-               numbers_font_style='normal', numbers_font_weight='normal',
-               numbers_font_colour='k', render_axes=True,
-               axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-               axes_y_ticks=None, figure_size=(7, 7), label=None):
+    def render(
+        self,
+        image_view=False,
+        render_lines=True,
+        line_colour="r",
+        line_style="-",
+        line_width=1,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour="r",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+        label=None,
+    ):
         from matplotlib import collections as mc
         import matplotlib.pyplot as plt
 
@@ -470,7 +604,8 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         min_x, min_y = np.min(points, axis=0)
         max_x, max_y = np.max(points, axis=0)
         axes_x_limits, axes_y_limits = _parse_axes_limits(
-            min_x, max_x, min_y, max_y, axes_x_limits, axes_y_limits)
+            min_x, max_x, min_y, max_y, axes_x_limits, axes_y_limits
+        )
 
         # get current axes object
         ax = plt.gca()
@@ -479,13 +614,17 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         # won't have any edges)
         if render_lines and np.array(self.edges).shape[0] > 0:
             # Get edges to be rendered
-            lines = zip(points[self.edges[:, 0], :],
-                        points[self.edges[:, 1], :])
+            lines = zip(points[self.edges[:, 0], :], points[self.edges[:, 1], :])
 
             # Draw line objects
-            lc = mc.LineCollection(lines, colors=line_colour,
-                                   linestyles=line_style, linewidths=line_width,
-                                   cmap=GLOBAL_CMAP, label=label)
+            lc = mc.LineCollection(
+                lines,
+                colors=line_colour,
+                linestyles=line_style,
+                linewidths=line_width,
+                cmap=GLOBAL_CMAP,
+                label=label,
+            )
             ax.add_collection(lc)
 
             # If a label is defined, it should only be applied to the lines, of
@@ -495,32 +634,49 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
             ax.autoscale()
 
         if render_markers:
-            plt.plot(points[:, 0], points[:, 1], linewidth=0,
-                     markersize=marker_size, marker=marker_style,
-                     markeredgewidth=marker_edge_width,
-                     markeredgecolor=marker_edge_colour,
-                     markerfacecolor=marker_face_colour, label=label)
+            plt.plot(
+                points[:, 0],
+                points[:, 1],
+                linewidth=0,
+                markersize=marker_size,
+                marker=marker_style,
+                markeredgewidth=marker_edge_width,
+                markeredgecolor=marker_edge_colour,
+                markerfacecolor=marker_face_colour,
+                label=label,
+            )
 
         # set numbering
-        _set_numbering(ax, points, render_numbering=render_numbering,
-                       numbers_horizontal_align=numbers_horizontal_align,
-                       numbers_vertical_align=numbers_vertical_align,
-                       numbers_font_name=numbers_font_name,
-                       numbers_font_size=numbers_font_size,
-                       numbers_font_style=numbers_font_style,
-                       numbers_font_weight=numbers_font_weight,
-                       numbers_font_colour=numbers_font_colour)
+        _set_numbering(
+            ax,
+            points,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+        )
 
         # set axes options
         _set_axes_options(
-            ax, render_axes=render_axes, inverted_y_axis=image_view,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks)
+            ax,
+            render_axes=render_axes,
+            inverted_y_axis=image_view,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+        )
 
         # set equal aspect ratio
-        ax.set_aspect('equal', adjustable='box')
+        ax.set_aspect("equal", adjustable="box")
 
         # set figure size
         _set_figure_size(self.figure, figure_size)
@@ -534,28 +690,55 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         self.group = group
         self.landmark_group = landmark_group
 
-    def render(self, image_view=False, render_lines=True, line_colour='r',
-               line_style='-', line_width=1, render_markers=True,
-               marker_style='o', marker_size=5, marker_face_colour='r',
-               marker_edge_colour='k', marker_edge_width=1.,
-               render_numbering=False, numbers_horizontal_align='center',
-               numbers_vertical_align='bottom', numbers_font_name='sans-serif',
-               numbers_font_size=10, numbers_font_style='normal',
-               numbers_font_weight='normal', numbers_font_colour='k',
-               render_legend=True, legend_title='',
-               legend_font_name='sans-serif',
-               legend_font_style='normal', legend_font_size=10,
-               legend_font_weight='normal', legend_marker_scale=None,
-               legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
-               legend_border_axes_pad=None, legend_n_columns=1,
-               legend_horizontal_spacing=None,
-               legend_vertical_spacing=None, legend_border=True,
-               legend_border_padding=None, legend_shadow=False,
-               legend_rounded_corners=False, render_axes=True,
-               axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-               axes_y_ticks=None, figure_size=(7, 7)):
+    def render(
+        self,
+        image_view=False,
+        render_lines=True,
+        line_colour="r",
+        line_style="-",
+        line_width=1,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour="r",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_legend=True,
+        legend_title="",
+        legend_font_name="sans-serif",
+        legend_font_style="normal",
+        legend_font_size=10,
+        legend_font_weight="normal",
+        legend_marker_scale=None,
+        legend_location=2,
+        legend_bbox_to_anchor=(1.05, 1.0),
+        legend_border_axes_pad=None,
+        legend_n_columns=1,
+        legend_horizontal_spacing=None,
+        legend_vertical_spacing=None,
+        legend_border=True,
+        legend_border_padding=None,
+        legend_shadow=False,
+        legend_rounded_corners=False,
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         import matplotlib.lines as mlines
         import matplotlib.pyplot as plt
 
@@ -565,17 +748,26 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # TODO: All marker and line options could be defined as lists...
         n_labels = self.landmark_group.n_labels
         line_colour = _check_colours_list(
-            render_lines, line_colour, n_labels,
-            'Must pass a list of line colours with length n_labels or a single '
-            'line colour for all labels.')
+            render_lines,
+            line_colour,
+            n_labels,
+            "Must pass a list of line colours with length n_labels or a single "
+            "line colour for all labels.",
+        )
         marker_face_colour = _check_colours_list(
-            render_markers, marker_face_colour, n_labels,
-            'Must pass a list of marker face colours with length n_labels or '
-            'a single marker face colour for all labels.')
+            render_markers,
+            marker_face_colour,
+            n_labels,
+            "Must pass a list of marker face colours with length n_labels or "
+            "a single marker face colour for all labels.",
+        )
         marker_edge_colour = _check_colours_list(
-            render_markers, marker_edge_colour, n_labels,
-            'Must pass a list of marker edge colours with length n_labels or '
-            'a single marker edge colour for all labels.')
+            render_markers,
+            marker_edge_colour,
+            n_labels,
+            "Must pass a list of marker edge colours with length n_labels or "
+            "a single marker edge colour for all labels.",
+        )
 
         # check axes limits
         points = self.landmark_group.points
@@ -586,7 +778,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             min_x, min_y = np.min(points, axis=0)
             max_x, max_y = np.max(points, axis=0)
         axes_x_limits, axes_y_limits = _parse_axes_limits(
-            min_x, max_x, min_y, max_y, axes_x_limits, axes_y_limits)
+            min_x, max_x, min_y, max_y, axes_x_limits, axes_y_limits
+        )
 
         # get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
@@ -597,60 +790,80 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # for each pointcloud
         for i, (label, pc) in enumerate(sub_pointclouds):
             # render pointcloud
-            pc.view(figure_id=self.figure_id, image_view=image_view,
-                    render_lines=render_lines, line_colour=line_colour[i],
-                    line_style=line_style, line_width=line_width,
-                    render_markers=render_markers, marker_style=marker_style,
-                    marker_size=marker_size,
-                    marker_face_colour=marker_face_colour[i],
-                    marker_edge_colour=marker_edge_colour[i],
-                    marker_edge_width=marker_edge_width,
-                    render_numbering=render_numbering,
-                    numbers_horizontal_align=numbers_horizontal_align,
-                    numbers_vertical_align=numbers_vertical_align,
-                    numbers_font_name=numbers_font_name,
-                    numbers_font_size=numbers_font_size,
-                    numbers_font_style=numbers_font_style,
-                    numbers_font_weight=numbers_font_weight,
-                    numbers_font_colour=numbers_font_colour,
-                    render_axes=render_axes, axes_font_name=axes_font_name,
-                    axes_font_size=axes_font_size,
-                    axes_font_style=axes_font_style,
-                    axes_font_weight=axes_font_weight,
-                    axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-                    axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
-                    figure_size=None)
+            pc.view(
+                figure_id=self.figure_id,
+                image_view=image_view,
+                render_lines=render_lines,
+                line_colour=line_colour[i],
+                line_style=line_style,
+                line_width=line_width,
+                render_markers=render_markers,
+                marker_style=marker_style,
+                marker_size=marker_size,
+                marker_face_colour=marker_face_colour[i],
+                marker_edge_colour=marker_edge_colour[i],
+                marker_edge_width=marker_edge_width,
+                render_numbering=render_numbering,
+                numbers_horizontal_align=numbers_horizontal_align,
+                numbers_vertical_align=numbers_vertical_align,
+                numbers_font_name=numbers_font_name,
+                numbers_font_size=numbers_font_size,
+                numbers_font_style=numbers_font_style,
+                numbers_font_weight=numbers_font_weight,
+                numbers_font_colour=numbers_font_colour,
+                render_axes=render_axes,
+                axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size,
+                axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight,
+                axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits,
+                axes_x_ticks=axes_x_ticks,
+                axes_y_ticks=axes_y_ticks,
+                figure_size=None,
+            )
 
             # set legend entry
             if render_legend:
                 tmp_line = line_style
-                tmp_marker = marker_style if render_markers else 'None'
+                tmp_marker = marker_style if render_markers else "None"
                 legend_handles.append(
-                    mlines.Line2D([], [], linewidth=line_width,
-                                  linestyle=tmp_line, color=line_colour[i],
-                                  marker=tmp_marker,
-                                  markersize=marker_size ** 0.5,
-                                  markeredgewidth=marker_edge_width,
-                                  markeredgecolor=marker_edge_colour[i],
-                                  markerfacecolor=marker_face_colour[i],
-                                  label='{0}: {1}'.format(self.group, label)))
+                    mlines.Line2D(
+                        [],
+                        [],
+                        linewidth=line_width,
+                        linestyle=tmp_line,
+                        color=line_colour[i],
+                        marker=tmp_marker,
+                        markersize=marker_size ** 0.5,
+                        markeredgewidth=marker_edge_width,
+                        markeredgecolor=marker_edge_colour[i],
+                        markerfacecolor=marker_face_colour[i],
+                        label="{0}: {1}".format(self.group, label),
+                    )
+                )
         # set legend
-        _set_legend(plt.gca(), legend_handles, render_legend=render_legend,
-                    legend_title=legend_title, legend_font_name=legend_font_name,
-                    legend_font_style=legend_font_style,
-                    legend_font_size=legend_font_size,
-                    legend_font_weight=legend_font_weight,
-                    legend_marker_scale=legend_marker_scale,
-                    legend_location=legend_location,
-                    legend_bbox_to_anchor=legend_bbox_to_anchor,
-                    legend_border_axes_pad=legend_border_axes_pad,
-                    legend_n_columns=legend_n_columns,
-                    legend_horizontal_spacing=legend_horizontal_spacing,
-                    legend_vertical_spacing=legend_vertical_spacing,
-                    legend_border=legend_border,
-                    legend_border_padding=legend_border_padding,
-                    legend_shadow=legend_shadow,
-                    legend_rounded_corners=legend_rounded_corners)
+        _set_legend(
+            plt.gca(),
+            legend_handles,
+            render_legend=render_legend,
+            legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+        )
 
         # set figure size
         _set_figure_size(self.figure, figure_size)
@@ -662,14 +875,15 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         return self
 
     def _build_sub_pointclouds(self):
-        return [(label, self.landmark_group.get_label(label))
-                for label in self.landmark_group.labels]
+        return [
+            (label, self.landmark_group.get_label(label))
+            for label in self.landmark_group.labels
+        ]
 
 
 class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
     def __init__(self, figure_id, new_figure, alignment_transform):
-        super(MatplotlibAlignmentViewer2d, self).__init__(figure_id,
-                                                          new_figure)
+        super(MatplotlibAlignmentViewer2d, self).__init__(figure_id, new_figure)
         self.alignment_transform = alignment_transform
 
     def render(self, image=False, **kwargs):
@@ -677,6 +891,7 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         Visualize how points are affected by the warp in 2 dimensions.
         """
         import matplotlib.pyplot as plt
+
         source = self.alignment_transform.source.points
         target = self.alignment_transform.target.points
         # a factor by which the minimum and maximum x and y values of the warp
@@ -686,10 +901,8 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         n_x, n_y = 50, 50
         # {x y}_{min max} is the actual bounds on either source or target
         # landmarks
-        x_min, y_min = np.vstack(
-            [target.min(0), source.min(0)]).min(0)
-        x_max, y_max = np.vstack(
-            [target.max(0), source.max(0)]).max(0)
+        x_min, y_min = np.vstack([target.min(0), source.min(0)]).min(0)
+        x_max, y_max = np.vstack([target.max(0), source.max(0)]).max(0)
         x_margin = x_margin_factor * (x_max - x_min)
         y_margin = y_margin_factor * (y_max - y_min)
         # {x y}_{min max}_m is the bound once it has been grown by the factor
@@ -703,7 +916,8 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         y = np.linspace(y_min_m, y_max_m, n_y)
         xx, yy = np.meshgrid(x, y)
         sample_points = np.concatenate(
-            [xx.reshape([-1, 1]), yy.reshape([-1, 1])], axis=1)
+            [xx.reshape([-1, 1]), yy.reshape([-1, 1])], axis=1
+        )
         warped_points = self.alignment_transform.apply(sample_points)
         delta = warped_points - sample_points
         # plot the sample points result
@@ -713,12 +927,18 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
             # we have to account for the fact that axis 0 is typically
             # called 'y' and axis 1 is typically called 'x'. Flip them here
             x, y = y, x
-        plt.quiver(sample_points[:, x], sample_points[:, y], delta[:, x],
-                   delta[:, y])
+        plt.quiver(sample_points[:, x], sample_points[:, y], delta[:, x], delta[:, y])
         delta = target - source
         # plot how the landmarks move from source to target
-        plt.quiver(source[:, x], source[:, y], delta[:, x],
-                   delta[:, y], angles='xy', scale_units='xy', scale=1)
+        plt.quiver(
+            source[:, x],
+            source[:, y],
+            delta[:, x],
+            delta[:, y],
+            angles="xy",
+            scale_units="xy",
+            scale=1,
+        )
         # rescale to the bounds
         plt.xlim((x_min_m, x_max_m))
         plt.ylim((y_min_m, y_max_m))
@@ -730,16 +950,26 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibGraphPlotter(MatplotlibRenderer):
-
-    def __init__(self, figure_id, new_figure, x_axis, y_axis, title=None,
-                 legend_entries=None, x_label=None, y_label=None,
-                 x_axis_limits=None, y_axis_limits=None, x_axis_ticks=None,
-                 y_axis_ticks=None):
+    def __init__(
+        self,
+        figure_id,
+        new_figure,
+        x_axis,
+        y_axis,
+        title=None,
+        legend_entries=None,
+        x_label=None,
+        y_label=None,
+        x_axis_limits=None,
+        y_axis_limits=None,
+        x_axis_ticks=None,
+        y_axis_ticks=None,
+    ):
         super(MatplotlibGraphPlotter, self).__init__(figure_id, new_figure)
         self.x_axis = x_axis
         self.y_axis = y_axis
         if legend_entries is None:
-            legend_entries = ['Curve {}'.format(i) for i in range(len(y_axis))]
+            legend_entries = ["Curve {}".format(i) for i in range(len(y_axis))]
         self.legend_entries = legend_entries
         self.title = title
         self.x_label = x_label
@@ -752,121 +982,195 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         min_y = np.min([np.min(l) for l in y_axis])
         max_y = np.max([np.max(l) for l in y_axis])
         self.x_axis_limits, self.y_axis_limits = _parse_axes_limits(
-            min_x, max_x, min_y, max_y, x_axis_limits, y_axis_limits)
+            min_x, max_x, min_y, max_y, x_axis_limits, y_axis_limits
+        )
 
-    def render(self, render_lines=True, line_colour='r',
-               line_style='-', line_width=1, render_markers=True,
-               marker_style='o', marker_size=6, marker_face_colour='r',
-               marker_edge_colour='k', marker_edge_width=1.,
-               render_legend=True, legend_title='',
-               legend_font_name='sans-serif', legend_font_style='normal',
-               legend_font_size=10, legend_font_weight='normal',
-               legend_marker_scale=None, legend_location=2,
-               legend_bbox_to_anchor=(1.05, 1.), legend_border_axes_pad=None,
-               legend_n_columns=1, legend_horizontal_spacing=None,
-               legend_vertical_spacing=None, legend_border=True,
-               legend_border_padding=None, legend_shadow=False,
-               legend_rounded_corners=False, render_axes=True,
-               axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               figure_size=(7, 7), render_grid=True, grid_line_style='--',
-               grid_line_width=1):
+    def render(
+        self,
+        render_lines=True,
+        line_colour="r",
+        line_style="-",
+        line_width=1,
+        render_markers=True,
+        marker_style="o",
+        marker_size=6,
+        marker_face_colour="r",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_legend=True,
+        legend_title="",
+        legend_font_name="sans-serif",
+        legend_font_style="normal",
+        legend_font_size=10,
+        legend_font_weight="normal",
+        legend_marker_scale=None,
+        legend_location=2,
+        legend_bbox_to_anchor=(1.05, 1.0),
+        legend_border_axes_pad=None,
+        legend_n_columns=1,
+        legend_horizontal_spacing=None,
+        legend_vertical_spacing=None,
+        legend_border=True,
+        legend_border_padding=None,
+        legend_shadow=False,
+        legend_rounded_corners=False,
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        figure_size=(7, 7),
+        render_grid=True,
+        grid_line_style="--",
+        grid_line_width=1,
+    ):
         import matplotlib.pyplot as plt
 
         # Check the viewer options that can be different for each plotted curve
         n_curves = len(self.y_axis)
-        render_lines = _check_render_flag(render_lines, n_curves,
-                                          'Must pass a list of different '
-                                          'render_lines flag for each curve or '
-                                          'a single render_lines flag for all '
-                                          'curves.')
-        render_markers = _check_render_flag(render_markers, n_curves,
-                                            'Must pass a list of different '
-                                            'render_markers flag for each '
-                                            'curve or a single render_markers '
-                                            'flag for all curves.')
+        render_lines = _check_render_flag(
+            render_lines,
+            n_curves,
+            "Must pass a list of different "
+            "render_lines flag for each curve or "
+            "a single render_lines flag for all "
+            "curves.",
+        )
+        render_markers = _check_render_flag(
+            render_markers,
+            n_curves,
+            "Must pass a list of different "
+            "render_markers flag for each "
+            "curve or a single render_markers "
+            "flag for all curves.",
+        )
         line_colour = _check_colours_list(
-            True, line_colour, n_curves,
-            'Must pass a list of line colours with length n_curves or a single '
-            'line colour for all curves.')
+            True,
+            line_colour,
+            n_curves,
+            "Must pass a list of line colours with length n_curves or a single "
+            "line colour for all curves.",
+        )
         line_style = _check_colours_list(
-            True, line_style, n_curves,
-            'Must pass a list of line styles with length n_curves or a single '
-            'line style for all curves.')
+            True,
+            line_style,
+            n_curves,
+            "Must pass a list of line styles with length n_curves or a single "
+            "line style for all curves.",
+        )
         line_width = _check_colours_list(
-            True, line_width, n_curves,
-            'Must pass a list of line widths with length n_curves or a single '
-            'line width for all curves.')
+            True,
+            line_width,
+            n_curves,
+            "Must pass a list of line widths with length n_curves or a single "
+            "line width for all curves.",
+        )
         marker_style = _check_colours_list(
-            True, marker_style, n_curves,
-            'Must pass a list of marker styles with length n_curves or a '
-            'single marker style for all curves.')
+            True,
+            marker_style,
+            n_curves,
+            "Must pass a list of marker styles with length n_curves or a "
+            "single marker style for all curves.",
+        )
         marker_size = _check_colours_list(
-            True, marker_size, n_curves,
-            'Must pass a list of marker sizes with length n_curves or a single '
-            'marker size for all curves.')
+            True,
+            marker_size,
+            n_curves,
+            "Must pass a list of marker sizes with length n_curves or a single "
+            "marker size for all curves.",
+        )
         marker_face_colour = _check_colours_list(
-            True, marker_face_colour, n_curves,
-            'Must pass a list of marker face colours with length n_curves or a '
-            'single marker face colour for all curves.')
+            True,
+            marker_face_colour,
+            n_curves,
+            "Must pass a list of marker face colours with length n_curves or a "
+            "single marker face colour for all curves.",
+        )
         marker_edge_colour = _check_colours_list(
-            True, marker_edge_colour, n_curves,
-            'Must pass a list of marker edge colours with length n_curves or a '
-            'single marker edge colour for all curves.')
+            True,
+            marker_edge_colour,
+            n_curves,
+            "Must pass a list of marker edge colours with length n_curves or a "
+            "single marker edge colour for all curves.",
+        )
         marker_edge_width = _check_colours_list(
-            True, marker_edge_width, n_curves,
-            'Must pass a list of marker edge widths with length n_curves or a '
-            'single marker edge width for all curves.')
+            True,
+            marker_edge_width,
+            n_curves,
+            "Must pass a list of marker edge widths with length n_curves or a "
+            "single marker edge width for all curves.",
+        )
 
         # plot all curves
         ax = plt.gca()
         for i, y in enumerate(self.y_axis):
             linestyle = line_style[i]
             if not render_lines[i]:
-                linestyle = 'None'
+                linestyle = "None"
             marker = marker_style[i]
             if not render_markers[i]:
-                marker = 'None'
-            plt.plot(self.x_axis, y, color=line_colour[i],
-                     linestyle=linestyle,
-                     linewidth=line_width[i], marker=marker,
-                     markeredgecolor=marker_edge_colour[i],
-                     markerfacecolor=marker_face_colour[i],
-                     markeredgewidth=marker_edge_width[i],
-                     markersize=marker_size[i], label=self.legend_entries[i])
+                marker = "None"
+            plt.plot(
+                self.x_axis,
+                y,
+                color=line_colour[i],
+                linestyle=linestyle,
+                linewidth=line_width[i],
+                marker=marker,
+                markeredgecolor=marker_edge_colour[i],
+                markerfacecolor=marker_face_colour[i],
+                markeredgewidth=marker_edge_width[i],
+                markersize=marker_size[i],
+                label=self.legend_entries[i],
+            )
 
         # set legend
-        _set_legend(ax, legend_handles=None, render_legend=render_legend,
-                    legend_title=legend_title, legend_font_name=legend_font_name,
-                    legend_font_style=legend_font_style,
-                    legend_font_size=legend_font_size,
-                    legend_font_weight=legend_font_weight,
-                    legend_marker_scale=legend_marker_scale,
-                    legend_location=legend_location,
-                    legend_bbox_to_anchor=legend_bbox_to_anchor,
-                    legend_border_axes_pad=legend_border_axes_pad,
-                    legend_n_columns=legend_n_columns,
-                    legend_horizontal_spacing=legend_horizontal_spacing,
-                    legend_vertical_spacing=legend_vertical_spacing,
-                    legend_border=legend_border,
-                    legend_border_padding=legend_border_padding,
-                    legend_shadow=legend_shadow,
-                    legend_rounded_corners=legend_rounded_corners)
+        _set_legend(
+            ax,
+            legend_handles=None,
+            render_legend=render_legend,
+            legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+        )
 
         # set axes options
         _set_axes_options(
-            ax, render_axes=render_axes, inverted_y_axis=False,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=self.x_axis_limits, axes_y_limits=self.y_axis_limits,
-            axes_x_ticks=self.x_axis_ticks, axes_y_ticks=self.y_axis_ticks,
-            axes_x_label=self.x_label, axes_y_label=self.y_label,
-            title=self.title)
+            ax,
+            render_axes=render_axes,
+            inverted_y_axis=False,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=self.x_axis_limits,
+            axes_y_limits=self.y_axis_limits,
+            axes_x_ticks=self.x_axis_ticks,
+            axes_y_ticks=self.y_axis_ticks,
+            axes_x_label=self.x_label,
+            axes_y_label=self.y_label,
+            title=self.title,
+        )
 
         # set grid options
-        _set_grid_options(render_grid=render_grid,
-                          grid_line_style=grid_line_style,
-                          grid_line_width=grid_line_width)
+        _set_grid_options(
+            render_grid=render_grid,
+            grid_line_style=grid_line_style,
+            grid_line_width=grid_line_width,
+        )
 
         # set figure size
         _set_figure_size(self.figure, figure_size)
@@ -876,8 +1180,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
 
 class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
     def __init__(self, figure_id, new_figure, image_list):
-        super(MatplotlibMultiImageViewer2d, self).__init__(figure_id,
-                                                           new_figure)
+        super(MatplotlibMultiImageViewer2d, self).__init__(figure_id, new_figure)
         self.image_list = image_list
 
     def render(self, interval=50, **kwargs):
@@ -892,24 +1195,28 @@ class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
             _ax = plt.imshow(self.image_list[0], **kwargs)
 
         def init():
-            return _ax,
+            return (_ax,)
 
         def animate(j):
             _ax.set_data(self.image_list[j])
-            return _ax,
+            return (_ax,)
 
-        self._ani = animation.FuncAnimation(self.figure, animate,
-                                            init_func=init,
-                                            frames=len(self.image_list),
-                                            interval=interval, blit=True)
+        self._ani = animation.FuncAnimation(
+            self.figure,
+            animate,
+            init_func=init,
+            frames=len(self.image_list),
+            interval=interval,
+            blit=True,
+        )
         return self
 
 
-class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
-                                           MatplotlibSubplots):
+class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
     def __init__(self, figure_id, new_figure, image_list):
-        super(MatplotlibMultiImageSubplotsViewer2d, self).__init__(figure_id,
-                                                                   new_figure)
+        super(MatplotlibMultiImageSubplotsViewer2d, self).__init__(
+            figure_id, new_figure
+        )
         self.image_list = image_list
         self.num_subplots = self.image_list[0].shape[2]
         self.plot_layout = self._subplot_layout(self.num_subplots)
@@ -924,9 +1231,8 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
         for i in range(self.image_list[0].shape[2]):
             plt.subplot(p[0], p[1], 1 + i)
             # Hide the x and y labels
-            plt.axis('off')
-            _ax = plt.imshow(self.image_list[0][:, :, i], cmap=cm.Greys_r,
-                             **kwargs)
+            plt.axis("off")
+            _ax = plt.imshow(self.image_list[0][:, :, i], cmap=cm.Greys_r, **kwargs)
             _axs.append(_ax)
 
         def init():
@@ -937,17 +1243,22 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
                 _ax.set_data(self.image_list[j][:, :, k])
             return _axs
 
-        self._ani = animation.FuncAnimation(self.figure, animate,
-                                            init_func=init,
-                                            frames=len(self.image_list),
-                                            interval=interval, blit=True)
+        self._ani = animation.FuncAnimation(
+            self.figure,
+            animate,
+            init_func=init,
+            frames=len(self.image_list),
+            interval=interval,
+            blit=True,
+        )
         return self
 
 
 def sample_colours_from_colourmap(n_colours, colour_map):
     import matplotlib.pyplot as plt
+
     cm = plt.get_cmap(colour_map)
-    return [cm(1.*i/n_colours)[:3] for i in range(n_colours)]
+    return [cm(1.0 * i / n_colours)[:3] for i in range(n_colours)]
 
 
 def _check_colours_list(render_flag, colours_list, n_objects, error_str):

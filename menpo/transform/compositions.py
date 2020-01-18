@@ -1,7 +1,6 @@
 from functools import reduce
 
-from .homogeneous import (Translation, UniformScale, Rotation, Affine,
-                          Homogeneous)
+from .homogeneous import Translation, UniformScale, Rotation, Affine, Homogeneous
 
 
 def transform_about_centre(obj, transform):
@@ -33,8 +32,9 @@ def transform_about_centre(obj, transform):
         # Translate to origin, transform, then translate back
         return to_origin.compose_before(transform).compose_before(back_to_centre)
     else:  # Fallback to transform chain
-        return reduce(lambda a, b: a.compose_before(b),
-                      [to_origin, transform, back_to_centre])
+        return reduce(
+            lambda a, b: a.compose_before(b), [to_origin, transform, back_to_centre]
+        )
 
 
 def scale_about_centre(obj, scale):
@@ -81,8 +81,7 @@ def rotate_ccw_about_centre(obj, theta, degrees=True):
         A homogeneous transform that implements the rotation.
     """
     if obj.n_dims != 2:
-        raise ValueError('CCW rotation is currently only supported for '
-                         '2D objects')
+        raise ValueError("CCW rotation is currently only supported for " "2D objects")
     r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
     return transform_about_centre(obj, r)
 
@@ -116,6 +115,6 @@ def shear_about_centre(obj, phi, psi, degrees=True):
         Shearing can only be applied on 2D objects
     """
     if obj.n_dims != 2:
-        raise ValueError('Shearing is currently only supported for 2D objects')
+        raise ValueError("Shearing is currently only supported for 2D objects")
     s = Affine.init_from_2d_shear(phi, psi, degrees=degrees)
     return transform_about_centre(obj, s)

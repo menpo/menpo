@@ -1,4 +1,3 @@
-
 class VectorizableBackedModel(object):
     r"""
     Mixin for models constructed from a set of :map:`Vectorizable` objects.
@@ -101,8 +100,7 @@ class VectorizableBackedModel(object):
         instance : `type(self.template_instance)`
             An instance of the model.
         """
-        return self.template_instance.from_vector(
-            self.instance_vector(weights))
+        return self.template_instance.from_vector(self.instance_vector(weights))
 
     def project_vector(self, instance_vector):
         """

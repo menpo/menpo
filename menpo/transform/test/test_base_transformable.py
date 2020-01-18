@@ -13,7 +13,7 @@ def test_transformable_transform():
     tr = MockTransformable()
     new_tr = tr._transform(mocked)
     assert mocked.called
-    assert (new_tr is not tr)
+    assert new_tr is not tr
 
 
 def test_transformable_transform_inplace():
@@ -21,4 +21,4 @@ def test_transformable_transform_inplace():
     tr = MockTransformable()
     no_return = tr._transform_inplace(mocked)
     assert mocked.called
-    assert (no_return is None)
+    assert no_return is None

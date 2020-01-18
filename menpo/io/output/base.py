@@ -6,8 +6,7 @@ from pathlib import Path
 from menpo.compatibility import basestring, str
 from .extensions import landmark_types, image_types, pickle_types, video_types
 from ..exceptions import OverwriteError
-from ..utils import (_norm_path, _possible_extensions_from_filepath,
-                     _normalize_extension)
+from ..utils import _norm_path, _possible_extensions_from_filepath, _normalize_extension
 
 # an open file handle that uses a small fast level of compression
 gzip_open = partial(gzip.open, compresslevel=3)
@@ -62,12 +61,15 @@ def export_landmark_file(landmarks_object, fp, extension=None, overwrite=False):
     except AttributeError:
         # unless this is LJSON, this is not correct.
         fp_is_path = isinstance(fp, basestring) or isinstance(fp, Path)
-        if (extension is not None and extension != '.ljson') or \
-                (fp_is_path and Path(fp).suffix != '.ljson'):
-            m1 = ('Only the LJSON format supports multiple '
-                  'keys for exporting. \nIn any other '
-                  'case your input should be a PointCloud or '
-                  'subclass.')
+        if (extension is not None and extension != ".ljson") or (
+            fp_is_path and Path(fp).suffix != ".ljson"
+        ):
+            m1 = (
+                "Only the LJSON format supports multiple "
+                "keys for exporting. \nIn any other "
+                "case your input should be a PointCloud or "
+                "subclass."
+            )
             raise ValueError(m1)
     _export(landmarks_object, fp, landmark_types, extension, overwrite)
 
@@ -151,12 +153,13 @@ def export_video(images, file_path, overwrite=False, fps=30, **kwargs):
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    exporter_kwargs = {'fps': fps}
+    exporter_kwargs = {"fps": fps}
     exporter_kwargs.update(kwargs)
 
-    file_path = _enforce_only_paths_supported(file_path, 'FFMPEG')
-    _export_paths_only(images, file_path, video_types, None, overwrite,
-                       exporter_kwargs=exporter_kwargs)
+    file_path = _enforce_only_paths_supported(file_path, "FFMPEG")
+    _export_paths_only(
+        images, file_path, video_types, None, overwrite, exporter_kwargs=exporter_kwargs
+    )
 
 
 def export_pickle(obj, fp, overwrite=False, protocol=2):
@@ -209,22 +212,23 @@ def export_pickle(obj, fp, overwrite=False, protocol=2):
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    exporter_kwargs = {'protocol': protocol}
+    exporter_kwargs = {"protocol": protocol}
     if isinstance(fp, basestring):
         fp = Path(fp)  # cheeky conversion to Path to reuse existing code
     if isinstance(fp, Path):
         # user provided a path - if it ended .gz we will compress
         path_filepath = _validate_filepath(fp, overwrite)
-        extension = _parse_and_validate_extension(path_filepath, None,
-                                                  pickle_types)
-        o = gzip_open if extension[-3:] == '.gz' else open
-        with o(str(path_filepath), 'wb') as f:
+        extension = _parse_and_validate_extension(path_filepath, None, pickle_types)
+        o = gzip_open if extension[-3:] == ".gz" else open
+        with o(str(path_filepath), "wb") as f:
             # force overwrite as True we've already done the check above
-            _export(obj, f, pickle_types, extension, True,
-                    exporter_kwargs=exporter_kwargs)
+            _export(
+                obj, f, pickle_types, extension, True, exporter_kwargs=exporter_kwargs
+            )
     else:
-        _export(obj, fp, pickle_types, '.pkl', overwrite,
-                exporter_kwargs=exporter_kwargs)
+        _export(
+            obj, fp, pickle_types, ".pkl", overwrite, exporter_kwargs=exporter_kwargs
+        )
 
 
 def _extension_to_export_function(extension, extensions_map):
@@ -254,8 +258,10 @@ def _extension_to_export_function(extension, extensions_map):
     try:
         return extensions_map[extension]
     except KeyError:
-        raise ValueError('The output file extension ({}) provided is not '
-                         'currently supported.'.format(extension))
+        raise ValueError(
+            "The output file extension ({}) provided is not "
+            "currently supported.".format(extension)
+        )
 
 
 def _validate_filepath(fp, overwrite):
@@ -284,10 +290,12 @@ def _validate_filepath(fp, overwrite):
     """
     path_filepath = _norm_path(fp)
     if path_filepath.exists() and not overwrite:
-        raise OverwriteError('File {} already exists. Please set the overwrite '
-                             'kwarg if you wish to overwrite '
-                             'the file.'.format(path_filepath.name),
-                             path_filepath)
+        raise OverwriteError(
+            "File {} already exists. Please set the overwrite "
+            "kwarg if you wish to overwrite "
+            "the file.".format(path_filepath.name),
+            path_filepath,
+        )
     return path_filepath
 
 
@@ -333,15 +341,17 @@ def _parse_and_validate_extension(filepath, extension, extensions_map):
             known_extension = possible_extension
 
     if known_extension is None:
-        raise ValueError('Unknown file extension passed: {}'.format(
-            ''.join(filepath.suffixes)))
+        raise ValueError(
+            "Unknown file extension passed: {}".format("".join(filepath.suffixes))
+        )
 
     if extension is not None:
         extension = _normalize_extension(extension)
         if extension != known_extension:
-            raise ValueError('The file path extension must match the '
-                             'requested file extension: {} != {}'.format(
-                               extension, known_extension))
+            raise ValueError(
+                "The file path extension must match the "
+                "requested file extension: {} != {}".format(extension, known_extension)
+            )
 
     return known_extension
 
@@ -369,20 +379,23 @@ def _enforce_only_paths_supported(file_path, exporter_name):
     ValueError
         If given ``file_path`` is not a string, pathlib.Path or file handle.
     """
-    if hasattr(file_path, 'name') and not isinstance(file_path, Path):
+    if hasattr(file_path, "name") and not isinstance(file_path, Path):
         file_path = file_path.name
-        warnings.warn('The {} exporter only supports file paths and not '
-                      'buffers or open file handles - therefore the provided '
-                      'file handle will be ignored and the object will be '
-                      'exported to {}.'.format(exporter_name, file_path))
+        warnings.warn(
+            "The {} exporter only supports file paths and not "
+            "buffers or open file handles - therefore the provided "
+            "file handle will be ignored and the object will be "
+            "exported to {}.".format(exporter_name, file_path)
+        )
     if isinstance(file_path, basestring) or isinstance(file_path, Path):
         return file_path
     else:
-        raise ValueError('Cannot write to unnamed file handles or buffers.')
+        raise ValueError("Cannot write to unnamed file handles or buffers.")
 
 
-def _validate_and_get_export_func(file_path, extensions_map, extension,
-                                  overwrite, return_extension=False):
+def _validate_and_get_export_func(
+    file_path, extensions_map, extension, overwrite, return_extension=False
+):
     r"""
     Given a ``file_path``, ensure that the options chosen are valid with respect
     to overwriting and any provided extensions. If this validation is
@@ -415,8 +428,7 @@ def _validate_and_get_export_func(file_path, extensions_map, extension,
         file_path = Path(file_path)
 
     file_path = _validate_filepath(file_path, overwrite)
-    extension = _parse_and_validate_extension(file_path, extension,
-                                              extensions_map)
+    extension = _parse_and_validate_extension(file_path, extension, extensions_map)
     export_callable = _extension_to_export_function(extension, extensions_map)
 
     if return_extension:
@@ -425,8 +437,9 @@ def _validate_and_get_export_func(file_path, extensions_map, extension,
         return export_callable
 
 
-def _export_paths_only(obj, file_path, extensions_map, extension, overwrite,
-                       exporter_kwargs=None):
+def _export_paths_only(
+    obj, file_path, extensions_map, extension, overwrite, exporter_kwargs=None
+):
     r"""
     A shared export function handling paths only. This handles the logic
     of ensuring that the given ``file_path`` is a ``pathlib.Path``. All exporter
@@ -450,13 +463,13 @@ def _export_paths_only(obj, file_path, extensions_map, extension, overwrite,
     """
     if exporter_kwargs is None:
         exporter_kwargs = {}
-    export_function = _validate_and_get_export_func(file_path, extensions_map,
-                                                    extension, overwrite)
+    export_function = _validate_and_get_export_func(
+        file_path, extensions_map, extension, overwrite
+    )
     export_function(obj, file_path, **exporter_kwargs)
 
 
-def _export(obj, fp, extensions_map, extension, overwrite,
-            exporter_kwargs=None):
+def _export(obj, fp, extensions_map, extension, overwrite, exporter_kwargs=None):
     r"""
     The shared export function. This handles the shared logic of ensuring
     that the given ``fp`` is either a ``pathlib.Path`` or a file like
@@ -485,16 +498,18 @@ def _export(obj, fp, extensions_map, extension, overwrite,
         fp = Path(fp)  # cheeky conversion to Path to reuse existing code
     if isinstance(fp, Path):
         export_function, extension = _validate_and_get_export_func(
-            fp, extensions_map, extension, overwrite, return_extension=True)
+            fp, extensions_map, extension, overwrite, return_extension=True
+        )
 
-        with fp.open('wb') as file_handle:
-            export_function(obj, file_handle, extension=extension,
-                            **exporter_kwargs)
+        with fp.open("wb") as file_handle:
+            export_function(obj, file_handle, extension=extension, **exporter_kwargs)
     else:
         # You MUST provide an extension if a file handle is given
         if extension is None:
-            raise ValueError('An export file extension must be provided if a '
-                             'file-like object is passed.')
+            raise ValueError(
+                "An export file extension must be provided if a "
+                "file-like object is passed."
+            )
         else:
             extension = _normalize_extension(extension)
 
@@ -507,10 +522,10 @@ def _export(obj, fp, extensions_map, extension, overwrite,
             # Follow PIL like behaviour. Check the file handle extension
             # and check if matches the given extension
             export_function = _validate_and_get_export_func(
-                Path(fp.name), extensions_map, extension, overwrite)
+                Path(fp.name), extensions_map, extension, overwrite
+            )
         except AttributeError:
             # Just use the extension to get the export function
-            export_function = _extension_to_export_function(extension,
-                                                            extensions_map)
+            export_function = _extension_to_export_function(extension, extensions_map)
 
         export_function(obj, fp, extension=extension, **exporter_kwargs)

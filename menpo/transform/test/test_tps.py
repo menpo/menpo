@@ -5,20 +5,11 @@ from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.shape import PointCloud
 
 
-square_src_landmarks = np.array([[-1.0, -1.0],
-                                 [-1, 1],
-                                 [1, -1],
-                                 [1, 1]])
+square_src_landmarks = np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]])
 
-square_tgt_landmarks = np.array([[-1.0, -1.0],
-                                 [-1, 1],
-                                 [1, -1],
-                                 [1, 1]])
+square_tgt_landmarks = np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]])
 
-perturbed_tgt_landmarks = np.array([[-0.6, -1.3],
-                                    [-0.8, 1.2],
-                                    [0.7, -0.8],
-                                    [1.3, 0.5]])
+perturbed_tgt_landmarks = np.array([[-0.6, -1.3], [-0.8, 1.2], [0.7, -0.8], [1.3, 0.5]])
 
 x = np.arange(-1, 1, 0.01)
 y = np.arange(-1, 1, 0.01)
@@ -37,15 +28,15 @@ def test_tps_maps_src_to_tgt():
 
 def test_tps_n_dims():
     tps = ThinPlateSplines(src, tgt_perturbed)
-    assert(tps.n_dims == 2)
+    assert tps.n_dims == 2
 
 
 def test_tps_build_pseudoinverse():
     tps = ThinPlateSplines(src, tgt)
     tps_pinv = tps.pseudoinverse()
 
-    assert (tps.source == tps_pinv.target)
-    assert (tps.target == tps_pinv.source)
+    assert tps.source == tps_pinv.target
+    assert tps.target == tps_pinv.source
     # TODO: test the kernel
 
 
@@ -55,7 +46,7 @@ def test_tps_apply():
     pts = PointCloud(np.array([[-0.1, -1.0], [-0.5, 1.0], [2.1, -2.5]]))
     tps = ThinPlateSplines(src, tgt)
     result = tps.apply(pts)
-    expected = np.array([[-0.2, -2.], [-1., 2.], [4.2, -5.]])
+    expected = np.array([[-0.2, -2.0], [-1.0, 2.0], [4.2, -5.0]])
     assert_allclose(result.points, expected)
 
 
@@ -65,5 +56,5 @@ def test_tps_apply_batched():
     pts = PointCloud(np.array([[-0.1, -1.0], [-0.5, 1.0], [2.1, -2.5]]))
     tps = ThinPlateSplines(src, tgt)
     result = tps.apply(pts, batch_size=2)
-    expected = np.array([[-0.2, -2.], [-1., 2.], [4.2, -5.]])
+    expected = np.array([[-0.2, -2.0], [-1.0, 2.0], [4.2, -5.0]])
     assert_allclose(result.points, expected)

@@ -23,11 +23,11 @@ def is_same_array(a, b):
     is_same : bool
         Will be `True` if the two arrays represent the same piece of memory.
     """
-    if not a.flags['OWNDATA'] and not b.flags['OWNDATA']:
+    if not a.flags["OWNDATA"] and not b.flags["OWNDATA"]:
         return a.base is b.base
-    if not a.flags['OWNDATA'] and b.flags['OWNDATA']:
+    if not a.flags["OWNDATA"] and b.flags["OWNDATA"]:
         return a.base is b
-    if not b.flags['OWNDATA'] and a.flags['OWNDATA']:
+    if not b.flags["OWNDATA"] and a.flags["OWNDATA"]:
         return b.base is a
 
     # Fallthough, they are either the same array or they aren't!
@@ -35,6 +35,7 @@ def is_same_array(a, b):
 
 
 # Stolen from https://github.com/ikostia/surrogate/blob/master/surrogate.py
+
 
 class surrogate(object):
     """
@@ -55,7 +56,7 @@ class surrogate(object):
 
     def __init__(self, path):
         self.path = path
-        self.elements = self.path.split('.')
+        self.elements = self.path.split(".")
 
     def __call__(self, func):
         @wraps(func)
@@ -65,6 +66,7 @@ class surrogate(object):
             if prepared:
                 self.restore()
             return result
+
         return _wrapper
 
     @property
@@ -89,18 +91,20 @@ class surrogate(object):
 
     def _get_importing_path(self, elements):
         """Return importing path for a module that is last in elements list"""
-        ip = '.'.join(elements)
+        ip = ".".join(elements)
         if self.known_path:
-            ip = self.known_path + '.' + ip
+            ip = self.known_path + "." + ip
         return ip
 
     def _create_module_stubs(self):
         """Create stubs for all not-existing modules"""
         # last module in our sequence
         # it should be loaded
-        last_module = type(self.elements[-1], (object, ), {
-            '__all__': [],
-            '_importing_path': self._get_importing_path(self.elements)})
+        last_module = type(
+            self.elements[-1],
+            (object,),
+            {"__all__": [], "_importing_path": self._get_importing_path(self.elements)},
+        )
         modules = [last_module]
 
         # now we create a module stub for each
@@ -111,9 +115,11 @@ class surrogate(object):
         # sequence
         for element in reversed(self.elements[:-1]):
             next_module = modules[-1]
-            module = type(element, (object, ), {
-                next_module.__name__: next_module,
-                '__all__': [next_module.__name__]})
+            module = type(
+                element,
+                (object,),
+                {next_module.__name__: next_module, "__all__": [next_module.__name__]},
+            )
             modules.append(module)
         self.modules = list(reversed(modules))
         self.modules[0].__path__ = []
@@ -127,9 +133,12 @@ class surrogate(object):
             by stubs.
         """
         known = 0
-        while known < len(self.elements) and '.'.join(self.elements[:known + 1]) in sys.modules:
+        while (
+            known < len(self.elements)
+            and ".".join(self.elements[: known + 1]) in sys.modules
+        ):
             known += 1
-        self.known_path = '.'.join(self.elements[:known])
+        self.known_path = ".".join(self.elements[:known])
         self.elements = self.elements[known:]
 
     def _save_base_module(self):
@@ -149,7 +158,7 @@ class surrogate(object):
 
         # save `__all__` attribute of the base_module
         self.base_all = []
-        if hasattr(self.base_module, '__all__'):
+        if hasattr(self.base_module, "__all__"):
             self.base_all = list(self.base_module.__all__)
         if self.base_module:
             # change base_module's `__all__` attribute
@@ -160,8 +169,7 @@ class surrogate(object):
     def _add_module_stubs(self):
         """Push created module stubs into sys.modules"""
         for i, module in enumerate(self.modules):
-            module._importing_path = \
-                self._get_importing_path(self.elements[:i + 1])
+            module._importing_path = self._get_importing_path(self.elements[: i + 1])
             sys.modules[module._importing_path] = module
 
     def _remove_module_stubs(self):

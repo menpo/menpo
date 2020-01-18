@@ -49,9 +49,9 @@ class Similarity(Affine):
         string : `str`
             String representation of transform.
         """
-        header = 'Similarity decomposing into:'
+        header = "Similarity decomposing into:"
         list_str = [t._transform_str() for t in self.decompose()]
-        return header + reduce(lambda x, y: x + '\n' + '  ' + y, list_str, '  ')
+        return header + reduce(lambda x, y: x + "\n" + "  " + y, list_str, "  ")
 
     @property
     def n_parameters(self):
@@ -77,11 +77,13 @@ class Similarity(Affine):
         if self.n_dims == 2:
             return 4
         elif self.n_dims == 3:
-            raise NotImplementedError("3D similarity transforms cannot be "
-                                      "vectorized yet.")
+            raise NotImplementedError(
+                "3D similarity transforms cannot be " "vectorized yet."
+            )
         else:
-            raise ValueError("Only 2D and 3D Similarity transforms "
-                             "are currently supported.")
+            raise ValueError(
+                "Only 2D and 3D Similarity transforms " "are currently supported."
+            )
 
     def _as_vector(self):
         r"""
@@ -120,15 +122,17 @@ class Similarity(Affine):
         if n_dims == 2:
             params = self.h_matrix - np.eye(n_dims + 1)
             # Pick off a, b, tx, ty
-            params = params[:n_dims, :].ravel(order='F')
+            params = params[:n_dims, :].ravel(order="F")
             # Pick out a, b, tx, ty
             return params[[0, 1, 4, 5]]
         elif n_dims == 3:
-            raise NotImplementedError("3D similarity transforms cannot be "
-                                      "vectorized yet.")
+            raise NotImplementedError(
+                "3D similarity transforms cannot be " "vectorized yet."
+            )
         else:
-            raise ValueError("Only 2D and 3D Similarity transforms "
-                             "are currently supported.")
+            raise ValueError(
+                "Only 2D and 3D Similarity transforms " "are currently supported."
+            )
 
     def _from_vector_inplace(self, p):
         r"""
@@ -160,11 +164,13 @@ class Similarity(Affine):
             homog[:2, 2] = p[2:]
             self._set_h_matrix(homog, skip_checks=True, copy=False)
         elif p.shape[0] == 7:
-            raise NotImplementedError("3D similarity transforms cannot be "
-                                      "vectorized yet.")
+            raise NotImplementedError(
+                "3D similarity transforms cannot be " "vectorized yet."
+            )
         else:
-            raise ValueError("Only 2D and 3D Similarity transforms "
-                             "are currently supported.")
+            raise ValueError(
+                "Only 2D and 3D Similarity transforms " "are currently supported."
+            )
 
 
 class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
@@ -186,16 +192,19 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         If ``True``, the Kabsch algorithm check is not performed, and mirroring
         of the Rotation matrix is permitted.
     """
+
     def __init__(self, source, target, rotation=True, allow_mirror=False):
         HomogFamilyAlignment.__init__(self, source, target)
-        x = procrustes_alignment(source, target, rotation=rotation,
-                                 allow_mirror=allow_mirror)
+        x = procrustes_alignment(
+            source, target, rotation=rotation, allow_mirror=allow_mirror
+        )
         Similarity.__init__(self, x.h_matrix, copy=False, skip_checks=True)
         self.allow_mirror = allow_mirror
 
     def _sync_state_from_target(self):
-        similarity = procrustes_alignment(self.source, self.target,
-                                          allow_mirror=self.allow_mirror)
+        similarity = procrustes_alignment(
+            self.source, self.target, allow_mirror=self.allow_mirror
+        )
         self._set_h_matrix(similarity.h_matrix, copy=False, skip_checks=True)
 
     def as_non_alignment(self):
@@ -262,12 +271,12 @@ def procrustes_alignment(source, target, rotation=True, allow_mirror=False):
     from .rotation import Rotation, optimal_rotation_matrix
     from .translation import Translation
     from .scale import UniformScale
+
     # Compute the transforms we need - centering translations
     tgt_t = Translation(-target.centre(), skip_checks=True)
     src_t = Translation(-source.centre(), skip_checks=True)
     # and a scale that matches the norm of the source to the norm of the target
-    src_s = UniformScale(target.norm() / source.norm(), source.n_dims,
-                         skip_checks=True)
+    src_s = UniformScale(target.norm() / source.norm(), source.n_dims, skip_checks=True)
 
     # start building the Procrustes Alignment - src translation followed by
     # scale
@@ -280,9 +289,12 @@ def procrustes_alignment(source, target, rotation=True, allow_mirror=False):
         # centre and of the correct size. Use the current p to do this
         aligned_src = p.apply(source)
         aligned_tgt = tgt_t.apply(target)
-        r = Rotation(optimal_rotation_matrix(aligned_src, aligned_tgt,
-                                             allow_mirror=allow_mirror),
-                     skip_checks=True)
+        r = Rotation(
+            optimal_rotation_matrix(
+                aligned_src, aligned_tgt, allow_mirror=allow_mirror
+            ),
+            skip_checks=True,
+        )
         p.compose_before_inplace(r)
     # finally, translate the target back
     p.compose_before_inplace(tgt_t.pseudoinverse())

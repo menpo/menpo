@@ -14,7 +14,5 @@ menpo_root = Path(__file__).parent.parent
 )
 def test_black():
     runner = CliRunner()
-    result = runner.invoke(
-        black.main, [str(menpo_root), "--check"]
-    )
+    result = runner.invoke(black.main, [str(menpo_root), "--check"])
     assert result.exit_code == 0, result.output

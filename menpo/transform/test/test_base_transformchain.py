@@ -11,19 +11,19 @@ def test_transformchain_apply():
     transforms = [mocked_transform, mocked_transform2]
     tr = TransformChain(transforms)
     result = tr.apply(1)
-    assert (result == 4)
+    assert result == 4
 
 
 def test_transformchain_composes_inplace_with():
     tr = TransformChain([])
-    assert (tr.composes_inplace_with == Transform)
+    assert tr.composes_inplace_with == Transform
 
 
 def test_transformchain_compose_before_composes_with():
     tr = TransformChain([])
     new_tr = tr.compose_before(Mock(spec=Transform))
-    assert (new_tr is not tr)
-    assert (len(new_tr.transforms) is 1)
+    assert new_tr is not tr
+    assert len(new_tr.transforms) is 1
 
 
 def test_transformchain_compose_before_inplace_order():
@@ -31,7 +31,7 @@ def test_transformchain_compose_before_inplace_order():
     m2 = Mock(spec=Transform)
     tr = TransformChain([m1])
     tr.compose_before_inplace(m2)
-    assert (tr.transforms[1] is m2)
+    assert tr.transforms[1] is m2
 
 
 def test_transformchain_compose_after_inplace_order():
@@ -39,29 +39,29 @@ def test_transformchain_compose_after_inplace_order():
     m2 = Mock(spec=Transform)
     tr = TransformChain([m1])
     tr.compose_after_inplace(m2)
-    assert (tr.transforms[0] is m2)
+    assert tr.transforms[0] is m2
 
 
 def test_transformchain_compose_before_inplace_composes_with():
     tr = TransformChain([])
     ref = tr
     no_return = tr.compose_after_inplace(Mock(spec=Transform))
-    assert (no_return is None)
-    assert (ref is tr)
-    assert (len(tr.transforms) is 1)
+    assert no_return is None
+    assert ref is tr
+    assert len(tr.transforms) is 1
 
 
 def test_transformchain_compose_after_composes_with():
     tr = TransformChain([])
     new_tr = tr.compose_after(Mock(spec=Transform))
-    assert (new_tr is not tr)
-    assert (len(new_tr.transforms) is 1)
+    assert new_tr is not tr
+    assert len(new_tr.transforms) is 1
 
 
 def test_transformchain_compose_after_inplace_composes_with():
     tr = TransformChain([])
     ref = tr
     no_return = tr.compose_after_inplace(Mock(spec=Transform))
-    assert (no_return is None)
-    assert (ref is tr)
-    assert (len(tr.transforms) is 1)
+    assert no_return is None
+    assert ref is tr
+    assert len(tr.transforms) is 1

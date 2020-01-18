@@ -6,15 +6,18 @@ import contextlib
 try:
     from subprocess import DEVNULL
 except ImportError:
-    DEVNULL = open(os.devnull, 'wb')
+    DEVNULL = open(os.devnull, "wb")
 
 
 def _norm_path(filepath):
     r"""
     Uses all the tricks in the book to expand a path out to an absolute one.
     """
-    return Path(os.path.abspath(os.path.normpath(
-        os.path.expandvars(os.path.expanduser(str(filepath))))))
+    return Path(
+        os.path.abspath(
+            os.path.normpath(os.path.expandvars(os.path.expanduser(str(filepath))))
+        )
+    )
 
 
 def _possible_extensions_from_filepath(filepath):
@@ -36,7 +39,7 @@ def _possible_extensions_from_filepath(filepath):
         to lowercase.
     """
     suffixes = filepath.suffixes
-    return [''.join(suffixes[i:]).lower() for i in range(len(suffixes))]
+    return ["".join(suffixes[i:]).lower() for i in range(len(suffixes))]
 
 
 def _normalize_extension(extension):
@@ -56,10 +59,10 @@ def _normalize_extension(extension):
     """
     if extension is None:
         return None
-    elif extension[0] is not '.':
+    elif extension[0] is not ".":
         # Account for the fact the user may only have passed the extension
         # without the proceeding period
-        extension = '.' + extension
+        extension = "." + extension
     return extension.lower()
 
 

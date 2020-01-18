@@ -21,8 +21,7 @@ class Translation(DiscreteAffine, Similarity):
         translation = np.asarray(translation)
         h_matrix = np.eye(translation.shape[0] + 1)
         h_matrix[:-1, -1] = translation
-        Similarity.__init__(self, h_matrix, copy=False,
-                            skip_checks=skip_checks)
+        Similarity.__init__(self, h_matrix, copy=False, skip_checks=skip_checks)
 
     @classmethod
     def init_identity(cls, n_dims):
@@ -42,7 +41,7 @@ class Translation(DiscreteAffine, Similarity):
         return Translation(np.zeros(n_dims))
 
     def _transform_str(self):
-        message = 'Translation by {}'.format(self.translation_component)
+        message = "Translation by {}".format(self.translation_component)
         return message
 
     @property

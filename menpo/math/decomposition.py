@@ -37,6 +37,7 @@ def eigenvalue_decomposition(C, is_inverse=False, eps=1e-10):
     # compute eigenvalue decomposition
     if issparse(C):
         from scipy.sparse.linalg import eigsh
+
         eigenvalues, eigenvectors = eigsh(C, k=C.shape[0] - 1)
     else:
         eigenvalues, eigenvectors = np.linalg.eigh(C)
@@ -188,7 +189,7 @@ def pcacov(C, is_inverse=False, eps=1e-5):
         Positive eigenvalues of the data matrix.
     """
     if C.shape[0] != C.shape[1]:
-        raise ValueError('C must be square.')
+        raise ValueError("C must be square.")
 
     # C should be perfectly symmetrical, but numerical error can creep in.
     # Enforce symmetry here to avoid creating complex eigenvectors
@@ -281,10 +282,17 @@ def ipca(B, U_a, l_a, n_a, m_a=None, f=1.0, eps=1e-10):
 
     # form R matrix
     S_a = np.diag(s_a)
-    R = np.hstack((np.vstack((f * S_a, B.dot(U_a.T))),
-                   np.vstack((np.zeros((S_a.shape[0], B_tilde.shape[0]),
-                                       dtype=B.dtype),
-                              PB.dot(B_tilde.T)))))
+    R = np.hstack(
+        (
+            np.vstack((f * S_a, B.dot(U_a.T))),
+            np.vstack(
+                (
+                    np.zeros((S_a.shape[0], B_tilde.shape[0]), dtype=B.dtype),
+                    PB.dot(B_tilde.T),
+                )
+            ),
+        )
+    )
 
     # compute SVD of R
     U_tilde, s_tilde, Vt_tilde = np.linalg.svd(R)
@@ -294,6 +302,6 @@ def ipca(B, U_a, l_a, n_a, m_a=None, f=1.0, eps=1e-10):
     # keep only positive eigenvalues within tolerance
     l = l[l > eps]
 
-    U = Vt_tilde.dot(np.vstack((U_a, B_tilde)))[:len(l), :]
+    U = Vt_tilde.dot(np.vstack((U_a, B_tilde)))[: len(l), :]
 
     return U, l, m

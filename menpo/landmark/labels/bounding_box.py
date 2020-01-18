@@ -4,7 +4,7 @@ from collections import OrderedDict
 from .base import labeller_func
 
 
-@labeller_func(group_label='bounding_box')
+@labeller_func(group_label="bounding_box")
 def bounding_box_to_bounding_box(bbox):
     r"""
     Apply a single 'all' label to a given bounding box. This bounding
@@ -13,11 +13,11 @@ def bounding_box_to_bounding_box(bbox):
     from menpo.shape import bounding_box
 
     mapping = OrderedDict()
-    mapping['all'] = np.arange(4)
+    mapping["all"] = np.arange(4)
     return bounding_box(bbox.points[0], bbox.points[2]), mapping
 
 
-@labeller_func(group_label='bounding_box')
+@labeller_func(group_label="bounding_box")
 def bounding_box_mirrored_to_bounding_box(bbox):
     r"""
     Apply a single 'all' label to a given bounding box that has been
@@ -27,5 +27,5 @@ def bounding_box_mirrored_to_bounding_box(bbox):
     from menpo.shape import bounding_box
 
     mapping = OrderedDict()
-    mapping['all'] = np.arange(4)
+    mapping["all"] = np.arange(4)
     return bounding_box(bbox.points[3], bbox.points[1]), mapping

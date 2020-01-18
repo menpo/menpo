@@ -15,8 +15,9 @@ class Menpo3dMissingError(MenpoMissingDependencyError):
 
     def __init__(self, actual_missing_import_name):
         super(Menpo3dMissingError, self).__init__(actual_missing_import_name)
-        self.message += ("\nThis import is required in order to use the "
-                         "'menpo3d' package")
+        self.message += (
+            "\nThis import is required in order to use the " "'menpo3d' package"
+        )
 
 
 class MenpowidgetsMissingError(MenpoMissingDependencyError):
@@ -27,8 +28,9 @@ class MenpowidgetsMissingError(MenpoMissingDependencyError):
 
     def __init__(self, actual_missing_import_name):
         super(MenpowidgetsMissingError, self).__init__(actual_missing_import_name)
-        self.message += ("\nThis import is required in order to use the "
-                         "'menpowidgets' package")
+        self.message += (
+            "\nThis import is required in order to use the " "'menpowidgets' package"
+        )
 
 
 class Renderer(object):
@@ -63,8 +65,10 @@ class Renderer(object):
 
     def __init__(self, figure_id, new_figure):
         if figure_id is not None and new_figure:
-            raise ValueError("Conflicting arguments. figure_id cannot be "
-                             "specified if the new_figure flag is True")
+            raise ValueError(
+                "Conflicting arguments. figure_id cannot be "
+                "specified if the new_figure flag is True"
+            )
 
         self.figure_id = figure_id
         self.new_figure = new_figure
@@ -144,8 +148,8 @@ class viewwrapper(object):
 
     def __init__(self, wrapped_func):
         fname = wrapped_func.__name__
-        self._2d_fname = '_{}_2d'.format(fname)
-        self._3d_fname = '_{}_3d'.format(fname)
+        self._2d_fname = "_{}_2d".format(fname)
+        self._3d_fname = "_{}_3d".format(fname)
 
     def __get__(self, instance, instancetype):
         if instance.n_dims == 2:
@@ -153,13 +157,16 @@ class viewwrapper(object):
         elif instance.n_dims == 3:
             return getattr(instance, self._3d_fname)
         else:
+
             def raise_not_supported(*args, **kwargs):
                 r"""
                 Viewing of objects with greater than 3 dimensions is not
                 currently possible.
                 """
-                raise ValueError('Viewing of objects with greater than 3 '
-                                 'dimensions is not currently possible.')
+                raise ValueError(
+                    "Viewing of objects with greater than 3 "
+                    "dimensions is not currently possible."
+                )
 
             return raise_not_supported
 
@@ -180,10 +187,10 @@ class Viewable(object):
         pass
 
     def _view_2d(self, **kwargs):
-        raise NotImplementedError('2D Viewing is not supported.')
+        raise NotImplementedError("2D Viewing is not supported.")
 
     def _view_3d(self, **kwargs):
-        raise NotImplementedError('3D Viewing is not supported.')
+        raise NotImplementedError("3D Viewing is not supported.")
 
 
 class LandmarkableViewable(object):
@@ -197,17 +204,22 @@ class LandmarkableViewable(object):
         pass
 
     def _view_landmarks_2d(self, **kwargs):
-        raise NotImplementedError('2D Landmark Viewing is not supported.')
+        raise NotImplementedError("2D Landmark Viewing is not supported.")
 
     def _view_landmarks_3d(self, **kwargs):
-        raise NotImplementedError('3D Landmark Viewing is not supported.')
+        raise NotImplementedError("3D Landmark Viewing is not supported.")
 
 
 from menpo.visualize.viewmatplotlib import (
-    MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
-    MatplotlibLandmarkViewer2d, MatplotlibAlignmentViewer2d,
-    MatplotlibGraphPlotter, MatplotlibMultiImageViewer2d,
-    MatplotlibMultiImageSubplotsViewer2d, MatplotlibPointGraphViewer2d)
+    MatplotlibImageViewer2d,
+    MatplotlibImageSubplotsViewer2d,
+    MatplotlibLandmarkViewer2d,
+    MatplotlibAlignmentViewer2d,
+    MatplotlibGraphPlotter,
+    MatplotlibMultiImageViewer2d,
+    MatplotlibMultiImageSubplotsViewer2d,
+    MatplotlibPointGraphViewer2d,
+)
 
 # Default importer types
 PointGraphViewer2d = MatplotlibPointGraphViewer2d
@@ -248,11 +260,13 @@ class ImageViewer(object):
         mask are set to ``0``.
     """
 
-    def __init__(self, figure_id, new_figure, dimensions, pixels,
-                 channels=None, mask=None):
+    def __init__(
+        self, figure_id, new_figure, dimensions, pixels, channels=None, mask=None
+    ):
         if len(pixels.shape) == 3 and pixels.shape[0] == 3:
             # then probably an RGB image, so ensure the clipped pixels.
             from menpo.image import Image
+
             image = Image(pixels, copy=False)
             image_clipped = image.clip_pixels()
             pixels = image_clipped.pixels
@@ -261,8 +275,7 @@ class ImageViewer(object):
         self.figure_id = figure_id
         self.new_figure = new_figure
         self.dimensions = dimensions
-        pixels, self.use_subplots = \
-            self._parse_channels(channels, pixels)
+        pixels, self.use_subplots = self._parse_channels(channels, pixels)
         self.pixels = self._masked_pixels(pixels, mask)
 
         self._flip_image_channels()
@@ -270,6 +283,7 @@ class ImageViewer(object):
     def _flip_image_channels(self):
         if self.pixels.ndim == 3:
             from menpo.image.base import channels_to_back
+
             self.pixels = channels_to_back(self.pixels)
 
     def _parse_channels(self, channels, pixels):
@@ -304,7 +318,7 @@ class ImageViewer(object):
                 use_subplots = False
             elif n_channels == 3:
                 use_subplots = False
-        elif channels != 'all':
+        elif channels != "all":
             if isinstance(channels, Iterable):
                 if len(channels) == 1:
                     pixels = pixels[channels[0], ...]
@@ -364,36 +378,75 @@ class ImageViewer(object):
         """
         if self.dimensions == 2:
             if self.use_subplots:
-                return ImageSubplotsViewer2d(self.figure_id, self.new_figure,
-                                             self.pixels).render(**kwargs)
+                return ImageSubplotsViewer2d(
+                    self.figure_id, self.new_figure, self.pixels
+                ).render(**kwargs)
             else:
-                return ImageViewer2d(self.figure_id, self.new_figure,
-                                     self.pixels).render(**kwargs)
+                return ImageViewer2d(
+                    self.figure_id, self.new_figure, self.pixels
+                ).render(**kwargs)
         else:
             raise ValueError("Only 2D images are currently supported")
 
 
-def view_image_landmarks(image, channels, masked, group,
-                         with_labels, without_labels, figure_id, new_figure,
-                         interpolation, cmap_name, alpha, render_lines,
-                         line_colour, line_style, line_width,
-                         render_markers, marker_style, marker_size,
-                         marker_face_colour, marker_edge_colour,
-                         marker_edge_width, render_numbering,
-                         numbers_horizontal_align, numbers_vertical_align,
-                         numbers_font_name, numbers_font_size,
-                         numbers_font_style, numbers_font_weight,
-                         numbers_font_colour, render_legend, legend_title,
-                         legend_font_name, legend_font_style, legend_font_size,
-                         legend_font_weight, legend_marker_scale,
-                         legend_location, legend_bbox_to_anchor,
-                         legend_border_axes_pad, legend_n_columns,
-                         legend_horizontal_spacing, legend_vertical_spacing,
-                         legend_border, legend_border_padding, legend_shadow,
-                         legend_rounded_corners, render_axes, axes_font_name,
-                         axes_font_size, axes_font_style, axes_font_weight,
-                         axes_x_limits, axes_y_limits, axes_x_ticks,
-                         axes_y_ticks, figure_size):
+def view_image_landmarks(
+    image,
+    channels,
+    masked,
+    group,
+    with_labels,
+    without_labels,
+    figure_id,
+    new_figure,
+    interpolation,
+    cmap_name,
+    alpha,
+    render_lines,
+    line_colour,
+    line_style,
+    line_width,
+    render_markers,
+    marker_style,
+    marker_size,
+    marker_face_colour,
+    marker_edge_colour,
+    marker_edge_width,
+    render_numbering,
+    numbers_horizontal_align,
+    numbers_vertical_align,
+    numbers_font_name,
+    numbers_font_size,
+    numbers_font_style,
+    numbers_font_weight,
+    numbers_font_colour,
+    render_legend,
+    legend_title,
+    legend_font_name,
+    legend_font_style,
+    legend_font_size,
+    legend_font_weight,
+    legend_marker_scale,
+    legend_location,
+    legend_bbox_to_anchor,
+    legend_border_axes_pad,
+    legend_n_columns,
+    legend_horizontal_spacing,
+    legend_vertical_spacing,
+    legend_border,
+    legend_border_padding,
+    legend_shadow,
+    legend_rounded_corners,
+    render_axes,
+    axes_font_name,
+    axes_font_size,
+    axes_font_style,
+    axes_font_weight,
+    axes_x_limits,
+    axes_y_limits,
+    axes_x_ticks,
+    axes_y_ticks,
+    figure_size,
+):
     r"""
     This is a helper method that abstracts away the fact that viewing
     images and masked images is identical apart from the mask. Therefore,
@@ -406,8 +459,9 @@ def view_image_landmarks(image, channels, masked, group,
     import matplotlib.pyplot as plt
 
     if not image.has_landmarks:
-        raise ValueError('Image does not have landmarks attached, unable '
-                         'to view landmarks.')
+        raise ValueError(
+            "Image does not have landmarks attached, unable " "to view landmarks."
+        )
 
     # Parse axes limits
     image_axes_x_limits = None
@@ -421,20 +475,32 @@ def view_image_landmarks(image, channels, masked, group,
 
     # Render image
     from menpo.image import MaskedImage
+
     if isinstance(image, MaskedImage):
-        self_view = image.view(figure_id=figure_id, new_figure=new_figure,
-                               channels=channels, masked=masked,
-                               interpolation=interpolation, cmap_name=cmap_name,
-                               alpha=alpha, render_axes=render_axes,
-                               axes_x_limits=image_axes_x_limits,
-                               axes_y_limits=image_axes_y_limits)
+        self_view = image.view(
+            figure_id=figure_id,
+            new_figure=new_figure,
+            channels=channels,
+            masked=masked,
+            interpolation=interpolation,
+            cmap_name=cmap_name,
+            alpha=alpha,
+            render_axes=render_axes,
+            axes_x_limits=image_axes_x_limits,
+            axes_y_limits=image_axes_y_limits,
+        )
     else:
-        self_view = image.view(figure_id=figure_id, new_figure=new_figure,
-                               channels=channels, interpolation=interpolation,
-                               cmap_name=cmap_name, alpha=alpha,
-                               render_axes=render_axes,
-                               axes_x_limits=image_axes_x_limits,
-                               axes_y_limits=image_axes_y_limits)
+        self_view = image.view(
+            figure_id=figure_id,
+            new_figure=new_figure,
+            channels=channels,
+            interpolation=interpolation,
+            cmap_name=cmap_name,
+            alpha=alpha,
+            render_axes=render_axes,
+            axes_x_limits=image_axes_x_limits,
+            axes_y_limits=image_axes_y_limits,
+        )
 
     # Render landmarks
     # correct group label in legend
@@ -452,12 +518,19 @@ def view_image_landmarks(image, channels, masked, group,
 
         # viewer
         landmark_view = image.landmarks[group].view(
-            with_labels=with_labels, without_labels=without_labels,
-            group=group, figure_id=self_view.figure_id, new_figure=False,
-            image_view=True, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            with_labels=with_labels,
+            without_labels=without_labels,
+            group=group,
+            figure_id=self_view.figure_id,
+            new_figure=False,
+            image_view=True,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
             marker_edge_width=marker_edge_width,
@@ -469,7 +542,8 @@ def view_image_landmarks(image, channels, masked, group,
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
             numbers_font_colour=numbers_font_colour,
-            render_legend=render_legend_tmp, legend_title=legend_title,
+            render_legend=render_legend_tmp,
+            legend_title=legend_title,
             legend_font_name=legend_font_name,
             legend_font_style=legend_font_style,
             legend_font_size=legend_font_size,
@@ -485,59 +559,100 @@ def view_image_landmarks(image, channels, masked, group,
             legend_border_padding=legend_border_padding,
             legend_shadow=legend_shadow,
             legend_rounded_corners=legend_rounded_corners,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
             axes_font_weight=axes_font_weight,
             axes_x_limits=landmarks_axes_x_limits,
-            axes_y_limits=landmarks_axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
+            axes_y_limits=landmarks_axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+        )
 
     return landmark_view
 
 
 class MultipleImageViewer(ImageViewer):
-
-    def __init__(self, figure_id, new_figure, dimensions, pixels_list,
-                 channels=None, mask=None):
+    def __init__(
+        self, figure_id, new_figure, dimensions, pixels_list, channels=None, mask=None
+    ):
         super(MultipleImageViewer, self).__init__(
-            figure_id, new_figure, dimensions, pixels_list[0],
-            channels=channels, mask=mask)
-        pixels_list = [self._parse_channels(channels, p)[0]
-                       for p in pixels_list]
-        self.pixels_list = [self._masked_pixels(p, mask)
-                            for p in pixels_list]
+            figure_id,
+            new_figure,
+            dimensions,
+            pixels_list[0],
+            channels=channels,
+            mask=mask,
+        )
+        pixels_list = [self._parse_channels(channels, p)[0] for p in pixels_list]
+        self.pixels_list = [self._masked_pixels(p, mask) for p in pixels_list]
 
     def render(self, **kwargs):
         if self.dimensions == 2:
             if self.use_subplots:
-                MultiImageSubplotsViewer2d(self.figure_id, self.new_figure,
-                                           self.pixels_list).render(**kwargs)
+                MultiImageSubplotsViewer2d(
+                    self.figure_id, self.new_figure, self.pixels_list
+                ).render(**kwargs)
             else:
-                return MultiImageViewer2d(self.figure_id, self.new_figure,
-                                          self.pixels_list).render(**kwargs)
+                return MultiImageViewer2d(
+                    self.figure_id, self.new_figure, self.pixels_list
+                ).render(**kwargs)
         else:
             raise ValueError("Only 2D images are currently supported")
 
 
-def plot_curve(x_axis, y_axis, figure_id=None, new_figure=True,
-               legend_entries=None, title='', x_label='', y_label='',
-               axes_x_limits=0., axes_y_limits=None, axes_x_ticks=None,
-               axes_y_ticks=None, render_lines=True, line_colour=None,
-               line_style='-', line_width=1, render_markers=True,
-               marker_style='o', marker_size=5, marker_face_colour=None,
-               marker_edge_colour='k', marker_edge_width=1., render_legend=True,
-               legend_title='', legend_font_name='sans-serif',
-               legend_font_style='normal', legend_font_size=10,
-               legend_font_weight='normal', legend_marker_scale=None,
-               legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
-               legend_border_axes_pad=None, legend_n_columns=1,
-               legend_horizontal_spacing=None, legend_vertical_spacing=None,
-               legend_border=True, legend_border_padding=None,
-               legend_shadow=False, legend_rounded_corners=False,
-               render_axes=True, axes_font_name='sans-serif', axes_font_size=10,
-               axes_font_style='normal', axes_font_weight='normal',
-               figure_size=(7, 7), render_grid=True, grid_line_style='--',
-               grid_line_width=1):
+def plot_curve(
+    x_axis,
+    y_axis,
+    figure_id=None,
+    new_figure=True,
+    legend_entries=None,
+    title="",
+    x_label="",
+    y_label="",
+    axes_x_limits=0.0,
+    axes_y_limits=None,
+    axes_x_ticks=None,
+    axes_y_ticks=None,
+    render_lines=True,
+    line_colour=None,
+    line_style="-",
+    line_width=1,
+    render_markers=True,
+    marker_style="o",
+    marker_size=5,
+    marker_face_colour=None,
+    marker_edge_colour="k",
+    marker_edge_width=1.0,
+    render_legend=True,
+    legend_title="",
+    legend_font_name="sans-serif",
+    legend_font_style="normal",
+    legend_font_size=10,
+    legend_font_weight="normal",
+    legend_marker_scale=None,
+    legend_location=2,
+    legend_bbox_to_anchor=(1.05, 1.0),
+    legend_border_axes_pad=None,
+    legend_n_columns=1,
+    legend_horizontal_spacing=None,
+    legend_vertical_spacing=None,
+    legend_border=True,
+    legend_border_padding=None,
+    legend_shadow=False,
+    legend_rounded_corners=False,
+    render_axes=True,
+    axes_font_name="sans-serif",
+    axes_font_size=10,
+    axes_font_style="normal",
+    axes_font_weight="normal",
+    figure_size=(7, 7),
+    render_grid=True,
+    grid_line_style="--",
+    grid_line_width=1,
+):
     r"""
     Plot a single or multiple curves on the same figure.
 
@@ -748,24 +863,38 @@ def plot_curve(x_axis, y_axis, figure_id=None, new_figure=True,
 
     # check legend_entries
     if legend_entries is not None and len(legend_entries) != len(y_axis):
-        raise ValueError('legend_entries list has different length than y_axis '
-                         'list')
+        raise ValueError("legend_entries list has different length than y_axis " "list")
 
     # render
-    return GraphPlotter(figure_id=figure_id, new_figure=new_figure,
-                        x_axis=x_axis, y_axis=y_axis, title=title,
-                        legend_entries=legend_entries, x_label=x_label,
-                        y_label=y_label, x_axis_limits=axes_x_limits,
-                        y_axis_limits=axes_y_limits, x_axis_ticks=axes_x_ticks,
-                        y_axis_ticks=axes_y_ticks).render(
-        render_lines=render_lines, line_colour=line_colour,
-        line_style=line_style, line_width=line_width,
-        render_markers=render_markers, marker_style=marker_style,
-        marker_size=marker_size, marker_face_colour=marker_face_colour,
+    return GraphPlotter(
+        figure_id=figure_id,
+        new_figure=new_figure,
+        x_axis=x_axis,
+        y_axis=y_axis,
+        title=title,
+        legend_entries=legend_entries,
+        x_label=x_label,
+        y_label=y_label,
+        x_axis_limits=axes_x_limits,
+        y_axis_limits=axes_y_limits,
+        x_axis_ticks=axes_x_ticks,
+        y_axis_ticks=axes_y_ticks,
+    ).render(
+        render_lines=render_lines,
+        line_colour=line_colour,
+        line_style=line_style,
+        line_width=line_width,
+        render_markers=render_markers,
+        marker_style=marker_style,
+        marker_size=marker_size,
+        marker_face_colour=marker_face_colour,
         marker_edge_colour=marker_edge_colour,
-        marker_edge_width=marker_edge_width, render_legend=render_legend,
-        legend_title=legend_title, legend_font_name=legend_font_name,
-        legend_font_style=legend_font_style, legend_font_size=legend_font_size,
+        marker_edge_width=marker_edge_width,
+        render_legend=render_legend,
+        legend_title=legend_title,
+        legend_font_name=legend_font_name,
+        legend_font_style=legend_font_style,
+        legend_font_size=legend_font_size,
         legend_font_weight=legend_font_weight,
         legend_marker_scale=legend_marker_scale,
         legend_location=legend_location,
@@ -777,17 +906,29 @@ def plot_curve(x_axis, y_axis, figure_id=None, new_figure=True,
         legend_border=legend_border,
         legend_border_padding=legend_border_padding,
         legend_shadow=legend_shadow,
-        legend_rounded_corners=legend_rounded_corners, render_axes=render_axes,
-        axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-        axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-        figure_size=figure_size, render_grid=render_grid,
-        grid_line_style=grid_line_style, grid_line_width=grid_line_width)
+        legend_rounded_corners=legend_rounded_corners,
+        render_axes=render_axes,
+        axes_font_name=axes_font_name,
+        axes_font_size=axes_font_size,
+        axes_font_style=axes_font_style,
+        axes_font_weight=axes_font_weight,
+        figure_size=figure_size,
+        render_grid=render_grid,
+        grid_line_style=grid_line_style,
+        grid_line_width=grid_line_width,
+    )
 
 
-def render_rectangles_around_patches(centers, patch_shape, axes=None,
-                                     image_view=True, line_colour='r',
-                                     line_style='-', line_width=1,
-                                     interpolation='none'):
+def render_rectangles_around_patches(
+    centers,
+    patch_shape,
+    axes=None,
+    image_view=True,
+    line_colour="r",
+    line_style="-",
+    line_width=1,
+    interpolation="none",
+):
     r"""
     Method that renders rectangles of the specified `patch_shape` centered
     around all the points of the provided `centers`.
@@ -831,16 +972,14 @@ def render_rectangles_around_patches(centers, patch_shape, axes=None,
     from matplotlib.patches import Rectangle
 
     # Dictionary with the line styles
-    line_style_dict = {'-': 'solid', '--': 'dashed', '-.': 'dashdot',
-                       ':': 'dotted'}
+    line_style_dict = {"-": "solid", "--": "dashed", "-.": "dashdot", ":": "dotted"}
 
     # Get axes object
     if axes is None:
         axes = plt.gca()
 
     # Need those in order to compute the lower left corner of the rectangle
-    half_patch_shape = [patch_shape[0] / 2,
-                        patch_shape[1] / 2]
+    half_patch_shape = [patch_shape[0] / 2, patch_shape[1] / 2]
 
     # Set the view mode
     if image_view:
@@ -851,44 +990,77 @@ def render_rectangles_around_patches(centers, patch_shape, axes=None,
         yi = 1
 
     # Set correct offsets so that the rectangle is tight to the patch
-    if interpolation == 'none':
+    if interpolation == "none":
         off_start = 0.5
-        off_end = 0.
+        off_end = 0.0
     else:
-        off_start = 1.
+        off_start = 1.0
         off_end = 0.5
 
     # Render rectangles
     for p in range(centers.shape[0]):
         xc = np.intp(centers[p, xi] - half_patch_shape[xi]) - off_start
         yc = np.intp(centers[p, yi] - half_patch_shape[yi]) - off_start
-        axes.add_patch(Rectangle((xc, yc),
-                                 patch_shape[xi] + off_end,
-                                 patch_shape[yi] + off_end,
-                                 fill=False, edgecolor=line_colour,
-                                 linewidth=line_width,
-                                 linestyle=line_style_dict[line_style]))
+        axes.add_patch(
+            Rectangle(
+                (xc, yc),
+                patch_shape[xi] + off_end,
+                patch_shape[yi] + off_end,
+                fill=False,
+                edgecolor=line_colour,
+                linewidth=line_width,
+                linestyle=line_style_dict[line_style],
+            )
+        )
 
 
-def view_patches(patches, patch_centers, patches_indices=None,
-                 offset_index=None, figure_id=None, new_figure=False,
-                 background='white', render_patches=True, channels=None,
-                 interpolation='none', cmap_name=None, alpha=1.,
-                 render_patches_bboxes=True, bboxes_line_colour='r',
-                 bboxes_line_style='-', bboxes_line_width=1,
-                 render_centers=True, render_lines=True, line_colour=None,
-                 line_style='-', line_width=1, render_markers=True,
-                 marker_style='o', marker_size=5, marker_face_colour=None,
-                 marker_edge_colour=None, marker_edge_width=1.,
-                 render_numbering=False, numbers_horizontal_align='center',
-                 numbers_vertical_align='bottom',
-                 numbers_font_name='sans-serif', numbers_font_size=10,
-                 numbers_font_style='normal', numbers_font_weight='normal',
-                 numbers_font_colour='k', render_axes=False,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(7, 7)):
+def view_patches(
+    patches,
+    patch_centers,
+    patches_indices=None,
+    offset_index=None,
+    figure_id=None,
+    new_figure=False,
+    background="white",
+    render_patches=True,
+    channels=None,
+    interpolation="none",
+    cmap_name=None,
+    alpha=1.0,
+    render_patches_bboxes=True,
+    bboxes_line_colour="r",
+    bboxes_line_style="-",
+    bboxes_line_width=1,
+    render_centers=True,
+    render_lines=True,
+    line_colour=None,
+    line_style="-",
+    line_width=1,
+    render_markers=True,
+    marker_style="o",
+    marker_size=5,
+    marker_face_colour=None,
+    marker_edge_colour=None,
+    marker_edge_width=1.0,
+    render_numbering=False,
+    numbers_horizontal_align="center",
+    numbers_vertical_align="bottom",
+    numbers_font_name="sans-serif",
+    numbers_font_size=10,
+    numbers_font_style="normal",
+    numbers_font_weight="normal",
+    numbers_font_colour="k",
+    render_axes=False,
+    axes_font_name="sans-serif",
+    axes_font_size=10,
+    axes_font_style="normal",
+    axes_font_weight="normal",
+    axes_x_limits=None,
+    axes_y_limits=None,
+    axes_x_ticks=None,
+    axes_y_ticks=None,
+    figure_size=(7, 7),
+):
     r"""
     Method that renders the provided `patches` on a canvas. The user can
     choose whether to render the patch centers (`render_centers`) as well as
@@ -1074,40 +1246,71 @@ def view_patches(patches, patch_centers, patches_indices=None,
     viewer : `ImageViewer`
         The image viewing object.
     """
-    from menpo.image.base import (_convert_patches_list_to_single_array,
-                                  _create_patches_image)
+    from menpo.image.base import (
+        _convert_patches_list_to_single_array,
+        _create_patches_image,
+    )
 
     # If patches is a list, convert it to an array
     if isinstance(patches, list):
-        patches = _convert_patches_list_to_single_array(patches,
-                                                        patch_centers.n_points)
+        patches = _convert_patches_list_to_single_array(patches, patch_centers.n_points)
 
     # Create patches image
     if render_patches:
         patches_image = _create_patches_image(
-            patches, patch_centers, patches_indices=patches_indices,
-            offset_index=offset_index, background=background)
+            patches,
+            patch_centers,
+            patches_indices=patches_indices,
+            offset_index=offset_index,
+            background=background,
+        )
     else:
-        if background == 'black':
-            tmp_patches = np.zeros((patches.shape[0], patches.shape[1], 3,
-                                    patches.shape[3], patches.shape[4]))
-        elif background == 'white':
-            tmp_patches = np.ones((patches.shape[0], patches.shape[1], 3,
-                                   patches.shape[3], patches.shape[4]))
+        if background == "black":
+            tmp_patches = np.zeros(
+                (
+                    patches.shape[0],
+                    patches.shape[1],
+                    3,
+                    patches.shape[3],
+                    patches.shape[4],
+                )
+            )
+        elif background == "white":
+            tmp_patches = np.ones(
+                (
+                    patches.shape[0],
+                    patches.shape[1],
+                    3,
+                    patches.shape[3],
+                    patches.shape[4],
+                )
+            )
         patches_image = _create_patches_image(
-            tmp_patches, patch_centers, patches_indices=patches_indices,
-            offset_index=offset_index, background=background)
+            tmp_patches,
+            patch_centers,
+            patches_indices=patches_indices,
+            offset_index=offset_index,
+            background=background,
+        )
         channels = None
 
     # Render patches image
     if render_centers:
         patch_view = patches_image.view_landmarks(
-            channels=channels, group='patch_centers', figure_id=figure_id,
-            new_figure=new_figure, interpolation=interpolation,
-            cmap_name=cmap_name, alpha=alpha, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            channels=channels,
+            group="patch_centers",
+            figure_id=figure_id,
+            new_figure=new_figure,
+            interpolation=interpolation,
+            cmap_name=cmap_name,
+            alpha=alpha,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
             marker_edge_width=marker_edge_width,
@@ -1119,45 +1322,81 @@ def view_patches(patches, patch_centers, patches_indices=None,
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
             numbers_font_colour=numbers_font_colour,
-            render_legend=False, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
-            figure_size=figure_size)
+            render_legend=False,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+        )
     else:
         patch_view = patches_image.view(
-            figure_id=figure_id, new_figure=new_figure, channels=channels,
-            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
+            figure_id=figure_id,
+            new_figure=new_figure,
+            channels=channels,
+            interpolation=interpolation,
+            cmap_name=cmap_name,
+            alpha=alpha,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+        )
 
     # Render rectangles around patches
     if render_patches_bboxes:
         patch_shape = [patches.shape[3], patches.shape[4]]
         render_rectangles_around_patches(
-            patches_image.landmarks['patch_centers'].points,
-            patch_shape, image_view=True, line_colour=bboxes_line_colour,
-            line_style=bboxes_line_style, line_width=bboxes_line_width,
-            interpolation=interpolation)
+            patches_image.landmarks["patch_centers"].points,
+            patch_shape,
+            image_view=True,
+            line_colour=bboxes_line_colour,
+            line_style=bboxes_line_style,
+            line_width=bboxes_line_width,
+            interpolation=interpolation,
+        )
 
     return patch_view
 
 
-def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
-                           colour_bar_label='Normalized Standard Deviation',
-                           colour_map='jet', figure_id=None, new_figure=False,
-                           image_view=True, line_colour='r', line_style='-',
-                           line_width=1., render_markers=True,
-                           marker_edge_colour='k', marker_face_colour='k',
-                           marker_edge_width=1., marker_size=5,
-                           marker_style='o', render_axes=False,
-                           axes_font_name='sans-serif', axes_font_size=10,
-                           axes_font_style='normal', axes_font_weight='normal',
-                           crop_proportion=0.1, figure_size=(7, 7)):
+def plot_gaussian_ellipses(
+    covariances,
+    means,
+    n_std=2,
+    render_colour_bar=True,
+    colour_bar_label="Normalized Standard Deviation",
+    colour_map="jet",
+    figure_id=None,
+    new_figure=False,
+    image_view=True,
+    line_colour="r",
+    line_style="-",
+    line_width=1.0,
+    render_markers=True,
+    marker_edge_colour="k",
+    marker_face_colour="k",
+    marker_edge_width=1.0,
+    marker_size=5,
+    marker_style="o",
+    render_axes=False,
+    axes_font_name="sans-serif",
+    axes_font_size=10,
+    axes_font_style="normal",
+    axes_font_weight="normal",
+    crop_proportion=0.1,
+    figure_size=(7, 7),
+):
     r"""
     Method that renders the Gaussian ellipses that correspond to a set of
     covariance matrices and mean vectors. Naturally, this only works for
@@ -1264,17 +1503,16 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
         return vals[order], vecs[:, order]
 
     # get correct line style
-    if line_style == '-':
-        line_style = 'solid'
-    elif line_style == '--':
-        line_style = 'dashed'
-    elif line_style == '-.':
-        line_style = 'dashdot'
-    elif line_style == ':':
-        line_style = 'dotted'
+    if line_style == "-":
+        line_style = "solid"
+    elif line_style == "--":
+        line_style = "dashed"
+    elif line_style == "-.":
+        line_style = "dashdot"
+    elif line_style == ":":
+        line_style = "dotted"
     else:
-        raise ValueError("line_style must be selected from "
-                         "['-', '--', '-.', ':'].")
+        raise ValueError("line_style must be selected from " "['-', '--', '-.', ':'].")
 
     # create pointcloud
     pc = PointCloud(np.array(means))
@@ -1286,7 +1524,7 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
     y_rr = r[1] * crop_proportion
     axes_x_limits = [bounds[0][1] - x_rr, bounds[1][1] + x_rr]
     axes_y_limits = [bounds[0][0] - y_rr, bounds[1][0] + y_rr]
-    normalizer = np.sum(r) / 2.
+    normalizer = np.sum(r) / 2.0
 
     # compute height, width, theta and std
     stds = []
@@ -1311,23 +1549,39 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
     # visualize pointcloud
     if render_colour_bar:
         renderer = pc.view(
-            figure_id=figure_id, new_figure=new_figure, image_view=image_view,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, figure_size=figure_size,
-            render_markers=False)
+            figure_id=figure_id,
+            new_figure=new_figure,
+            image_view=image_view,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            figure_size=figure_size,
+            render_markers=False,
+        )
     else:
         renderer = pc.view(
-            figure_id=figure_id, new_figure=new_figure, image_view=image_view,
+            figure_id=figure_id,
+            new_figure=new_figure,
+            image_view=image_view,
             marker_edge_colour=marker_edge_colour,
             marker_face_colour=marker_face_colour,
-            marker_edge_width=marker_edge_width, marker_size=marker_size,
-            marker_style=marker_style, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            figure_size=figure_size, render_markers=render_markers)
+            marker_edge_width=marker_edge_width,
+            marker_size=marker_size,
+            marker_style=marker_style,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            figure_size=figure_size,
+            render_markers=render_markers,
+        )
 
     # plot ellipses
     ax = plt.gca()
@@ -1341,23 +1595,45 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
             if render_colour_bar:
                 colour = scalarMap.to_rgba(stds[i])
                 if render_markers:
-                    plt.plot(means[i][1], means[i][0], facecolor=colour,
-                             edgecolor=colour, linewidth=0)
-            ellip = Ellipse(xy=means[i][-1::-1], width=height, height=width,
-                            angle=thetas[i], linestyle=line_style,
-                            linewidth=line_width, edgecolor=colour,
-                            facecolor='none')
+                    plt.plot(
+                        means[i][1],
+                        means[i][0],
+                        facecolor=colour,
+                        edgecolor=colour,
+                        linewidth=0,
+                    )
+            ellip = Ellipse(
+                xy=means[i][-1::-1],
+                width=height,
+                height=width,
+                angle=thetas[i],
+                linestyle=line_style,
+                linewidth=line_width,
+                edgecolor=colour,
+                facecolor="none",
+            )
         else:
             colour = line_colour
             if render_colour_bar:
                 colour = scalarMap.to_rgba(stds[i])
                 if render_markers:
-                    plt.plot(means[i][0], means[i][1], facecolor=colour,
-                             edgecolor=colour, linewidth=0)
-            ellip = Ellipse(xy=means[i], width=width, height=height,
-                            angle=thetas[i], linestyle=line_style,
-                            linewidth=line_width, edgecolor=colour,
-                            facecolor='none')
+                    plt.plot(
+                        means[i][0],
+                        means[i][1],
+                        facecolor=colour,
+                        edgecolor=colour,
+                        linewidth=0,
+                    )
+            ellip = Ellipse(
+                xy=means[i],
+                width=width,
+                height=height,
+                angle=thetas[i],
+                linestyle=line_style,
+                linewidth=line_width,
+                edgecolor=colour,
+                facecolor="none",
+            )
         ax.add_artist(ellip)
 
     # show colour bar
@@ -1368,8 +1644,12 @@ def plot_gaussian_ellipses(covariances, means, n_std=2, render_colour_bar=True,
         # change colour bar's font properties
         ax = cb.ax
         text = ax.yaxis.label
-        font = FontProperties(size=axes_font_size, weight=axes_font_weight,
-                              style=axes_font_style, family=axes_font_name)
+        font = FontProperties(
+            size=axes_font_size,
+            weight=axes_font_weight,
+            style=axes_font_style,
+            family=axes_font_name,
+        )
         text.set_font_properties(font)
 
     return renderer

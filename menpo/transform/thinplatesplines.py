@@ -31,10 +31,11 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
     ValueError
         TPS is only with on 2-dimensional data
     """
+
     def __init__(self, source, target, kernel=None, min_singular_val=1e-4):
         Alignment.__init__(self, source, target)
         if self.n_dims != 2:
-            raise ValueError('TPS can only be used on 2D data.')
+            raise ValueError("TPS can only be used on 2D data.")
         if kernel is None:
             kernel = R2LogR2RBF(source.points)
         self.min_singular_val = min_singular_val
@@ -44,7 +45,8 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
         self.k = self.kernel.apply(self.source.points)
         # p is a homogeneous version of the source points
         self.p = np.concatenate(
-            [np.ones([self.n_points, 1]), self.source.points], axis=1)
+            [np.ones([self.n_points, 1]), self.source.points], axis=1
+        )
         o = np.zeros([3, 3])
         top_l = np.concatenate([self.k, self.p], axis=1)
         bot_l = np.concatenate([self.p.T, o], axis=1)
@@ -89,7 +91,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
             TPS can only be applied to 2D data.
         """
         if points.shape[1] != self.n_dims:
-            raise ValueError('TPS can only be applied to 2D data.')
+            raise ValueError("TPS can only be applied to 2D data.")
         x = points[..., 0][:, None]
         y = points[..., 1][:, None]
         # calculate the affine coefficients of the warp

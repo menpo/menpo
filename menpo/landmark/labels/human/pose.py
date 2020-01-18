@@ -1,11 +1,15 @@
 from collections import OrderedDict
 import numpy as np
 
-from ..base import (labeller_func, validate_input, connectivity_from_array,
-                    pcloud_and_lgroup_from_ranges)
+from ..base import (
+    labeller_func,
+    validate_input,
+    connectivity_from_array,
+    pcloud_and_lgroup_from_ranges,
+)
 
 
-@labeller_func(group_label='pose_stickmen_12')
+@labeller_func(group_label="pose_stickmen_12")
 def pose_stickmen_12_to_pose_stickmen_12(pcloud):
     r"""
     Apply the 'stickmen' 12-point semantic labels.
@@ -26,18 +30,20 @@ def pose_stickmen_12_to_pose_stickmen_12(pcloud):
     n_expected_points = 12
     validate_input(pcloud, n_expected_points)
 
-    labels = OrderedDict([
-        ('torso', (0, 2, False)),
-        ('right_upper arm', (2, 4, False)),
-        ('left_upper arm', (4, 6, False)),
-        ('right_lower_arm', (6, 8, False)),
-        ('left_lower_arm', (8, 10, False)),
-        ('head', (10, 12, False))
-    ])
+    labels = OrderedDict(
+        [
+            ("torso", (0, 2, False)),
+            ("right_upper arm", (2, 4, False)),
+            ("left_upper arm", (4, 6, False)),
+            ("right_lower_arm", (6, 8, False)),
+            ("left_lower_arm", (8, 10, False)),
+            ("head", (10, 12, False)),
+        ]
+    )
     return pcloud_and_lgroup_from_ranges(pcloud, labels)
 
 
-@labeller_func(group_label='pose_lsp_14')
+@labeller_func(group_label="pose_lsp_14")
 def pose_lsp_14_to_pose_lsp_14(pcloud):
     r"""
     Apply the lsp 14-point semantic labels.
@@ -71,26 +77,31 @@ def pose_lsp_14_to_pose_lsp_14(pcloud):
     right_arm_connectivity = connectivity_from_array(right_arm_indices)
     head_connectivity = connectivity_from_array(head_indices)
 
-    all_connectivity = np.vstack([
-        left_leg_connectivity, right_leg_connectivity,
-        left_arm_connectivity, right_arm_connectivity,
-        head_connectivity
-    ])
+    all_connectivity = np.vstack(
+        [
+            left_leg_connectivity,
+            right_leg_connectivity,
+            left_arm_connectivity,
+            right_arm_connectivity,
+            head_connectivity,
+        ]
+    )
 
     mapping = OrderedDict()
-    mapping['left_leg'] = left_leg_indices
-    mapping['right_leg'] = right_leg_indices
-    mapping['left_arm'] = left_arm_indices
-    mapping['right_arm'] = right_arm_indices
-    mapping['head'] = head_indices
+    mapping["left_leg"] = left_leg_indices
+    mapping["right_leg"] = right_leg_indices
+    mapping["left_arm"] = left_arm_indices
+    mapping["right_arm"] = right_arm_indices
+    mapping["head"] = head_indices
 
     new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
-        pcloud.points, all_connectivity, mapping)
+        pcloud.points, all_connectivity, mapping
+    )
 
     return new_pcloud, mapping
 
 
-@labeller_func(group_label='pose_flic_11')
+@labeller_func(group_label="pose_flic_11")
 def pose_flic_11_to_pose_flic_11(pcloud):
     r"""
     Apply the flic 11-point semantic labels.
@@ -109,16 +120,19 @@ def pose_flic_11_to_pose_flic_11(pcloud):
     n_expected_points = 11
     validate_input(pcloud, n_expected_points)
 
-    labels = OrderedDict([
-        ('left_arm', (0, 3, False)),
-        ('right_arm', (3, 6, False)),
-        ('hips', (6, 8, False)),
-        ('face', (8, 11, True))])
+    labels = OrderedDict(
+        [
+            ("left_arm", (0, 3, False)),
+            ("right_arm", (3, 6, False)),
+            ("hips", (6, 8, False)),
+            ("face", (8, 11, True)),
+        ]
+    )
 
     return pcloud_and_lgroup_from_ranges(pcloud, labels)
 
 
-@labeller_func(group_label='pose_human36M_32')
+@labeller_func(group_label="pose_human36M_32")
 def pose_human36M_32_to_pose_human36M_32(pcloud):
     r"""
     Apply the human3.6M 32-point semantic labels.
@@ -165,35 +179,43 @@ def pose_human36M_32_to_pose_human36M_32(pcloud):
     left_hand_connectivity = connectivity_from_array(left_hand_indices)
     right_arm_connectivity = connectivity_from_array(right_arm_indices)
     right_hand_connectivity = connectivity_from_array(right_hand_indices)
-    torso_connectivity = connectivity_from_array(torso_indices,
-                                                 close_loop=True)
+    torso_connectivity = connectivity_from_array(torso_indices, close_loop=True)
 
-    all_connectivity = np.vstack([
-        pelvis_connectivity, right_leg_connectivity, left_leg_connectivity,
-        spine_connectivity, head_connectivity, left_arm_connectivity,
-        left_hand_connectivity, right_arm_connectivity,
-        right_hand_connectivity, torso_connectivity
-    ])
+    all_connectivity = np.vstack(
+        [
+            pelvis_connectivity,
+            right_leg_connectivity,
+            left_leg_connectivity,
+            spine_connectivity,
+            head_connectivity,
+            left_arm_connectivity,
+            left_hand_connectivity,
+            right_arm_connectivity,
+            right_hand_connectivity,
+            torso_connectivity,
+        ]
+    )
 
     mapping = OrderedDict()
-    mapping['pelvis'] = pelvis_indices
-    mapping['right_leg'] = right_leg_indices
-    mapping['left_leg'] = left_leg_indices
-    mapping['spine'] = spine_indices
-    mapping['head'] = head_indices
-    mapping['left_arm'] = left_arm_indices
-    mapping['left_hand'] = left_hand_indices
-    mapping['right_arm'] = right_arm_indices
-    mapping['right_hand'] = right_hand_indices
-    mapping['torso'] = torso_indices
+    mapping["pelvis"] = pelvis_indices
+    mapping["right_leg"] = right_leg_indices
+    mapping["left_leg"] = left_leg_indices
+    mapping["spine"] = spine_indices
+    mapping["head"] = head_indices
+    mapping["left_arm"] = left_arm_indices
+    mapping["left_hand"] = left_hand_indices
+    mapping["right_arm"] = right_arm_indices
+    mapping["right_hand"] = right_hand_indices
+    mapping["torso"] = torso_indices
 
     new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
-        pcloud.points, all_connectivity, mapping)
+        pcloud.points, all_connectivity, mapping
+    )
 
     return new_pcloud, mapping
 
 
-@labeller_func(group_label='pose_human36M_17')
+@labeller_func(group_label="pose_human36M_17")
 def pose_human36M_32_to_pose_human36M_17(pcloud):
     r"""
     Apply the human3.6M 17-point semantic labels (based on the
@@ -236,29 +258,43 @@ def pose_human36M_32_to_pose_human36M_17(pcloud):
     head_connectivity = connectivity_from_array(head_indices)
     left_arm_connectivity = connectivity_from_array(left_arm_indices)
     right_arm_connectivity = connectivity_from_array(right_arm_indices)
-    torso_connectivity = connectivity_from_array(torso_indices,
-                                                 close_loop=True)
+    torso_connectivity = connectivity_from_array(torso_indices, close_loop=True)
 
-    all_connectivity = np.vstack([
-        pelvis_connectivity, right_leg_connectivity, left_leg_connectivity,
-        spine_connectivity, head_connectivity, left_arm_connectivity,
-        right_arm_connectivity, torso_connectivity
-    ])
+    all_connectivity = np.vstack(
+        [
+            pelvis_connectivity,
+            right_leg_connectivity,
+            left_leg_connectivity,
+            spine_connectivity,
+            head_connectivity,
+            left_arm_connectivity,
+            right_arm_connectivity,
+            torso_connectivity,
+        ]
+    )
 
     mapping = OrderedDict()
-    mapping['pelvis'] = pelvis_indices
-    mapping['right_leg'] = right_leg_indices
-    mapping['left_leg'] = left_leg_indices
-    mapping['spine'] = spine_indices
-    mapping['head'] = head_indices
-    mapping['left_arm'] = left_arm_indices
-    mapping['right_arm'] = right_arm_indices
-    mapping['torso'] = torso_indices
+    mapping["pelvis"] = pelvis_indices
+    mapping["right_leg"] = right_leg_indices
+    mapping["left_leg"] = left_leg_indices
+    mapping["spine"] = spine_indices
+    mapping["head"] = head_indices
+    mapping["left_arm"] = left_arm_indices
+    mapping["right_arm"] = right_arm_indices
+    mapping["torso"] = torso_indices
 
     # Ignore duplicate points, sole and palms
-    ind = np.hstack([np.arange(0, 4), np.arange(6, 9), np.arange(12, 16),
-                     np.arange(17, 20), np.arange(25, 28)])
+    ind = np.hstack(
+        [
+            np.arange(0, 4),
+            np.arange(6, 9),
+            np.arange(12, 16),
+            np.arange(17, 20),
+            np.arange(25, 28),
+        ]
+    )
     new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
-        pcloud.points[ind], all_connectivity, mapping)
+        pcloud.points[ind], all_connectivity, mapping
+    )
 
     return new_pcloud, mapping

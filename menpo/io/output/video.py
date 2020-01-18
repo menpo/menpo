@@ -9,12 +9,20 @@ from menpo.visualize import print_progress
 from ..utils import DEVNULL, _call_subprocess
 
 
-_FFMPEG_CMD = lambda: str(Path(os.environ.get('MENPO_FFMPEG_CMD', 'ffmpeg')))
+_FFMPEG_CMD = lambda: str(Path(os.environ.get("MENPO_FFMPEG_CMD", "ffmpeg")))
 
 
-def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
-                          preset='medium', bitrate=None,
-                          out_pix_fmt='yuv420p', verbose=False, **kwargs):
+def ffmpeg_video_exporter(
+    images,
+    out_path,
+    fps=30,
+    codec="libx264",
+    preset="medium",
+    bitrate=None,
+    out_pix_fmt="yuv420p",
+    verbose=False,
+    **kwargs,
+):
     r"""
     Uses subprocess PIPE to export the images using FFMPEG.
 
@@ -64,66 +72,90 @@ def ffmpeg_video_exporter(images, out_path, fps=30, codec='libx264',
     im = images[0]
     frame_shape = im.shape
     if im.n_channels != 3 and im.n_channels != 1:
-        m = ('Currently only images of 1 or 3 channels are expected, '
-             'while {} channels were found in the first frame.')
+        m = (
+            "Currently only images of 1 or 3 channels are expected, "
+            "while {} channels were found in the first frame."
+        )
         raise ValueError(m.format(im.n_channels))
     # If the first image is gray then all the images will be assumed to be
     # gray
-    colour = 'rgb24' if im.n_channels == 3 else 'gray8'
-    cmd = [_FFMPEG_CMD(), '-y',
-           '-s', '{}x{}'.format(frame_shape[1], frame_shape[0]),
-           '-r', str(fps),
-           '-an',
-           '-pix_fmt', colour,
-           '-c:v', 'rawvideo', '-f', 'rawvideo',
-           '-i', '-']
+    colour = "rgb24" if im.n_channels == 3 else "gray8"
+    cmd = [
+        _FFMPEG_CMD(),
+        "-y",
+        "-s",
+        "{}x{}".format(frame_shape[1], frame_shape[0]),
+        "-r",
+        str(fps),
+        "-an",
+        "-pix_fmt",
+        colour,
+        "-c:v",
+        "rawvideo",
+        "-f",
+        "rawvideo",
+        "-i",
+        "-",
+    ]
     if codec:
-        cmd.extend(['-vcodec', codec])
+        cmd.extend(["-vcodec", codec])
     if out_pix_fmt:
-        cmd.extend(['-pix_fmt', out_pix_fmt])
+        cmd.extend(["-pix_fmt", out_pix_fmt])
     if preset:
-        cmd.extend(['-preset', preset])
+        cmd.extend(["-preset", preset])
     if bitrate:
-        cmd.extend(['-b', str(bitrate)])
+        cmd.extend(["-b", str(bitrate)])
     # add the optional kwargs for FFMPEG options.
     for key, value in kwargs.items():
-        cmd.extend(['-{}'.format(key), value])
+        cmd.extend(["-{}".format(key), value])
     cmd.append(str(out_path))
 
-    images = (print_progress(images, prefix='Exporting frames') if verbose
-              else images)
+    images = print_progress(images, prefix="Exporting frames") if verbose else images
 
     # Pipe stdout to DEVNULL to ignore it
-    with _call_subprocess(sp.Popen(cmd, stdin=sp.PIPE, stderr=sp.PIPE,
-                                   stdout=DEVNULL)) as pipe:
+    with _call_subprocess(
+        sp.Popen(cmd, stdin=sp.PIPE, stderr=sp.PIPE, stdout=DEVNULL)
+    ) as pipe:
         for k, image in enumerate(images):
             try:
-                if image.n_channels != 1 and colour == 'gray8':
-                    warnings.warn('Frame {} is non-greyscale and the initial '
-                                  'frame was greyscale. This frame will be '
-                                  'corrupted.'.format(k))
+                if image.n_channels != 1 and colour == "gray8":
+                    warnings.warn(
+                        "Frame {} is non-greyscale and the initial "
+                        "frame was greyscale. This frame will be "
+                        "corrupted.".format(k)
+                    )
                 if image.shape != frame_shape:  # Valid due to tuple/int
-                    warnings.warn('Frame {} is not the same shape as the '
-                                  'initial frame and therefore the output '
-                                  'may be corrupted.'.format(k))
+                    warnings.warn(
+                        "Frame {} is not the same shape as the "
+                        "initial frame and therefore the output "
+                        "may be corrupted.".format(k)
+                    )
 
                 i = image.pixels_with_channels_at_back(out_dtype=np.uint8)
                 # Handle the case of a greyscale image amidst colour images
-                if image.n_channels == 1 and colour == 'rgb24':
+                if image.n_channels == 1 and colour == "rgb24":
                     # Repeat the channels axis 3 times
                     i = i.reshape(i.shape + (1,)).repeat(3, axis=2)
                 pipe.stdin.write(i.tostring())
             except IOError:
-                error = ('FFMPEG encountered the following error while '
-                         'writing the video:\n\n{}'.format(
-                    pipe.stderr.read().decode()))
+                error = (
+                    "FFMPEG encountered the following error while "
+                    "writing the video:\n\n{}".format(pipe.stderr.read().decode())
+                )
                 # Re-raise the error for a useful error message
                 raise IOError(error)
 
 
-def imageio_video_exporter(images, out_path, fps=30, codec='libx264',
-                           quality=None, bitrate=None, pixelformat='yuv420p',
-                           **kwargs):
+def imageio_video_exporter(
+    images,
+    out_path,
+    fps=30,
+    codec="libx264",
+    quality=None,
+    bitrate=None,
+    pixelformat="yuv420p",
+    **kwargs,
+):
     r"""
     Uses imageio to export the images using FFMPEG. Please see the imageio
     documentation for more information.
@@ -155,9 +187,15 @@ def imageio_video_exporter(images, out_path, fps=30, codec='libx264',
     """
     import imageio
 
-    writer = imageio.get_writer(str(out_path), mode='I', fps=fps,
-                                codec=codec, quality=quality, bitrate=bitrate,
-                                pixelformat=pixelformat)
+    writer = imageio.get_writer(
+        str(out_path),
+        mode="I",
+        fps=fps,
+        codec=codec,
+        quality=quality,
+        bitrate=bitrate,
+        pixelformat=pixelformat,
+    )
 
     for v in images:
         v = v.pixels_with_channels_at_back(out_dtype=np.uint8)
@@ -165,8 +203,7 @@ def imageio_video_exporter(images, out_path, fps=30, codec='libx264',
     writer.close()
 
 
-def image_gif_exporter(images, out_path, fps=30, loop=0, duration=None,
-                       **kwargs):
+def image_gif_exporter(images, out_path, fps=30, loop=0, duration=None, **kwargs):
     r"""
     Uses imageio to export the images to a GIF. Please see the imageio
     documentation for more information.
@@ -188,8 +225,9 @@ def image_gif_exporter(images, out_path, fps=30, loop=0, duration=None,
     """
     import imageio
 
-    writer = imageio.get_writer(str(out_path), mode='I', fps=fps,
-                                loop=loop, duration=duration)
+    writer = imageio.get_writer(
+        str(out_path), mode="I", fps=fps, loop=loop, duration=duration
+    )
 
     for v in images:
         v = v.pixels_with_channels_at_back(out_dtype=np.uint8)

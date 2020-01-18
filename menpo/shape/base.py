@@ -4,8 +4,7 @@ from menpo.transform.base import Transformable
 from menpo.visualize import LandmarkableViewable, Viewable
 
 
-class Shape(Vectorizable, Transformable, Landmarkable, LandmarkableViewable,
-            Viewable):
+class Shape(Vectorizable, Transformable, Landmarkable, LandmarkableViewable, Viewable):
     """
     Abstract representation of shape. Shapes are :map:`Transformable`,
     :map:`Vectorizable`, :map:`Landmarkable`, :map:`LandmarkableViewable` and
