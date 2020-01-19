@@ -23,7 +23,7 @@ matrix:
       env: PYTHON_VERSION=3.7
 
 install:
-- wget https://raw.githubusercontent.com/menpo/condaci/v0.5.x/condaci.py -O condaci.py
+- wget https://raw.githubusercontent.com/menpo/condaci/add-miniver-support/condaci.py -O condaci.py
 - python condaci.py setup --channels conda-forge
 
 script:
