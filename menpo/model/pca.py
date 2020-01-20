@@ -36,8 +36,10 @@ class PCAVectorModel(MeanLinearVectorModel):
         If ``True`` the data matrix is modified in place. Otherwise, the data
         matrix is copied.
     """
-    def __init__(self, samples, centre=True, n_samples=None,
-                 max_n_components=None, inplace=True):
+
+    def __init__(
+        self, samples, centre=True, n_samples=None, max_n_components=None, inplace=True
+    ):
         # Generate data matrix
         data, self.n_samples = self._data_to_matrix(samples, n_samples)
 
@@ -46,12 +48,17 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         # The call to __init__ of MeanLinearModel is done in here
         self._constructor_helper(
-            eigenvalues=e_values, eigenvectors=e_vectors, mean=mean,
-            centred=centre, max_n_components=max_n_components)
+            eigenvalues=e_values,
+            eigenvectors=e_vectors,
+            mean=mean,
+            centred=centre,
+            max_n_components=max_n_components,
+        )
 
     @classmethod
-    def init_from_covariance_matrix(cls, C, mean, n_samples, centred=True,
-                                    is_inverse=False, max_n_components=None):
+    def init_from_covariance_matrix(
+        cls, C, mean, n_samples, centred=True, is_inverse=False, max_n_components=None
+    ):
         r"""
         Build the Principal Component Analysis (PCA) by eigenvalue
         decomposition of the provided covariance/scatter matrix. For details
@@ -86,13 +93,18 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         # The call to __init__ of MeanLinearModel is done in here
         model._constructor_helper(
-            eigenvalues=e_values, eigenvectors=e_vectors, mean=mean,
-            centred=centred, max_n_components=max_n_components)
+            eigenvalues=e_values,
+            eigenvectors=e_vectors,
+            mean=mean,
+            centred=centred,
+            max_n_components=max_n_components,
+        )
         return model
 
     @classmethod
-    def init_from_components(cls, components, eigenvalues, mean, n_samples,
-                             centred, max_n_components=None):
+    def init_from_components(
+        cls, components, eigenvalues, mean, n_samples, centred, max_n_components=None
+    ):
         r"""
         Build the Principal Component Analysis (PCA) using the provided
         components (eigenvectors) and eigenvalues.
@@ -122,18 +134,24 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         # The call to __init__ of MeanLinearModel is done in here
         model._constructor_helper(
-            eigenvalues=eigenvalues, eigenvectors=components, mean=mean,
-            centred=centred, max_n_components=max_n_components)
+            eigenvalues=eigenvalues,
+            eigenvectors=components,
+            mean=mean,
+            centred=centred,
+            max_n_components=max_n_components,
+        )
         return model
 
-    def _constructor_helper(self, eigenvalues, eigenvectors, mean, centred,
-                            max_n_components):
+    def _constructor_helper(
+        self, eigenvalues, eigenvectors, mean, centred, max_n_components
+    ):
         # if covariance is not centred, mean must be zeros.
         if centred:
             MeanLinearVectorModel.__init__(self, eigenvectors, mean)
         else:
-            MeanLinearVectorModel.__init__(self, eigenvectors,
-                                           np.zeros(mean.shape, dtype=mean.dtype))
+            MeanLinearVectorModel.__init__(
+                self, eigenvectors, np.zeros(mean.shape, dtype=mean.dtype)
+            )
         self.centred = centred
         self._eigenvalues = eigenvalues
         # start the active components as all the components
@@ -154,9 +172,9 @@ class PCAVectorModel(MeanLinearVectorModel):
         return data, n_samples
 
     def __setstate__(self, state):
-        if 'mean_vector' in state:
-            state['_mean'] = state['mean_vector']
-            del state['mean_vector']
+        if "mean_vector" in state:
+            state["_mean"] = state["mean_vector"]
+            del state["mean_vector"]
 
         self.__dict__ = state
 
@@ -191,21 +209,26 @@ class PCAVectorModel(MeanLinearVectorModel):
             float 0.0 < n_components < self._total_kept_variance_ratio ({}) or
             an integer 1 < n_components < self.n_components ({})
         """
-        err_str = ("Tried setting n_active_components to {} - "
-                   "value needs to be a float "
-                   "0.0 < n_components < self._total_kept_variance_ratio "
-                   "({}) or an integer 1 < n_components < "
-                   "self.n_components ({})".format(value,
-                                                   self._total_variance_ratio(),
-                                                   self.n_components))
+        err_str = (
+            "Tried setting n_active_components to {} - "
+            "value needs to be a float "
+            "0.0 < n_components < self._total_kept_variance_ratio "
+            "({}) or an integer 1 < n_components < "
+            "self.n_components ({})".format(
+                value, self._total_variance_ratio(), self.n_components
+            )
+        )
 
         # check value
         if isinstance(value, float):
             if 0.0 < value <= self._total_variance_ratio():
                 # value needed to capture desired variance
-                value = np.sum(
-                    [r < value
-                     for r in self._total_eigenvalues_cumulative_ratio()]) + 1
+                value = (
+                    np.sum(
+                        [r < value for r in self._total_eigenvalues_cumulative_ratio()]
+                    )
+                    + 1
+                )
             else:
                 # variance must be bigger than 0.0
                 raise ValueError(err_str)
@@ -234,7 +257,7 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         :type: ``(n_active_components, n_features)`` `ndarray`
         """
-        return self._components[:self.n_active_components, :]
+        return self._components[: self.n_active_components, :]
 
     @property
     def eigenvalues(self):
@@ -245,7 +268,7 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         :type: ``(n_active_components,)`` `ndarray`
         """
-        return self._eigenvalues[:self.n_active_components]
+        return self._eigenvalues[: self.n_active_components]
 
     def whitened_components(self):
         r"""
@@ -257,8 +280,8 @@ class PCAVectorModel(MeanLinearVectorModel):
             The whitened components.
         """
         return self.components / (
-            np.sqrt(self.eigenvalues * self.n_samples +
-                    self.noise_variance())[:, None])
+            np.sqrt(self.eigenvalues * self.n_samples + self.noise_variance())[:, None]
+        )
 
     def original_variance(self):
         r"""
@@ -394,8 +417,11 @@ class PCAVectorModel(MeanLinearVectorModel):
                 noise_variance = 0.0
         else:
             noise_variance = np.hstack(
-                (self._eigenvalues[self.n_active_components:],
-                 self._trimmed_eigenvalues)).mean()
+                (
+                    self._eigenvalues[self.n_active_components :],
+                    self._trimmed_eigenvalues,
+                )
+            ).mean()
         return noise_variance
 
     def noise_variance_ratio(self):
@@ -427,8 +453,9 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         noise_variance = self.noise_variance()
         if np.allclose(noise_variance, 0):
-            raise ValueError("noise variance is effectively 0 - "
-                             "cannot take the inverse")
+            raise ValueError(
+                "noise variance is effectively 0 - " "cannot take the inverse"
+            )
         return 1.0 / noise_variance
 
     def component(self, index, with_mean=True, scale=1.0):
@@ -498,10 +525,13 @@ class PCAVectorModel(MeanLinearVectorModel):
         if n_weights > self.n_active_components:
             raise ValueError(
                 "Number of weightings cannot be greater than {}".format(
-                    self.n_active_components))
+                    self.n_active_components
+                )
+            )
         else:
-            full_weights = np.zeros((n_instances, self.n_active_components),
-                                    dtype=self._components.dtype)
+            full_weights = np.zeros(
+                (n_instances, self.n_active_components), dtype=self._components.dtype
+            )
             full_weights[..., :n_weights] = weights
             weights = full_weights
 
@@ -537,7 +567,8 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         weights = np.asarray(weights)
         return self.instance_vectors(
-            weights[None, :], normalized_weights=normalized_weights).flatten()
+            weights[None, :], normalized_weights=normalized_weights
+        ).flatten()
 
     def trim_components(self, n_components=None):
         r"""
@@ -576,9 +607,12 @@ class PCAVectorModel(MeanLinearVectorModel):
             # that the data is actually removed, otherwise a view is returned
             self._components = self._components[:nac].copy()
             # store the eigenvalues associated to the discarded components
-            self._trimmed_eigenvalues = np.hstack((
-                self._trimmed_eigenvalues,
-                self._eigenvalues[self.n_active_components:]))
+            self._trimmed_eigenvalues = np.hstack(
+                (
+                    self._trimmed_eigenvalues,
+                    self._eigenvalues[self.n_active_components :],
+                )
+            )
             # make sure that the eigenvalues are trimmed too
             self._eigenvalues = self._eigenvalues[:nac].copy()
 
@@ -620,11 +654,12 @@ class PCAVectorModel(MeanLinearVectorModel):
             A second linear model to orthonormalize this against.
         """
         # take the QR decomposition of the model components
-        Q = (np.linalg.qr(np.hstack((linear_model._components.T,
-                                     self._components.T)))[0]).T
+        Q = (
+            np.linalg.qr(np.hstack((linear_model._components.T, self._components.T)))[0]
+        ).T
         # the model passed to us went first, so all it's components will
         # survive. Pull them off, and update the other model.
-        linear_model.components = Q[:linear_model.n_components, :]
+        linear_model.components = Q[: linear_model.n_components, :]
         # it's possible that all of our components didn't survive due to
         # degeneracy. We need to trim our components down before replacing
         # them to ensure the number of components is consistent (otherwise
@@ -645,10 +680,9 @@ class PCAVectorModel(MeanLinearVectorModel):
                 self.n_active_components = n_active_components
 
         # now we can set our own components with the updated orthogonal ones
-        self.components = Q[linear_model.n_components:, :]
+        self.components = Q[linear_model.n_components :, :]
 
-    def increment(self, data, n_samples=None, forgetting_factor=1.0,
-                  verbose=False):
+    def increment(self, data, n_samples=None, forgetting_factor=1.0, verbose=False):
         r"""
         Update the eigenvectors, eigenvalues and mean vector of this model
         by performing incremental PCA on the given samples.
@@ -677,12 +711,17 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         # compute incremental pca
         e_vectors, e_values, m_vector = ipca(
-            data, self._components, self._eigenvalues, self.n_samples,
-            m_a=self._mean, f=forgetting_factor)
+            data,
+            self._components,
+            self._eigenvalues,
+            self.n_samples,
+            m_a=self._mean,
+            f=forgetting_factor,
+        )
 
         # if the number of active components is the same as the total number
         # of components so it will be after this method is executed
-        reset = (self.n_active_components == self.n_components)
+        reset = self.n_active_components == self.n_components
 
         # update mean, components, eigenvalues and number of samples
         self._mean = m_vector
@@ -695,16 +734,30 @@ class PCAVectorModel(MeanLinearVectorModel):
         if reset:
             self.n_active_components = self.n_components
 
-    def plot_eigenvalues(self, figure_id=None, new_figure=False,
-                         render_lines=True, line_colour='b', line_style='-',
-                         line_width=2, render_markers=True, marker_style='o',
-                         marker_size=6, marker_face_colour='b',
-                         marker_edge_colour='k', marker_edge_width=1.,
-                         render_axes=True, axes_font_name='sans-serif',
-                         axes_font_size=10, axes_font_style='normal',
-                         axes_font_weight='normal', figure_size=(10, 6),
-                         render_grid=True, grid_line_style='--',
-                         grid_line_width=0.5):
+    def plot_eigenvalues(
+        self,
+        figure_id=None,
+        new_figure=False,
+        render_lines=True,
+        line_colour="b",
+        line_style="-",
+        line_width=2,
+        render_markers=True,
+        marker_style="o",
+        marker_size=6,
+        marker_face_colour="b",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        figure_size=(10, 6),
+        render_grid=True,
+        grid_line_style="--",
+        grid_line_width=0.5,
+    ):
         r"""
         Plot of the eigenvalues.
 
@@ -801,26 +854,43 @@ class PCAVectorModel(MeanLinearVectorModel):
             The viewer object.
         """
         from menpo.visualize import plot_curve
-        return plot_curve(
-            range(self.n_active_components), [self.eigenvalues],
-            figure_id=figure_id, new_figure=new_figure, legend_entries=None,
-            title='Eigenvalues', x_label='Component Number',
-            y_label='Eigenvalue',
-            axes_x_limits=[0, self.n_active_components - 1],
-            axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-            render_lines=render_lines, line_colour=line_colour,
-            line_style=line_style, line_width=line_width,
-            render_markers=render_markers, marker_style=marker_style,
-            marker_size=marker_size, marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, render_legend=False,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, figure_size=figure_size,
-            render_grid=render_grid, grid_line_style=grid_line_style,
-            grid_line_width=grid_line_width)
 
-    def plot_eigenvalues_widget(self, figure_size=(10, 6), style='coloured'):
+        return plot_curve(
+            range(self.n_active_components),
+            [self.eigenvalues],
+            figure_id=figure_id,
+            new_figure=new_figure,
+            legend_entries=None,
+            title="Eigenvalues",
+            x_label="Component Number",
+            y_label="Eigenvalue",
+            axes_x_limits=[0, self.n_active_components - 1],
+            axes_y_limits=None,
+            axes_x_ticks=None,
+            axes_y_ticks=None,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_legend=False,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            figure_size=figure_size,
+            render_grid=render_grid,
+            grid_line_style=grid_line_style,
+            grid_line_width=grid_line_width,
+        )
+
+    def plot_eigenvalues_widget(self, figure_size=(10, 6), style="coloured"):
         r"""
         Plot of the eigenvalues using an interactive widget.
 
@@ -836,22 +906,40 @@ class PCAVectorModel(MeanLinearVectorModel):
             from menpowidgets import plot_graph
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError(e)
-        plot_graph(x_axis=range(self.n_active_components),
-                   y_axis=[self.eigenvalues], legend_entries=['Eigenvalues'],
-                   figure_size=figure_size, style=style)
 
-    def plot_eigenvalues_ratio(self, figure_id=None, new_figure=False,
-                               render_lines=True, line_colour='b',
-                               line_style='-', line_width=2,
-                               render_markers=True, marker_style='o',
-                               marker_size=6, marker_face_colour='b',
-                               marker_edge_colour='k', marker_edge_width=1.,
-                               render_axes=True, axes_font_name='sans-serif',
-                               axes_font_size=10, axes_font_style='normal',
-                               axes_font_weight='normal', figure_size=(10, 6),
-                               render_grid=True, grid_line_style='--',
-                               grid_line_width=0.5):
+            raise MenpowidgetsMissingError(e)
+        plot_graph(
+            x_axis=range(self.n_active_components),
+            y_axis=[self.eigenvalues],
+            legend_entries=["Eigenvalues"],
+            figure_size=figure_size,
+            style=style,
+        )
+
+    def plot_eigenvalues_ratio(
+        self,
+        figure_id=None,
+        new_figure=False,
+        render_lines=True,
+        line_colour="b",
+        line_style="-",
+        line_width=2,
+        render_markers=True,
+        marker_style="o",
+        marker_size=6,
+        marker_face_colour="b",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        figure_size=(10, 6),
+        render_grid=True,
+        grid_line_style="--",
+        grid_line_width=0.5,
+    ):
         r"""
         Plot of the variance ratio captured by the eigenvalues.
 
@@ -948,27 +1036,43 @@ class PCAVectorModel(MeanLinearVectorModel):
             The viewer object.
         """
         from menpo.visualize import plot_curve
-        return plot_curve(
-            range(self.n_active_components), [self.eigenvalues_ratio()],
-            figure_id=figure_id, new_figure=new_figure, legend_entries=None,
-            title='Variance Ratio of Eigenvalues', x_label='Component Number',
-            y_label='Variance Ratio',
-            axes_x_limits=[0, self.n_active_components - 1],
-            axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-            render_lines=render_lines, line_colour=line_colour,
-            line_style=line_style, line_width=line_width,
-            render_markers=render_markers, marker_style=marker_style,
-            marker_size=marker_size, marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, render_legend=False,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, figure_size=figure_size,
-            render_grid=render_grid, grid_line_style=grid_line_style,
-            grid_line_width=grid_line_width)
 
-    def plot_eigenvalues_ratio_widget(self, figure_size=(10, 6),
-                                      style='coloured'):
+        return plot_curve(
+            range(self.n_active_components),
+            [self.eigenvalues_ratio()],
+            figure_id=figure_id,
+            new_figure=new_figure,
+            legend_entries=None,
+            title="Variance Ratio of Eigenvalues",
+            x_label="Component Number",
+            y_label="Variance Ratio",
+            axes_x_limits=[0, self.n_active_components - 1],
+            axes_y_limits=None,
+            axes_x_ticks=None,
+            axes_y_ticks=None,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_legend=False,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            figure_size=figure_size,
+            render_grid=render_grid,
+            grid_line_style=grid_line_style,
+            grid_line_width=grid_line_width,
+        )
+
+    def plot_eigenvalues_ratio_widget(self, figure_size=(10, 6), style="coloured"):
         r"""
         Plot of the variance ratio captured by the eigenvalues using an
         interactive widget.
@@ -985,28 +1089,40 @@ class PCAVectorModel(MeanLinearVectorModel):
             from menpowidgets import plot_graph
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
-            raise MenpowidgetsMissingError(e)
-        plot_graph(x_axis=range(self.n_active_components),
-                   y_axis=[self.eigenvalues_ratio()],
-                   legend_entries=['Eigenvalues ratio'],
-                   figure_size=figure_size, style=style)
 
-    def plot_eigenvalues_cumulative_ratio(self, figure_id=None,
-                                          new_figure=False, render_lines=True,
-                                          line_colour='b', line_style='-',
-                                          line_width=2, render_markers=True,
-                                          marker_style='o', marker_size=6,
-                                          marker_face_colour='b',
-                                          marker_edge_colour='k',
-                                          marker_edge_width=1.,
-                                          render_axes=True,
-                                          axes_font_name='sans-serif',
-                                          axes_font_size=10,
-                                          axes_font_style='normal',
-                                          axes_font_weight='normal',
-                                          figure_size=(10, 6), render_grid=True,
-                                          grid_line_style='--',
-                                          grid_line_width=0.5):
+            raise MenpowidgetsMissingError(e)
+        plot_graph(
+            x_axis=range(self.n_active_components),
+            y_axis=[self.eigenvalues_ratio()],
+            legend_entries=["Eigenvalues ratio"],
+            figure_size=figure_size,
+            style=style,
+        )
+
+    def plot_eigenvalues_cumulative_ratio(
+        self,
+        figure_id=None,
+        new_figure=False,
+        render_lines=True,
+        line_colour="b",
+        line_style="-",
+        line_width=2,
+        render_markers=True,
+        marker_style="o",
+        marker_size=6,
+        marker_face_colour="b",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        figure_size=(10, 6),
+        render_grid=True,
+        grid_line_style="--",
+        grid_line_width=0.5,
+    ):
         r"""
         Plot of the cumulative variance ratio captured by the eigenvalues.
 
@@ -1103,28 +1219,45 @@ class PCAVectorModel(MeanLinearVectorModel):
             The viewer object.
         """
         from menpo.visualize import plot_curve
+
         return plot_curve(
             range(self.n_active_components),
-            [self.eigenvalues_cumulative_ratio()], figure_id=figure_id,
-            new_figure=new_figure, legend_entries=None,
-            title='Cumulative Variance Ratio of Eigenvalues',
-            x_label='Component Number', y_label='Cumulative Variance Ratio',
+            [self.eigenvalues_cumulative_ratio()],
+            figure_id=figure_id,
+            new_figure=new_figure,
+            legend_entries=None,
+            title="Cumulative Variance Ratio of Eigenvalues",
+            x_label="Component Number",
+            y_label="Cumulative Variance Ratio",
             axes_x_limits=[0, self.n_active_components - 1],
-            axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-            render_lines=render_lines, line_colour=line_colour,
-            line_style=line_style, line_width=line_width,
-            render_markers=render_markers, marker_style=marker_style,
-            marker_size=marker_size, marker_face_colour=marker_face_colour,
+            axes_y_limits=None,
+            axes_x_ticks=None,
+            axes_y_ticks=None,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, render_legend=False,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, figure_size=figure_size,
-            render_grid=render_grid, grid_line_style=grid_line_style,
-            grid_line_width=grid_line_width)
+            marker_edge_width=marker_edge_width,
+            render_legend=False,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            figure_size=figure_size,
+            render_grid=render_grid,
+            grid_line_style=grid_line_style,
+            grid_line_width=grid_line_width,
+        )
 
-    def plot_eigenvalues_cumulative_ratio_widget(self, figure_size=(10, 6),
-                                                 style='coloured'):
+    def plot_eigenvalues_cumulative_ratio_widget(
+        self, figure_size=(10, 6), style="coloured"
+    ):
         r"""
         Plot of the cumulative variance ratio captured by the eigenvalues using
         an interactive widget.
@@ -1141,25 +1274,37 @@ class PCAVectorModel(MeanLinearVectorModel):
             from menpowidgets import plot_graph
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
-        plot_graph(x_axis=range(self.n_active_components),
-                   y_axis=[self.eigenvalues_cumulative_ratio()],
-                   legend_entries=['Eigenvalues cumulative ratio'],
-                   figure_size=figure_size, style=style)
+        plot_graph(
+            x_axis=range(self.n_active_components),
+            y_axis=[self.eigenvalues_cumulative_ratio()],
+            legend_entries=["Eigenvalues cumulative ratio"],
+            figure_size=figure_size,
+            style=style,
+        )
 
     def __str__(self):
-        str_out = 'PCA Vector Model \n'                      \
-                  ' - centred:              {}\n'            \
-                  ' - # features:           {}\n'            \
-                  ' - # active components:  {}\n'            \
-                  ' - kept variance:        {:.2}  {:.1%}\n' \
-                  ' - noise variance:       {:.2}  {:.1%}\n' \
-                  ' - total # components:   {}\n'            \
-                  ' - components shape:     {}\n'.format(
-            self.centred,  self.n_features, self.n_active_components,
-            self.variance(), self.variance_ratio(), self.noise_variance(),
-            self.noise_variance_ratio(), self.n_components,
-            self.components.shape)
+        str_out = (
+            "PCA Vector Model \n"
+            " - centred:              {}\n"
+            " - # features:           {}\n"
+            " - # active components:  {}\n"
+            " - kept variance:        {:.2}  {:.1%}\n"
+            " - noise variance:       {:.2}  {:.1%}\n"
+            " - total # components:   {}\n"
+            " - components shape:     {}\n".format(
+                self.centred,
+                self.n_features,
+                self.n_active_components,
+                self.variance(),
+                self.variance_ratio(),
+                self.noise_variance(),
+                self.noise_variance_ratio(),
+                self.n_components,
+                self.components.shape,
+            )
+        )
         return str_out
 
 
@@ -1194,21 +1339,35 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         Whether to print building information or not.
      """
 
-    def __init__(self, samples, centre=True, n_samples=None,
-                 max_n_components=None, inplace=True, verbose=False):
+    def __init__(
+        self,
+        samples,
+        centre=True,
+        n_samples=None,
+        max_n_components=None,
+        inplace=True,
+        verbose=False,
+    ):
         # build a data matrix from all the samples
-        data, template = as_matrix(samples, length=n_samples,
-                                   return_template=True, verbose=verbose)
+        data, template = as_matrix(
+            samples, length=n_samples, return_template=True, verbose=verbose
+        )
         n_samples = data.shape[0]
 
-        PCAVectorModel.__init__(self, data, centre=centre,
-                                max_n_components=max_n_components,
-                                n_samples=n_samples, inplace=inplace)
+        PCAVectorModel.__init__(
+            self,
+            data,
+            centre=centre,
+            max_n_components=max_n_components,
+            n_samples=n_samples,
+            inplace=inplace,
+        )
         VectorizableBackedModel.__init__(self, template)
 
     @classmethod
-    def init_from_covariance_matrix(cls, C, mean, n_samples, centred=True,
-                                    is_inverse=False, max_n_components=None):
+    def init_from_covariance_matrix(
+        cls, C, mean, n_samples, centred=True, is_inverse=False, max_n_components=None
+    ):
         r"""
         Build the Principal Component Analysis (PCA) by eigenvalue
         decomposition of the provided covariance/scatter matrix. For details
@@ -1243,17 +1402,20 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         e_vectors, e_values = pcacov(C, is_inverse=is_inverse)
 
         # The call to __init__ of MeanLinearModel is done in here
-        self_model._constructor_helper(eigenvalues=e_values,
-                                       eigenvectors=e_vectors,
-                                       mean=mean.as_vector(),
-                                       centred=centred,
-                                       max_n_components=max_n_components)
+        self_model._constructor_helper(
+            eigenvalues=e_values,
+            eigenvectors=e_vectors,
+            mean=mean.as_vector(),
+            centred=centred,
+            max_n_components=max_n_components,
+        )
         VectorizableBackedModel.__init__(self_model, mean)
         return self_model
 
     @classmethod
-    def init_from_components(cls, components, eigenvalues, mean, n_samples,
-                             centred, max_n_components=None):
+    def init_from_components(
+        cls, components, eigenvalues, mean, n_samples, centred, max_n_components=None
+    ):
         r"""
         Build the Principal Component Analysis (PCA) using the provided
         components (eigenvectors) and eigenvalues.
@@ -1282,9 +1444,12 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
 
         # The call to __init__ of MeanLinearModel is done in here
         self_model._constructor_helper(
-            eigenvalues=eigenvalues, eigenvectors=components,
-            mean=mean.as_vector(), centred=centred,
-            max_n_components=max_n_components)
+            eigenvalues=eigenvalues,
+            eigenvectors=components,
+            mean=mean.as_vector(),
+            centred=centred,
+            max_n_components=max_n_components,
+        )
         VectorizableBackedModel.__init__(self_model, mean)
         return self_model
 
@@ -1305,29 +1470,29 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         """
         return self._mean
 
-    @doc_inherit(name='project_out')
+    @doc_inherit(name="project_out")
     def project_out_vector(self, instance_vector):
         return PCAVectorModel.project_out(self, instance_vector)
 
-    @doc_inherit(name='reconstruct')
+    @doc_inherit(name="reconstruct")
     def reconstruct_vector(self, instance_vector):
         return PCAVectorModel.reconstruct(self, instance_vector)
 
-    @doc_inherit(name='project')
+    @doc_inherit(name="project")
     def project_vector(self, instance_vector):
         return PCAVectorModel.project(self, instance_vector)
 
-    @doc_inherit(name='instance')
+    @doc_inherit(name="instance")
     def instance_vector(self, weights, normalized_weights=False):
-        return PCAVectorModel.instance(self, weights,
-                                       normalized_weights=normalized_weights)
+        return PCAVectorModel.instance(
+            self, weights, normalized_weights=normalized_weights
+        )
 
-    @doc_inherit(name='component')
+    @doc_inherit(name="component")
     def component_vector(self, index, with_mean=True, scale=1.0):
-        return PCAVectorModel.component(self, index, with_mean=with_mean,
-                                        scale=scale)
+        return PCAVectorModel.component(self, index, with_mean=with_mean, scale=scale)
 
-    @doc_inherit(name='project_whitened')
+    @doc_inherit(name="project_whitened")
     def project_whitened_vector(self, vector_instance):
         return PCAVectorModel.project_whitened(self, vector_instance)
 
@@ -1353,8 +1518,9 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         component : `type(self.template_instance)`
             The requested component instance.
         """
-        return self.template_instance.from_vector(self.component_vector(
-            index, with_mean=with_mean, scale=scale))
+        return self.template_instance.from_vector(
+            self.component_vector(index, with_mean=with_mean, scale=scale)
+        )
 
     def instance(self, weights, normalized_weights=False):
         """
@@ -1401,8 +1567,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         """
         return self.project_whitened_vector(instance.as_vector())
 
-    def increment(self, samples, n_samples=None, forgetting_factor=1.0,
-                  verbose=False):
+    def increment(self, samples, n_samples=None, forgetting_factor=1.0, verbose=False):
         r"""
         Update the eigenvectors, eigenvalues and mean vector of this model
         by performing incremental PCA on the given samples.
@@ -1430,9 +1595,13 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         # build a data matrix from the new samples
         data = as_matrix(samples, length=n_samples, verbose=verbose)
         n_new_samples = data.shape[0]
-        PCAVectorModel.increment(self, data, n_samples=n_new_samples,
-                                 forgetting_factor=forgetting_factor,
-                                 verbose=verbose)
+        PCAVectorModel.increment(
+            self,
+            data,
+            n_samples=n_new_samples,
+            forgetting_factor=forgetting_factor,
+            verbose=verbose,
+        )
 
     def view_widget(self, figure_size=(7, 7)):
         r"""
@@ -1446,26 +1615,36 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         """
         try:
             from menpowidgets import view_widget
+
             view_widget(self, figure_size=figure_size)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
 
     def __str__(self):
-        str_out = 'PCA Model \n'                             \
-                  ' - instance class:       {}\n'            \
-                  ' - centred:              {}\n'            \
-                  ' - # features:           {}\n'            \
-                  ' - # active components:  {}\n'            \
-                  ' - kept variance:        {:.2}  {:.1%}\n' \
-                  ' - noise variance:       {:.2}  {:.1%}\n' \
-                  ' - total # components:   {}\n'            \
-                  ' - components shape:     {}\n'.format(
-            name_of_callable(self.template_instance), self.centred,
-            self.n_features, self.n_active_components, self.variance(),
-            self.variance_ratio(), self.noise_variance(),
-            self.noise_variance_ratio(), self.n_components,
-            self.components.shape)
+        str_out = (
+            "PCA Model \n"
+            " - instance class:       {}\n"
+            " - centred:              {}\n"
+            " - # features:           {}\n"
+            " - # active components:  {}\n"
+            " - kept variance:        {:.2}  {:.1%}\n"
+            " - noise variance:       {:.2}  {:.1%}\n"
+            " - total # components:   {}\n"
+            " - components shape:     {}\n".format(
+                name_of_callable(self.template_instance),
+                self.centred,
+                self.n_features,
+                self.n_active_components,
+                self.variance(),
+                self.variance_ratio(),
+                self.noise_variance(),
+                self.noise_variance_ratio(),
+                self.n_components,
+                self.components.shape,
+            )
+        )
         return str_out
 
     def render_components(self,  export_path=None, filename='',

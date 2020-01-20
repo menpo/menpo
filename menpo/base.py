@@ -46,8 +46,7 @@ class Copyable(object):
     def __str__(self):
         # We have to be sure that we implement __str__ otherwise the __repr__
         # implementation below will lead to an infinite recursion.
-        return 'Copyable Menpo Object with keys:\n{}'.format(
-            pformat(self.__dict__))
+        return "Copyable Menpo Object with keys:\n{}".format(pformat(self.__dict__))
 
     def __repr__(self):
         # Most classes in Menpo derive from Copyable, so it's a handy place
@@ -117,9 +116,12 @@ class Vectorizable(Copyable):
         vector : ``(n_parameters,)`` `ndarray`
             Flattened representation of this object
         """
-        warnings.warn('the public API for inplace operations is deprecated '
-                      'and will be removed in a future version of Menpo. '
-                      'Use .from_vector() instead.', MenpoDeprecationWarning)
+        warnings.warn(
+            "the public API for inplace operations is deprecated "
+            "and will be removed in a future version of Menpo. "
+            "Use .from_vector() instead.",
+            MenpoDeprecationWarning,
+        )
         return self._from_vector_inplace(vector)
 
     def _from_vector_inplace(self, vector):
@@ -169,6 +171,7 @@ class Vectorizable(Copyable):
             If the vectorized object contains ``nan`` values.
         """
         import numpy as np
+
         return np.any(np.isnan(self.as_vector()))
 
 
@@ -269,12 +272,14 @@ class Targetable(Copyable):
             raise ValueError(
                 "The current target is {}D, the new target is {}D - new "
                 "target has to have the same dimensionality as the "
-                "old".format(self.target.n_dims, new_target.n_dims))
+                "old".format(self.target.n_dims, new_target.n_dims)
+            )
         elif new_target.n_points != self.target.n_points:
             raise ValueError(
                 "The current target has {} points, the new target has {} "
                 "- new target has to have the same number of points as the"
-                " old".format(self.target.n_points, new_target.n_points))
+                " old".format(self.target.n_points, new_target.n_points)
+            )
 
     def _target_setter(self, new_target):
         r"""Sets the target to the new value.
@@ -324,6 +329,7 @@ def menpo_src_dir_path():
         The full path to the top of the Menpo package
     """
     from pathlib import Path  # to avoid cluttering the menpo.base namespace
+
     return Path(os.path.abspath(__file__)).parent
 
 
@@ -346,7 +352,8 @@ class MenpoMissingDependencyError(ImportError):
         if isinstance(package_name, ImportError):
             package_name = self._handle_importerror(package_name)
 
-        self.message = textwrap.dedent("""
+        self.message = textwrap.dedent(
+            """
             You need to install the '{pname}' package in order to use this
             functionality. We recommend that you use conda to achieve this -
             try the command
@@ -362,22 +369,25 @@ class MenpoMissingDependencyError(ImportError):
             Note that some packages (e.g. scikit-image) may have a different
             name on pypi/conda than their import (skimage) and thus the above 
             commands may fail.
-        """.format(pname=package_name))
+        """.format(
+                pname=package_name
+            )
+        )
 
         self.missing_name = package_name
 
     def _handle_importerror(self, error):
-        if hasattr(error, 'name'):
+        if hasattr(error, "name"):
             return error.name
         else:
             try:
                 # Python 2 doesn't have ModuleNotFoundError
                 # (so doesn't have the name attribute)
-                base_name = error.message.split('No module named ')[1]
+                base_name = error.message.split("No module named ")[1]
                 # Furthermore - the default ImportError includes the full path
                 # so we split the name and return just the first part
                 # (presumably the name of the package)
-                return base_name.split('.')[0]
+                return base_name.split(".")[0]
             except:
                 # Worst case, just stringify the error
                 return str(error)
@@ -472,7 +482,7 @@ class doc_inherit(object):
 
         # Return the wrapped method, passing through the arguments and the
         # object instance.
-        @wraps(self.mthd, assigned=('__name__', '__module__'))
+        @wraps(self.mthd, assigned=("__name__", "__module__"))
         def f(*args, **kwargs):
             return self.mthd(obj, *args, **kwargs)
 
@@ -490,7 +500,7 @@ class doc_inherit(object):
 
         # Return the wrapped method, passing through the arguments and the
         # object instance.
-        @wraps(self.mthd, assigned=('__name__', '__module__'))
+        @wraps(self.mthd, assigned=("__name__", "__module__"))
         def f(*args, **kwargs):
             return self.mthd(*args, **kwargs)
 
@@ -531,7 +541,7 @@ class LazyList(collections_abc.Sequence, Copyable):
         if isinstance(slice_, collections_abc.Iterable):
             # An iterable object is passed - return a new LazyList
             return LazyList([self._callables[s] for s in slice_])
-        elif isinstance(slice_, int) or hasattr(slice_, '__index__'):
+        elif isinstance(slice_, int) or hasattr(slice_, "__index__"):
             # PEP 357 and single integer index access - returns element
             return self._callables[slice_]()
         else:
@@ -567,6 +577,7 @@ class LazyList(collections_abc.Sequence, Copyable):
             # The identity function
             def f(i):
                 return i
+
         return cls([partial(f, x) for x in iterable])
 
     @classmethod
@@ -625,16 +636,20 @@ class LazyList(collections_abc.Sequence, Copyable):
             return delay_f(delay_x())
 
         if isinstance(f, collections_abc.Iterable) and callable(f):
-            raise ValueError('It is ambiguous whether the provided argument '
-                             'is an iterable object or a callable.')
+            raise ValueError(
+                "It is ambiguous whether the provided argument "
+                "is an iterable object or a callable."
+            )
 
         new = self.copy()
         if isinstance(f, collections_abc.Iterable):
             if len(f) != len(new):
-                raise ValueError('A callable per element of the LazyList must '
-                                 'be passed.')
-            new._callables = [partial(delayed, one_f, x)
-                              for one_f, x in zip(f, new._callables)]
+                raise ValueError(
+                    "A callable per element of the LazyList must " "be passed."
+                )
+            new._callables = [
+                partial(delayed, one_f, x) for one_f, x in zip(f, new._callables)
+            ]
         else:
             new._callables = [partial(delayed, f, x) for x in new._callables]
         return new
@@ -714,8 +729,9 @@ class LazyList(collections_abc.Sequence, Copyable):
             return self + LazyList.init_from_iterable(other)
         else:
             raise ValueError(
-                'Can only add another LazyList or an Iterable to a LazyList '
-                '- {} is neither'.format(type(other)))
+                "Can only add another LazyList or an Iterable to a LazyList "
+                "- {} is neither".format(type(other))
+            )
 
     def view_widget(self):
         r"""
@@ -742,12 +758,13 @@ class LazyList(collections_abc.Sequence, Copyable):
             from menpowidgets import view_widget
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
         else:
             return view_widget(self)
 
     def __str__(self):
-        return 'LazyList containing {} items'.format(len(self))
+        return "LazyList containing {} items".format(len(self))
 
 
 def partial_doc(func, *args, **kwargs):
@@ -796,6 +813,6 @@ def copy_landmarks_and_path(source, target):
     """
     if source.has_landmarks:
         target.landmarks = source.landmarks
-    if hasattr(source, 'path'):
+    if hasattr(source, "path"):
         target.path = source.path
     return target

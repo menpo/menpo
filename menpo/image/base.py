@@ -10,13 +10,18 @@ import numpy as np
 import PIL.Image as PILImage
 
 from menpo.compatibility import basestring
-from menpo.base import (Vectorizable, MenpoDeprecationWarning,
-                        copy_landmarks_and_path)
+from menpo.base import Vectorizable, MenpoDeprecationWarning, copy_landmarks_and_path
 from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
-from menpo.transform import (Translation, NonUniformScale, Rotation,
-                             AlignmentUniformScale, scale_about_centre,
-                             transform_about_centre, Homogeneous)
+from menpo.transform import (
+    Translation,
+    NonUniformScale,
+    Rotation,
+    AlignmentUniformScale,
+    scale_about_centre,
+    transform_about_centre,
+    Homogeneous,
+)
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
 
 from .interpolation import scipy_interpolation
@@ -24,9 +29,13 @@ from .interpolation import scipy_interpolation
 try:
     from .interpolation import cv2_perspective_interpolation
 except ImportError:
-    warn('Falling back to scipy interpolation for affine warps')
+    warn("Falling back to scipy interpolation for affine warps")
     cv2_perspective_interpolation = None
-from .patches import extract_patches_with_slice, set_patches, extract_patches_by_sampling
+from .patches import (
+    extract_patches_with_slice,
+    set_patches,
+    extract_patches_by_sampling,
+)
 
 # Cache the greyscale luminosity coefficients as they are invariant.
 _greyscale_luminosity_coef = None
@@ -51,8 +60,7 @@ class ImageBoundaryError(ValueError):
         constrained to the image boundaries.
     """
 
-    def __init__(self, requested_min, requested_max, snapped_min,
-                 snapped_max):
+    def __init__(self, requested_min, requested_max, snapped_min, snapped_max):
         super(ImageBoundaryError, self).__init__()
         self.requested_min = requested_min
         self.requested_max = requested_max
@@ -110,8 +118,10 @@ def normalize_pixels_range(pixels, error_on_unknown_type=True):
         max_range = 65535.0
     else:
         if error_on_unknown_type:
-            raise ValueError('Unexpected dtype ({}) - normalisation range '
-                             'is unknown'.format(dtype))
+            raise ValueError(
+                "Unexpected dtype ({}) - normalisation range "
+                "is unknown".format(dtype)
+            )
         else:
             # Do nothing
             return pixels
@@ -161,20 +171,25 @@ def denormalize_pixels_range(pixels, out_dtype):
             p_min = pixels.min()
             p_max = pixels.max()
             if p_min < 0.0 or p_max > 1.0:
-                raise ValueError('Unexpected input range [{}, {}] - pixels '
-                                 'must be in the range [0, 1]'.format(p_min,
-                                                                      p_max))
+                raise ValueError(
+                    "Unexpected input range [{}, {}] - pixels "
+                    "must be in the range [0, 1]".format(p_min, p_max)
+                )
     elif in_dtype != np.bool:
-        raise ValueError('Unexpected input dtype ({}) - only float32, float64 '
-                         'and bool supported'.format(in_dtype))
+        raise ValueError(
+            "Unexpected input dtype ({}) - only float32, float64 "
+            "and bool supported".format(in_dtype)
+        )
 
     if out_dtype == np.uint8:
         max_range = 255.0
     elif out_dtype == np.uint16:
         max_range = 65535.0
     else:
-        raise ValueError('Unexpected output dtype ({}) - normalisation range '
-                         'is unknown'.format(out_dtype))
+        raise ValueError(
+            "Unexpected output dtype ({}) - normalisation range "
+            "is unknown".format(out_dtype)
+        )
 
     return (pixels * max_range).astype(out_dtype)
 
@@ -197,8 +212,9 @@ def channels_to_back(pixels):
     rolled_pixels : `ndarray`
         The numpy array of pixels with the channels on the last axis.
     """
-    return np.require(np.rollaxis(pixels, 0, pixels.ndim), dtype=pixels.dtype,
-                      requirements=['C'])
+    return np.require(
+        np.rollaxis(pixels, 0, pixels.ndim), dtype=pixels.dtype, requirements=["C"]
+    )
 
 
 def channels_to_front(pixels):
@@ -218,8 +234,7 @@ def channels_to_front(pixels):
     """
     if not isinstance(pixels, np.ndarray):
         pixels = np.array(pixels)
-    return np.require(np.rollaxis(pixels, -1), dtype=pixels.dtype,
-                      requirements=['C'])
+    return np.require(np.rollaxis(pixels, -1), dtype=pixels.dtype, requirements=["C"])
 
 
 class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
@@ -257,11 +272,13 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         super(Image, self).__init__()
         if not copy:
             if not image_data.flags.c_contiguous:
-                image_data = np.array(image_data, copy=True, order='C')
-                warn('The copy flag was NOT honoured. A copy HAS been made. '
-                     'Please ensure the data you pass is C-contiguous.')
+                image_data = np.array(image_data, copy=True, order="C")
+                warn(
+                    "The copy flag was NOT honoured. A copy HAS been made. "
+                    "Please ensure the data you pass is C-contiguous."
+                )
         else:
-            image_data = np.array(image_data, copy=True, order='C')
+            image_data = np.array(image_data, copy=True, order="C")
 
         # Degenerate case whereby we can just put the extra axis
         # on ourselves
@@ -274,7 +291,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 "Pixel array has to be 2D (implicitly 1 channel, "
                 "2D shape) or 3D+ (n_channels, 2D+ shape) "
                 " - a {}D array "
-                "was provided".format(image_data.ndim))
+                "was provided".format(image_data.ndim)
+            )
         self.pixels = image_data
 
     @classmethod
@@ -313,10 +331,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         r"""
         Deprecated - please use the equivalent ``init_from_channels_at_back`` method.
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .init_from_channels_at_back instead.',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .init_from_channels_at_back instead.",
+            MenpoDeprecationWarning,
+        )
 
         return cls.init_from_channels_at_back(pixels)
 
@@ -356,13 +376,21 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 "(2D shape, implicitly 1 channel) "
                 "or 3D+ (2D+ shape, n_channels) "
                 " - a {}D array "
-                "was provided".format(pixels.ndim))
+                "was provided".format(pixels.ndim)
+            )
         return cls(channels_to_front(pixels))
 
     @classmethod
-    def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,
-                             n_channels=1, fill=0, dtype=np.float,
-                             return_transform=False):
+    def init_from_pointcloud(
+        cls,
+        pointcloud,
+        group=None,
+        boundary=0,
+        n_channels=1,
+        fill=0,
+        dtype=np.float,
+        return_transform=False,
+    ):
         r"""
         Create an Image that is big enough to contain the given pointcloud.
         The pointcloud will be translated to the origin and then translated
@@ -408,8 +436,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         tr = Translation(-minimum)
         origin_pc = tr.apply(pointcloud)
         image_shape = origin_pc.range(boundary=boundary)
-        new_image = cls.init_blank(image_shape, n_channels=n_channels,
-                                   fill=fill, dtype=dtype)
+        new_image = cls.init_blank(
+            image_shape, n_channels=n_channels, fill=fill, dtype=dtype
+        )
         if group is not None:
             new_image.landmarks[group] = origin_pc
         if return_transform:
@@ -439,9 +468,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             a mask.
         """
         from menpo.image import MaskedImage
-        return copy_landmarks_and_path(self,
-                                       MaskedImage(self.pixels,
-                                                   mask=mask, copy=copy))
+
+        return copy_landmarks_and_path(
+            self, MaskedImage(self.pixels, mask=mask, copy=copy)
+        )
 
     @property
     def n_dims(self):
@@ -553,9 +583,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
     def _str_shape(self):
         if self.n_dims > 2:
-            return ' x '.join(str(dim) for dim in self.shape)
+            return " x ".join(str(dim) for dim in self.shape)
         elif self.n_dims == 2:
-            return '{}W x {}H'.format(self.width, self.height)
+            return "{}W x {}H".format(self.width, self.height)
 
     def indices(self):
         r"""
@@ -661,13 +691,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image_data = vector.reshape(self.pixels.shape)
         if not copy:
             if not image_data.flags.c_contiguous:
-                warn('The copy flag was NOT honoured. A copy HAS been made. '
-                     'Please ensure the data you pass is C-contiguous.')
-                image_data = np.array(image_data, copy=True, order='C',
-                                      dtype=image_data.dtype)
+                warn(
+                    "The copy flag was NOT honoured. A copy HAS been made. "
+                    "Please ensure the data you pass is C-contiguous."
+                )
+                image_data = np.array(
+                    image_data, copy=True, order="C", dtype=image_data.dtype
+                )
         else:
-            image_data = np.array(image_data, copy=True, order='C',
-                                  dtype=image_data.dtype)
+            image_data = np.array(
+                image_data, copy=True, order="C", dtype=image_data.dtype
+            )
         self.pixels = image_data
 
     def extract_channels(self, channels):
@@ -690,7 +724,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         copy.pixels = self.pixels[channels]
         return copy
 
-    def as_histogram(self, keep_channels=True, bins='unique'):
+    def as_histogram(self, keep_channels=True, bins="unique"):
         r"""
         Histogram binning of the values of this image.
 
@@ -734,14 +768,17 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         # parse options
         if isinstance(bins, basestring):
-            if bins == 'unique':
+            if bins == "unique":
                 bins = 0
             else:
-                raise ValueError("Bins can be either 'unique', positive int or"
-                                 "a sequence of scalars.")
+                raise ValueError(
+                    "Bins can be either 'unique', positive int or"
+                    "a sequence of scalars."
+                )
         elif isinstance(bins, int) and bins < 1:
-            raise ValueError("Bins can be either 'unique', positive int or a "
-                             "sequence of scalars.")
+            raise ValueError(
+                "Bins can be either 'unique', positive int or a " "sequence of scalars."
+            )
         # compute histogram
         vec = self.as_vector(keep_channels=keep_channels)
         if len(vec.shape) == 1 or vec.shape[0] == 1:
@@ -760,13 +797,25 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 bin_edges.append(c_tmp)
         return hist, bin_edges
 
-    def _view_2d(self, figure_id=None, new_figure=False, channels=None,
-                 interpolation='bilinear', cmap_name=None, alpha=1.,
-                 render_axes=False, axes_font_name='sans-serif',
-                 axes_font_size=10, axes_font_style='normal',
-                 axes_font_weight='normal', axes_x_limits=None,
-                 axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-                 figure_size=(7, 7)):
+    def _view_2d(
+        self,
+        figure_id=None,
+        new_figure=False,
+        channels=None,
+        interpolation="bilinear",
+        cmap_name=None,
+        alpha=1.0,
+        render_axes=False,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         r"""
         View the image using the default image viewer. This method will appear 
         on the Image as ``view`` if the Image is 2D.
@@ -837,14 +886,23 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         viewer : `ImageViewer`
             The image viewing object.
         """
-        return ImageViewer(figure_id, new_figure, self.n_dims,
-                           self.pixels, channels=channels).render(
-            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
+        return ImageViewer(
+            figure_id, new_figure, self.n_dims, self.pixels, channels=channels
+        ).render(
+            interpolation=interpolation,
+            cmap_name=cmap_name,
+            alpha=alpha,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+        )
 
     def view_widget(self, figure_size=(7, 7)):
         r"""
@@ -857,41 +915,70 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         try:
             from menpowidgets import view_widget
+
             view_widget(self, figure_size=figure_size)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
 
-    def _view_landmarks_2d(self, channels=None, group=None,
-                           with_labels=None, without_labels=None,
-                           figure_id=None, new_figure=False,
-                           interpolation='bilinear', cmap_name=None, alpha=1.,
-                           render_lines=True, line_colour=None, line_style='-',
-                           line_width=1, render_markers=True, marker_style='o',
-                           marker_size=5, marker_face_colour=None,
-                           marker_edge_colour=None, marker_edge_width=1.,
-                           render_numbering=False,
-                           numbers_horizontal_align='center',
-                           numbers_vertical_align='bottom',
-                           numbers_font_name='sans-serif', numbers_font_size=10,
-                           numbers_font_style='normal',
-                           numbers_font_weight='normal',
-                           numbers_font_colour='k', render_legend=False,
-                           legend_title='', legend_font_name='sans-serif',
-                           legend_font_style='normal', legend_font_size=10,
-                           legend_font_weight='normal',
-                           legend_marker_scale=None,
-                           legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
-                           legend_border_axes_pad=None, legend_n_columns=1,
-                           legend_horizontal_spacing=None,
-                           legend_vertical_spacing=None, legend_border=True,
-                           legend_border_padding=None, legend_shadow=False,
-                           legend_rounded_corners=False, render_axes=False,
-                           axes_font_name='sans-serif', axes_font_size=10,
-                           axes_font_style='normal', axes_font_weight='normal',
-                           axes_x_limits=None, axes_y_limits=None,
-                           axes_x_ticks=None, axes_y_ticks=None,
-                           figure_size=(7, 7)):
+    def _view_landmarks_2d(
+        self,
+        channels=None,
+        group=None,
+        with_labels=None,
+        without_labels=None,
+        figure_id=None,
+        new_figure=False,
+        interpolation="bilinear",
+        cmap_name=None,
+        alpha=1.0,
+        render_lines=True,
+        line_colour=None,
+        line_style="-",
+        line_width=1,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour=None,
+        marker_edge_colour=None,
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_legend=False,
+        legend_title="",
+        legend_font_name="sans-serif",
+        legend_font_style="normal",
+        legend_font_size=10,
+        legend_font_weight="normal",
+        legend_marker_scale=None,
+        legend_location=2,
+        legend_bbox_to_anchor=(1.05, 1.0),
+        legend_border_axes_pad=None,
+        legend_n_columns=1,
+        legend_horizontal_spacing=None,
+        legend_vertical_spacing=None,
+        legend_border=True,
+        legend_border_padding=None,
+        legend_shadow=False,
+        legend_rounded_corners=False,
+        render_axes=False,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         """
         Visualize the landmarks. This method will appear on the Image as
         ``view_landmarks`` if the Image is 2D.
@@ -1101,26 +1188,73 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If the landmark manager doesn't contain the provided group label.
         """
         from menpo.visualize import view_image_landmarks
-        return view_image_landmarks(
-            self, channels, False, group, with_labels, without_labels,
-            figure_id, new_figure, interpolation, cmap_name, alpha,
-            render_lines, line_colour, line_style, line_width,
-            render_markers, marker_style, marker_size, marker_face_colour,
-            marker_edge_colour, marker_edge_width, render_numbering,
-            numbers_horizontal_align, numbers_vertical_align,
-            numbers_font_name, numbers_font_size, numbers_font_style,
-            numbers_font_weight, numbers_font_colour, render_legend,
-            legend_title, legend_font_name, legend_font_style,
-            legend_font_size, legend_font_weight, legend_marker_scale,
-            legend_location, legend_bbox_to_anchor, legend_border_axes_pad,
-            legend_n_columns, legend_horizontal_spacing,
-            legend_vertical_spacing, legend_border, legend_border_padding,
-            legend_shadow, legend_rounded_corners, render_axes, axes_font_name,
-            axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
-            axes_y_limits, axes_x_ticks, axes_y_ticks, figure_size)
 
-    def crop(self, min_indices, max_indices, constrain_to_boundary=False,
-             return_transform=False):
+        return view_image_landmarks(
+            self,
+            channels,
+            False,
+            group,
+            with_labels,
+            without_labels,
+            figure_id,
+            new_figure,
+            interpolation,
+            cmap_name,
+            alpha,
+            render_lines,
+            line_colour,
+            line_style,
+            line_width,
+            render_markers,
+            marker_style,
+            marker_size,
+            marker_face_colour,
+            marker_edge_colour,
+            marker_edge_width,
+            render_numbering,
+            numbers_horizontal_align,
+            numbers_vertical_align,
+            numbers_font_name,
+            numbers_font_size,
+            numbers_font_style,
+            numbers_font_weight,
+            numbers_font_colour,
+            render_legend,
+            legend_title,
+            legend_font_name,
+            legend_font_style,
+            legend_font_size,
+            legend_font_weight,
+            legend_marker_scale,
+            legend_location,
+            legend_bbox_to_anchor,
+            legend_border_axes_pad,
+            legend_n_columns,
+            legend_horizontal_spacing,
+            legend_vertical_spacing,
+            legend_border,
+            legend_border_padding,
+            legend_shadow,
+            legend_rounded_corners,
+            render_axes,
+            axes_font_name,
+            axes_font_size,
+            axes_font_style,
+            axes_font_weight,
+            axes_x_limits,
+            axes_y_limits,
+            axes_x_ticks,
+            axes_y_ticks,
+            figure_size,
+        )
+
+    def crop(
+        self,
+        min_indices,
+        max_indices,
+        constrain_to_boundary=False,
+        return_transform=False,
+    ):
         r"""
         Return a cropped copy of this image using the given minimum and
         maximum indices. Landmarks are correctly adjusted so they maintain
@@ -1163,27 +1297,30 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if not (min_indices.size == max_indices.size == self.n_dims):
             raise ValueError(
                 "Both min and max indices should be 1D numpy arrays of"
-                " length n_dims ({})".format(self.n_dims))
+                " length n_dims ({})".format(self.n_dims)
+            )
         elif not np.all(max_indices > min_indices):
-            raise ValueError("All max indices must be greater that the min "
-                             "indices")
+            raise ValueError("All max indices must be greater that the min " "indices")
         min_bounded = self.constrain_points_to_bounds(min_indices)
         max_bounded = self.constrain_points_to_bounds(max_indices)
         all_max_bounded = np.all(min_bounded == min_indices)
         all_min_bounded = np.all(max_bounded == max_indices)
         if not (constrain_to_boundary or all_max_bounded or all_min_bounded):
             # points have been constrained and the user didn't want this -
-            raise ImageBoundaryError(min_indices, max_indices,
-                                     min_bounded, max_bounded)
+            raise ImageBoundaryError(min_indices, max_indices, min_bounded, max_bounded)
 
         new_shape = (max_bounded - min_bounded).astype(np.int)
-        return self.warp_to_shape(new_shape, Translation(min_bounded), order=0,
-                                  warp_landmarks=True,
-                                  return_transform=return_transform)
+        return self.warp_to_shape(
+            new_shape,
+            Translation(min_bounded),
+            order=0,
+            warp_landmarks=True,
+            return_transform=return_transform,
+        )
 
-    def crop_to_pointcloud(self, pointcloud, boundary=0,
-                           constrain_to_boundary=True,
-                           return_transform=False):
+    def crop_to_pointcloud(
+        self, pointcloud, boundary=0, constrain_to_boundary=True, return_transform=False
+    ):
         r"""
         Return a copy of this image cropped so that it is bounded around a
         pointcloud with an optional ``n_pixel`` boundary.
@@ -1217,13 +1354,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             to crop the image in a way that violates the image bounds.
         """
         min_indices, max_indices = pointcloud.bounds(boundary=boundary)
-        return self.crop(min_indices, max_indices,
-                         constrain_to_boundary=constrain_to_boundary,
-                         return_transform=return_transform)
+        return self.crop(
+            min_indices,
+            max_indices,
+            constrain_to_boundary=constrain_to_boundary,
+            return_transform=return_transform,
+        )
 
-    def crop_to_landmarks(self, group=None, boundary=0,
-                          constrain_to_boundary=True,
-                          return_transform=False):
+    def crop_to_landmarks(
+        self, group=None, boundary=0, constrain_to_boundary=True, return_transform=False
+    ):
         r"""
         Return a copy of this image cropped so that it is bounded around a set
         of landmarks with an optional ``n_pixel`` boundary
@@ -1259,13 +1399,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         pc = self.landmarks[group]
         return self.crop_to_pointcloud(
-            pc, boundary=boundary, constrain_to_boundary=constrain_to_boundary,
-            return_transform=return_transform)
+            pc,
+            boundary=boundary,
+            constrain_to_boundary=constrain_to_boundary,
+            return_transform=return_transform,
+        )
 
-    def crop_to_pointcloud_proportion(self, pointcloud, boundary_proportion,
-                                      minimum=True,
-                                      constrain_to_boundary=True,
-                                      return_transform=False):
+    def crop_to_pointcloud_proportion(
+        self,
+        pointcloud,
+        boundary_proportion,
+        minimum=True,
+        constrain_to_boundary=True,
+        return_transform=False,
+    ):
         r"""
         Return a copy of this image cropped so that it is bounded around a
         pointcloud with a border proportional to the pointcloud spread or range.
@@ -1311,14 +1458,20 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         else:
             boundary = boundary_proportion * np.max(pointcloud.range())
         return self.crop_to_pointcloud(
-            pointcloud, boundary=boundary,
+            pointcloud,
+            boundary=boundary,
             constrain_to_boundary=constrain_to_boundary,
-            return_transform=return_transform)
+            return_transform=return_transform,
+        )
 
-    def crop_to_landmarks_proportion(self, boundary_proportion,
-                                     group=None, minimum=True,
-                                     constrain_to_boundary=True,
-                                     return_transform=False):
+    def crop_to_landmarks_proportion(
+        self,
+        boundary_proportion,
+        group=None,
+        minimum=True,
+        constrain_to_boundary=True,
+        return_transform=False,
+    ):
         r"""
         Crop this image to be bounded around a set of landmarks with a
         border proportional to the landmark spread or range.
@@ -1362,9 +1515,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         pc = self.landmarks[group]
         return self.crop_to_pointcloud_proportion(
-            pc, boundary_proportion, minimum=minimum,
+            pc,
+            boundary_proportion,
+            minimum=minimum,
             constrain_to_boundary=constrain_to_boundary,
-            return_transform=return_transform)
+            return_transform=return_transform,
+        )
 
     def constrain_points_to_bounds(self, points):
         r"""
@@ -1389,9 +1545,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         bounded_points[over_image] = shape[over_image]
         return bounded_points
 
-    def extract_patches(self, patch_centers, patch_shape=(16, 16),
-                        sample_offsets=None, as_single_array=True,
-                        order=0, mode='constant', cval=0.0):
+    def extract_patches(
+        self,
+        patch_centers,
+        patch_shape=(16, 16),
+        sample_offsets=None,
+        as_single_array=True,
+        order=0,
+        mode="constant",
+        cval=0.0,
+    ):
         r"""
         Extract a set of patches from an image. Given a set of patch centers
         and a patch size, patches are extracted from within the image, centred
@@ -1452,24 +1615,29 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If image is not 2D
         """
         if self.n_dims != 2:
-            raise ValueError('Only two dimensional patch extraction is '
-                             'currently supported.')
+            raise ValueError(
+                "Only two dimensional patch extraction is " "currently supported."
+            )
 
-        if order == 0 and mode == 'constant':
+        if order == 0 and mode == "constant":
             # Fast path using slicing
-            single_array = extract_patches_with_slice(self.pixels,
-                                                      patch_centers.points,
-                                                      patch_shape,
-                                                      offsets=sample_offsets,
-                                                      cval=cval)
+            single_array = extract_patches_with_slice(
+                self.pixels,
+                patch_centers.points,
+                patch_shape,
+                offsets=sample_offsets,
+                cval=cval,
+            )
         else:
-            single_array = extract_patches_by_sampling(self.pixels,
-                                                       patch_centers.points,
-                                                       patch_shape,
-                                                       offsets=sample_offsets,
-                                                       order=order,
-                                                       mode=mode,
-                                                       cval=cval)
+            single_array = extract_patches_by_sampling(
+                self.pixels,
+                patch_centers.points,
+                patch_shape,
+                offsets=sample_offsets,
+                order=order,
+                mode=mode,
+                cval=cval,
+            )
 
         if as_single_array:
             return single_array
@@ -1477,8 +1645,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             return [Image(o, copy=False) for p in single_array for o in p]
 
     def extract_patches_around_landmarks(
-            self, group=None, patch_shape=(16, 16),
-            sample_offsets=None, as_single_array=True):
+        self,
+        group=None,
+        patch_shape=(16, 16),
+        sample_offsets=None,
+        as_single_array=True,
+    ):
         r"""
         Extract patches around landmarks existing on this image. Provided the
         group label and optionally the landmark label extract a set of patches.
@@ -1516,13 +1688,14 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ValueError
             If image is not 2D
         """
-        return self.extract_patches(self.landmarks[group],
-                                    patch_shape=patch_shape,
-                                    sample_offsets=sample_offsets,
-                                    as_single_array=as_single_array)
+        return self.extract_patches(
+            self.landmarks[group],
+            patch_shape=patch_shape,
+            sample_offsets=sample_offsets,
+            as_single_array=as_single_array,
+        )
 
-    def set_patches(self, patches, patch_centers, offset=None,
-                    offset_index=None):
+    def set_patches(self, patches, patch_centers, offset=None, offset_index=None):
         r"""
         Set the values of a group of patches into the correct regions of a copy
         of this image. Given an array of patches and a set of patch centers,
@@ -1566,32 +1739,36 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         # parse arguments
         if self.n_dims != 2:
-            raise ValueError('Only two dimensional patch insertion is '
-                             'currently supported.')
+            raise ValueError(
+                "Only two dimensional patch insertion is " "currently supported."
+            )
         if offset is None:
             offset = np.zeros([1, 2], dtype=np.intp)
         elif isinstance(offset, tuple) or isinstance(offset, list):
             offset = np.asarray([offset])
         offset = np.require(offset, dtype=np.intp)
         if not offset.shape == (1, 2):
-            raise ValueError('The offset must be a tuple, a list or a '
-                             'numpy.array with shape (1, 2).')
+            raise ValueError(
+                "The offset must be a tuple, a list or a "
+                "numpy.array with shape (1, 2)."
+            )
         if offset_index is None:
             offset_index = 0
 
         # if patches is a list, convert it to array
         if isinstance(patches, list):
             patches = _convert_patches_list_to_single_array(
-                patches, patch_centers.n_points)
+                patches, patch_centers.n_points
+            )
 
         copy = self.copy()
         # set patches
-        set_patches(patches, copy.pixels, patch_centers.points, offset,
-                    offset_index)
+        set_patches(patches, copy.pixels, patch_centers.points, offset, offset_index)
         return copy
 
-    def set_patches_around_landmarks(self, patches, group=None,
-                                     offset=None, offset_index=None):
+    def set_patches_around_landmarks(
+        self, patches, group=None, offset=None, offset_index=None
+    ):
         r"""
         Set the values of a group of patches around the landmarks existing in a
         copy of this image. Given an array of patches, a group and a label, the
@@ -1633,12 +1810,21 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         ValueError
             If offset does not have shape (1, 2)
         """
-        return self.set_patches(patches, self.landmarks[group],
-                                offset=offset, offset_index=offset_index)
+        return self.set_patches(
+            patches, self.landmarks[group], offset=offset, offset_index=offset_index
+        )
 
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     order=1, mode='constant', cval=0.0, batch_size=None,
-                     return_transform=False):
+    def warp_to_mask(
+        self,
+        template_mask,
+        transform,
+        warp_landmarks=True,
+        order=1,
+        mode="constant",
+        cval=0.0,
+        batch_size=None,
+        return_transform=False,
+    ):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -1699,12 +1885,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if self.n_dims != transform.n_dims:
             raise ValueError(
                 "Trying to warp a {}D image with a {}D transform "
-                "(they must match)".format(self.n_dims, transform.n_dims))
+                "(they must match)".format(self.n_dims, transform.n_dims)
+            )
         template_points = template_mask.true_indices()
-        points_to_sample = transform.apply(template_points,
-                                           batch_size=batch_size)
-        sampled = self.sample(points_to_sample,
-                              order=order, mode=mode, cval=cval)
+        points_to_sample = transform.apply(template_points, batch_size=batch_size)
+        sampled = self.sample(points_to_sample, order=order, mode=mode, cval=cval)
 
         # set any nan values to 0
         sampled[np.isnan(sampled)] = 0
@@ -1713,7 +1898,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse()._apply_inplace(warped_image.landmarks)
-        if hasattr(self, 'path'):
+        if hasattr(self, "path"):
             warped_image.path = self.path
         # optionally return the transform
         if return_transform:
@@ -1736,13 +1921,14 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Sampled value to rebuild the masked image from.
         """
         from menpo.image import MaskedImage
-        warped_image = MaskedImage.init_blank(template_mask.shape,
-                                              n_channels=self.n_channels,
-                                              mask=template_mask)
+
+        warped_image = MaskedImage.init_blank(
+            template_mask.shape, n_channels=self.n_channels, mask=template_mask
+        )
         warped_image._from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
-    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0):
+    def sample(self, points_to_sample, order=1, mode="constant", cval=0.0):
         r"""
         Sample this image at the given sub-pixel accurate points. The input
         PointCloud should have the same number of dimensions as the image e.g.
@@ -1775,12 +1961,21 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # 'special case' and not document the ndarray ability.
         if isinstance(points_to_sample, PointCloud):
             points_to_sample = points_to_sample.points
-        return scipy_interpolation(self.pixels, points_to_sample,
-                                   order=order, mode=mode, cval=cval)
+        return scipy_interpolation(
+            self.pixels, points_to_sample, order=order, mode=mode, cval=cval
+        )
 
-    def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      order=1, mode='constant', cval=0.0, batch_size=None,
-                      return_transform=False):
+    def warp_to_shape(
+        self,
+        template_shape,
+        transform,
+        warp_landmarks=True,
+        order=1,
+        mode="constant",
+        cval=0.0,
+        batch_size=None,
+        return_transform=False,
+    ):
         """
         Return a copy of this image warped into a different reference space.
 
@@ -1836,33 +2031,40 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             `return_transform` is ``True``.
         """
         template_shape = np.array(template_shape, dtype=np.int)
-        if (isinstance(transform, Homogeneous) and order in range(2) and
-                self.n_dims == 2 and cv2_perspective_interpolation is not None):
+        if (
+            isinstance(transform, Homogeneous)
+            and order in range(2)
+            and self.n_dims == 2
+            and cv2_perspective_interpolation is not None
+        ):
             # we couldn't do the crop, but OpenCV has an optimised
             # interpolation for 2D perspective warps - let's use that
             warped_pixels = cv2_perspective_interpolation(
-                self.pixels, template_shape, transform,
-                order=order, mode=mode, cval=cval
+                self.pixels,
+                template_shape,
+                transform,
+                order=order,
+                mode=mode,
+                cval=cval,
             )
         else:
             template_points = indices_for_image_of_shape(template_shape)
-            points_to_sample = transform.apply(template_points,
-                                               batch_size=batch_size)
-            sampled = self.sample(points_to_sample,
-                                  order=order, mode=mode, cval=cval)
+            points_to_sample = transform.apply(template_points, batch_size=batch_size)
+            sampled = self.sample(points_to_sample, order=order, mode=mode, cval=cval)
 
             # set any nan values to 0
             # (seems that map_coordinates can produce nan values)
             sampled[np.isnan(sampled)] = 0
             # build a warped version of the image
-            warped_pixels = sampled.reshape(
-                (self.n_channels,) + tuple(template_shape))
+            warped_pixels = sampled.reshape((self.n_channels,) + tuple(template_shape))
 
-        return self._build_warp_to_shape(warped_pixels, transform,
-                                         warp_landmarks, return_transform)
+        return self._build_warp_to_shape(
+            warped_pixels, transform, warp_landmarks, return_transform
+        )
 
-    def _build_warp_to_shape(self, warped_pixels, transform, warp_landmarks,
-                             return_transform):
+    def _build_warp_to_shape(
+        self, warped_pixels, transform, warp_landmarks, return_transform
+    ):
         # factored out common logic from the different paths we can take in
         # warp_to_shape. Rebuilds an image post-warp, adjusting landmarks
         # as necessary.
@@ -1872,7 +2074,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse()._apply_inplace(warped_image.landmarks)
-        if hasattr(self, 'path'):
+        if hasattr(self, "path"):
             warped_image.path = self.path
 
         # optionally return the transform
@@ -1881,8 +2083,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         else:
             return warped_image
 
-    def rescale(self, scale, round='ceil', order=1,
-                warp_landmarks=True, return_transform=False):
+    def rescale(
+        self, scale, round="ceil", order=1, warp_landmarks=True, return_transform=False
+    ):
         r"""
         Return a copy of this image, rescaled by a given factor.
         Landmarks are rescaled appropriately.
@@ -1934,8 +2137,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         try:
             if len(scale) < self.n_dims:
                 raise ValueError(
-                    'Must provide a scale per dimension.'
-                    '{} scales were provided, {} were expected.'.format(
+                    "Must provide a scale per dimension."
+                    "{} scales were provided, {} were expected.".format(
                         len(scale), self.n_dims
                     )
                 )
@@ -1946,13 +2149,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         scale = np.asarray(scale)
         for s in scale:
             if s <= 0:
-                raise ValueError('Scales must be positive floats.')
+                raise ValueError("Scales must be positive floats.")
 
         transform = NonUniformScale(scale)
         # use the scale factor to make the template mask bigger
         # while respecting the users rounding preference.
-        template_shape = round_image_shape(transform.apply(self.shape),
-                                           round)
+        template_shape = round_image_shape(transform.apply(self.shape), round)
         # due to image indexing, we can't just apply the pseudoinverse
         # transform to achieve the scaling we want though!
         # Consider a 3x rescale on a 2x4 image. Looking at each dimension:
@@ -1965,13 +2167,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         scale_factors = (scale * shape - 1) / (shape - 1)
         inverse_transform = NonUniformScale(scale_factors).pseudoinverse()
         # for rescaling we enforce that mode is nearest to avoid num. errors
-        return self.warp_to_shape(template_shape, inverse_transform,
-                                  warp_landmarks=warp_landmarks, order=order,
-                                  mode='nearest',
-                                  return_transform=return_transform)
+        return self.warp_to_shape(
+            template_shape,
+            inverse_transform,
+            warp_landmarks=warp_landmarks,
+            order=order,
+            mode="nearest",
+            return_transform=return_transform,
+        )
 
-    def rescale_to_diagonal(self, diagonal, round='ceil',
-                            warp_landmarks=True, return_transform=False):
+    def rescale_to_diagonal(
+        self, diagonal, round="ceil", warp_landmarks=True, return_transform=False
+    ):
         r"""
         Return a copy of this image, rescaled so that the it's diagonal is a
         new size.
@@ -1997,14 +2204,22 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The transform that was used. It only applies if
             `return_transform` is ``True``.
         """
-        return self.rescale(diagonal / self.diagonal(), round=round,
-                            warp_landmarks=warp_landmarks,
-                            return_transform=return_transform)
+        return self.rescale(
+            diagonal / self.diagonal(),
+            round=round,
+            warp_landmarks=warp_landmarks,
+            return_transform=return_transform,
+        )
 
-    def rescale_to_pointcloud(self, pointcloud, group=None,
-                              round='ceil', order=1,
-                              warp_landmarks=True,
-                              return_transform=False):
+    def rescale_to_pointcloud(
+        self,
+        pointcloud,
+        group=None,
+        round="ceil",
+        order=1,
+        warp_landmarks=True,
+        return_transform=False,
+    ):
         r"""
         Return a copy of this image, rescaled so that the scale of a
         particular group of landmarks matches the scale of the passed
@@ -2051,14 +2266,23 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         pc = self.landmarks[group]
         scale = AlignmentUniformScale(pc, pointcloud).as_vector().copy()
-        return self.rescale(scale, round=round, order=order,
-                            warp_landmarks=warp_landmarks,
-                            return_transform=return_transform)
+        return self.rescale(
+            scale,
+            round=round,
+            order=order,
+            warp_landmarks=warp_landmarks,
+            return_transform=return_transform,
+        )
 
-    def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
-                                            round='ceil', order=1,
-                                            warp_landmarks=True,
-                                            return_transform=False):
+    def rescale_landmarks_to_diagonal_range(
+        self,
+        diagonal_range,
+        group=None,
+        round="ceil",
+        order=1,
+        warp_landmarks=True,
+        return_transform=False,
+    ):
         r"""
         Return a copy of this image, rescaled so that the ``diagonal_range`` of
         the bounding box containing its landmarks matches the specified
@@ -2105,12 +2329,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         x, y = self.landmarks[group].range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
-        return self.rescale(scale, round=round, order=order,
-                            warp_landmarks=warp_landmarks,
-                            return_transform=return_transform)
+        return self.rescale(
+            scale,
+            round=round,
+            order=order,
+            warp_landmarks=warp_landmarks,
+            return_transform=return_transform,
+        )
 
-    def resize(self, shape, order=1, warp_landmarks=True,
-               return_transform=False):
+    def resize(self, shape, order=1, warp_landmarks=True, return_transform=False):
         r"""
         Return a copy of this image, resized to a particular shape.
         All image information (landmarks, and mask in the case of
@@ -2158,17 +2385,23 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         shape = np.asarray(shape, dtype=np.float)
         if len(shape) != self.n_dims:
             raise ValueError(
-                'Dimensions must match.'
-                '{} dimensions provided, {} were expected.'.format(
-                    shape.shape, self.n_dims))
+                "Dimensions must match."
+                "{} dimensions provided, {} were expected.".format(
+                    shape.shape, self.n_dims
+                )
+            )
         scales = shape / self.shape
         # Have to round the shape when scaling to deal with floating point
         # errors. For example, if we want (250, 250), we need to ensure that
         # we get (250, 250) even if the number we obtain is 250 to some
         # floating point inaccuracy.
-        return self.rescale(scales, round='round', order=order,
-                            warp_landmarks=warp_landmarks,
-                            return_transform=return_transform)
+        return self.rescale(
+            scales,
+            round="round",
+            order=order,
+            warp_landmarks=warp_landmarks,
+            return_transform=return_transform,
+        )
 
     def zoom(self, scale, order=1, warp_landmarks=True, return_transform=False):
         r"""
@@ -2215,14 +2448,27 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             `return_transform` is ``True``.
         """
         t = scale_about_centre(self, 1.0 / scale)
-        return self.warp_to_shape(self.shape, t, order=order,
-                                  mode='nearest', warp_landmarks=warp_landmarks,
-                                  return_transform=return_transform)
+        return self.warp_to_shape(
+            self.shape,
+            t,
+            order=order,
+            mode="nearest",
+            warp_landmarks=warp_landmarks,
+            return_transform=return_transform,
+        )
 
-    def rotate_ccw_about_centre(self, theta, degrees=True, retain_shape=False,
-                                mode='constant', cval=0.0, round='round',
-                                order=1, warp_landmarks=True,
-                                return_transform=False):
+    def rotate_ccw_about_centre(
+        self,
+        theta,
+        degrees=True,
+        retain_shape=False,
+        mode="constant",
+        cval=0.0,
+        round="round",
+        order=1,
+        warp_landmarks=True,
+        return_transform=False,
+    ):
         r"""
         Return a copy of this image, rotated counter-clockwise about its centre.
 
@@ -2289,21 +2535,33 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Image rotation is presently only supported on 2D images
         """
         if self.n_dims != 2:
-            raise ValueError('Image rotation is presently only supported on '
-                             '2D images')
+            raise ValueError(
+                "Image rotation is presently only supported on " "2D images"
+            )
 
         rotation = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
         return self.transform_about_centre(
             rotation,
-            retain_shape=retain_shape, mode=mode, cval=cval, round=round,
-            order=order, warp_landmarks=warp_landmarks,
-            return_transform=return_transform
+            retain_shape=retain_shape,
+            mode=mode,
+            cval=cval,
+            round=round,
+            order=order,
+            warp_landmarks=warp_landmarks,
+            return_transform=return_transform,
         )
 
-    def transform_about_centre(self, transform, retain_shape=False,
-                               mode='constant', cval=0.0, round='round',
-                               order=1, warp_landmarks=True,
-                               return_transform=False):
+    def transform_about_centre(
+        self,
+        transform,
+        retain_shape=False,
+        mode="constant",
+        cval=0.0,
+        round="round",
+        order=1,
+        warp_landmarks=True,
+        return_transform=False,
+    ):
         r"""
         Return a copy of this image, transformed about its centre.
 
@@ -2439,11 +2697,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             applied_transform = transform_about_centre(self, transform)
         else:
             # Get image's bounding box coordinates
-            original_bbox = bounding_box((0, 0),
-                                         np.array(self.shape) - 1)
+            original_bbox = bounding_box((0, 0), np.array(self.shape) - 1)
             # Translate to origin and apply transform
-            trans = Translation(-self.centre(),
-                                skip_checks=True).compose_before(transform)
+            trans = Translation(-self.centre(), skip_checks=True).compose_before(
+                transform
+            )
             transformed_bbox = trans.apply(original_bbox)
 
             # Create new translation so that min bbox values go to 0
@@ -2456,13 +2714,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         # Warp image
         return self.warp_to_shape(
-            shape, applied_transform.pseudoinverse(), order=order,
-            warp_landmarks=warp_landmarks, mode=mode, cval=cval,
-            return_transform=return_transform
+            shape,
+            applied_transform.pseudoinverse(),
+            order=order,
+            warp_landmarks=warp_landmarks,
+            mode=mode,
+            cval=cval,
+            return_transform=return_transform,
         )
 
-    def mirror(self, axis=1, order=1, warp_landmarks=True,
-               return_transform=False):
+    def mirror(self, axis=1, order=1, warp_landmarks=True, return_transform=False):
         r"""
         Return a copy of this image, mirrored/flipped about a certain axis.
 
@@ -2509,10 +2770,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         # Check axis argument
         if axis < 0:
-            raise ValueError('axis cannot be negative')
+            raise ValueError("axis cannot be negative")
         elif axis >= self.n_dims:
-            raise ValueError("axis={} but the image has {} "
-                             "dimensions".format(axis, self.n_dims))
+            raise ValueError(
+                "axis={} but the image has {} " "dimensions".format(axis, self.n_dims)
+            )
 
         # Create transform that includes ...
         # ... flipping about the selected axis ...
@@ -2524,14 +2786,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
 
         # Create transform object
         trans = Rotation(rot_matrix, skip_checks=True).compose_before(
-            Translation(tr_matrix, skip_checks=True))
+            Translation(tr_matrix, skip_checks=True)
+        )
 
         # Warp image
-        return self.warp_to_shape(self.shape, trans.pseudoinverse(),
-                                  mode='nearest',
-                                  order=order,
-                                  warp_landmarks=warp_landmarks,
-                                  return_transform=return_transform)
+        return self.warp_to_shape(
+            self.shape,
+            trans.pseudoinverse(),
+            mode="nearest",
+            order=order,
+            warp_landmarks=warp_landmarks,
+            return_transform=return_transform,
+        )
 
     def pyramid(self, n_levels=3, downscale=2):
         r"""
@@ -2582,15 +2848,16 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Generator yielding pyramid layers as :map:`Image` objects.
         """
         from menpo.feature import gaussian_filter
+
         if sigma is None:
-            sigma = downscale / 3.
+            sigma = downscale / 3.0
         image = self.copy()
         yield image
         for level in range(n_levels - 1):
             image = gaussian_filter(image, sigma).rescale(1.0 / downscale)
             yield image
 
-    def as_greyscale(self, mode='luminosity', channel=None):
+    def as_greyscale(self, mode="luminosity", channel=None):
         r"""
         Returns a greyscale version of the image. If the image does *not*
         represent a 2D RGB image, then the ``luminosity`` mode will fail.
@@ -2616,41 +2883,51 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             A copy of this image in greyscale.
         """
         greyscale = self.copy()
-        if mode == 'luminosity':
+        if mode == "luminosity":
             if self.n_dims != 2:
-                raise ValueError("The 'luminosity' mode only works on 2D RGB"
-                                 "images. {} dimensions found, "
-                                 "2 expected.".format(self.n_dims))
+                raise ValueError(
+                    "The 'luminosity' mode only works on 2D RGB"
+                    "images. {} dimensions found, "
+                    "2 expected.".format(self.n_dims)
+                )
             elif self.n_channels != 3:
-                raise ValueError("The 'luminosity' mode only works on RGB"
-                                 "images. {} channels found, "
-                                 "3 expected.".format(self.n_channels))
+                raise ValueError(
+                    "The 'luminosity' mode only works on RGB"
+                    "images. {} channels found, "
+                    "3 expected.".format(self.n_channels)
+                )
             # Only compute the coefficients once.
             global _greyscale_luminosity_coef
             if _greyscale_luminosity_coef is None:
                 _greyscale_luminosity_coef = np.linalg.inv(
-                    np.array([[1.0, 0.956, 0.621],
-                              [1.0, -0.272, -0.647],
-                              [1.0, -1.106, 1.703]]))[0, :]
+                    np.array(
+                        [
+                            [1.0, 0.956, 0.621],
+                            [1.0, -0.272, -0.647],
+                            [1.0, -1.106, 1.703],
+                        ]
+                    )
+                )[0, :]
             # Compute greyscale via dot product
-            pixels = np.dot(_greyscale_luminosity_coef,
-                            greyscale.pixels.reshape(3, -1))
+            pixels = np.dot(_greyscale_luminosity_coef, greyscale.pixels.reshape(3, -1))
             # Reshape image back to original shape (with 1 channel)
             pixels = pixels.reshape(greyscale.shape)
-        elif mode == 'average':
+        elif mode == "average":
             pixels = np.mean(greyscale.pixels, axis=0)
-        elif mode == 'channel':
+        elif mode == "channel":
             if channel is None:
-                raise ValueError("For the 'channel' mode you have to provide"
-                                 " a channel index")
+                raise ValueError(
+                    "For the 'channel' mode you have to provide" " a channel index"
+                )
             pixels = greyscale.pixels[channel]
         else:
-            raise ValueError("Unknown mode {} - expected 'luminosity', "
-                             "'average' or 'channel'.".format(mode))
+            raise ValueError(
+                "Unknown mode {} - expected 'luminosity', "
+                "'average' or 'channel'.".format(mode)
+            )
 
         # Set new pixels - ensure channel axis and maintain
-        greyscale.pixels = pixels[None, ...].astype(greyscale.pixels.dtype,
-                                                    copy=False)
+        greyscale.pixels = pixels[None, ...].astype(greyscale.pixels.dtype, copy=False)
         return greyscale
 
     def as_PILImage(self, out_dtype=np.uint8):
@@ -2684,9 +2961,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
             raise ValueError(
-                'Can only convert greyscale or RGB 2D images. '
-                'Received a {} channel {}D image.'.format(self.n_channels,
-                                                          self.n_dims))
+                "Can only convert greyscale or RGB 2D images. "
+                "Received a {} channel {}D image.".format(self.n_channels, self.n_dims)
+            )
 
         # Slice off the channel for greyscale images
         if self.n_channels == 1:
@@ -2727,16 +3004,18 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If the output dtype is unsupported. Currently uint8 and uint16
             are supported.
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .pixels_with_channels_at_back instead.',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .pixels_with_channels_at_back instead.",
+            MenpoDeprecationWarning,
+        )
 
         if self.n_dims != 2 or (self.n_channels != 1 and self.n_channels != 3):
             raise ValueError(
-                'Can only convert greyscale or RGB 2D images. '
-                'Received a {} channel {}D image.'.format(self.n_channels,
-                                                          self.n_dims))
+                "Can only convert greyscale or RGB 2D images. "
+                "Received a {} channel {}D image.".format(self.n_channels, self.n_dims)
+            )
 
         # Slice off the channel for greyscale images
         if self.n_channels == 1:
@@ -2760,10 +3039,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         r"""
         Deprecated - please use the equivalent ``pixels_with_channels_at_back`` method.
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .pixels_with_channels_at_back() instead.',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .pixels_with_channels_at_back() instead.",
+            MenpoDeprecationWarning,
+        )
         return self.pixels_with_channels_at_back()
 
     def pixels_with_channels_at_back(self, out_dtype=None):
@@ -2792,9 +3073,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return np.squeeze(p)
 
     def __str__(self):
-        return ('{} {}D Image with {} channel{}'.format(
-            self._str_shape(), self.n_dims, self.n_channels,
-            's' * (self.n_channels > 1)))
+        return "{} {}D Image with {} channel{}".format(
+            self._str_shape(), self.n_dims, self.n_channels, "s" * (self.n_channels > 1)
+        )
 
     def has_landmarks_outside_bounds(self):
         """
@@ -2818,10 +3099,12 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             >>> im.constrain_landmarks_to_bounds()  # Equivalent to below
             >>> im.landmarks['test'] = im.landmarks['test'].constrain_to_bounds(im.bounds())
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .constrain_to_bounds() instead (on PointCloud).',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .constrain_to_bounds() instead (on PointCloud).",
+            MenpoDeprecationWarning,
+        )
 
         for l_group in self.landmarks:
             l = self.landmarks[l_group]
@@ -2832,7 +3115,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 l.points[:, k] = tmp
             self.landmarks[l_group] = l
 
-    def normalize_std(self, mode='all', **kwargs):
+    def normalize_std(self, mode="all", **kwargs):
         r"""
         Returns a copy of this image normalized such that its
         pixel values have zero mean and unit variance.
@@ -2849,13 +3132,15 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image : ``type(self)``
             A copy of this image, normalized.
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .normalize_std() instead (features package).',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .normalize_std() instead (features package).",
+            MenpoDeprecationWarning,
+        )
         return self._normalize(np.std, mode=mode)
 
-    def normalize_norm(self, mode='all', **kwargs):
+    def normalize_norm(self, mode="all", **kwargs):
         r"""
         Returns a copy of this image normalized such that its pixel values
         have zero mean and its norm equals 1.
@@ -2872,18 +3157,21 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         image : ``type(self)``
             A copy of this image, normalized.
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .normalize_norm() instead (features package).',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .normalize_norm() instead (features package).",
+            MenpoDeprecationWarning,
+        )
 
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
         return self._normalize(scale_func, mode=mode)
 
-    def _normalize(self, scale_func, mode='all'):
+    def _normalize(self, scale_func, mode="all"):
         from menpo.feature import normalize
+
         return normalize(self, scale_func=scale_func, mode=mode)
 
     def rescale_pixels(self, minimum, maximum, per_channel=True):
@@ -2948,18 +3236,28 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             elif dtype in [np.float32, np.float64]:
                 maximum = 1.0
             else:
-                m1 = 'Could not recognise the dtype ({}) to set the maximum.'
+                m1 = "Could not recognise the dtype ({}) to set the maximum."
                 raise ValueError(m1.format(dtype))
 
         copy = self.copy()
         copy.pixels = copy.pixels.clip(min=minimum, max=maximum)
         return copy
 
-    def rasterize_landmarks(self, group=None, render_lines=True, line_style='-',
-                            line_colour='b', line_width=1, render_markers=True,
-                            marker_style='o', marker_size=1,
-                            marker_face_colour='b', marker_edge_colour='b',
-                            marker_edge_width=1, backend='matplotlib'):
+    def rasterize_landmarks(
+        self,
+        group=None,
+        render_lines=True,
+        line_style="-",
+        line_colour="b",
+        line_width=1,
+        render_markers=True,
+        marker_style="o",
+        marker_size=1,
+        marker_face_colour="b",
+        marker_edge_colour="b",
+        marker_edge_width=1,
+        backend="matplotlib",
+    ):
         r"""
         This method provides the ability to rasterize 2D landmarks onto the
         image. The returned image has the specified landmark groups rasterized
@@ -3020,19 +3318,27 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Only RGB (3-channel) or Greyscale (1-channel) images are supported.
         """
         from .rasterize import rasterize_landmarks_2d
+
         return rasterize_landmarks_2d(
-            self, group=group, render_lines=render_lines,
-            line_style=line_style, line_colour=line_colour,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            self,
+            group=group,
+            render_lines=render_lines,
+            line_style=line_style,
+            line_colour=line_colour,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, backend=backend)
+            marker_edge_width=marker_edge_width,
+            backend=backend,
+        )
 
 
 def round_image_shape(shape, round):
-    if round not in ['ceil', 'round', 'floor']:
-        raise ValueError('round must be either ceil, round or floor')
+    if round not in ["ceil", "round", "floor"]:
+        raise ValueError("round must be either ceil, round or floor")
     # Ensure that the '+' operator means concatenate tuples
     return tuple(getattr(np, round)(shape).astype(np.int))
 
@@ -3061,8 +3367,10 @@ def _convert_patches_list_to_single_array(patches_list, n_center):
     n_channels = patches_list[0].n_channels
     height = patches_list[0].height
     width = patches_list[0].width
-    patches_array = np.empty((n_center, n_offsets, n_channels, height, width),
-                             dtype=patches_list[0].pixels.dtype)
+    patches_array = np.empty(
+        (n_center, n_offsets, n_channels, height, width),
+        dtype=patches_list[0].pixels.dtype,
+    )
     total_index = 0
     for p in range(n_center):
         for o in range(n_offsets):
@@ -3071,8 +3379,9 @@ def _convert_patches_list_to_single_array(patches_list, n_center):
     return patches_array
 
 
-def _create_patches_image(patches, patch_centers, patches_indices=None,
-                          offset_index=None, background='black'):
+def _create_patches_image(
+    patches, patch_centers, patches_indices=None, offset_index=None, background="black"
+):
     r"""
     Creates an :map:`Image` object in which the patches are located on the
     correct regions based on the centers. Thus, the image is a block-sparse
@@ -3121,8 +3430,7 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     """
     # If patches is a list, convert it to array
     if isinstance(patches, list):
-        patches = _convert_patches_list_to_single_array(patches,
-                                                        patch_centers.n_points)
+        patches = _convert_patches_list_to_single_array(patches, patch_centers.n_points)
 
     # Parse inputs
     if offset_index is None:
@@ -3150,28 +3458,32 @@ def _create_patches_image(patches, patch_centers, patches_indices=None,
     new_patch_centers.points = patch_centers.points - np.array([[min_0, min_1]])
 
     # Create new image with the correct background values
-    if background == 'black':
+    if background == "black":
         patches_image = Image.init_blank(
-            (height, width), n_channels,
+            (height, width),
+            n_channels,
             fill=np.min(patches[patches_indices]),
-            dtype=patches.dtype)
-    elif background == 'white':
+            dtype=patches.dtype,
+        )
+    elif background == "white":
         patches_image = Image.init_blank(
-            (height, width), n_channels,
+            (height, width),
+            n_channels,
             fill=np.max(patches[patches_indices]),
-            dtype=patches.dtype)
+            dtype=patches.dtype,
+        )
     else:
-        raise ValueError('Background must be either ''black'' or ''white''.')
+        raise ValueError("Background must be either " "black" " or " "white" ".")
 
     # If there was no slicing on the patches, then attach the original patch
     # centers. Otherwise, attach the sliced ones.
     if set(patches_indices) == set(range(patches.shape[0])):
-        patches_image.landmarks['patch_centers'] = new_patch_centers
+        patches_image.landmarks["patch_centers"] = new_patch_centers
     else:
         tmp_centers = PointCloud(new_patch_centers.points[patches_indices])
-        patches_image.landmarks['patch_centers'] = tmp_centers
+        patches_image.landmarks["patch_centers"] = tmp_centers
 
     # Set the patches
     return patches_image.set_patches_around_landmarks(
-        patches[patches_indices], group='patch_centers',
-        offset_index=offset_index)
+        patches[patches_indices], group="patch_centers", offset_index=offset_index
+    )

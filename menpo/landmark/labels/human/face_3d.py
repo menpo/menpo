@@ -4,7 +4,7 @@ import numpy as np
 from ..base import labeller_func, validate_input, connectivity_from_array
 
 
-@labeller_func(group_label='face_bu3dfe_83')
+@labeller_func(group_label="face_bu3dfe_83")
 def face_bu3dfe_83_to_face_bu3dfe_83(pcloud):
     r"""
     Apply the BU-3DFE (Binghamton University 3D Facial Expression)
@@ -45,40 +45,48 @@ def face_bu3dfe_83_to_face_bu3dfe_83(pcloud):
 
     reye_connectivity = connectivity_from_array(reye_indices, close_loop=True)
     leye_connectivity = connectivity_from_array(leye_indices, close_loop=True)
-    rbrow_connectivity = connectivity_from_array(rbrow_indices,
-                                                 close_loop=True)
-    lbrow_connectivity = connectivity_from_array(lbrow_indices,
-                                                 close_loop=True)
+    rbrow_connectivity = connectivity_from_array(rbrow_indices, close_loop=True)
+    lbrow_connectivity = connectivity_from_array(lbrow_indices, close_loop=True)
     rnose_connectivity = connectivity_from_array(rnose_indices)
     nostril_connectivity = connectivity_from_array(nostril_indices)
     lnose_connectivity = connectivity_from_array(lnose_indices)
-    outermouth_connectivity = connectivity_from_array(outermouth_indices,
-                                                      close_loop=True)
-    innermouth_connectivity = connectivity_from_array(innermouth_indices,
-                                                      close_loop=True)
+    outermouth_connectivity = connectivity_from_array(
+        outermouth_indices, close_loop=True
+    )
+    innermouth_connectivity = connectivity_from_array(
+        innermouth_indices, close_loop=True
+    )
     jaw_connectivity = connectivity_from_array(jaw_indices)
 
-    all_connectivity = np.vstack([
-        reye_connectivity, leye_connectivity,
-        rbrow_connectivity, lbrow_connectivity,
-        rnose_connectivity, nostril_connectivity, lnose_connectivity,
-        outermouth_connectivity, innermouth_connectivity,
-        jaw_connectivity
-    ])
+    all_connectivity = np.vstack(
+        [
+            reye_connectivity,
+            leye_connectivity,
+            rbrow_connectivity,
+            lbrow_connectivity,
+            rnose_connectivity,
+            nostril_connectivity,
+            lnose_connectivity,
+            outermouth_connectivity,
+            innermouth_connectivity,
+            jaw_connectivity,
+        ]
+    )
 
     mapping = OrderedDict()
-    mapping['right_eye'] = reye_indices
-    mapping['left_eye'] = leye_indices
-    mapping['right_eyebrow'] = rbrow_indices
-    mapping['left_eyebrow'] = lbrow_indices
-    mapping['right_nose'] = rnose_indices
-    mapping['left_nose'] = lnose_indices
-    mapping['nostrils'] = nostril_indices
-    mapping['outer_mouth'] = outermouth_indices
-    mapping['inner_mouth'] = innermouth_indices
-    mapping['jaw'] = jaw_indices
+    mapping["right_eye"] = reye_indices
+    mapping["left_eye"] = leye_indices
+    mapping["right_eyebrow"] = rbrow_indices
+    mapping["left_eyebrow"] = lbrow_indices
+    mapping["right_nose"] = rnose_indices
+    mapping["left_nose"] = lnose_indices
+    mapping["nostrils"] = nostril_indices
+    mapping["outer_mouth"] = outermouth_indices
+    mapping["inner_mouth"] = innermouth_indices
+    mapping["jaw"] = jaw_indices
 
     new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
-        pcloud.points, all_connectivity, mapping)
+        pcloud.points, all_connectivity, mapping
+    )
 
     return new_pcloud, mapping

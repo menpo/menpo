@@ -39,8 +39,7 @@ def connectivity_from_range(range_tuple, close_loop=False):
     If ``close_loop`` is true, add an extra connection from the last point to
     the first.
     """
-    return connectivity_from_array(
-        np.arange(*range_tuple), close_loop=close_loop)
+    return connectivity_from_array(np.arange(*range_tuple), close_loop=close_loop)
 
 
 def validate_input(pcloud, n_expected_points):
@@ -62,9 +61,11 @@ def validate_input(pcloud, n_expected_points):
     """
     n_actual_points = pcloud.n_points
     if n_actual_points != n_expected_points:
-        msg = 'Label expects exactly {} ' \
-              'points. However, the given pointcloud ' \
-              'has {} points'.format(n_expected_points, n_actual_points)
+        msg = (
+            "Label expects exactly {} "
+            "points. However, the given pointcloud "
+            "has {} points".format(n_expected_points, n_actual_points)
+        )
         raise LabellingError(msg)
 
 
@@ -103,14 +104,14 @@ def pcloud_and_lgroup_from_ranges(pointcloud, labels_to_ranges):
         range_tuple = tup[:-1]
         close_loop = tup[-1]
 
-        connectivity = connectivity_from_range(range_tuple,
-                                               close_loop=close_loop)
+        connectivity = connectivity_from_range(range_tuple, close_loop=close_loop)
         all_connectivity.append(connectivity)
         mapping[label] = np.arange(*range_tuple)
     all_connectivity = np.vstack(all_connectivity)
 
     new_pcloud = LabelledPointUndirectedGraph.init_from_indices_mapping(
-        pointcloud.points, all_connectivity, mapping)
+        pointcloud.points, all_connectivity, mapping
+    )
 
     return new_pcloud, mapping
 
@@ -166,12 +167,16 @@ def labeller_func(group_label=None):
     labelling function) on to the function itself for the labeller method
     below.
     """
+
     def decorator(labelling_method):
         # Shadowing parent scope variables inside a nested function
         # kills the scope of the parent variable, so we need a unique alias
         # for the group name
-        gl = (group_label if group_label is not None
-              else name_of_callable(labelling_method))
+        gl = (
+            group_label
+            if group_label is not None
+            else name_of_callable(labelling_method)
+        )
         # Duck type group label onto method itself
         labelling_method.group_label = gl
         # Set up the global docs
@@ -180,6 +185,7 @@ def labeller_func(group_label=None):
         @wraps(labelling_method)
         def wrapper(x, return_mapping=False):
             from menpo.shape import PointCloud
+
             # Accepts PointCloud subclass or ndarray
             if isinstance(x, np.ndarray):
                 x = PointCloud(x, copy=False)
@@ -189,7 +195,9 @@ def labeller_func(group_label=None):
                 return new_pcloud, mapping
             else:
                 return new_pcloud
+
         return wrapper
+
     return decorator
 
 

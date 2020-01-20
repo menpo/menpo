@@ -32,16 +32,16 @@ def test_composable_compose_before_not_composes_with():
     mocked = Mock()
     co = MockedComposable()
     new_co = co.compose_before(mocked)
-    assert (new_co is not co)
-    assert (isinstance(new_co, TransformChain))
+    assert new_co is not co
+    assert isinstance(new_co, TransformChain)
 
 
 def test_composable_compose_before_composes_with():
     mocked = Mock(spec=OtherMockedComposable)
     co = MockedComposable()
     new_co = co.compose_before(mocked)
-    assert (new_co is not co)
-    assert (new_co.transforms[1] is mocked)
+    assert new_co is not co
+    assert new_co.transforms[1] is mocked
 
 
 def test_composable_compose_before_inplace_composes_with():
@@ -49,9 +49,9 @@ def test_composable_compose_before_inplace_composes_with():
     co = MockedComposable()
     ref = co
     no_return = co.compose_before_inplace(mocked)
-    assert (no_return is None)
-    assert (ref is co)
-    assert (co.transforms[1] is mocked)
+    assert no_return is None
+    assert ref is co
+    assert co.transforms[1] is mocked
 
 
 def test_composable_compose_before_inplace_not_composes_with():
@@ -65,16 +65,16 @@ def test_composable_compose_after_not_composes_with():
     mocked = Mock()
     co = MockedComposable()
     new_co = co.compose_after(mocked)
-    assert (new_co is not co)
-    assert (isinstance(new_co, TransformChain))
+    assert new_co is not co
+    assert isinstance(new_co, TransformChain)
 
 
 def test_composable_compose_after_composes_with():
     mocked = Mock(spec=OtherMockedComposable)
     co = MockedComposable()
     new_co = co.compose_after(mocked)
-    assert (new_co is not co)
-    assert (new_co.transforms[0] is mocked)
+    assert new_co is not co
+    assert new_co.transforms[0] is mocked
 
 
 def test_composable_compose_after_inplace_composes_with():
@@ -82,9 +82,9 @@ def test_composable_compose_after_inplace_composes_with():
     co = MockedComposable()
     ref = co
     no_return = co.compose_after_inplace(mocked)
-    assert (no_return is None)
-    assert (ref is co)
-    assert (co.transforms[0] is mocked)
+    assert no_return is None
+    assert ref is co
+    assert co.transforms[0] is mocked
 
 
 def test_composable_compose_after_inplace_not_composes_with():

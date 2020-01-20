@@ -26,6 +26,7 @@ class OutOfMaskSampleError(ValueError):
     sampled_values : `ndarray`
         The sampled values, no attempt at masking is made.
     """
+
     def __init__(self, sampled_mask, sampled_values):
         super(OutOfMaskSampleError, self).__init__()
         self.sampled_mask = sampled_mask
@@ -58,6 +59,7 @@ class MaskedImage(Image):
     ValueError
         Mask is not the same shape as the image
     """
+
     def __init__(self, image_data, mask=None, copy=True):
         super(MaskedImage, self).__init__(image_data, copy=copy)
         if mask is not None:
@@ -73,10 +75,11 @@ class MaskedImage(Image):
             if mask_image.shape == self.shape:
                 self.mask = mask_image
             else:
-                raise ValueError("Trying to construct a Masked Image of "
-                                 "shape {} with a Mask of differing "
-                                 "shape {}".format(self.shape,
-                                                   mask.shape))
+                raise ValueError(
+                    "Trying to construct a Masked Image of "
+                    "shape {} with a Mask of differing "
+                    "shape {}".format(self.shape, mask.shape)
+                )
         else:
             # no mask provided - make the default.
             self.mask = BooleanImage.init_blank(self.shape, fill=True)
@@ -155,9 +158,16 @@ class MaskedImage(Image):
         return MaskedImage(im.pixels, mask=mask, copy=False)
 
     @classmethod
-    def init_from_pointcloud(cls, pointcloud, group=None, boundary=0,
-                             constrain_mask=True, n_channels=1, fill=0,
-                             dtype=np.float):
+    def init_from_pointcloud(
+        cls,
+        pointcloud,
+        group=None,
+        boundary=0,
+        constrain_mask=True,
+        n_channels=1,
+        fill=0,
+        dtype=np.float,
+    ):
         r"""
         Create an Image that is big enough to contain the given pointcloud.
         The pointcloud will be translated to the origin and then translated
@@ -206,13 +216,14 @@ class MaskedImage(Image):
         image_shape = origin_pc.range(boundary=boundary)
         if constrain_mask:
             new_mask = BooleanImage.init_from_pointcloud(
-                origin_pc, group=None, boundary=boundary, constrain=True,
-                fill=False)
+                origin_pc, group=None, boundary=boundary, constrain=True, fill=False
+            )
         else:
             new_mask = None
 
-        new_image = cls.init_blank(image_shape, n_channels=n_channels,
-                                   fill=fill, dtype=dtype, mask=new_mask)
+        new_image = cls.init_blank(
+            image_shape, n_channels=n_channels, fill=fill, dtype=dtype, mask=new_mask
+        )
         if group is not None:
             new_image.landmarks[group] = origin_pc
         return new_image
@@ -301,10 +312,12 @@ class MaskedImage(Image):
         r"""
         Deprecated - please use the equivalent ``from_vector``
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .from_vector() instead.',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .from_vector() instead.",
+            MenpoDeprecationWarning,
+        )
         self._set_masked_pixels(pixels, copy=copy)
 
     # TODO: Replace _from_vector_inplace with this.
@@ -331,10 +344,12 @@ class MaskedImage(Image):
             pixels = pixels.reshape((self.n_channels,) + self.shape)
             if not copy:
                 if not pixels.flags.c_contiguous:
-                    warn('The copy flag was NOT honoured. A copy HAS been '
-                         'made. Copy can only be avoided if MaskedImage has '
-                         'an all_true mask and the pixels provided are '
-                         'C-contiguous.')
+                    warn(
+                        "The copy flag was NOT honoured. A copy HAS been "
+                        "made. Copy can only be avoided if MaskedImage has "
+                        "an all_true mask and the pixels provided are "
+                        "C-contiguous."
+                    )
                     pixels = pixels.copy()
             else:
                 pixels = pixels.copy()
@@ -343,15 +358,22 @@ class MaskedImage(Image):
             self.pixels[..., self.mask.mask] = pixels
             # oh dear, couldn't avoid a copy. Did the user try to?
             if not copy:
-                warn('The copy flag was NOT honoured. A copy HAS been made. '
-                     'copy can only be avoided if MaskedImage has an all_true '
-                     'mask.')
+                warn(
+                    "The copy flag was NOT honoured. A copy HAS been made. "
+                    "copy can only be avoided if MaskedImage has an all_true "
+                    "mask."
+                )
 
     def __str__(self):
-        return ('{} {}D MaskedImage with {} channels. '
-                'Attached mask {:.1%} true'.format(
-            self._str_shape(), self.n_dims, self.n_channels,
-            self.mask.proportion_true()))
+        return (
+            "{} {}D MaskedImage with {} channels. "
+            "Attached mask {:.1%} true".format(
+                self._str_shape(),
+                self.n_dims,
+                self.n_channels,
+                self.mask.proportion_true(),
+            )
+        )
 
     def _as_vector(self, keep_channels=False):
         r"""
@@ -415,8 +437,7 @@ class MaskedImage(Image):
             # we can just reshape the array!
             image_data = vector.reshape(((n_channels,) + self.shape))
         else:
-            image_data = np.zeros((n_channels,) + self.shape,
-                                  dtype=vector.dtype)
+            image_data = np.zeros((n_channels,) + self.shape, dtype=vector.dtype)
             pixels_per_channel = vector.reshape((n_channels, -1))
             image_data[..., self.mask.mask] = pixels_per_channel
         new_image = MaskedImage(image_data, mask=self.mask)
@@ -442,16 +463,28 @@ class MaskedImage(Image):
         Warning
             If ``copy=False`` cannot be honored.
         """
-        self._set_masked_pixels(vector.reshape((self.n_channels, -1)),
-                                copy=copy)
+        self._set_masked_pixels(vector.reshape((self.n_channels, -1)), copy=copy)
 
-    def _view_2d(self, figure_id=None, new_figure=False, channels=None,
-                 masked=True, interpolation='bilinear', cmap_name=None,
-                 alpha=1., render_axes=False, axes_font_name='sans-serif',
-                 axes_font_size=10, axes_font_style='normal',
-                 axes_font_weight='normal', axes_x_limits=None,
-                 axes_y_limits=None, axes_x_ticks=None, axes_y_ticks=None,
-                 figure_size=(7, 7)):
+    def _view_2d(
+        self,
+        figure_id=None,
+        new_figure=False,
+        channels=None,
+        masked=True,
+        interpolation="bilinear",
+        cmap_name=None,
+        alpha=1.0,
+        render_axes=False,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         r"""
         View the image using the default image viewer. This method will appear
         on the Image as ``view`` if the Image is 2D.
@@ -526,46 +559,87 @@ class MaskedImage(Image):
             If Image is not 2D
         """
         mask = self.mask.mask if masked else None
-        return ImageViewer(figure_id, new_figure, self.n_dims,
-                           self.pixels, channels=channels,
-                           mask=mask).render(
-            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
+        return ImageViewer(
+            figure_id,
+            new_figure,
+            self.n_dims,
+            self.pixels,
+            channels=channels,
+            mask=mask,
+        ).render(
+            interpolation=interpolation,
+            cmap_name=cmap_name,
+            alpha=alpha,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+        )
 
-    def _view_landmarks_2d(self, channels=None, masked=True, group=None,
-                           with_labels=None, without_labels=None,
-                           figure_id=None, new_figure=False,
-                           interpolation='bilinear', cmap_name=None, alpha=1.,
-                           render_lines=True, line_colour=None, line_style='-',
-                           line_width=1, render_markers=True, marker_style='o',
-                           marker_size=5, marker_face_colour=None,
-                           marker_edge_colour=None, marker_edge_width=1.,
-                           render_numbering=False,
-                           numbers_horizontal_align='center',
-                           numbers_vertical_align='bottom',
-                           numbers_font_name='sans-serif', numbers_font_size=10,
-                           numbers_font_style='normal',
-                           numbers_font_weight='normal',
-                           numbers_font_colour='k', render_legend=False,
-                           legend_title='', legend_font_name='sans-serif',
-                           legend_font_style='normal', legend_font_size=10,
-                           legend_font_weight='normal',
-                           legend_marker_scale=None,
-                           legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
-                           legend_border_axes_pad=None, legend_n_columns=1,
-                           legend_horizontal_spacing=None,
-                           legend_vertical_spacing=None, legend_border=True,
-                           legend_border_padding=None, legend_shadow=False,
-                           legend_rounded_corners=False, render_axes=False,
-                           axes_font_name='sans-serif', axes_font_size=10,
-                           axes_font_style='normal', axes_font_weight='normal',
-                           axes_x_limits=None, axes_y_limits=None,
-                           axes_x_ticks=None, axes_y_ticks=None,
-                           figure_size=(7, 7)):
+    def _view_landmarks_2d(
+        self,
+        channels=None,
+        masked=True,
+        group=None,
+        with_labels=None,
+        without_labels=None,
+        figure_id=None,
+        new_figure=False,
+        interpolation="bilinear",
+        cmap_name=None,
+        alpha=1.0,
+        render_lines=True,
+        line_colour=None,
+        line_style="-",
+        line_width=1,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour=None,
+        marker_edge_colour=None,
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_legend=False,
+        legend_title="",
+        legend_font_name="sans-serif",
+        legend_font_style="normal",
+        legend_font_size=10,
+        legend_font_weight="normal",
+        legend_marker_scale=None,
+        legend_location=2,
+        legend_bbox_to_anchor=(1.05, 1.0),
+        legend_border_axes_pad=None,
+        legend_n_columns=1,
+        legend_horizontal_spacing=None,
+        legend_vertical_spacing=None,
+        legend_border=True,
+        legend_border_padding=None,
+        legend_shadow=False,
+        legend_rounded_corners=False,
+        render_axes=False,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         """
         Visualize the landmarks. This method will appear on the Image as
         ``view_landmarks`` if the Image is 2D.
@@ -777,25 +851,69 @@ class MaskedImage(Image):
             If the landmark manager doesn't contain the provided group label.
         """
         from menpo.visualize import view_image_landmarks
-        return view_image_landmarks(
-            self, channels, masked, group, with_labels, without_labels,
-            figure_id, new_figure, interpolation, cmap_name, alpha,
-            render_lines, line_colour, line_style, line_width, render_markers,
-            marker_style, marker_size, marker_face_colour, marker_edge_colour,
-            marker_edge_width, render_numbering, numbers_horizontal_align,
-            numbers_vertical_align, numbers_font_name, numbers_font_size,
-            numbers_font_style, numbers_font_weight, numbers_font_colour,
-            render_legend, legend_title, legend_font_name, legend_font_style,
-            legend_font_size, legend_font_weight, legend_marker_scale,
-            legend_location, legend_bbox_to_anchor, legend_border_axes_pad,
-            legend_n_columns, legend_horizontal_spacing,
-            legend_vertical_spacing, legend_border, legend_border_padding,
-            legend_shadow, legend_rounded_corners, render_axes, axes_font_name,
-            axes_font_size, axes_font_style, axes_font_weight, axes_x_limits,
-            axes_y_limits, axes_x_ticks, axes_y_ticks, figure_size)
 
-    def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True,
-                          return_transform=False):
+        return view_image_landmarks(
+            self,
+            channels,
+            masked,
+            group,
+            with_labels,
+            without_labels,
+            figure_id,
+            new_figure,
+            interpolation,
+            cmap_name,
+            alpha,
+            render_lines,
+            line_colour,
+            line_style,
+            line_width,
+            render_markers,
+            marker_style,
+            marker_size,
+            marker_face_colour,
+            marker_edge_colour,
+            marker_edge_width,
+            render_numbering,
+            numbers_horizontal_align,
+            numbers_vertical_align,
+            numbers_font_name,
+            numbers_font_size,
+            numbers_font_style,
+            numbers_font_weight,
+            numbers_font_colour,
+            render_legend,
+            legend_title,
+            legend_font_name,
+            legend_font_style,
+            legend_font_size,
+            legend_font_weight,
+            legend_marker_scale,
+            legend_location,
+            legend_bbox_to_anchor,
+            legend_border_axes_pad,
+            legend_n_columns,
+            legend_horizontal_spacing,
+            legend_vertical_spacing,
+            legend_border,
+            legend_border_padding,
+            legend_shadow,
+            legend_rounded_corners,
+            render_axes,
+            axes_font_name,
+            axes_font_size,
+            axes_font_style,
+            axes_font_weight,
+            axes_x_limits,
+            axes_y_limits,
+            axes_x_ticks,
+            axes_y_ticks,
+            figure_size,
+        )
+
+    def crop_to_true_mask(
+        self, boundary=0, constrain_to_boundary=True, return_transform=False
+    ):
         r"""
         Crop this image to be bounded just the `True` values of it's mask.
 
@@ -827,14 +945,19 @@ class MaskedImage(Image):
             made to crop the image in a way that violates the image bounds.
         """
         min_indices, max_indices = self.mask.bounds_true(
-            boundary=boundary, constrain_to_bounds=False)
+            boundary=boundary, constrain_to_bounds=False
+        )
         # no point doing the bounds check twice - let the crop do it only.
-        return self.crop(min_indices, max_indices,
-                         constrain_to_boundary=constrain_to_boundary,
-                         return_transform=return_transform)
+        return self.crop(
+            min_indices,
+            max_indices,
+            constrain_to_boundary=constrain_to_boundary,
+            return_transform=return_transform,
+        )
 
-    def sample(self, points_to_sample, order=1, mode='constant', cval=0.0,
-               verify_mask=False):
+    def sample(
+        self, points_to_sample, order=1, mode="constant", cval=0.0, verify_mask=False
+    ):
         r"""
         Sample this image at the given sub-pixel accurate points. The input
         PointCloud should have the same number of dimensions as the image e.g.
@@ -883,19 +1006,27 @@ class MaskedImage(Image):
             themselves, in case you want to ignore the error. Only raised
             if verify_mask is True.
         """
-        sampled_values = Image.sample(self, points_to_sample, order=order,
-                                      mode=mode, cval=cval)
+        sampled_values = Image.sample(
+            self, points_to_sample, order=order, mode=mode, cval=cval
+        )
         if verify_mask:
-            sampled_mask = self.mask.sample(points_to_sample, mode=mode,
-                                            cval=cval)
+            sampled_mask = self.mask.sample(points_to_sample, mode=mode, cval=cval)
             if not np.all(sampled_mask):
                 raise OutOfMaskSampleError(sampled_mask, sampled_values)
         return sampled_values
 
     # noinspection PyMethodOverriding
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0., batch_size=None,
-                     return_transform=False):
+    def warp_to_mask(
+        self,
+        template_mask,
+        transform,
+        warp_landmarks=False,
+        order=1,
+        mode="constant",
+        cval=0.0,
+        batch_size=None,
+        return_transform=False,
+    ):
         r"""
         Warps this image into a different reference space.
 
@@ -951,10 +1082,16 @@ class MaskedImage(Image):
         """
         # call the super variant and get ourselves a MaskedImage back
         # with a blank mask
-        warped_image = Image.warp_to_mask(self, template_mask, transform,
-                                          warp_landmarks=warp_landmarks,
-                                          order=order, mode=mode, cval=cval,
-                                          batch_size=batch_size)
+        warped_image = Image.warp_to_mask(
+            self,
+            template_mask,
+            transform,
+            warp_landmarks=warp_landmarks,
+            order=order,
+            mode=mode,
+            cval=cval,
+            batch_size=batch_size,
+        )
         # Set the template mask as our mask
         warped_image.mask = template_mask
         # optionally return the transform
@@ -964,9 +1101,17 @@ class MaskedImage(Image):
             return warped_image
 
     # noinspection PyMethodOverriding
-    def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      order=1, mode='constant', cval=0., batch_size=None,
-                      return_transform=False):
+    def warp_to_shape(
+        self,
+        template_shape,
+        transform,
+        warp_landmarks=False,
+        order=1,
+        mode="constant",
+        cval=0.0,
+        batch_size=None,
+        return_transform=False,
+    ):
         """
         Return a copy of this :map:`MaskedImage` warped into a different
         reference space.
@@ -1023,18 +1168,28 @@ class MaskedImage(Image):
             `return_transform` is ``True``.
         """
         # call the super variant and get ourselves an Image back
-        warped_image = Image.warp_to_shape(self, template_shape, transform,
-                                           warp_landmarks=warp_landmarks,
-                                           order=order, mode=mode, cval=cval,
-                                           batch_size=batch_size)
+        warped_image = Image.warp_to_shape(
+            self,
+            template_shape,
+            transform,
+            warp_landmarks=warp_landmarks,
+            order=order,
+            mode=mode,
+            cval=cval,
+            batch_size=batch_size,
+        )
         # Warp the mask separately and reattach
-        mask = self.mask.warp_to_shape(template_shape, transform,
-                                       warp_landmarks=warp_landmarks,
-                                       mode=mode, cval=cval)
+        mask = self.mask.warp_to_shape(
+            template_shape,
+            transform,
+            warp_landmarks=warp_landmarks,
+            mode=mode,
+            cval=cval,
+        )
         # efficiently turn the Image into a MaskedImage, attaching the
         # landmarks
         masked_warped_image = warped_image.as_masked(mask=mask, copy=False)
-        if hasattr(warped_image, 'path'):
+        if hasattr(warped_image, "path"):
             masked_warped_image.path = warped_image.path
         # optionally return the transform
         if return_transform:
@@ -1042,7 +1197,7 @@ class MaskedImage(Image):
         else:
             return masked_warped_image
 
-    def normalize_std(self, mode='all', limit_to_mask=True):
+    def normalize_std(self, mode="all", limit_to_mask=True):
         r"""
         Returns a copy of this image normalized such that it's pixel values
         have zero mean and unit variance.
@@ -1064,15 +1219,16 @@ class MaskedImage(Image):
         image : ``type(self)``
             A copy of this image, normalized.
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .normalize_std() instead (features package).',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .normalize_std() instead (features package).",
+            MenpoDeprecationWarning,
+        )
 
-        return self._normalize(np.std, mode=mode,
-                               limit_to_mask=limit_to_mask)
+        return self._normalize(np.std, mode=mode, limit_to_mask=limit_to_mask)
 
-    def normalize_norm(self, mode='all', limit_to_mask=True, **kwargs):
+    def normalize_norm(self, mode="all", limit_to_mask=True, **kwargs):
         r"""
         Returns a copy of this image normalized such that it's pixel values
         have zero mean and its norm equals 1.
@@ -1094,19 +1250,21 @@ class MaskedImage(Image):
         image : ``type(self)``
             A copy of this image, normalized.
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .normalize_norm() instead (features package).',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .normalize_norm() instead (features package).",
+            MenpoDeprecationWarning,
+        )
 
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
-        return self._normalize(scale_func, mode=mode,
-                               limit_to_mask=limit_to_mask)
+        return self._normalize(scale_func, mode=mode, limit_to_mask=limit_to_mask)
 
-    def _normalize(self, scale_func, mode='all', limit_to_mask=True):
+    def _normalize(self, scale_func, mode="all", limit_to_mask=True):
         from menpo.feature import normalize
+
         if limit_to_mask:
             pixels = self
         else:
@@ -1119,8 +1277,9 @@ class MaskedImage(Image):
         else:
             return new_img.as_masked(copy=False, mask=self.mask.copy())
 
-    def constrain_mask_to_landmarks(self, group=None, batch_size=None,
-                                    point_in_pointcloud='pwa'):
+    def constrain_mask_to_landmarks(
+        self, group=None, batch_size=None, point_in_pointcloud="pwa"
+    ):
         r"""
         Returns a copy of this image whereby the mask is restricted to be equal
         to the convex hull around the chosen landmarks.
@@ -1168,8 +1327,10 @@ class MaskedImage(Image):
         """
         copy = self.copy()
         copy.mask = copy.mask.constrain_to_pointcloud(
-            copy.landmarks[group], batch_size=batch_size,
-            point_in_pointcloud=point_in_pointcloud)
+            copy.landmarks[group],
+            batch_size=batch_size,
+            point_in_pointcloud=point_in_pointcloud,
+        )
         return copy
 
     def build_mask_around_landmarks(self, patch_shape, group=None):
@@ -1177,15 +1338,17 @@ class MaskedImage(Image):
         Deprecated - please use the equivalent
         `constrain_mask_to_patches_around_landmarks` method.
         """
-        warn('This method is no longer supported and will be removed in a '
-             'future version of Menpo. '
-             'Use .constrain_mask_to_patches_around_landmarks() instead.',
-             MenpoDeprecationWarning)
+        warn(
+            "This method is no longer supported and will be removed in a "
+            "future version of Menpo. "
+            "Use .constrain_mask_to_patches_around_landmarks() instead.",
+            MenpoDeprecationWarning,
+        )
         return self.constrain_mask_to_patches_around_landmarks(
-            patch_shape=patch_shape, group=group)
+            patch_shape=patch_shape, group=group
+        )
 
-    def constrain_mask_to_patches_around_landmarks(self, patch_shape,
-                                                   group=None):
+    def constrain_mask_to_patches_around_landmarks(self, patch_shape, group=None):
         r"""
         Returns a copy of this image whereby the mask is restricted to be
         patches around each landmark in the chosen landmark group. The
@@ -1212,8 +1375,9 @@ class MaskedImage(Image):
         # temporarily set all mask values to False
         copy.mask.pixels[:] = False
         # create a patches array of the correct size, full of True values
-        patches = np.ones((pc.n_points, 1, 1, int(patch_shape[0]),
-                           int(patch_shape[1])), dtype=np.bool)
+        patches = np.ones(
+            (pc.n_points, 1, 1, int(patch_shape[0]), int(patch_shape[1])), dtype=np.bool
+        )
         # set True patches around pointcloud centers
         copy.mask = copy.mask.set_patches(patches, pc)
         return copy
@@ -1305,11 +1469,21 @@ class MaskedImage(Image):
         image.mask = BooleanImage(dilated_mask)
         return image
 
-    def rasterize_landmarks(self, group=None, render_lines=True, line_style='-',
-                            line_colour='b', line_width=1, render_markers=True,
-                            marker_style='o', marker_size=1,
-                            marker_face_colour='b', marker_edge_colour='b',
-                            marker_edge_width=1, backend='matplotlib'):
+    def rasterize_landmarks(
+        self,
+        group=None,
+        render_lines=True,
+        line_style="-",
+        line_colour="b",
+        line_width=1,
+        render_markers=True,
+        marker_style="o",
+        marker_size=1,
+        marker_face_colour="b",
+        marker_edge_colour="b",
+        marker_edge_width=1,
+        backend="matplotlib",
+    ):
         r"""
         This method provides the ability to rasterize 2D landmarks onto the
         image. The returned image has the specified landmark groups rasterized
@@ -1373,15 +1547,23 @@ class MaskedImage(Image):
             Only RGB (3-channel) or Greyscale (1-channel) images are supported.
         """
         from .rasterize import rasterize_landmarks_2d
+
         # Ensure that the image is ALWAYS masked - to make it consistent
         # between backends - the background will be black. as_unmasked should be
         # used to fiddle with the background colour.
         im = self.as_unmasked(copy=True, fill=0)
         return rasterize_landmarks_2d(
-            im, group=group, render_lines=render_lines,
-            line_style=line_style, line_colour=line_colour,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            im,
+            group=group,
+            render_lines=render_lines,
+            line_style=line_style,
+            line_colour=line_colour,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, backend=backend)
+            marker_edge_width=marker_edge_width,
+            backend=backend,
+        )

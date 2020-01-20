@@ -44,17 +44,14 @@ def gradient(pixels):
     if pixels.dtype == np.uint8:
         raise TypeError("Attempting to take the gradient on a uint8 image.")
     n_dims = pixels.ndim - 1
-    grad_per_dim_per_channel = [np.gradient(g, edge_order=1)
-                                for g in pixels]
+    grad_per_dim_per_channel = [np.gradient(g, edge_order=1) for g in pixels]
     # Flatten out the separate dims
-    grad_per_channel = list(itertools.chain.from_iterable(
-        grad_per_dim_per_channel))
+    grad_per_channel = list(itertools.chain.from_iterable(grad_per_dim_per_channel))
     # Add a channel axis for broadcasting
     grad_per_channel = [g[None, ...] for g in grad_per_channel]
 
     # Permute the list so it is first axis, second axis, etc
-    grad_per_channel = [grad_per_channel[i::n_dims]
-                        for i in range(n_dims)]
+    grad_per_channel = [grad_per_channel[i::n_dims] for i in range(n_dims)]
     grad_per_channel = list(itertools.chain.from_iterable(grad_per_channel))
 
     # Concatenate gradient list into an array (the new_image)
@@ -138,8 +135,10 @@ def igo(pixels, double_angles=False, verbose=False):
     """
     # check number of dimensions
     if len(pixels.shape) != 3:
-        raise ValueError('IGOs only work on 2D images. Expects image data '
-                         'to be 3D, channels + shape.')
+        raise ValueError(
+            "IGOs only work on 2D images. Expects image data "
+            "to be 3D, channels + shape."
+        )
     n_img_chnls = pixels.shape[0]
     # feature channels per image channel
     feat_chnls = 2
@@ -151,19 +150,19 @@ def igo(pixels, double_angles=False, verbose=False):
     # compute angles
     grad_orient = np.angle(grad[:n_img_chnls] + 1j * grad[n_img_chnls:])
     # compute igo image
-    igo_pixels = np.empty((n_img_chnls * feat_chnls,
-                           pixels.shape[1], pixels.shape[2]),
-                          dtype=pixels.dtype)
+    igo_pixels = np.empty(
+        (n_img_chnls * feat_chnls, pixels.shape[1], pixels.shape[2]), dtype=pixels.dtype
+    )
 
     if double_angles:
         dbl_grad_orient = 2 * grad_orient
         # y angles
         igo_pixels[:n_img_chnls] = np.sin(grad_orient)
-        igo_pixels[n_img_chnls:n_img_chnls * 2] = np.sin(dbl_grad_orient)
+        igo_pixels[n_img_chnls : n_img_chnls * 2] = np.sin(dbl_grad_orient)
 
         # x angles
-        igo_pixels[n_img_chnls * 2:n_img_chnls * 3] = np.cos(grad_orient)
-        igo_pixels[n_img_chnls * 3:] = np.cos(dbl_grad_orient)
+        igo_pixels[n_img_chnls * 2 : n_img_chnls * 3] = np.cos(grad_orient)
+        igo_pixels[n_img_chnls * 3 :] = np.cos(dbl_grad_orient)
     else:
         igo_pixels[:n_img_chnls] = np.sin(grad_orient)  # y
         igo_pixels[n_img_chnls:] = np.cos(grad_orient)  # x
@@ -172,11 +171,14 @@ def igo(pixels, double_angles=False, verbose=False):
     if verbose:
         info_str = "IGO Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[2], pixels.shape[1], n_img_chnls)
+            info_str, pixels.shape[2], pixels.shape[1], n_img_chnls
+        )
         info_str = "{}  - Double angles are {}.\n".format(
-            info_str, 'enabled' if double_angles else 'disabled')
+            info_str, "enabled" if double_angles else "disabled"
+        )
         info_str = "{}Output image size {}W x {}H with {} channels.".format(
-            info_str, igo_pixels.shape[2], igo_pixels.shape[1], n_img_chnls)
+            info_str, igo_pixels.shape[2], igo_pixels.shape[1], n_img_chnls
+        )
         print(info_str)
     return igo_pixels
 
@@ -216,8 +218,10 @@ def es(pixels, verbose=False):
     """
     # check number of dimensions
     if len(pixels.shape) != 3:
-        raise ValueError('ES features only work on 2D images. Expects '
-                         'image data to be 3D, channels + shape.')
+        raise ValueError(
+            "ES features only work on 2D images. Expects "
+            "image data to be 3D, channels + shape."
+        )
     n_img_chnls = pixels.shape[0]
     # feature channels per image channel
     feat_channels = 2
@@ -227,9 +231,10 @@ def es(pixels, verbose=False):
     grad_abs = np.abs(grad[:n_img_chnls] + 1j * grad[n_img_chnls:])
     # compute es image
     grad_abs = grad_abs + np.median(grad_abs)
-    es_pixels = np.empty((pixels.shape[0] * feat_channels,
-                          pixels.shape[1], pixels.shape[2]),
-                         dtype=pixels.dtype)
+    es_pixels = np.empty(
+        (pixels.shape[0] * feat_channels, pixels.shape[1], pixels.shape[2]),
+        dtype=pixels.dtype,
+    )
 
     es_pixels[:n_img_chnls] = grad[:n_img_chnls] / grad_abs
     es_pixels[n_img_chnls:] = grad[n_img_chnls:] / grad_abs
@@ -238,16 +243,28 @@ def es(pixels, verbose=False):
     if verbose:
         info_str = "ES Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[2], pixels.shape[1], n_img_chnls)
+            info_str, pixels.shape[2], pixels.shape[1], n_img_chnls
+        )
         info_str = "{}Output image size {}W x {}H with {} channels.".format(
-            info_str, es_pixels.shape[2], es_pixels.shape[1], n_img_chnls)
+            info_str, es_pixels.shape[2], es_pixels.shape[1], n_img_chnls
+        )
         print(info_str)
     return es_pixels
 
 
 @ndfeature
-def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
-          normalization='l1', sigmas=None, ring_radii=None, verbose=False):
+def daisy(
+    pixels,
+    step=1,
+    radius=15,
+    rings=2,
+    histograms=2,
+    orientations=8,
+    normalization="l1",
+    sigmas=None,
+    ring_radii=None,
+    verbose=False,
+):
     r"""
     Extracts Daisy features from the input image. The output image has ``N * C``
     number of channels, where ``N`` is the number of channels of the original
@@ -319,9 +336,12 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     from menpo.external.skimage._daisy import _daisy
 
     # Parse options
-    if sigmas is not None and ring_radii is not None \
-            and len(sigmas) - 1 != len(ring_radii):
-        raise ValueError('`len(sigmas)-1 != len(ring_radii)`')
+    if (
+        sigmas is not None
+        and ring_radii is not None
+        and len(sigmas) - 1 != len(ring_radii)
+    ):
+        raise ValueError("`len(sigmas)-1 != len(ring_radii)`")
     if ring_radii is not None:
         rings = len(ring_radii)
         radius = ring_radii[-1]
@@ -332,41 +352,53 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     if ring_radii is None:
         ring_radii = [radius * (i + 1) / float(rings) for i in range(rings)]
     if normalization is None:
-        normalization = 'off'
-    if normalization not in ['l1', 'l2', 'daisy', 'off']:
-        raise ValueError('Invalid normalization method.')
+        normalization = "off"
+    if normalization not in ["l1", "l2", "daisy", "off"]:
+        raise ValueError("Invalid normalization method.")
 
     # Compute daisy features
-    daisy_descriptor = _daisy(pixels, step=step, radius=radius, rings=rings,
-                              histograms=histograms, orientations=orientations,
-                              normalization=normalization, sigmas=sigmas,
-                              ring_radii=ring_radii)
+    daisy_descriptor = _daisy(
+        pixels,
+        step=step,
+        radius=radius,
+        rings=rings,
+        histograms=histograms,
+        orientations=orientations,
+        normalization=normalization,
+        sigmas=sigmas,
+        ring_radii=ring_radii,
+    )
 
     # print information
     if verbose:
         info_str = "Daisy Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[2], pixels.shape[1], pixels.shape[0])
+            info_str, pixels.shape[2], pixels.shape[1], pixels.shape[0]
+        )
         info_str = "{}  - Sampling step is {}.\n".format(info_str, step)
-        info_str = "{}  - Radius of {} pixels, {} rings and {} histograms " \
-                   "with {} orientations.\n".format(
-            info_str, radius, rings, histograms, orientations)
-        if not normalization == 'off':
-            info_str = "{}  - Using {} normalization.\n".format(info_str,
-                                                                normalization)
+        info_str = (
+            "{}  - Radius of {} pixels, {} rings and {} histograms "
+            "with {} orientations.\n".format(
+                info_str, radius, rings, histograms, orientations
+            )
+        )
+        if not normalization == "off":
+            info_str = "{}  - Using {} normalization.\n".format(info_str, normalization)
         else:
             info_str = "{}  - No normalization emplyed.\n".format(info_str)
         info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, daisy_descriptor.shape[2], daisy_descriptor.shape[1],
-            daisy_descriptor.shape[0])
+            info_str,
+            daisy_descriptor.shape[2],
+            daisy_descriptor.shape[1],
+            daisy_descriptor.shape[0],
+        )
         print(info_str)
 
     return daisy_descriptor
 
 
 @imgfeature
-def normalize(img, scale_func=None, mode='all',
-              error_on_divide_by_zero=True):
+def normalize(img, scale_func=None, mode="all", error_on_divide_by_zero=True):
     r"""
     Normalize the pixel values via mean centering and an optional scaling. By
     default the scaling will be ``1.0``. The ``mode`` parameter selects
@@ -404,38 +436,44 @@ def normalize(img, scale_func=None, mode='all',
         ``True``.
     """
     if scale_func is None:
+
         def scale_func(_, axis=None):
             return np.array([1.0])
 
     pixels = img.as_vector(keep_channels=True)
 
-    if mode == 'all':
+    if mode == "all":
         centered_pixels = pixels - np.mean(pixels)
         scale_factor = scale_func(centered_pixels)
-    elif mode == 'per_channel':
+    elif mode == "per_channel":
         centered_pixels = pixels - np.mean(pixels, axis=1, keepdims=True)
         scale_factor = scale_func(centered_pixels, axis=1).reshape([-1, 1])
     else:
-        raise ValueError("Supported modes are {{'all', 'per_channel'}} - '{}' "
-                         "is not known".format(mode))
+        raise ValueError(
+            "Supported modes are {{'all', 'per_channel'}} - '{}' "
+            "is not known".format(mode)
+        )
 
     zero_denom = (scale_factor == 0).ravel()
     any_non_zero = np.any(zero_denom)
     if error_on_divide_by_zero and any_non_zero:
         raise ValueError("Computed scale factor cannot be 0.0")
     elif any_non_zero:
-        warnings.warn('One or more the scale factors are 0.0 and thus these'
-                      'entries will be skipped during normalization.')
+        warnings.warn(
+            "One or more the scale factors are 0.0 and thus these"
+            "entries will be skipped during normalization."
+        )
         non_zero_denom = ~zero_denom
-        centered_pixels[non_zero_denom] = (centered_pixels[non_zero_denom] /
-                                           scale_factor[non_zero_denom])
+        centered_pixels[non_zero_denom] = (
+            centered_pixels[non_zero_denom] / scale_factor[non_zero_denom]
+        )
         return img.from_vector(centered_pixels)
     else:
         return img.from_vector(centered_pixels / scale_factor)
 
 
 @ndfeature
-def normalize_norm(pixels, mode='all', error_on_divide_by_zero=True):
+def normalize_norm(pixels, mode="all", error_on_divide_by_zero=True):
     r"""
     Normalize the pixels to be mean centred and have unit norm. The ``mode``
     parameter selects whether the normalisation is computed across all pixels in
@@ -471,12 +509,16 @@ def normalize_norm(pixels, mode='all', error_on_divide_by_zero=True):
     def unit_norm(x, axis=None):
         return np.linalg.norm(x, axis=axis)
 
-    return normalize(pixels, scale_func=unit_norm, mode=mode,
-                     error_on_divide_by_zero=error_on_divide_by_zero)
+    return normalize(
+        pixels,
+        scale_func=unit_norm,
+        mode=mode,
+        error_on_divide_by_zero=error_on_divide_by_zero,
+    )
 
 
 @ndfeature
-def normalize_std(pixels, mode='all', error_on_divide_by_zero=True):
+def normalize_std(pixels, mode="all", error_on_divide_by_zero=True):
     r"""
     Normalize the pixels to be mean centred and have unit standard deviation.
     The ``mode`` parameter selects whether the normalisation is computed across
@@ -512,12 +554,16 @@ def normalize_std(pixels, mode='all', error_on_divide_by_zero=True):
     def unit_std(x, axis=None):
         return np.std(x, axis=axis)
 
-    return normalize(pixels, scale_func=unit_std, mode=mode,
-                     error_on_divide_by_zero=error_on_divide_by_zero)
+    return normalize(
+        pixels,
+        scale_func=unit_std,
+        mode=mode,
+        error_on_divide_by_zero=error_on_divide_by_zero,
+    )
 
 
 @ndfeature
-def normalize_var(pixels, mode='all', error_on_divide_by_zero=True):
+def normalize_var(pixels, mode="all", error_on_divide_by_zero=True):
     r"""
     Normalize the pixels to be mean centred and normalize according
     to the variance.
@@ -554,8 +600,12 @@ def normalize_var(pixels, mode='all', error_on_divide_by_zero=True):
     def unit_var(x, axis=None):
         return np.var(x, axis=axis)
 
-    return normalize(pixels, scale_func=unit_var, mode=mode,
-                     error_on_divide_by_zero=error_on_divide_by_zero)
+    return normalize(
+        pixels,
+        scale_func=unit_var,
+        mode=mode,
+        error_on_divide_by_zero=error_on_divide_by_zero,
+    )
 
 
 @ndfeature

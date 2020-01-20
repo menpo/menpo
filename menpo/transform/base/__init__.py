@@ -104,9 +104,12 @@ class Transform(Copyable):
         For internal performance-specific uses, see `_apply_inplace()`.
 
         """
-        warnings.warn('the public API for inplace operations is deprecated '
-                      'and will be removed in a future version of Menpo. '
-                      'Use .apply() instead.', MenpoDeprecationWarning)
+        warnings.warn(
+            "the public API for inplace operations is deprecated "
+            "and will be removed in a future version of Menpo. "
+            "Use .apply() instead.",
+            MenpoDeprecationWarning,
+        )
         return self._apply_inplace(*args, **kwargs)
 
     def _apply_inplace(self, x, **kwargs):
@@ -138,8 +141,9 @@ class Transform(Copyable):
         try:
             x._transform_inplace(transform)
         except AttributeError:
-            raise ValueError('apply_inplace can only be used on Transformable'
-                             ' objects.')
+            raise ValueError(
+                "apply_inplace can only be used on Transformable" " objects."
+            )
 
     def apply(self, x, batch_size=None, **kwargs):
         r"""

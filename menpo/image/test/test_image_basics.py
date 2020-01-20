@@ -14,7 +14,7 @@ from menpo.transform import UniformScale, Translation
 def test_image_as_masked():
     img = Image(np.random.rand(3, 3, 1), copy=False)
     m_img = img.as_masked()
-    assert(type(m_img) == MaskedImage)
+    assert type(m_img) == MaskedImage
     assert_allclose(m_img.pixels, img.pixels)
 
 
@@ -32,7 +32,7 @@ def test_image_no_nan_values():
 def test_masked_image_as_unmasked():
     m_img = MaskedImage(np.random.rand(1, 3, 3), copy=False)
     img = m_img.as_unmasked()
-    assert(type(img) == Image)
+    assert type(img) == Image
     assert_allclose(m_img.pixels, img.pixels)
 
 
@@ -40,7 +40,7 @@ def test_masked_image_as_unmasked_fill():
     m_img = MaskedImage(np.random.rand(1, 3, 3), copy=False)
     m_img.mask.pixels[0, 0, 0] = False
     img = m_img.as_unmasked(fill=8)
-    assert(type(img) == Image)
+    assert type(img) == Image
     assert_allclose(m_img.pixels[0, 1:, 1:], img.pixels[0, 1:, 1:])
     assert_allclose(img.pixels[0, 0, 0], 8.0)
 
@@ -49,7 +49,7 @@ def test_masked_image_as_unmasked_fill_tuple():
     m_img = MaskedImage(np.random.rand(3, 3, 3), copy=False)
     m_img.mask.pixels[0, 0, 0] = False
     img = m_img.as_unmasked(fill=(1, 2, 3))
-    assert(type(img) == Image)
+    assert type(img) == Image
     assert_allclose(m_img.pixels[0, 1:, 1:], img.pixels[0, 1:, 1:])
     assert_allclose(img.pixels[:, 0, 0], (1, 2, 3))
 
@@ -63,7 +63,7 @@ def test_boolean_image_as_masked_raises_not_implemented_error():
 def test_warp_to_shape_preserves_path():
     bb = menpo.io.import_builtin_asset.breakingbad_jpg()
     bb2 = bb.rescale(0.1)
-    assert hasattr(bb2, 'path')
+    assert hasattr(bb2, "path")
     assert bb2.path == bb.path
 
 
@@ -71,15 +71,15 @@ def test_warp_to_mask_preserves_path():
     bb = menpo.io.import_builtin_asset.breakingbad_jpg()
     no_op = UniformScale(1.0, n_dims=2)
     bb2 = bb.warp_to_mask(BooleanImage.init_blank((10, 10)), no_op)
-    assert hasattr(bb2, 'path')
+    assert hasattr(bb2, "path")
     assert bb2.path == bb.path
 
 
 def test_warp_to_shape_boolean_preserves_path():
     i1 = BooleanImage.init_blank((10, 10))
-    i1.path = Path('.')
+    i1.path = Path(".")
     i2 = i1.rescale(0.8)
-    assert hasattr(i2, 'path')
+    assert hasattr(i2, "path")
     assert i2.path == i1.path
 
 
@@ -115,7 +115,7 @@ def test_init_from_pointcloud_return_transform():
 
 def test_init_from_pointcloud_attach_group():
     pc = PointCloud.init_2d_grid((10, 10))
-    im = Image.init_from_pointcloud(pc, group='test')
+    im = Image.init_from_pointcloud(pc, group="test")
     assert im.shape == (9, 9)
     assert im.n_landmark_groups == 1
 
@@ -139,9 +139,9 @@ def test_bounds_3d():
 
 def test_constrain_landmarks_to_bounds():
     im = Image.init_blank((10, 10))
-    im.landmarks['test'] = PointCloud.init_2d_grid((20, 20))
+    im.landmarks["test"] = PointCloud.init_2d_grid((20, 20))
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
+        warnings.simplefilter("ignore")
         im.constrain_landmarks_to_bounds()
     assert not im.has_landmarks_outside_bounds()
-    assert_allclose(im.landmarks['test'].bounds(), im.bounds())
+    assert_allclose(im.landmarks["test"].bounds(), im.bounds())

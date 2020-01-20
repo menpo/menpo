@@ -11,10 +11,18 @@ except ImportError as e:
 
 
 @winitfeature
-def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
-          num_bins_horizontal=2, num_bins_vertical=2, num_or_bins=9,
-          cell_size_horizontal=6, cell_size_vertical=6, fast=True,
-          verbose=False):
+def dsift(
+    pixels,
+    window_step_horizontal=1,
+    window_step_vertical=1,
+    num_bins_horizontal=2,
+    num_bins_vertical=2,
+    num_or_bins=9,
+    cell_size_horizontal=6,
+    cell_size_vertical=6,
+    fast=True,
+    verbose=False,
+):
     r"""
     Computes a 2-dimensional dense SIFT features image with ``C`` number of
     channels, where
@@ -76,48 +84,74 @@ def dsift(pixels, window_step_horizontal=1, window_step_vertical=1,
     # with descriptor norm, or energy, before contrast normalization.
     # This information can be used to suppress low contrast descriptors.
     centers, output = cyvlfeat_dsift(
-        pixels[0], step=[window_step_vertical, window_step_horizontal],
-        size=[cell_size_vertical, cell_size_horizontal], bounds=None,
-        norm=False, fast=fast, float_descriptors=True,
+        pixels[0],
+        step=[window_step_vertical, window_step_horizontal],
+        size=[cell_size_vertical, cell_size_horizontal],
+        bounds=None,
+        norm=False,
+        fast=fast,
+        float_descriptors=True,
         geometry=(num_bins_vertical, num_bins_horizontal, num_or_bins),
-        verbose=False)
+        verbose=False,
+    )
 
     # the output shape can be calculated from looking at the range of
     # centres / the window step size in each dimension. Note that cyvlfeat
     # returns x, y centres.
-    shape = (((centers[-1, :] - centers[0, :]) /
-              [window_step_vertical, window_step_horizontal]) + 1)
+    shape = (
+        (centers[-1, :] - centers[0, :])
+        / [window_step_vertical, window_step_horizontal]
+    ) + 1
     shape = shape.astype(np.int)
 
     # print information
     if verbose:
-        info_str = "Dense SIFT features:\n" \
-                   "  - Input image is {}W x {}H with {} channels.\n" \
-                   "  - Sampling step of ({}W, {}H).\n" \
-                   "  - {}W x {}H spatial bins and {} orientation bins.\n" \
-                   "  - Cell size of {}W x {}H pixels.\n".format(
-                   pixels.shape[2], pixels.shape[1], pixels.shape[0],
-                   window_step_horizontal, window_step_vertical,
-                   num_bins_horizontal, num_bins_vertical, num_or_bins,
-                   cell_size_horizontal, cell_size_vertical)
+        info_str = (
+            "Dense SIFT features:\n"
+            "  - Input image is {}W x {}H with {} channels.\n"
+            "  - Sampling step of ({}W, {}H).\n"
+            "  - {}W x {}H spatial bins and {} orientation bins.\n"
+            "  - Cell size of {}W x {}H pixels.\n".format(
+                pixels.shape[2],
+                pixels.shape[1],
+                pixels.shape[0],
+                window_step_horizontal,
+                window_step_vertical,
+                num_bins_horizontal,
+                num_bins_vertical,
+                num_or_bins,
+                cell_size_horizontal,
+                cell_size_vertical,
+            )
+        )
         if fast:
             info_str += "  - Fast mode is enabled.\n"
         info_str += "Output image size {}W x {}H x {}.".format(
-            int(shape[1]), int(shape[0]), output.shape[0])
+            int(shape[1]), int(shape[0]), output.shape[0]
+        )
         print(info_str)
 
     # return SIFT and centers in the correct form
-    return (np.require(np.rollaxis(output.reshape((shape[0], shape[1], -1)),
-                                   -1),
-                       dtype=np.double, requirements=['C']),
-            np.require(centers.reshape((shape[0], shape[1], -1)),
-                       dtype=np.int))
+    return (
+        np.require(
+            np.rollaxis(output.reshape((shape[0], shape[1], -1)), -1),
+            dtype=np.double,
+            requirements=["C"],
+        ),
+        np.require(centers.reshape((shape[0], shape[1], -1)), dtype=np.int),
+    )
 
 
 # A predefined method for a 'faster' dsift method
-fast_dsift = partial_doc(dsift, fast=True, cell_size_vertical=5,
-                         cell_size_horizontal=5, num_bins_horizontal=1,
-                         num_bins_vertical=1, num_or_bins=8)
+fast_dsift = partial_doc(
+    dsift,
+    fast=True,
+    cell_size_vertical=5,
+    cell_size_horizontal=5,
+    num_bins_horizontal=1,
+    num_bins_vertical=1,
+    num_or_bins=8,
+)
 
 
 # Predefined dsift that returns a 128d vector
@@ -144,18 +178,24 @@ def vector_128_dsift(x, dtype=np.float32):
     if not isinstance(x, np.ndarray):
         x = x.pixels
     if x.shape[-1] != x.shape[-2]:
-        raise ValueError('This feature only works with square images '
-                         'i.e. width == height')
+        raise ValueError(
+            "This feature only works with square images " "i.e. width == height"
+        )
     patch_shape = x.shape[-1]
     n_bins = 4
     c_size = patch_shape // n_bins
     x = normalize_pixels_range(x, error_on_unknown_type=False)
-    return dsift(x,
-                 window_step_horizontal=patch_shape,
-                 window_step_vertical=patch_shape,
-                 num_bins_horizontal=n_bins, num_bins_vertical=n_bins,
-                 cell_size_horizontal=c_size, cell_size_vertical=c_size,
-                 num_or_bins=8, fast=True).astype(dtype)
+    return dsift(
+        x,
+        window_step_horizontal=patch_shape,
+        window_step_vertical=patch_shape,
+        num_bins_horizontal=n_bins,
+        num_bins_vertical=n_bins,
+        cell_size_horizontal=c_size,
+        cell_size_vertical=c_size,
+        num_or_bins=8,
+        fast=True,
+    ).astype(dtype)
 
 
 # Predefined dsift that returns a 128d vector normalized by the hellinger norm
@@ -191,5 +231,5 @@ def hellinger_vector_128_dsift(x, dtype=np.float32):
            should know to improve object retrieval.", CVPR, 2012.
     """
     h = vector_128_dsift(x, dtype=dtype)
-    h /= (h.sum(axis=0) + 1e-15)
+    h /= h.sum(axis=0) + 1e-15
     return np.sqrt(h)

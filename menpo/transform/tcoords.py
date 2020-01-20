@@ -29,20 +29,18 @@ def tcoords_to_image_coords(image_shape):
         to image coordinates.
     """
     # flip the 'y' st 1 -> 0 and 0 -> 1, moving the axis to upper left
-    invert_unit_y = Homogeneous(np.array(
-        [[1., 0., 0.],
-         [0., -1., 1.],
-         [0., 0., 1.]]))
+    invert_unit_y = Homogeneous(
+        np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 1.0], [0.0, 0.0, 1.0]])
+    )
 
     # flip axis 0 and axis 1 so indexing is as expected
-    flip_xy_yx = Homogeneous(np.array(
-        [[0., 1., 0.],
-         [1., 0., 0.],
-         [0., 0., 1.]]))
+    flip_xy_yx = Homogeneous(
+        np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    )
 
-    return (invert_unit_y
-            .compose_before(flip_xy_yx)
-            .compose_before(Scale(np.array(image_shape) - 1)))
+    return invert_unit_y.compose_before(flip_xy_yx).compose_before(
+        Scale(np.array(image_shape) - 1)
+    )
 
 
 def image_coords_to_tcoords(image_shape):

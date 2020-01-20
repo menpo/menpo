@@ -1,3 +1,2 @@
 include LICENSE.txt
 include AUTHORS.txt
-include versioneer.py

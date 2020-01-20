@@ -42,7 +42,7 @@ class ColouredTriMesh(TriMesh):
             colours_handle = colours.copy()
 
         if points.shape[0] != colours_handle.shape[0]:
-            raise ValueError('Must provide a colour per-vertex.')
+            raise ValueError("Must provide a colour per-vertex.")
         self.colours = colours_handle
 
     @classmethod
@@ -84,8 +84,7 @@ class ColouredTriMesh(TriMesh):
         # Ensure that the colours are copied
         if colours is not None:
             colours = colours.copy()
-        return ColouredTriMesh(points, trilist=trilist, colours=colours,
-                               copy=False)
+        return ColouredTriMesh(points, trilist=trilist, colours=colours, copy=False)
 
     @classmethod
     def init_from_depth_image(cls, depth_image, colours=None):
@@ -121,11 +120,12 @@ class ColouredTriMesh(TriMesh):
         new_tmesh = cls.init_2d_grid(depth_image.shape, colours=colours)
         if isinstance(depth_image, MaskedImage):
             new_tmesh = new_tmesh.from_mask(depth_image.mask.as_vector())
-        return cls(np.hstack([new_tmesh.points,
-                              depth_image.as_vector(keep_channels=True).T]),
-                   colours=new_tmesh.colours,
-                   trilist=new_tmesh.trilist,
-                   copy=False)
+        return cls(
+            np.hstack([new_tmesh.points, depth_image.as_vector(keep_channels=True).T]),
+            colours=new_tmesh.colours,
+            trilist=new_tmesh.trilist,
+            copy=False,
+        )
 
     @property
     def n_channels(self):
@@ -154,9 +154,11 @@ class ColouredTriMesh(TriMesh):
             A new mesh that has been masked.
         """
         if mask.shape[0] != self.n_points:
-            raise ValueError('Mask must be a 1D boolean array of the same '
-                             'number of entries as points in this '
-                             'ColouredTriMesh.')
+            raise ValueError(
+                "Mask must be a 1D boolean array of the same "
+                "number of entries as points in this "
+                "ColouredTriMesh."
+            )
 
         ctm = self.copy()
         if np.all(mask):  # Fast path for all true
@@ -171,7 +173,7 @@ class ColouredTriMesh(TriMesh):
             ctm.colours = ctm.colours[isolated_mask, :]
             return ctm
 
-    def clip_texture(self, range=(0., 1.)):
+    def clip_texture(self, range=(0.0, 1.0)):
         """
         Method that returns a copy of the object with the coloured values
         clipped in range ``(0, 1)``.
@@ -220,12 +222,25 @@ class ColouredTriMesh(TriMesh):
         instance.colours = ((colours - min_) * sf) + minimum
         return instance
 
-    def _view_3d(self, figure_id=None, new_figure=True, render_texture=True,
-                 mesh_type='surface', ambient_light=0.0, specular_light=0.0,
-                 colour='r', line_width=2, normals=None, normals_colour='k',
-                 normals_line_width=2, normals_marker_style='2darrow',
-                 normals_marker_resolution=8, normals_marker_size=None,
-                 step=None, alpha=1.0):
+    def _view_3d(
+        self,
+        figure_id=None,
+        new_figure=True,
+        render_texture=True,
+        mesh_type="surface",
+        ambient_light=0.0,
+        specular_light=0.0,
+        colour="r",
+        line_width=2,
+        normals=None,
+        normals_colour="k",
+        normals_line_width=2,
+        normals_marker_style="2darrow",
+        normals_marker_resolution=8,
+        normals_marker_size=None,
+        step=None,
+        alpha=1.0,
+    ):
         r"""
         Visualize the Coloured TriMesh in 3D.
 
@@ -303,54 +318,90 @@ class ColouredTriMesh(TriMesh):
         if render_texture:
             try:
                 from menpo3d.visualize import ColouredTriMeshViewer3d
-                renderer = ColouredTriMeshViewer3d(figure_id, new_figure,
-                                                   self.points, self.trilist,
-                                                   self.colours)
+
+                renderer = ColouredTriMeshViewer3d(
+                    figure_id, new_figure, self.points, self.trilist, self.colours
+                )
                 renderer.render(
-                    mesh_type=mesh_type, ambient_light=ambient_light,
-                    specular_light=specular_light, normals=normals,
+                    mesh_type=mesh_type,
+                    ambient_light=ambient_light,
+                    specular_light=specular_light,
+                    normals=normals,
                     normals_colour=normals_colour,
                     normals_line_width=normals_line_width,
                     normals_marker_style=normals_marker_style,
                     normals_marker_resolution=normals_marker_resolution,
-                    normals_marker_size=normals_marker_size, step=step,
-                    alpha=alpha)
+                    normals_marker_size=normals_marker_size,
+                    step=step,
+                    alpha=alpha,
+                )
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import TriMeshViewer3d
-                renderer = TriMeshViewer3d(figure_id, new_figure, self.points,
-                                           self.trilist)
+
+                renderer = TriMeshViewer3d(
+                    figure_id, new_figure, self.points, self.trilist
+                )
                 renderer.render(
-                    mesh_type=mesh_type, line_width=line_width, colour=colour,
-                    normals=normals, normals_colour=normals_colour,
+                    mesh_type=mesh_type,
+                    line_width=line_width,
+                    colour=colour,
+                    normals=normals,
+                    normals_colour=normals_colour,
                     normals_line_width=normals_line_width,
                     normals_marker_style=normals_marker_style,
                     normals_marker_resolution=normals_marker_resolution,
-                    normals_marker_size=normals_marker_size, step=step,
-                    alpha=alpha)
+                    normals_marker_size=normals_marker_size,
+                    step=step,
+                    alpha=alpha,
+                )
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
 
-    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
-                 render_lines=True, line_colour='r', line_style='-',
-                 line_width=1., render_markers=True, marker_style='o',
-                 marker_size=5, marker_face_colour='k', marker_edge_colour='k',
-                 marker_edge_width=1., render_numbering=False,
-                 numbers_horizontal_align='center',
-                 numbers_vertical_align='bottom',
-                 numbers_font_name='sans-serif', numbers_font_size=10,
-                 numbers_font_style='normal', numbers_font_weight='normal',
-                 numbers_font_colour='k', render_axes=True,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(7, 7), label=None, **kwargs):
+    def _view_2d(
+        self,
+        figure_id=None,
+        new_figure=False,
+        image_view=True,
+        render_lines=True,
+        line_colour="r",
+        line_style="-",
+        line_width=1.0,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour="k",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+        label=None,
+        **kwargs,
+    ):
         r"""
         Visualization of the TriMesh in 2D. Currently, explicit coloured TriMesh
         viewing is not supported, and therefore viewing falls back to uncoloured
@@ -486,14 +537,25 @@ class ColouredTriMesh(TriMesh):
             falls back to 2D :map:`TriMesh` viewing.
         """
         import warnings
-        warnings.warn(Warning('2D Viewing of Coloured TriMeshes is not '
-                              'supported, falling back to TriMesh viewing.'))
+
+        warnings.warn(
+            Warning(
+                "2D Viewing of Coloured TriMeshes is not "
+                "supported, falling back to TriMesh viewing."
+            )
+        )
         return TriMesh._view_2d(
-            self, figure_id=figure_id, new_figure=new_figure,
-            image_view=image_view, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            self,
+            figure_id=figure_id,
+            new_figure=new_figure,
+            image_view=image_view,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
             marker_edge_width=marker_edge_width,
@@ -504,9 +566,16 @@ class ColouredTriMesh(TriMesh):
             numbers_font_size=numbers_font_size,
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
-            figure_size=figure_size, label=label)
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+            label=label,
+        )

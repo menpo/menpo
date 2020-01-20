@@ -37,11 +37,11 @@ def grid_tcoords(shape):
     # is an image the same size as the input grid. The meshgrid is made in
     # an ordering that attempts to reduce the amount of copying required but
     # places the texture coordinates in the correct arrangement.
-    tcoords = np.meshgrid(np.linspace(0, 1, num=shape[1]),
-                          np.linspace(1, 0, num=shape[0]),
-                          indexing='xy')
+    tcoords = np.meshgrid(
+        np.linspace(0, 1, num=shape[1]), np.linspace(1, 0, num=shape[0]), indexing="xy"
+    )
     tcoords = np.stack(tcoords, axis=2).reshape([-1, 2])
-    tcoords = np.require(tcoords, requirements=['C'])
+    tcoords = np.require(tcoords, requirements=["C"])
     return tcoords
 
 
@@ -61,12 +61,9 @@ def trilist_to_adjacency_array(trilist):
         The adjacency array including the edges that complete the triangle
         which are implicit in a trilist.
     """
-    wrap_around_adj = np.hstack([trilist[:, -1][..., None],
-                                 trilist[:, 0][..., None]])
+    wrap_around_adj = np.hstack([trilist[:, -1][..., None], trilist[:, 0][..., None]])
     # Build the array of all pairs
-    return np.concatenate([trilist[:, :2],
-                           trilist[:, 1:],
-                           wrap_around_adj])
+    return np.concatenate([trilist[:, :2], trilist[:, 1:], wrap_around_adj])
 
 
 def subsampled_grid_triangulation(shape, subsampling=1):
@@ -104,15 +101,23 @@ def subsampled_grid_triangulation(shape, subsampling=1):
 
     # Bottom-left triangles (right handed)
     tri_down_left = np.concatenate(
-        [indices_grid[:-1, :-1].ravel()[..., None],
-         indices_grid[1:, :-1].ravel()[..., None],
-         indices_grid[1:, 1:].ravel()[..., None]], axis=-1)
+        [
+            indices_grid[:-1, :-1].ravel()[..., None],
+            indices_grid[1:, :-1].ravel()[..., None],
+            indices_grid[1:, 1:].ravel()[..., None],
+        ],
+        axis=-1,
+    )
 
     # Top-right triangles (right handed)
     tri_up_right = np.concatenate(
-        [indices_grid[:-1, :-1].ravel()[..., None],
-         indices_grid[1:, 1:].ravel()[..., None],
-         indices_grid[:-1, 1:].ravel()[..., None]], axis=-1)
+        [
+            indices_grid[:-1, :-1].ravel()[..., None],
+            indices_grid[1:, 1:].ravel()[..., None],
+            indices_grid[:-1, 1:].ravel()[..., None],
+        ],
+        axis=-1,
+    )
 
     return np.vstack([tri_down_left, tri_up_right]).astype(np.uint32)
 
@@ -144,11 +149,13 @@ class TriMesh(PointCloud):
             trilist = Delaunay(points).simplices
         if not copy:
             if not trilist.flags.c_contiguous:
-                warn('The copy flag was NOT honoured. A copy HAS been made. '
-                     'Please ensure the data you pass is C-contiguous.')
-                trilist = np.array(trilist, copy=True, order='C')
+                warn(
+                    "The copy flag was NOT honoured. A copy HAS been made. "
+                    "Please ensure the data you pass is C-contiguous."
+                )
+                trilist = np.array(trilist, copy=True, order="C")
         else:
-            trilist = np.array(trilist, copy=True, order='C')
+            trilist = np.array(trilist, copy=True, order="C")
         self.trilist = trilist
 
     @classmethod
@@ -183,8 +190,11 @@ class TriMesh(PointCloud):
         """
         pc = PointCloud.init_2d_grid(shape, spacing=spacing)
         points = pc.points
-        return cls(points, trilist=subsampled_grid_triangulation(
-            shape, subsampling=1), copy=False)
+        return cls(
+            points,
+            trilist=subsampled_grid_triangulation(shape, subsampling=1),
+            copy=False,
+        )
 
     @classmethod
     def init_from_depth_image(cls, depth_image):
@@ -213,14 +223,14 @@ class TriMesh(PointCloud):
         new_tmesh = cls.init_2d_grid(depth_image.shape)
         if isinstance(depth_image, MaskedImage):
             new_tmesh = new_tmesh.from_mask(depth_image.mask.as_vector())
-        return cls(np.hstack([new_tmesh.points,
-                              depth_image.as_vector(keep_channels=True).T]),
-                   trilist=new_tmesh.trilist,
-                   copy=False)
+        return cls(
+            np.hstack([new_tmesh.points, depth_image.as_vector(keep_channels=True).T]),
+            trilist=new_tmesh.trilist,
+            copy=False,
+        )
 
     def __str__(self):
-        return '{}, n_tris: {}'.format(PointCloud.__str__(self),
-                                       self.n_tris)
+        return "{}, n_tris: {}".format(PointCloud.__str__(self), self.n_tris)
 
     def __add__(self, other):
         r"""
@@ -467,8 +477,10 @@ class TriMesh(PointCloud):
             A new mesh that has been masked.
         """
         if mask.shape[0] != self.n_points:
-            raise ValueError('Mask must be a 1D boolean array of the same '
-                             'number of entries as points in this TriMesh.')
+            raise ValueError(
+                "Mask must be a 1D boolean array of the same "
+                "number of entries as points in this TriMesh."
+            )
 
         tm = self.copy()
         if np.all(mask):  # Fast path for all true
@@ -537,12 +549,15 @@ class TriMesh(PointCloud):
         """
         from .. import PointUndirectedGraph
         from ..graph import _convert_edges_to_symmetric_adjacency_matrix
+
         # Since we have triangles we need the last connection
         # that 'completes' the triangle
         adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
-            trilist_to_adjacency_array(self.trilist), self.points.shape[0])
-        pg = PointUndirectedGraph(self.points, adjacency_matrix, copy=copy,
-                                  skip_checks=skip_checks)
+            trilist_to_adjacency_array(self.trilist), self.points.shape[0]
+        )
+        pg = PointUndirectedGraph(
+            self.points, adjacency_matrix, copy=copy, skip_checks=skip_checks
+        )
         # This is always a copy
         pg.landmarks = self.landmarks
         return pg
@@ -605,8 +620,7 @@ class TriMesh(PointCloud):
         elif self.n_dims == 3:
             return np.linalg.norm(np.cross(ij, ik), axis=1) * 0.5
         else:
-            raise ValueError('tri_areas can only be calculated on a 2D or '
-                             '3D mesh')
+            raise ValueError("tri_areas can only be calculated on a 2D or " "3D mesh")
 
     def mean_tri_area(self):
         r"""The mean area of each triangle face in this :map:`TriMesh`.
@@ -686,9 +700,9 @@ class TriMesh(PointCloud):
             e.g. [AB_1, BC_1, CA_1, AB_2, BC_2, CA_2, ...]
         """
         t = self.points[self.trilist]
-        return np.hstack((t[:, 1] - t[:, 0],
-                          t[:, 2] - t[:, 1],
-                          t[:, 2] - t[:, 0])).reshape(-1, 2)
+        return np.hstack(
+            (t[:, 1] - t[:, 0], t[:, 2] - t[:, 1], t[:, 2] - t[:, 0])
+        ).reshape(-1, 2)
 
     def edge_indices(self):
         r"""An unordered index into points that rebuilds the edges of this
@@ -708,9 +722,7 @@ class TriMesh(PointCloud):
             e.g. [AB_1, BC_1, CA_1, AB_2, BC_2, CA_2, ...]
         """
         tl = self.trilist
-        return np.hstack((tl[:, [0, 1]],
-                          tl[:, [1, 2]],
-                          tl[:, [2, 0]])).reshape(-1, 2)
+        return np.hstack((tl[:, [0, 1]], tl[:, [1, 2]], tl[:, [2, 0]])).reshape(-1, 2)
 
     def unique_edge_indices(self):
         r"""An unordered index into points that rebuilds the unique edges of
@@ -734,7 +746,8 @@ class TriMesh(PointCloud):
         # get a view on the array where each pair is considered by numpy to be
         # one item
         edge_pair_view = np.ascontiguousarray(edge_pairs).view(
-            np.dtype((np.void, edge_pairs.dtype.itemsize * edge_pairs.shape[1])))
+            np.dtype((np.void, edge_pairs.dtype.itemsize * edge_pairs.shape[1]))
+        )
         # Now we can use this view to ask for only unique edges...
         unique_edge_index = np.unique(edge_pair_view, return_index=True)[1]
         # And use that to filter our original list down
@@ -798,23 +811,44 @@ class TriMesh(PointCloud):
         mean_edge_length : ``float``
             The mean length of each edge in this :map:`TriMesh`
         """
-        return np.mean(self.unique_edge_lengths() if unique
-                       else self.edge_lengths())
+        return np.mean(self.unique_edge_lengths() if unique else self.edge_lengths())
 
-    def _view_2d(self, figure_id=None, new_figure=False, image_view=True,
-                 render_lines=True, line_colour='r', line_style='-',
-                 line_width=1., render_markers=True, marker_style='o',
-                 marker_size=5, marker_face_colour='k', marker_edge_colour='k',
-                 marker_edge_width=1., render_numbering=False,
-                 numbers_horizontal_align='center',
-                 numbers_vertical_align='bottom',
-                 numbers_font_name='sans-serif', numbers_font_size=10,
-                 numbers_font_style='normal', numbers_font_weight='normal',
-                 numbers_font_colour='k', render_axes=True,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(7, 7), label=None, **kwargs):
+    def _view_2d(
+        self,
+        figure_id=None,
+        new_figure=False,
+        image_view=True,
+        render_lines=True,
+        line_colour="r",
+        line_style="-",
+        line_width=1.0,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour="k",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+        label=None,
+        **kwargs,
+    ):
         r"""
         Visualization of the TriMesh in 2D.
 
@@ -944,12 +978,16 @@ class TriMesh(PointCloud):
         from menpo.visualize import PointGraphViewer2d
 
         return PointGraphViewer2d(
-            figure_id, new_figure, self.points,
-            trilist_to_adjacency_array(self.trilist)).render(
-            image_view=image_view, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            figure_id, new_figure, self.points, trilist_to_adjacency_array(self.trilist)
+        ).render(
+            image_view=image_view,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
             marker_edge_width=marker_edge_width,
@@ -960,48 +998,84 @@ class TriMesh(PointCloud):
             numbers_font_size=numbers_font_size,
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour, render_axes=render_axes,
-            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
             axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size, label=label)
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+            label=label,
+        )
 
-    def _view_landmarks_2d(self, group=None, with_labels=None,
-                           without_labels=None, figure_id=None,
-                           new_figure=False, image_view=True,
-                           render_lines=True, line_colour='k',
-                           line_style='-', line_width=2,
-                           render_markers=True, marker_style='s', marker_size=7,
-                           marker_face_colour='k', marker_edge_colour='k',
-                           marker_edge_width=1., render_lines_lms=True,
-                           line_colour_lms=None, line_style_lms='-',
-                           line_width_lms=1, render_markers_lms=True,
-                           marker_style_lms='o', marker_size_lms=5,
-                           marker_face_colour_lms=None,
-                           marker_edge_colour_lms=None,
-                           marker_edge_width_lms=1., render_numbering=False,
-                           numbers_horizontal_align='center',
-                           numbers_vertical_align='bottom',
-                           numbers_font_name='sans-serif', numbers_font_size=10,
-                           numbers_font_style='normal',
-                           numbers_font_weight='normal',
-                           numbers_font_colour='k', render_legend=False,
-                           legend_title='', legend_font_name='sans-serif',
-                           legend_font_style='normal', legend_font_size=10,
-                           legend_font_weight='normal',
-                           legend_marker_scale=None, legend_location=2,
-                           legend_bbox_to_anchor=(1.05, 1.),
-                           legend_border_axes_pad=None, legend_n_columns=1,
-                           legend_horizontal_spacing=None,
-                           legend_vertical_spacing=None, legend_border=True,
-                           legend_border_padding=None, legend_shadow=False,
-                           legend_rounded_corners=False, render_axes=False,
-                           axes_font_name='sans-serif', axes_font_size=10,
-                           axes_font_style='normal', axes_font_weight='normal',
-                           axes_x_limits=None, axes_y_limits=None,
-                           axes_x_ticks=None, axes_y_ticks=None,
-                           figure_size=(7, 7)):
+    def _view_landmarks_2d(
+        self,
+        group=None,
+        with_labels=None,
+        without_labels=None,
+        figure_id=None,
+        new_figure=False,
+        image_view=True,
+        render_lines=True,
+        line_colour="k",
+        line_style="-",
+        line_width=2,
+        render_markers=True,
+        marker_style="s",
+        marker_size=7,
+        marker_face_colour="k",
+        marker_edge_colour="k",
+        marker_edge_width=1.0,
+        render_lines_lms=True,
+        line_colour_lms=None,
+        line_style_lms="-",
+        line_width_lms=1,
+        render_markers_lms=True,
+        marker_style_lms="o",
+        marker_size_lms=5,
+        marker_face_colour_lms=None,
+        marker_edge_colour_lms=None,
+        marker_edge_width_lms=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_legend=False,
+        legend_title="",
+        legend_font_name="sans-serif",
+        legend_font_style="normal",
+        legend_font_size=10,
+        legend_font_weight="normal",
+        legend_marker_scale=None,
+        legend_location=2,
+        legend_bbox_to_anchor=(1.05, 1.0),
+        legend_border_axes_pad=None,
+        legend_n_columns=1,
+        legend_horizontal_spacing=None,
+        legend_vertical_spacing=None,
+        legend_border=True,
+        legend_border_padding=None,
+        legend_shadow=False,
+        legend_rounded_corners=False,
+        render_axes=False,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(7, 7),
+    ):
         """
         Visualize the landmarks. This method will appear on the `TriMesh` as
         ``view_landmarks``.
@@ -1236,29 +1310,43 @@ class TriMesh(PointCloud):
             If the landmark manager doesn't contain the provided group label.
         """
         if not self.has_landmarks:
-            raise ValueError('PointGraph does not have landmarks attached, '
-                             'unable to view landmarks.')
-        self_view = self.view(figure_id=figure_id, new_figure=new_figure,
-                              image_view=image_view, figure_size=figure_size,
-                              render_markers=render_markers,
-                              marker_style=marker_style,
-                              marker_size=marker_size,
-                              marker_face_colour=marker_face_colour,
-                              marker_edge_colour=marker_edge_colour,
-                              marker_edge_width=marker_edge_width,
-                              render_lines=render_lines,
-                              line_colour=line_colour, line_style=line_style,
-                              line_width=line_width)
+            raise ValueError(
+                "PointGraph does not have landmarks attached, "
+                "unable to view landmarks."
+            )
+        self_view = self.view(
+            figure_id=figure_id,
+            new_figure=new_figure,
+            image_view=image_view,
+            figure_size=figure_size,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+        )
         # correct group label in legend
         if group is None:
             group = self.landmarks.group_labels[0]
         landmark_view = self.landmarks[group].view(
-            with_labels=with_labels, without_labels=without_labels,
-            figure_id=self_view.figure_id, new_figure=False, group=group,
-            image_view=image_view, render_lines=render_lines_lms,
-            line_colour=line_colour_lms, line_style=line_style_lms,
-            line_width=line_width_lms, render_markers=render_markers_lms,
-            marker_style=marker_style_lms, marker_size=marker_size_lms,
+            with_labels=with_labels,
+            without_labels=without_labels,
+            figure_id=self_view.figure_id,
+            new_figure=False,
+            group=group,
+            image_view=image_view,
+            render_lines=render_lines_lms,
+            line_colour=line_colour_lms,
+            line_style=line_style_lms,
+            line_width=line_width_lms,
+            render_markers=render_markers_lms,
+            marker_style=marker_style_lms,
+            marker_size=marker_size_lms,
             marker_face_colour=marker_face_colour_lms,
             marker_edge_colour=marker_edge_colour_lms,
             marker_edge_width=marker_edge_width_lms,
@@ -1270,7 +1358,8 @@ class TriMesh(PointCloud):
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
             numbers_font_colour=numbers_font_colour,
-            render_legend=render_legend, legend_title=legend_title,
+            render_legend=render_legend,
+            legend_title=legend_title,
             legend_font_name=legend_font_name,
             legend_font_style=legend_font_style,
             legend_font_size=legend_font_size,
@@ -1286,20 +1375,39 @@ class TriMesh(PointCloud):
             legend_border_padding=legend_border_padding,
             legend_shadow=legend_shadow,
             legend_rounded_corners=legend_rounded_corners,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+        )
 
         return landmark_view
 
-    def _view_3d(self, figure_id=None, new_figure=True, mesh_type='wireframe',
-                 line_width=2, colour='r', marker_style='sphere',
-                 marker_size=None, marker_resolution=8, normals=None,
-                 normals_colour='k', normals_line_width=2,
-                 normals_marker_style='2darrow', normals_marker_resolution=8,
-                 normals_marker_size=None, step=None, alpha=1.0):
+    def _view_3d(
+        self,
+        figure_id=None,
+        new_figure=True,
+        mesh_type="wireframe",
+        line_width=2,
+        colour="r",
+        marker_style="sphere",
+        marker_size=None,
+        marker_resolution=8,
+        normals=None,
+        normals_colour="k",
+        normals_line_width=2,
+        normals_marker_style="2darrow",
+        normals_marker_resolution=8,
+        normals_marker_size=None,
+        step=None,
+        alpha=1.0,
+    ):
         r"""
         Visualization of the TriMesh in 3D.
 
@@ -1391,18 +1499,26 @@ class TriMesh(PointCloud):
         """
         try:
             from menpo3d.visualize import TriMeshViewer3d
-            renderer = TriMeshViewer3d(figure_id, new_figure, self.points,
-                                       self.trilist)
+
+            renderer = TriMeshViewer3d(figure_id, new_figure, self.points, self.trilist)
             renderer.render(
-                mesh_type=mesh_type, line_width=line_width, colour=colour,
-                marker_style=marker_style, marker_size=marker_size,
-                marker_resolution=marker_resolution, normals=normals,
+                mesh_type=mesh_type,
+                line_width=line_width,
+                colour=colour,
+                marker_style=marker_style,
+                marker_size=marker_size,
+                marker_resolution=marker_resolution,
+                normals=normals,
                 normals_colour=normals_colour,
                 normals_line_width=normals_line_width,
                 normals_marker_style=normals_marker_style,
                 normals_marker_resolution=normals_marker_resolution,
-                normals_marker_size=normals_marker_size, step=step, alpha=alpha)
+                normals_marker_size=normals_marker_size,
+                step=step,
+                alpha=alpha,
+            )
             return renderer
         except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
+
             raise Menpo3dMissingError(e)

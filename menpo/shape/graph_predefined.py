@@ -1,8 +1,16 @@
 import numpy as np
 import scipy.sparse as sparse
 
-from . import (PointCloud, UndirectedGraph, DirectedGraph, Tree, TriMesh,
-               PointUndirectedGraph, PointDirectedGraph, PointTree)
+from . import (
+    PointCloud,
+    UndirectedGraph,
+    DirectedGraph,
+    Tree,
+    TriMesh,
+    PointUndirectedGraph,
+    PointDirectedGraph,
+    PointTree,
+)
 
 
 def stencil_grid(stencil, shape, dtype=None, format=None):
@@ -116,16 +124,18 @@ def stencil_grid(stencil, shape, dtype=None, format=None):
     shape = tuple(shape)
 
     if not (np.asarray(stencil.shape) % 2 == 1).all():
-        raise ValueError('all stencil dimensions must be odd')
+        raise ValueError("all stencil dimensions must be odd")
 
     if len(shape) != np.ndim(stencil):
-        raise ValueError('stencil dimension must equal number of shape\
-                          dimensions')
+        raise ValueError(
+            "stencil dimension must equal number of shape\
+                          dimensions"
+        )
 
     if min(shape) < 1:
-        raise ValueError('shape dimensions must be positive')
+        raise ValueError("shape dimensions must be positive")
 
-    N_v = np.prod(shape)        # number of vertices in the mesh
+    N_v = np.prod(shape)  # number of vertices in the mesh
     N_s = (stencil != 0).sum()  # number of nonzero stencil entries
 
     # diagonal offsets
@@ -155,7 +165,7 @@ def stencil_grid(stencil, shape, dtype=None, format=None):
                 s[n] = slice(0, i)
                 diag[tuple(s)] = 0
             elif i < 0:
-                s = [slice(None)]*len(shape)
+                s = [slice(None)] * len(shape)
                 s[n] = slice(i, None)
                 diag[tuple(s)] = 0
 
@@ -168,8 +178,7 @@ def stencil_grid(stencil, shape, dtype=None, format=None):
     # sum duplicate diagonals
     if len(np.unique(diags)) != len(diags):
         new_diags = np.unique(diags)
-        new_data = np.zeros((len(new_diags), data.shape[1]),
-                            dtype=data.dtype)
+        new_data = np.zeros((len(new_diags), data.shape[1]), dtype=data.dtype)
 
         for dia, dat in zip(diags, data):
             n = np.searchsorted(new_diags, dia)
@@ -178,8 +187,7 @@ def stencil_grid(stencil, shape, dtype=None, format=None):
         diags = new_diags
         data = new_data
 
-    return sparse.dia_matrix((data, diags),
-                             shape=(N_v, N_v)).asformat(format)
+    return sparse.dia_matrix((data, diags), shape=(N_v, N_v)).asformat(format)
 
 
 def _get_points_and_number_of_vertices(shape):
@@ -200,7 +208,7 @@ def _get_star_graph_edges(vertices_list, root_vertex):
 def _get_complete_graph_edges(vertices_list):
     n_vertices = len(vertices_list)
     edges = []
-    for i in range(n_vertices-1):
+    for i in range(n_vertices - 1):
         k = i + 1
         for j in range(k, n_vertices, 1):
             v1 = vertices_list[i]
@@ -212,7 +220,7 @@ def _get_complete_graph_edges(vertices_list):
 def _get_chain_graph_edges(vertices_list, closed):
     n_vertices = len(vertices_list)
     edges = []
-    for i in range(n_vertices-1):
+    for i in range(n_vertices - 1):
         k = i + 1
         v1 = vertices_list[i]
         v2 = vertices_list[k]
@@ -252,11 +260,11 @@ def empty_graph(shape, return_pointgraph=True):
 
     # return graph
     if return_pointgraph:
-        return PointUndirectedGraph.init_from_edges(points, edges, n_vertices,
-                                                    skip_checks=True)
+        return PointUndirectedGraph.init_from_edges(
+            points, edges, n_vertices, skip_checks=True
+        )
     else:
-        return UndirectedGraph.init_from_edges(edges, n_vertices,
-                                               skip_checks=True)
+        return UndirectedGraph.init_from_edges(edges, n_vertices, skip_checks=True)
 
 
 def star_graph(shape, root_vertex, graph_cls=PointTree):
@@ -297,23 +305,28 @@ def star_graph(shape, root_vertex, graph_cls=PointTree):
 
     # return graph
     if graph_cls == Tree:
-        return graph_cls.init_from_edges(edges=edges, n_vertices=n_vertices,
-                                         root_vertex=root_vertex,
-                                         skip_checks=True)
+        return graph_cls.init_from_edges(
+            edges=edges,
+            n_vertices=n_vertices,
+            root_vertex=root_vertex,
+            skip_checks=True,
+        )
     elif graph_cls == PointTree:
-        return graph_cls.init_from_edges(points=points, edges=edges,
-                                         root_vertex=root_vertex,
-                                         skip_checks=True)
+        return graph_cls.init_from_edges(
+            points=points, edges=edges, root_vertex=root_vertex, skip_checks=True
+        )
     elif graph_cls == UndirectedGraph or graph_cls == DirectedGraph:
-        return graph_cls.init_from_edges(edges=edges, n_vertices=n_vertices,
-                                         skip_checks=True)
+        return graph_cls.init_from_edges(
+            edges=edges, n_vertices=n_vertices, skip_checks=True
+        )
     elif graph_cls == PointUndirectedGraph or graph_cls == PointDirectedGraph:
-        return graph_cls.init_from_edges(points=points, edges=edges,
-                                         skip_checks=True)
+        return graph_cls.init_from_edges(points=points, edges=edges, skip_checks=True)
     else:
-        raise ValueError("graph_cls must be UndirectedGraph, DirectedGraph, "
-                         "Tree, PointUndirectedGraph, PointDirectedGraph or "
-                         "PointTree.")
+        raise ValueError(
+            "graph_cls must be UndirectedGraph, DirectedGraph, "
+            "Tree, PointUndirectedGraph, PointDirectedGraph or "
+            "PointTree."
+        )
 
 
 def complete_graph(shape, graph_cls=PointUndirectedGraph):
@@ -352,14 +365,16 @@ def complete_graph(shape, graph_cls=PointUndirectedGraph):
 
     # return graph
     if graph_cls == UndirectedGraph or graph_cls == DirectedGraph:
-        return graph_cls.init_from_edges(edges=edges, n_vertices=n_vertices,
-                                         skip_checks=True)
+        return graph_cls.init_from_edges(
+            edges=edges, n_vertices=n_vertices, skip_checks=True
+        )
     elif graph_cls == PointUndirectedGraph or graph_cls == PointDirectedGraph:
-        return graph_cls.init_from_edges(points=points, edges=edges,
-                                         skip_checks=True)
+        return graph_cls.init_from_edges(points=points, edges=edges, skip_checks=True)
     else:
-        raise ValueError("graph_cls must be UndirectedGraph, DirectedGraph, "
-                         "PointUndirectedGraph or PointDirectedGraph.")
+        raise ValueError(
+            "graph_cls must be UndirectedGraph, DirectedGraph, "
+            "PointUndirectedGraph or PointDirectedGraph."
+        )
 
 
 def chain_graph(shape, graph_cls=PointDirectedGraph, closed=False):
@@ -405,28 +420,30 @@ def chain_graph(shape, graph_cls=PointDirectedGraph, closed=False):
     # return graph
     if graph_cls == Tree:
         if closed:
-            raise ValueError("A closed chain graph cannot be a Tree "
-                             "instance.")
+            raise ValueError("A closed chain graph cannot be a Tree " "instance.")
         else:
-            return graph_cls.init_from_edges(edges=edges, n_vertices=n_vertices,
-                                             root_vertex=0, skip_checks=True)
+            return graph_cls.init_from_edges(
+                edges=edges, n_vertices=n_vertices, root_vertex=0, skip_checks=True
+            )
     elif graph_cls == PointTree:
         if closed:
-            raise ValueError("A closed chain graph cannot be a PointTree "
-                             "instance.")
+            raise ValueError("A closed chain graph cannot be a PointTree " "instance.")
         else:
-            return graph_cls.init_from_edges(points=points, edges=edges,
-                                             root_vertex=0, skip_checks=True)
+            return graph_cls.init_from_edges(
+                points=points, edges=edges, root_vertex=0, skip_checks=True
+            )
     elif graph_cls == UndirectedGraph or graph_cls == DirectedGraph:
-        return graph_cls.init_from_edges(edges=edges, n_vertices=n_vertices,
-                                         skip_checks=True)
+        return graph_cls.init_from_edges(
+            edges=edges, n_vertices=n_vertices, skip_checks=True
+        )
     elif graph_cls == PointUndirectedGraph or graph_cls == PointDirectedGraph:
-        return graph_cls.init_from_edges(points=points, edges=edges,
-                                         skip_checks=True)
+        return graph_cls.init_from_edges(points=points, edges=edges, skip_checks=True)
     else:
-        raise ValueError("graph_cls must be UndirectedGraph, DirectedGraph, "
-                         "Tree, PointUndirectedGraph, PointDirectedGraph or "
-                         "PointTree.")
+        raise ValueError(
+            "graph_cls must be UndirectedGraph, DirectedGraph, "
+            "Tree, PointUndirectedGraph, PointDirectedGraph or "
+            "PointTree."
+        )
 
 
 def delaunay_graph(shape, return_pointgraph=True):
@@ -462,7 +479,9 @@ def delaunay_graph(shape, return_pointgraph=True):
     # return graph
     if return_pointgraph:
         return PointUndirectedGraph.init_from_edges(
-            points=points, edges=edges, skip_checks=True)
+            points=points, edges=edges, skip_checks=True
+        )
     else:
         return UndirectedGraph.init_from_edges(
-            edges=edges, n_vertices=n_vertices, skip_checks=True)
+            edges=edges, n_vertices=n_vertices, skip_checks=True
+        )

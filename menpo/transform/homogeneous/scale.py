@@ -39,11 +39,12 @@ def Scale(scale_factor, n_dims=None):
         If any of the scale factors is zero
     """
     from numbers import Number
+
     if not isinstance(scale_factor, Number):
         # some array like thing - make it a numpy array for sure
         scale_factor = np.asarray(scale_factor)
     if not np.all(scale_factor):
-        raise ValueError('Having a zero in one of the scales is invalid')
+        raise ValueError("Having a zero in one of the scales is invalid")
 
     if n_dims is None:
         # scale_factor better be a numpy array then
@@ -72,8 +73,9 @@ class NonUniformScale(DiscreteAffine, Affine):
         scale = np.asarray(scale)
         if not skip_checks:
             if scale.size > 3 or scale.size < 2:
-                raise ValueError("NonUniformScale can only be 2D or 3D"
-                                 ", not {}".format(scale.size))
+                raise ValueError(
+                    "NonUniformScale can only be 2D or 3D" ", not {}".format(scale.size)
+                )
         h_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
@@ -107,7 +109,7 @@ class NonUniformScale(DiscreteAffine, Affine):
         return self.h_matrix.diagonal()[:-1].copy()
 
     def _transform_str(self):
-        message = 'NonUniformScale by {}'.format(self.scale)
+        message = "NonUniformScale by {}".format(self.scale)
         return message
 
     @property
@@ -193,13 +195,13 @@ class UniformScale(DiscreteAffine, Similarity):
     def __init__(self, scale, n_dims, skip_checks=False):
         if not skip_checks:
             if n_dims > 3 or n_dims < 2:
-                raise ValueError("UniformScale can only be 2D or 3D"
-                                 ", not {}".format(n_dims))
+                raise ValueError(
+                    "UniformScale can only be 2D or 3D" ", not {}".format(n_dims)
+                )
         h_matrix = np.eye(n_dims + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
-        Similarity.__init__(self, h_matrix, copy=False,
-                            skip_checks=True)
+        Similarity.__init__(self, h_matrix, copy=False, skip_checks=True)
 
     @classmethod
     def init_identity(cls, n_dims):
@@ -228,7 +230,7 @@ class UniformScale(DiscreteAffine, Similarity):
         return self.h_matrix[0, 0]
 
     def _transform_str(self):
-        message = 'UniformScale by {}'.format(self.scale)
+        message = "UniformScale by {}".format(self.scale)
         return message
 
     @property
@@ -304,8 +306,7 @@ class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
 
     def __init__(self, source, target):
         HomogFamilyAlignment.__init__(self, source, target)
-        UniformScale.__init__(self, target.norm() / source.norm(),
-                              source.n_dims)
+        UniformScale.__init__(self, target.norm() / source.norm(), source.n_dims)
 
     def _from_vector_inplace(self, p):
         r"""

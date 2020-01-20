@@ -41,7 +41,7 @@ def __adjusted_meshgrid(shape):
     for dim in shape:
         adjust_range.append(np.linspace(-0.5, 0.5, dim))
 
-    return np.meshgrid(*adjust_range, indexing='ij')
+    return np.meshgrid(*adjust_range, indexing="ij")
 
 
 def __frequency_butterworth_filter(shape, cutoff, order):
@@ -189,7 +189,7 @@ def log_gabor(image, **kwargs):
         Journal of The Optical Society of America A, Vol 4, No. 12,
         December 1987. pp 2379-2394
     """
-    if len(image.shape) == 2:    # 2D filter
+    if len(image.shape) == 2:  # 2D filter
         return __log_gabor_2d(image, **kwargs)
     elif len(image.shape) == 3:  # 3D filter
         return __log_gabor_3d(image, **kwargs)
@@ -197,25 +197,41 @@ def log_gabor(image, **kwargs):
         raise ValueError("Image must be either 2D or 3D")
 
 
-def __log_gabor_3d(image, num_scales=4, num_phi_orientations=6,
-                   num_theta_orientations=4, min_wavelength=3,
-                   scaling_constant=2, center_sigma=0.65, d_theta_sigma=1.5,
-                   d_phi_sigma=1.5):
+def __log_gabor_3d(
+    image,
+    num_scales=4,
+    num_phi_orientations=6,
+    num_theta_orientations=4,
+    min_wavelength=3,
+    scaling_constant=2,
+    center_sigma=0.65,
+    d_theta_sigma=1.5,
+    d_phi_sigma=1.5,
+):
     # Pre-compute sigma values
     theta_sigma = np.pi / num_theta_orientations / d_theta_sigma
     phi_sigma = (2 * np.pi) / num_phi_orientations / d_phi_sigma
 
     # Allocate space for return structures
-    bandpass = np.empty([num_scales, image.shape[0], image.shape[1],
-                         image.shape[2]], dtype=np.complex)
-    log_gabor = np.empty([num_scales, image.shape[0], image.shape[1],
-                          image.shape[2]])
+    bandpass = np.empty(
+        [num_scales, image.shape[0], image.shape[1], image.shape[2]], dtype=np.complex
+    )
+    log_gabor = np.empty([num_scales, image.shape[0], image.shape[1], image.shape[2]])
     S = np.zeros(image.shape)
-    complex_conv = np.empty([num_scales, num_theta_orientations,
-                             num_phi_orientations, image.shape[0],
-                             image.shape[1], image.shape[2]], dtype=np.complex)
-    tmp_complex_conv = np.empty([num_scales, image.shape[0], image.shape[1],
-                                 image.shape[2]], dtype=np.complex)
+    complex_conv = np.empty(
+        [
+            num_scales,
+            num_theta_orientations,
+            num_phi_orientations,
+            image.shape[0],
+            image.shape[1],
+            image.shape[2],
+        ],
+        dtype=np.complex,
+    )
+    tmp_complex_conv = np.empty(
+        [num_scales, image.shape[0], image.shape[1], image.shape[2]], dtype=np.complex
+    )
 
     # Pre-compute fourier values
     image_fft = np.fft.fftn(image)
@@ -246,8 +262,7 @@ def __log_gabor_3d(image, num_scales=4, num_phi_orientations=6,
         wavelength = min_wavelength * scaling_constant ** s
         fo = 1.0 / wavelength
 
-        l = np.exp((-np.log(radius / fo) ** 2) /
-                   (2.0 * np.log(center_sigma) ** 2))
+        l = np.exp((-np.log(radius / fo) ** 2) / (2.0 * np.log(center_sigma) ** 2))
         l = l * butterworth_filter
         l[0, 0, 0] = 0.0
 
@@ -259,22 +274,26 @@ def __log_gabor_3d(image, num_scales=4, num_phi_orientations=6,
         # Pre-compute filter data specific to this orientation
         elevation_angle = e * np.pi / num_theta_orientations
 
-        d_theta_sin = (sin_theta * np.cos(elevation_angle) -
-                       cos_theta * np.sin(elevation_angle))
-        d_theta_cos = (cos_theta * np.cos(elevation_angle) +
-                       sin_theta * np.sin(elevation_angle))
+        d_theta_sin = sin_theta * np.cos(elevation_angle) - cos_theta * np.sin(
+            elevation_angle
+        )
+        d_theta_cos = cos_theta * np.cos(elevation_angle) + sin_theta * np.sin(
+            elevation_angle
+        )
         d_theta = np.abs(np.arctan2(d_theta_sin, d_theta_cos))
 
         for a in range(num_phi_orientations):
             azimuth_angle = a * 2 * np.pi / num_phi_orientations
-            d_phi_sin = (sin_phi * np.cos(azimuth_angle) -
-                         cos_phi * np.sin(azimuth_angle))
-            d_phi_cos = (cos_phi * np.cos(azimuth_angle) +
-                         sin_phi * np.sin(azimuth_angle))
+            d_phi_sin = sin_phi * np.cos(azimuth_angle) - cos_phi * np.sin(
+                azimuth_angle
+            )
+            d_phi_cos = cos_phi * np.cos(azimuth_angle) + sin_phi * np.sin(
+                azimuth_angle
+            )
             d_phi = np.abs(np.arctan2(d_phi_sin, d_phi_cos))
 
-            phi_spread = (-d_phi ** 2) / (2 * phi_sigma ** 2)
-            theta_spread = (-d_theta ** 2) / (2 * theta_sigma ** 2)
+            phi_spread = (-(d_phi ** 2)) / (2 * phi_sigma ** 2)
+            theta_spread = (-(d_theta ** 2)) / (2 * theta_sigma ** 2)
             spread = np.exp(phi_spread + theta_spread)
 
             # For each scale, multiply by the angular spread
@@ -284,8 +303,7 @@ def __log_gabor_3d(image, num_scales=4, num_phi_orientations=6,
                 shifted_filter = np.fft.fftshift(filter_bank)
                 S += shifted_filter * np.conjugate(shifted_filter)
 
-                tmp_complex_conv[s, :, :] = np.fft.ifft2(image_fft *
-                                                         filter_bank)
+                tmp_complex_conv[s, :, :] = np.fft.ifft2(image_fft * filter_bank)
 
             complex_conv[:, e, a, :, :] = tmp_complex_conv[None, None, ...]
 
@@ -293,18 +311,25 @@ def __log_gabor_3d(image, num_scales=4, num_phi_orientations=6,
     return complex_conv, bandpass, S
 
 
-def __log_gabor_2d(image, num_scales=4, num_orientations=6,
-                   min_wavelength=3, scaling_constant=2, center_sigma=0.65,
-                   d_phi_sigma=1.3):
+def __log_gabor_2d(
+    image,
+    num_scales=4,
+    num_orientations=6,
+    min_wavelength=3,
+    scaling_constant=2,
+    center_sigma=0.65,
+    d_phi_sigma=1.3,
+):
     # Allocate space for return structures
-    bandpass = np.empty([num_scales, image.shape[0], image.shape[1]],
-                        dtype=np.complex)
+    bandpass = np.empty([num_scales, image.shape[0], image.shape[1]], dtype=np.complex)
     log_gabor = np.empty([num_scales, image.shape[0], image.shape[1]])
     S = np.zeros(image.shape)
-    complex_conv = np.empty([num_scales, num_orientations, image.shape[0],
-                             image.shape[1]], dtype=np.complex)
-    tmp_complex_conv = np.empty([num_scales, image.shape[0], image.shape[1]],
-                                dtype=np.complex)
+    complex_conv = np.empty(
+        [num_scales, num_orientations, image.shape[0], image.shape[1]], dtype=np.complex
+    )
+    tmp_complex_conv = np.empty(
+        [num_scales, image.shape[0], image.shape[1]], dtype=np.complex
+    )
 
     # Pre-compute phi sigma
     phi_sigma = np.pi / num_orientations / d_phi_sigma
@@ -332,8 +357,7 @@ def __log_gabor_2d(image, num_scales=4, num_orientations=6,
         wavelength = min_wavelength * scaling_constant ** s
         fo = 1.0 / wavelength
 
-        l = np.exp((-(np.log(radius / fo)) ** 2) /
-                   (2.0 * np.log(center_sigma) ** 2))
+        l = np.exp((-((np.log(radius / fo)) ** 2)) / (2.0 * np.log(center_sigma) ** 2))
         l = l * butterworth_filter
         l[0][0] = 0.0
 
@@ -345,16 +369,14 @@ def __log_gabor_2d(image, num_scales=4, num_orientations=6,
         # Pre-compute filter data specific to this orientation
         filter_angle = o * np.pi / num_orientations
 
-        ds = (sin_phi * np.cos(filter_angle) -
-              cos_phi * np.sin(filter_angle))
-        dc = (cos_phi * np.cos(filter_angle) +
-              sin_phi * np.sin(filter_angle))
+        ds = sin_phi * np.cos(filter_angle) - cos_phi * np.sin(filter_angle)
+        dc = cos_phi * np.cos(filter_angle) + sin_phi * np.sin(filter_angle)
 
         d_phi = np.abs(np.arctan2(ds, dc))
 
         # Calculate the standard deviation of the angular Gaussian
         # function used to construct filters in the freq. plane.
-        spread = np.exp((-d_phi ** 2.0) / (2.0 * phi_sigma ** 2))
+        spread = np.exp((-(d_phi ** 2.0)) / (2.0 * phi_sigma ** 2))
 
         # For each scale, multiply by the angular spread
         for s in range(0, num_scales):

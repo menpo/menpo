@@ -20,22 +20,32 @@ def _centered_patch(patch_shape):
     sampling_locations : ``(prod(patch_shape), 2)`` ``ndarray``
         The locations to sample for the given patch shape
     """
-    assert len(patch_shape) == 2, 'Only 2D images are supported'
+    assert len(patch_shape) == 2, "Only 2D images are supported"
     half_pixel = (np.array([patch_shape]) % 2) / 2
     patch = np.meshgrid(
-        np.linspace(-patch_shape[0] / 2, patch_shape[0] / 2, num=patch_shape[0],
-                    dtype=np.float, endpoint=False),
-        np.linspace(-patch_shape[1] / 2, patch_shape[1] / 2, num=patch_shape[1],
-                    dtype=np.float, endpoint=False),
-        indexing='ij'
+        np.linspace(
+            -patch_shape[0] / 2,
+            patch_shape[0] / 2,
+            num=patch_shape[0],
+            dtype=np.float,
+            endpoint=False,
+        ),
+        np.linspace(
+            -patch_shape[1] / 2,
+            patch_shape[1] / 2,
+            num=patch_shape[1],
+            dtype=np.float,
+            endpoint=False,
+        ),
+        indexing="ij",
     )
     patch = np.stack(patch, axis=2).reshape([-1, 2])
-    return np.require(patch, requirements=['C']) + half_pixel
+    return np.require(patch, requirements=["C"]) + half_pixel
 
 
-def extract_patches_by_sampling(pixels, patch_centers, patch_shape,
-                                offsets=None, order=0, mode='constant',
-                                cval=0.0):
+def extract_patches_by_sampling(
+    pixels, patch_centers, patch_shape, offsets=None, order=0, mode="constant", cval=0.0
+):
     r"""
     Extract a set of patches from the given pixels. Given a set of patch centers
     and a patch size, patches are extracted from within the pixels, centered
@@ -76,8 +86,9 @@ def extract_patches_by_sampling(pixels, patch_centers, patch_shape,
         If pixels array is not 2D
     """
     if pixels.ndim != 3:
-        raise ValueError('Only 2D images are supported but '
-                         'found {}'.format(pixels.shape))
+        raise ValueError(
+            "Only 2D images are supported but " "found {}".format(pixels.shape)
+        )
 
     n_points = patch_centers.shape[0]
     n_offsets = 1
@@ -89,16 +100,17 @@ def extract_patches_by_sampling(pixels, patch_centers, patch_shape,
         points_to_sample = points_to_sample[:, :, None, :] + offsets
     points_to_sample = points_to_sample.reshape([-1, 2])
 
-    patches = scipy_interpolation(pixels, points_to_sample,
-                                  order=order, mode=mode, cval=cval)
-    patches = patches.reshape(3, patch_shape[0], patch_shape[1],
-                              n_points, n_offsets)
+    patches = scipy_interpolation(
+        pixels, points_to_sample, order=order, mode=mode, cval=cval
+    )
+    patches = patches.reshape(3, patch_shape[0], patch_shape[1], n_points, n_offsets)
     patches = np.transpose(patches, [3, 4, 0, 1, 2])
-    return np.require(patches, requirements=['C'])
+    return np.require(patches, requirements=["C"])
 
 
-def extract_patches_with_slice(pixels, patch_centers, patch_shape,
-                               offsets=None, cval=0.):
+def extract_patches_with_slice(
+    pixels, patch_centers, patch_shape, offsets=None, cval=0.0
+):
     r"""
     Extract a set of patches from the given pixels. Given a set of patch centers
     and a patch size, patches are extracted from within the pixels, centered
@@ -132,8 +144,9 @@ def extract_patches_with_slice(pixels, patch_centers, patch_shape,
         If pixels array is not 2D
     """
     if pixels.ndim != 3:
-        raise ValueError('Only 2D images are supported but '
-                         'found {}'.format(pixels.shape))
+        raise ValueError(
+            "Only 2D images are supported but " "found {}".format(pixels.shape)
+        )
 
     n_offsets = offsets.shape[0] if offsets is not None else 1
     half_r, half_c = (patch_shape[0] / 2, patch_shape[1] / 2)
@@ -142,19 +155,23 @@ def extract_patches_with_slice(pixels, patch_centers, patch_shape,
     if offsets is None:
         offsets = np.zeros([1, 2])
 
-    patches = np.full([patch_centers.shape[0],
-                       n_offsets,
-                       pixels.shape[0],
-                       patch_shape[0],
-                       patch_shape[1]],
-                      fill_value=cval,
-                      dtype=pixels.dtype)
+    patches = np.full(
+        [
+            patch_centers.shape[0],
+            n_offsets,
+            pixels.shape[0],
+            patch_shape[0],
+            patch_shape[1],
+        ],
+        fill_value=cval,
+        dtype=pixels.dtype,
+    )
     # This is equivalent to nearest neighbour sampling per offset
     half_pixel = (np.array([patch_shape]) % 2) / 2
     patch_centers = patch_centers + half_pixel
-    bounds = np.round(patch_centers[:, None, None, :] +
-                      offsets[:, None, :] +
-                      corners).astype(int)
+    bounds = np.round(
+        patch_centers[:, None, None, :] + offsets[:, None, :] + corners
+    ).astype(int)
     # Limit the points to exist inside the image boundaries
     pixel_bounds = np.clip(bounds, [0, 0], [pixels.shape[1:]])
     # Then compute the regions inside the patches that need to be filled
@@ -165,14 +182,19 @@ def extract_patches_with_slice(pixels, patch_centers, patch_shape,
     for i, (pix_off, patch_off) in enumerate(zip(pixel_bounds, patch_bounds)):
         # Loop over the offsets
         for j, (pix_b, patch_b) in enumerate(zip(pix_off, patch_off)):
-            pix_slice = (slice(pix_b[0, 0], pix_b[1, 0]),
-                         slice(pix_b[0, 1], pix_b[1, 1]))
-            patch_slice = (slice(patch_b[0, 0], patch_shape[0] + patch_b[1, 0]),
-                           slice(patch_b[0, 1], patch_shape[1] + patch_b[1, 1]))
+            pix_slice = (
+                slice(pix_b[0, 0], pix_b[1, 0]),
+                slice(pix_b[0, 1], pix_b[1, 1]),
+            )
+            patch_slice = (
+                slice(patch_b[0, 0], patch_shape[0] + patch_b[1, 0]),
+                slice(patch_b[0, 1], patch_shape[1] + patch_b[1, 1]),
+            )
 
             # Set only the pixels that were inside the image bounds
-            patches[i, j, :, patch_slice[0], patch_slice[1]] = \
-                pixels[:, pix_slice[0], pix_slice[1]]
+            patches[i, j, :, patch_slice[0], patch_slice[1]] = pixels[
+                :, pix_slice[0], pix_slice[1]
+            ]
 
     return patches
 
@@ -214,8 +236,9 @@ def set_patches(patches, pixels, patch_centers, offset, offset_index):
         If pixels array is not 2D
     """
     if pixels.ndim != 3:
-        raise ValueError('Only 2D images are supported but '
-                         'found {}'.format(pixels.shape))
+        raise ValueError(
+            "Only 2D images are supported but " "found {}".format(pixels.shape)
+        )
 
     patch_shape = patches.shape[-2:]
     # the [L]ow offset is the floor of half the patch shape
@@ -228,4 +251,4 @@ def set_patches(patches, pixels, patch_centers, offset, offset_index):
         p = point + offset[0]
         p_r = int(p[0])
         p_c = int(p[1])
-        pixels[:, p_r - l_r:p_r + h_r, p_c - l_c:p_c + h_c] = patch
+        pixels[:, p_r - l_r : p_r + h_r, p_c - l_c : p_c + h_c] = patch

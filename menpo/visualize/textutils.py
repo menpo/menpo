@@ -5,7 +5,7 @@ import sys
 from time import time
 
 
-def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
+def progress_bar_str(percentage, bar_length=20, bar_marker="=", show_bar=True):
     r"""
     Returns an `str` of the specified progress percentage. The percentage is
     represented either in the form of a progress bar or in the form of a
@@ -104,16 +104,24 @@ def bytes_str(num):
     """
     if not isinstance(num, int) or num < 0:
         raise ValueError("num must be int >= 0")
-    for x in ['bytes', 'KB', 'MB', 'GB']:
+    for x in ["bytes", "KB", "MB", "GB"]:
         if num < 1024.0:
             return "{0:3.2f} {1:s}".format(num, x)
         num /= 1024.0
-    return "{0:3.2f} {1:s}".format(num, 'TB')
+    return "{0:3.2f} {1:s}".format(num, "TB")
 
 
-def print_progress(iterable, prefix='', n_items=None, offset=0,
-                   show_bar=True, show_count=True, show_eta=True,
-                   end_with_newline=True, min_seconds_between_updates=0.1):
+def print_progress(
+    iterable,
+    prefix="",
+    n_items=None,
+    offset=0,
+    show_bar=True,
+    show_count=True,
+    show_eta=True,
+    end_with_newline=True,
+    min_seconds_between_updates=0.1,
+):
     r"""
     Print the remaining time needed to compute over an iterable.
 
@@ -176,10 +184,11 @@ def print_progress(iterable, prefix='', n_items=None, offset=0,
         [=============       ] 70% (7/10) - 00:00:03 remaining
     """
     if n_items is None and offset != 0:
-        raise ValueError('offset can only be set when n_items has been'
-                         ' manually provided.')
-    if prefix != '':
-        prefix += ': '
+        raise ValueError(
+            "offset can only be set when n_items has been" " manually provided."
+        )
+    if prefix != "":
+        prefix += ": "
         bar_length = 10
     else:
         bar_length = 20
@@ -197,20 +206,19 @@ def print_progress(iterable, prefix='', n_items=None, offset=0,
         if time2 - last_update_time < min_seconds_between_updates:
             continue
         last_update_time = time2
-        duration = datetime.utcfromtimestamp(sum(timings) / len(timings) *
-                                             remaining)
-        bar_str = progress_bar_str(i / n, bar_length=bar_length,
-                                   show_bar=show_bar)
-        count_str = ' ({}/{})'.format(i, n) if show_count else ''
-        eta_str = (" - {} remaining".format(duration.strftime('%H:%M:%S'))
-                   if show_eta else '')
-        print_dynamic('{}{}{}{}'.format(prefix, bar_str, count_str, eta_str))
+        duration = datetime.utcfromtimestamp(sum(timings) / len(timings) * remaining)
+        bar_str = progress_bar_str(i / n, bar_length=bar_length, show_bar=show_bar)
+        count_str = " ({}/{})".format(i, n) if show_count else ""
+        eta_str = (
+            " - {} remaining".format(duration.strftime("%H:%M:%S")) if show_eta else ""
+        )
+        print_dynamic("{}{}{}{}".format(prefix, bar_str, count_str, eta_str))
 
     # the iterable has now finished - to make it clear redraw the progress with
     # a done message. We also hide the eta at this stage.
-    count_str = ' ({}/{})'.format(n, n) if show_count else ''
+    count_str = " ({}/{})".format(n, n) if show_count else ""
     bar_str = progress_bar_str(1, bar_length=bar_length, show_bar=show_bar)
-    print_dynamic('{}{}{} - done.'.format(prefix, bar_str, count_str))
+    print_dynamic("{}{}{} - done.".format(prefix, bar_str, count_str))
 
     if end_with_newline:
-        print('')
+        print("")

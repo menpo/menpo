@@ -28,7 +28,7 @@ def lm_centres_correction(centres):
     step_h = centres[0, 0, 1]
     if centres.shape[1] > 1:
         step_h = centres[0, 1, 1] - centres[0, 0, 1]
-    s = NonUniformScale((1./step_v, 1./step_h), skip_checks=True)
+    s = NonUniformScale((1.0 / step_v, 1.0 / step_h), skip_checks=True)
     return t.compose_before(s)
 
 
@@ -51,7 +51,7 @@ def sample_mask_for_centres(mask, centres):
 
 def rebuild_feature_image(image, f_pixels):
     shape_changed = f_pixels.shape[1:] != image.shape
-    if hasattr(image, 'mask'):
+    if hasattr(image, "mask"):
         # original image had a mask. Did the feature generate an image of the
         # same size?
         if shape_changed:
@@ -75,7 +75,7 @@ def rebuild_feature_image(image, f_pixels):
 
 
 def rebuild_feature_image_with_centres(image, f_pixels, centres):
-    if hasattr(image, 'mask'):
+    if hasattr(image, "mask"):
         mask = sample_mask_for_centres(image.mask.mask, centres)
         new_image = MaskedImage(f_pixels, mask=mask, copy=False)
     else:
@@ -87,7 +87,6 @@ def rebuild_feature_image_with_centres(image, f_pixels, centres):
 
 
 def imgfeature(wrapped):
-
     @wraps(wrapped)
     def wrapper(image, *args, **kwargs):
         if isinstance(image, np.ndarray):
@@ -97,11 +96,11 @@ def imgfeature(wrapped):
             return wrapped(image, *args, **kwargs).pixels
         else:
             return wrapped(image, *args, **kwargs)
+
     return wrapper
 
 
 def ndfeature(wrapped):
-
     @wraps(wrapped)
     def wrapper(image, *args, **kwargs):
         if not isinstance(image, np.ndarray):
@@ -111,11 +110,11 @@ def ndfeature(wrapped):
             return rebuild_feature_image(image, feature)
         else:
             return wrapped(image, *args, **kwargs)
+
     return wrapper
 
 
 def winitfeature(wrapped):
-
     @wraps(wrapped)
     def wrapper(image, *args, **kwargs):
         if not isinstance(image, np.ndarray):

@@ -5,8 +5,7 @@ import numpy as np
 
 from menpo.base import Copyable
 from menpo.shape import PointUndirectedGraph, PointCloud, TriMesh
-from menpo.shape.graph import (_convert_edges_to_symmetric_adjacency_matrix,
-                               PointGraph)
+from menpo.shape.graph import _convert_edges_to_symmetric_adjacency_matrix, PointGraph
 from menpo.visualize import viewwrapper
 
 
@@ -25,8 +24,10 @@ def indices_to_masks(labels_to_indices, n_points):
         Number of points in the pointcloud that is being masked.
     """
     if not isinstance(labels_to_indices, OrderedDict):
-        raise ValueError('Must provide an OrderedDict to maintain the '
-                         'semantic meaning of the labels.')
+        raise ValueError(
+            "Must provide an OrderedDict to maintain the "
+            "semantic meaning of the labels."
+        )
 
     masks = OrderedDict()
     for label in labels_to_indices:
@@ -76,28 +77,37 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         If there exists any point in the points that is not covered
         by a label.
     """
-    def __init__(self, points, adjacency_matrix, labels_to_masks, copy=True,
-                 skip_checks=False):
-        PointUndirectedGraph.__init__(self, points, adjacency_matrix, copy=copy,
-                                      skip_checks=skip_checks)
+
+    def __init__(
+        self, points, adjacency_matrix, labels_to_masks, copy=True, skip_checks=False
+    ):
+        PointUndirectedGraph.__init__(
+            self, points, adjacency_matrix, copy=copy, skip_checks=skip_checks
+        )
 
         if not labels_to_masks:
-            raise ValueError('Labelled point graphs are designed to be '
-                             'immutable. Empty label sets are not permitted.')
+            raise ValueError(
+                "Labelled point graphs are designed to be "
+                "immutable. Empty label sets are not permitted."
+            )
         if np.vstack(list(labels_to_masks.values())).shape[1] != points.shape[0]:
-            raise ValueError('Each mask must have the same number of points '
-                             'as the given points.')
+            raise ValueError(
+                "Each mask must have the same number of points " "as the given points."
+            )
         if not isinstance(labels_to_masks, OrderedDict):
-            raise ValueError('Must provide an OrderedDict to maintain the '
-                             'semantic meaning of the labels.')
+            raise ValueError(
+                "Must provide an OrderedDict to maintain the "
+                "semantic meaning of the labels."
+            )
 
         # Another sanity check
         self._labels_to_masks = labels_to_masks
         self._verify_all_labels_masked()
 
         if copy:
-            self._labels_to_masks = OrderedDict([(l, m.copy()) for l, m in
-                                                 labels_to_masks.items()])
+            self._labels_to_masks = OrderedDict(
+                [(l, m.copy()) for l, m in labels_to_masks.items()]
+            )
 
     @classmethod
     def init_with_all_label(cls, points, adjacency_matrix, copy=True):
@@ -124,13 +134,14 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             called 'all' that is ``True`` for all points.
         """
         labels_to_masks = OrderedDict(
-            [('all', np.ones(points.shape[0], dtype=np.bool))])
-        return LabelledPointUndirectedGraph(points, adjacency_matrix,
-                                            labels_to_masks, copy=copy)
+            [("all", np.ones(points.shape[0], dtype=np.bool))]
+        )
+        return LabelledPointUndirectedGraph(
+            points, adjacency_matrix, labels_to_masks, copy=copy
+        )
 
     @classmethod
-    def init_from_indices_mapping(cls, points, adjacency,
-                                  labels_to_indices, copy=True):
+    def init_from_indices_mapping(cls, points, adjacency, labels_to_indices, copy=True):
         r"""
         Static constructor to create a :map:`LabelledPointUndirectedGraph` from
         an ordered dictionary that maps a set of indices .
@@ -167,15 +178,17 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         adjacency = np.array(adjacency)
         if adjacency.shape[0] != adjacency.shape[1] and adjacency.shape[1] == 2:
             adjacency = _convert_edges_to_symmetric_adjacency_matrix(
-                adjacency, points.shape[0])
-        labels_to_masks = indices_to_masks(labels_to_indices,
-                                           points.shape[0])
-        return LabelledPointUndirectedGraph(points, adjacency, labels_to_masks,
-                                            copy=copy)
+                adjacency, points.shape[0]
+            )
+        labels_to_masks = indices_to_masks(labels_to_indices, points.shape[0])
+        return LabelledPointUndirectedGraph(
+            points, adjacency, labels_to_masks, copy=copy
+        )
 
     @classmethod
-    def init_from_edges(cls, points, edges, labels_to_masks, copy=True,
-                        skip_checks=False):
+    def init_from_edges(
+        cls, points, edges, labels_to_masks, copy=True, skip_checks=False
+    ):
         r"""
         Construct a :map:`LabelledPointUndirectedGraph` from an edges array.
 
@@ -199,19 +212,28 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             If ``True``, no checks will be performed.
         """
         adjacency_matrix = _convert_edges_to_symmetric_adjacency_matrix(
-            edges, points.shape[0])
-        return cls(points, adjacency_matrix, labels_to_masks, copy=copy,
-                   skip_checks=skip_checks)
+            edges, points.shape[0]
+        )
+        return cls(
+            points,
+            adjacency_matrix,
+            labels_to_masks,
+            copy=copy,
+            skip_checks=skip_checks,
+        )
 
     def __setstate__(self, state_dict):
         # TODO: Deprecate this - this handles importing old-style LandmarkGroup
-        if '_pointcloud' in state_dict:
+        if "_pointcloud" in state_dict:
             from menpo.base import MenpoDeprecationWarning
-            warnings.warn('menpo.landmark.LandmarkGroup is now deprecated and '
-                          'has been moved to menpo.shape.LandmarkGroup.',
-                          MenpoDeprecationWarning)
-            _pointcloud = state_dict.pop('_pointcloud')
-            state_dict['points'] = _pointcloud.points
+
+            warnings.warn(
+                "menpo.landmark.LandmarkGroup is now deprecated and "
+                "has been moved to menpo.shape.LandmarkGroup.",
+                MenpoDeprecationWarning,
+            )
+            _pointcloud = state_dict.pop("_pointcloud")
+            state_dict["points"] = _pointcloud.points
 
             # the shape on old landmarks *itself* was allowed to have landmarks
             # (of course it was very frequently None though, see
@@ -219,25 +241,29 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             # In the new word, self has the same behavior, so move the
             # landmarks across here.
             # In the vast majority of cases, this will simply be None.
-            state_dict['_landmarks'] = _pointcloud._landmarks
+            state_dict["_landmarks"] = _pointcloud._landmarks
 
             if type(_pointcloud) == PointCloud:
                 adj_mat = _convert_edges_to_symmetric_adjacency_matrix(
-                    [], _pointcloud.n_points)
+                    [], _pointcloud.n_points
+                )
             elif isinstance(_pointcloud, PointGraph):
                 a = _pointcloud.adjacency_matrix
                 # Ensure that the matrix is symmetric
                 adj_mat = a.maximum(a.T)
             elif isinstance(_pointcloud, TriMesh):
-                warnings.warn('menpo.landmark.LandmarkGroup is now deprecated.'
-                              'The underlying ._pointcloud was a '
-                              'menpo.shape.TriMesh and this has been cast down '
-                              'to an UndirectedPointGraph subclass.')
+                warnings.warn(
+                    "menpo.landmark.LandmarkGroup is now deprecated."
+                    "The underlying ._pointcloud was a "
+                    "menpo.shape.TriMesh and this has been cast down "
+                    "to an UndirectedPointGraph subclass."
+                )
                 adj_mat = _pointcloud.as_pointgraph(copy=False).adjacency_matrix
             else:
-                raise ValueError('Unexpected PointCloud type ({})'.format(
-                    type(_pointcloud)))
-            state_dict['adjacency_matrix'] = adj_mat
+                raise ValueError(
+                    "Unexpected PointCloud type ({})".format(type(_pointcloud))
+                )
+            state_dict["adjacency_matrix"] = adj_mat
 
         self.__dict__.update(state_dict)
 
@@ -355,12 +381,15 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         :type: `int`
         """
         from menpo.base import MenpoDeprecationWarning
-        warnings.warn('The .n_landmarks property is deprecated. LandmarkGroups '
-                      'are now LabelledPointUndirectedGraph which '
-                      'are subclasses of UndirectedPointGraph and thus may '
-                      'be used as such. Thus .n_landmarks is an alias for '
-                      '.n_points .',
-                      MenpoDeprecationWarning)
+
+        warnings.warn(
+            "The .n_landmarks property is deprecated. LandmarkGroups "
+            "are now LabelledPointUndirectedGraph which "
+            "are subclasses of UndirectedPointGraph and thus may "
+            "be used as such. Thus .n_landmarks is an alias for "
+            ".n_points .",
+            MenpoDeprecationWarning,
+        )
         return self.n_points
 
     def with_labels(self, labels):
@@ -416,8 +445,9 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         if np.any(unlabelled_points):
             nonzero = np.nonzero(unlabelled_points)
             raise ValueError(
-                'Every point in the landmark pointcloud must be labelled. '
-                'Points {0} were unlabelled.'.format(nonzero))
+                "Every point in the landmark pointcloud must be labelled. "
+                "Points {0} were unlabelled.".format(nonzero)
+            )
 
     def _new_group_with_only_labels(self, labels):
         """
@@ -436,20 +466,25 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         """
         set_difference = set(labels).difference(self.labels)
         if len(set_difference) > 0:
-            raise ValueError('Labels {0} do not exist in the landmark '
-                             'group. Available labels are: {1}'.format(
-                list(set_difference), self.labels))
+            raise ValueError(
+                "Labels {0} do not exist in the landmark "
+                "group. Available labels are: {1}".format(
+                    list(set_difference), self.labels
+                )
+            )
 
-        masks_to_keep = [self._labels_to_masks[l] for l in labels
-                         if l in self._labels_to_masks]
+        masks_to_keep = [
+            self._labels_to_masks[l] for l in labels if l in self._labels_to_masks
+        ]
         overlap = np.sum(masks_to_keep, axis=0) > 0
         masks_to_keep = [l[overlap] for l in masks_to_keep]
 
         new_graph = self.from_mask(overlap)
-        return LabelledPointUndirectedGraph(new_graph.points,
-                                            new_graph.adjacency_matrix,
-                                            OrderedDict(zip(labels,
-                                                            masks_to_keep)))
+        return LabelledPointUndirectedGraph(
+            new_graph.points,
+            new_graph.adjacency_matrix,
+            OrderedDict(zip(labels, masks_to_keep)),
+        )
 
     def tojson(self):
         r"""
@@ -461,36 +496,68 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         json : ``dict``
             Dictionary conforming to the LJSON v2 specification.
         """
-        labels = [{'mask': mask.nonzero()[0].tolist(),
-                   'label': label}
-                  for label, mask in self._labels_to_masks.items()]
+        labels = [
+            {"mask": mask.nonzero()[0].tolist(), "label": label}
+            for label, mask in self._labels_to_masks.items()
+        ]
         lms_dict = PointUndirectedGraph.tojson(self)
-        lms_dict['labels'] = labels
+        lms_dict["labels"] = labels
         return lms_dict
 
-    def _view_2d(self, with_labels=None, without_labels=None, group='group',
-                 figure_id=None, new_figure=False, image_view=True,
-                 render_lines=True, line_colour=None, line_style='-',
-                 line_width=1, render_markers=True, marker_style='o',
-                 marker_size=5, marker_face_colour=None,
-                 marker_edge_colour=None, marker_edge_width=1.,
-                 render_numbering=False, numbers_horizontal_align='center',
-                 numbers_vertical_align='bottom',
-                 numbers_font_name='sans-serif', numbers_font_size=10,
-                 numbers_font_style='normal', numbers_font_weight='normal',
-                 numbers_font_colour='k', render_legend=True, legend_title='',
-                 legend_font_name='sans-serif', legend_font_style='normal',
-                 legend_font_size=10, legend_font_weight='normal',
-                 legend_marker_scale=None, legend_location=2,
-                 legend_bbox_to_anchor=(1.05, 1.), legend_border_axes_pad=None,
-                 legend_n_columns=1, legend_horizontal_spacing=None,
-                 legend_vertical_spacing=None, legend_border=True,
-                 legend_border_padding=None, legend_shadow=False,
-                 legend_rounded_corners=False, render_axes=True,
-                 axes_font_name='sans-serif', axes_font_size=10,
-                 axes_font_style='normal', axes_font_weight='normal',
-                 axes_x_limits=None, axes_y_limits=None, axes_x_ticks=None,
-                 axes_y_ticks=None, figure_size=(10, 8)):
+    def _view_2d(
+        self,
+        with_labels=None,
+        without_labels=None,
+        group="group",
+        figure_id=None,
+        new_figure=False,
+        image_view=True,
+        render_lines=True,
+        line_colour=None,
+        line_style="-",
+        line_width=1,
+        render_markers=True,
+        marker_style="o",
+        marker_size=5,
+        marker_face_colour=None,
+        marker_edge_colour=None,
+        marker_edge_width=1.0,
+        render_numbering=False,
+        numbers_horizontal_align="center",
+        numbers_vertical_align="bottom",
+        numbers_font_name="sans-serif",
+        numbers_font_size=10,
+        numbers_font_style="normal",
+        numbers_font_weight="normal",
+        numbers_font_colour="k",
+        render_legend=True,
+        legend_title="",
+        legend_font_name="sans-serif",
+        legend_font_style="normal",
+        legend_font_size=10,
+        legend_font_weight="normal",
+        legend_marker_scale=None,
+        legend_location=2,
+        legend_bbox_to_anchor=(1.05, 1.0),
+        legend_border_axes_pad=None,
+        legend_n_columns=1,
+        legend_horizontal_spacing=None,
+        legend_vertical_spacing=None,
+        legend_border=True,
+        legend_border_padding=None,
+        legend_shadow=False,
+        legend_rounded_corners=False,
+        render_axes=True,
+        axes_font_name="sans-serif",
+        axes_font_size=10,
+        axes_font_style="normal",
+        axes_font_weight="normal",
+        axes_x_limits=None,
+        axes_y_limits=None,
+        axes_x_ticks=None,
+        axes_y_ticks=None,
+        figure_size=(10, 8),
+    ):
         """
         Visualize the labelled point undirected graph.
 
@@ -690,22 +757,27 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             If both ``with_labels`` and ``without_labels`` are passed.
         """
         from menpo.visualize import LandmarkViewer2d
+
         if with_labels is not None and without_labels is not None:
-            raise ValueError('You may only pass one of `with_labels` or '
-                             '`without_labels`.')
+            raise ValueError(
+                "You may only pass one of `with_labels` or " "`without_labels`."
+            )
         elif with_labels is not None:
             lmark_group = self.with_labels(with_labels)
         elif without_labels is not None:
             lmark_group = self.without_labels(without_labels)
         else:
             lmark_group = self  # Fall through
-        landmark_viewer = LandmarkViewer2d(figure_id, new_figure,
-                                           group, lmark_group)
+        landmark_viewer = LandmarkViewer2d(figure_id, new_figure, group, lmark_group)
         return landmark_viewer.render(
-            image_view=image_view, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
+            image_view=image_view,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
             marker_edge_width=marker_edge_width,
@@ -717,7 +789,8 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             numbers_font_style=numbers_font_style,
             numbers_font_weight=numbers_font_weight,
             numbers_font_colour=numbers_font_colour,
-            render_legend=render_legend, legend_title=legend_title,
+            render_legend=render_legend,
+            legend_title=legend_title,
             legend_font_name=legend_font_name,
             legend_font_style=legend_font_style,
             legend_font_size=legend_font_size,
@@ -733,44 +806,77 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             legend_border_padding=legend_border_padding,
             legend_shadow=legend_shadow,
             legend_rounded_corners=legend_rounded_corners,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-            axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-            axes_y_ticks=axes_y_ticks, figure_size=figure_size)
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+        )
 
-    def _view_3d(self, with_labels=None, without_labels=None, group='group',
-                 figure_id=None, new_figure=False, render_lines=True,
-                 line_colour=None, line_width=2, render_markers=True,
-                 marker_style='sphere', marker_size=None, marker_colour=None,
-                 marker_resolution=8, step=None, alpha=1.0,
-                 render_numbering=False, numbers_colour='k', numbers_size=None):
+    def _view_3d(
+        self,
+        with_labels=None,
+        without_labels=None,
+        group="group",
+        figure_id=None,
+        new_figure=False,
+        render_lines=True,
+        line_colour=None,
+        line_width=2,
+        render_markers=True,
+        marker_style="sphere",
+        marker_size=None,
+        marker_colour=None,
+        marker_resolution=8,
+        step=None,
+        alpha=1.0,
+        render_numbering=False,
+        numbers_colour="k",
+        numbers_size=None,
+    ):
         try:
             from menpo3d.visualize import LandmarkViewer3d
+
             if with_labels is not None and without_labels is not None:
-                raise ValueError('You may only pass one of `with_labels` or '
-                                 '`without_labels`.')
+                raise ValueError(
+                    "You may only pass one of `with_labels` or " "`without_labels`."
+                )
             elif with_labels is not None:
                 lmark_group = self.with_labels(with_labels)
             elif without_labels is not None:
                 lmark_group = self.without_labels(without_labels)
             else:
                 lmark_group = self  # Fall through
-            landmark_viewer = LandmarkViewer3d(figure_id, new_figure,
-                                               group, lmark_group)
+            landmark_viewer = LandmarkViewer3d(
+                figure_id, new_figure, group, lmark_group
+            )
             return landmark_viewer.render(
-                render_lines=render_lines, line_colour=line_colour,
-                line_width=line_width, render_markers=render_markers,
-                marker_style=marker_style, marker_size=marker_size,
-                marker_colour=marker_colour, marker_resolution=marker_resolution,
-                step=step, alpha=alpha, render_numbering=render_numbering,
-                numbers_colour=numbers_colour, numbers_size=numbers_size)
+                render_lines=render_lines,
+                line_colour=line_colour,
+                line_width=line_width,
+                render_markers=render_markers,
+                marker_style=marker_style,
+                marker_size=marker_size,
+                marker_colour=marker_colour,
+                marker_resolution=marker_resolution,
+                step=step,
+                alpha=alpha,
+                render_numbering=render_numbering,
+                numbers_colour=numbers_colour,
+                numbers_size=numbers_size,
+            )
         except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
+
             raise Menpo3dMissingError(e)
 
     @viewwrapper
-    def view_widget(self, ):
+    def view_widget(self,):
         r"""
         Abstract method for viewing with an interactive widget. See the
         :map:`viewwrapper` documentation for an explanation of how the
@@ -790,9 +896,11 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         """
         try:
             from menpowidgets import view_widget
+
             view_widget(self, figure_size=figure_size)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
 
     def _view_widget_3d(self):
@@ -802,13 +910,14 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         """
         try:
             from menpowidgets import view_widget
+
             view_widget(self)
         except ImportError as e:
             from menpo.visualize.base import MenpowidgetsMissingError
+
             raise MenpowidgetsMissingError(e)
 
     def __str__(self):
-        return '{}: n_labels: {}, n_points: {}, n_edges: {}'.format(
-            type(self).__name__, self.n_labels, self.n_points,
-            self.n_edges
+        return "{}: n_labels: {}, n_points: {}, n_edges: {}".format(
+            type(self).__name__, self.n_labels, self.n_points, self.n_edges
         )

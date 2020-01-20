@@ -4,9 +4,9 @@ from ..homogeneous import AlignmentSimilarity
 from .base import MultipleAlignment
 
 
-avoid_circular = None      # to avoid circular imports
-mean_pointcloud = None     # to avoid circular imports
-PointCloud = None          # to avoid circular imports
+avoid_circular = None  # to avoid circular imports
+mean_pointcloud = None  # to avoid circular imports
+PointCloud = None  # to avoid circular imports
 scale_about_centre = None  # to avoid circular imports
 
 
@@ -33,13 +33,14 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     ValueError
         Need at least two sources to align
     """
+
     def __init__(self, sources, target=None, allow_mirror=False):
-        super(GeneralizedProcrustesAnalysis, self).__init__(sources,
-                                                            target=target)
+        super(GeneralizedProcrustesAnalysis, self).__init__(sources, target=target)
         initial_target = self.target
-        self.transforms = [AlignmentSimilarity(source, self.target,
-                                               allow_mirror=allow_mirror)
-                           for source in self.sources]
+        self.transforms = [
+            AlignmentSimilarity(source, self.target, allow_mirror=allow_mirror)
+            for source in self.sources
+        ]
         self.initial_target_scale = self.target.norm()
         self.n_iterations = 1
         self.max_iterations = 100
@@ -55,17 +56,19 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         if avoid_circular is None:
             from menpo.shape import mean_pointcloud, PointCloud
             from ..compositions import scale_about_centre
+
             avoid_circular = True
 
         if self.n_iterations > self.max_iterations:
             return False
-        new_tgt = mean_pointcloud([PointCloud(t.aligned_source().points,
-                                              copy=False)
-                                   for t in self.transforms])
+        new_tgt = mean_pointcloud(
+            [PointCloud(t.aligned_source().points, copy=False) for t in self.transforms]
+        )
         # rescale the new_target to be the same size as the original about
         # it's centre
-        rescale = scale_about_centre(new_tgt,
-                                     self.initial_target_scale / new_tgt.norm())
+        rescale = scale_about_centre(
+            new_tgt, self.initial_target_scale / new_tgt.norm()
+        )
         rescale._apply_inplace(new_tgt)
         # check to see if we have converged yet
         delta_target = np.linalg.norm(self.target.points - new_tgt.points)
@@ -85,8 +88,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         :type: :map:`PointCloud`
         """
         from menpo.shape import PointCloud
-        return PointCloud(np.mean([t.target.points for t in self.transforms],
-                                  axis=0))
+
+        return PointCloud(np.mean([t.target.points for t in self.transforms], axis=0))
 
     def mean_alignment_error(self):
         r"""
@@ -94,13 +97,16 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
 
         :type: `float`
         """
-        return sum([t.alignment_error() for t in
-                    self.transforms])/self.n_sources
+        return sum([t.alignment_error() for t in self.transforms]) / self.n_sources
 
     def __str__(self):
         if self.converged:
-            return ('Converged after %d iterations with av. error %f'
-                    % (self.n_iterations, self.mean_alignment_error()))
+            return "Converged after %d iterations with av. error %f" % (
+                self.n_iterations,
+                self.mean_alignment_error(),
+            )
         else:
-            return ('Failed to converge after %d iterations with av. error '
-                    '%f' % (self.n_iterations, self.mean_alignment_error()))
+            return "Failed to converge after %d iterations with av. error " "%f" % (
+                self.n_iterations,
+                self.mean_alignment_error(),
+            )

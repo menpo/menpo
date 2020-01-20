@@ -3,8 +3,17 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 
 
-def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
-           normalization='l1', sigmas=None, ring_radii=None):
+def _daisy(
+    img,
+    step=4,
+    radius=15,
+    rings=3,
+    histograms=8,
+    orientations=8,
+    normalization="l1",
+    sigmas=None,
+    ring_radii=None,
+):
     r"""Extract DAISY feature descriptors densely for the given image.
 
     DAISY is a feature descriptor similar to SIFT formulated in a way that
@@ -101,12 +110,14 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
         c_grad_mag = np.sqrt(grad[c] ** 2 + grad[c + n_channels] ** 2)
         tmp_max_mask = c_grad_mag > grad_mag
         grad_mag[tmp_max_mask] = c_grad_mag[tmp_max_mask]
-        grad_ori[tmp_max_mask] = np.arctan2(grad[c][tmp_max_mask],
-                                            grad[c + n_channels][tmp_max_mask])
+        grad_ori[tmp_max_mask] = np.arctan2(
+            grad[c][tmp_max_mask], grad[c + n_channels][tmp_max_mask]
+        )
 
     orientation_kappa = orientations / np.pi
-    orientation_angles = [2 * o * np.pi / orientations - np.pi
-                          for o in range(orientations)]
+    orientation_angles = [
+        2 * o * np.pi / orientations - np.pi for o in range(orientations)
+    ]
     hist = np.empty((orientations,) + img.shape[1:], dtype=float)
     for i, o in enumerate(orientation_angles):
         # Weigh bin contribution by the circular normal distribution
@@ -124,8 +135,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     # Assemble descriptor grid.
     theta = [2 * np.pi * j / histograms for j in range(histograms)]
     desc_dims = (rings * histograms + 1) * orientations
-    descs = np.empty((desc_dims, img.shape[1] - 2 * radius,
-                      img.shape[2] - 2 * radius))
+    descs = np.empty((desc_dims, img.shape[1] - 2 * radius, img.shape[2] - 2 * radius))
     descs[:orientations] = hist_smooth[0, :, radius:-radius, radius:-radius]
     idx = orientations
     for i in range(rings):
@@ -134,24 +144,24 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
             y_max = descs.shape[1] + y_min
             x_min = radius + int(np.round(ring_radii[i] * np.cos(theta[j])))
             x_max = descs.shape[2] + x_min
-            descs[idx:idx + orientations] = hist_smooth[i + 1, :,
-                                                        y_min:y_max,
-                                                        x_min:x_max]
+            descs[idx : idx + orientations] = hist_smooth[
+                i + 1, :, y_min:y_max, x_min:x_max
+            ]
             idx += orientations
     descs = descs[:, ::step, ::step]
 
     # Normalize descriptors.
-    if normalization != 'off':
+    if normalization != "off":
         descs += 1e-10
-        if normalization == 'l1':
+        if normalization == "l1":
             descs /= np.sum(descs, axis=0)
-        elif normalization == 'l2':
+        elif normalization == "l2":
             descs /= np.sqrt(np.sum(descs ** 2, axis=0))
-        elif normalization == 'daisy':
+        elif normalization == "daisy":
             for i in range(0, desc_dims, orientations):
-                norms = np.sqrt(np.sum(descs[i:i + orientations] ** 2, axis=0))
-                descs[i:i + orientations] /= norms
+                norms = np.sqrt(np.sum(descs[i : i + orientations] ** 2, axis=0))
+                descs[i : i + orientations] /= norms
 
-    descs = np.require(descs, requirements=['C'])
+    descs = np.require(descs, requirements=["C"])
 
     return descs

@@ -7,35 +7,73 @@ cov_matrix = np.array([[3, 1], [1, 3]])
 # Data values taken from:
 # http://www.cs.otago.ac.nz/cosc453/student_tutorials/principal_components.pdf
 # Tested values are equal
-large_samples_data_matrix = np.array([[2.5, 2.4],
-                                      [0.5, 0.7],
-                                      [2.2, 2.9],
-                                      [1.9, 2.2],
-                                      [3.1, 3.0],
-                                      [2.3, 2.7],
-                                      [2.0, 1.6],
-                                      [1.0, 1.1],
-                                      [1.5, 1.6],
-                                      [1.1, 0.9]])
-centered_eigenvectors_s = np.array([[0.6778734, 0.73517866],
-                                    [-0.73517866, 0.6778734]])
-non_centered_eigenvectors_s = np.array([[0.68647784, 0.72715072],
-                                        [-0.72715072, 0.68647784]])
+large_samples_data_matrix = np.array(
+    [
+        [2.5, 2.4],
+        [0.5, 0.7],
+        [2.2, 2.9],
+        [1.9, 2.2],
+        [3.1, 3.0],
+        [2.3, 2.7],
+        [2.0, 1.6],
+        [1.0, 1.1],
+        [1.5, 1.6],
+        [1.1, 0.9],
+    ]
+)
+centered_eigenvectors_s = np.array([[0.6778734, 0.73517866], [-0.73517866, 0.6778734]])
+non_centered_eigenvectors_s = np.array(
+    [[0.68647784, 0.72715072], [-0.72715072, 0.68647784]]
+)
 mean_vector_s = np.array([1.81, 1.91])
 eigenvalues_no_centre_s = np.array([8.97738481, 0.04928186])
 eigenvalues_centered_s = np.array([1.28402771, 0.0490834])
 
-centered_eigenvectors_f = np.array([[-0.09901475, 0.19802951, 0.69310328,
-                                     0.29704426, -0.09901475, 0.39605902,
-                                     -0.39605902, 0.09901475, 0.09901475,
-                                     -0.19802951]])
+centered_eigenvectors_f = np.array(
+    [
+        [
+            -0.09901475,
+            0.19802951,
+            0.69310328,
+            0.29704426,
+            -0.09901475,
+            0.39605902,
+            -0.39605902,
+            0.09901475,
+            0.09901475,
+            -0.19802951,
+        ]
+    ]
+)
 non_centered_eigenvectors_f = np.array(
-    [[0.38507927, 0.09481302, 0.40261598, 0.32307722, 0.4794398, 0.39407387,
-      0.28217662, 0.16535718, 0.24399096, 0.15681507],
-     [-0.25575629, 0.17561812, 0.58718113, 0.19319469, -0.29239933, 0.27184299,
-      -0.5344514, 0.04200527, 0.01146941, -0.27333287]])
-mean_vector_f = np.array([2.45, 0.6, 2.55, 2.05, 3.05,
-                          2.5, 1.8, 1.05, 1.55, 1.])
+    [
+        [
+            0.38507927,
+            0.09481302,
+            0.40261598,
+            0.32307722,
+            0.4794398,
+            0.39407387,
+            0.28217662,
+            0.16535718,
+            0.24399096,
+            0.15681507,
+        ],
+        [
+            -0.25575629,
+            0.17561812,
+            0.58718113,
+            0.19319469,
+            -0.29239933,
+            0.27184299,
+            -0.5344514,
+            0.04200527,
+            0.01146941,
+            -0.27333287,
+        ],
+    ]
+)
+mean_vector_f = np.array([2.45, 0.6, 2.55, 2.05, 3.05, 2.5, 1.8, 1.05, 1.55, 1.0])
 eigenvalues_no_centre_f = np.array([80.79646326, 0.44353674])
 eigenvalues_centered_f = np.array([0.51])
 
@@ -70,8 +108,7 @@ def test_pcd_features_nocentre():
 def test_pcd_features_nocentre_inplace():
     # important to copy as this will now destructively effect the input data
     # matrix (due to inplace)
-    output = pca(large_samples_data_matrix.T.copy(), centre=False,
-                 inplace=True)
+    output = pca(large_samples_data_matrix.T.copy(), centre=False, inplace=True)
     eigenvectors, eigenvalues, mean_vector = output
 
     assert_almost_equal(eigenvalues, eigenvalues_no_centre_f)
@@ -93,18 +130,18 @@ def test_eigenvalue_decomposition_default_epsilon():
 
     assert_almost_equal(pos_eigenvalues, [4.0, 2.0])
     sqrt_one_over_2 = np.sqrt(2.0) / 2.0
-    assert_almost_equal(pos_eigenvectors, [[sqrt_one_over_2, -sqrt_one_over_2],
-                                           [sqrt_one_over_2, sqrt_one_over_2]])
+    assert_almost_equal(
+        pos_eigenvectors,
+        [[sqrt_one_over_2, -sqrt_one_over_2], [sqrt_one_over_2, sqrt_one_over_2]],
+    )
 
 
 def test_eigenvalue_decomposition_large_epsilon():
-    pos_eigenvectors, pos_eigenvalues = eigenvalue_decomposition(cov_matrix,
-                                                                 eps=0.5)
+    pos_eigenvectors, pos_eigenvalues = eigenvalue_decomposition(cov_matrix, eps=0.5)
 
     assert_almost_equal(pos_eigenvalues, [4.0])
     sqrt_one_over_2 = np.sqrt(2.0) / 2.0
-    assert_almost_equal(pos_eigenvectors,
-                        [[sqrt_one_over_2], [sqrt_one_over_2]])
+    assert_almost_equal(pos_eigenvectors, [[sqrt_one_over_2], [sqrt_one_over_2]])
 
 
 def test_ipca_samples_yescentre():

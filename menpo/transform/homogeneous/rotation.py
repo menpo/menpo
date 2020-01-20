@@ -74,6 +74,7 @@ def optimal_rotation_matrix(source, target, allow_mirror=False):
 # see http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
 # for details
 
+
 class Rotation(DiscreteAffine, Similarity):
     r"""
     Abstract `n_dims` rotation transform.
@@ -128,9 +129,10 @@ class Rotation(DiscreteAffine, Similarity):
         """
         if degrees:
             theta = np.deg2rad(theta)
-        return Rotation(np.array([[np.cos(theta), -np.sin(theta)],
-                                  [np.sin(theta),  np.cos(theta)]]),
-                        skip_checks=True)
+        return Rotation(
+            np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]),
+            skip_checks=True,
+        )
 
     @classmethod
     def init_3d_from_quaternion(cls, q):
@@ -170,10 +172,16 @@ class Rotation(DiscreteAffine, Similarity):
         """
         if degrees:
             theta = np.deg2rad(theta)
-        return Rotation(np.array([[ 1,             0,              0],
-                                  [ 0, np.cos(theta), -np.sin(theta)],
-                                  [ 0, np.sin(theta), np.cos(theta)]]),
-                        skip_checks=True)
+        return Rotation(
+            np.array(
+                [
+                    [1, 0, 0],
+                    [0, np.cos(theta), -np.sin(theta)],
+                    [0, np.sin(theta), np.cos(theta)],
+                ]
+            ),
+            skip_checks=True,
+        )
 
     @classmethod
     def init_from_3d_ccw_angle_around_y(cls, theta, degrees=True):
@@ -195,10 +203,16 @@ class Rotation(DiscreteAffine, Similarity):
         """
         if degrees:
             theta = np.deg2rad(theta)
-        return Rotation(np.array([[ np.cos(theta), 0, np.sin(theta)],
-                                  [             0, 1,             0],
-                                  [-np.sin(theta), 0, np.cos(theta)]]),
-                        skip_checks=True)
+        return Rotation(
+            np.array(
+                [
+                    [np.cos(theta), 0, np.sin(theta)],
+                    [0, 1, 0],
+                    [-np.sin(theta), 0, np.cos(theta)],
+                ]
+            ),
+            skip_checks=True,
+        )
 
     @classmethod
     def init_from_3d_ccw_angle_around_z(cls, theta, degrees=True):
@@ -220,10 +234,16 @@ class Rotation(DiscreteAffine, Similarity):
         """
         if degrees:
             theta = np.deg2rad(theta)
-        return Rotation(np.array([[ np.cos(theta), -np.sin(theta), 0],
-                                  [ np.sin(theta),  np.cos(theta), 0],
-                                  [             0,              0, 1]]),
-                        skip_checks=True)
+        return Rotation(
+            np.array(
+                [
+                    [np.cos(theta), -np.sin(theta), 0],
+                    [np.sin(theta), np.cos(theta), 0],
+                    [0, 0, 1],
+                ]
+            ),
+            skip_checks=True,
+        )
 
     @property
     def rotation_matrix(self):
@@ -251,8 +271,9 @@ class Rotation(DiscreteAffine, Similarity):
                 raise ValueError("You need to provide a square rotation matrix")
             # The update better be the same size
             elif self.n_dims != shape[0]:
-                raise ValueError("Trying to update the rotation "
-                                 "matrix to a different dimension")
+                raise ValueError(
+                    "Trying to update the rotation " "matrix to a different dimension"
+                )
             # TODO actually check I am a valid rotation
             # TODO slightly dodgy here accessing _h_matrix
         self._h_matrix[:-1, :-1] = value
@@ -262,8 +283,9 @@ class Rotation(DiscreteAffine, Similarity):
         if axis is None:
             return "NO OP"
         degrees_of_rotation = np.rad2deg(radians_of_rotation)
-        message = ('CCW Rotation of {:.1f} degrees '
-                   'about {}'.format(degrees_of_rotation, axis))
+        message = "CCW Rotation of {:.1f} degrees " "about {}".format(
+            degrees_of_rotation, axis
+        )
         return message
 
     def axis_and_angle_of_rotation(self):
@@ -299,8 +321,7 @@ class Rotation(DiscreteAffine, Similarity):
         """
         axis = np.array([0, 0, 1])
         test_vector = np.array([1, 0])
-        transformed_vector = np.dot(self.rotation_matrix,
-                                    test_vector)
+        transformed_vector = np.dot(self.rotation_matrix, test_vector)
         angle_of_rotation = np.arccos(np.dot(transformed_vector, test_vector))
         return axis, angle_of_rotation
 
@@ -346,12 +367,11 @@ class Rotation(DiscreteAffine, Similarity):
         axis_temp_vector = axis - np.random.rand(axis.size)
         perpendicular_vector = np.cross(axis, axis_temp_vector)
         perpendicular_vector /= np.sqrt((perpendicular_vector ** 2).sum())
-        transformed_vector = np.dot(self.rotation_matrix,
-                                    perpendicular_vector)
-        angle_of_rotation = np.arccos(
-            np.dot(transformed_vector, perpendicular_vector))
-        chirality_of_rotation = np.dot(axis, np.cross(perpendicular_vector,
-                                                      transformed_vector))
+        transformed_vector = np.dot(self.rotation_matrix, perpendicular_vector)
+        angle_of_rotation = np.arccos(np.dot(transformed_vector, perpendicular_vector))
+        chirality_of_rotation = np.dot(
+            axis, np.cross(perpendicular_vector, transformed_vector)
+        )
         if chirality_of_rotation < 0:
             angle_of_rotation *= -1.0
         return axis, angle_of_rotation
@@ -377,8 +397,7 @@ class Rotation(DiscreteAffine, Similarity):
             # Quaternion parameters
             return 4
         else:
-            raise NotImplementedError("Non-3D Rotations are not yet "
-                                      "vectorizable")
+            raise NotImplementedError("Non-3D Rotations are not yet " "vectorizable")
 
     def _as_vector(self):
         r"""
@@ -407,10 +426,14 @@ class Rotation(DiscreteAffine, Similarity):
             m21 = self.h_matrix[2, 1]
             m22 = self.h_matrix[2, 2]
             # symmetric matrix K
-            K = np.array([[m00-m11-m22, 0.0,         0.0,         0.0],
-                          [m01+m10,     m11-m00-m22, 0.0,         0.0],
-                          [m02+m20,     m12+m21,     m22-m00-m11, 0.0],
-                          [m21-m12,     m02-m20,     m10-m01,     m00+m11+m22]])
+            K = np.array(
+                [
+                    [m00 - m11 - m22, 0.0, 0.0, 0.0],
+                    [m01 + m10, m11 - m00 - m22, 0.0, 0.0],
+                    [m02 + m20, m12 + m21, m22 - m00 - m11, 0.0],
+                    [m21 - m12, m02 - m20, m10 - m01, m00 + m11 + m22],
+                ]
+            )
             K /= 3.0
             # Quaternion is eigenvector of K that corresponds to largest
             # eigenvalue
@@ -420,8 +443,7 @@ class Rotation(DiscreteAffine, Similarity):
                 q = -q
             return q
         else:
-            raise NotImplementedError("Non-3D Rotations are not yet "
-                                      "vectorizable")
+            raise NotImplementedError("Non-3D Rotations are not yet " "vectorizable")
 
     def _from_vector_inplace(self, p):
         r"""
@@ -454,16 +476,20 @@ class Rotation(DiscreteAffine, Similarity):
                 p = p * np.sqrt(2.0 / n)
                 p = np.outer(p, p)
                 rotation = np.array(
-                    [[1.-p[2, 2]-p[3, 3],    p[1, 2]-p[3, 0],    p[1, 3]+p[2, 0]],
-                     [   p[1, 2]+p[3, 0], 1.-p[1, 1]-p[3, 3],    p[2, 3]-p[1, 0]],
-                     [   p[1, 3]-p[2, 0],    p[2, 3]+p[1, 0], 1.-p[1, 1]-p[2, 2]]])
+                    [
+                        [1.0 - p[2, 2] - p[3, 3], p[1, 2] - p[3, 0], p[1, 3] + p[2, 0]],
+                        [p[1, 2] + p[3, 0], 1.0 - p[1, 1] - p[3, 3], p[2, 3] - p[1, 0]],
+                        [p[1, 3] - p[2, 0], p[2, 3] + p[1, 0], 1.0 - p[1, 1] - p[2, 2]],
+                    ]
+                )
                 self.set_rotation_matrix(rotation, skip_checks=True)
             else:
-                raise ValueError("Expected 4 quaternion parameters; got {} "
-                                 "instead.".format(len(p)))
+                raise ValueError(
+                    "Expected 4 quaternion parameters; got {} "
+                    "instead.".format(len(p))
+                )
         else:
-            raise NotImplementedError("Non-3D rotations are not yet "
-                                      "vectorizable")
+            raise NotImplementedError("Non-3D rotations are not yet " "vectorizable")
 
     @property
     def composes_inplace_with(self):
@@ -500,8 +526,9 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
 
     def __init__(self, source, target, allow_mirror=False):
         HomogFamilyAlignment.__init__(self, source, target)
-        Rotation.__init__(self, optimal_rotation_matrix(
-            source, target, allow_mirror=allow_mirror))
+        Rotation.__init__(
+            self, optimal_rotation_matrix(source, target, allow_mirror=allow_mirror)
+        )
         self.allow_mirror = allow_mirror
 
     def set_rotation_matrix(self, value, skip_checks=False):
@@ -519,8 +546,9 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):
-        r = optimal_rotation_matrix(self.source, self.target,
-                                    allow_mirror=self.allow_mirror)
+        r = optimal_rotation_matrix(
+            self.source, self.target, allow_mirror=self.allow_mirror
+        )
         Rotation.set_rotation_matrix(self, r, skip_checks=True)
 
     def as_non_alignment(self):

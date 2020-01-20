@@ -16,6 +16,7 @@ class RadialBasisFunction(Transform):
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
+
     def __init__(self, c):
         self.c = c
 
@@ -64,11 +65,12 @@ class R2LogR2RBF(RadialBasisFunction):
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
+
     def __init__(self, c):
         super(R2LogR2RBF, self).__init__(c)
 
     def _apply(self, x, **kwargs):
-        """
+        r"""
         Apply the basis function.
 
         .. note::
@@ -88,9 +90,8 @@ class R2LogR2RBF(RadialBasisFunction):
         """
         euclidean_distance = cdist(x, self.c)
         mask = euclidean_distance == 0
-        with np.errstate(divide='ignore', invalid='ignore'):
-            u = (euclidean_distance ** 2 *
-                 (2 * np.log(euclidean_distance)))
+        with np.errstate(divide="ignore", invalid="ignore"):
+            u = euclidean_distance ** 2 * (2 * np.log(euclidean_distance))
         # reset singularities to 0
         u[mask] = 0
         return u
@@ -112,11 +113,12 @@ class R2LogRRBF(RadialBasisFunction):
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
+
     def __init__(self, c):
         super(R2LogRRBF, self).__init__(c)
 
     def _apply(self, points, **kwargs):
-        """
+        r"""
         Apply the basis function :math:`r^2 \log{r}`.
 
         Parameters
@@ -132,7 +134,7 @@ class R2LogRRBF(RadialBasisFunction):
         """
         euclidean_distance = cdist(points, self.c)
         mask = euclidean_distance == 0
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             u = euclidean_distance ** 2 * np.log(euclidean_distance)
         # reset singularities to 0
         u[mask] = 0

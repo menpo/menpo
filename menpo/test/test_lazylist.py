@@ -172,6 +172,6 @@ def test_lazylist_add_non_iterable_non_lazy_list_rases_value_error():
 
 def test_lazylist_slice_with_ndarray():
     index = np.array([1, 0, 3], dtype=np.int)
-    l = LazyList.init_from_iterable(['a', 'b', 'c', 'd', 'e'])
+    l = LazyList.init_from_iterable(["a", "b", "c", "d", "e"])
     l_indexed = l[index]
-    assert list(l_indexed) == ['b', 'a', 'd']
+    assert list(l_indexed) == ["b", "a", "d"]
