@@ -1,11 +1,13 @@
 import warnings
+from pathlib import Path
 
 import numpy as np
 from PIL import Image as PILImage
-from mock import patch, MagicMock
+from mock import MagicMock, patch
 from pytest import raises
 
 import menpo.io as mio
+from menpo.shape import PointCloud
 
 
 def test_import_incorrect_built_in():
@@ -546,6 +548,14 @@ def test_importing_v3_ljson_null_values(is_file, mock_open, mock_dict):
     assert nan_points[0, 0]  # y-coord None point is nan
     assert not nan_points[0, 1]  # x-coord point is not nan
     assert np.all(nan_points[1, :])  # all of leye label is nan
+
+
+def test_export_import_pointcloud_ljson_v3(tmpdir):
+    tmpdir = Path(tmpdir)
+    pc = PointCloud(np.random.random([10, 2]), copy=False)
+    mio.export_landmark_file(pc, tmpdir / "test.ljson")
+    loaded_pc = mio.import_landmark_file(tmpdir / "test.ljson")["LJSON"]
+    np.testing.assert_allclose(pc.points, loaded_pc.points)
 
 
 @patch("random.shuffle")
