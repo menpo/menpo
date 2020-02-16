@@ -1,14 +1,13 @@
-from collections import OrderedDict, namedtuple
+import itertools
 import json
 import warnings
-import itertools
+from collections import OrderedDict, namedtuple
 
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from menpo.shape import PointCloud, LabelledPointUndirectedGraph
+from menpo.shape import LabelledPointUndirectedGraph, PointCloud, PointUndirectedGraph
 from menpo.transform import Scale
-
 
 ASFPath = namedtuple(
     "ASFPath",
@@ -358,24 +357,23 @@ def _parse_ljson_v3(lms_dict):
     for key, lms_dict_group in lms_dict["groups"].items():
         points = _ljson_parse_null_values(lms_dict_group["landmarks"]["points"])
         connectivity = lms_dict_group["landmarks"].get("connectivity")
+        labels_to_mask = OrderedDict()
         # TODO: create the metadata label!
 
-        if connectivity is None and len(lms_dict_group["labels"]) == 0:
-            all_lms[key] = PointCloud(points)
-        else:
+        if len(lms_dict_group["labels"]) != 0:
             # masks into the pointcloud per label
-            labels_to_mask = OrderedDict()
             n_points = points.shape[0]
             for label in lms_dict_group["labels"]:
                 mask = np.zeros(n_points, dtype=np.bool)
                 mask[label["mask"]] = True
                 labels_to_mask[label["label"]] = mask
 
-            # Note that we can pass connectivity as None here and the edges
-            # will be empty.
-            all_lms[key] = LabelledPointUndirectedGraph.init_from_edges(
-                points, connectivity, labels_to_mask
-            )
+        # Note that we can pass connectivity as None here and the edges will be empty.
+        graph_cls = (
+            LabelledPointUndirectedGraph if labels_to_mask else PointUndirectedGraph
+        )
+        all_lms[key] = graph_cls.init_from_edges(points, connectivity, labels_to_mask)
+
     return all_lms
 
 
