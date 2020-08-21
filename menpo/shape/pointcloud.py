@@ -559,7 +559,7 @@ class PointCloud(Shape):
         axes_y_ticks=None,
         figure_size=(7, 7),
         label=None,
-        **kwargs,
+        **kwargs
     ):
         r"""
         Visualization of the PointCloud in 2D.
@@ -1082,7 +1082,7 @@ class PointCloud(Shape):
         render_numbering=False,
         numbers_colour="k",
         numbers_size=None,
-        **kwargs,
+        **kwargs
     ):
         r"""
         Visualization of the PointCloud in 3D.

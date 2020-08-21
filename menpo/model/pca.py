@@ -418,7 +418,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         else:
             noise_variance = np.hstack(
                 (
-                    self._eigenvalues[self.n_active_components :],
+                    self._eigenvalues[self.n_active_components:],
                     self._trimmed_eigenvalues,
                 )
             ).mean()
@@ -610,7 +610,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             self._trimmed_eigenvalues = np.hstack(
                 (
                     self._trimmed_eigenvalues,
-                    self._eigenvalues[self.n_active_components :],
+                    self._eigenvalues[self.n_active_components:],
                 )
             )
             # make sure that the eigenvalues are trimmed too
@@ -680,7 +680,7 @@ class PCAVectorModel(MeanLinearVectorModel):
                 self.n_active_components = n_active_components
 
         # now we can set our own components with the updated orthogonal ones
-        self.components = Q[linear_model.n_components :, :]
+        self.components = Q[linear_model.n_components:, :]
 
     def increment(self, data, n_samples=None, forgetting_factor=1.0, verbose=False):
         r"""
@@ -1716,13 +1716,44 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
 
         mlab.savefig(str(export_path / 'Mean face.{}'.format('png')))
         for component in components_to_be_rendered:
-                parameters = np.zeros(component+1)
-                std = self.eigenvalues[component] ** 0.5
-                for weight in list_weights:
-                    parameters[component] = std*weight
-                    s.mlab_source.points = self.instance(parameters).points
-                    full_filename = '{}_{}_{}.{}'.format(filename,
-                                                         component,
-                                                         weight,
-                                                         'png')
-                    mlab.savefig(str(export_path / full_filename))
+            parameters = np.zeros(component+1)
+            std = self.eigenvalues[component] ** 0.5
+            for weight in list_weights:
+                parameters[component] = std*weight
+                s.mlab_source.points = self.instance(parameters).points
+                full_filename = '{}_{}_{}.{}'.format(filename,
+                                                     component,
+                                                     weight,
+                                                     'png')
+                mlab.savefig(str(export_path / full_filename))
+
+    def to_list(self):
+        r"""
+        Returns the main attributes of a model as a list
+        for serialization with avatars.serialize_morphable_model_to_binary
+        User should only expand the list.
+
+        Returns
+        ----------
+        list_elements: A list with the following  elements:
+                       mean_points: (n_features,) float32 ndarray
+                                     Flatten array with the points of the mean
+                                     mesh, casted as float32
+
+                       trilist:     (n_faces*3,) ndarray
+                                     Flatten array with the faces of the mean
+                                     mesh, casted as np.uint32
+
+                       components:   (n_features*n_components,) float32 ndarray
+                                     Flatten array with the components of the
+                                     PCAModel, casted as float32
+
+                       eigenvalues: (n_components,) float32 ndarray
+                                     Flatten array with the square rooot of
+                                     eigenvalues of the PCAModel,
+                                     casted as float32
+        """
+        return [self.mean().points.flatten().astype('float32'),
+                self.mean().trilist.flatten().astype('uint32'),
+                self.components.astype('float32'),
+                np.sqrt(self.eigenvalues).astype('float32')]

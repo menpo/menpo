@@ -1855,7 +1855,7 @@ class PointGraph(Graph, PointCloud):
         axes_y_ticks=None,
         figure_size=(7, 7),
         label=None,
-        **kwargs,
+        **kwargs
     ):
         r"""
         Visualization of the PointGraph in 2D.

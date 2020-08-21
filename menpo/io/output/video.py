@@ -21,7 +21,7 @@ def ffmpeg_video_exporter(
     bitrate=None,
     out_pix_fmt="yuv420p",
     verbose=False,
-    **kwargs,
+    **kwargs
 ):
     r"""
     Uses subprocess PIPE to export the images using FFMPEG.
@@ -154,7 +154,7 @@ def imageio_video_exporter(
     quality=None,
     bitrate=None,
     pixelformat="yuv420p",
-    **kwargs,
+    **kwargs
 ):
     r"""
     Uses imageio to export the images using FFMPEG. Please see the imageio

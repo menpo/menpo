@@ -20,15 +20,11 @@ def get_version_and_cmdclass(package_path):
 version, cmdclass = get_version_and_cmdclass("menpo")
 
 # Please see conda/meta.yaml for other binary dependencies
-<<<<<<< HEAD
 install_requires = ['numpy>=1.14',
                     'scipy>=1.0',
                     'matplotlib>=3.0',
                     'pillow>=4.0',
                     'scikit-image>=0.15']
-=======
-install_requires = ["numpy>=1.14", "scipy>=1.0", "matplotlib>=3.0", "pillow>=4.0"]
->>>>>>> upstream/master
 
 if sys.version_info.major == 2:
     install_requires.append("pathlib==1.0")
