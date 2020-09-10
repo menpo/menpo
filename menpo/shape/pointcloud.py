@@ -1110,6 +1110,60 @@ class PointCloud(Shape):
             from menpo.visualize import Menpo3dMissingError
 
             raise Menpo3dMissingError(e)
+        if inline:
+            try:
+                from menpo3d.visualize import PointGraphInlineViewer3d
+
+                edges = np.empty(0)
+                renderer = PointGraphInlineViewer3d(
+                    figure_id, new_figure, self.points, edges
+                )
+                render_return = renderer._render(
+                    render_lines=False,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    marker_resolution=marker_resolution,
+                    step=step,
+                    alpha=alpha,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                )
+                if render_return is not renderer:
+                    renderer.close()
+                    return
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import PointGraphViewer3d
+
+                edges = np.empty(0)
+                renderer = PointGraphViewer3d(figure_id, new_figure, self.points, edges)
+                renderer.render(
+                    render_lines=False,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    marker_resolution=marker_resolution,
+                    step=step,
+                    alpha=alpha,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                )
+
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
 
     def _view_landmarks_3d(
         self,

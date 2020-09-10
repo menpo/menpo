@@ -297,6 +297,7 @@ class TexturedTriMesh(TriMesh):
         normals_marker_size=None,
         step=None,
         alpha=1.0,
+        inline=False,
         **kwargs,
     ):
         r"""
@@ -374,35 +375,70 @@ class TexturedTriMesh(TriMesh):
             The Menpo3D rendering object.
         """
         if render_texture:
-            try:
-                from menpo3d.visualize import TexturedTriMeshViewer3d
+            if inline:
+                try:
+                    from menpo3d.visualize import TexturedTriMeshInlineViewer3d
 
-                renderer = TexturedTriMeshViewer3d(
-                    figure_id,
-                    new_figure,
-                    self.points,
-                    self.trilist,
-                    self.texture,
-                    self.tcoords.points,
-                )
-                renderer.render(
-                    mesh_type=mesh_type,
-                    ambient_light=ambient_light,
-                    specular_light=specular_light,
-                    normals=normals,
-                    normals_colour=normals_colour,
-                    normals_line_width=normals_line_width,
-                    normals_marker_style=normals_marker_style,
-                    normals_marker_resolution=normals_marker_resolution,
-                    normals_marker_size=normals_marker_size,
-                    step=step,
-                    alpha=alpha,
-                )
-                return renderer
-            except ImportError as e:
-                from menpo.visualize import Menpo3dMissingError
+                    renderer = TexturedTriMeshInlineViewer3d(
+                        figure_id,
+                        new_figure,
+                        self.points,
+                        self.trilist,
+                        self.texture,
+                        self.tcoords,
+                        self.landmarks,
+                    )
+                    render_return = renderer._render(
+                        mesh_type=mesh_type,
+                        ambient_light=ambient_light,
+                        specular_light=specular_light,
+                        normals=normals,
+                        normals_colour=normals_colour,
+                        normals_line_width=normals_line_width,
+                        normals_marker_style=normals_marker_style,
+                        normals_marker_resolution=normals_marker_resolution,
+                        normals_marker_size=normals_marker_size,
+                        step=step,
+                        alpha=alpha,
+                    )
+                    if render_return is not renderer:
+                        renderer.close()
+                        return
+                    return renderer
+                except ImportError as e:
+                    from menpo.visualize import Menpo3dMissingError
 
-                raise Menpo3dMissingError(e)
+                    raise Menpo3dMissingError(e)
+            else:
+                try:
+                    from menpo3d.visualize import TexturedTriMeshViewer3d
+
+                    renderer = TexturedTriMeshViewer3d(
+                        figure_id,
+                        new_figure,
+                        self.points,
+                        self.trilist,
+                        self.texture,
+                        self.tcoords.points,
+                    )
+                    renderer.render(
+                        mesh_type=mesh_type,
+                        ambient_light=ambient_light,
+                        specular_light=specular_light,
+                        normals=normals,
+                        normals_colour=normals_colour,
+                        normals_line_width=normals_line_width,
+                        normals_marker_style=normals_marker_style,
+                        normals_marker_resolution=normals_marker_resolution,
+                        normals_marker_size=normals_marker_size,
+                        step=step,
+                        alpha=alpha,
+                    )
+                    return renderer
+                except ImportError as e:
+                    from menpo.visualize import Menpo3dMissingError
+
+                    raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import TriMeshViewer3d
