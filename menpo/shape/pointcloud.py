@@ -1154,7 +1154,7 @@ class PointCloud(Shape):
                 edges = np.empty(0)
                 renderer = PointGraphInlineViewer3d(figure_id, new_figure,
                                                     self.points, edges)
-                render_return = renderer.render(
+                render_return = renderer._render(
                     render_lines=False,
                     render_markers=render_markers,
                     marker_style=marker_style,

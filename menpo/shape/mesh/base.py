@@ -1506,7 +1506,7 @@ class TriMesh(PointCloud):
                                                  self.points,
                                                  self.trilist,
                                                  self.landmarks)
-                render_return = renderer.render(
+                render_return = renderer._render(
                     mesh_type=mesh_type,
                     line_width=line_width,
                     colour=colour,
