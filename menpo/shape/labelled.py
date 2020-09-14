@@ -838,42 +838,78 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         render_numbering=False,
         numbers_colour="k",
         numbers_size=None,
+        inline=False
     ):
-        try:
-            from menpo3d.visualize import LandmarkViewer3d
+        if inline:
+            try:
+                from menpo3d.visualize import LandmarkInlineViewer3d
 
-            if with_labels is not None and without_labels is not None:
-                raise ValueError(
-                    "You may only pass one of `with_labels` or " "`without_labels`."
+                if with_labels is not None and without_labels is not None:
+                    raise ValueError(
+                        "You may only pass one of `with_labels` or " "`without_labels`."
+                    )
+                elif with_labels is not None:
+                    lmark_group = self.with_labels(with_labels)
+                elif without_labels is not None:
+                    lmark_group = self.without_labels(without_labels)
+                else:
+                    lmark_group = self  # Fall through
+                landmark_viewer = LandmarkInlineViewer3d(
+                    figure_id, new_figure, group, lmark_group
                 )
-            elif with_labels is not None:
-                lmark_group = self.with_labels(with_labels)
-            elif without_labels is not None:
-                lmark_group = self.without_labels(without_labels)
-            else:
-                lmark_group = self  # Fall through
-            landmark_viewer = LandmarkViewer3d(
-                figure_id, new_figure, group, lmark_group
-            )
-            return landmark_viewer.render(
-                render_lines=render_lines,
-                line_colour=line_colour,
-                line_width=line_width,
-                render_markers=render_markers,
-                marker_style=marker_style,
-                marker_size=marker_size,
-                marker_colour=marker_colour,
-                marker_resolution=marker_resolution,
-                step=step,
-                alpha=alpha,
-                render_numbering=render_numbering,
-                numbers_colour=numbers_colour,
-                numbers_size=numbers_size,
-            )
-        except ImportError as e:
-            from menpo.visualize import Menpo3dMissingError
+                return landmark_viewer._render(
+                    render_lines=render_lines,
+                    line_colour=line_colour,
+                    line_width=line_width,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    marker_resolution=marker_resolution,
+                    step=step,
+                    alpha=alpha,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                )
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+        else:
+            try:
+                from menpo3d.visualize import LandmarkViewer3d
 
-            raise Menpo3dMissingError(e)
+                if with_labels is not None and without_labels is not None:
+                    raise ValueError(
+                        "You may only pass one of `with_labels` or " "`without_labels`."
+                    )
+                elif with_labels is not None:
+                    lmark_group = self.with_labels(with_labels)
+                elif without_labels is not None:
+                    lmark_group = self.without_labels(without_labels)
+                else:
+                    lmark_group = self  # Fall through
+                landmark_viewer = LandmarkViewer3d(
+                    figure_id, new_figure, group, lmark_group
+                )
+                return landmark_viewer.render(
+                    render_lines=render_lines,
+                    line_colour=line_colour,
+                    line_width=line_width,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    marker_resolution=marker_resolution,
+                    step=step,
+                    alpha=alpha,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                )
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
 
     @viewwrapper
     def view_widget(self,):
