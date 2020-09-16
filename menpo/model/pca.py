@@ -1542,6 +1542,148 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             verbose=verbose,
         )
 
+    def view(
+        self,
+        figure_id=None,
+        new_figure=True,
+        mesh_type="wireframe",
+        line_width=2,
+        colour="r",
+        marker_style="mesh",
+        marker_size=None,
+        step=None,
+        alpha=1.0,
+        n_parameters=5,
+        parameters_bound=(-15, 15),
+        landmarks_indices=None,
+        widget_style="info",
+        inline=True,
+    ):
+        r"""
+        Visualization of the TriMesh in 3D.
+
+        Parameters
+        ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        mesh_type : `str`, optional
+            The representation type to be used for the mesh.
+            Example options ::
+
+                {surface, wireframe, points, mesh, fancymesh}
+        colour : See Below, optional
+            The colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+        marker_style : `str`, optional
+            The style of the markers.
+            Example options ::
+                 `flat`: simple circles with uniform color,
+                 `dot`: simple dot with uniform color,
+                 `3d`: little 3D balls,
+                 `3dSpecular`: little 3D balls with specular lightning,
+                 `mesh`: high precision triangle mesh of a ball
+                         (high quality and GPU load).}
+        marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically. It only applies for the
+            'fancymesh'.
+
+        widget_style: `str`
+            Style options:
+                ============= ==================
+                Style         Description
+                ============= ==================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ==================
+        step : `int` or ``None``, optional
+            If `int`, then one every `step` markers will be rendered.
+            If ``None``, then all vertexes will be rendered. It only applies for
+            the 'fancymesh' and if `normals` is not ``None``.
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
+
+        Returns
+        -------
+        renderer : `menpo3d.visualize.TriMeshViewer3D`
+            The Menpo3D rendering object.
+        """
+        if inline:
+            try:
+
+                from menpo3d.visualize import PCAModelInlineViewer3d
+
+                renderer = PCAModelInlineViewer3d(
+                    figure_id,
+                    new_figure,
+                    self.mean().points,
+                    self.mean().trilist,
+                    self.components,
+                    self.eigenvalues,
+                    n_parameters,
+                    parameters_bound,
+                    landmarks_indices,
+                    widget_style,
+                )
+                render_return = renderer._render(
+                    mesh_type=mesh_type,
+                    colour=colour,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    step=step,
+                    alpha=alpha,
+                )
+                # if render_return is not renderer:
+                #     renderer.close()
+                #     return
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import TriMeshViewer3d
+
+                renderer = TriMeshViewer3d(
+                    figure_id, new_figure, self.points, self.trilist
+                )
+                render_return = renderer.render(
+                    mesh_type=mesh_type,
+                    line_width=line_width,
+                    colour=colour,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_resolution=marker_resolution,
+                    normals=normals,
+                    normals_colour=normals_colour,
+                    normals_line_width=normals_line_width,
+                    normals_marker_style=normals_marker_style,
+                    normals_marker_resolution=normals_marker_resolution,
+                    normals_marker_size=normals_marker_size,
+                    step=step,
+                    alpha=alpha,
+                )
+                if render_return is not renderer:
+                    renderer.close()
+                    return
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+
     def __str__(self):
         str_out = (
             "PCA Model \n"
