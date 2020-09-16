@@ -857,7 +857,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
                 landmark_viewer = LandmarkInlineViewer3d(
                     figure_id, new_figure, group, lmark_group
                 )
-                return landmark_viewer._render(
+                render_return = landmark_viewer._render(
                     render_lines=render_lines,
                     line_colour=line_colour,
                     line_width=line_width,
@@ -872,6 +872,10 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
                     numbers_colour=numbers_colour,
                     numbers_size=numbers_size,
                 )
+                if render_return is not landmark_viewer:
+                    landmark_viewer.close()
+                    return
+                return landmark_viewer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
         else:
