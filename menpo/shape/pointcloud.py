@@ -1410,6 +1410,41 @@ class PointCloud(Shape):
             )
         return cdist(self.points, pointcloud.points, **kwargs)
 
+    def find_closest_vertices(self, pointcloud, **kwargs):
+        r"""
+        Returns a matrix  where for each vertex in this PointCloud
+        with N vertices,  its closest vertex in target PoinCloud
+        with M vertices is calculated
+        By default the Euclidean distance is calculated - see
+        `scipy.spatial.distance.cdist` for valid kwargs to change the metric
+        and other properties.
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            The second pointcloud to compute distances between. This must be
+            of the same dimension as this PointCloud.
+
+        Returns
+        -------
+        closest_vertices_matrix: ``(N, M)`` `ndarray`
+           A numpy.darray with NxM elements with 1
+                denotes the closest vertex i.e
+                [[0,1,0],[0,0,1]]
+                The second vertex in target pointcloud is the
+                closest vertex to the first vertex in this pointcloud.
+                In a similar way, the third vertex in target pointcloud
+                is the closest vertex to the second vertex in
+               this pointcloud.
+        """
+        closest_vertices = np.zeros((self.points.shape[0],
+                                     pointcloud.points.shape[0]),
+                                    dtype=np.uint8)
+        indx_vertices = np.argmin(self.distance_to(pointcloud,
+                                                   **kwargs), axis=1)
+        closest_vertices[np.arange(len(indx_vertices)), indx_vertices] = 1
+        return closest_vertices
+
     def norm(self, **kwargs):
         r"""
         Returns the norm of this PointCloud. This is a translation and
