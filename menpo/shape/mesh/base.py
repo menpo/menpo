@@ -812,6 +812,24 @@ class TriMesh(PointCloud):
         """
         return np.mean(self.unique_edge_lengths() if unique else self.edge_lengths())
 
+    def list_faces_per_vertex(self):
+        r"""
+        Returns a list  where for each vertex in this mesh
+        with N vertices,  its faces are added
+
+        Returns
+        -------
+        faces_per_vertex: ``(N, )`` `list`
+           A list of N lists for each vertex that contains the faces that
+           the vertex is part
+        """
+
+        faces_per_vertex = [[] for x in self.points]
+        for face in self.trilist:
+            for vertex in face:
+                faces_per_vertex[vertex].append(face.tolist())
+        return faces_per_vertex
+
     def _view_2d(
         self,
         figure_id=None,
