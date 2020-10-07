@@ -236,8 +236,6 @@ class TriMesh(PointCloud):
         """
         return len(self.trilist)
 
-<<<<<<< HEAD
-=======
     def heatmap(self, target_mesh, scalar_range=(0, 2), scale_value=100,
                 type_cmap='hot_r', show_statistics=False, figure_id=None,
                 new_figure=True, inline=False, **kwargs):
@@ -353,13 +351,11 @@ class TriMesh(PointCloud):
                     type_cmap = 'hot'
                 renderer.render(scaled_distances_between_meshes,
                                 type_cmap, scalar_range, show_statistics)
-
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
                 raise Menpo3dMissingError(e)
 
->>>>>>> c971694b... Add heatmap as a k3dwidget. Move definition of heatmap using mayavi from menpo.shape.mesh to viewmayavi
     def tojson(self):
         r"""
         Convert this :map:`TriMesh` to a dictionary representation suitable
