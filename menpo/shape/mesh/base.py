@@ -236,6 +236,130 @@ class TriMesh(PointCloud):
         """
         return len(self.trilist)
 
+<<<<<<< HEAD
+=======
+    def heatmap(self, target_mesh, scalar_range=(0, 2), scale_value=100,
+                type_cmap='hot_r', show_statistics=False, figure_id=None,
+                new_figure=True, inline=False, **kwargs):
+        r"""
+        Creates a heatmap of euclidean differences between the current mesh
+        and the target meshh. If the two meshes have the same number of
+        vertices, a corresponence of them is considered.
+        If the two meshes don't have the number of vertices,
+        a KDTree is constructed for the current
+        mesh and the difference of the closest points is calculated
+        Parameters
+        ----------
+        target_mesh :   `TriMesh`
+            A TriMesh whose points are used to find the differences(subtrahend)
+        scalar_range : `tuple'
+            The scalar range of  the colorbar, default=(0,2)
+        scale_value : `int'
+            The scale value of the differences, to go to mm, default : 100
+        type_cmap : `cmap'
+            Type of the colormap, default : 'hot', it can be:
+            'Accent','Blues','BrBG','BuGn','BuPu','CMRmap','Dark2', 'GnBu',
+            'Greens','Greys', 'OrRd', 'Oranges', 'PRGn', 'Paired', 'Pastel1',
+            'Pastel2', 'PiYG', 'PuBu', 'PuBuGn', 'PuOr', 'PuRd', 'Purples',
+            'RdBu', 'RdGy', 'RdPu', 'RdYlBu', 'RdYlGn', 'Reds', 'Set1',
+            'Set2', 'Set3', 'Spectral', 'Vega10', 'Vega20', 'Vega20b',
+            'Vega20c', 'Wistia', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd',
+            'afmhot', 'autumn', 'binary', 'black-white', 'blue-red',
+            'bone', 'brg', 'bwr','cool' or 'coolwarm' or 'copper',
+            'cubehelix', 'file', 'flag', 'gist_earth', 'gist_gray',
+            'gist_heat', 'gist_ncar', 'gist_rainbow', 'gist_stern',
+            'gist_yarg', 'gnuplot', 'gnuplot2', 'gray', 'hot', 'hsv',
+            'inferno', 'jet', 'magma', 'nipy_spectral', 'ocean', 'pink',
+            'plasma', 'prism', 'rainbow', 'seismic', 'spectral' 'spring',
+            'summer', 'terrain', 'viridis', 'winter'
+        show_statistics : `bool'
+            If statistics like mean, standard deviation and max error will be
+            shown in the window,
+            default:False
+        inline : 'bool', False
+               If True, the viewer will be in the Jupyter cell using K3dwidgets
+               If False, the viewer will open a new window using Mayavi
+
+        Returns
+        -------
+        v : `Scene`
+            Handle to  mayavi scene or a K3dwidgetsHeatmapViewer3d object
+        scaled_distances_between_meshes : `np.array'
+            An array with the scaled distances between the
+            correspoding vertices.
+        Raises
+        ------
+        ValueError
+        """
+        source_mesh = self
+        source_n_vertices = source_mesh.points.shape[0]
+        target_mesh_n_vertices = target_mesh.points.shape[0]
+
+        if not source_n_vertices == target_mesh_n_vertices:
+            first_part_string = 'Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices,
+                                                                                              target_mesh_n_vertices)
+            print(first_part_string)
+            subject = source_mesh.points
+            template = target_mesh
+            X = template.points
+
+            tree = cKDTree(X)
+            dist, indx = tree.query(subject, k=1)
+
+            target_mesh = TriMesh(X[indx], source_mesh.trilist)
+
+        if figure_id is None:
+            if hasattr(self, 'path'):
+                source_name = self.path.stem
+            else:
+                source_name = 'Source'
+            if hasattr(target_mesh, 'path'):
+                target_name = target_mesh.path.stem
+            else:
+                target_name = 'Target'
+            figure_name = 'Heatmap between {} and {}'.format(source_name,
+                                                             target_name)
+        else:
+            figure_name = figure_id
+
+        diff = (source_mesh.points.astype(np.float32)-target_mesh.points.astype(np.float32))**2
+        distances_between_meshes = np.sqrt(diff.sum(axis=1))
+        scaled_distances_between_meshes = distances_between_meshes*scale_value
+
+        if inline:
+            try:
+                from menpo3d.visualize import HeatmapInlineViewer3d
+                renderer = HeatmapInlineViewer3d(figure_name, new_figure,
+                                                 self.points, self.trilist,
+                                                 self.landmarks)
+                render_return = renderer._render(scaled_distances_between_meshes,
+                                                 type_cmap, scalar_range,
+                                                 show_statistics)
+
+                if render_return is not renderer:
+                    renderer.close()
+                    return
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import HeatmapViewer3d
+                renderer = HeatmapViewer3d(figure_name, new_figure,
+                                           self.points, self.trilist)
+
+                if type_cmap == 'hot_r':
+                    type_cmap = 'hot'
+                renderer.render(scaled_distances_between_meshes,
+                                type_cmap, scalar_range, show_statistics)
+
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError(e)
+
+>>>>>>> c971694b... Add heatmap as a k3dwidget. Move definition of heatmap using mayavi from menpo.shape.mesh to viewmayavi
     def tojson(self):
         r"""
         Convert this :map:`TriMesh` to a dictionary representation suitable
@@ -1284,6 +1408,9 @@ class TriMesh(PointCloud):
             the 'fancymesh' and if `normals` is not ``None``.
         alpha : `float`, optional
             Defines the transparency (opacity) of the object.
+        inline : 'bool', False
+               If True, the viewer will be in the Jupyter cell using K3dwidgets
+               If False, the viewer will open a new window using Mayavi
 
         Returns
         -------
@@ -1325,11 +1452,9 @@ class TriMesh(PointCloud):
         else:
             try:
                 from menpo3d.visualize import TriMeshViewer3d
-
-                renderer = TriMeshViewer3d(
-                    figure_id, new_figure, self.points, self.trilist
-                )
-                render_return = renderer.render(
+                renderer = TriMeshViewer3d(figure_id, new_figure,
+                                           self.points, self.trilist)
+                renderer.render(
                     mesh_type=mesh_type,
                     line_width=line_width,
                     colour=colour,
@@ -1345,9 +1470,6 @@ class TriMesh(PointCloud):
                     step=step,
                     alpha=alpha,
                 )
-                if render_return is not renderer:
-                    renderer.close()
-                    return
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
