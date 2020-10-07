@@ -311,9 +311,9 @@ class TriMesh(PointCloud):
         """
         return len(self.trilist)
 
-    def heatmap(self, target_mesh, camera_settings=None, scalar_range=(0, 2),
-                scale_value=100, size=(1200, 1200),
-                type_cmap='hot', show_statistics=False, figure_id=None):
+    def heatmap(self, target_mesh, scalar_range=(0, 2), scale_value=100,
+                type_cmap='hot_r', show_statistics=False, figure_id=None,
+                new_figure=True, inline=False, **kwargs):
         r"""
         Creates a heatmap of euclidean differences between the current mesh
         and the target meshh. If the two meshes have the same number of
@@ -325,15 +325,10 @@ class TriMesh(PointCloud):
         ----------
         target_mesh :   `TriMesh`
             A TriMesh whose points are used to find the differences(subtrahend)
-        camera_settings : `tuple'
-            A list of parameters for move, view and roll of camera,
-            default value = None, Oz axis normal to the scene
         scalar_range : `tuple'
             The scalar range of  the colorbar, default=(0,2)
         scale_value : `int'
             The scale value of the differences, to go to mm, default : 100
-        size : `Tuple'
-            Size of the window, default: (1200,1200)
         type_cmap : `cmap'
             Type of the colormap, default : 'hot', it can be:
             'Accent','Blues','BrBG','BuGn','BuPu','CMRmap','Dark2', 'GnBu',
@@ -351,13 +346,17 @@ class TriMesh(PointCloud):
             'plasma', 'prism', 'rainbow', 'seismic', 'spectral' 'spring',
             'summer', 'terrain', 'viridis', 'winter'
         show_statistics : `bool'
-            If statistics like mean and max error will be shown in the window,
+            If statistics like mean, standard deviation and max error will be
+            shown in the window,
             default:False
+        inline : 'bool', False
+               If True, the viewer will be in the Jupyter cell using K3dwidgets
+               If False, the viewer will open a new window using Mayavi
 
         Returns
         -------
         v : `Scene`
-            Handle to  mayavi scene
+            Handle to  mayavi scene or a K3dwidgetsHeatmapViewer3d object
         scaled_distances_between_meshes : `np.array'
             An array with the scaled distances between the
             correspoding vertices.
@@ -365,82 +364,73 @@ class TriMesh(PointCloud):
         ------
         ValueError
         """
-        try:
-            from mayavi import mlab
-            source_mesh = self
-            source_n_vertices = source_mesh.points.shape[0]
-            target_mesh_n_vertices = target_mesh.points.shape[0]
+        source_mesh = self
+        source_n_vertices = source_mesh.points.shape[0]
+        target_mesh_n_vertices = target_mesh.points.shape[0]
 
-            if not source_n_vertices == target_mesh_n_vertices:
-                first_part_string = 'Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices,
-                                                                                                  target_mesh_n_vertices)
-                print(first_part_string)
-                subject = source_mesh.points
-                template = target_mesh
-                X = template.points
+        if not source_n_vertices == target_mesh_n_vertices:
+            first_part_string = 'Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices,
+                                                                                              target_mesh_n_vertices)
+            print(first_part_string)
+            subject = source_mesh.points
+            template = target_mesh
+            X = template.points
 
-                tree = cKDTree(X)
-                dist, indx = tree.query(subject, k=1)
+            tree = cKDTree(X)
+            dist, indx = tree.query(subject, k=1)
 
-                target_mesh = TriMesh(X[indx], source_mesh.trilist)
+            target_mesh = TriMesh(X[indx], source_mesh.trilist)
 
-            if figure_id is None:
-                if hasattr(self, 'path'):
-                    source_name = self.path.stem
-                else:
-                    source_name = 'Source'
-                if hasattr(target_mesh, 'path'):
-                    target_name = target_mesh.path.stem
-                else:
-                    target_name = 'Target'
-                figure_name = 'Heatmap between {} and {}'.format(source_name,
-                                                                 target_name)
+        if figure_id is None:
+            if hasattr(self, 'path'):
+                source_name = self.path.stem
             else:
-                figure_name = figure_id
+                source_name = 'Source'
+            if hasattr(target_mesh, 'path'):
+                target_name = target_mesh.path.stem
+            else:
+                target_name = 'Target'
+            figure_name = 'Heatmap between {} and {}'.format(source_name,
+                                                             target_name)
+        else:
+            figure_name = figure_id
 
-            v = mlab.figure(figure=figure_name, size=size,
-                            bgcolor=(1, 1, 1), fgcolor=(0, 0, 0))
+        diff = (source_mesh.points.astype(np.float32)-target_mesh.points.astype(np.float32))**2
+        distances_between_meshes = np.sqrt(diff.sum(axis=1))
+        scaled_distances_between_meshes = distances_between_meshes*scale_value
 
-            diff = (source_mesh.points-target_mesh.points)**2
-            distances_between_meshes = np.sqrt(diff.sum(axis=1))
-            scaled_distances_between_meshes = distances_between_meshes*scale_value
+        if inline:
+            try:
+                from menpo3d.visualize import HeatmapInlineViewer3d
+                renderer = HeatmapInlineViewer3d(figure_name, new_figure,
+                                                 self.points, self.trilist,
+                                                 self.landmarks)
+                render_return = renderer._render(scaled_distances_between_meshes,
+                                                 type_cmap, scalar_range,
+                                                 show_statistics)
 
-            src = mlab.pipeline.triangular_mesh_source(source_mesh.points[:, 0],
-                                                       source_mesh.points[:, 1],
-                                                       source_mesh.points[:, 2],
-                                                       source_mesh.trilist,
-                                                       scalars=scaled_distances_between_meshes)
+                if render_return is not renderer:
+                    renderer.close()
+                    return
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import HeatmapViewer3d
+                renderer = HeatmapViewer3d(figure_name, new_figure,
+                                           self.points, self.trilist)
 
-            surf = mlab.pipeline.surface(src, colormap=type_cmap)
+                if type_cmap == 'hot_r':
+                    type_cmap = 'hot'
+                renderer.render(scaled_distances_between_meshes,
+                                type_cmap, scalar_range, show_statistics)
 
-            # When font size bug resolved, uncomment
-            # cb=mlab.colorbar(title='Distances in mm',
-            # orientation='vertical', nb_labels=5)
-            # cb.title_text_property.font_size = 20
-            # cb.label_text_property.font_family = 'times'
-            # cb.label_text_property.font_size=10
-            cb = mlab.colorbar(orientation='vertical', nb_labels=5)
-            cb.data_range = scalar_range
-
-            cb.scalar_bar_representation.position = [0.8, 0.15]
-            cb.scalar_bar_representation.position2 = [0.15, 0.7]
-            text = mlab.text(0.8, 0.85, 'Distances in mm')
-            text.width = 0.20
-            if show_statistics:
-                text2 = mlab.text(0.5, 0.02,
-                                  'Mean error {:.3}mm \nMax error {:.3}mm \
-                              '.format(scaled_distances_between_meshes.mean(),
-                                       scaled_distances_between_meshes.max()))
-                text2.width = 0.20
-            surf.module_manager.scalar_lut_manager.reverse_lut = True
-            if camera_settings is None:
-                mlab.gcf().scene.z_plus_view()
-
-            return v, scaled_distances_between_meshes
-
-        except ImportError as e:
-            from menpo.visualize import Menpo3dMissingError
-            raise Menpo3dMissingError(e)
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError(e)
 
     def tojson(self):
         r"""
@@ -1509,6 +1499,9 @@ class TriMesh(PointCloud):
             the 'fancymesh' and if `normals` is not ``None``.
         alpha : `float`, optional
             Defines the transparency (opacity) of the object.
+        inline : 'bool', False
+               If True, the viewer will be in the Jupyter cell using K3dwidgets
+               If False, the viewer will open a new window using Mayavi
 
         Returns
         -------
@@ -1552,7 +1545,7 @@ class TriMesh(PointCloud):
                 from menpo3d.visualize import TriMeshViewer3d
                 renderer = TriMeshViewer3d(figure_id, new_figure,
                                            self.points, self.trilist)
-                render_return = renderer.render(
+                renderer.render(
                     mesh_type=mesh_type,
                     line_width=line_width,
                     colour=colour,
@@ -1568,9 +1561,6 @@ class TriMesh(PointCloud):
                     step=step,
                     alpha=alpha,
                 )
-                if render_return is not renderer:
-                    renderer.close()
-                    return
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
