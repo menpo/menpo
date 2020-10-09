@@ -1422,20 +1422,14 @@ class TriMesh(PointCloud):
                     figure_id, new_figure, self.points, self.trilist, self.landmarks
                 )
                 render_return = renderer._render(
-                    mesh_type=mesh_type,
                     line_width=line_width,
                     colour=colour,
                     marker_style=marker_style,
                     marker_size=marker_size,
-                    marker_resolution=marker_resolution,
                     normals=normals,
                     normals_colour=normals_colour,
                     normals_line_width=normals_line_width,
-                    normals_marker_style=normals_marker_style,
-                    normals_marker_resolution=normals_marker_resolution,
                     normals_marker_size=normals_marker_size,
-                    step=step,
-                    alpha=alpha,
                 )
                 if render_return is not renderer:
                     renderer.close()
