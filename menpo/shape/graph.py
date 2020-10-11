@@ -2414,6 +2414,7 @@ class PointGraph(Graph, PointCloud):
         render_numbering=False,
         numbers_colour="k",
         numbers_size=None,
+        inline=False
     ):
         r"""
         Visualization of the PointGraph in 3D.
@@ -2488,32 +2489,56 @@ class PointGraph(Graph, PointCloud):
         renderer : `menpo3d.visualize.PointGraphViewer3d`
             The Menpo3D rendering object.
         """
-        try:
-            from menpo3d.visualize import PointGraphViewer3d
-
-            renderer = PointGraphViewer3d(
-                figure_id, new_figure, self.points, self.edges
-            )
-            renderer.render(
-                render_lines=render_lines,
-                line_colour=line_colour,
-                line_width=line_width,
-                render_markers=render_markers,
-                marker_style=marker_style,
-                marker_size=marker_size,
-                marker_colour=marker_colour,
-                marker_resolution=marker_resolution,
-                step=step,
-                alpha=alpha,
-                render_numbering=render_numbering,
-                numbers_colour=numbers_colour,
-                numbers_size=numbers_size,
-            )
-            return renderer
-        except ImportError as e:
-            from menpo.visualize import Menpo3dMissingError
-
-            raise Menpo3dMissingError(e)
+        if inline:
+            try:
+                from menpo3d.visualize import PointGraphInlineViewer3d
+                renderer = PointGraphInlineViewer3d(
+                    figure_id, new_figure, self.points, self.edges
+                )
+                render_return = renderer._render(
+                    render_lines=render_lines,
+                    line_colour=line_colour,
+                    line_width=line_width,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                )
+                if render_return is not renderer:
+                    renderer.close()
+                    return
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import PointGraphViewer3d
+                renderer = PointGraphViewer3d(
+                    figure_id, new_figure, self.points, self.edges
+                )
+                renderer.render(
+                    render_lines=render_lines,
+                    line_colour=line_colour,
+                    line_width=line_width,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    marker_resolution=marker_resolution,
+                    step=step,
+                    alpha=alpha,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                )
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError(e)
 
 
 class PointUndirectedGraph(PointGraph, UndirectedGraph):
