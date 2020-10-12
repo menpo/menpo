@@ -3,6 +3,7 @@ import warnings
 from warnings import warn
 
 import numpy as np
+import scipy.sparse as sp
 
 try:
     import collections.abc as collections_abc
@@ -1407,7 +1408,7 @@ class PointCloud(Shape):
             )
         return cdist(self.points, pointcloud.points, **kwargs)
 
-    def find_closest_vertices(self, pointcloud, **kwargs):
+    def find_closest_vertices(self, pointcloud, return_sparse=True, **kwargs):
         r"""
         Returns a matrix  where for each vertex in this PointCloud
         with N vertices,  its closest vertex in target PoinCloud
@@ -1440,6 +1441,8 @@ class PointCloud(Shape):
         indx_vertices = np.argmin(self.distance_to(pointcloud,
                                                    **kwargs), axis=1)
         closest_vertices[np.arange(len(indx_vertices)), indx_vertices] = 1
+        if return_sparse:
+            closest_vertices = sp.csr_matrix(closest_vertices)
         return closest_vertices
 
     def norm(self, **kwargs):
