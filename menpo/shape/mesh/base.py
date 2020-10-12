@@ -7,6 +7,7 @@ from .normals import compute_vertex_normals, compute_face_normals
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from scipy.spatial import cKDTree
+import scipy.sparse as sp
 
 Delaunay = None  # expensive, from scipy.spatial
 
@@ -519,6 +520,26 @@ class TriMesh(PointCloud):
         new_mask = mask.copy()
         new_mask[isolated_indices] = False
         return new_mask
+
+    def upsampling_matrix(self, downsampled_mesh):
+        r"""
+        Calculates an upsampling matrix between this mesh of m vertices
+        and  downsampled_mesh.
+
+        Parameters: TriMesh of n vertices
+
+        Returns: A sparce matrix of mxn
+        """
+        if self.n_points < downsampled_mesh.n_points:
+            print('The input mesh has more vertices than this mesh')
+            raise
+
+        coef, face_indices = downsampled_mesh.barycentric_coordinates_of_pointcloud(self)
+        cols = downsampled_mesh.trilist[face_indices].flatten()
+        rows = np.tile(np.arange(self.n_points), 3).reshape(-1, 3, order='F').flatten()
+        U = sp.csc_matrix((coef.flatten().astype(np.float32), (rows, cols)),
+                          shape=(self.n_points, downsampled_mesh.n_points))
+        return U
 
     def as_pointgraph(self, copy=True, skip_checks=False):
         """
