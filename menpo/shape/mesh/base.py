@@ -433,6 +433,37 @@ class TriMesh(PointCloud):
                 from menpo.visualize import Menpo3dMissingError
                 raise Menpo3dMissingError(e)
 
+    def decimate(self, percentage_reduction=0.75,
+                 type_reduction='quadric', **kwargs):
+        """
+        Decimate the mesh specifying the percentage (0,1) of triangles to
+        be removed
+
+        Parameters
+        ----------
+        percentage_reduction: float (default: 0.75)
+                   The percentage of triangles to be removed.
+                   It should be in (0, 1)
+
+        type_reduction : str (default: quadric)
+                         The type of decimation as:
+                             'quadric' : Quadric decimation
+                             'progressive : Progressive decimation
+        Returns
+        -------
+        mesh : :map:`TriMesh`
+            A new mesh that has been decimated.
+        """
+        try:
+            from menpo3d.vtkutils import decimate_mesh
+            new_mesh = decimate_mesh(self, percentage_reduction,
+                                     type_reduction, **kwargs)
+
+            return new_mesh
+        except ImportError as e:
+            from menpo.visualize import Menpo3dMissingError
+            raise Menpo3dMissingError(e)
+
     def tojson(self):
         r"""
         Convert this :map:`TriMesh` to a dictionary representation suitable
