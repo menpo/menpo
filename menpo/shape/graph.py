@@ -489,7 +489,8 @@ class Graph(object):
         """
         return len(self.find_all_paths(start, end))
 
-    def find_all_shortest_paths(self, algorithm="auto", unweighted=False):
+    def find_all_shortest_paths(self, algorithm="auto", unweighted=False,
+                                indices=None):
         r"""
         Returns the distances and predecessors arrays of the graph's shortest
         paths.
@@ -511,6 +512,9 @@ class Graph(object):
             If ``True``, then find unweighted distances. That is, rather than
             finding the path between each vertex such that the sum of weights is
             minimized, find the path such that the number of edges is minimized.
+        indices : array like or int
+            If specified, only compute the paths from the points at the given
+            indices. Incompatible with method == ‘FW’.
 
         Returns
         -------
@@ -532,6 +536,7 @@ class Graph(object):
             method=algorithm,
             unweighted=unweighted,
             return_predecessors=True,
+            indices=indices
         )
 
     def find_shortest_path(
