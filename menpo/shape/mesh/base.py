@@ -743,7 +743,7 @@ class TriMesh(PointCloud):
         t = self.points[self.trilist]
         return np.hstack(
             (t[:, 1] - t[:, 0], t[:, 2] - t[:, 1], t[:, 2] - t[:, 0])
-        ).reshape(-1, 2)
+        ).reshape(-1, self.n_dims)
 
     def edge_indices(self):
         r"""An unordered index into points that rebuilds the edges of this
