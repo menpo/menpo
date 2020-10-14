@@ -603,6 +603,39 @@ class TriMesh(PointCloud):
         pg.landmarks = self.landmarks
         return pg
 
+    def as_weighted_pointgraph(self,  copy=True, skip_checks=False):
+        r"""
+        Converts the TriMesh to a weighted :map:`PointUndirectedGraph`
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            If ``True``, the graph will be a copy.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
+
+        Returns
+        -------
+        pointgraph : :map:`PointUndirectedGraph`
+            The point graph.
+     """
+        from .. import PointUndirectedGraph
+
+        edges = self.unique_edge_indices()
+        weights = self.unique_edge_lengths()
+        n_vertices = self.n_points
+        rows = np.hstack((edges[:, 0], edges[:, 1]))
+        cols = np.hstack((edges[:, 1], edges[:, 0]))
+        weights2 = np.hstack((weights, weights))
+        weight_adjacency_matrix = sp.csr_matrix((weights2, (rows, cols)),
+                                                shape=(n_vertices, n_vertices))
+
+        pg = PointUndirectedGraph(self.points, weight_adjacency_matrix,
+                                  copy=copy, skip_checks=skip_checks)
+        # This is always a copy
+        pg.landmarks = self.landmarks
+        return pg
+
     def vertex_normals(self):
         r"""
         Compute the per-vertex normals from the current set of points and
