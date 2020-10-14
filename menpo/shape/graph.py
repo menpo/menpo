@@ -499,13 +499,13 @@ class Graph(object):
         algorithm : 'str', see below, optional
             The algorithm to be used. Possible options are:
 
-            ================ =========================================
-            'dijkstra'       Dijkstra's algorithm with Fibonacci heaps
-            'bellman-ford'   Bellman-Ford algorithm
-            'johnson'        Johnson's algorithm
-            'floyd-warshall' Floyd-Warshall algorithm
-            'auto'           Select the best among the above
-            ================ =========================================
+            ====== =========================================
+            'D'    Dijkstra's algorithm with Fibonacci heaps
+            'BF'   Bellman-Ford algorithm
+            'J'    Johnson's algorithm
+            'FW'   Floyd-Warshall algorithm
+            'auto' Select the best among the above
+            ====== =========================================
 
         unweighted : `bool`, optional
             If ``True``, then find unweighted distances. That is, rather than
