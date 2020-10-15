@@ -895,14 +895,14 @@ class TriMesh(PointCloud):
         Returns
         -------
         faces_per_vertex: ``(N, )`` `list`
-           A list of N lists for each vertex that contains the faces that
+           A list of N tuples for each vertex that contains the faces that
            the vertex is part
         """
 
         faces_per_vertex = [[] for x in self.points]
         for face in self.trilist:
             for vertex in face:
-                faces_per_vertex[vertex].append(face.tolist())
+                faces_per_vertex[vertex].append(tuple(face))
         return faces_per_vertex
 
     def _view_2d(
