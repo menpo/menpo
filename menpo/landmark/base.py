@@ -42,15 +42,6 @@ class Landmarkable(Copyable):
             self._landmarks = LandmarkManager()
         return self._landmarks
 
-    @property
-    def has_landmarks(self):
-        """
-        Whether the object has landmarks.
-
-        :type: `bool`
-        """
-        return self._landmarks is not None and self.landmarks.n_groups != 0
-
     @landmarks.setter
     def landmarks(self, value):
         """
@@ -69,6 +60,15 @@ class Landmarkable(Copyable):
                 "{}D object".format(value.n_dims, self.n_dims)
             )
         self._landmarks = value.copy()
+
+    @property
+    def has_landmarks(self):
+        """
+        Whether the object has landmarks.
+
+        :type: `bool`
+        """
+        return self._landmarks is not None and self.landmarks.n_groups != 0
 
     @property
     def n_landmark_groups(self):
