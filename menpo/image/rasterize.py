@@ -3,7 +3,6 @@ import numpy as np
 
 from menpo.shape import TriMesh
 from menpo.image import Image
-from menpo.compatibility import basestring
 
 
 def check_param(n, types, param_name, param):
@@ -116,7 +115,7 @@ def _rasterize_matplotlib(
 
 
 def _parse_colour(x):
-    if isinstance(x, basestring):
+    if isinstance(x, str):
         from matplotlib.colors import ColorConverter
 
         c = ColorConverter()
@@ -312,19 +311,17 @@ def rasterize_landmarks_2d(
         # passed in
         n_pclouds = len(landmarks)
         render_lines = check_param(n_pclouds, bool, "render_lines", render_lines)
-        line_style = check_param(n_pclouds, basestring, "line_style", line_style)
-        line_colour = check_param(
-            n_pclouds, (basestring, tuple), "line_colour", line_colour
-        )
+        line_style = check_param(n_pclouds, str, "line_style", line_style)
+        line_colour = check_param(n_pclouds, (str, tuple), "line_colour", line_colour)
         line_width = check_param(n_pclouds, int, "line_width", line_width)
         render_markers = check_param(n_pclouds, bool, "render_markers", render_markers)
-        marker_style = check_param(n_pclouds, basestring, "marker_style", marker_style)
+        marker_style = check_param(n_pclouds, str, "marker_style", marker_style)
         marker_size = check_param(n_pclouds, int, "marker_size", marker_size)
         marker_face_colour = check_param(
-            n_pclouds, (basestring, tuple), "marker_face_colour", marker_face_colour
+            n_pclouds, (str, tuple), "marker_face_colour", marker_face_colour
         )
         marker_edge_colour = check_param(
-            n_pclouds, (basestring, tuple), "marker_edge_colour", marker_edge_colour
+            n_pclouds, (str, tuple), "marker_edge_colour", marker_edge_colour
         )
         marker_edge_width = check_param(
             n_pclouds, int, "marker_edge_width", marker_edge_width

@@ -9,7 +9,6 @@ except ImportError:
 import numpy as np
 import PIL.Image as PILImage
 
-from menpo.compatibility import basestring
 from menpo.base import Vectorizable, MenpoDeprecationWarning, copy_landmarks_and_path
 from menpo.shape import PointCloud, bounding_box
 from menpo.landmark import Landmarkable
@@ -767,7 +766,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         >>>     plt.bar(centre, hist[k], align='center', width=width)
         """
         # parse options
-        if isinstance(bins, basestring):
+        if isinstance(bins, str):
             if bins == "unique":
                 bins = 0
             else:

@@ -15,7 +15,6 @@ from menpo.base import (
     partial_doc,
     MenpoDeprecationWarning,
 )
-from menpo.compatibility import basestring
 from menpo.visualize import print_progress
 from .extensions import (
     image_landmark_types,
@@ -153,7 +152,7 @@ def _register_importer(ext_map, extension, callable):
         discovered during importing. Should take a single argument (the
         filepath) and any number of kwargs.
     """
-    if not isinstance(extension, basestring):
+    if not isinstance(extension, str):
         raise ValueError("Only string type keys are supported.")
     if extension in ext_map:
         warnings.warn(
