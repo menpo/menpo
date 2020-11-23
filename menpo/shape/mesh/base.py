@@ -1487,7 +1487,7 @@ class TriMesh(PointCloud):
         new_figure=True,
         mesh_type="wireframe",
         line_width=2,
-        colour="r",
+        colour=(24/256,148/256,187/256),
         marker_style="sphere",
         marker_size=None,
         marker_resolution=8,
@@ -1499,7 +1499,7 @@ class TriMesh(PointCloud):
         normals_marker_size=None,
         step=None,
         alpha=1.0,
-        inline=False
+        inline=True
     ):
         r"""
         Visualization of the TriMesh in 3D.

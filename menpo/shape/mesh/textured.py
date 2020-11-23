@@ -476,7 +476,7 @@ class TexturedTriMesh(TriMesh):
         new_figure=False,
         image_view=True,
         render_lines=True,
-        line_colour="r",
+        line_colour=(24/256,148/256,187/256),
         line_style="-",
         line_width=1.0,
         render_markers=True,
