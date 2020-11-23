@@ -1,14 +1,15 @@
 import numpy as np
-from pytest import raises
 from numpy.testing import (
     assert_allclose,
-    assert_equal,
     assert_almost_equal,
     assert_array_almost_equal,
+    assert_equal,
 )
-from menpo.shape import PointCloud
-from menpo.model import LinearVectorModel, PCAModel, PCAVectorModel
+from pytest import raises
+
 from menpo.math import as_matrix
+from menpo.model import LinearVectorModel, PCAModel, PCAVectorModel
+from menpo.shape import PointCloud
 
 
 def test_linear_model_creation():
@@ -91,14 +92,6 @@ def test_pca_trim():
     model.trim_components(5)
     # number of active components should be the same as number of components
     assert_equal(model.n_active_components, model.n_components)
-
-
-def test_pca_trim_variance_limit():
-    samples = [np.random.randn(10) for _ in range(10)]
-    model = PCAVectorModel(samples)
-    with raises(ValueError):
-        # impossible to keep more than 1.0 ratio variance
-        model.trim_components(2.5)
 
 
 def test_pca_trim_variance_limit():
