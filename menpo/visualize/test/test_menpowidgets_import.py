@@ -1,18 +1,18 @@
 import numpy as np
-from mock import patch, MagicMock
+from mock import MagicMock, patch
 from pytest import raises
 from scipy.sparse import csr_matrix
 
 from menpo.image import Image
-from menpo.visualize import MenpowidgetsMissingError
-from menpo.shape import (
-    PointCloud,
-    TriMesh,
-    PointDirectedGraph,
-    LabelledPointUndirectedGraph,
-)
 from menpo.landmark import LandmarkManager
+from menpo.shape import (
+    LabelledPointUndirectedGraph,
+    PointCloud,
+    PointDirectedGraph,
+    TriMesh,
+)
 from menpo.testing import surrogate
+from menpo.visualize import MenpowidgetsMissingError
 
 pcloud2d = np.zeros([1, 2])
 triangle_pcloud2d = np.array([[0, 0], [0, 1], [1, 0.0]])
@@ -46,7 +46,7 @@ def test_labelledpointundirectedgraph_view_widget():
 
 @surrogate("menpowidgets.visualize_landmarks")
 @patch("menpowidgets.visualize_landmarks", menpowidgets_mock)
-def test_landmarkmanager_view_widget():
+def test_landmarkmanager_view_widget_landmarks():
     l = LandmarkManager()
     l["test"] = PointCloud(pcloud2d)
     with raises(MenpowidgetsMissingError):
@@ -55,7 +55,7 @@ def test_landmarkmanager_view_widget():
 
 @surrogate("menpowidgets.visualize_patches")
 @patch("menpowidgets.visualize_patches", menpowidgets_mock)
-def test_landmarkmanager_view_widget():
+def test_landmarkmanager_view_widget_patches():
     l = LandmarkManager()
     l["test"] = PointCloud(pcloud2d)
     with raises(MenpowidgetsMissingError):

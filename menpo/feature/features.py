@@ -5,9 +5,7 @@ import warnings
 
 import numpy as np
 
-scipy_gaussian_filter = None  # expensive
-
-from .base import ndfeature, imgfeature
+from .base import imgfeature, ndfeature
 
 
 @ndfeature
@@ -80,9 +78,8 @@ def gaussian_filter(pixels, sigma):
     output_image : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
         The filtered image has the same type and size as the input ``pixels``.
     """
-    global scipy_gaussian_filter
-    if scipy_gaussian_filter is None:
-        from scipy.ndimage import gaussian_filter as scipy_gaussian_filter
+    from scipy.ndimage import gaussian_filter as scipy_gaussian_filter  # expensive
+
     output = np.empty(pixels.shape, dtype=pixels.dtype)
     for dim in range(pixels.shape[0]):
         scipy_gaussian_filter(pixels[dim], sigma, output=output[dim])
