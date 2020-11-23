@@ -135,7 +135,7 @@ def ffmpeg_video_exporter(
                 if image.n_channels == 1 and colour == "rgb24":
                     # Repeat the channels axis 3 times
                     i = i.reshape(i.shape + (1,)).repeat(3, axis=2)
-                pipe.stdin.write(i.tostring())
+                pipe.stdin.write(i.tobytes())
             except IOError:
                 error = (
                     "FFMPEG encountered the following error while "

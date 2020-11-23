@@ -400,7 +400,7 @@ def test_importing_ffmpeg_GIF_normalize(is_file, video_infos_ffprobe, pipe):
         "n_frames": 10,
         "fps": 5,
     }
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
@@ -426,7 +426,7 @@ def test_importing_ffmpeg_GIF_no_normalize(is_file, video_infos_ffprobe, pipe):
         "n_frames": 10,
         "fps": 5,
     }
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
@@ -675,7 +675,7 @@ def test_importing_ffmpeg_avi_no_normalize(is_file, video_infos_ffprobe, pipe):
         "fps": 5,
     }
     is_file.return_value = True
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video("fake_image_being_mocked.avi", normalize=False)
     assert ll.path.name == "fake_image_being_mocked.avi"
@@ -699,7 +699,7 @@ def test_importing_ffmpeg_avi_normalize(is_file, video_infos_ffprobe, pipe):
         "fps": 5,
     }
     is_file.return_value = True
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video("fake_image_being_mocked.avi", normalize=True)
     assert ll.path.name == "fake_image_being_mocked.avi"
@@ -738,7 +738,7 @@ def test_importing_ffmpeg_no_exact_frame_count_no_ffprobe(
         "fps": 5,
     }
     is_file.return_value = True
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video(
         "fake_image_being_mocked.avi", normalize=True, exact_frame_count=False
