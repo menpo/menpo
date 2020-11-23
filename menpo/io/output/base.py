@@ -3,7 +3,6 @@ import warnings
 from functools import partial
 from pathlib import Path
 
-from menpo.compatibility import basestring, str
 from .extensions import landmark_types, image_types, pickle_types, video_types
 from ..exceptions import OverwriteError
 from ..utils import _norm_path, _possible_extensions_from_filepath, _normalize_extension
@@ -60,7 +59,7 @@ def export_landmark_file(landmarks_object, fp, extension=None, overwrite=False):
         landmarks_object.n_points
     except AttributeError:
         # unless this is LJSON, this is not correct.
-        fp_is_path = isinstance(fp, basestring) or isinstance(fp, Path)
+        fp_is_path = isinstance(fp, (str, Path))
         if (extension is not None and extension != ".ljson") or (
             fp_is_path and Path(fp).suffix != ".ljson"
         ):
@@ -213,7 +212,7 @@ def export_pickle(obj, fp, overwrite=False, protocol=2):
         (the output type is not supported).
     """
     exporter_kwargs = {"protocol": protocol}
-    if isinstance(fp, basestring):
+    if isinstance(fp, str):
         fp = Path(fp)  # cheeky conversion to Path to reuse existing code
     if isinstance(fp, Path):
         # user provided a path - if it ended .gz we will compress
@@ -387,7 +386,7 @@ def _enforce_only_paths_supported(file_path, exporter_name):
             "file handle will be ignored and the object will be "
             "exported to {}.".format(exporter_name, file_path)
         )
-    if isinstance(file_path, basestring) or isinstance(file_path, Path):
+    if isinstance(file_path, (str, Path)):
         return file_path
     else:
         raise ValueError("Cannot write to unnamed file handles or buffers.")
@@ -423,7 +422,7 @@ def _validate_and_get_export_func(
         The correct extension for the exporter function, if
         ``return_extension==True``.
     """
-    if isinstance(file_path, basestring):
+    if isinstance(file_path, str):
         # cheeky conversion to Path to reuse existing code
         file_path = Path(file_path)
 
@@ -494,7 +493,7 @@ def _export(obj, fp, extensions_map, extension, overwrite, exporter_kwargs=None)
     """
     if exporter_kwargs is None:
         exporter_kwargs = {}
-    if isinstance(fp, basestring):
+    if isinstance(fp, str):
         fp = Path(fp)  # cheeky conversion to Path to reuse existing code
     if isinstance(fp, Path):
         export_function, extension = _validate_and_get_export_func(
