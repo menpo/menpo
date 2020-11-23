@@ -1,6 +1,6 @@
 from __future__ import division
 
-from collections.abc import Iterable
+from typing import Iterable, Optional
 from warnings import warn
 
 import PIL.Image as PILImage
@@ -25,7 +25,7 @@ try:
     from .interpolation import cv2_perspective_interpolation
 except ImportError:
     warn("Falling back to scipy interpolation for affine warps")
-    cv2_perspective_interpolation = None
+    cv2_perspective_interpolation = None  # type: ignore
 from .patches import (
     extract_patches_with_slice,
     set_patches,
@@ -33,7 +33,7 @@ from .patches import (
 )
 
 # Cache the greyscale luminosity coefficients as they are invariant.
-_greyscale_luminosity_coef = None
+_greyscale_luminosity_coef: Optional[np.ndarray] = None
 
 
 class ImageBoundaryError(ValueError):

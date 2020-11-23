@@ -1,13 +1,12 @@
 import os
 import subprocess as sp
 import warnings
-
-import numpy as np
 from pathlib import Path
 
-from menpo.visualize import print_progress
-from ..utils import DEVNULL, _call_subprocess
+import numpy as np
 
+from menpo.visualize import print_progress
+from ..utils import _call_subprocess
 
 _FFMPEG_CMD = lambda: str(Path(os.environ.get("MENPO_FFMPEG_CMD", "ffmpeg")))
 
@@ -114,7 +113,7 @@ def ffmpeg_video_exporter(
 
     # Pipe stdout to DEVNULL to ignore it
     with _call_subprocess(
-        sp.Popen(cmd, stdin=sp.PIPE, stderr=sp.PIPE, stdout=DEVNULL)
+        sp.Popen(cmd, stdin=sp.PIPE, stderr=sp.PIPE, stdout=sp.DEVNULL)
     ) as pipe:
         for k, image in enumerate(images):
             try:

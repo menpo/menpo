@@ -1,16 +1,15 @@
-import warnings
 import os
-import numpy as np
-import subprocess as sp
 import re
+import subprocess as sp
+import warnings
 from pathlib import Path
 
-from menpo.image.base import normalize_pixels_range, channels_to_front
-from menpo.image import Image
+import numpy as np
+
 from menpo.base import LazyList
-
-from ..utils import DEVNULL, _call_subprocess
-
+from menpo.image import Image
+from menpo.image.base import normalize_pixels_range
+from ..utils import _call_subprocess
 
 _FFMPEG_CMD = lambda: str(Path(os.environ.get("MENPO_FFMPEG_CMD", "ffmpeg")))
 _FFPROBE_CMD = lambda: str(Path(os.environ.get("MENPO_FFPROBE_CMD", "ffprobe")))
@@ -183,7 +182,11 @@ class FFMpegVideoReader(object):
 
         self._shutdown_pipe()
         self._pipe = sp.Popen(
-            command, stdout=sp.PIPE, stdin=DEVNULL, stderr=DEVNULL, bufsize=10 ** 8
+            command,
+            stdout=sp.PIPE,
+            stdin=sp.DEVNULL,
+            stderr=sp.DEVNULL,
+            bufsize=10 ** 8,
         )  # Is this buffer the correct size?
         # We have not yet read the specified frame
         self.index = frame - 1
@@ -271,7 +274,7 @@ def video_infos_ffmpeg(filepath):
     # an error about no output from FFMPEG in order to terminate faster - hence
     # reading the output from stderr.
     command = [_FFMPEG_CMD(), "-i", str(filepath), "-"]
-    with _call_subprocess(sp.Popen(command, stdout=DEVNULL, stderr=sp.PIPE)) as pipe:
+    with _call_subprocess(sp.Popen(command, stdout=sp.DEVNULL, stderr=sp.PIPE)) as pipe:
         raw_infos = pipe.stderr.read().decode()
 
     # Note: we use '\d+\.?\d*' so we can match both int and float for the fps

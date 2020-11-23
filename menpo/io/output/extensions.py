@@ -1,12 +1,12 @@
 from functools import partial
+from typing import Callable, Dict
 
-from .landmark import ljson_exporter, pts_exporter
 from .image import pil_exporter
-from .video import ffmpeg_video_exporter
+from .landmark import ljson_exporter, pts_exporter
 from .pickle import pickle_exporter
+from .video import ffmpeg_video_exporter
 
-
-landmark_types = {".ljson": ljson_exporter, ".pts": pts_exporter}
+landmark_types: Dict[str, Callable] = {".ljson": ljson_exporter, ".pts": pts_exporter}
 
 
 image_types = {

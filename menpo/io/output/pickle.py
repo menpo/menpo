@@ -1,10 +1,6 @@
+import pickle
 from contextlib import contextmanager
 from pathlib import Path, PurePath
-
-try:
-    import cPickle as pickle  # request cPickle manually on Py2
-except ImportError:  # Py3
-    import pickle
 
 
 # -------------- Custom pickle behavior for pathlib.Path objects ------------ #

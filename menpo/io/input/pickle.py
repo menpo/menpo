@@ -1,10 +1,6 @@
-import sys
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 import gzip
+import pickle
+import sys
 
 
 def _unpickle_with_encoding(f, encoding=None):
