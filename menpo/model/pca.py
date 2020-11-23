@@ -1,8 +1,9 @@
 from __future__ import division
+
 import numpy as np
 
 from menpo.base import doc_inherit, name_of_callable
-from menpo.math import pca, pcacov, ipca, as_matrix
+from menpo.math import as_matrix, ipca, pca, pcacov
 from .linear import MeanLinearVectorModel
 from .vectorizable import VectorizableBackedModel
 
@@ -249,7 +250,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         else:
             raise ValueError(err_str)
 
-    @MeanLinearVectorModel.components.getter
+    @property
     def components(self):
         r"""
         Returns the active components of the model.
@@ -257,6 +258,30 @@ class PCAVectorModel(MeanLinearVectorModel):
         :type: ``(n_active_components, n_features)`` `ndarray`
         """
         return self._components[: self.n_active_components, :]
+
+    @components.setter
+    def components(self, value):
+        r"""
+        Updates the components of this linear model, ensuring that the shape
+        of the components is not changed.
+
+        Parameters
+        ----------
+        value : ``(n_components, n_features)`` `ndarray`
+            The new components array.
+
+        Raises
+        ------
+        ValueError
+            Trying to replace components of shape {} with some of shape {}
+        """
+        if value.shape != self._components.shape:
+            raise ValueError(
+                "Trying to replace components of shape {} with some of "
+                "shape {}".format(self.components.shape, value.shape)
+            )
+        else:
+            np.copyto(self._components, value, casting="safe")
 
     @property
     def eigenvalues(self):
