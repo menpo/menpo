@@ -1,6 +1,5 @@
 import numpy as np
 
-map_coordinates = None  # expensive, from scipy.ndimage
 from menpo.transform import Homogeneous
 
 # Store out a transform that simply switches the x and y axis
@@ -33,9 +32,8 @@ def scipy_interpolation(pixels, points_to_sample, mode="constant", order=1, cval
     sampled_image : `ndarray`
         The pixel information sampled at each of the points.
     """
-    global map_coordinates
-    if map_coordinates is None:
-        from scipy.ndimage import map_coordinates  # expensive
+    from scipy.ndimage import map_coordinates  # expensive
+
     sampled_pixel_values = np.empty(
         (pixels.shape[0], points_to_sample.shape[0]), dtype=pixels.dtype
     )

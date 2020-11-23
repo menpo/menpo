@@ -1,14 +1,12 @@
 from __future__ import division
-from warnings import warn
-import numpy as np
 
-binary_erosion = None  # expensive, from scipy.ndimage
-binary_dilation = None  # expensive, from scipy.ndimage
+from warnings import warn
+
+import numpy as np
 
 from menpo.base import MenpoDeprecationWarning, copy_landmarks_and_path
 from menpo.transform import Translation
 from menpo.visualize.base import ImageViewer
-
 from .base import Image
 from .boolean import BooleanImage
 
@@ -1401,10 +1399,9 @@ class MaskedImage(Image):
             The copy of the image for which the ``n`` pixels along its mask
             boundary have been set to a particular value.
         """
+        from scipy.ndimage import binary_erosion  # expensive
+
         copy = self.copy()
-        global binary_erosion
-        if binary_erosion is None:
-            from scipy.ndimage import binary_erosion  # expensive
         # Erode the edge of the mask in by one pixel
         eroded_mask = binary_erosion(copy.mask.mask, iterations=n_pixels)
 
@@ -1432,9 +1429,8 @@ class MaskedImage(Image):
             The copy of the masked image in which the mask has been shrunk
             by n pixels along its boundary.
         """
-        global binary_erosion
-        if binary_erosion is None:
-            from scipy.ndimage import binary_erosion  # expensive
+        from scipy.ndimage import binary_erosion  # expensive
+
         # Erode the edge of the mask in by one pixel
         eroded_mask = binary_erosion(self.mask.mask, iterations=n_pixels)
 
@@ -1459,9 +1455,8 @@ class MaskedImage(Image):
             The copy of the masked image in which the mask has been expanded
             by n pixels along its boundary.
         """
-        global binary_dilation
-        if binary_dilation is None:
-            from scipy.ndimage import binary_dilation  # expensive
+        from scipy.ndimage import binary_dilation  # expensive
+
         # Erode the edge of the mask in by one pixel
         dilated_mask = binary_dilation(self.mask.mask, iterations=n_pixels)
 

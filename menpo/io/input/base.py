@@ -1,7 +1,4 @@
-try:
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc as collections_abc
 import os
 import random
 import warnings
@@ -10,19 +7,19 @@ from functools import partial
 from pathlib import Path
 
 from menpo.base import (
-    menpo_src_dir_path,
     LazyList,
-    partial_doc,
     MenpoDeprecationWarning,
+    menpo_src_dir_path,
+    partial_doc,
 )
 from menpo.visualize import print_progress
 from .extensions import (
+    ffmpeg_video_types,
     image_landmark_types,
     image_types,
     pickle_types,
-    ffmpeg_video_types,
 )
-from ..utils import _norm_path, _possible_extensions_from_filepath, _normalize_extension
+from ..utils import _norm_path, _normalize_extension, _possible_extensions_from_filepath
 
 
 # TODO: Remove once deprecated
