@@ -1,7 +1,5 @@
-try:
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc as collections_abc
+
 import numpy as np
 from mock import Mock
 from pytest import raises

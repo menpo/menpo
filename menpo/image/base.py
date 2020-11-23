@@ -1,28 +1,24 @@
 from __future__ import division
 
+from collections.abc import Iterable
 from warnings import warn
 
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
-import numpy as np
 import PIL.Image as PILImage
+import numpy as np
 
-from menpo.base import Vectorizable, MenpoDeprecationWarning, copy_landmarks_and_path
-from menpo.shape import PointCloud, bounding_box
+from menpo.base import MenpoDeprecationWarning, Vectorizable, copy_landmarks_and_path
 from menpo.landmark import Landmarkable
+from menpo.shape import PointCloud, bounding_box
 from menpo.transform import (
-    Translation,
+    AlignmentUniformScale,
+    Homogeneous,
     NonUniformScale,
     Rotation,
-    AlignmentUniformScale,
+    Translation,
     scale_about_centre,
     transform_about_centre,
-    Homogeneous,
 )
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
-
 from .interpolation import scipy_interpolation
 
 try:

@@ -2,14 +2,15 @@ import numpy as np
 from numpy.testing import assert_allclose
 from pytest import raises
 from scipy.sparse import csr_matrix, lil_matrix
+
 from menpo.image import Image, MaskedImage
 from menpo.shape import (
-    UndirectedGraph,
     DirectedGraph,
-    Tree,
-    PointUndirectedGraph,
     PointDirectedGraph,
     PointTree,
+    PointUndirectedGraph,
+    Tree,
+    UndirectedGraph,
 )
 
 # Points for point graphs
@@ -461,7 +462,7 @@ def test_relative_locations():
     )
 
 
-def test_relative_locations():
+def test_relative_locations_raises():
     with raises(ValueError):
         pg_tree.relative_location_edge(8, 5)
     with raises(ValueError):

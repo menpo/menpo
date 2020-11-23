@@ -1,19 +1,14 @@
+import collections.abc as collections_abc
 import numbers
 import warnings
 from warnings import warn
 
 import numpy as np
-
-try:
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
 from menpo.transform import WithDims
 from menpo.visualize import viewwrapper
-
 from .base import Shape
 
 
