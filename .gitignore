@@ -25,3 +25,7 @@ dist/*
 MANIFEST
 # IntelliJ's module file
 *.iml
+# mypy
+.dmypy.json
+.mypy_cache/
+
