@@ -1,13 +1,10 @@
-from pytest import raises
 import numpy as np
 from numpy.testing import assert_allclose
-from menpo.image import Image
+from pytest import raises
+
 from menpo.feature import gradient
+from menpo.image import Image
 
-import menpo.io as mio
-
-
-takeo = mio.import_builtin_asset.takeo_ppm()
 example_image = np.array([[1.0, 2.0, 6.0], [3.0, 4.0, 5.0]])
 y_grad = np.array([[2.0, 2.0, -1.0], [2.0, 2.0, -1.0]])
 x_grad = np.array([[1.0, 2.5, 4.0], [1.0, 1.0, 1.0]])

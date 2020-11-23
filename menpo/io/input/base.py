@@ -5,6 +5,7 @@ import warnings
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 from menpo.base import (
     LazyList,
@@ -1154,16 +1155,16 @@ def importer_for_filepath(filepath, extensions_map):
 class BuiltinAssets(object):
     def __init__(self, import_builtin_callable):
         self.import_builtin_asset = import_builtin_callable
+        self._builtin_files = {
+            asset.replace(".", "_"): partial(_menpo_import_builtin_asset, asset)
+            for asset in menpo_ls_builtin_assets()
+        }
 
     def __call__(self, asset_name, **kwargs):
         return self.import_builtin_asset(asset_name, **kwargs)
 
+    def __getattr__(self, file_name) -> Any:
+        return self._builtin_files[file_name]
+
 
 import_builtin_asset = BuiltinAssets(_menpo_import_builtin_asset)
-
-for asset in menpo_ls_builtin_assets():
-    setattr(
-        import_builtin_asset,
-        asset.replace(".", "_"),
-        partial(_menpo_import_builtin_asset, asset),
-    )
