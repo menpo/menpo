@@ -34,12 +34,11 @@ requirements:
 
 test:
   requires:
-    - pytest >=5.0,<6.0
+    - pytest >=6.0,<7.0
     - pytest-cov >=2.0,<3.0
-    - pytest-mock >=1.0,<2.0
+    - pytest-mock >=3.0,<4.0
     - pytest-mypy >=0.7.0
-    - mock >=3.0,<4.0
-    - black >= 19.0
+    - black >= 20.0
 
   files:
     - .coveragerc
