@@ -42,17 +42,22 @@ test:
 
   files:
     - .coveragerc
+    - mypy.ini
 
   imports:
     - menpo
 
   commands:
-    - MPLBACKEND=Agg pytest $SP_DIR/menpo --mypy -v --cov=menpo --cov-config .coveragerc    # [linux]
-    - MPLBACKEND=TKAgg pytest $SP_DIR/menpo --mypy -v --cov=menpo --cov-config .coveragerc  # [osx]
+    # This is crazy but we need to work around https://github.com/python/mypy/issues/8567
+    # which we do by basically soft linking the output packages into a temporary directory
+    # to avoid the mypy site packages check
+    - rm -fr /tmp/menpo && ln -s $SP_DIR/menpo /tmp/menpo
+    - MPLBACKEND=Agg pytest /tmp/menpo --mypy -v --cov=menpo --cov-config .coveragerc    # [linux]
+    - MPLBACKEND=TKAgg pytest /tmp/menpo --mypy -v --cov=menpo --cov-config .coveragerc  # [osx]
 
 about:
   home: https://github.com/menpo/menpo/
-  license: BSD 3-Clause
+  license: BSD
   summary: The Menpo Project Python package for handling annotated data
   description: |
     Menpo is a Menpo Project package designed from the ground up to make
