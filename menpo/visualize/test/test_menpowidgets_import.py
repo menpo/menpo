@@ -1,5 +1,6 @@
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from mock import MagicMock, patch
 from pytest import raises
 from scipy.sparse import csr_matrix
 

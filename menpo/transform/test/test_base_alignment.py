@@ -1,5 +1,6 @@
+from unittest.mock import Mock
+
 import numpy as np
-from mock import Mock
 from numpy.testing import assert_equal
 from pytest import raises
 

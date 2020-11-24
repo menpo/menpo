@@ -1,6 +1,6 @@
-from mock import Mock
+from unittest.mock import Mock
 
-from menpo.transform import TransformChain, Transform
+from menpo.transform import Transform, TransformChain
 
 
 def test_transformchain_apply():

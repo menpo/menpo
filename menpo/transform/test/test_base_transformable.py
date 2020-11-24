@@ -1,4 +1,4 @@
-from mock import Mock
+from unittest.mock import Mock
 
 from menpo.transform.base import Transformable
 
