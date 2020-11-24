@@ -1,9 +1,9 @@
 import warnings
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 from PIL import Image as PILImage
-from mock import MagicMock, patch
 from pytest import raises
 
 import menpo.io as mio

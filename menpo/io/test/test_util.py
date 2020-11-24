@@ -1,8 +1,8 @@
 from os.path import sep as PATH_SEP
-from mock import patch
 from pathlib import Path
-from pytest import raises
+from unittest.mock import patch
 
+from pytest import raises
 
 from menpo.io.input.base import _pathlib_glob_for_pattern
 from menpo.io.output.base import _parse_and_validate_extension

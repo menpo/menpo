@@ -1,10 +1,10 @@
+from unittest.mock import Mock
+
 import numpy as np
 from numpy.testing import assert_allclose
 from pytest import raises
-from mock import Mock
 
 from menpo.transform import Transform
-
 
 x = np.zeros([5, 5])
 
