@@ -921,7 +921,10 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         warped_points = self.alignment_transform.apply(sample_points)
         delta = warped_points - sample_points
         # plot the sample points result
-        x, y, = 0, 1
+        x, y, = (
+            0,
+            1,
+        )
         if image:
             # if we are overlaying points onto an image,
             # we have to account for the fact that axis 0 is typically

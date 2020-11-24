@@ -766,7 +766,7 @@ def plot_curve(
         Example options ::
 
             {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}
-            
+
     legend_font_style : ``{'normal', 'italic', 'oblique'}``, optional
         The font style of the legend.
     legend_font_size : `int`, optional

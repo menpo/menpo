@@ -798,7 +798,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             Example options ::
 
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                or 
+                or
                 ``(3, )`` `ndarray`
                 or
                 `list` of length ``3``
@@ -824,7 +824,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             Example options ::
 
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                or 
+                or
                 ``(3, )`` `ndarray`
                 or
                 `list` of length ``3``
@@ -834,7 +834,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             Example options ::
 
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                or 
+                or
                 ``(3, )`` `ndarray`
                 or
                 `list` of length ``3``
@@ -980,7 +980,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             Example options ::
 
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                or 
+                or
                 ``(3, )`` `ndarray`
                 or
                 `list` of length ``3``
@@ -1006,7 +1006,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             Example options ::
 
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                or 
+                or
                 ``(3, )`` `ndarray`
                 or
                 `list` of length ``3``
@@ -1016,7 +1016,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             Example options ::
 
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                or 
+                or
                 ``(3, )`` `ndarray`
                 or
                 `list` of length ``3``
@@ -1163,7 +1163,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             Example options ::
 
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                or 
+                or
                 ``(3, )`` `ndarray`
                 or
                 `list` of length ``3``
@@ -1189,7 +1189,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             Example options ::
 
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                or 
+                or
                 ``(3, )`` `ndarray`
                 or
                 `list` of length ``3``
@@ -1199,7 +1199,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             Example options ::
 
                 {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
-                or 
+                or
                 ``(3, )`` `ndarray`
                 or
                 `list` of length ``3``
@@ -1361,7 +1361,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         matrix is copied.
     verbose : `bool`, optional
         Whether to print building information or not.
-     """
+    """
 
     def __init__(
         self,
@@ -1575,7 +1575,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
 
     def project_whitened(self, instance):
         """
-        Projects the `instance` onto the whitened components, retrieving the 
+        Projects the `instance` onto the whitened components, retrieving the
         whitened linear weightings.
 
         Parameters
@@ -1630,7 +1630,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         r"""
         Visualizes the model using an interactive widget. It only works if it
         is a 2D/3D shape or appearance model.
-        
+
         Parameters
         ----------
         figure_size : (`int`, `int`), optional

@@ -812,7 +812,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         figure_size=(7, 7),
     ):
         r"""
-        View the image using the default image viewer. This method will appear 
+        View the image using the default image viewer. This method will appear
         on the Image as ``view`` if the Image is 2D.
 
         Returns
@@ -845,7 +845,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         axes_font_name : See Below, optional
             The font of the axes.
             Example options ::
-            
+
                 {serif, sans-serif, cursive, fantasy, monospace}
 
         axes_font_size : `int`, optional
@@ -855,7 +855,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         axes_font_weight : See Below, optional
             The font weight of the axes.
             Example options ::
-            
+
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
@@ -1038,7 +1038,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
-            
+
                 {r, g, b, c, m, k, w}
                 or
                 (3, ) ndarray
@@ -1046,9 +1046,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         marker_edge_colour : See Below, optional
             The edge colour of the markers.
             Example options ::
-            
+
                 {r, g, b, c, m, k, w}
-                or 
+                or
                 (3, ) ndarray
 
         marker_edge_width : `float`, optional
@@ -1071,7 +1071,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         numbers_font_weight : See Below, optional
             The font weight of the numbers.
             Example options ::
-            
+
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
@@ -1089,7 +1089,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The title of the legend.
         legend_font_name : See below, optional
             The font of the legend. Example options ::
-            
+
                 {serif, sans-serif, cursive, fantasy, monospace}
 
         legend_font_style : ``{normal, italic, oblique}``, optional
@@ -1099,7 +1099,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         legend_font_weight : See Below, optional
             The font weight of the legend.
             Example options ::
-            
+
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
@@ -1144,7 +1144,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True``, the axes will be rendered.
         axes_font_name : See Below, optional
             The font of the axes. Example options ::
-            
+
                 {serif, sans-serif, cursive, fantasy, monospace}
 
         axes_font_size : `int`, optional

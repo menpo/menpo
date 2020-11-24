@@ -1250,7 +1250,9 @@ class PointCloud(Shape):
         return landmark_view
 
     @viewwrapper
-    def view_widget(self,):
+    def view_widget(
+        self,
+    ):
         r"""
         Abstract method for viewing with an interactive widget. See the
         :map:`viewwrapper` documentation for an explanation of how the
