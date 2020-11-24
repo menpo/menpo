@@ -876,7 +876,9 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             raise Menpo3dMissingError(e)
 
     @viewwrapper
-    def view_widget(self,):
+    def view_widget(
+        self,
+    ):
         r"""
         Abstract method for viewing with an interactive widget. See the
         :map:`viewwrapper` documentation for an explanation of how the
@@ -886,7 +888,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
     def _view_widget_2d(self, figure_size=(7, 7)):
         r"""
-        Visualization of the LabelledPointUndirectedGraph using an interactive 
+        Visualization of the LabelledPointUndirectedGraph using an interactive
         widget.
 
         Parameters
@@ -905,7 +907,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
     def _view_widget_3d(self):
         r"""
-        Visualization of the LabelledPointUndirectedGraph using an interactive 
+        Visualization of the LabelledPointUndirectedGraph using an interactive
         widget.
         """
         try:

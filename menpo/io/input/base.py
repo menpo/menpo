@@ -387,7 +387,7 @@ def import_video(
         to recover accurate frame counts from videos it is necessary to use
         ffprobe to count the frames. This involves reading the entire
         video in to memory which may cause a delay in loading despite the lazy
-        nature of the video loading within Menpo. 
+        nature of the video loading within Menpo.
         If ffprobe cannot be found, and `exact_frame_count` is ``False``,
         Menpo falls back to ffmpeg itself which is not accurate and the user
         should proceed at their own risk.
@@ -458,7 +458,7 @@ def import_landmark_file(filepath, group=None, asset=None):
     r"""Single landmark file importer.
 
     If a landmark file is found at ``filepath``, returns a dictionary
-    of landmarks where keys are the group names and the values are 
+    of landmarks where keys are the group names and the values are
     :map:`PointCloud` or subclasses. If the optional ``group`` argument is
     supplied then a single group with the given name is returned rather than
     a dictionary
@@ -703,7 +703,7 @@ def import_videos(
         to recover accurate frame counts from videos it is necessary to use
         ffprobe to count the frames. This involves reading the entire
         video in to memory which may cause a delay in loading despite the lazy
-        nature of the video loading within Menpo. 
+        nature of the video loading within Menpo.
         If ffprobe cannot be found, and `exact_frame_count` is ``False``,
         Menpo falls back to ffmpeg itself which is not accurate and the user
         should proceed at their own risk.
