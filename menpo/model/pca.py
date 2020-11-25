@@ -1,5 +1,3 @@
-from __future__ import division
-
 import numpy as np
 
 from menpo.base import doc_inherit, name_of_callable

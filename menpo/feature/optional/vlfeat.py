@@ -1,5 +1,5 @@
-from __future__ import division
 import numpy as np
+
 from menpo.base import MenpoMissingDependencyError, partial_doc
 from menpo.image.base import normalize_pixels_range
 from ..base import winitfeature

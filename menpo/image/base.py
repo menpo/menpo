@@ -1,5 +1,3 @@
-from __future__ import division
-
 from typing import Iterable, Optional
 from warnings import warn
 
