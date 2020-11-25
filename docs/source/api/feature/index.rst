@@ -70,15 +70,6 @@ Visualization
   sum_channels
 
 
-Widget
-------
-
-.. toctree::
-  :maxdepth: 2
-
-  features_selection_widget
-
-
 References
 ----------
 .. [1] Vedaldi, Andrea, and Brian Fulkerson. "VLFeat: An open and portable

@@ -140,15 +140,6 @@ class MatplotlibRenderer(Renderer):
             save_fig_args, filename, self._extensions_map, format, overwrite=overwrite
         )
 
-    def save_figure_widget(self):
-        r"""
-        Method for saving the figure of the current ``figure_id`` to file using
-        `menpowidgets.base.save_matplotlib_figure` widget.
-        """
-        from menpowidgets import save_matplotlib_figure
-
-        save_matplotlib_figure(self)
-
     def clear_figure(self):
         r"""
         Method for clearing the current figure.
@@ -157,8 +148,7 @@ class MatplotlibRenderer(Renderer):
 
     def force_draw(self):
         r"""
-        Method for forcing the current figure to render. This is useful for
-        the widgets animation.
+        Method for forcing the current figure to render.
         """
         import matplotlib.pyplot as plt
 

@@ -108,15 +108,10 @@ a number of more specific libraries that rely on the core components of Menpo:
     are wrapped, they may not be compatible with this BSD license. Therefore,
     we urge caution be taken when interacting with this library for
     non-academic purposes.
-  - [menpowidgets][mw_gh]: This package provides high level object
-    viewing classes using Matplotlib and Jupyter. Jupyter notebooks
-    are therefore required to this package - and Menpo also
-    implicitly relies on menpowidgets for any widget functionality.
 
 [mf_gh]: https://github.com/menpo/menpofit
 [m3d_gh]: https://github.com/menpo/menpo3d
 [md_gh]: https://github.com/menpo/menpodetect
-[mw_gh]: https://github.com/menpo/menpowidgets
 
 Documentation
 -------------
@@ -138,4 +133,3 @@ dependency installed. These are:
 - 3D viewing methods, only available if `menpo3d` is installed
 - `menpo.feature.dsift` only available if `cyvlfeat` is installed
 - Some warping unit tests are only available if `opencv` is installed
-- Widgets are only available if `menpowidgets` is installed

@@ -897,24 +897,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             figure_size=figure_size,
         )
 
-    def view_widget(self, figure_size=(7, 7)):
-        r"""
-        Visualizes the image using an interactive widget.
-
-        Parameters
-        ----------
-        figure_size : (`int`, `int`), optional
-            The initial size of the rendered figure.
-        """
-        try:
-            from menpowidgets import view_widget
-
-            view_widget(self, figure_size=figure_size)
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
-
     def _view_landmarks_2d(
         self,
         channels=None,
