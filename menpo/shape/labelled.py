@@ -4,9 +4,8 @@ from collections import OrderedDict
 import numpy as np
 
 from menpo.base import Copyable
-from menpo.shape import PointUndirectedGraph, PointCloud, TriMesh
-from menpo.shape.graph import _convert_edges_to_symmetric_adjacency_matrix, PointGraph
-from menpo.visualize import viewwrapper
+from menpo.shape import PointCloud, PointUndirectedGraph, TriMesh
+from menpo.shape.graph import PointGraph, _convert_edges_to_symmetric_adjacency_matrix
 
 
 def indices_to_masks(labels_to_indices, n_points):
@@ -874,50 +873,6 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             from menpo.visualize import Menpo3dMissingError
 
             raise Menpo3dMissingError(e)
-
-    @viewwrapper
-    def view_widget(
-        self,
-    ):
-        r"""
-        Abstract method for viewing with an interactive widget. See the
-        :map:`viewwrapper` documentation for an explanation of how the
-        `view_widget` method works.
-        """
-        pass
-
-    def _view_widget_2d(self, figure_size=(7, 7)):
-        r"""
-        Visualization of the LabelledPointUndirectedGraph using an interactive
-        widget.
-
-        Parameters
-        ----------
-        figure_size : (`int`, `int`), optional
-            The initial size of the rendered figure.
-        """
-        try:
-            from menpowidgets import view_widget
-
-            view_widget(self, figure_size=figure_size)
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
-
-    def _view_widget_3d(self):
-        r"""
-        Visualization of the LabelledPointUndirectedGraph using an interactive
-        widget.
-        """
-        try:
-            from menpowidgets import view_widget
-
-            view_widget(self)
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
 
     def __str__(self):
         return "{}: n_labels: {}, n_points: {}, n_edges: {}".format(
