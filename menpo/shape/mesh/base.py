@@ -1514,7 +1514,8 @@ class TriMesh(PointCloud):
             The representation type to be used for the mesh.
             Example options ::
 
-                {surface, wireframe, points, mesh, fancymesh}
+                mayavi {surface, wireframe, points, mesh, fancymesh}
+                K3d  {surface, wirefame}
 
         line_width : `float`, optional
             The width of the lines, if there are any.
@@ -1605,6 +1606,7 @@ class TriMesh(PointCloud):
                 render_return = renderer._render(
                     line_width=line_width,
                     colour=colour,
+                    mesh_type=mesh_type,
                     marker_style=marker_style,
                     marker_size=marker_size,
                     normals=normals,
