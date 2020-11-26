@@ -30,7 +30,8 @@ class TexturedTriMesh(TriMesh):
     """
 
     def __init__(self, points, tcoords, texture, trilist=None, copy=True):
-        super(TexturedTriMesh, self).__init__(points, trilist=trilist, copy=copy)
+        super(TexturedTriMesh, self).__init__(points, trilist=trilist,
+                                              copy=copy)
         self.tcoords = PointCloud(tcoords, copy=copy)
 
         if not copy:
@@ -442,6 +443,7 @@ class TexturedTriMesh(TriMesh):
                                                      self.landmarks)
                     render_return = renderer._render(
                         line_width=line_width,
+                        mesh_type=mesh_type,
                         colour=colour,
                         normals=normals,
                         normals_colour=normals_colour,
