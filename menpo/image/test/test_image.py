@@ -1,14 +1,13 @@
+import unittest
 import warnings
+from distutils.version import LooseVersion
+
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from pytest import raises
-from menpo.testing import is_same_array
-from menpo.image import BooleanImage, MaskedImage, Image
 
-# TODO: Remove when Pillow 3.3.0 release on all platforms
-import unittest
-from PIL import PILLOW_VERSION
-from distutils.version import LooseVersion
+from menpo.image import BooleanImage, Image, MaskedImage
+from menpo.testing import is_same_array
 
 
 def test_create_1d_error():
@@ -737,9 +736,6 @@ def test_as_pil_image_float32():
     )
 
 
-@unittest.skipIf(
-    LooseVersion(PILLOW_VERSION) < LooseVersion("3.3.0"), "requires pillow>=3.3.0"
-)
 def test_as_pil_image_float32_uint16_out():
     im = Image(np.ones((1, 120, 120), dtype=np.float32), copy=False)
     new_im = im.as_PILImage(out_dtype=np.uint16)

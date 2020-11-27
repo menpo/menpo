@@ -1,8 +1,9 @@
-from __future__ import division
 from functools import wraps
+
 import numpy as np
-from menpo.image import Image, MaskedImage, BooleanImage
-from menpo.transform import Translation, NonUniformScale
+
+from menpo.image import BooleanImage, Image, MaskedImage
+from menpo.transform import NonUniformScale, Translation
 
 
 def lm_centres_correction(centres):
