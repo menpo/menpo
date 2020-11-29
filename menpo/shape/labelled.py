@@ -838,7 +838,8 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         render_numbering=False,
         numbers_colour="k",
         numbers_size=None,
-        inline=False
+        inline=True,
+        return_widget=False
     ):
         if inline:
             try:
@@ -875,7 +876,11 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
                 if render_return is not landmark_viewer:
                     landmark_viewer.close()
                     return
-                return landmark_viewer
+                if return_widget:
+                    return landmark_viewer
+                else:
+                    landmark_viewer.display()
+
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
         else:
@@ -926,7 +931,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
     def _view_widget_2d(self, figure_size=(7, 7)):
         r"""
-        Visualization of the LabelledPointUndirectedGraph using an interactive 
+        Visualization of the LabelledPointUndirectedGraph using an interactive
         widget.
 
         Parameters
@@ -945,7 +950,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
     def _view_widget_3d(self):
         r"""
-        Visualization of the LabelledPointUndirectedGraph using an interactive 
+        Visualization of the LabelledPointUndirectedGraph using an interactive
         widget.
         """
         try:

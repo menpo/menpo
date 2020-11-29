@@ -1083,7 +1083,8 @@ class PointCloud(Shape):
         render_numbering=False,
         numbers_colour="k",
         numbers_size=None,
-        inline=False,
+        inline=True,
+        return_widget=False,
         **kwargs
     ):
         r"""
@@ -1168,7 +1169,12 @@ class PointCloud(Shape):
                 if render_return is not renderer:
                     renderer.close()
                     return
-                return renderer
+
+                if return_widget:
+                    return renderer
+                else:
+                    renderer.display()
+
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
 
