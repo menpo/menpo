@@ -238,7 +238,7 @@ class TriMesh(PointCloud):
 
     def heatmap(self, target_mesh, scalar_range=(0, 2), scale_value=100,
                 type_cmap='hot_r', show_statistics=False, figure_id=None,
-                new_figure=True, inline=False, **kwargs):
+                new_figure=True, inline=True, **kwargs):
         r"""
         Creates a heatmap of euclidean differences between the current mesh
         and the target meshh. If the two meshes have the same number of
