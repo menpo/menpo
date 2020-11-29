@@ -298,7 +298,8 @@ class TexturedTriMesh(TriMesh):
         normals_marker_size=None,
         step=None,
         alpha=1.0,
-        inline=False,
+        inline=True,
+        return_widget=False,
         **kwargs,
     ):
         r"""
@@ -428,7 +429,12 @@ class TexturedTriMesh(TriMesh):
                         step=step,
                         alpha=alpha,
                     )
-                    return renderer
+
+                    if return_widget:
+                        return renderer
+                    else:
+                        renderer.display()
+
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
 

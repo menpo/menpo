@@ -1320,6 +1320,8 @@ class TriMesh(PointCloud):
         normals_marker_size=None,
         step=None,
         alpha=1.0,
+        inline=True,
+        return_widget=False
     ):
         r"""
         Visualization of the TriMesh in 3D.
@@ -1436,7 +1438,12 @@ class TriMesh(PointCloud):
                 if render_return is not renderer:
                     renderer.close()
                     return
-                return renderer
+
+                if return_widget:
+                    return renderer
+                else:
+                    renderer.display()
+
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
 
