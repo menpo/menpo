@@ -1681,13 +1681,19 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             The Menpo3D rendering object.
         """
         if inline:
+            if name_of_callable(self.template_instance) == 'TriMesh':
+                tmp_trilist = self.mean().trilist
+            elif name_of_callable(self.template_instance) == 'PointCloud':
+                tmp_trilist = None
+            else:
+                raise ValueError('We only support TriMesh and PointCloud')
+
             try:
-
                 from menpo3d.visualize import PCAModelInlineViewer3d
-
-                renderer = PCAModelInlineViewer3d(figure_id, new_figure,
+                renderer = PCAModelInlineViewer3d(figure_id,
+                                                  new_figure,
                                                   self.mean().points,
-                                                  self.mean().trilist,
+                                                  tmp_trilist,
                                                   self.components,
                                                   self.eigenvalues,
                                                   n_parameters,
@@ -1702,60 +1708,12 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
                     step=step,
                     alpha=alpha,
                 )
-                # if render_return is not renderer:
-                #     renderer.close()
-                #     return
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
                 raise Menpo3dMissingError(e)
         else:
-            try:
-                from menpo3d.visualize import TriMeshViewer3d
-                renderer = TriMeshViewer3d(figure_id, new_figure,
-                                           self.points, self.trilist)
-                render_return = renderer.render(
-                    mesh_type=mesh_type,
-                    line_width=line_width,
-                    colour=colour,
-                    marker_style=marker_style,
-                    marker_size=marker_size,
-                    marker_resolution=marker_resolution,
-                    normals=normals,
-                    normals_colour=normals_colour,
-                    normals_line_width=normals_line_width,
-                    normals_marker_style=normals_marker_style,
-                    normals_marker_resolution=normals_marker_resolution,
-                    normals_marker_size=normals_marker_size,
-                    step=step,
-                    alpha=alpha,
-                )
-                if render_return is not renderer:
-                    renderer.close()
-                    return
-                return renderer
-            except ImportError as e:
-                from menpo.visualize import Menpo3dMissingError
-                raise Menpo3dMissingError(e)
-
-    def view_widget(self, figure_size=(7, 7)):
-        r"""
-        Visualizes the model using an interactive widget. It only works if it
-        is a 2D/3D shape or appearance model.
-
-        Parameters
-        ----------
-        figure_size : (`int`, `int`), optional
-            The initial size of the rendered figure.
-        """
-        try:
-            from menpowidgets import view_widget
-
-            view_widget(self, figure_size=figure_size)
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
+            print('View method is not implemented yet for mayavi')
 
     def __str__(self):
         str_out = (
