@@ -459,7 +459,7 @@ class doc_inherit(object):
 
     def __call__(self, mthd):
         # Implementing the call method on a decorator allows the decorator
-        # to recieve arguments in the constructor (__init__). Therefore,
+        # to receive arguments in the constructor (__init__). Therefore,
         # the argument to the call method is always the method being wrapped.
         self.mthd = mthd
         # If name is None then default to the name of the method being wrapped.
