@@ -11,6 +11,9 @@ workflows:
           context:
             - menpo
       - linux_python_3.8:
+          context:
+            - menpo
+      - linux_python_3.9:
           filters:
             tags:
               only: /.*/
@@ -36,15 +39,20 @@ jobs:
   linux_python_3.6:
     <<: *linux_template
     environment:
-      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.8
+      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.9
       PYTHON_VERSION: 3.6
   linux_python_3.7:
     <<: *linux_template
     environment:
-      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.8
+      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.9
       PYTHON_VERSION: 3.7
   linux_python_3.8:
     <<: *linux_template
     environment:
-      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.8
+      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.9
       PYTHON_VERSION: 3.8
+  linux_python_3.9:
+    <<: *linux_template
+    environment:
+      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.9
+      PYTHON_VERSION: 3.9
