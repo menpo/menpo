@@ -66,15 +66,9 @@ SciPy or Matplotlib. Installation via `conda` is as simple as
 And has the added benefit of installing a number of commonly used scientific
 packages such as SciPy and Numpy as Menpo also makes use of these packages.
 
-|  CI Host |                     OS                    |                      Build Status                     |
-|:--------:|:-----------------------------------------:|:-----------------------------------------------------:|
-| Travis   | Ubuntu 16.04 (x64) and OSX 10.12 (x64)    | [![Travis Build Status][travis_shield]][travis]       |
-
-
-[travis]: https://travis-ci.org/menpo/menpo
-[travis_shield]: http://img.shields.io/travis/menpo/menpo.svg?style=flat
-[jenkins]: http://jenkins.menpo.org/view/menpo/job/menpo
-[jenkins_shield]: http://jenkins.menpo.org/buildStatus/icon?job=menpo
+|  CI Host |        OS        |                      Build Status                                     |
+|:--------:|:----------------:|:---------------------------------------------------------------------:|
+| CircleCI | linux/amd64      | [![menpo](https://circleci.com/gh/menpo/menpo.svg?style=svg)](<LINK>) |
 
 Usage
 -----
