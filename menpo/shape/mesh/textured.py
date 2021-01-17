@@ -423,11 +423,7 @@ class TexturedTriMesh(TriMesh):
                         step=step,
                         alpha=alpha,
                     )
-
-                    if return_widget:
-                        return renderer
-                    else:
-                        renderer.display()
+                    return renderer
 
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
