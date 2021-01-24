@@ -10,7 +10,7 @@ root = Path(__file__).parent.parent
 
 
 @pytest.mark.skipif(
-    os.getenv("CI") and sys.version_info[:2] != (3, 7),
+    os.getenv("CI", False) and sys.version_info[:2] != (3, 7),
     reason="Only run on one Python version to save testing time",
 )
 def test_black():
