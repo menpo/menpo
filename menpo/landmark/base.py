@@ -7,7 +7,6 @@ from collections import OrderedDict
 
 from menpo.base import Copyable
 from menpo.transform.base import Transformable
-from menpo.visualize.base import viewwrapper
 
 
 class Landmarkable(Copyable):
@@ -42,15 +41,6 @@ class Landmarkable(Copyable):
             self._landmarks = LandmarkManager()
         return self._landmarks
 
-    @property
-    def has_landmarks(self):
-        """
-        Whether the object has landmarks.
-
-        :type: `bool`
-        """
-        return self._landmarks is not None and self.landmarks.n_groups != 0
-
     @landmarks.setter
     def landmarks(self, value):
         """
@@ -69,6 +59,15 @@ class Landmarkable(Copyable):
                 "{}D object".format(value.n_dims, self.n_dims)
             )
         self._landmarks = value.copy()
+
+    @property
+    def has_landmarks(self):
+        """
+        Whether the object has landmarks.
+
+        :type: `bool`
+        """
+        return self._landmarks is not None and self.landmarks.n_groups != 0
 
     @property
     def n_landmark_groups(self):
@@ -302,46 +301,6 @@ class LandmarkManager(MutableMapping, Transformable):
         for group in self._landmark_groups.values():
             group._transform_inplace(transform)
         return self
-
-    @viewwrapper
-    def view_widget(self):
-        r"""
-        Abstract method for viewing with an interactive widget. See the
-        :map:`viewwrapper` documentation for an explanation of how the
-        `view_widget` method works.
-        """
-        pass
-
-    def _view_widget_2d(self, figure_size=(7, 7)):
-        r"""
-        Visualization of the landmark manager using an interactive widget.
-
-        Parameters
-        ----------
-        figure_size : (`int`, `int`), optional
-            The initial size of the rendered figure.
-        """
-        try:
-            from menpowidgets import view_widget
-
-            view_widget(self, figure_size=figure_size)
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
-
-    def _view_widget_3d(self):
-        r"""
-        Visualization of the landmark manager using an interactive widget.
-        """
-        try:
-            from menpowidgets import view_widget
-
-            view_widget(self)
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
 
     def __str__(self):
         out_string = "{}: n_groups: {}".format(type(self).__name__, self.n_groups)

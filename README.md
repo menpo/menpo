@@ -8,6 +8,8 @@
   <br>
   <img src="https://img.shields.io/badge/Python-3.6-green.svg" alt="Python 3.6 Support"/>
   <img src="https://img.shields.io/badge/Python-3.7-green.svg" alt="Python 3.7 Support"/>
+  <img src="https://img.shields.io/badge/Python-3.8-green.svg" alt="Python 3.8 Support"/>
+  <img src="https://img.shields.io/badge/Python-3.9-green.svg" alt="Python 3.9 Support"/>
 </p>
 
 
@@ -64,15 +66,9 @@ SciPy or Matplotlib. Installation via `conda` is as simple as
 And has the added benefit of installing a number of commonly used scientific
 packages such as SciPy and Numpy as Menpo also makes use of these packages.
 
-|  CI Host |                     OS                    |                      Build Status                     |
-|:--------:|:-----------------------------------------:|:-----------------------------------------------------:|
-| Travis   | Ubuntu 16.04 (x64) and OSX 10.12 (x64)    | [![Travis Build Status][travis_shield]][travis]       |
-
-
-[travis]: https://travis-ci.org/menpo/menpo
-[travis_shield]: http://img.shields.io/travis/menpo/menpo.svg?style=flat
-[jenkins]: http://jenkins.menpo.org/view/menpo/job/menpo
-[jenkins_shield]: http://jenkins.menpo.org/buildStatus/icon?job=menpo
+|  CI Host |        OS        |                      Build Status                                     |
+|:--------:|:----------------:|:---------------------------------------------------------------------:|
+| CircleCI | linux/amd64      | [![menpo](https://circleci.com/gh/menpo/menpo.svg?style=svg)](<LINK>) |
 
 Usage
 -----
@@ -108,15 +104,10 @@ a number of more specific libraries that rely on the core components of Menpo:
     are wrapped, they may not be compatible with this BSD license. Therefore,
     we urge caution be taken when interacting with this library for
     non-academic purposes.
-  - [menpowidgets][mw_gh]: This package provides high level object
-    viewing classes using Matplotlib and Jupyter. Jupyter notebooks
-    are therefore required to this package - and Menpo also
-    implicitly relies on menpowidgets for any widget functionality.
 
 [mf_gh]: https://github.com/menpo/menpofit
 [m3d_gh]: https://github.com/menpo/menpo3d
 [md_gh]: https://github.com/menpo/menpodetect
-[mw_gh]: https://github.com/menpo/menpowidgets
 
 Documentation
 -------------
@@ -138,4 +129,3 @@ dependency installed. These are:
 - 3D viewing methods, only available if `menpo3d` is installed
 - `menpo.feature.dsift` only available if `cyvlfeat` is installed
 - Some warping unit tests are only available if `opencv` is installed
-- Widgets are only available if `menpowidgets` is installed

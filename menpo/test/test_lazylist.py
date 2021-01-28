@@ -1,9 +1,7 @@
-try:
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc as collections_abc
+from unittest.mock import Mock
+
 import numpy as np
-from mock import Mock
 from pytest import raises
 
 from menpo.base import LazyList

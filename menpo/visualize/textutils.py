@@ -1,7 +1,6 @@
-from __future__ import division, print_function
+import sys
 from collections import deque
 from datetime import datetime
-import sys
 from time import time
 
 

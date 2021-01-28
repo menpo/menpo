@@ -1,5 +1,3 @@
-from __future__ import division
-
 import warnings
 
 import numpy as np
@@ -7,9 +5,9 @@ from numpy.testing import assert_allclose
 from pytest import raises, skip
 
 from menpo.feature import (
+    daisy,
     es,
     igo,
-    daisy,
     no_op,
     normalize,
     normalize_norm,
@@ -209,15 +207,6 @@ def test_normalize_var_channels():
     assert_allclose(np.var(new_image.pixels[0]), 0.15, atol=1e-5)
     assert_allclose(np.var(new_image.pixels[1]), 0.15, atol=1e-5)
     assert_allclose(np.var(new_image.pixels[2]), 0.15, atol=1e-5)
-
-
-def test_normalize_no_scale_per_channel():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
-    image = Image(pixels, copy=False)
-    new_image = normalize(image, scale_func=None, mode="per_channel")
-    assert_allclose(new_image.pixels[0], pixels[0] - 4.0)
-    assert_allclose(new_image.pixels[1], pixels[1] - 13.0)
-    assert_allclose(new_image.pixels[2], pixels[2] - 22.0)
 
 
 def test_normalize_no_scale_per_channel():

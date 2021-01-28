@@ -39,19 +39,19 @@ def is_same_array(a, b):
 
 class surrogate(object):
     """
-        Add empty module stub that can be imported
-        for every subpath in path.
-        Those stubs can later be patched by mock's
-        patch decorator.
-        Example:
-        @surrogate('sys.my.cool.module1')
-        @surrogate('sys.my.cool.module2')
-        @mock.patch('sys.my.cool.module1', mock1)
-        @mock.patch('sys.my.cool.module2', mock2)
-        def function():
-            from sys.my import cool
-            from sys.my.cool import module1
-            from sys.my.cool import module2
+    Add empty module stub that can be imported
+    for every subpath in path.
+    Those stubs can later be patched by mock's
+    patch decorator.
+    Example:
+    @surrogate('sys.my.cool.module1')
+    @surrogate('sys.my.cool.module2')
+    @mock.patch('sys.my.cool.module1', mock1)
+    @mock.patch('sys.my.cool.module2', mock2)
+    def function():
+        from sys.my import cool
+        from sys.my.cool import module1
+        from sys.my.cool import module2
     """
 
     def __init__(self, path):
@@ -126,11 +126,11 @@ class surrogate(object):
 
     def _determine_existing_modules(self):
         """
-            Find out which of the modules
-            from specified path are already
-            imported (e.g. present in sys.modules)
-            those modules should not be replaced
-            by stubs.
+        Find out which of the modules
+        from specified path are already
+        imported (e.g. present in sys.modules)
+        those modules should not be replaced
+        by stubs.
         """
         known = 0
         while (
@@ -143,11 +143,11 @@ class surrogate(object):
 
     def _save_base_module(self):
         """
-            Remember state of the last of existing modules
-            The last of the sequence of existing modules
-            is the only one we will change. So we must
-            remember it's state in order to restore it
-            afterwards.
+        Remember state of the last of existing modules
+        The last of the sequence of existing modules
+        is the only one we will change. So we must
+        remember it's state in order to restore it
+        afterwards.
         """
 
         try:

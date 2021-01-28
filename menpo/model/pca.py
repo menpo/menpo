@@ -1,8 +1,7 @@
-from __future__ import division
 import numpy as np
 
 from menpo.base import doc_inherit, name_of_callable
-from menpo.math import pca, pcacov, ipca, as_matrix
+from menpo.math import as_matrix, ipca, pca, pcacov
 from .linear import MeanLinearVectorModel
 from .vectorizable import VectorizableBackedModel
 from pathlib import Path
@@ -250,7 +249,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         else:
             raise ValueError(err_str)
 
-    @MeanLinearVectorModel.components.getter
+    @property
     def components(self):
         r"""
         Returns the active components of the model.
@@ -258,6 +257,30 @@ class PCAVectorModel(MeanLinearVectorModel):
         :type: ``(n_active_components, n_features)`` `ndarray`
         """
         return self._components[: self.n_active_components, :]
+
+    @components.setter
+    def components(self, value):
+        r"""
+        Updates the components of this linear model, ensuring that the shape
+        of the components is not changed.
+
+        Parameters
+        ----------
+        value : ``(n_components, n_features)`` `ndarray`
+            The new components array.
+
+        Raises
+        ------
+        ValueError
+            Trying to replace components of shape {} with some of shape {}
+        """
+        if value.shape != self._components.shape:
+            raise ValueError(
+                "Trying to replace components of shape {} with some of "
+                "shape {}".format(self.components.shape, value.shape)
+            )
+        else:
+            np.copyto(self._components, value, casting="safe")
 
     @property
     def eigenvalues(self):
@@ -890,32 +913,6 @@ class PCAVectorModel(MeanLinearVectorModel):
             grid_line_width=grid_line_width,
         )
 
-    def plot_eigenvalues_widget(self, figure_size=(10, 6), style="coloured"):
-        r"""
-        Plot of the eigenvalues using an interactive widget.
-
-        Parameters
-        ----------
-        figure_size : (`float`, `float`) or ``None``, optional
-            The size of the figure in inches.
-        style : {``'coloured'``, ``'minimal'``}, optional
-            If ``'coloured'``, then the style of the widget will be coloured. If
-            ``minimal``, then the style is simple using black and white colours.
-        """
-        try:
-            from menpowidgets import plot_graph
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
-        plot_graph(
-            x_axis=range(self.n_active_components),
-            y_axis=[self.eigenvalues],
-            legend_entries=["Eigenvalues"],
-            figure_size=figure_size,
-            style=style,
-        )
-
     def plot_eigenvalues_ratio(
         self,
         figure_id=None,
@@ -1070,33 +1067,6 @@ class PCAVectorModel(MeanLinearVectorModel):
             render_grid=render_grid,
             grid_line_style=grid_line_style,
             grid_line_width=grid_line_width,
-        )
-
-    def plot_eigenvalues_ratio_widget(self, figure_size=(10, 6), style="coloured"):
-        r"""
-        Plot of the variance ratio captured by the eigenvalues using an
-        interactive widget.
-
-        Parameters
-        ----------
-        figure_size : (`float`, `float`) or ``None``, optional
-            The size of the figure in inches.
-        style : {``'coloured'``, ``'minimal'``}, optional
-            If ``'coloured'``, then the style of the widget will be coloured. If
-            ``minimal``, then the style is simple using black and white colours.
-        """
-        try:
-            from menpowidgets import plot_graph
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
-        plot_graph(
-            x_axis=range(self.n_active_components),
-            y_axis=[self.eigenvalues_ratio()],
-            legend_entries=["Eigenvalues ratio"],
-            figure_size=figure_size,
-            style=style,
         )
 
     def plot_eigenvalues_cumulative_ratio(
@@ -1255,35 +1225,6 @@ class PCAVectorModel(MeanLinearVectorModel):
             grid_line_width=grid_line_width,
         )
 
-    def plot_eigenvalues_cumulative_ratio_widget(
-        self, figure_size=(10, 6), style="coloured"
-    ):
-        r"""
-        Plot of the cumulative variance ratio captured by the eigenvalues using
-        an interactive widget.
-
-        Parameters
-        ----------
-        figure_size : (`float`, `float`) or ``None``, optional
-            The size of the figure in inches.
-        style : {``'coloured'``, ``'minimal'``}, optional
-            If ``'coloured'``, then the style of the widget will be coloured. If
-            ``minimal``, then the style is simple using black and white colours.
-        """
-        try:
-            from menpowidgets import plot_graph
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
-        plot_graph(
-            x_axis=range(self.n_active_components),
-            y_axis=[self.eigenvalues_cumulative_ratio()],
-            legend_entries=["Eigenvalues cumulative ratio"],
-            figure_size=figure_size,
-            style=style,
-        )
-
     def __str__(self):
         str_out = (
             "PCA Vector Model \n"
@@ -1337,7 +1278,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         matrix is copied.
     verbose : `bool`, optional
         Whether to print building information or not.
-     """
+    """
 
     def __init__(
         self,

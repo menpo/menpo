@@ -1,16 +1,15 @@
-from .base import ndfeature, imgfeature
+from .base import imgfeature, ndfeature
 from .features import (
-    gradient,
+    daisy,
     es,
+    gaussian_filter,
+    gradient,
     igo,
     no_op,
-    gaussian_filter,
-    daisy,
     normalize,
     normalize_norm,
     normalize_std,
     normalize_var,
-    features_selection_widget,
 )
 
 # Optional dependencies may return nothing.

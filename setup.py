@@ -26,8 +26,6 @@ install_requires = ['numpy>=1.14',
                     'pillow>=4.0',
                     'scikit-image>=0.15']
 
-if sys.version_info.major == 2:
-    install_requires.append("pathlib==1.0")
 
 setup(
     name="menpo",
@@ -39,5 +37,5 @@ setup(
     packages=find_packages(),
     install_requires=install_requires,
     package_data={"menpo": ["data/*"]},
-    tests_require=["pytest>=5.0", "pytest-mock>=1.0", "mock>=3.0", "black>=19.0"],
+    tests_require=["pytest>=6.0", "pytest-mock>=3.0", "black>=20.0"],
 )

@@ -1,20 +1,13 @@
+import collections.abc as collections_abc
 import numbers
 import warnings
 from warnings import warn
 
 import numpy as np
-import scipy.sparse as sp
-
-try:
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
 from menpo.transform import WithDims
-from menpo.visualize import viewwrapper
-
 from .base import Shape
 
 
@@ -1347,46 +1340,6 @@ class PointCloud(Shape):
 
         return landmark_view
 
-    @viewwrapper
-    def view_widget(self,):
-        r"""
-        Abstract method for viewing with an interactive widget. See the
-        :map:`viewwrapper` documentation for an explanation of how the
-        `view_widget` method works.
-        """
-        pass
-
-    def _view_widget_2d(self, figure_size=(7, 7)):
-        r"""
-        Visualization of the PointCloud using an interactive widget.
-
-        Parameters
-        ----------
-        figure_size : (`int`, `int`), optional
-            The initial size of the rendered figure.
-        """
-        try:
-            from menpowidgets import view_widget
-
-            view_widget(self, figure_size=figure_size)
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
-
-    def _view_widget_3d(self):
-        r"""
-        Visualization of the PointCloud using an interactive widget.
-        """
-        try:
-            from menpowidgets import view_widget
-
-            view_widget(self)
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
-
     def _transform_self_inplace(self, transform):
         self.points = transform(self.points)
         return self
@@ -1452,7 +1405,7 @@ class PointCloud(Shape):
                                                    **kwargs), axis=1)
         closest_vertices[np.arange(len(indx_vertices)), indx_vertices] = 1
         if return_sparse:
-            closest_vertices = sp.csr_matrix(closest_vertices)
+            closest_vertices = csr_matrix(closest_vertices)
         return closest_vertices
 
     def norm(self, **kwargs):

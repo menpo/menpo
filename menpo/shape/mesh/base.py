@@ -3,13 +3,11 @@ from warnings import warn
 
 import numpy as np
 
-from .normals import compute_vertex_normals, compute_face_normals
+from .normals import compute_face_normals, compute_vertex_normals
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from scipy.spatial import cKDTree
 import scipy.sparse as sp
-
-Delaunay = None  # expensive, from scipy.spatial
 
 
 def grid_tcoords(shape):
@@ -143,9 +141,8 @@ class TriMesh(PointCloud):
     def __init__(self, points, trilist=None, copy=True):
         super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
-            global Delaunay
-            if Delaunay is None:
-                from scipy.spatial import Delaunay  # expensive
+            from scipy.spatial import Delaunay  # expensive import
+
             trilist = Delaunay(points).simplices
         if not copy:
             if not trilist.flags.c_contiguous:

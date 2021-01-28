@@ -1,12 +1,6 @@
+import contextlib
 import os
 from pathlib import Path
-import contextlib
-
-
-try:
-    from subprocess import DEVNULL
-except ImportError:
-    DEVNULL = open(os.devnull, "wb")
 
 
 def _norm_path(filepath):

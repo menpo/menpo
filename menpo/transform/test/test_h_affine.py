@@ -1,6 +1,6 @@
 import numpy as np
-from pytest import raises
 from numpy.testing import assert_allclose
+from pytest import raises
 
 from menpo.transform import Affine, NonUniformScale
 
@@ -79,12 +79,6 @@ def test_affine_non_square_h_matrix():
 
 def test_affine_incorrect_bottom_row():
     homo = np.random.rand(4, 4)
-    with raises(ValueError):
-        Affine(homo)
-
-
-def test_affine_non_square_h_matrix():
-    homo = np.random.rand(4, 6)
     with raises(ValueError):
         Affine(homo)
 

@@ -1,29 +1,26 @@
-try:
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc as collections_abc
 import os
 import random
 import warnings
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 from menpo.base import (
-    menpo_src_dir_path,
     LazyList,
-    partial_doc,
     MenpoDeprecationWarning,
+    menpo_src_dir_path,
+    partial_doc,
 )
-from menpo.compatibility import basestring
 from menpo.visualize import print_progress
 from .extensions import (
+    ffmpeg_video_types,
     image_landmark_types,
     image_types,
     pickle_types,
-    ffmpeg_video_types,
 )
-from ..utils import _norm_path, _possible_extensions_from_filepath, _normalize_extension
+from ..utils import _norm_path, _normalize_extension, _possible_extensions_from_filepath
 
 
 # TODO: Remove once deprecated
@@ -153,7 +150,7 @@ def _register_importer(ext_map, extension, callable):
         discovered during importing. Should take a single argument (the
         filepath) and any number of kwargs.
     """
-    if not isinstance(extension, basestring):
+    if not isinstance(extension, str):
         raise ValueError("Only string type keys are supported.")
     if extension in ext_map:
         warnings.warn(
@@ -390,7 +387,7 @@ def import_video(
         to recover accurate frame counts from videos it is necessary to use
         ffprobe to count the frames. This involves reading the entire
         video in to memory which may cause a delay in loading despite the lazy
-        nature of the video loading within Menpo. 
+        nature of the video loading within Menpo.
         If ffprobe cannot be found, and `exact_frame_count` is ``False``,
         Menpo falls back to ffmpeg itself which is not accurate and the user
         should proceed at their own risk.
@@ -461,7 +458,7 @@ def import_landmark_file(filepath, group=None, asset=None):
     r"""Single landmark file importer.
 
     If a landmark file is found at ``filepath``, returns a dictionary
-    of landmarks where keys are the group names and the values are 
+    of landmarks where keys are the group names and the values are
     :map:`PointCloud` or subclasses. If the optional ``group`` argument is
     supplied then a single group with the given name is returned rather than
     a dictionary
@@ -706,7 +703,7 @@ def import_videos(
         to recover accurate frame counts from videos it is necessary to use
         ffprobe to count the frames. This involves reading the entire
         video in to memory which may cause a delay in loading despite the lazy
-        nature of the video loading within Menpo. 
+        nature of the video loading within Menpo.
         If ffprobe cannot be found, and `exact_frame_count` is ``False``,
         Menpo falls back to ffmpeg itself which is not accurate and the user
         should proceed at their own risk.
@@ -1158,16 +1155,16 @@ def importer_for_filepath(filepath, extensions_map):
 class BuiltinAssets(object):
     def __init__(self, import_builtin_callable):
         self.import_builtin_asset = import_builtin_callable
+        self._builtin_files = {
+            asset.replace(".", "_"): partial(_menpo_import_builtin_asset, asset)
+            for asset in menpo_ls_builtin_assets()
+        }
 
     def __call__(self, asset_name, **kwargs):
         return self.import_builtin_asset(asset_name, **kwargs)
 
+    def __getattr__(self, file_name) -> Any:
+        return self._builtin_files[file_name]
+
 
 import_builtin_asset = BuiltinAssets(_menpo_import_builtin_asset)
-
-for asset in menpo_ls_builtin_assets():
-    setattr(
-        import_builtin_asset,
-        asset.replace(".", "_"),
-        partial(_menpo_import_builtin_asset, asset),
-    )

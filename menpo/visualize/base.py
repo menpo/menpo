@@ -20,19 +20,6 @@ class Menpo3dMissingError(MenpoMissingDependencyError):
         )
 
 
-class MenpowidgetsMissingError(MenpoMissingDependencyError):
-    r"""
-    Exception that is thrown when an attempt is made to import a widget, but
-    'menpowidgets' is not installed.
-    """
-
-    def __init__(self, actual_missing_import_name):
-        super(MenpowidgetsMissingError, self).__init__(actual_missing_import_name)
-        self.message += (
-            "\nThis import is required in order to use the " "'menpowidgets' package"
-        )
-
-
 class Renderer(object):
     r"""
     Abstract class for rendering visualizations. Framework specific
@@ -766,7 +753,7 @@ def plot_curve(
         Example options ::
 
             {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}
-            
+
     legend_font_style : ``{'normal', 'italic', 'oblique'}``, optional
         The font style of the legend.
     legend_font_size : `int`, optional

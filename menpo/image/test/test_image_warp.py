@@ -1,6 +1,7 @@
+from unittest.mock import PropertyMock
+
 import numpy as np
 import pytest
-from mock import PropertyMock
 from numpy.testing import assert_allclose, assert_almost_equal
 from pytest import raises
 

@@ -22,39 +22,42 @@ requirements:
     # Scientific Python Stack
     - {{ pin_compatible('numpy') }}
     - scipy >=1.0,<2.0
-    - pillow >=4.0,<6.0
+    - pillow >=4.0,<9.0
     - ffmpeg >=2.7,<5.0
 
     # Visualization
     - matplotlib >=3.0,<4.0
 
     # Optional Dependencies
-    - cyvlfeat >=0.5.0,<0.6.0
+    - cyvlfeat >=0.5.0,<0.8.0
     - opencv >=3.0,<5.0
 
 test:
   requires:
-    - pytest >=5.0,<6.0
+    - pytest >=6.0,<7.0
     - pytest-cov >=2.0,<3.0
-    - pytest-mock >=1.0,<2.0
-    - mock >=3.0,<4.0
-    - black >= 19.0
+    - pytest-mock >=3.0,<4.0
+    - pytest-mypy >=0.7.0
+    - black >= 20.0
 
   files:
     - .coveragerc
+    - mypy.ini
 
   imports:
     - menpo
 
   commands:
-    - MPLBACKEND=Agg pytest $SP_DIR/menpo -v --cov=menpo --cov-config .coveragerc              # [linux]
-    - MPLBACKEND=TKAgg pytest $SP_DIR/menpo -v --cov=menpo --cov-config .coveragerc            # [osx]
-    - pytest %SP_DIR%\\menpo -v --cov=menpo --cov-config .coveragerc --junitxml=C:\\menpo.xml  # [win]
-
+    # This is crazy but we need to work around https://github.com/python/mypy/issues/8567
+    # which we do by basically soft linking the output packages into a temporary directory
+    # to avoid the mypy site packages check
+    - rm -fr /tmp/menpo && ln -s $SP_DIR/menpo /tmp/menpo
+    - MPLBACKEND=Agg pytest /tmp/menpo --mypy -v --cov=menpo --cov-config .coveragerc    # [linux]
+    - MPLBACKEND=TKAgg pytest /tmp/menpo --mypy -v --cov=menpo --cov-config .coveragerc  # [osx]
 
 about:
   home: https://github.com/menpo/menpo/
-  license: BSD 3-Clause
+  license: BSD
   summary: The Menpo Project Python package for handling annotated data
   description: |
     Menpo is a Menpo Project package designed from the ground up to make

@@ -1,36 +1,29 @@
-from __future__ import division
-
+from typing import Iterable, Optional
 from warnings import warn
 
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
-import numpy as np
 import PIL.Image as PILImage
+import numpy as np
 
-from menpo.compatibility import basestring
-from menpo.base import Vectorizable, MenpoDeprecationWarning, copy_landmarks_and_path
-from menpo.shape import PointCloud, bounding_box
+from menpo.base import MenpoDeprecationWarning, Vectorizable, copy_landmarks_and_path
 from menpo.landmark import Landmarkable
+from menpo.shape import PointCloud, bounding_box
 from menpo.transform import (
-    Translation,
+    AlignmentUniformScale,
+    Homogeneous,
     NonUniformScale,
     Rotation,
-    AlignmentUniformScale,
+    Translation,
     scale_about_centre,
     transform_about_centre,
-    Homogeneous,
 )
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
-
 from .interpolation import scipy_interpolation
 
 try:
     from .interpolation import cv2_perspective_interpolation
 except ImportError:
     warn("Falling back to scipy interpolation for affine warps")
-    cv2_perspective_interpolation = None
+    cv2_perspective_interpolation = None  # type: ignore
 from .patches import (
     extract_patches_with_slice,
     set_patches,
@@ -38,7 +31,7 @@ from .patches import (
 )
 
 # Cache the greyscale luminosity coefficients as they are invariant.
-_greyscale_luminosity_coef = None
+_greyscale_luminosity_coef: Optional[np.ndarray] = None
 
 
 class ImageBoundaryError(ValueError):
@@ -767,7 +760,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         >>>     plt.bar(centre, hist[k], align='center', width=width)
         """
         # parse options
-        if isinstance(bins, basestring):
+        if isinstance(bins, str):
             if bins == "unique":
                 bins = 0
             else:
@@ -817,7 +810,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         figure_size=(7, 7),
     ):
         r"""
-        View the image using the default image viewer. This method will appear 
+        View the image using the default image viewer. This method will appear
         on the Image as ``view`` if the Image is 2D.
 
         Returns
@@ -850,7 +843,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         axes_font_name : See Below, optional
             The font of the axes.
             Example options ::
-            
+
                 {serif, sans-serif, cursive, fantasy, monospace}
 
         axes_font_size : `int`, optional
@@ -860,7 +853,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         axes_font_weight : See Below, optional
             The font weight of the axes.
             Example options ::
-            
+
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
@@ -903,24 +896,6 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             axes_y_ticks=axes_y_ticks,
             figure_size=figure_size,
         )
-
-    def view_widget(self, figure_size=(7, 7)):
-        r"""
-        Visualizes the image using an interactive widget.
-
-        Parameters
-        ----------
-        figure_size : (`int`, `int`), optional
-            The initial size of the rendered figure.
-        """
-        try:
-            from menpowidgets import view_widget
-
-            view_widget(self, figure_size=figure_size)
-        except ImportError as e:
-            from menpo.visualize.base import MenpowidgetsMissingError
-
-            raise MenpowidgetsMissingError(e)
 
     def _view_landmarks_2d(
         self,
@@ -1043,7 +1018,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         marker_face_colour : See Below, optional
             The face (filling) colour of the markers.
             Example options ::
-            
+
                 {r, g, b, c, m, k, w}
                 or
                 (3, ) ndarray
@@ -1051,9 +1026,9 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         marker_edge_colour : See Below, optional
             The edge colour of the markers.
             Example options ::
-            
+
                 {r, g, b, c, m, k, w}
-                or 
+                or
                 (3, ) ndarray
 
         marker_edge_width : `float`, optional
@@ -1076,7 +1051,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         numbers_font_weight : See Below, optional
             The font weight of the numbers.
             Example options ::
-            
+
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
@@ -1094,7 +1069,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The title of the legend.
         legend_font_name : See below, optional
             The font of the legend. Example options ::
-            
+
                 {serif, sans-serif, cursive, fantasy, monospace}
 
         legend_font_style : ``{normal, italic, oblique}``, optional
@@ -1104,7 +1079,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         legend_font_weight : See Below, optional
             The font weight of the legend.
             Example options ::
-            
+
                 {ultralight, light, normal, regular, book, medium, roman,
                 semibold, demibold, demi, bold, heavy, extra bold, black}
 
@@ -1149,7 +1124,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If ``True``, the axes will be rendered.
         axes_font_name : See Below, optional
             The font of the axes. Example options ::
-            
+
                 {serif, sans-serif, cursive, fantasy, monospace}
 
         axes_font_size : `int`, optional

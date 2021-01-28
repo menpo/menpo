@@ -1,20 +1,20 @@
 from collections import OrderedDict
-from mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 from pytest import raises
 from scipy.sparse import csr_matrix
 
 from menpo.image import Image
 from menpo.shape import (
-    TriMesh,
-    TexturedTriMesh,
     ColouredTriMesh,
-    PointCloud,
     LabelledPointUndirectedGraph,
+    PointCloud,
+    TexturedTriMesh,
+    TriMesh,
 )
-from menpo.visualize import Menpo3dMissingError
 from menpo.testing import surrogate
-
+from menpo.visualize import Menpo3dMissingError
 
 fake_triangle = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 fake_trilist = np.array([[0, 1, 2]], dtype=np.uint32)

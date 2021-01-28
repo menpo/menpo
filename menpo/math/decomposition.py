@@ -1,6 +1,6 @@
-from __future__ import division
 import numpy as np
 from scipy.sparse import issparse
+
 from .linalg import dot_inplace_right
 
 

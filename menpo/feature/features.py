@@ -1,13 +1,9 @@
-from __future__ import division
-
 import itertools
 import warnings
 
 import numpy as np
 
-scipy_gaussian_filter = None  # expensive
-
-from .base import ndfeature, imgfeature
+from .base import imgfeature, ndfeature
 
 
 @ndfeature
@@ -80,9 +76,8 @@ def gaussian_filter(pixels, sigma):
     output_image : :map:`Image` or subclass or ``(X, Y, ..., Z, C)`` `ndarray`
         The filtered image has the same type and size as the input ``pixels``.
     """
-    global scipy_gaussian_filter
-    if scipy_gaussian_filter is None:
-        from scipy.ndimage import gaussian_filter as scipy_gaussian_filter
+    from scipy.ndimage import gaussian_filter as scipy_gaussian_filter  # expensive
+
     output = np.empty(pixels.shape, dtype=pixels.dtype)
     for dim in range(pixels.shape[0]):
         scipy_gaussian_filter(pixels[dim], sigma, output=output[dim])
@@ -627,35 +622,3 @@ def no_op(pixels):
         A copy of the image that was passed in.
     """
     return pixels.copy()
-
-
-def features_selection_widget():
-    r"""
-    Widget that allows for easy selection of a features function and its
-    options. It also has a 'preview' tab for visual inspection. It returns a
-    `list` of length 1 with the selected features function closure.
-
-    Returns
-    -------
-    features_function : `list` of length ``1``
-        The function closure of the features function using `functools.partial`.
-        So the function can be called as: ::
-
-            features_image = features_function[0](image)
-
-    Examples
-    --------
-    The widget can be invoked as ::
-
-        from menpo.feature import features_selection_widget
-        features_fun = features_selection_widget()
-
-    And the returned function can be used as ::
-
-        import menpo.io as mio
-        image = mio.import_builtin_asset.lenna_png()
-        features_image = features_fun[0](image)
-    """
-    from menpowidgets import features_selection
-
-    return features_selection()

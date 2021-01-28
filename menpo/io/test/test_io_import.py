@@ -1,11 +1,13 @@
 import warnings
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 from PIL import Image as PILImage
-from mock import patch, MagicMock
 from pytest import raises
 
 import menpo.io as mio
+from menpo.shape import PointCloud
 
 
 def test_import_incorrect_built_in():
@@ -398,7 +400,7 @@ def test_importing_ffmpeg_GIF_normalize(is_file, video_infos_ffprobe, pipe):
         "n_frames": 10,
         "fps": 5,
     }
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
@@ -424,7 +426,7 @@ def test_importing_ffmpeg_GIF_no_normalize(is_file, video_infos_ffprobe, pipe):
         "n_frames": 10,
         "fps": 5,
     }
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
@@ -548,6 +550,14 @@ def test_importing_v3_ljson_null_values(is_file, mock_open, mock_dict):
     assert np.all(nan_points[1, :])  # all of leye label is nan
 
 
+def test_export_import_pointcloud_ljson_v3(tmpdir):
+    tmpdir = Path(tmpdir)
+    pc = PointCloud(np.random.random([10, 2]), copy=False)
+    mio.export_landmark_file(pc, tmpdir / "test.ljson")
+    loaded_pc = mio.import_landmark_file(tmpdir / "test.ljson")["LJSON"]
+    np.testing.assert_allclose(pc.points, loaded_pc.points)
+
+
 @patch("random.shuffle")
 def test_shuffle_kwarg_true_calls_shuffle(mock):
     list(mio.import_images(mio.data_dir_path(), shuffle=True))
@@ -665,7 +675,7 @@ def test_importing_ffmpeg_avi_no_normalize(is_file, video_infos_ffprobe, pipe):
         "fps": 5,
     }
     is_file.return_value = True
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video("fake_image_being_mocked.avi", normalize=False)
     assert ll.path.name == "fake_image_being_mocked.avi"
@@ -689,7 +699,7 @@ def test_importing_ffmpeg_avi_normalize(is_file, video_infos_ffprobe, pipe):
         "fps": 5,
     }
     is_file.return_value = True
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video("fake_image_being_mocked.avi", normalize=True)
     assert ll.path.name == "fake_image_being_mocked.avi"
@@ -728,7 +738,7 @@ def test_importing_ffmpeg_no_exact_frame_count_no_ffprobe(
         "fps": 5,
     }
     is_file.return_value = True
-    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tostring()
+    empty_frame = np.zeros(150 * 100 * 3, dtype=np.uint8).tobytes()
     pipe.return_value.stdout.read.return_value = empty_frame
     ll = mio.import_video(
         "fake_image_being_mocked.avi", normalize=True, exact_frame_count=False

@@ -1,19 +1,17 @@
+import os
+import sys
 import warnings
+from pathlib import Path, PosixPath, WindowsPath
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import numpy as np
-import sys
 from numpy.testing import assert_allclose
-import os
-from pathlib import PosixPath, WindowsPath, Path
-from mock import patch, PropertyMock, MagicMock
 from pytest import raises
 
-
 import menpo.io as mio
-from menpo.io.utils import _norm_path
 from menpo.image import Image
 from menpo.io.output.pickle import pickle_paths_as_pure
-
+from menpo.io.utils import _norm_path
 
 builtins_str = "__builtin__" if sys.version_info[0] == 2 else "builtins"
 

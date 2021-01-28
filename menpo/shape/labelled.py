@@ -4,9 +4,8 @@ from collections import OrderedDict
 import numpy as np
 
 from menpo.base import Copyable
-from menpo.shape import PointUndirectedGraph, PointCloud, TriMesh
-from menpo.shape.graph import _convert_edges_to_symmetric_adjacency_matrix, PointGraph
-from menpo.visualize import viewwrapper
+from menpo.shape import PointCloud, PointUndirectedGraph, TriMesh
+from menpo.shape.graph import PointGraph, _convert_edges_to_symmetric_adjacency_matrix
 
 
 def indices_to_masks(labels_to_indices, n_points):

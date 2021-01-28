@@ -1,8 +1,8 @@
-from mock import Mock
+from unittest.mock import Mock
+
 from pytest import raises
 
 from menpo.transform import TransformChain
-
 from menpo.transform.base import ComposableTransform
 
 

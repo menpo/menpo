@@ -3,6 +3,44 @@
 Changelog
 #########
 
+0.11.0 (2021/01/09)
+-------------------
+
+**Very important change!** The license text has been changed to a more generic
+BSD 3-Clause. Functionally (and hopefully legally) this changes nothing as the
+license a BSD 3-Clause anyway but with non-standard text -> it was based on
+the Scipy license. After agreement from all copyright holders (see `#841`_)
+we changed the license to make it clearer that the project is licensed in a
+standard way.
+
+Other major breaking change is the removal of the menpowidgets code as this
+has been functionally broken for probably close to 2 years. Removing this
+code simplifies the API and removes a common source of confusion. Examples
+still need to be updated across the board.
+
+The project now has a unit test for passing mypy and passes a clean (non-strict)
+mypy check.
+
+Python 3.9 builds are now supported by CI.
+
+Github Pull Requests
+....................
+- `#841`_ Simplify the license to an unmodified BSD 3-Clause (@patricksnape)
+- `#842`_ Run black on all code and add unit test (@patricksnape)
+- `#847`_ Fix exporting and importing of graphs without labels (@patricksnape)
+- `#849`_ Add basic mypy testing (@patricksnape)
+- `#850`_ Remove python 2 future imports (@patricksnape)
+- `#851`_ Remove menpowidgets and associated methods (@patricksnape)
+- `#852`_ Change from Travis to CircleCI (@patricksnape)
+
+.. _#841: https://github.com/menpo/menpo/pull/841
+.. _#842: https://github.com/menpo/menpo/pull/842
+.. _#847: https://github.com/menpo/menpo/pull/847
+.. _#849: https://github.com/menpo/menpo/pull/849
+.. _#850: https://github.com/menpo/menpo/pull/850
+.. _#851: https://github.com/menpo/menpo/pull/851
+.. _#852: https://github.com/menpo/menpo/pull/852
+
 0.10.0 (2020/01/01)
 -------------------
 

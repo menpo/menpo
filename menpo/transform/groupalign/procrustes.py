@@ -1,13 +1,7 @@
 import numpy as np
 
-from ..homogeneous import AlignmentSimilarity
 from .base import MultipleAlignment
-
-
-avoid_circular = None  # to avoid circular imports
-mean_pointcloud = None  # to avoid circular imports
-PointCloud = None  # to avoid circular imports
-scale_about_centre = None  # to avoid circular imports
+from ..homogeneous import AlignmentSimilarity
 
 
 class GeneralizedProcrustesAnalysis(MultipleAlignment):
@@ -52,12 +46,9 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         r"""
         Recursively calculates a procrustes alignment.
         """
-        global mean_pointcloud, PointCloud, scale_about_centre, avoid_circular
-        if avoid_circular is None:
-            from menpo.shape import mean_pointcloud, PointCloud
-            from ..compositions import scale_about_centre
-
-            avoid_circular = True
+        # Avoid circular imports
+        from menpo.shape import mean_pointcloud, PointCloud
+        from ..compositions import scale_about_centre
 
         if self.n_iterations > self.max_iterations:
             return False

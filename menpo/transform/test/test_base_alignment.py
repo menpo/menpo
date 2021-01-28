@@ -1,10 +1,10 @@
-from mock import Mock
-from pytest import raises
+from unittest.mock import Mock
+
 import numpy as np
 from numpy.testing import assert_equal
+from pytest import raises
 
 from menpo.transform.base import Alignment
-
 
 # Mock a pointcloud
 source_array = np.random.random([5, 2])
@@ -39,11 +39,6 @@ class MockedAlignment(Alignment):
 
 def test_alignment_init():
     MockedAlignment(source, target)
-
-
-def test_alignment_init_n_dims_mismatch():
-    with raises(ValueError):
-        MockedAlignment(source, target_3d)
 
 
 def test_alignment_init_n_dims_mismatch():
