@@ -1024,6 +1024,8 @@ class PointCloud(Shape):
         render_numbering=False,
         numbers_colour="k",
         numbers_size=None,
+        colours=[],
+        keep_alpha=False,
         inline=True,
         return_widget=False,
         **kwargs
@@ -1129,6 +1131,8 @@ class PointCloud(Shape):
                     render_numbering=render_numbering,
                     numbers_colour=numbers_colour,
                     numbers_size=numbers_size,
+                    colours=colours,
+                    keep_alpha=keep_alpha
                 )
                 if render_return is not renderer:
                     renderer.close()
