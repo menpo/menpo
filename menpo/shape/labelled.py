@@ -880,6 +880,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+                raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import LandmarkViewer3d
@@ -914,7 +915,6 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
                 )
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
-
                 raise Menpo3dMissingError(e)
 
     def __str__(self):
