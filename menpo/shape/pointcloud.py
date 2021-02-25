@@ -1024,7 +1024,7 @@ class PointCloud(Shape):
         render_numbering=False,
         numbers_colour="k",
         numbers_size=None,
-        colours=[],
+        colours=None,
         keep_alpha=False,
         inline=True,
         return_widget=False,
