@@ -309,6 +309,100 @@ class TriMesh(PointCloud):
         """
         return len(self.trilist)
 
+    def half_edges(self):
+        """Create an array of half edges
+           Code based on https://github.com/joel-simon/cymesh
+
+           Returns: ndarray
+           --------
+           An half_edge array has the following structure:
+           [face, point, twin, next, edge] where
+           face: The index of face the half edge belongs
+           point: The index of point(or vertex) the half edge terminates
+           twin: The index of its twin half edge
+           next: The index of its next half edge
+           edge: The edge it belogs
+
+           ToDo
+           Check for corrupted meshes, e.g duplicate triangles
+        """
+        halfs = []
+        pair_to_half = {}  # (i,j) tuple -> half edge
+        he_boundary = {}  # Create boundary edges.
+        edges = []
+
+        for i_f, f in enumerate(self.trilist):
+            face_half_edges = []
+
+            for i, a in enumerate(f):
+                b = f[(i+1) % len(f)]
+                pair_ab = (a, b)
+                pair_ba = (b, a)
+                # h_ab = self._half(face=face, vert=verts[a], twin=None, next=None, edge=None)
+                h_ab = [i_f, a, -1, -1, -1]
+                halfs.append(h_ab)
+                pair_to_half[pair_ab] = len(halfs)-1
+                face_half_edges.append(len(halfs)-1)
+
+                if pair_ba in pair_to_half:
+                    h_ba = halfs[pair_to_half[pair_ba]]
+                    h_ba[2] = len(halfs)-1
+                    h_ab[2] = pair_to_half[pair_ba]
+                    h_ab[4] = h_ba[4]
+                else:
+                    edge = len(edges)
+                    edges.append(a)
+                    h_ab[4] = edge
+
+            # Link them together via their 'next' pointers.
+            for i, he_id in enumerate(face_half_edges):
+                he = halfs[he_id]
+                he[3] = face_half_edges[(i+1) % len(f)]
+
+        for a, b in pair_to_half:
+            if (b, a) not in pair_to_half:
+                twin = pair_to_half[(a, b)]
+                halfs[twin][2] = len(halfs)
+                edge = halfs[pair_to_half[(a, b)]][4]
+                h_ba = [-1, b, twin, -1, edge]
+                halfs.append(h_ba)
+                he_boundary[b] = (len(halfs)-1, a)
+
+        for he_id, end in he_boundary.values():
+            try:
+                halfs[he_id][3] = he_boundary[end][0]
+            except KeyError:
+                print('Could not find the following keys. Possibly corrupted mesh', he_id, end)
+        self.np_halfs = np.asarray(halfs)
+
+    def list_neighbours(self, vertex):
+        """Return a list of neigbours for a vertex;
+           Parameters:
+           ----------
+           vertex: int
+               The ver
+           Returns: list
+               List of vertex's neighbours
+        """
+        if hasattr(self, 'np_halfs') is False:
+            raise NotImplementedError('Halfedges have not been created. Try to create it by calling haf_edges function')
+
+        if vertex >= self.n_points:
+            raise ValueError('Vertex should be an int between 0 and {}'.format(self.n_points))
+
+        twin = np.where(self.np_halfs[:, 1] == vertex)[0][-1]
+        start = twin
+        h = self.np_halfs[twin]
+        neighbours = []
+        while True:
+            new_twin = h[2]
+            new_next = self.np_halfs[new_twin][3]
+            neighbours.append(self.np_halfs[new_twin][1])
+            h = self.np_halfs[new_next]
+            print(self.np_halfs[new_twin][1], h)
+            if new_next == start:
+                return neighbours
+
     def heatmap(self, target_mesh, scalar_range=(0, 2), scale_value=100,
                 type_cmap='hot_r', show_statistics=False, figure_id=None,
                 new_figure=True, inline=True, **kwargs):
