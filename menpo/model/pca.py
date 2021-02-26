@@ -1553,7 +1553,6 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         colour="r",
         marker_style="mesh",
         marker_size=None,
-        step=None,
         alpha=1.0,
         n_parameters=5,
         parameters_bound=(-15, 15),
@@ -1609,10 +1608,6 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
                 ``'danger'``  Red-based style
                 ``''``        No style
                 ============= ================== 
-        step : `int` or ``None``, optional
-            If `int`, then one every `step` markers will be rendered.
-            If ``None``, then all vertexes will be rendered. It only applies for
-            the 'fancymesh' and if `normals` is not ``None``.
         alpha : `float`, optional
             Defines the transparency (opacity) of the object.
 
@@ -1631,22 +1626,21 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
 
             try:
                 from menpo3d.visualize import PCAModelInlineViewer3d
-                renderer = PCAModelInlineViewer3d(figure_id,
-                                                  new_figure,
-                                                  self.mean().points,
-                                                  tmp_trilist,
-                                                  self.components,
-                                                  self.eigenvalues,
-                                                  n_parameters,
-                                                  parameters_bound,
-                                                  landmarks_indices,
-                                                  widget_style)
+                renderer = PCAModelInlineViewer3d(figure_id=figure_id,
+                                                  new_figure=new_figure,
+                                                  points=self.mean().points,
+                                                  trilist=tmp_trilist,
+                                                  components=self.components,
+                                                  eigenvalues=self.eigenvalues,
+                                                  n_parameters=n_parameters,
+                                                  parameters_bound=parameters_bound,
+                                                  landmarks_indices=landmarks_indices,
+                                                  widget_style=widget_style)
                 render_return = renderer._render(
                     mesh_type=mesh_type,
                     colour=colour,
                     marker_style=marker_style,
                     marker_size=marker_size,
-                    step=step,
                     alpha=alpha,
                 )
                 return renderer

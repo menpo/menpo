@@ -865,8 +865,6 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
                     marker_style=marker_style,
                     marker_size=marker_size,
                     marker_colour=marker_colour,
-                    marker_resolution=marker_resolution,
-                    step=step,
                     alpha=alpha,
                     render_numbering=render_numbering,
                     numbers_colour=numbers_colour,
