@@ -238,7 +238,7 @@ class TriMesh(PointCloud):
 
     def heatmap(self, target_mesh, scalar_range=(0, 2), scale_value=100,
                 type_cmap='hot_r', show_statistics=False, figure_id=None,
-                new_figure=True, inline=True, **kwargs):
+                new_figure=True, inline=True, automatic_id=False, **kwargs):
         r"""
         Creates a heatmap of euclidean differences between the current mesh
         and the target meshh. If the two meshes have the same number of
@@ -274,6 +274,8 @@ class TriMesh(PointCloud):
             If statistics like mean, standard deviation and max error will be
             shown in the window,
             default:False
+        automatic_id : `bool`
+            If ``True'', an automatic text is created for figure_id
         inline : 'bool', False
                If True, the viewer will be in the Jupyter cell using K3dwidgets
                If False, the viewer will open a new window using Mayavi
@@ -307,16 +309,19 @@ class TriMesh(PointCloud):
             target_mesh = TriMesh(X[indx], source_mesh.trilist)
 
         if figure_id is None:
-            if hasattr(self, 'path'):
-                source_name = self.path.stem
+            if automatic_id:
+                if hasattr(self, 'path'):
+                    source_name = self.path.stem
+                else:
+                    source_name = 'Source'
+                if hasattr(target_mesh, 'path'):
+                    target_name = target_mesh.path.stem
+                else:
+                    target_name = 'Target'
+                figure_name = 'Heatmap between {} and {}'.format(source_name,
+                                                                 target_name)
             else:
-                source_name = 'Source'
-            if hasattr(target_mesh, 'path'):
-                target_name = target_mesh.path.stem
-            else:
-                target_name = 'Target'
-            figure_name = 'Heatmap between {} and {}'.format(source_name,
-                                                             target_name)
+                figure_name = None
         else:
             figure_name = figure_id
 
@@ -1337,7 +1342,7 @@ class TriMesh(PointCloud):
             Example options ::
 
                 mayavi {surface, wireframe, points, mesh, fancymesh}
-                K3d  {surface, wirefame}
+                K3D  {surface, wirefame}
 
         line_width : `float`, optional
             The width of the lines, if there are any.
@@ -1353,9 +1358,11 @@ class TriMesh(PointCloud):
             The style of the markers.
             Example options ::
 
-                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
-                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
-                 arrow, axes, cone, cube, cylinder, point, sphere}
+                mayavi {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond,
+                        2dhooked_arrow, 2dsquare, 2dthick_arrow,
+                        2dthick_cross, 2dtriangle, 2dvertex,
+                        arrow, axes, cone, cube, cylinder, point, sphere}
+                K3D  {flat, dot, 3d, 3dSpecular, mesh}
 
         marker_size : `float` or ``None``, optional
             The size of the markers. This size can be seen as a scale factor
@@ -1387,9 +1394,11 @@ class TriMesh(PointCloud):
             is not ``None``.
             Example options ::
 
-                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
-                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
-                 arrow, axes, cone, cube, cylinder, point, sphere}
+                mayavi {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond,
+                        2dhooked_arrow, 2dsquare, 2dthick_arrow,
+                        2dthick_cross, 2dtriangle, 2dvertex,
+                        arrow, axes, cone, cube, cylinder, point, sphere}
+                K3D  {flat, dot, 3d, 3dSpecular, mesh}
 
         normals_marker_resolution : `int`, optional
             The resolution of the markers of the normals. For spheres, for
@@ -1407,9 +1416,16 @@ class TriMesh(PointCloud):
             the 'fancymesh' and if `normals` is not ``None``.
         alpha : `float`, optional
             Defines the transparency (opacity) of the object.
-        inline : 'bool', False
+        inline : `bool`, False
                If True, the viewer will be in the Jupyter cell using K3dwidgets
                If False, the viewer will open a new window using Mayavi
+        return_widget : `bool`, False
+               K3D only
+               If True, the widget will be returned so as it can be stored
+               in a variable or displayed if it is the last command of a
+               Jupyter cell.
+               If False, the widget will be displayed. It should be used when
+               we want many widgets to be displayed in the same cell.
 
         Returns
         -------
@@ -1418,7 +1434,6 @@ class TriMesh(PointCloud):
         """
         if inline:
             try:
-
                 from menpo3d.visualize import TriMeshInlineViewer3d
 
                 renderer = TriMeshInlineViewer3d(
@@ -1434,6 +1449,7 @@ class TriMesh(PointCloud):
                     normals_colour=normals_colour,
                     normals_line_width=normals_line_width,
                     normals_marker_size=normals_marker_size,
+                    alpha=alpha
                 )
                 if render_return is not renderer:
                     renderer.close()
