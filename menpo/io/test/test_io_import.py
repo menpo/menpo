@@ -328,7 +328,7 @@ def test_importing_PIL_1_normalize(is_file, mock_image):
     im = mio.import_image("fake_image_being_mocked.ppm", normalize=True)
     assert im.shape == (15, 10)
     assert im.n_channels == 1
-    assert im.pixels.dtype == np.bool
+    assert im.pixels.dtype == bool
     assert type(im) == BooleanImage
 
 
@@ -343,7 +343,7 @@ def test_importing_PIL_1_no_normalize(is_file, mock_image):
     im = mio.import_image("fake_image_being_mocked.ppm", normalize=False)
     assert im.shape == (15, 10)
     assert im.n_channels == 1
-    assert im.pixels.dtype == np.bool
+    assert im.pixels.dtype == bool
     assert type(im) == BooleanImage
 
 
@@ -360,9 +360,9 @@ def test_importing_PIL_1_proper_conversion(is_file, mock_image):
     im = mio.import_image("fake_image_being_mocked.ppm", normalize=False)
     assert im.shape == (10, 10)
     assert im.n_channels == 1
-    assert im.pixels.dtype == np.bool
+    assert im.pixels.dtype == bool
     assert type(im) == BooleanImage
-    assert np.all(im.pixels == arr.astype(np.bool))
+    assert np.all(im.pixels == arr.astype(bool))
 
 
 @patch("PIL.Image.open")

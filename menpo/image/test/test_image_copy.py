@@ -19,7 +19,7 @@ def test_image_copy():
 
 
 def test_booleanimage_copy():
-    pixels = np.ones([10, 10], dtype=np.bool)
+    pixels = np.ones([10, 10], dtype=bool)
     landmarks = PointCloud(np.ones([3, 2]), copy=False)
     im = BooleanImage(pixels, copy=False)
     im.landmarks["test"] = landmarks

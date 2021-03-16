@@ -63,7 +63,7 @@ def pillow_importer(filepath, asset=None, normalize=True, **kwargs):
         # channel, which can be useful if the alpha channel has semantic
         # meanings!
         if normalize:
-            alpha = np.array(pil_image)[..., 3].astype(np.bool)
+            alpha = np.array(pil_image)[..., 3].astype(bool)
             image_pixels = _pil_to_numpy(pil_image, True, convert="RGB")
             image = MaskedImage.init_from_channels_at_back(image_pixels, mask=alpha)
         else:
@@ -132,7 +132,7 @@ def abs_importer(filepath, asset=None, **kwargs):
 
     return MaskedImage(
         np.rollaxis(np.reshape(data_view, [n_rows, n_cols, 3]), -1),
-        np.reshape(image_data[:, 0], [n_rows, n_cols]).astype(np.bool),
+        np.reshape(image_data[:, 0], [n_rows, n_cols]).astype(bool),
         copy=False,
     )
 
@@ -209,7 +209,7 @@ def imageio_importer(filepath, asset=None, normalize=True, **kwargs):
         # meanings!
         if normalize:
             p = normalize_pixels_range(pixels[:3])
-            return MaskedImage(p, mask=pixels[-1].astype(np.bool), copy=False)
+            return MaskedImage(p, mask=pixels[-1].astype(bool), copy=False)
         else:
             return Image(pixels, copy=False)
 
@@ -259,7 +259,7 @@ def imageio_gif_importer(filepath, asset=None, normalize=True, **kwargs):
             # meanings!
             if normalize:
                 p = normalize_pixels_range(pixels[:3])
-                return MaskedImage(p, mask=pixels[-1].astype(np.bool), copy=False)
+                return MaskedImage(p, mask=pixels[-1].astype(bool), copy=False)
             else:
                 return Image(pixels, copy=False)
 

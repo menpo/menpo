@@ -168,7 +168,7 @@ def denormalize_pixels_range(pixels, out_dtype):
                     "Unexpected input range [{}, {}] - pixels "
                     "must be in the range [0, 1]".format(p_min, p_max)
                 )
-    elif in_dtype != np.bool:
+    elif in_dtype != bool:
         raise ValueError(
             "Unexpected input dtype ({}) - only float32, float64 "
             "and bool supported".format(in_dtype)

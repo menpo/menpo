@@ -109,7 +109,7 @@ def asf_importer(filepath, asset=None, **kwargs):
         # fix that here
         points = Scale(np.array(asset.shape)).apply(points)
 
-    labels_to_masks = OrderedDict([("all", np.ones(points.shape[0], dtype=np.bool))])
+    labels_to_masks = OrderedDict([("all", np.ones(points.shape[0], dtype=bool))])
     return {
         "ASF": LabelledPointUndirectedGraph.init_from_edges(
             points, connectivity, labels_to_masks
@@ -275,7 +275,7 @@ def lm2_importer(filepath, **kwargs):
     points = np.hstack([ys, xs])
     # Create the mask whereby there is one landmark per label
     # (identity matrix)
-    masks = np.eye(num_points).astype(np.bool)
+    masks = np.eye(num_points).astype(bool)
     masks = np.vsplit(masks, num_points)
     masks = [np.squeeze(m) for m in masks]
     labels_to_masks = OrderedDict(zip(labels, masks))
@@ -320,7 +320,7 @@ def _parse_ljson_v1(lms_dict):
     labels_to_masks = OrderedDict()
     # go through each label and build the appropriate boolean array
     for label, l_slice in zip(labels, labels_slices):
-        mask = np.zeros(n_points, dtype=np.bool)
+        mask = np.zeros(n_points, dtype=bool)
         mask[l_slice] = True
         labels_to_masks[label] = mask
 
@@ -340,7 +340,7 @@ def _parse_ljson_v2(lms_dict):
         labels_to_mask = OrderedDict()  # masks into the pointcloud per label
         n_points = points.shape[0]
         for label in lms_dict["labels"]:
-            mask = np.zeros(n_points, dtype=np.bool)
+            mask = np.zeros(n_points, dtype=bool)
             mask[label["mask"]] = True
             labels_to_mask[label["label"]] = mask
         # Note that we can pass connectivity as None here and the edges will be
@@ -364,7 +364,7 @@ def _parse_ljson_v3(lms_dict):
             # masks into the pointcloud per label
             n_points = points.shape[0]
             for label in lms_dict_group["labels"]:
-                mask = np.zeros(n_points, dtype=np.bool)
+                mask = np.zeros(n_points, dtype=bool)
                 mask[label["mask"]] = True
                 labels_to_mask[label["label"]] = mask
 

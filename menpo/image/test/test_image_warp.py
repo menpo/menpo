@@ -189,7 +189,7 @@ def test_sample_maskedimage():
 
 
 def test_sample_maskedimage_error():
-    m = np.zeros([100, 100], dtype=np.bool)
+    m = np.zeros([100, 100], dtype=bool)
     im = MaskedImage.init_blank((100, 100), mask=m, fill=2)
     p = PointCloud(np.array([[0, 0], [1, 0]]))
     with raises(OutOfMaskSampleError):
@@ -197,7 +197,7 @@ def test_sample_maskedimage_error():
 
 
 def test_sample_maskedimage_error_values():
-    m = np.zeros([100, 100], dtype=np.bool)
+    m = np.zeros([100, 100], dtype=bool)
     m[1, 0] = True
     im = MaskedImage.init_blank((100, 100), mask=m, fill=2)
     p = PointCloud(np.array([[0, 0], [1, 0]]))

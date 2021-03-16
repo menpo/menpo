@@ -38,7 +38,7 @@ def pwa_point_in_pointcloud(pcloud, indices, batch_size=None):
     try:
         pwa = PiecewiseAffine(pcloud, pcloud)
         pwa.apply(indices, batch_size=batch_size)
-        return np.ones(indices.shape[0], dtype=np.bool)
+        return np.ones(indices.shape[0], dtype=bool)
     except TriangleContainmentError as e:
         return ~e.points_outside_source_domain
 
@@ -105,8 +105,8 @@ class BooleanImage(Image):
         mask_data = mask_data.reshape((1,) + mask_data.shape)
         # If we are trying not to copy, but the data we have isn't boolean,
         # then unfortunately, we forced to copy anyway!
-        if mask_data.dtype != np.bool:
-            mask_data = np.array(mask_data, dtype=np.bool, copy=True, order="C")
+        if mask_data.dtype != bool:
+            mask_data = np.array(mask_data, dtype=bool, copy=True, order="C")
             if not copy:
                 warn(
                     "The copy flag was NOT honoured. A copy HAS been made. "
@@ -139,9 +139,9 @@ class BooleanImage(Image):
 
         shape = round_image_shape(shape, round)
         if fill:
-            mask = np.ones(shape, dtype=np.bool)
+            mask = np.ones(shape, dtype=bool)
         else:
-            mask = np.zeros(shape, dtype=np.bool)
+            mask = np.zeros(shape, dtype=bool)
         return cls(mask, copy=False)
 
     @classmethod
@@ -579,7 +579,7 @@ class BooleanImage(Image):
             batch_size=batch_size,
         )
         # unfortunately we can't escape copying here, let BooleanImage
-        # convert us to np.bool
+        # convert us to bool
         boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
         if warped.has_landmarks:
             boolean_image.landmarks = warped.landmarks

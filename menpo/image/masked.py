@@ -1372,7 +1372,7 @@ class MaskedImage(Image):
         copy.mask.pixels[:] = False
         # create a patches array of the correct size, full of True values
         patches = np.ones(
-            (pc.n_points, 1, 1, int(patch_shape[0]), int(patch_shape[1])), dtype=np.bool
+            (pc.n_points, 1, 1, int(patch_shape[0]), int(patch_shape[1])), dtype=bool
         )
         # set True patches around pointcloud centers
         copy.mask = copy.mask.set_patches(patches, pc)

@@ -31,7 +31,7 @@ def indices_to_masks(labels_to_indices, n_points):
     masks = OrderedDict()
     for label in labels_to_indices:
         indices = labels_to_indices[label]
-        mask = np.zeros(n_points, dtype=np.bool)
+        mask = np.zeros(n_points, dtype=bool)
         mask[indices] = True
         masks[label] = mask
     return masks
@@ -133,7 +133,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             called 'all' that is ``True`` for all points.
         """
         labels_to_masks = OrderedDict(
-            [("all", np.ones(points.shape[0], dtype=np.bool))]
+            [("all", np.ones(points.shape[0], dtype=bool))]
         )
         return LabelledPointUndirectedGraph(
             points, adjacency_matrix, labels_to_masks, copy=copy
@@ -299,7 +299,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             A new labelled pointgraph with the new label specified by indices.
         """
         new = self.copy()
-        mask = np.zeros(self.n_points, dtype=np.bool)
+        mask = np.zeros(self.n_points, dtype=bool)
         mask[indices] = True
         new._labels_to_masks[label] = mask
         return new

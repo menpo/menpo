@@ -200,7 +200,7 @@ def test_init_from_depth_image():
 
 def test_init_from_depth_image_masked():
     fake_z = np.random.uniform(size=(10, 10))
-    mask = np.zeros(fake_z.shape, dtype=np.bool)
+    mask = np.zeros(fake_z.shape, dtype=bool)
     mask[2:6, 2:6] = True
     im = MaskedImage(fake_z, mask=mask)
     g = PointTree.init_from_depth_image(im)

@@ -116,7 +116,7 @@ try:
         cv_template_shape = template_shape[::-1]  # Flip to (W, H)
 
         # Unfortunately, OpenCV does not seem to support the boolean numpy type
-        if pixels.dtype == np.bool:
+        if pixels.dtype == bool:
             in_pixels = pixels.astype(np.uint8)
         else:
             in_pixels = pixels
@@ -136,8 +136,8 @@ try:
             )
 
         # As above, we may need to convert the uint8 back to bool
-        if pixels.dtype == np.bool:
-            warped_image = warped_image.astype(np.bool)
+        if pixels.dtype == bool:
+            warped_image = warped_image.astype(bool)
         return warped_image
 
 
