@@ -116,7 +116,7 @@ class MaskedImage(Image):
             A new masked image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(np.ceil(shape).astype(np.int))
+        shape = tuple(np.ceil(shape).astype(int))
         if fill == 0:
             pixels = np.zeros((n_channels,) + shape, dtype=dtype)
         else:

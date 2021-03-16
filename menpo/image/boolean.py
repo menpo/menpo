@@ -725,7 +725,7 @@ class BooleanImage(Image):
         # Only consider indices inside the bounding box of the PointCloud
         bounds = pointcloud.bounds()
         # Convert to integer to try and reduce boundary fp rounding errors.
-        bounds = [b.astype(np.int) for b in bounds]
+        bounds = [b.astype(int) for b in bounds]
         indices = copy.indices()
 
         # This loop is to ensure the code is multi-dimensional

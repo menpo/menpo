@@ -311,7 +311,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             A new image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(np.ceil(shape).astype(np.int))
+        shape = tuple(np.ceil(shape).astype(int))
         if fill == 0:
             pixels = np.zeros((n_channels,) + shape, dtype=dtype)
         else:
@@ -1284,7 +1284,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices, min_bounded, max_bounded)
 
-        new_shape = (max_bounded - min_bounded).astype(np.int)
+        new_shape = (max_bounded - min_bounded).astype(int)
         return self.warp_to_shape(
             new_shape,
             Translation(min_bounded),
@@ -2005,7 +2005,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The transform that was used. It only applies if
             `return_transform` is ``True``.
         """
-        template_shape = np.array(template_shape, dtype=np.int)
+        template_shape = np.array(template_shape, dtype=int)
         if (
             isinstance(transform, Homogeneous)
             and order in range(2)
@@ -3315,7 +3315,7 @@ def round_image_shape(shape, round):
     if round not in ["ceil", "round", "floor"]:
         raise ValueError("round must be either ceil, round or floor")
     # Ensure that the '+' operator means concatenate tuples
-    return tuple(getattr(np, round)(shape).astype(np.int))
+    return tuple(getattr(np, round)(shape).astype(int))
 
 
 def _convert_patches_list_to_single_array(patches_list, n_center):
@@ -3338,7 +3338,7 @@ def _convert_patches_list_to_single_array(patches_list, n_center):
     patches_array : `ndarray` ``(n_center, n_offset, n_channels, patch_shape)``
         The numpy array that contains all the patches.
     """
-    n_offsets = np.int(len(patches_list) / n_center)
+    n_offsets = int(len(patches_list) / n_center)
     n_channels = patches_list[0].n_channels
     height = patches_list[0].height
     width = patches_list[0].width
