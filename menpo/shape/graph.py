@@ -3547,7 +3547,7 @@ def _convert_edges_to_adjacency_matrix(edges, n_vertices):
         edges = np.array(edges)
     if edges is None or edges.shape[0] == 0:
         # create adjacency with zeros
-        return csr_matrix((n_vertices, n_vertices), dtype=np.int)
+        return csr_matrix((n_vertices, n_vertices), dtype=int)
     else:
         # create sparse adjacency
         return csr_matrix(
@@ -3580,7 +3580,7 @@ def _convert_edges_to_symmetric_adjacency_matrix(edges, n_vertices):
         edges = np.array(edges)
     if edges is None or edges.shape[0] == 0:
         # create adjacency with zeros
-        adjacency_matrix = csr_matrix((n_vertices, n_vertices), dtype=np.int)
+        adjacency_matrix = csr_matrix((n_vertices, n_vertices), dtype=int)
     else:
         rows = np.hstack((edges[:, 0], edges[:, 1]))
         cols = np.hstack((edges[:, 1], edges[:, 0]))

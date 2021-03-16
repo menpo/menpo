@@ -60,7 +60,7 @@ def test_int_pointcloud():
     patches = image.extract_patches(
         landmarks, patch_shape=patch_shape, as_single_array=False
     )
-    assert patches[0].pixels.dtype == np.float
+    assert patches[0].pixels.dtype == float
 
 
 def test_uint8_type_single_array():

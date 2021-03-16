@@ -35,7 +35,7 @@ def test_trimesh_init_from_depth_image():
 
 def test_trimesh_init_from_depth_image_masked():
     fake_z = np.random.uniform(size=(10, 10))
-    mask = np.zeros(fake_z.shape, dtype=np.bool)
+    mask = np.zeros(fake_z.shape, dtype=bool)
     mask[2:6, 2:6] = True
     im = MaskedImage(fake_z, mask=mask)
     tm = TriMesh.init_from_depth_image(im)
@@ -67,7 +67,7 @@ def test_colouredtrimesh_init_from_depth_image():
 
 def test_colouredtrimesh_init_from_depth_image_masked():
     fake_z = np.random.uniform(size=(10, 10))
-    mask = np.zeros(fake_z.shape, dtype=np.bool)
+    mask = np.zeros(fake_z.shape, dtype=bool)
     mask[2:6, 2:6] = True
     im = MaskedImage(fake_z, mask=mask)
     tm = ColouredTriMesh.init_from_depth_image(im)
@@ -111,7 +111,7 @@ def test_texturedtrimesh_init_from_depth_image():
 
 def test_texturedtrimesh_init_from_depth_image_masked():
     fake_z = np.random.uniform(size=(10, 10))
-    mask = np.zeros(fake_z.shape, dtype=np.bool)
+    mask = np.zeros(fake_z.shape, dtype=bool)
     mask[2:6, 2:6] = True
     im = MaskedImage(fake_z, mask=mask)
     tm = TexturedTriMesh.init_from_depth_image(im)
@@ -229,7 +229,7 @@ def test_trimesh_n_tris():
 def test_trimesh_from_tri_mask():
     points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
     trilist = np.array([[0, 1, 3], [1, 2, 3]])
-    mask = np.zeros(2, dtype=np.bool)
+    mask = np.zeros(2, dtype=bool)
     mask[0] = True
     trimesh = TriMesh(points, trilist=trilist).from_tri_mask(mask)
     assert trimesh.n_tris == 1

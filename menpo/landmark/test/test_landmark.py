@@ -11,7 +11,7 @@ from menpo.testing import is_same_array
 
 points = np.ones((10, 3))
 adjacency_matrix = csr_matrix((10, 10))
-mask_dict = OrderedDict([("all", np.ones(10, dtype=np.bool))])
+mask_dict = OrderedDict([("all", np.ones(10, dtype=bool))])
 
 
 def test_LandmarkManager_set_LabelledPointUndirectedGraph():

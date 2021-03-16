@@ -157,8 +157,8 @@ def denormalize_pixels_range(pixels, out_dtype):
     if in_dtype == out_dtype:
         return pixels
 
-    if np.issubclass_(in_dtype.type, np.floating) or in_dtype == np.float:
-        if np.issubclass_(out_dtype, np.floating) or out_dtype == np.float:
+    if np.issubclass_(in_dtype.type, np.floating) or in_dtype == float:
+        if np.issubclass_(out_dtype, np.floating) or out_dtype == float:
             return pixels.astype(out_dtype)
         else:
             p_min = pixels.min()
@@ -168,7 +168,7 @@ def denormalize_pixels_range(pixels, out_dtype):
                     "Unexpected input range [{}, {}] - pixels "
                     "must be in the range [0, 1]".format(p_min, p_max)
                 )
-    elif in_dtype != np.bool:
+    elif in_dtype != bool:
         raise ValueError(
             "Unexpected input dtype ({}) - only float32, float64 "
             "and bool supported".format(in_dtype)
@@ -289,7 +289,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         self.pixels = image_data
 
     @classmethod
-    def init_blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
+    def init_blank(cls, shape, n_channels=1, fill=0, dtype=float):
         r"""
         Returns a blank image.
 
@@ -311,7 +311,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             A new image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(np.ceil(shape).astype(np.int))
+        shape = tuple(np.ceil(shape).astype(int))
         if fill == 0:
             pixels = np.zeros((n_channels,) + shape, dtype=dtype)
         else:
@@ -381,7 +381,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         boundary=0,
         n_channels=1,
         fill=0,
-        dtype=np.float,
+        dtype=float,
         return_transform=False,
     ):
         r"""
@@ -1284,7 +1284,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices, min_bounded, max_bounded)
 
-        new_shape = (max_bounded - min_bounded).astype(np.int)
+        new_shape = (max_bounded - min_bounded).astype(int)
         return self.warp_to_shape(
             new_shape,
             Translation(min_bounded),
@@ -2005,7 +2005,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             The transform that was used. It only applies if
             `return_transform` is ``True``.
         """
-        template_shape = np.array(template_shape, dtype=np.int)
+        template_shape = np.array(template_shape, dtype=int)
         if (
             isinstance(transform, Homogeneous)
             and order in range(2)
@@ -2136,7 +2136,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         #    H 2 -> 6 so [0-1] -> [0-5] = 5/1 = 5x
         #    W 4 -> 12 [0-3] -> [0-11] = 11/3 = 3.67x
         # => need to make the correct scale per dimension!
-        shape = np.array(self.shape, dtype=np.float)
+        shape = np.array(self.shape, dtype=float)
         # scale factors = max_index_after / current_max_index
         # (note that max_index = length - 1, as 0 based)
         scale_factors = (scale * shape - 1) / (shape - 1)
@@ -2357,7 +2357,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If the number of dimensions of the new shape does not match
             the number of dimensions of the image.
         """
-        shape = np.asarray(shape, dtype=np.float)
+        shape = np.asarray(shape, dtype=float)
         if len(shape) != self.n_dims:
             raise ValueError(
                 "Dimensions must match."
@@ -3315,7 +3315,7 @@ def round_image_shape(shape, round):
     if round not in ["ceil", "round", "floor"]:
         raise ValueError("round must be either ceil, round or floor")
     # Ensure that the '+' operator means concatenate tuples
-    return tuple(getattr(np, round)(shape).astype(np.int))
+    return tuple(getattr(np, round)(shape).astype(int))
 
 
 def _convert_patches_list_to_single_array(patches_list, n_center):
@@ -3338,7 +3338,7 @@ def _convert_patches_list_to_single_array(patches_list, n_center):
     patches_array : `ndarray` ``(n_center, n_offset, n_channels, patch_shape)``
         The numpy array that contains all the patches.
     """
-    n_offsets = np.int(len(patches_list) / n_center)
+    n_offsets = int(len(patches_list) / n_center)
     n_channels = patches_list[0].n_channels
     height = patches_list[0].height
     width = patches_list[0].width

@@ -66,7 +66,7 @@ def bounding_box(closest_to_origin, opposite_corner):
             opposite_corner,
             [closest_to_origin[0], opposite_corner[1]],
         ],
-        dtype=np.float,
+        dtype=float,
     )
     return PointDirectedGraph(box, adjacency_matrix, copy=False)
 
@@ -128,7 +128,7 @@ def bounding_cuboid(near_closest_to_origin, far_opposite_corner):
             far_opposite_corner,
             [near_closest_to_origin[0], far_opposite_corner[1], far_opposite_corner[2]],
         ],
-        dtype=np.float,
+        dtype=float,
     )
     return PointDirectedGraph(cuboid, adjacency_matrix, copy=False)
 

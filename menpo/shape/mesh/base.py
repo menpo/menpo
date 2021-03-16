@@ -305,7 +305,7 @@ class TriMesh(PointCloud):
             A new mesh that has been masked by triangles.
         """
         # start with an all False point mask.
-        point_mask = np.zeros(self.n_points, dtype=np.bool)
+        point_mask = np.zeros(self.n_points, dtype=bool)
         # find all points that are involved in the triangles we wish to
         # retain and set their mask to True.
         point_mask[np.unique(self.trilist[tri_mask].ravel())] = True
@@ -473,7 +473,7 @@ class TriMesh(PointCloud):
                 # so we can just remove it from the candidate set
                 del lonely_triangles[sorted_edge]
 
-        mask = np.zeros(self.n_tris, dtype=np.bool)
+        mask = np.zeros(self.n_tris, dtype=bool)
         mask[np.array(list(lonely_triangles.values()))] = True
         return mask
 
