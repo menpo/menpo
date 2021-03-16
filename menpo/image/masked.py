@@ -81,7 +81,7 @@ class MaskedImage(Image):
             self.mask = BooleanImage.init_blank(self.shape, fill=True)
 
     @classmethod
-    def init_blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
+    def init_blank(cls, shape, n_channels=1, fill=0, dtype=float, mask=None):
         r"""Generate a blank masked image
 
         Parameters
@@ -116,7 +116,7 @@ class MaskedImage(Image):
             A new masked image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(np.ceil(shape).astype(np.int))
+        shape = tuple(np.ceil(shape).astype(int))
         if fill == 0:
             pixels = np.zeros((n_channels,) + shape, dtype=dtype)
         else:
@@ -162,7 +162,7 @@ class MaskedImage(Image):
         constrain_mask=True,
         n_channels=1,
         fill=0,
-        dtype=np.float,
+        dtype=float,
     ):
         r"""
         Create an Image that is big enough to contain the given pointcloud.
@@ -1372,7 +1372,7 @@ class MaskedImage(Image):
         copy.mask.pixels[:] = False
         # create a patches array of the correct size, full of True values
         patches = np.ones(
-            (pc.n_points, 1, 1, int(patch_shape[0]), int(patch_shape[1])), dtype=np.bool
+            (pc.n_points, 1, 1, int(patch_shape[0]), int(patch_shape[1])), dtype=bool
         )
         # set True patches around pointcloud centers
         copy.mask = copy.mask.set_patches(patches, pc)

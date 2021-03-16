@@ -11,7 +11,7 @@ n_small = 99
 
 n_images = 5
 image_shape = (10, 10)
-mask = np.zeros(image_shape, dtype=np.bool)
+mask = np.zeros(image_shape, dtype=bool)
 mask[:2] = True
 template = MaskedImage.init_blank(image_shape, mask=mask)
 
