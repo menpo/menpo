@@ -35,7 +35,7 @@ class ColouredTriMesh(TriMesh):
         # set of colours, or copy the given array if necessary
         if colours is None:
             # default to grey
-            colours_handle = np.ones_like(points, dtype=np.float) * 0.5
+            colours_handle = np.ones_like(points, dtype=float) * 0.5
         elif not copy:
             colours_handle = colours
         else:

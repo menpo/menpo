@@ -93,7 +93,7 @@ def stencil_grid(stencil, shape, dtype=None, format=None):
     >>> from menpo.shape import stencil_grid
     >>> stencil = [[0,-1,0],[-1,4,-1],[0,-1,0]]  # 2D Poisson stencil
     >>> shape = (3, 3)                           # 2D shape with shape 3x3
-    >>> A = stencil_grid(stencil, shape, dtype=np.float, format='csr')
+    >>> A = stencil_grid(stencil, shape, dtype=float, format='csr')
     >>> A.todense()
     matrix([[ 4., -1.,  0., -1.,  0.,  0.,  0.,  0.,  0.],
             [-1.,  4., -1.,  0., -1.,  0.,  0.,  0.,  0.],
@@ -107,7 +107,7 @@ def stencil_grid(stencil, shape, dtype=None, format=None):
 
     >>> stencil = [[0,1,0],[1,0,1],[0,1,0]]  # 2D Lattice Connectivity
     >>> shape = (3, 3)                       # 2D shape with shape 3x3
-    >>> A = stencil_grid(stencil, shape, dtype=np.float, format='csr')
+    >>> A = stencil_grid(stencil, shape, dtype=float, format='csr')
     >>> A.todense()
     matrix([[ 0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  0.],
             [ 1.,  0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.],

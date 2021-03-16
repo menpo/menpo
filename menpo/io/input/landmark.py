@@ -167,8 +167,8 @@ def pts_importer(filepath, image_origin=True, **kwargs):
             xs.append(xpos)
             ys.append(ypos)
 
-    xs = np.array(xs, dtype=np.float).reshape((-1, 1))
-    ys = np.array(ys, dtype=np.float).reshape((-1, 1))
+    xs = np.array(xs, dtype=float).reshape((-1, 1))
+    ys = np.array(ys, dtype=float).reshape((-1, 1))
 
     # PTS landmarks are 1-based, need to convert to 0-based (subtract 1)
     if image_origin:
@@ -268,8 +268,8 @@ def lm2_importer(filepath, **kwargs):
         xs.append(float(p[0]))
         ys.append(float(p[1]))
 
-    xs = np.array(xs, dtype=np.float).reshape((-1, 1))
-    ys = np.array(ys, dtype=np.float).reshape((-1, 1))
+    xs = np.array(xs, dtype=float).reshape((-1, 1))
+    ys = np.array(ys, dtype=float).reshape((-1, 1))
 
     # Flip the x and y
     points = np.hstack([ys, xs])
@@ -290,7 +290,7 @@ def _ljson_parse_null_values(points_list):
     filtered_points = [
         np.nan if x is None else x for x in itertools.chain(*points_list)
     ]
-    return np.array(filtered_points, dtype=np.float).reshape([-1, len(points_list[0])])
+    return np.array(filtered_points, dtype=float).reshape([-1, len(points_list[0])])
 
 
 def _parse_ljson_v1(lms_dict):

@@ -51,7 +51,7 @@ def test_tri_areas():
 
 def test_2d_trimesh_2d_positive_areas():
     t = TriMesh(
-        np.array([[0, 0], [0, 1], [1, 1], [1, 0]], dtype=np.float),
+        np.array([[0, 0], [0, 1], [1, 1], [1, 0]], dtype=float),
         trilist=np.array([[0, 2, 3], [0, 2, 1]]),
     )
     assert np.all(t.tri_areas() > 0)

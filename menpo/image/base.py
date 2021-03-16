@@ -157,8 +157,8 @@ def denormalize_pixels_range(pixels, out_dtype):
     if in_dtype == out_dtype:
         return pixels
 
-    if np.issubclass_(in_dtype.type, np.floating) or in_dtype == np.float:
-        if np.issubclass_(out_dtype, np.floating) or out_dtype == np.float:
+    if np.issubclass_(in_dtype.type, np.floating) or in_dtype == float:
+        if np.issubclass_(out_dtype, np.floating) or out_dtype == float:
             return pixels.astype(out_dtype)
         else:
             p_min = pixels.min()
@@ -289,7 +289,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         self.pixels = image_data
 
     @classmethod
-    def init_blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
+    def init_blank(cls, shape, n_channels=1, fill=0, dtype=float):
         r"""
         Returns a blank image.
 
@@ -381,7 +381,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         boundary=0,
         n_channels=1,
         fill=0,
-        dtype=np.float,
+        dtype=float,
         return_transform=False,
     ):
         r"""
@@ -2136,7 +2136,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         #    H 2 -> 6 so [0-1] -> [0-5] = 5/1 = 5x
         #    W 4 -> 12 [0-3] -> [0-11] = 11/3 = 3.67x
         # => need to make the correct scale per dimension!
-        shape = np.array(self.shape, dtype=np.float)
+        shape = np.array(self.shape, dtype=float)
         # scale factors = max_index_after / current_max_index
         # (note that max_index = length - 1, as 0 based)
         scale_factors = (scale * shape - 1) / (shape - 1)
@@ -2357,7 +2357,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             If the number of dimensions of the new shape does not match
             the number of dimensions of the image.
         """
-        shape = np.asarray(shape, dtype=np.float)
+        shape = np.asarray(shape, dtype=float)
         if len(shape) != self.n_dims:
             raise ValueError(
                 "Dimensions must match."

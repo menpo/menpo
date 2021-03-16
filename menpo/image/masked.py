@@ -81,7 +81,7 @@ class MaskedImage(Image):
             self.mask = BooleanImage.init_blank(self.shape, fill=True)
 
     @classmethod
-    def init_blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
+    def init_blank(cls, shape, n_channels=1, fill=0, dtype=float, mask=None):
         r"""Generate a blank masked image
 
         Parameters
@@ -162,7 +162,7 @@ class MaskedImage(Image):
         constrain_mask=True,
         n_channels=1,
         fill=0,
-        dtype=np.float,
+        dtype=float,
     ):
         r"""
         Create an Image that is big enough to contain the given pointcloud.

@@ -223,7 +223,7 @@ def test_sample_booleanimage():
 
 @opencv_and_scipy_interpolation
 def test_transform_about_centre(method):
-    pixels_16 = np.arange(16, dtype=np.float)
+    pixels_16 = np.arange(16, dtype=float)
     image = Image(pixels_16.reshape(4, 4))
     transform = Rotation.init_from_2d_ccw_angle(180).compose_before(
         UniformScale(2, n_dims=2)

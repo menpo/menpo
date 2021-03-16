@@ -139,7 +139,7 @@ def test_double_suffix(pathlib_glob):
 def test_import_image():
     img_path = mio.data_dir_path() / "einstein.jpg"
     im = mio.import_image(img_path)
-    assert im.pixels.dtype == np.float
+    assert im.pixels.dtype == float
     assert im.n_channels == 1
 
 
@@ -256,7 +256,7 @@ def test_importing_PIL_RGBA_normalize(is_file, mock_image):
     im = mio.import_image("fake_image_being_mocked.ppm", normalize=True)
     assert im.shape == (15, 10)
     assert im.n_channels == 3
-    assert im.pixels.dtype == np.float
+    assert im.pixels.dtype == float
     assert type(im) == MaskedImage
 
 
@@ -293,7 +293,7 @@ def test_importing_PIL_L_normalize(is_file, mock_image):
     im = mio.import_image("fake_image_being_mocked.ppm", normalize=True)
     assert im.shape == (15, 10)
     assert im.n_channels == 1
-    assert im.pixels.dtype == np.float
+    assert im.pixels.dtype == float
 
 
 @patch("PIL.Image.open")
@@ -374,7 +374,7 @@ def test_importing_PIL_P_normalize(is_file, mock_image):
     im = mio.import_image("fake_image_being_mocked.ppm", normalize=True)
     assert im.shape == (10, 10)
     assert im.n_channels == 3
-    assert im.pixels.dtype == np.float
+    assert im.pixels.dtype == float
 
 
 @patch("PIL.Image.open")
@@ -412,7 +412,7 @@ def test_importing_ffmpeg_GIF_normalize(is_file, video_infos_ffprobe, pipe):
     im = ll[0]
     assert im.shape == (150, 100)
     assert im.n_channels == 3
-    assert im.pixels.dtype == np.float
+    assert im.pixels.dtype == float
 
 
 @patch("subprocess.Popen")
@@ -708,7 +708,7 @@ def test_importing_ffmpeg_avi_normalize(is_file, video_infos_ffprobe, pipe):
     image = ll[0]
     assert image.shape == (150, 100)
     assert image.n_channels == 3
-    assert image.pixels.dtype == np.float
+    assert image.pixels.dtype == float
 
 
 @patch("menpo.io.input.video.video_infos_ffprobe")
@@ -749,7 +749,7 @@ def test_importing_ffmpeg_no_exact_frame_count_no_ffprobe(
     image = ll[0]
     assert image.shape == (150, 100)
     assert image.n_channels == 3
-    assert image.pixels.dtype == np.float
+    assert image.pixels.dtype == float
 
 
 def test_import_images_negative_max_images():

@@ -689,7 +689,7 @@ def test_as_pil_image_1channel():
 def test_as_rolled_channels_1channel():
     im = Image.init_blank((120, 120), n_channels=1, fill=1.0)
     new_im = im.pixels_with_channels_at_back()
-    assert new_im.dtype == np.float
+    assert new_im.dtype == float
     assert_allclose(np.ones([120, 120]), new_im)
     assert new_im.ndim == 2
 
@@ -703,7 +703,7 @@ def test_as_rolled_channels_float_out_range():
 def test_as_rolled_channels_3channels():
     im = Image.init_blank((120, 120), n_channels=3, fill=1)
     new_im = im.pixels_with_channels_at_back()
-    assert new_im.dtype == np.float
+    assert new_im.dtype == float
     assert_allclose(np.ones([120, 120, 3]), new_im)
 
 

@@ -132,9 +132,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             Labelled pointgraph wrapping the given points with a single label
             called 'all' that is ``True`` for all points.
         """
-        labels_to_masks = OrderedDict(
-            [("all", np.ones(points.shape[0], dtype=bool))]
-        )
+        labels_to_masks = OrderedDict([("all", np.ones(points.shape[0], dtype=bool))])
         return LabelledPointUndirectedGraph(
             points, adjacency_matrix, labels_to_masks, copy=copy
         )
