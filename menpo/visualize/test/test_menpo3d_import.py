@@ -60,7 +60,7 @@ def test_pointcloud3d_viewer():
 @patch("menpo3d.visualize.LandmarkViewer3d", menpo3d_visualize_mock)
 def test_landmark3d_viewer():
     adj_matrix = csr_matrix((3, 3))
-    labels_map = OrderedDict([("all", np.ones(3, dtype=np.bool))])
+    labels_map = OrderedDict([("all", np.ones(3, dtype=bool))])
     with raises(Menpo3dMissingError):
         LabelledPointUndirectedGraph(
             fake_triangle, adj_matrix, labels_map, copy=False

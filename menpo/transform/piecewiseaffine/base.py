@@ -306,7 +306,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
                 else:
                     # No exception was thrown, so all points were inside
                     points_outside_source_domain.append(
-                        np.zeros(batch_size, dtype=np.bool)
+                        np.zeros(batch_size, dtype=bool)
                     )
 
             if exception_thrown:
