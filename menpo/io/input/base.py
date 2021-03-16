@@ -1156,7 +1156,7 @@ class BuiltinAssets(object):
     def __init__(self, import_builtin_callable):
         self.import_builtin_asset = import_builtin_callable
         self._builtin_files = {
-            asset.replace(".", "_"): partial(_menpo_import_builtin_asset, asset)
+            asset.replace(".", "_"): partial(import_builtin_callable, asset)
             for asset in menpo_ls_builtin_assets()
         }
 
@@ -1165,6 +1165,9 @@ class BuiltinAssets(object):
 
     def __getattr__(self, file_name) -> Any:
         return self._builtin_files[file_name]
+
+    def __dir__(self):
+        return dir(super()) + list(self._builtin_files)
 
 
 import_builtin_asset = BuiltinAssets(_menpo_import_builtin_asset)
