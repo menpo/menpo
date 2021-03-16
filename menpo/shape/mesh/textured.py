@@ -297,6 +297,7 @@ class TexturedTriMesh(TriMesh):
         normals_marker_size=None,
         step=None,
         alpha=1.0,
+        **kwargs,
     ):
         r"""
         Visualize the Textured TriMesh in 3D.
