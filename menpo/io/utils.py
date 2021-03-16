@@ -53,7 +53,7 @@ def _normalize_extension(extension):
     """
     if extension is None:
         return None
-    elif extension[0] is not ".":
+    elif extension[0] != ".":
         # Account for the fact the user may only have passed the extension
         # without the proceeding period
         extension = "." + extension
