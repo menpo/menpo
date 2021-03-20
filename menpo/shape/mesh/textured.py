@@ -299,7 +299,8 @@ class TexturedTriMesh(TriMesh):
         step=None,
         alpha=1.0,
         inline=True,
-        return_widget=False
+        return_widget=False,
+        **kwargs,
     ):
         r"""
         Visualize the Textured TriMesh in 3D.
@@ -332,7 +333,7 @@ class TexturedTriMesh(TriMesh):
         normals : ``(n_points, 3)`` `ndarray` or ``None``, optional
             If ``None``, then the normals will not be rendered. If `ndarray`,
             then the provided normals will be rendered as well. Note that a
-            normal must be provided for each point in the TriMesh.
+            ormal must be provided for each point in the TriMesh.
         normals_colour : See Below, optional
             The colour of the normals.
             Example options ::

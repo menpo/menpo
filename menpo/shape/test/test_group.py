@@ -10,16 +10,16 @@ from menpo.testing import is_same_array
 
 points = np.ones((10, 3))
 adjacency_matrix = csr_matrix((10, 10))
-mask_dict = OrderedDict([("all", np.ones(10, dtype=np.bool))])
+mask_dict = OrderedDict([("all", np.ones(10, dtype=bool))])
 lower = np.array(
-    [True, True, True, True, True, True, False, False, False, False], dtype=np.bool
+    [True, True, True, True, True, True, False, False, False, False], dtype=bool
 )
 upper = np.array(
-    [False, False, False, False, False, False, True, True, True, True], dtype=np.bool
+    [False, False, False, False, False, False, True, True, True, True], dtype=bool
 )
 mask_dict_2 = OrderedDict([("lower", lower), ("upper", upper)])
 mask_dict_3 = OrderedDict(
-    [("all", np.ones(10, dtype=np.bool)), ("lower", lower), ("upper", upper)]
+    [("all", np.ones(10, dtype=bool)), ("lower", lower), ("upper", upper)]
 )
 
 
@@ -112,7 +112,7 @@ def test_LabelledPointUndirectedGraph_remove_label_unlabelled():
 def test_LabelledPointUndirectedGraph_create_unlabelled():
     points = np.array([[0, 1], [2, 3], [4, 5]])
     adjacency_matrix = csr_matrix((3, 3))
-    mask_dict = OrderedDict([("all", np.zeros(3, dtype=np.bool))])
+    mask_dict = OrderedDict([("all", np.zeros(3, dtype=bool))])
 
     with raises(ValueError):
         LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
@@ -121,7 +121,7 @@ def test_LabelledPointUndirectedGraph_create_unlabelled():
 def test_LabelledPointUndirectedGraph_pass_non_ordered_dict():
     points = np.array([[0, 1], [2, 3], [4, 5]])
     adjacency_matrix = csr_matrix((3, 3))
-    mask_dict = {"all": np.ones(3, dtype=np.bool)}
+    mask_dict = {"all": np.ones(3, dtype=bool)}
 
     with raises(ValueError):
         LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)
@@ -139,7 +139,7 @@ def test_LabelledPointUndirectedGraph_create_no_mask():
 def test_LabelledPointUndirectedGraph_create_incorrect_shape():
     points = np.array([[0, 1], [2, 3], [4, 5]])
     adjacency_matrix = csr_matrix((3, 3))
-    mask_dict = OrderedDict([("all", np.ones(5, dtype=np.bool))])
+    mask_dict = OrderedDict([("all", np.ones(5, dtype=bool))])
 
     with raises(ValueError):
         LabelledPointUndirectedGraph(points, adjacency_matrix, mask_dict)

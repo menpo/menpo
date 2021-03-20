@@ -62,7 +62,7 @@ def test_constrain_mask_to_landmarks_convex_hull():
 
 def test_constrain_mask_to_landmarks_callable():
     def bounding_box(_, indices):
-        return np.ones(indices.shape[0], dtype=np.bool)
+        return np.ones(indices.shape[0], dtype=bool)
 
     img = MaskedImage.init_blank((10, 10))
     img.landmarks["box"] = PointCloud(
@@ -126,7 +126,7 @@ def test_constrain_mask_to_patches_around_landmarks_odd():
 
 
 def test_set_boundary_pixels():
-    mask = np.ones((10, 10), dtype=np.bool)
+    mask = np.ones((10, 10), dtype=bool)
     img = MaskedImage.init_blank((10, 10), mask=mask, fill=0.0, n_channels=1)
     new_img = img.set_boundary_pixels(value=2.0)
     assert new_img.mask.n_true() == 100

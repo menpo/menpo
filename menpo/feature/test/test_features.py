@@ -155,21 +155,21 @@ def test_no_op():
 
 
 def test_normalize_no_scale_all():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize(image, scale_func=None, mode="all")
     assert_allclose(new_image.pixels, pixels - 13.0)
 
 
 def test_normalize_norm_all():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_norm(image, mode="all")
     assert_allclose(np.linalg.norm(new_image.pixels), 1.0)
 
 
 def test_normalize_norm_channels():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_norm(image, mode="per_channel")
     assert_allclose(np.linalg.norm(new_image.pixels[0]), 1.0)
@@ -178,14 +178,14 @@ def test_normalize_norm_channels():
 
 
 def test_normalize_std_all():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_std(image, mode="all")
     assert_allclose(np.std(new_image.pixels), 1.0)
 
 
 def test_normalize_std_channels():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_std(image, mode="per_channel")
     assert_allclose(np.std(new_image.pixels[0]), 1.0)
@@ -194,14 +194,14 @@ def test_normalize_std_channels():
 
 
 def test_normalize_var_all():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_var(image, mode="all")
     assert_allclose(np.var(new_image.pixels), 0.01648, atol=1e-3)
 
 
 def test_normalize_var_channels():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize_var(image, mode="per_channel")
     assert_allclose(np.var(new_image.pixels[0]), 0.15, atol=1e-5)
@@ -210,7 +210,7 @@ def test_normalize_var_channels():
 
 
 def test_normalize_no_scale_per_channel():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     new_image = normalize(image, scale_func=None, mode="per_channel")
     assert_allclose(new_image.pixels[0], pixels[0] - 4.0)
@@ -219,7 +219,7 @@ def test_normalize_no_scale_per_channel():
 
 
 def test_normalize_scale_all():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     dummy_scale = lambda *a, **kwargs: np.array(2.0)
     image = Image(pixels, copy=False)
     new_image = normalize(image, scale_func=dummy_scale, mode="all")
@@ -227,7 +227,7 @@ def test_normalize_scale_all():
 
 
 def test_normalize_scale_per_channel():
-    pixels = np.arange(27, dtype=np.float).reshape([3, 3, 3])
+    pixels = np.arange(27, dtype=float).reshape([3, 3, 3])
     image = Image(pixels, copy=False)
     dummy_scale = lambda *a, **kwargs: np.array(2.0)
     new_image = normalize(image, scale_func=dummy_scale, mode="per_channel")
@@ -250,7 +250,7 @@ def test_normalize_0_variance_raises():
 
 
 def test_normalize_0_variance_warning():
-    pixels = np.arange(8, dtype=np.float).reshape([2, 2, 2])
+    pixels = np.arange(8, dtype=float).reshape([2, 2, 2])
     image = Image(pixels, copy=False)
     dummy_scale = lambda *a, **kwargs: np.array([2.0, 0.0])
     with warnings.catch_warnings():

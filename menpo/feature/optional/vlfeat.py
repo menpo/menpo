@@ -102,7 +102,7 @@ def dsift(
         (centers[-1, :] - centers[0, :])
         / [window_step_vertical, window_step_horizontal]
     ) + 1
-    shape = shape.astype(np.int)
+    shape = shape.astype(int)
 
     # print information
     if verbose:
@@ -138,7 +138,7 @@ def dsift(
             dtype=np.double,
             requirements=["C"],
         ),
-        np.require(centers.reshape((shape[0], shape[1], -1)), dtype=np.int),
+        np.require(centers.reshape((shape[0], shape[1], -1)), dtype=int),
     )
 
 

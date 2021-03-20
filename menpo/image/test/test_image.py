@@ -215,21 +215,21 @@ def test_boolean_image_str():
 
 
 def test_boolean_image_from_vector():
-    vector = np.zeros(16, dtype=np.bool)
+    vector = np.zeros(16, dtype=bool)
     image = BooleanImage.init_blank((4, 4))
     image2 = image.from_vector(vector)
     assert np.all(image2.as_vector() == vector)
 
 
 def test_boolean_image_from_vector_no_copy():
-    vector = np.zeros(16, dtype=np.bool)
+    vector = np.zeros(16, dtype=bool)
     image = BooleanImage.init_blank((4, 4))
     image2 = image.from_vector(vector, copy=False)
     assert is_same_array(image2.pixels.ravel(), vector)
 
 
 def test_boolean_image_from_vector_no_copy_raises():
-    vector = np.zeros(16, dtype=np.bool)
+    vector = np.zeros(16, dtype=bool)
     image = BooleanImage.init_blank((4, 4))
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
@@ -306,13 +306,13 @@ def test_mask_blank():
 
 
 def test_boolean_copy_false_boolean():
-    mask = np.zeros((10, 10), dtype=np.bool)
+    mask = np.zeros((10, 10), dtype=bool)
     boolean_image = BooleanImage(mask, copy=False)
     assert is_same_array(boolean_image.pixels, mask)
 
 
 def test_boolean_copy_true():
-    mask = np.zeros((10, 10), dtype=np.bool)
+    mask = np.zeros((10, 10), dtype=bool)
     boolean_image = BooleanImage(mask)
     assert not is_same_array(boolean_image.pixels, mask)
 
@@ -396,7 +396,7 @@ def test_no_channels_image_creation():
 
 def test_create_MaskedImage_copy_false_mask_array():
     pixels = np.ones((1, 100, 100))
-    mask = np.ones((100, 100), dtype=np.bool)
+    mask = np.ones((100, 100), dtype=bool)
     image = MaskedImage(pixels, mask=mask, copy=False)
     assert is_same_array(image.pixels, pixels)
     assert is_same_array(image.mask.pixels, mask)
@@ -404,7 +404,7 @@ def test_create_MaskedImage_copy_false_mask_array():
 
 def test_create_MaskedImage_copy_false_mask_BooleanImage():
     pixels = np.ones((1, 100, 100))
-    mask = np.ones((100, 100), dtype=np.bool)
+    mask = np.ones((100, 100), dtype=bool)
     mask_image = BooleanImage(mask, copy=False)
     image = MaskedImage(pixels, mask=mask_image, copy=False)
     assert is_same_array(image.pixels, pixels)
@@ -413,7 +413,7 @@ def test_create_MaskedImage_copy_false_mask_BooleanImage():
 
 def test_create_MaskedImage_copy_true_mask_array():
     pixels = np.ones((100, 100))
-    mask = np.ones((100, 100), dtype=np.bool)
+    mask = np.ones((100, 100), dtype=bool)
     image = MaskedImage(pixels, mask=mask)
     assert not is_same_array(image.pixels, pixels)
     assert not is_same_array(image.mask.pixels, mask)
@@ -421,7 +421,7 @@ def test_create_MaskedImage_copy_true_mask_array():
 
 def test_create_MaskedImage_copy_true_mask_BooleanImage():
     pixels = np.ones((1, 100, 100))
-    mask = np.ones((100, 100), dtype=np.bool)
+    mask = np.ones((100, 100), dtype=bool)
     mask_image = BooleanImage(mask, copy=False)
     image = MaskedImage(pixels, mask=mask_image, copy=True)
     assert not is_same_array(image.pixels, pixels)
@@ -689,7 +689,7 @@ def test_as_pil_image_1channel():
 def test_as_rolled_channels_1channel():
     im = Image.init_blank((120, 120), n_channels=1, fill=1.0)
     new_im = im.pixels_with_channels_at_back()
-    assert new_im.dtype == np.float
+    assert new_im.dtype == float
     assert_allclose(np.ones([120, 120]), new_im)
     assert new_im.ndim == 2
 
@@ -703,7 +703,7 @@ def test_as_rolled_channels_float_out_range():
 def test_as_rolled_channels_3channels():
     im = Image.init_blank((120, 120), n_channels=3, fill=1)
     new_im = im.pixels_with_channels_at_back()
-    assert new_im.dtype == np.float
+    assert new_im.dtype == float
     assert_allclose(np.ones([120, 120, 3]), new_im)
 
 
@@ -746,7 +746,7 @@ def test_as_pil_image_float32_uint16_out():
 
 
 def test_as_pil_image_bool():
-    im = BooleanImage(np.ones((120, 120), dtype=np.bool), copy=False)
+    im = BooleanImage(np.ones((120, 120), dtype=bool), copy=False)
     new_im = im.as_PILImage()
     assert 1
     assert_allclose(

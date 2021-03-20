@@ -35,7 +35,7 @@ class ColouredTriMesh(TriMesh):
         # set of colours, or copy the given array if necessary
         if colours is None:
             # default to grey
-            colours_handle = np.ones_like(points, dtype=np.float) * 0.5
+            colours_handle = np.ones_like(points, dtype=float) * 0.5
         elif not copy:
             colours_handle = colours
         else:
@@ -241,7 +241,8 @@ class ColouredTriMesh(TriMesh):
         step=None,
         alpha=1.0,
         inline=True,
-        return_widget=False
+        return_widget=False,
+        **kwargs,
     ):
         r"""
         Visualize the Coloured TriMesh in 3D.
