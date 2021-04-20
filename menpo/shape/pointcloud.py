@@ -379,20 +379,6 @@ class PointCloud(Shape):
         """
         self.points = vector.reshape([-1, self.n_dims])
 
-    def same_space(self, other):
-        r"""
-        Check if two PointClouds have the same shapes
-
-        Parameters
-        ----------
-        other : PointCloud
-            The PointCloud to compare.
-        Returns
-        -------
-        Boolean : True if they have the same shape
-        """
-        return self.points.shape == other.points.shape
-
     def __str__(self):
         return "{}: n_points: {}, n_dims: {}".format(
             type(self).__name__, self.n_points, self.n_dims
