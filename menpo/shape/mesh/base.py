@@ -1583,7 +1583,7 @@ class TriMesh(PointCloud):
         new_figure=True,
         mesh_type="wireframe",
         line_width=2,
-        colour=(24/256, 148/256, 187/256),
+        colour="r",
         marker_style="sphere",
         marker_size=None,
         marker_resolution=8,
