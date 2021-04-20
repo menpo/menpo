@@ -1758,7 +1758,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
     def to_list(self):
         r"""
         Returns the main attributes of a model as a list
-        for serialization with avatars.serialize_morphable_model_to_binary
+        for serialization purposes.
         User should only expand the list.
 
         Returns
