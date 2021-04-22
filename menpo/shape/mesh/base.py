@@ -6,7 +6,6 @@ import numpy as np
 from .normals import compute_face_normals, compute_vertex_normals
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from scipy.spatial import cKDTree
 import scipy.sparse as sp
 
 
@@ -458,6 +457,8 @@ class TriMesh(PointCloud):
         ------
         ValueError
         """
+        from scipy.spatial import cKDTree
+
         source_mesh = self
         source_n_vertices = source_mesh.points.shape[0]
         target_mesh_n_vertices = target_mesh.points.shape[0]
