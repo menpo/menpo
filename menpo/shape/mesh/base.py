@@ -295,10 +295,11 @@ class TriMesh(PointCloud):
         source_n_vertices = source_mesh.points.shape[0]
         target_mesh_n_vertices = target_mesh.points.shape[0]
 
-        if not source_n_vertices == target_mesh_n_vertices:
+        if source_n_vertices != target_mesh_n_vertices:
+            import warnings
             first_part_string = 'Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices,
                                                                                               target_mesh_n_vertices)
-            print(first_part_string)
+            warnings.warn(first_part_string)
             subject = source_mesh.points
             template = target_mesh
             X = template.points
