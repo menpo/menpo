@@ -14,5 +14,5 @@ from .features import (
 
 # Optional dependencies may return nothing.
 from .optional import *
-from .visualize import  sum_channels
+from .visualize import sum_channels
 from .predefined import double_igo

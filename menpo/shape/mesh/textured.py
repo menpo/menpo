@@ -30,8 +30,7 @@ class TexturedTriMesh(TriMesh):
     """
 
     def __init__(self, points, tcoords, texture, trilist=None, copy=True):
-        super(TexturedTriMesh, self).__init__(points, trilist=trilist,
-                                              copy=copy)
+        super(TexturedTriMesh, self).__init__(points, trilist=trilist, copy=copy)
         self.tcoords = PointCloud(tcoords, copy=copy)
 
         if not copy:
@@ -380,13 +379,16 @@ class TexturedTriMesh(TriMesh):
             if inline:
                 try:
                     from menpo3d.visualize import TexturedTriMeshInlineViewer3d
-                    renderer = TexturedTriMeshInlineViewer3d(figure_id,
-                                                             new_figure,
-                                                             self.points,
-                                                             self.trilist,
-                                                             self.texture,
-                                                             self.tcoords,
-                                                             self.landmarks)
+
+                    renderer = TexturedTriMeshInlineViewer3d(
+                        figure_id,
+                        new_figure,
+                        self.points,
+                        self.trilist,
+                        self.texture,
+                        self.tcoords,
+                        self.landmarks,
+                    )
                     render_return = renderer._render(
                         normals=normals,
                         normals_colour=normals_colour,
@@ -399,10 +401,12 @@ class TexturedTriMesh(TriMesh):
                     return renderer
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
+
                     raise Menpo3dMissingError(e)
             else:
                 try:
                     from menpo3d.visualize import TexturedTriMeshViewer3d
+
                     renderer = TexturedTriMeshViewer3d(
                         figure_id,
                         new_figure,
@@ -428,15 +432,16 @@ class TexturedTriMesh(TriMesh):
 
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
+
                     raise Menpo3dMissingError(e)
         else:
             if inline:
                 try:
                     from menpo3d.visualize import TriMeshInlineViewer3d
-                    renderer = TriMeshInlineViewer3d(figure_id, new_figure,
-                                                     self.points,
-                                                     self.trilist,
-                                                     self.landmarks)
+
+                    renderer = TriMeshInlineViewer3d(
+                        figure_id, new_figure, self.points, self.trilist, self.landmarks
+                    )
                     render_return = renderer._render(
                         line_width=line_width,
                         mesh_type=mesh_type,
@@ -452,12 +457,15 @@ class TexturedTriMesh(TriMesh):
                     return renderer
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
+
                     raise Menpo3dMissingError(e)
             else:
                 try:
                     from menpo3d.visualize import TriMeshViewer3d
-                    renderer = TriMeshViewer3d(figure_id, new_figure,
-                                               self.points, self.trilist)
+
+                    renderer = TriMeshViewer3d(
+                        figure_id, new_figure, self.points, self.trilist
+                    )
                     renderer.render(
                         mesh_type=mesh_type,
                         line_width=line_width,
@@ -474,6 +482,7 @@ class TexturedTriMesh(TriMesh):
                     return renderer
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
+
                     raise Menpo3dMissingError(e)
 
     def _view_2d(
@@ -482,7 +491,7 @@ class TexturedTriMesh(TriMesh):
         new_figure=False,
         image_view=True,
         render_lines=True,
-        line_colour=(24/256, 148/256, 187/256),
+        line_colour=(24 / 256, 148 / 256, 187 / 256),
         line_style="-",
         line_width=1.0,
         render_markers=True,
@@ -510,7 +519,7 @@ class TexturedTriMesh(TriMesh):
         axes_y_ticks=None,
         figure_size=(7, 7),
         label=None,
-        **kwargs
+        **kwargs,
     ):
         r"""
         Visualization of the TriMesh in 2D. Currently, explicit textured TriMesh

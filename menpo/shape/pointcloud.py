@@ -401,7 +401,7 @@ class PointCloud(Shape):
             new_points = self.points + other.points
             return PointCloud(new_points)
         else:
-            raise ValueError('The two PointClouds dont have the same shape')
+            raise ValueError("The two PointClouds dont have the same shape")
 
     def __sub__(self, other):
         r"""
@@ -420,7 +420,7 @@ class PointCloud(Shape):
             new_points = self.points - other.points
             return PointCloud(new_points)
         else:
-            raise ValueError('The two PointClouds dont have the same shape')
+            raise ValueError("The two PointClouds dont have the same shape")
 
     def bounds(self, boundary=0):
         r"""
@@ -539,7 +539,7 @@ class PointCloud(Shape):
         axes_y_ticks=None,
         figure_size=(7, 7),
         label=None,
-        **kwargs
+        **kwargs,
     ):
         r"""
         Visualization of the PointCloud in 2D.
@@ -1066,7 +1066,7 @@ class PointCloud(Shape):
         keep_alpha=False,
         inline=True,
         return_widget=False,
-        **kwargs
+        **kwargs,
     ):
         r"""
         Visualization of the PointCloud in 3D.
@@ -1151,8 +1151,9 @@ class PointCloud(Shape):
                 from menpo3d.visualize import PointGraphInlineViewer3d
 
                 edges = np.empty(0)
-                renderer = PointGraphInlineViewer3d(figure_id, new_figure,
-                                                    self.points, edges)
+                renderer = PointGraphInlineViewer3d(
+                    figure_id, new_figure, self.points, edges
+                )
                 render_return = renderer._render(
                     render_lines=False,
                     render_markers=render_markers,
@@ -1164,7 +1165,7 @@ class PointCloud(Shape):
                     numbers_colour=numbers_colour,
                     numbers_size=numbers_size,
                     colours=colours,
-                    keep_alpha=keep_alpha
+                    keep_alpha=keep_alpha,
                 )
                 if render_return is not renderer:
                     renderer.close()
@@ -1184,8 +1185,7 @@ class PointCloud(Shape):
                 from menpo3d.visualize import PointGraphViewer3d
 
                 edges = np.empty(0)
-                renderer = PointGraphViewer3d(figure_id, new_figure,
-                                              self.points, edges)
+                renderer = PointGraphViewer3d(figure_id, new_figure, self.points, edges)
                 renderer.render(
                     render_lines=False,
                     render_markers=render_markers,
@@ -1401,11 +1401,10 @@ class PointCloud(Shape):
                 is the closest vertex to the second vertex in
                this pointcloud.
         """
-        closest_vertices = np.zeros((self.points.shape[0],
-                                     pointcloud.points.shape[0]),
-                                    dtype=np.uint8)
-        indx_vertices = np.argmin(self.distance_to(pointcloud,
-                                                   **kwargs), axis=1)
+        closest_vertices = np.zeros(
+            (self.points.shape[0], pointcloud.points.shape[0]), dtype=np.uint8
+        )
+        indx_vertices = np.argmin(self.distance_to(pointcloud, **kwargs), axis=1)
         closest_vertices[np.arange(len(indx_vertices)), indx_vertices] = 1
         if return_sparse:
             closest_vertices = csr_matrix(closest_vertices)

@@ -245,7 +245,7 @@ class TriMesh(PointCloud):
             new_points = self.points + other.points
             return TriMesh(new_points, self.trilist)
         else:
-            raise ValueError('The two meshes dont have the same shape')
+            raise ValueError("The two meshes dont have the same shape")
 
     def __sub__(self, other):
         r"""
@@ -264,7 +264,7 @@ class TriMesh(PointCloud):
             new_points = self.points - other.points
             return TriMesh(new_points, self.trilist)
         else:
-            raise ValueError('The two meshes dont have the same shape')
+            raise ValueError("The two meshes dont have the same shape")
 
     def __mul__(self, multiplier):
         r"""
@@ -297,7 +297,7 @@ class TriMesh(PointCloud):
             new_points = self.points / divisor
             return TriMesh(new_points, self.trilist)
         else:
-            raise ValueError('Divisor cannot be zero')
+            raise ValueError("Divisor cannot be zero")
 
     @property
     def n_tris(self):
@@ -334,17 +334,17 @@ class TriMesh(PointCloud):
             face_half_edges = []
 
             for i, a in enumerate(f):
-                b = f[(i+1) % len(f)]
+                b = f[(i + 1) % len(f)]
                 pair_ab = (a, b)
                 pair_ba = (b, a)
                 h_ab = [i_f, a, -1, -1, -1]
                 halfs.append(h_ab)
-                pair_to_half[pair_ab] = len(halfs)-1
-                face_half_edges.append(len(halfs)-1)
+                pair_to_half[pair_ab] = len(halfs) - 1
+                face_half_edges.append(len(halfs) - 1)
 
                 if pair_ba in pair_to_half:
                     h_ba = halfs[pair_to_half[pair_ba]]
-                    h_ba[2] = len(halfs)-1
+                    h_ba[2] = len(halfs) - 1
                     h_ab[2] = pair_to_half[pair_ba]
                     h_ab[4] = h_ba[4]
                 else:
@@ -355,7 +355,7 @@ class TriMesh(PointCloud):
             # Link them together via their 'next' pointers.
             for i, he_id in enumerate(face_half_edges):
                 he = halfs[he_id]
-                he[3] = face_half_edges[(i+1) % len(f)]
+                he[3] = face_half_edges[(i + 1) % len(f)]
 
         for a, b in pair_to_half:
             if (b, a) not in pair_to_half:
@@ -364,13 +364,17 @@ class TriMesh(PointCloud):
                 edge = halfs[pair_to_half[(a, b)]][4]
                 h_ba = [-1, b, twin, -1, edge]
                 halfs.append(h_ba)
-                he_boundary[b] = (len(halfs)-1, a)
+                he_boundary[b] = (len(halfs) - 1, a)
 
         for he_id, end in he_boundary.values():
             try:
                 halfs[he_id][3] = he_boundary[end][0]
             except KeyError:
-                print('Could not find the following keys. Possibly corrupted mesh', he_id, end)
+                print(
+                    "Could not find the following keys. Possibly corrupted mesh",
+                    he_id,
+                    end,
+                )
         self.np_halfs = np.asarray(halfs)
 
     def list_neighbours(self, vertex):
@@ -382,11 +386,15 @@ class TriMesh(PointCloud):
            Returns: list
                List of vertex's neighbours
         """
-        if hasattr(self, 'np_halfs') is False:
-            raise NotImplementedError('Halfedges have not been created. Try to create it by calling haf_edges function')
+        if hasattr(self, "np_halfs") is False:
+            raise NotImplementedError(
+                "Halfedges have not been created. Try to create it by calling haf_edges function"
+            )
 
         if vertex >= self.n_points:
-            raise ValueError('Vertex should be an int between 0 and {}'.format(self.n_points))
+            raise ValueError(
+                "Vertex should be an int between 0 and {}".format(self.n_points)
+            )
 
         twin = np.where(self.np_halfs[:, 1] == vertex)[0][-1]
         start = twin
@@ -400,9 +408,19 @@ class TriMesh(PointCloud):
             if new_next == start:
                 return neighbours
 
-    def heatmap(self, target_mesh, scalar_range=(0, 2), scale_value=100,
-                type_cmap='hot_r', show_statistics=False, figure_id=None,
-                new_figure=True, inline=True, automatic_id=False, **kwargs):
+    def heatmap(
+        self,
+        target_mesh,
+        scalar_range=(0, 2),
+        scale_value=100,
+        type_cmap="hot_r",
+        show_statistics=False,
+        figure_id=None,
+        new_figure=True,
+        inline=True,
+        automatic_id=False,
+        **kwargs,
+    ):
         r"""
         Creates a heatmap of euclidean differences between the current mesh
         and the target meshh. If the two meshes have the same number of
@@ -463,8 +481,10 @@ class TriMesh(PointCloud):
 
         if source_n_vertices != target_mesh_n_vertices:
             import warnings
-            first_part_string = 'Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices,
-                                                                                              target_mesh_n_vertices)
+
+            first_part_string = "Source mesh has {} vertices while target mesh has {}".format(
+                source_n_vertices, target_mesh_n_vertices
+            )
             warnings.warn(first_part_string)
             subject = source_mesh.points
             template = target_mesh
@@ -477,34 +497,42 @@ class TriMesh(PointCloud):
 
         if figure_id is None:
             if automatic_id:
-                if hasattr(self, 'path'):
+                if hasattr(self, "path"):
                     source_name = self.path.stem
                 else:
-                    source_name = 'Source'
-                if hasattr(target_mesh, 'path'):
+                    source_name = "Source"
+                if hasattr(target_mesh, "path"):
                     target_name = target_mesh.path.stem
                 else:
-                    target_name = 'Target'
-                figure_name = 'Heatmap between {} and {}'.format(source_name,
-                                                                 target_name)
+                    target_name = "Target"
+                figure_name = "Heatmap between {} and {}".format(
+                    source_name, target_name
+                )
             else:
                 figure_name = None
         else:
             figure_name = figure_id
 
-        diff = (source_mesh.points.astype(np.float32)-target_mesh.points.astype(np.float32))**2
+        diff = (
+            source_mesh.points.astype(np.float32)
+            - target_mesh.points.astype(np.float32)
+        ) ** 2
         distances_between_meshes = np.sqrt(diff.sum(axis=1))
-        scaled_distances_between_meshes = distances_between_meshes*scale_value
+        scaled_distances_between_meshes = distances_between_meshes * scale_value
 
         if inline:
             try:
                 from menpo3d.visualize import HeatmapInlineViewer3d
-                renderer = HeatmapInlineViewer3d(figure_name, new_figure,
-                                                 self.points, self.trilist,
-                                                 self.landmarks)
-                render_return = renderer._render(scaled_distances_between_meshes,
-                                                 type_cmap, scalar_range,
-                                                 show_statistics)
+
+                renderer = HeatmapInlineViewer3d(
+                    figure_name, new_figure, self.points, self.trilist, self.landmarks
+                )
+                render_return = renderer._render(
+                    scaled_distances_between_meshes,
+                    type_cmap,
+                    scalar_range,
+                    show_statistics,
+                )
 
                 if render_return is not renderer:
                     renderer.close()
@@ -512,25 +540,32 @@ class TriMesh(PointCloud):
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import HeatmapViewer3d
-                renderer = HeatmapViewer3d(figure_name, new_figure,
-                                           self.points, self.trilist)
 
-                if type_cmap == 'hot_r':
-                    type_cmap = 'hot'
-                renderer.render(scaled_distances_between_meshes,
-                                type_cmap, scalar_range, show_statistics)
+                renderer = HeatmapViewer3d(
+                    figure_name, new_figure, self.points, self.trilist
+                )
+
+                if type_cmap == "hot_r":
+                    type_cmap = "hot"
+                renderer.render(
+                    scaled_distances_between_meshes,
+                    type_cmap,
+                    scalar_range,
+                    show_statistics,
+                )
 
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
 
-    def decimate(self, percentage_reduction=0.75,
-                 type_reduction='quadric', **kwargs):
+    def decimate(self, percentage_reduction=0.75, type_reduction="quadric", **kwargs):
         """
         Decimate the mesh specifying the percentage (0,1) of triangles to
         be removed
@@ -552,12 +587,15 @@ class TriMesh(PointCloud):
         """
         try:
             from menpo3d.vtkutils import decimate_mesh
-            new_mesh = decimate_mesh(self, percentage_reduction,
-                                     type_reduction, **kwargs)
+
+            new_mesh = decimate_mesh(
+                self, percentage_reduction, type_reduction, **kwargs
+            )
 
             return new_mesh
         except ImportError as e:
             from menpo.visualize import Menpo3dMissingError
+
             raise Menpo3dMissingError(e)
 
     def tojson(self):
@@ -658,14 +696,18 @@ class TriMesh(PointCloud):
         Returns: A sparce matrix of mxn
         """
         if self.n_points < downsampled_mesh.n_points:
-            print('The input mesh has more vertices than this mesh')
+            print("The input mesh has more vertices than this mesh")
             raise
 
-        coef, face_indices = downsampled_mesh.barycentric_coordinates_of_pointcloud(self)
+        coef, face_indices = downsampled_mesh.barycentric_coordinates_of_pointcloud(
+            self
+        )
         cols = downsampled_mesh.trilist[face_indices].flatten()
-        rows = np.tile(np.arange(self.n_points), 3).reshape(-1, 3, order='F').flatten()
-        U = sp.csc_matrix((coef.flatten().astype(np.float32), (rows, cols)),
-                          shape=(self.n_points, downsampled_mesh.n_points))
+        rows = np.tile(np.arange(self.n_points), 3).reshape(-1, 3, order="F").flatten()
+        U = sp.csc_matrix(
+            (coef.flatten().astype(np.float32), (rows, cols)),
+            shape=(self.n_points, downsampled_mesh.n_points),
+        )
         return U
 
     def as_pointgraph(self, copy=True, skip_checks=False):
@@ -699,7 +741,7 @@ class TriMesh(PointCloud):
         pg.landmarks = self.landmarks
         return pg
 
-    def as_weighted_pointgraph(self,  copy=True, skip_checks=False):
+    def as_weighted_pointgraph(self, copy=True, skip_checks=False):
         r"""
         Converts the TriMesh to a weighted :map:`PointUndirectedGraph`
 
@@ -723,11 +765,13 @@ class TriMesh(PointCloud):
         rows = np.hstack((edges[:, 0], edges[:, 1]))
         cols = np.hstack((edges[:, 1], edges[:, 0]))
         weights2 = np.hstack((weights, weights))
-        weight_adjacency_matrix = sp.csr_matrix((weights2, (rows, cols)),
-                                                shape=(n_vertices, n_vertices))
+        weight_adjacency_matrix = sp.csr_matrix(
+            (weights2, (rows, cols)), shape=(n_vertices, n_vertices)
+        )
 
-        pg = PointUndirectedGraph(self.points, weight_adjacency_matrix,
-                                  copy=copy, skip_checks=skip_checks)
+        pg = PointUndirectedGraph(
+            self.points, weight_adjacency_matrix, copy=copy, skip_checks=skip_checks
+        )
         # This is always a copy
         pg.landmarks = self.landmarks
         return pg
@@ -1035,7 +1079,7 @@ class TriMesh(PointCloud):
         axes_y_ticks=None,
         figure_size=(7, 7),
         label=None,
-        **kwargs
+        **kwargs,
     ):
         r"""
         Visualization of the TriMesh in 2D.
@@ -1596,7 +1640,7 @@ class TriMesh(PointCloud):
         step=None,
         alpha=1.0,
         inline=True,
-        return_widget=False
+        return_widget=False,
     ):
         r"""
         Visualization of the TriMesh in 3D.
@@ -1706,10 +1750,9 @@ class TriMesh(PointCloud):
             try:
                 from menpo3d.visualize import TriMeshInlineViewer3d
 
-                renderer = TriMeshInlineViewer3d(figure_id, new_figure,
-                                                 self.points,
-                                                 self.trilist,
-                                                 self.landmarks)
+                renderer = TriMeshInlineViewer3d(
+                    figure_id, new_figure, self.points, self.trilist, self.landmarks
+                )
                 render_return = renderer._render(
                     line_width=line_width,
                     colour=colour,
@@ -1720,7 +1763,7 @@ class TriMesh(PointCloud):
                     normals_colour=normals_colour,
                     normals_line_width=normals_line_width,
                     normals_marker_size=normals_marker_size,
-                    alpha=alpha
+                    alpha=alpha,
                 )
                 if render_return is not renderer:
                     renderer.close()
@@ -1733,12 +1776,15 @@ class TriMesh(PointCloud):
 
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import TriMeshViewer3d
-                renderer = TriMeshViewer3d(figure_id, new_figure,
-                                           self.points, self.trilist)
+
+                renderer = TriMeshViewer3d(
+                    figure_id, new_figure, self.points, self.trilist
+                )
                 renderer.render(
                     mesh_type=mesh_type,
                     line_width=line_width,
@@ -1758,4 +1804,5 @@ class TriMesh(PointCloud):
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)

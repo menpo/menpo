@@ -836,7 +836,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
         numbers_colour="k",
         numbers_size=None,
         inline=True,
-        return_widget=False
+        return_widget=False,
     ):
         if inline:
             try:
@@ -878,6 +878,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
         else:
             try:
@@ -913,6 +914,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
                 )
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
 
     def __str__(self):

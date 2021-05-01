@@ -517,7 +517,7 @@ def import_pickles(
     shuffle=False,
     as_generator=False,
     verbose=False,
-    **kwargs
+    **kwargs,
 ):
     r"""Multiple pickle importer.
 
@@ -669,7 +669,7 @@ def import_images(
         landmark_attach_func=_import_object_attach_landmarks,
         as_generator=as_generator,
         verbose=verbose,
-        importer_kwargs=kwargs
+        importer_kwargs=kwargs,
     )
 
 

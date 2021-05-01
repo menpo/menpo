@@ -441,7 +441,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         else:
             noise_variance = np.hstack(
                 (
-                    self._eigenvalues[self.n_active_components:],
+                    self._eigenvalues[self.n_active_components :],
                     self._trimmed_eigenvalues,
                 )
             ).mean()
@@ -633,7 +633,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             self._trimmed_eigenvalues = np.hstack(
                 (
                     self._trimmed_eigenvalues,
-                    self._eigenvalues[self.n_active_components:],
+                    self._eigenvalues[self.n_active_components :],
                 )
             )
             # make sure that the eigenvalues are trimmed too
@@ -703,7 +703,7 @@ class PCAVectorModel(MeanLinearVectorModel):
                 self.n_active_components = n_active_components
 
         # now we can set our own components with the updated orthogonal ones
-        self.components = Q[linear_model.n_components:, :]
+        self.components = Q[linear_model.n_components :, :]
 
     def increment(self, data, n_samples=None, forgetting_factor=1.0, verbose=False):
         r"""
@@ -1487,8 +1487,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         instance : `type(self.template_instance)`
             An instance of the model.
         """
-        v = self.instance_vector(weights,
-                                 normalized_weights=normalized_weights)
+        v = self.instance_vector(weights, normalized_weights=normalized_weights)
         return self.template_instance.from_vector(v)
 
     def project_whitened(self, instance):
@@ -1557,8 +1556,8 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         n_parameters=5,
         parameters_bound=(-15, 15),
         landmarks_indices=None,
-        widget_style='info',
-        inline=True
+        widget_style="info",
+        inline=True,
     ):
         r"""
         Visualization of the TriMesh in 3D.
@@ -1617,25 +1616,28 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             The Menpo3D rendering object.
         """
         if inline:
-            if name_of_callable(self.template_instance) == 'TriMesh':
+            if name_of_callable(self.template_instance) == "TriMesh":
                 tmp_trilist = self.mean().trilist
-            elif name_of_callable(self.template_instance) == 'PointCloud':
+            elif name_of_callable(self.template_instance) == "PointCloud":
                 tmp_trilist = None
             else:
-                raise ValueError('We only support TriMesh and PointCloud')
+                raise ValueError("We only support TriMesh and PointCloud")
 
             try:
                 from menpo3d.visualize import PCAModelInlineViewer3d
-                renderer = PCAModelInlineViewer3d(figure_id=figure_id,
-                                                  new_figure=new_figure,
-                                                  points=self.mean().points,
-                                                  trilist=tmp_trilist,
-                                                  components=self.components,
-                                                  eigenvalues=self.eigenvalues,
-                                                  n_parameters=n_parameters,
-                                                  parameters_bound=parameters_bound,
-                                                  landmarks_indices=landmarks_indices,
-                                                  widget_style=widget_style)
+
+                renderer = PCAModelInlineViewer3d(
+                    figure_id=figure_id,
+                    new_figure=new_figure,
+                    points=self.mean().points,
+                    trilist=tmp_trilist,
+                    components=self.components,
+                    eigenvalues=self.eigenvalues,
+                    n_parameters=n_parameters,
+                    parameters_bound=parameters_bound,
+                    landmarks_indices=landmarks_indices,
+                    widget_style=widget_style,
+                )
                 render_return = renderer._render(
                     mesh_type=mesh_type,
                     colour=colour,
@@ -1646,9 +1648,10 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
         else:
-            print('View method is not implemented yet for mayavi')
+            print("View method is not implemented yet for mayavi")
 
     def __str__(self):
         str_out = (
@@ -1675,12 +1678,17 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         )
         return str_out
 
-    def render_components(self,  export_path=None, filename='',
-                          size=(600, 600), list_weights=[-2, 2],
-                          list_components=np.arange(5),
-                          bgcolor=(1, 1, 1),
-                          camera_settings=None,
-                          mesh_color=(.5, .5, .5)):
+    def render_components(
+        self,
+        export_path=None,
+        filename="",
+        size=(600, 600),
+        list_weights=[-2, 2],
+        list_components=np.arange(5),
+        bgcolor=(1, 1, 1),
+        camera_settings=None,
+        mesh_color=(0.5, 0.5, 0.5),
+    ):
         r"""
         Render and save various components of the  model
 
@@ -1703,7 +1711,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         try:
             from mayavi import mlab
         except ImportError:
-            print('Cannot import mlab')
+            print("Cannot import mlab")
             return 1
 
         if export_path is None:
@@ -1715,7 +1723,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             try:
                 export_path.mkdir(parents=True)
             except OSError:
-                print('Cannot create directory')
+                print("Cannot create directory")
                 return -1
 
         fig = mlab.figure(bgcolor=bgcolor, size=size)
@@ -1735,24 +1743,25 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         are_components = list_components < self.n_components
         components_to_be_rendered = list_components[are_components]
         for not_exist_component in list_components[~are_components]:
-            print('Component {} does not exist'.format(not_exist_component))
+            print("Component {} does not exist".format(not_exist_component))
 
         mesh = self.mean()
-        s = mlab.triangular_mesh(mesh.points[:, 0], mesh.points[:, 1],
-                                 mesh.points[:, 2], mesh.trilist,
-                                 color=mesh_color)
+        s = mlab.triangular_mesh(
+            mesh.points[:, 0],
+            mesh.points[:, 1],
+            mesh.points[:, 2],
+            mesh.trilist,
+            color=mesh_color,
+        )
 
-        mlab.savefig(str(export_path / 'Mean face.{}'.format('png')))
+        mlab.savefig(str(export_path / "Mean face.{}".format("png")))
         for component in components_to_be_rendered:
-            parameters = np.zeros(component+1)
+            parameters = np.zeros(component + 1)
             std = self.eigenvalues[component] ** 0.5
             for weight in list_weights:
-                parameters[component] = std*weight
+                parameters[component] = std * weight
                 s.mlab_source.points = self.instance(parameters).points
-                full_filename = '{}_{}_{}.{}'.format(filename,
-                                                     component,
-                                                     weight,
-                                                     'png')
+                full_filename = "{}_{}_{}.{}".format(filename, component, weight, "png")
                 mlab.savefig(str(export_path / full_filename))
 
     def to_list(self):
@@ -1781,7 +1790,9 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
                                      eigenvalues of the PCAModel,
                                      casted as float32
         """
-        return [self.mean().points.flatten().astype('float32'),
-                self.mean().trilist.flatten().astype('uint32'),
-                self.components.astype('float32'),
-                np.sqrt(self.eigenvalues).astype('float32')]
+        return [
+            self.mean().points.flatten().astype("float32"),
+            self.mean().trilist.flatten().astype("uint32"),
+            self.components.astype("float32"),
+            np.sqrt(self.eigenvalues).astype("float32"),
+        ]
