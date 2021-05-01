@@ -337,7 +337,6 @@ class TriMesh(PointCloud):
                 b = f[(i+1) % len(f)]
                 pair_ab = (a, b)
                 pair_ba = (b, a)
-                # h_ab = self._half(face=face, vert=verts[a], twin=None, next=None, edge=None)
                 h_ab = [i_f, a, -1, -1, -1]
                 halfs.append(h_ab)
                 pair_to_half[pair_ab] = len(halfs)-1
@@ -398,7 +397,6 @@ class TriMesh(PointCloud):
             new_next = self.np_halfs[new_twin][3]
             neighbours.append(self.np_halfs[new_twin][1])
             h = self.np_halfs[new_next]
-            print(self.np_halfs[new_twin][1], h)
             if new_next == start:
                 return neighbours
 
@@ -463,10 +461,11 @@ class TriMesh(PointCloud):
         source_n_vertices = source_mesh.points.shape[0]
         target_mesh_n_vertices = target_mesh.points.shape[0]
 
-        if not source_n_vertices == target_mesh_n_vertices:
+        if source_n_vertices != target_mesh_n_vertices:
+            import warnings
             first_part_string = 'Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices,
                                                                                               target_mesh_n_vertices)
-            print(first_part_string)
+            warnings.warn(first_part_string)
             subject = source_mesh.points
             template = target_mesh
             X = template.points
