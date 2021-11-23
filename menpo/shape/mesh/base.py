@@ -236,9 +236,19 @@ class TriMesh(PointCloud):
         """
         return len(self.trilist)
 
-    def heatmap(self, target_mesh, scalar_range=(0, 2), scale_value=100,
-                type_cmap='hot_r', show_statistics=False, figure_id=None,
-                new_figure=True, inline=True, automatic_id=False, **kwargs):
+    def heatmap(
+        self,
+        target_mesh,
+        scalar_range=(0, 2),
+        scale_value=100,
+        type_cmap="hot_r",
+        show_statistics=False,
+        figure_id=None,
+        new_figure=True,
+        inline=True,
+        automatic_id=False,
+        **kwargs,
+    ):
         r"""
         Creates a heatmap of euclidean differences between the current mesh
         and the target meshh. If the two meshes have the same number of
@@ -297,8 +307,12 @@ class TriMesh(PointCloud):
 
         if source_n_vertices != target_mesh_n_vertices:
             import warnings
-            first_part_string = 'Source mesh has {} vertices while target mesh has {}'.format(source_n_vertices,
-                                                                                              target_mesh_n_vertices)
+
+            first_part_string = (
+                "Source mesh has {} vertices while target mesh has {}".format(
+                    source_n_vertices, target_mesh_n_vertices
+                )
+            )
             warnings.warn(first_part_string)
             subject = source_mesh.points
             template = target_mesh
@@ -311,34 +325,42 @@ class TriMesh(PointCloud):
 
         if figure_id is None:
             if automatic_id:
-                if hasattr(self, 'path'):
+                if hasattr(self, "path"):
                     source_name = self.path.stem
                 else:
-                    source_name = 'Source'
-                if hasattr(target_mesh, 'path'):
+                    source_name = "Source"
+                if hasattr(target_mesh, "path"):
                     target_name = target_mesh.path.stem
                 else:
-                    target_name = 'Target'
-                figure_name = 'Heatmap between {} and {}'.format(source_name,
-                                                                 target_name)
+                    target_name = "Target"
+                figure_name = "Heatmap between {} and {}".format(
+                    source_name, target_name
+                )
             else:
                 figure_name = None
         else:
             figure_name = figure_id
 
-        diff = (source_mesh.points.astype(np.float32)-target_mesh.points.astype(np.float32))**2
+        diff = (
+            source_mesh.points.astype(np.float32)
+            - target_mesh.points.astype(np.float32)
+        ) ** 2
         distances_between_meshes = np.sqrt(diff.sum(axis=1))
-        scaled_distances_between_meshes = distances_between_meshes*scale_value
+        scaled_distances_between_meshes = distances_between_meshes * scale_value
 
         if inline:
             try:
                 from menpo3d.visualize import HeatmapInlineViewer3d
-                renderer = HeatmapInlineViewer3d(figure_name, new_figure,
-                                                 self.points, self.trilist,
-                                                 self.landmarks)
-                render_return = renderer._render(scaled_distances_between_meshes,
-                                                 type_cmap, scalar_range,
-                                                 show_statistics)
+
+                renderer = HeatmapInlineViewer3d(
+                    figure_name, new_figure, self.points, self.trilist, self.landmarks
+                )
+                render_return = renderer._render(
+                    scaled_distances_between_meshes,
+                    type_cmap,
+                    scalar_range,
+                    show_statistics,
+                )
 
                 if render_return is not renderer:
                     renderer.close()
@@ -346,20 +368,28 @@ class TriMesh(PointCloud):
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import HeatmapViewer3d
-                renderer = HeatmapViewer3d(figure_name, new_figure,
-                                           self.points, self.trilist)
 
-                if type_cmap == 'hot_r':
-                    type_cmap = 'hot'
-                renderer.render(scaled_distances_between_meshes,
-                                type_cmap, scalar_range, show_statistics)
+                renderer = HeatmapViewer3d(
+                    figure_name, new_figure, self.points, self.trilist
+                )
+
+                if type_cmap == "hot_r":
+                    type_cmap = "hot"
+                renderer.render(
+                    scaled_distances_between_meshes,
+                    type_cmap,
+                    scalar_range,
+                    show_statistics,
+                )
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
 
     def tojson(self):
@@ -1327,7 +1357,7 @@ class TriMesh(PointCloud):
         step=None,
         alpha=1.0,
         inline=True,
-        return_widget=False
+        return_widget=False,
     ):
         r"""
         Visualization of the TriMesh in 3D.
@@ -1450,7 +1480,7 @@ class TriMesh(PointCloud):
                     normals_colour=normals_colour,
                     normals_line_width=normals_line_width,
                     normals_marker_size=normals_marker_size,
-                    alpha=alpha
+                    alpha=alpha,
                 )
                 if render_return is not renderer:
                     renderer.close()
@@ -1468,8 +1498,10 @@ class TriMesh(PointCloud):
         else:
             try:
                 from menpo3d.visualize import TriMeshViewer3d
-                renderer = TriMeshViewer3d(figure_id, new_figure,
-                                           self.points, self.trilist)
+
+                renderer = TriMeshViewer3d(
+                    figure_id, new_figure, self.points, self.trilist
+                )
                 renderer.render(
                     mesh_type=mesh_type,
                     line_width=line_width,

@@ -30,8 +30,7 @@ class TexturedTriMesh(TriMesh):
     """
 
     def __init__(self, points, tcoords, texture, trilist=None, copy=True):
-        super(TexturedTriMesh, self).__init__(points, trilist=trilist,
-                                              copy=copy)
+        super(TexturedTriMesh, self).__init__(points, trilist=trilist, copy=copy)
         self.tcoords = PointCloud(tcoords, copy=copy)
 
         if not copy:
@@ -439,10 +438,10 @@ class TexturedTriMesh(TriMesh):
             if inline:
                 try:
                     from menpo3d.visualize import TriMeshInlineViewer3d
-                    renderer = TriMeshInlineViewer3d(figure_id, new_figure,
-                                                     self.points,
-                                                     self.trilist,
-                                                     self.landmarks)
+
+                    renderer = TriMeshInlineViewer3d(
+                        figure_id, new_figure, self.points, self.trilist, self.landmarks
+                    )
                     render_return = renderer._render(
                         line_width=line_width,
                         mesh_type=mesh_type,
@@ -458,12 +457,15 @@ class TexturedTriMesh(TriMesh):
                     return renderer
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
+
                     raise Menpo3dMissingError(e)
             else:
                 try:
                     from menpo3d.visualize import TriMeshViewer3d
-                    renderer = TriMeshViewer3d(figure_id, new_figure,
-                                               self.points, self.trilist)
+
+                    renderer = TriMeshViewer3d(
+                        figure_id, new_figure, self.points, self.trilist
+                    )
                     renderer.render(
                         mesh_type=mesh_type,
                         line_width=line_width,
@@ -480,6 +482,7 @@ class TexturedTriMesh(TriMesh):
                     return renderer
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
+
                     raise Menpo3dMissingError(e)
 
     def _view_2d(

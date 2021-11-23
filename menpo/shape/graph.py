@@ -2415,7 +2415,7 @@ class PointGraph(Graph, PointCloud):
         numbers_colour="k",
         numbers_size=None,
         inline=True,
-        return_widget=False
+        return_widget=False,
     ):
         r"""
         Visualization of the PointGraph in 3D.
@@ -2493,6 +2493,7 @@ class PointGraph(Graph, PointCloud):
         if inline:
             try:
                 from menpo3d.visualize import PointGraphInlineViewer3d
+
                 renderer = PointGraphInlineViewer3d(
                     figure_id, new_figure, self.points, self.edges
                 )
@@ -2519,10 +2520,12 @@ class PointGraph(Graph, PointCloud):
 
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import PointGraphViewer3d
+
                 renderer = PointGraphViewer3d(
                     figure_id, new_figure, self.points, self.edges
                 )
@@ -2544,6 +2547,7 @@ class PointGraph(Graph, PointCloud):
                 return renderer
             except ImportError as e:
                 from menpo.visualize import Menpo3dMissingError
+
                 raise Menpo3dMissingError(e)
 
 

@@ -241,7 +241,7 @@ class ColouredTriMesh(TriMesh):
         step=None,
         alpha=1.0,
         inline=True,
-        return_widget=False
+        return_widget=False,
     ):
         r"""
         Visualize the Coloured TriMesh in 3D.
@@ -321,12 +321,15 @@ class ColouredTriMesh(TriMesh):
             if inline:
                 try:
                     from menpo3d.visualize import ColouredTriMeshInlineViewer3d
-                    renderer = ColouredTriMeshInlineViewer3d(figure_id,
-                                                             new_figure,
-                                                             self.points,
-                                                             self.trilist,
-                                                             self.colours,
-                                                             self.landmarks)
+
+                    renderer = ColouredTriMeshInlineViewer3d(
+                        figure_id,
+                        new_figure,
+                        self.points,
+                        self.trilist,
+                        self.colours,
+                        self.landmarks,
+                    )
                     render_return = renderer._render(
                         normals=normals,
                         normals_colour=normals_colour,
@@ -343,15 +346,20 @@ class ColouredTriMesh(TriMesh):
 
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
+
                     raise Menpo3dMissingError(e)
             else:
                 try:
                     from menpo3d.visualize import ColouredTriMeshViewer3d
-                    renderer = ColouredTriMeshViewer3d(figure_id, new_figure,
-                                                       self.points,
-                                                       self.trilist,
-                                                       self.colours,
-                                                       self.landmarks)
+
+                    renderer = ColouredTriMeshViewer3d(
+                        figure_id,
+                        new_figure,
+                        self.points,
+                        self.trilist,
+                        self.colours,
+                        self.landmarks,
+                    )
                     renderer.render(
                         mesh_type=mesh_type,
                         ambient_light=ambient_light,
@@ -366,6 +374,7 @@ class ColouredTriMesh(TriMesh):
                     return renderer
                 except ImportError as e:
                     from menpo.visualize import Menpo3dMissingError
+
                     raise Menpo3dMissingError(e)
         else:
             try:

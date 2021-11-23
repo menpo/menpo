@@ -1605,7 +1605,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
                 ``'warning'`` Yellow-based style
                 ``'danger'``  Red-based style
                 ``''``        No style
-                ============= ================== 
+                ============= ==================
         alpha : `float`, optional
             Defines the transparency (opacity) of the object.
 
@@ -1615,25 +1615,28 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             The Menpo3D rendering object.
         """
         if inline:
-            if name_of_callable(self.template_instance) == 'TriMesh':
+            if name_of_callable(self.template_instance) == "TriMesh":
                 tmp_trilist = self.mean().trilist
-            elif name_of_callable(self.template_instance) == 'PointCloud':
+            elif name_of_callable(self.template_instance) == "PointCloud":
                 tmp_trilist = None
             else:
-                raise ValueError('We only support TriMesh and PointCloud')
+                raise ValueError("We only support TriMesh and PointCloud")
 
             try:
                 from menpo3d.visualize import PCAModelInlineViewer3d
-                renderer = PCAModelInlineViewer3d(figure_id=figure_id,
-                                                  new_figure=new_figure,
-                                                  points=self.mean().points,
-                                                  trilist=tmp_trilist,
-                                                  components=self.components,
-                                                  eigenvalues=self.eigenvalues,
-                                                  n_parameters=n_parameters,
-                                                  parameters_bound=parameters_bound,
-                                                  landmarks_indices=landmarks_indices,
-                                                  widget_style=widget_style)
+
+                renderer = PCAModelInlineViewer3d(
+                    figure_id=figure_id,
+                    new_figure=new_figure,
+                    points=self.mean().points,
+                    trilist=tmp_trilist,
+                    components=self.components,
+                    eigenvalues=self.eigenvalues,
+                    n_parameters=n_parameters,
+                    parameters_bound=parameters_bound,
+                    landmarks_indices=landmarks_indices,
+                    widget_style=widget_style,
+                )
                 render_return = renderer._render(
                     mesh_type=mesh_type,
                     colour=colour,
@@ -1647,7 +1650,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
 
                 raise Menpo3dMissingError(e)
         else:
-            print('View method is not implemented yet for mayavi')
+            print("View method is not implemented yet for mayavi")
 
     def __str__(self):
         str_out = (

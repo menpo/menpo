@@ -1127,7 +1127,7 @@ class PointCloud(Shape):
                     numbers_colour=numbers_colour,
                     numbers_size=numbers_size,
                     colours=colours,
-                    keep_alpha=keep_alpha
+                    keep_alpha=keep_alpha,
                 )
                 if render_return is not renderer:
                     renderer.close()
