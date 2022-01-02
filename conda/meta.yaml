@@ -12,9 +12,8 @@ build:
 requirements:
   host:
     - python
-    - setuptools
+    - pip
     - numpy
-    - cython
 
   run:
     - python
