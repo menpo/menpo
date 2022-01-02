@@ -21,6 +21,7 @@ workflows:
             - menpo
 
 template: &linux_template
+  resource_class: medium+
   docker:
     - image: circleci/python:latest
   steps:
