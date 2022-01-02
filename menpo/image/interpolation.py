@@ -140,6 +140,5 @@ try:
             warped_image = warped_image.astype(bool)
         return warped_image
 
-
 except ImportError:
     pass
