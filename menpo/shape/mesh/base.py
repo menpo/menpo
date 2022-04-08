@@ -236,6 +236,162 @@ class TriMesh(PointCloud):
         """
         return len(self.trilist)
 
+    def heatmap(
+        self,
+        target_mesh,
+        scalar_range=(0, 2),
+        scale_value=100,
+        type_cmap="hot_r",
+        show_statistics=False,
+        figure_id=None,
+        new_figure=True,
+        inline=True,
+        automatic_id=False,
+        **kwargs,
+    ):
+        r"""
+        Creates a heatmap of euclidean differences between the current mesh
+        and the target meshh. If the two meshes have the same number of
+        vertices, a corresponence of them is considered.
+        If the two meshes don't have the number of vertices,
+        a KDTree is constructed for the current
+        mesh and the difference of the closest points is calculated
+        Parameters
+        ----------
+        target_mesh :   `TriMesh`
+            A TriMesh whose points are used to find the differences(subtrahend)
+        scalar_range : `tuple'
+            The scalar range of  the colorbar, default=(0,2)
+        scale_value : `int'
+            The scale value of the differences, to go to mm, default : 100
+        type_cmap : `cmap'
+            Type of the colormap, default : 'hot', it can be:
+            'Accent','Blues','BrBG','BuGn','BuPu','CMRmap','Dark2', 'GnBu',
+            'Greens','Greys', 'OrRd', 'Oranges', 'PRGn', 'Paired', 'Pastel1',
+            'Pastel2', 'PiYG', 'PuBu', 'PuBuGn', 'PuOr', 'PuRd', 'Purples',
+            'RdBu', 'RdGy', 'RdPu', 'RdYlBu', 'RdYlGn', 'Reds', 'Set1',
+            'Set2', 'Set3', 'Spectral', 'Vega10', 'Vega20', 'Vega20b',
+            'Vega20c', 'Wistia', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd',
+            'afmhot', 'autumn', 'binary', 'black-white', 'blue-red',
+            'bone', 'brg', 'bwr','cool' or 'coolwarm' or 'copper',
+            'cubehelix', 'file', 'flag', 'gist_earth', 'gist_gray',
+            'gist_heat', 'gist_ncar', 'gist_rainbow', 'gist_stern',
+            'gist_yarg', 'gnuplot', 'gnuplot2', 'gray', 'hot', 'hsv',
+            'inferno', 'jet', 'magma', 'nipy_spectral', 'ocean', 'pink',
+            'plasma', 'prism', 'rainbow', 'seismic', 'spectral' 'spring',
+            'summer', 'terrain', 'viridis', 'winter'
+        show_statistics : `bool'
+            If statistics like mean, standard deviation and max error will be
+            shown in the window,
+            default:False
+        automatic_id : `bool`
+            If ``True'', an automatic text is created for figure_id
+        inline : 'bool', False
+               If True, the viewer will be in the Jupyter cell using K3dwidgets
+               If False, the viewer will open a new window using Mayavi
+
+        Returns
+        -------
+        v : `Scene`
+            Handle to  mayavi scene or a K3dwidgetsHeatmapViewer3d object
+        scaled_distances_between_meshes : `np.array'
+            An array with the scaled distances between the
+            correspoding vertices.
+        Raises
+        ------
+        ValueError
+        """
+        source_mesh = self
+        source_n_vertices = source_mesh.points.shape[0]
+        target_mesh_n_vertices = target_mesh.points.shape[0]
+
+        if source_n_vertices != target_mesh_n_vertices:
+            import warnings
+
+            first_part_string = (
+                "Source mesh has {} vertices while target mesh has {}".format(
+                    source_n_vertices, target_mesh_n_vertices
+                )
+            )
+            warnings.warn(first_part_string)
+            subject = source_mesh.points
+            template = target_mesh
+            X = template.points
+
+            tree = cKDTree(X)
+            dist, indx = tree.query(subject, k=1)
+
+            target_mesh = TriMesh(X[indx], source_mesh.trilist)
+
+        if figure_id is None:
+            if automatic_id:
+                if hasattr(self, "path"):
+                    source_name = self.path.stem
+                else:
+                    source_name = "Source"
+                if hasattr(target_mesh, "path"):
+                    target_name = target_mesh.path.stem
+                else:
+                    target_name = "Target"
+                figure_name = "Heatmap between {} and {}".format(
+                    source_name, target_name
+                )
+            else:
+                figure_name = None
+        else:
+            figure_name = figure_id
+
+        diff = (
+            source_mesh.points.astype(np.float32)
+            - target_mesh.points.astype(np.float32)
+        ) ** 2
+        distances_between_meshes = np.sqrt(diff.sum(axis=1))
+        scaled_distances_between_meshes = distances_between_meshes * scale_value
+
+        if inline:
+            try:
+                from menpo3d.visualize import HeatmapInlineViewer3d
+
+                renderer = HeatmapInlineViewer3d(
+                    figure_name, new_figure, self.points, self.trilist, self.landmarks
+                )
+                render_return = renderer._render(
+                    scaled_distances_between_meshes,
+                    type_cmap,
+                    scalar_range,
+                    show_statistics,
+                )
+
+                if render_return is not renderer:
+                    renderer.close()
+                    return
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import HeatmapViewer3d
+
+                renderer = HeatmapViewer3d(
+                    figure_name, new_figure, self.points, self.trilist
+                )
+
+                if type_cmap == "hot_r":
+                    type_cmap = "hot"
+                renderer.render(
+                    scaled_distances_between_meshes,
+                    type_cmap,
+                    scalar_range,
+                    show_statistics,
+                )
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+
     def tojson(self):
         r"""
         Convert this :map:`TriMesh` to a dictionary representation suitable
@@ -1200,6 +1356,8 @@ class TriMesh(PointCloud):
         normals_marker_size=None,
         step=None,
         alpha=1.0,
+        inline=True,
+        return_widget=False,
     ):
         r"""
         Visualization of the TriMesh in 3D.
@@ -1214,7 +1372,8 @@ class TriMesh(PointCloud):
             The representation type to be used for the mesh.
             Example options ::
 
-                {surface, wireframe, points, mesh, fancymesh}
+                mayavi {surface, wireframe, points, mesh, fancymesh}
+                K3D  {surface, wirefame}
 
         line_width : `float`, optional
             The width of the lines, if there are any.
@@ -1230,9 +1389,11 @@ class TriMesh(PointCloud):
             The style of the markers.
             Example options ::
 
-                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
-                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
-                 arrow, axes, cone, cube, cylinder, point, sphere}
+                mayavi {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond,
+                        2dhooked_arrow, 2dsquare, 2dthick_arrow,
+                        2dthick_cross, 2dtriangle, 2dvertex,
+                        arrow, axes, cone, cube, cylinder, point, sphere}
+                K3D  {flat, dot, 3d, 3dSpecular, mesh}
 
         marker_size : `float` or ``None``, optional
             The size of the markers. This size can be seen as a scale factor
@@ -1264,9 +1425,11 @@ class TriMesh(PointCloud):
             is not ``None``.
             Example options ::
 
-                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
-                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
-                 arrow, axes, cone, cube, cylinder, point, sphere}
+                mayavi {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond,
+                        2dhooked_arrow, 2dsquare, 2dthick_arrow,
+                        2dthick_cross, 2dtriangle, 2dvertex,
+                        arrow, axes, cone, cube, cylinder, point, sphere}
+                K3D  {flat, dot, 3d, 3dSpecular, mesh}
 
         normals_marker_resolution : `int`, optional
             The resolution of the markers of the normals. For spheres, for
@@ -1284,34 +1447,79 @@ class TriMesh(PointCloud):
             the 'fancymesh' and if `normals` is not ``None``.
         alpha : `float`, optional
             Defines the transparency (opacity) of the object.
+        inline : `bool`, False
+               If True, the viewer will be in the Jupyter cell using K3dwidgets
+               If False, the viewer will open a new window using Mayavi
+        return_widget : `bool`, False
+               K3D only
+               If True, the widget will be returned so as it can be stored
+               in a variable or displayed if it is the last command of a
+               Jupyter cell.
+               If False, the widget will be displayed. It should be used when
+               we want many widgets to be displayed in the same cell.
 
         Returns
         -------
         renderer : `menpo3d.visualize.TriMeshViewer3D`
             The Menpo3D rendering object.
         """
-        try:
-            from menpo3d.visualize import TriMeshViewer3d
+        if inline:
+            try:
+                from menpo3d.visualize import TriMeshInlineViewer3d
 
-            renderer = TriMeshViewer3d(figure_id, new_figure, self.points, self.trilist)
-            renderer.render(
-                mesh_type=mesh_type,
-                line_width=line_width,
-                colour=colour,
-                marker_style=marker_style,
-                marker_size=marker_size,
-                marker_resolution=marker_resolution,
-                normals=normals,
-                normals_colour=normals_colour,
-                normals_line_width=normals_line_width,
-                normals_marker_style=normals_marker_style,
-                normals_marker_resolution=normals_marker_resolution,
-                normals_marker_size=normals_marker_size,
-                step=step,
-                alpha=alpha,
-            )
-            return renderer
-        except ImportError as e:
-            from menpo.visualize import Menpo3dMissingError
+                renderer = TriMeshInlineViewer3d(
+                    figure_id, new_figure, self.points, self.trilist, self.landmarks
+                )
+                render_return = renderer._render(
+                    line_width=line_width,
+                    colour=colour,
+                    mesh_type=mesh_type,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    normals=normals,
+                    normals_colour=normals_colour,
+                    normals_line_width=normals_line_width,
+                    normals_marker_size=normals_marker_size,
+                    alpha=alpha,
+                )
+                if render_return is not renderer:
+                    renderer.close()
+                    return
 
-            raise Menpo3dMissingError(e)
+                if return_widget:
+                    return renderer
+                else:
+                    renderer.display()
+
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import TriMeshViewer3d
+
+                renderer = TriMeshViewer3d(
+                    figure_id, new_figure, self.points, self.trilist
+                )
+                renderer.render(
+                    mesh_type=mesh_type,
+                    line_width=line_width,
+                    colour=colour,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_resolution=marker_resolution,
+                    normals=normals,
+                    normals_colour=normals_colour,
+                    normals_line_width=normals_line_width,
+                    normals_marker_style=normals_marker_style,
+                    normals_marker_resolution=normals_marker_resolution,
+                    normals_marker_size=normals_marker_size,
+                    step=step,
+                    alpha=alpha,
+                )
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)

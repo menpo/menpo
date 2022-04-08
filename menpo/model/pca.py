@@ -1542,6 +1542,116 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             verbose=verbose,
         )
 
+    def view(
+        self,
+        figure_id=None,
+        new_figure=True,
+        mesh_type="wireframe",
+        line_width=2,
+        colour="r",
+        marker_style="mesh",
+        marker_size=None,
+        alpha=1.0,
+        n_parameters=5,
+        parameters_bound=(-15, 15),
+        landmarks_indices=None,
+        widget_style="info",
+        inline=True,
+    ):
+        r"""
+        Visualization of the TriMesh in 3D.
+
+        Parameters
+        ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        mesh_type : `str`, optional
+            The representation type to be used for the mesh.
+            Example options ::
+
+                {surface, wireframe, points, mesh, fancymesh}
+        colour : See Below, optional
+            The colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+        marker_style : `str`, optional
+            The style of the markers.
+            Example options ::
+                 `flat`: simple circles with uniform color,
+                 `dot`: simple dot with uniform color,
+                 `3d`: little 3D balls,
+                 `3dSpecular`: little 3D balls with specular lightning,
+                 `mesh`: high precision triangle mesh of a ball
+                         (high quality and GPU load).}
+        marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically. It only applies for the
+            'fancymesh'.
+
+        widget_style: `str`
+            Style options:
+                ============= ==================
+                Style         Description
+                ============= ==================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ==================
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
+
+        Returns
+        -------
+        renderer : `menpo3d.visualize.TriMeshViewer3D`
+            The Menpo3D rendering object.
+        """
+        if inline:
+            if name_of_callable(self.template_instance) == "TriMesh":
+                tmp_trilist = self.mean().trilist
+            elif name_of_callable(self.template_instance) == "PointCloud":
+                tmp_trilist = None
+            else:
+                raise ValueError("We only support TriMesh and PointCloud")
+
+            try:
+                from menpo3d.visualize import PCAModelInlineViewer3d
+
+                renderer = PCAModelInlineViewer3d(
+                    figure_id=figure_id,
+                    new_figure=new_figure,
+                    points=self.mean().points,
+                    trilist=tmp_trilist,
+                    components=self.components,
+                    eigenvalues=self.eigenvalues,
+                    n_parameters=n_parameters,
+                    parameters_bound=parameters_bound,
+                    landmarks_indices=landmarks_indices,
+                    widget_style=widget_style,
+                )
+                render_return = renderer._render(
+                    mesh_type=mesh_type,
+                    colour=colour,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    alpha=alpha,
+                )
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            print("View method is not implemented yet for mayavi")
+
     def __str__(self):
         str_out = (
             "PCA Model \n"
