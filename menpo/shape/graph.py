@@ -489,7 +489,7 @@ class Graph(object):
         """
         return len(self.find_all_paths(start, end))
 
-    def find_all_shortest_paths(self, algorithm="auto", unweighted=False):
+    def find_all_shortest_paths(self, algorithm="auto", unweighted=False, indices=None):
         r"""
         Returns the distances and predecessors arrays of the graph's shortest
         paths.
@@ -499,18 +499,21 @@ class Graph(object):
         algorithm : 'str', see below, optional
             The algorithm to be used. Possible options are:
 
-            ================ =========================================
-            'dijkstra'       Dijkstra's algorithm with Fibonacci heaps
-            'bellman-ford'   Bellman-Ford algorithm
-            'johnson'        Johnson's algorithm
-            'floyd-warshall' Floyd-Warshall algorithm
-            'auto'           Select the best among the above
-            ================ =========================================
+            ====== =========================================
+            'D'    Dijkstra's algorithm with Fibonacci heaps
+            'BF'   Bellman-Ford algorithm
+            'J'    Johnson's algorithm
+            'FW'   Floyd-Warshall algorithm
+            'auto' Select the best among the above
+            ====== =========================================
 
         unweighted : `bool`, optional
             If ``True``, then find unweighted distances. That is, rather than
             finding the path between each vertex such that the sum of weights is
             minimized, find the path such that the number of edges is minimized.
+        indices : array like or int
+            If specified, only compute the paths from the points at the given
+            indices. Incompatible with method == ‘FW’.
 
         Returns
         -------
@@ -532,6 +535,7 @@ class Graph(object):
             method=algorithm,
             unweighted=unweighted,
             return_predecessors=True,
+            indices=indices,
         )
 
     def find_shortest_path(
@@ -2414,6 +2418,8 @@ class PointGraph(Graph, PointCloud):
         render_numbering=False,
         numbers_colour="k",
         numbers_size=None,
+        inline=True,
+        return_widget=False,
     ):
         r"""
         Visualization of the PointGraph in 3D.
@@ -2488,32 +2494,65 @@ class PointGraph(Graph, PointCloud):
         renderer : `menpo3d.visualize.PointGraphViewer3d`
             The Menpo3D rendering object.
         """
-        try:
-            from menpo3d.visualize import PointGraphViewer3d
+        if inline:
+            try:
+                from menpo3d.visualize import PointGraphInlineViewer3d
 
-            renderer = PointGraphViewer3d(
-                figure_id, new_figure, self.points, self.edges
-            )
-            renderer.render(
-                render_lines=render_lines,
-                line_colour=line_colour,
-                line_width=line_width,
-                render_markers=render_markers,
-                marker_style=marker_style,
-                marker_size=marker_size,
-                marker_colour=marker_colour,
-                marker_resolution=marker_resolution,
-                step=step,
-                alpha=alpha,
-                render_numbering=render_numbering,
-                numbers_colour=numbers_colour,
-                numbers_size=numbers_size,
-            )
-            return renderer
-        except ImportError as e:
-            from menpo.visualize import Menpo3dMissingError
+                renderer = PointGraphInlineViewer3d(
+                    figure_id, new_figure, self.points, self.edges
+                )
+                render_return = renderer._render(
+                    render_lines=render_lines,
+                    line_colour=line_colour,
+                    line_width=line_width,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                )
+                if render_return is not renderer:
+                    renderer.close()
+                    return
 
-            raise Menpo3dMissingError(e)
+                if return_widget:
+                    return renderer
+                else:
+                    renderer.display()
+
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import PointGraphViewer3d
+
+                renderer = PointGraphViewer3d(
+                    figure_id, new_figure, self.points, self.edges
+                )
+                renderer.render(
+                    render_lines=render_lines,
+                    line_colour=line_colour,
+                    line_width=line_width,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    marker_resolution=marker_resolution,
+                    step=step,
+                    alpha=alpha,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                )
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
 
 
 class PointUndirectedGraph(PointGraph, UndirectedGraph):

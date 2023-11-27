@@ -240,6 +240,8 @@ class ColouredTriMesh(TriMesh):
         normals_marker_size=None,
         step=None,
         alpha=1.0,
+        inline=True,
+        return_widget=False,
         **kwargs,
     ):
         r"""
@@ -317,30 +319,64 @@ class ColouredTriMesh(TriMesh):
             The Menpo3D rendering object.
         """
         if render_texture:
-            try:
-                from menpo3d.visualize import ColouredTriMeshViewer3d
+            if inline:
+                try:
+                    from menpo3d.visualize import ColouredTriMeshInlineViewer3d
 
-                renderer = ColouredTriMeshViewer3d(
-                    figure_id, new_figure, self.points, self.trilist, self.colours
-                )
-                renderer.render(
-                    mesh_type=mesh_type,
-                    ambient_light=ambient_light,
-                    specular_light=specular_light,
-                    normals=normals,
-                    normals_colour=normals_colour,
-                    normals_line_width=normals_line_width,
-                    normals_marker_style=normals_marker_style,
-                    normals_marker_resolution=normals_marker_resolution,
-                    normals_marker_size=normals_marker_size,
-                    step=step,
-                    alpha=alpha,
-                )
-                return renderer
-            except ImportError as e:
-                from menpo.visualize import Menpo3dMissingError
+                    renderer = ColouredTriMeshInlineViewer3d(
+                        figure_id,
+                        new_figure,
+                        self.points,
+                        self.trilist,
+                        self.colours,
+                        self.landmarks,
+                    )
+                    render_return = renderer._render(
+                        normals=normals,
+                        normals_colour=normals_colour,
+                        normals_line_width=normals_line_width,
+                        normals_marker_size=normals_marker_size,
+                    )
+                    if render_return is not renderer:
+                        renderer.close()
+                        return
+                    if return_widget:
+                        return renderer
+                    else:
+                        renderer.display()
 
-                raise Menpo3dMissingError(e)
+                except ImportError as e:
+                    from menpo.visualize import Menpo3dMissingError
+
+                    raise Menpo3dMissingError(e)
+            else:
+                try:
+                    from menpo3d.visualize import ColouredTriMeshViewer3d
+
+                    renderer = ColouredTriMeshViewer3d(
+                        figure_id,
+                        new_figure,
+                        self.points,
+                        self.trilist,
+                        self.colours,
+                        self.landmarks,
+                    )
+                    renderer.render(
+                        mesh_type=mesh_type,
+                        ambient_light=ambient_light,
+                        specular_light=specular_light,
+                        normals=normals,
+                        normals_colour=normals_colour,
+                        normals_line_width=normals_line_width,
+                        normals_marker_style=normals_marker_style,
+                        normals_marker_resolution=normals_marker_resolution,
+                        normals_marker_size=normals_marker_size,
+                    )
+                    return renderer
+                except ImportError as e:
+                    from menpo.visualize import Menpo3dMissingError
+
+                    raise Menpo3dMissingError(e)
         else:
             try:
                 from menpo3d.visualize import TriMeshViewer3d
