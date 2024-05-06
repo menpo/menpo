@@ -285,12 +285,6 @@ def test_create_image_copy_false_not_c_contiguous():
         assert len(w) == 1
 
 
-def test_mask_image_3d():
-    mask_shape = (13, 120, 121)
-    mask_region = np.ones(mask_shape)
-    return BooleanImage(mask_region)
-
-
 def test_mask_creation_basics():
     mask_shape = (3, 120, 121)
     mask_region = np.ones(mask_shape)
