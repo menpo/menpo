@@ -16,7 +16,9 @@ from menpo.shape import (
 from menpo.testing import surrogate
 from menpo.visualize import Menpo3dMissingError
 
-fake_triangle: np.ndarray = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+fake_triangle: np.ndarray = np.array(
+    [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+)
 fake_trilist: np.ndarray = np.array([[0, 1, 2]], dtype=np.uint32)
 fake_texture: Image = Image.init_blank([10, 10])
 fake_tcoords: np.ndarray = np.array([[0, 0], [0.5, 0.5], [1.0, 1.0]])
