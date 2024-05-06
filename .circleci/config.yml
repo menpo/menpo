@@ -16,9 +16,6 @@ workflows:
       - linux_python_3.10:
           context:
             - menpo
-      - linux_python_3.11:
-          context:
-            - menpo
 
 template: &linux_template
   resource_class: medium+
@@ -52,8 +49,3 @@ jobs:
     environment:
       CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.9
       PYTHON_VERSION: "3.10"
-  linux_python_3.11:
-    <<: *linux_template
-    environment:
-      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.9
-      PYTHON_VERSION: "3.11"
