@@ -2,7 +2,7 @@ import numpy as np
 
 
 def _normalize(v):
-    return np.nan_to_num(v / np.sqrt((v ** 2).sum(axis=1, keepdims=True)))
+    return np.nan_to_num(v / np.sqrt((v**2).sum(axis=1, keepdims=True)))
 
 
 def compute_face_normals(points, trilist):

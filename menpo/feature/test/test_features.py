@@ -112,7 +112,7 @@ def test_igo_values():
 def test_es_values():
     image = Image([[1.0, 2.0], [2.0, 1.0]])
     es_img = es(image)
-    k = 1.0 / (2 * (2 ** 0.5))
+    k = 1.0 / (2 * (2**0.5))
     res = np.array([[[k, -k], [k, -k]], [[k, k], [-k, -k]]])
     assert_allclose(es_img.pixels, res)
 

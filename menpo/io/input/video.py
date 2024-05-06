@@ -186,7 +186,7 @@ class FFMpegVideoReader(object):
             stdout=sp.PIPE,
             stdin=sp.DEVNULL,
             stderr=sp.DEVNULL,
-            bufsize=10 ** 8,
+            bufsize=10**8,
         )  # Is this buffer the correct size?
         # We have not yet read the specified frame
         self.index = frame - 1

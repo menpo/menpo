@@ -155,7 +155,7 @@ def _daisy(
         if normalization == "l1":
             descs /= np.sum(descs, axis=0)
         elif normalization == "l2":
-            descs /= np.sqrt(np.sum(descs ** 2, axis=0))
+            descs /= np.sqrt(np.sum(descs**2, axis=0))
         elif normalization == "daisy":
             for i in range(0, desc_dims, orientations):
                 norms = np.sqrt(np.sum(descs[i : i + orientations] ** 2, axis=0))

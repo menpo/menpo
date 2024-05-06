@@ -91,7 +91,7 @@ class R2LogR2RBF(RadialBasisFunction):
         euclidean_distance = cdist(x, self.c)
         mask = euclidean_distance == 0
         with np.errstate(divide="ignore", invalid="ignore"):
-            u = euclidean_distance ** 2 * (2 * np.log(euclidean_distance))
+            u = euclidean_distance**2 * (2 * np.log(euclidean_distance))
         # reset singularities to 0
         u[mask] = 0
         return u
@@ -135,7 +135,7 @@ class R2LogRRBF(RadialBasisFunction):
         euclidean_distance = cdist(points, self.c)
         mask = euclidean_distance == 0
         with np.errstate(divide="ignore", invalid="ignore"):
-            u = euclidean_distance ** 2 * np.log(euclidean_distance)
+            u = euclidean_distance**2 * np.log(euclidean_distance)
         # reset singularities to 0
         u[mask] = 0
         return u

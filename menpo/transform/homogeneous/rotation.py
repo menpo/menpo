@@ -361,12 +361,12 @@ class Rotation(DiscreteAffine, Similarity):
             #  does nothing
             return None, None
         axis = evec_with_real_unitary_eval[:, 0]
-        axis /= np.sqrt((axis ** 2).sum())  # normalize to unit vector
+        axis /= np.sqrt((axis**2).sum())  # normalize to unit vector
         # to find the angle of rotation, build a new unit vector perpendicular
         # to the axis, and see how it rotates
         axis_temp_vector = axis - np.random.rand(axis.size)
         perpendicular_vector = np.cross(axis, axis_temp_vector)
-        perpendicular_vector /= np.sqrt((perpendicular_vector ** 2).sum())
+        perpendicular_vector /= np.sqrt((perpendicular_vector**2).sum())
         transformed_vector = np.dot(self.rotation_matrix, perpendicular_vector)
         angle_of_rotation = np.arccos(np.dot(transformed_vector, perpendicular_vector))
         chirality_of_rotation = np.dot(
