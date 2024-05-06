@@ -561,7 +561,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             # If the weights were normalized, then they are all relative to
             # to the scale of the eigenvalues and thus must be multiplied by
             # the sqrt of the eigenvalues.
-            weights *= self.eigenvalues ** 0.5
+            weights *= self.eigenvalues**0.5
         return self._instance_vectors_for_full_weights(weights)
 
     def instance(self, weights, normalized_weights=False):

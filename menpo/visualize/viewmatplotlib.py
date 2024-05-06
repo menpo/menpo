@@ -205,7 +205,7 @@ class MatplotlibSubplots(object):
             return True
         if n % 3 == 0:
             return False
-        r = int(n ** 0.5)
+        r = int(n**0.5)
         f = 5
         while f <= r:
             if n % f == 0:
@@ -825,7 +825,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                         linestyle=tmp_line,
                         color=line_colour[i],
                         marker=tmp_marker,
-                        markersize=marker_size ** 0.5,
+                        markersize=marker_size**0.5,
                         markeredgewidth=marker_edge_width,
                         markeredgecolor=marker_edge_colour[i],
                         markerfacecolor=marker_face_colour[i],
@@ -911,7 +911,10 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         warped_points = self.alignment_transform.apply(sample_points)
         delta = warped_points - sample_points
         # plot the sample points result
-        x, y, = (
+        (
+            x,
+            y,
+        ) = (
             0,
             1,
         )

@@ -71,7 +71,7 @@ def __frequency_butterworth_filter(shape, cutoff, order):
     """
     # Dimension-free sum of squares
     grid = __adjusted_meshgrid(shape)
-    grid_sq = [g ** 2 for g in grid]
+    grid_sq = [g**2 for g in grid]
     grid_sq = sum(grid_sq)
 
     radius = np.sqrt(grid_sq)
@@ -238,7 +238,7 @@ def __log_gabor_3d(
 
     axis0, axis1, axis2 = __adjusted_meshgrid(image.shape)
 
-    radius = np.sqrt(axis0 ** 2 + axis1 ** 2 + axis2 ** 2)
+    radius = np.sqrt(axis0**2 + axis1**2 + axis2**2)
     theta = np.arctan2(axis0, axis1)
     # TODO: Is adding the mean REALLY a good idea?
     m_ab = np.abs(np.mean(radius))
@@ -259,7 +259,7 @@ def __log_gabor_3d(
 
     # Compute radial component of filter
     for s in range(num_scales):
-        wavelength = min_wavelength * scaling_constant ** s
+        wavelength = min_wavelength * scaling_constant**s
         fo = 1.0 / wavelength
 
         l = np.exp((-np.log(radius / fo) ** 2) / (2.0 * np.log(center_sigma) ** 2))
@@ -292,8 +292,8 @@ def __log_gabor_3d(
             )
             d_phi = np.abs(np.arctan2(d_phi_sin, d_phi_cos))
 
-            phi_spread = (-(d_phi ** 2)) / (2 * phi_sigma ** 2)
-            theta_spread = (-(d_theta ** 2)) / (2 * theta_sigma ** 2)
+            phi_spread = (-(d_phi**2)) / (2 * phi_sigma**2)
+            theta_spread = (-(d_theta**2)) / (2 * theta_sigma**2)
             spread = np.exp(phi_spread + theta_spread)
 
             # For each scale, multiply by the angular spread
@@ -339,7 +339,7 @@ def __log_gabor_2d(
 
     axis0, axis1 = __adjusted_meshgrid(image.shape)
 
-    radius = np.sqrt(axis0 ** 2 + axis1 ** 2)
+    radius = np.sqrt(axis0**2 + axis1**2)
     phi = np.arctan2(axis0, axis1)
 
     radius = np.fft.ifftshift(radius)
@@ -354,7 +354,7 @@ def __log_gabor_2d(
 
     # Compute radial component of filter
     for s in range(num_scales):
-        wavelength = min_wavelength * scaling_constant ** s
+        wavelength = min_wavelength * scaling_constant**s
         fo = 1.0 / wavelength
 
         l = np.exp((-((np.log(radius / fo)) ** 2)) / (2.0 * np.log(center_sigma) ** 2))
@@ -376,7 +376,7 @@ def __log_gabor_2d(
 
         # Calculate the standard deviation of the angular Gaussian
         # function used to construct filters in the freq. plane.
-        spread = np.exp((-(d_phi ** 2.0)) / (2.0 * phi_sigma ** 2))
+        spread = np.exp((-(d_phi**2.0)) / (2.0 * phi_sigma**2))
 
         # For each scale, multiply by the angular spread
         for s in range(0, num_scales):

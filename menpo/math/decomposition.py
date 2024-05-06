@@ -298,7 +298,7 @@ def ipca(B, U_a, l_a, n_a, m_a=None, f=1.0, eps=1e-10):
     U_tilde, s_tilde, Vt_tilde = np.linalg.svd(R)
 
     # compute new eigenvalues
-    l = s_tilde ** 2 / (n - 1)
+    l = s_tilde**2 / (n - 1)
     # keep only positive eigenvalues within tolerance
     l = l[l > eps]
 

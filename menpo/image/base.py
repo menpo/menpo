@@ -2303,7 +2303,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             `return_transform` is ``True``.
         """
         x, y = self.landmarks[group].range()
-        scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
+        scale = diagonal_range / np.sqrt(x**2 + y**2)
         return self.rescale(
             scale,
             round=round,

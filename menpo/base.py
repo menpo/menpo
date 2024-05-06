@@ -334,6 +334,7 @@ class MenpoDeprecationWarning(Warning):
     A warning that functionality in Menpo will be deprecated in a future major
     release.
     """
+
     pass
 
 
