@@ -436,7 +436,7 @@ def test_2d_crop_without_mask():
 
     assert cropped_im.shape == (10, 10)
     assert cropped_im.n_channels == 3
-    assert np.alltrue(cropped_im.shape)
+    assert np.all(cropped_im.shape)
 
 
 def test_2d_crop_with_mask():
@@ -446,7 +446,7 @@ def test_2d_crop_with_mask():
     im = MaskedImage(pixels, mask=mask)
     cropped_im = im.crop([0, 0], [20, 60])
     assert cropped_im.shape == (20, 60)
-    assert np.alltrue(cropped_im.shape)
+    assert np.all(cropped_im.shape)
 
 
 def test_normalize_std_image():
