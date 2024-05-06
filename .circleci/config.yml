@@ -4,9 +4,6 @@ workflows:
   version: 2
   test:
     jobs:
-      - linux_python_3.7:
-          context:
-            - menpo
       - linux_python_3.8:
           context:
             - menpo
@@ -17,6 +14,9 @@ workflows:
           context:
             - menpo
       - linux_python_3.10:
+          context:
+            - menpo
+      - linux_python_3.11:
           context:
             - menpo
 
@@ -37,11 +37,6 @@ template: &linux_template
           ~/miniconda/bin/python condaci.py build ./conda
 
 jobs:
-  linux_python_3.7:
-    <<: *linux_template
-    environment:
-      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.9
-      PYTHON_VERSION: 3.7
   linux_python_3.8:
     <<: *linux_template
     environment:
@@ -57,3 +52,8 @@ jobs:
     environment:
       CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.9
       PYTHON_VERSION: "3.10"
+  linux_python_3.11:
+    <<: *linux_template
+    environment:
+      CONDACI_PYPI_SDIST_UPLOAD_PY_VER: 3.9
+      PYTHON_VERSION: "3.11"

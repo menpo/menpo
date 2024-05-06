@@ -2,7 +2,6 @@
 from warnings import warn
 
 import numpy as np
-import typing as t
 
 from .normals import compute_face_normals, compute_vertex_normals
 from .. import PointCloud
@@ -137,7 +136,7 @@ class TriMesh(PointCloud):
         In general this should only be used if you know what you are doing.
     """
 
-    def __init__(self, points, trilist: t.Optional[np.ndarray] = None, copy=True):
+    def __init__(self, points, trilist=None, copy=True):
         super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
             from scipy.spatial import Delaunay  # expensive import
