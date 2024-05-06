@@ -23,7 +23,7 @@ def test_transformchain_compose_before_composes_with():
     tr = TransformChain([])
     new_tr = tr.compose_before(Mock(spec=Transform))
     assert new_tr is not tr
-    assert len(new_tr.transforms) is 1
+    assert len(new_tr.transforms) == 1
 
 
 def test_transformchain_compose_before_inplace_order():
@@ -48,14 +48,14 @@ def test_transformchain_compose_before_inplace_composes_with():
     no_return = tr.compose_after_inplace(Mock(spec=Transform))
     assert no_return is None
     assert ref is tr
-    assert len(tr.transforms) is 1
+    assert len(tr.transforms) == 1
 
 
 def test_transformchain_compose_after_composes_with():
     tr = TransformChain([])
     new_tr = tr.compose_after(Mock(spec=Transform))
     assert new_tr is not tr
-    assert len(new_tr.transforms) is 1
+    assert len(new_tr.transforms) == 1
 
 
 def test_transformchain_compose_after_inplace_composes_with():
@@ -64,4 +64,4 @@ def test_transformchain_compose_after_inplace_composes_with():
     no_return = tr.compose_after_inplace(Mock(spec=Transform))
     assert no_return is None
     assert ref is tr
-    assert len(tr.transforms) is 1
+    assert len(tr.transforms) == 1
