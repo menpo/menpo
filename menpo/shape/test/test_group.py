@@ -10,15 +10,15 @@ from menpo.testing import is_same_array
 
 points = np.ones((10, 3))
 adjacency_matrix = csr_matrix((10, 10))
-mask_dict = OrderedDict([("all", np.ones(10, dtype=bool))])
-lower = np.array(
+mask_dict: OrderedDict = OrderedDict([("all", np.ones(10, dtype=bool))])
+lower: np.ndarray = np.array(
     [True, True, True, True, True, True, False, False, False, False], dtype=bool
 )
-upper = np.array(
+upper: np.ndarray = np.array(
     [False, False, False, False, False, False, True, True, True, True], dtype=bool
 )
-mask_dict_2 = OrderedDict([("lower", lower), ("upper", upper)])
-mask_dict_3 = OrderedDict(
+mask_dict_2: OrderedDict = OrderedDict([("lower", lower), ("upper", upper)])
+mask_dict_3: OrderedDict = OrderedDict(
     [("all", np.ones(10, dtype=bool)), ("lower", lower), ("upper", upper)]
 )
 
