@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import csgraph, csr_matrix, triu
+from scipy.sparse import csgraph, csr_matrix, triu, issparse
 
 from . import PointCloud
 
@@ -3413,7 +3413,10 @@ def _is_symmetric(array):
     is_symmetric : `bool`
         ``True`` if the array is symmetric.
     """
-    return np.allclose(array.transpose().nonzero(), array.nonzero())
+    if issparse(array):
+        return (array != array.T).nnz == 0
+    else:
+        return np.count_nonzero(array != array.T) == 0
 
 
 def _check_n_points(points, adjacency_matrix):
