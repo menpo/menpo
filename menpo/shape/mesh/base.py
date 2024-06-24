@@ -6,6 +6,7 @@ import numpy as np
 from .normals import compute_face_normals, compute_vertex_normals
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
+import scipy.sparse as sp
 
 
 def grid_tcoords(shape):
@@ -227,6 +228,77 @@ class TriMesh(PointCloud):
     def __str__(self):
         return "{}, n_tris: {}".format(PointCloud.__str__(self), self.n_tris)
 
+    def __add__(self, other):
+        r"""
+        Overload the add operator
+
+        Parameters
+        ----------
+        other : TriMesh
+
+        Returns
+        -------
+        TriMesh : A TriMesh with points the sum of
+                     the points of the two TriMesh
+        """
+        if self.same_space(other):
+            new_points = self.points + other.points
+            return TriMesh(new_points, self.trilist)
+        else:
+            raise ValueError("The two meshes dont have the same shape")
+
+    def __sub__(self, other):
+        r"""
+        Overload the add operator
+
+        Parameters
+        ----------
+        other : TriMesh
+
+        Returns
+        -------
+        TriMesh: A TriMesh with points the difference
+                     the points of the two meshes
+        """
+        if self.same_space(other):
+            new_points = self.points - other.points
+            return TriMesh(new_points, self.trilist)
+        else:
+            raise ValueError("The two meshes dont have the same shape")
+
+    def __mul__(self, multiplier):
+        r"""
+        Overload the multiplication  operator
+
+        Parameters
+        ----------
+        multiplier:  A scalar that every point is multiplied with
+
+        Returns
+        -------
+        TriMesh : A TriMesh with points multiplied by the multiplier
+        """
+        new_points = self.points * multiplier
+        return TriMesh(new_points, self.trilist)
+
+    def __truediv__(self, divisor):
+        r"""
+        Overload the add operator
+
+        Parameters
+        ----------
+        divisor:  A scalar that divides every point in TriMesh
+
+        Returns
+        -------
+        TriMesh : A TriMesh with points divided by the divisor
+        """
+        if divisor:
+            new_points = self.points / divisor
+            return TriMesh(new_points, self.trilist)
+        else:
+            raise ValueError("Divisor cannot be zero")
+
     @property
     def n_tris(self):
         r"""
@@ -235,6 +307,296 @@ class TriMesh(PointCloud):
         :type: `int`
         """
         return len(self.trilist)
+
+    def half_edges(self):
+        """Create an array of half edges
+           Code based on https://github.com/joel-simon/cymesh
+
+           Returns: ndarray
+           --------
+           An half_edge array has the following structure:
+           [face, point, twin, next, edge] where
+           face: The index of face the half edge belongs
+           point: The index of point(or vertex) the half edge terminates
+           twin: The index of its twin half edge
+           next: The index of its next half edge
+           edge: The edge it belogs
+
+           ToDo
+           Check for corrupted meshes, e.g duplicate triangles
+        """
+        halfs = []
+        pair_to_half = {}  # (i,j) tuple -> half edge
+        he_boundary = {}  # Create boundary edges.
+        edges = []
+
+        for i_f, f in enumerate(self.trilist):
+            face_half_edges = []
+
+            for i, a in enumerate(f):
+                b = f[(i + 1) % len(f)]
+                pair_ab = (a, b)
+                pair_ba = (b, a)
+                h_ab = [i_f, a, -1, -1, -1]
+                halfs.append(h_ab)
+                pair_to_half[pair_ab] = len(halfs) - 1
+                face_half_edges.append(len(halfs) - 1)
+
+                if pair_ba in pair_to_half:
+                    h_ba = halfs[pair_to_half[pair_ba]]
+                    h_ba[2] = len(halfs) - 1
+                    h_ab[2] = pair_to_half[pair_ba]
+                    h_ab[4] = h_ba[4]
+                else:
+                    edge = len(edges)
+                    edges.append(a)
+                    h_ab[4] = edge
+
+            # Link them together via their 'next' pointers.
+            for i, he_id in enumerate(face_half_edges):
+                he = halfs[he_id]
+                he[3] = face_half_edges[(i + 1) % len(f)]
+
+        for a, b in pair_to_half:
+            if (b, a) not in pair_to_half:
+                twin = pair_to_half[(a, b)]
+                halfs[twin][2] = len(halfs)
+                edge = halfs[pair_to_half[(a, b)]][4]
+                h_ba = [-1, b, twin, -1, edge]
+                halfs.append(h_ba)
+                he_boundary[b] = (len(halfs) - 1, a)
+
+        for he_id, end in he_boundary.values():
+            try:
+                halfs[he_id][3] = he_boundary[end][0]
+            except KeyError:
+                print(
+                    "Could not find the following keys. Possibly corrupted mesh",
+                    he_id,
+                    end,
+                )
+        self.np_halfs = np.asarray(halfs)
+
+    def list_neighbours(self, vertex):
+        """Return a list of neigbours for a vertex;
+           Parameters:
+           ----------
+           vertex: int
+               The ver
+           Returns: list
+               List of vertex's neighbours
+        """
+        if hasattr(self, "np_halfs") is False:
+            raise NotImplementedError(
+                "Halfedges have not been created. Try to create it by calling haf_edges function"
+            )
+
+        if vertex >= self.n_points:
+            raise ValueError(
+                "Vertex should be an int between 0 and {}".format(self.n_points)
+            )
+
+        twin = np.where(self.np_halfs[:, 1] == vertex)[0][-1]
+        start = twin
+        h = self.np_halfs[twin]
+        neighbours = []
+        while True:
+            new_twin = h[2]
+            new_next = self.np_halfs[new_twin][3]
+            neighbours.append(self.np_halfs[new_twin][1])
+            h = self.np_halfs[new_next]
+            if new_next == start:
+                return neighbours
+
+    def heatmap(
+        self,
+        target_mesh,
+        scalar_range=(0, 2),
+        scale_value=100,
+        type_cmap="hot_r",
+        show_statistics=False,
+        figure_id=None,
+        new_figure=True,
+        inline=True,
+        automatic_id=False,
+        **kwargs,
+    ):
+        r"""
+        Creates a heatmap of euclidean differences between the current mesh
+        and the target meshh. If the two meshes have the same number of
+        vertices, a corresponence of them is considered.
+        If the two meshes don't have the number of vertices,
+        a KDTree is constructed for the current
+        mesh and the difference of the closest points is calculated
+        Parameters
+        ----------
+        target_mesh :   `TriMesh`
+            A TriMesh whose points are used to find the differences(subtrahend)
+        scalar_range : `tuple'
+            The scalar range of  the colorbar, default=(0,2)
+        scale_value : `int'
+            The scale value of the differences, to go to mm, default : 100
+        type_cmap : `cmap'
+            Type of the colormap, default : 'hot', it can be:
+            'Accent','Blues','BrBG','BuGn','BuPu','CMRmap','Dark2', 'GnBu',
+            'Greens','Greys', 'OrRd', 'Oranges', 'PRGn', 'Paired', 'Pastel1',
+            'Pastel2', 'PiYG', 'PuBu', 'PuBuGn', 'PuOr', 'PuRd', 'Purples',
+            'RdBu', 'RdGy', 'RdPu', 'RdYlBu', 'RdYlGn', 'Reds', 'Set1',
+            'Set2', 'Set3', 'Spectral', 'Vega10', 'Vega20', 'Vega20b',
+            'Vega20c', 'Wistia', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd',
+            'afmhot', 'autumn', 'binary', 'black-white', 'blue-red',
+            'bone', 'brg', 'bwr','cool' or 'coolwarm' or 'copper',
+            'cubehelix', 'file', 'flag', 'gist_earth', 'gist_gray',
+            'gist_heat', 'gist_ncar', 'gist_rainbow', 'gist_stern',
+            'gist_yarg', 'gnuplot', 'gnuplot2', 'gray', 'hot', 'hsv',
+            'inferno', 'jet', 'magma', 'nipy_spectral', 'ocean', 'pink',
+            'plasma', 'prism', 'rainbow', 'seismic', 'spectral' 'spring',
+            'summer', 'terrain', 'viridis', 'winter'
+        show_statistics : `bool'
+            If statistics like mean, standard deviation and max error will be
+            shown in the window,
+            default:False
+        automatic_id : `bool`
+            If ``True'', an automatic text is created for figure_id
+        inline : 'bool', False
+               If True, the viewer will be in the Jupyter cell using K3dwidgets
+               If False, the viewer will open a new window using Mayavi
+
+        Returns
+        -------
+        v : `Scene`
+            Handle to  mayavi scene or a K3dwidgetsHeatmapViewer3d object
+        scaled_distances_between_meshes : `np.array'
+            An array with the scaled distances between the
+            correspoding vertices.
+        Raises
+        ------
+        ValueError
+        """
+        from scipy.spatial import cKDTree
+
+        source_mesh = self
+        source_n_vertices = source_mesh.points.shape[0]
+        target_mesh_n_vertices = target_mesh.points.shape[0]
+
+        if source_n_vertices != target_mesh_n_vertices:
+            import warnings
+
+            first_part_string = "Source mesh has {} vertices while target mesh has {}".format(
+                source_n_vertices, target_mesh_n_vertices
+            )
+            warnings.warn(first_part_string)
+            subject = source_mesh.points
+            template = target_mesh
+            X = template.points
+
+            tree = cKDTree(X)
+            dist, indx = tree.query(subject, k=1)
+
+            target_mesh = TriMesh(X[indx], source_mesh.trilist)
+
+        if figure_id is None:
+            if automatic_id:
+                if hasattr(self, "path"):
+                    source_name = self.path.stem
+                else:
+                    source_name = "Source"
+                if hasattr(target_mesh, "path"):
+                    target_name = target_mesh.path.stem
+                else:
+                    target_name = "Target"
+                figure_name = "Heatmap between {} and {}".format(
+                    source_name, target_name
+                )
+            else:
+                figure_name = None
+        else:
+            figure_name = figure_id
+
+        diff = (
+            source_mesh.points.astype(np.float32)
+            - target_mesh.points.astype(np.float32)
+        ) ** 2
+        distances_between_meshes = np.sqrt(diff.sum(axis=1))
+        scaled_distances_between_meshes = distances_between_meshes * scale_value
+
+        if inline:
+            try:
+                from menpo3d.visualize import HeatmapInlineViewer3d
+
+                renderer = HeatmapInlineViewer3d(
+                    figure_name, new_figure, self.points, self.trilist, self.landmarks
+                )
+                render_return = renderer._render(
+                    scaled_distances_between_meshes,
+                    type_cmap,
+                    scalar_range,
+                    show_statistics,
+                )
+
+                if render_return is not renderer:
+                    renderer.close()
+                    return
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import HeatmapViewer3d
+
+                renderer = HeatmapViewer3d(
+                    figure_name, new_figure, self.points, self.trilist
+                )
+
+                if type_cmap == "hot_r":
+                    type_cmap = "hot"
+                renderer.render(
+                    scaled_distances_between_meshes,
+                    type_cmap,
+                    scalar_range,
+                    show_statistics,
+                )
+
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+
+    def decimate(self, percentage_reduction=0.75, type_reduction="quadric", **kwargs):
+        """
+        Decimate the mesh specifying the percentage (0,1) of triangles to
+        be removed
+
+        Parameters
+        ----------
+        percentage_reduction: float (default: 0.75)
+                   The percentage of triangles to be removed.
+                   It should be in (0, 1)
+
+        type_reduction : str (default: quadric)
+                         The type of decimation as:
+                             'quadric' : Quadric decimation
+                             'progressive : Progressive decimation
+        Returns
+        -------
+        mesh : :map:`TriMesh`
+            A new mesh that has been decimated.
+        """
+        try:
+            from menpo3d.vtkutils import decimate_mesh
+
+            new_mesh = decimate_mesh(
+                self, percentage_reduction, type_reduction, **kwargs
+            )
+
+            return new_mesh
+        except ImportError as e:
+            from menpo.visualize import Menpo3dMissingError
+
+            raise Menpo3dMissingError(e)
 
     def tojson(self):
         r"""
@@ -324,6 +686,30 @@ class TriMesh(PointCloud):
         new_mask[isolated_indices] = False
         return new_mask
 
+    def upsampling_matrix(self, downsampled_mesh):
+        r"""
+        Calculates an upsampling matrix between this mesh of m vertices
+        and  downsampled_mesh.
+
+        Parameters: TriMesh of n vertices
+
+        Returns: A sparce matrix of mxn
+        """
+        if self.n_points < downsampled_mesh.n_points:
+            print("The input mesh has more vertices than this mesh")
+            raise
+
+        coef, face_indices = downsampled_mesh.barycentric_coordinates_of_pointcloud(
+            self
+        )
+        cols = downsampled_mesh.trilist[face_indices].flatten()
+        rows = np.tile(np.arange(self.n_points), 3).reshape(-1, 3, order="F").flatten()
+        U = sp.csc_matrix(
+            (coef.flatten().astype(np.float32), (rows, cols)),
+            shape=(self.n_points, downsampled_mesh.n_points),
+        )
+        return U
+
     def as_pointgraph(self, copy=True, skip_checks=False):
         """
         Converts the TriMesh to a :map:`PointUndirectedGraph`.
@@ -350,6 +736,41 @@ class TriMesh(PointCloud):
         )
         pg = PointUndirectedGraph(
             self.points, adjacency_matrix, copy=copy, skip_checks=skip_checks
+        )
+        # This is always a copy
+        pg.landmarks = self.landmarks
+        return pg
+
+    def as_weighted_pointgraph(self, copy=True, skip_checks=False):
+        r"""
+        Converts the TriMesh to a weighted :map:`PointUndirectedGraph`
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            If ``True``, the graph will be a copy.
+        skip_checks : `bool`, optional
+            If ``True``, no checks will be performed.
+
+        Returns
+        -------
+        pointgraph : :map:`PointUndirectedGraph`
+            The point graph.
+     """
+        from .. import PointUndirectedGraph
+
+        edges = self.unique_edge_indices()
+        weights = self.unique_edge_lengths()
+        n_vertices = self.n_points
+        rows = np.hstack((edges[:, 0], edges[:, 1]))
+        cols = np.hstack((edges[:, 1], edges[:, 0]))
+        weights2 = np.hstack((weights, weights))
+        weight_adjacency_matrix = sp.csr_matrix(
+            (weights2, (rows, cols)), shape=(n_vertices, n_vertices)
+        )
+
+        pg = PointUndirectedGraph(
+            self.points, weight_adjacency_matrix, copy=copy, skip_checks=skip_checks
         )
         # This is always a copy
         pg.landmarks = self.landmarks
@@ -605,6 +1026,24 @@ class TriMesh(PointCloud):
             The mean length of each edge in this :map:`TriMesh`
         """
         return np.mean(self.unique_edge_lengths() if unique else self.edge_lengths())
+
+    def list_faces_per_vertex(self):
+        r"""
+        Returns a list  where for each vertex in this mesh
+        with N vertices,  its faces are added
+
+        Returns
+        -------
+        faces_per_vertex: ``(N, )`` `list`
+           A list of N tuples for each vertex that contains the faces that
+           the vertex is part
+        """
+
+        faces_per_vertex = [[] for x in self.points]
+        for face in self.trilist:
+            for vertex in face:
+                faces_per_vertex[vertex].append(tuple(face))
+        return faces_per_vertex
 
     def _view_2d(
         self,
@@ -1200,6 +1639,8 @@ class TriMesh(PointCloud):
         normals_marker_size=None,
         step=None,
         alpha=1.0,
+        inline=True,
+        return_widget=False,
     ):
         r"""
         Visualization of the TriMesh in 3D.
@@ -1214,7 +1655,8 @@ class TriMesh(PointCloud):
             The representation type to be used for the mesh.
             Example options ::
 
-                {surface, wireframe, points, mesh, fancymesh}
+                mayavi {surface, wireframe, points, mesh, fancymesh}
+                K3D  {surface, wirefame}
 
         line_width : `float`, optional
             The width of the lines, if there are any.
@@ -1230,9 +1672,11 @@ class TriMesh(PointCloud):
             The style of the markers.
             Example options ::
 
-                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
-                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
-                 arrow, axes, cone, cube, cylinder, point, sphere}
+                mayavi {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond,
+                        2dhooked_arrow, 2dsquare, 2dthick_arrow,
+                        2dthick_cross, 2dtriangle, 2dvertex,
+                        arrow, axes, cone, cube, cylinder, point, sphere}
+                K3D  {flat, dot, 3d, 3dSpecular, mesh}
 
         marker_size : `float` or ``None``, optional
             The size of the markers. This size can be seen as a scale factor
@@ -1264,9 +1708,11 @@ class TriMesh(PointCloud):
             is not ``None``.
             Example options ::
 
-                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
-                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
-                 arrow, axes, cone, cube, cylinder, point, sphere}
+                mayavi {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond,
+                        2dhooked_arrow, 2dsquare, 2dthick_arrow,
+                        2dthick_cross, 2dtriangle, 2dvertex,
+                        arrow, axes, cone, cube, cylinder, point, sphere}
+                K3D  {flat, dot, 3d, 3dSpecular, mesh}
 
         normals_marker_resolution : `int`, optional
             The resolution of the markers of the normals. For spheres, for
@@ -1284,34 +1730,79 @@ class TriMesh(PointCloud):
             the 'fancymesh' and if `normals` is not ``None``.
         alpha : `float`, optional
             Defines the transparency (opacity) of the object.
+        inline : `bool`, False
+               If True, the viewer will be in the Jupyter cell using K3dwidgets
+               If False, the viewer will open a new window using Mayavi
+        return_widget : `bool`, False
+               K3D only
+               If True, the widget will be returned so as it can be stored
+               in a variable or displayed if it is the last command of a
+               Jupyter cell.
+               If False, the widget will be displayed. It should be used when
+               we want many widgets to be displayed in the same cell.
 
         Returns
         -------
         renderer : `menpo3d.visualize.TriMeshViewer3D`
             The Menpo3D rendering object.
         """
-        try:
-            from menpo3d.visualize import TriMeshViewer3d
+        if inline:
+            try:
+                from menpo3d.visualize import TriMeshInlineViewer3d
 
-            renderer = TriMeshViewer3d(figure_id, new_figure, self.points, self.trilist)
-            renderer.render(
-                mesh_type=mesh_type,
-                line_width=line_width,
-                colour=colour,
-                marker_style=marker_style,
-                marker_size=marker_size,
-                marker_resolution=marker_resolution,
-                normals=normals,
-                normals_colour=normals_colour,
-                normals_line_width=normals_line_width,
-                normals_marker_style=normals_marker_style,
-                normals_marker_resolution=normals_marker_resolution,
-                normals_marker_size=normals_marker_size,
-                step=step,
-                alpha=alpha,
-            )
-            return renderer
-        except ImportError as e:
-            from menpo.visualize import Menpo3dMissingError
+                renderer = TriMeshInlineViewer3d(
+                    figure_id, new_figure, self.points, self.trilist, self.landmarks
+                )
+                render_return = renderer._render(
+                    line_width=line_width,
+                    colour=colour,
+                    mesh_type=mesh_type,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    normals=normals,
+                    normals_colour=normals_colour,
+                    normals_line_width=normals_line_width,
+                    normals_marker_size=normals_marker_size,
+                    alpha=alpha,
+                )
+                if render_return is not renderer:
+                    renderer.close()
+                    return
 
-            raise Menpo3dMissingError(e)
+                if return_widget:
+                    return renderer
+                else:
+                    renderer.display()
+
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import TriMeshViewer3d
+
+                renderer = TriMeshViewer3d(
+                    figure_id, new_figure, self.points, self.trilist
+                )
+                renderer.render(
+                    mesh_type=mesh_type,
+                    line_width=line_width,
+                    colour=colour,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_resolution=marker_resolution,
+                    normals=normals,
+                    normals_colour=normals_colour,
+                    normals_line_width=normals_line_width,
+                    normals_marker_style=normals_marker_style,
+                    normals_marker_resolution=normals_marker_resolution,
+                    normals_marker_size=normals_marker_size,
+                    step=step,
+                    alpha=alpha,
+                )
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)

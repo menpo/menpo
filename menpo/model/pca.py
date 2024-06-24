@@ -4,6 +4,7 @@ from menpo.base import doc_inherit, name_of_callable
 from menpo.math import as_matrix, ipca, pca, pcacov
 from .linear import MeanLinearVectorModel
 from .vectorizable import VectorizableBackedModel
+from pathlib import Path
 
 
 class PCAVectorModel(MeanLinearVectorModel):
@@ -1542,6 +1543,116 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             verbose=verbose,
         )
 
+    def view(
+        self,
+        figure_id=None,
+        new_figure=True,
+        mesh_type="wireframe",
+        line_width=2,
+        colour="r",
+        marker_style="mesh",
+        marker_size=None,
+        alpha=1.0,
+        n_parameters=5,
+        parameters_bound=(-15, 15),
+        landmarks_indices=None,
+        widget_style="info",
+        inline=True,
+    ):
+        r"""
+        Visualization of the TriMesh in 3D.
+
+        Parameters
+        ----------
+        figure_id : `object`, optional
+            The id of the figure to be used.
+        new_figure : `bool`, optional
+            If ``True``, a new figure is created.
+        mesh_type : `str`, optional
+            The representation type to be used for the mesh.
+            Example options ::
+
+                {surface, wireframe, points, mesh, fancymesh}
+        colour : See Below, optional
+            The colour of the markers.
+            Example options ::
+
+                {r, g, b, c, m, k, w}
+                or
+                (3, ) ndarray
+        marker_style : `str`, optional
+            The style of the markers.
+            Example options ::
+                 `flat`: simple circles with uniform color,
+                 `dot`: simple dot with uniform color,
+                 `3d`: little 3D balls,
+                 `3dSpecular`: little 3D balls with specular lightning,
+                 `mesh`: high precision triangle mesh of a ball
+                         (high quality and GPU load).}
+        marker_size : `float` or ``None``, optional
+            The size of the markers. This size can be seen as a scale factor
+            applied to the size markers, which is by default calculated from
+            the inter-marker spacing. If ``None``, then an optimal marker size
+            value will be set automatically. It only applies for the
+            'fancymesh'.
+
+        widget_style: `str`
+            Style options:
+                ============= ==================
+                Style         Description
+                ============= ==================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ================== 
+        alpha : `float`, optional
+            Defines the transparency (opacity) of the object.
+
+        Returns
+        -------
+        renderer : `menpo3d.visualize.TriMeshViewer3D`
+            The Menpo3D rendering object.
+        """
+        if inline:
+            if name_of_callable(self.template_instance) == "TriMesh":
+                tmp_trilist = self.mean().trilist
+            elif name_of_callable(self.template_instance) == "PointCloud":
+                tmp_trilist = None
+            else:
+                raise ValueError("We only support TriMesh and PointCloud")
+
+            try:
+                from menpo3d.visualize import PCAModelInlineViewer3d
+
+                renderer = PCAModelInlineViewer3d(
+                    figure_id=figure_id,
+                    new_figure=new_figure,
+                    points=self.mean().points,
+                    trilist=tmp_trilist,
+                    components=self.components,
+                    eigenvalues=self.eigenvalues,
+                    n_parameters=n_parameters,
+                    parameters_bound=parameters_bound,
+                    landmarks_indices=landmarks_indices,
+                    widget_style=widget_style,
+                )
+                render_return = renderer._render(
+                    mesh_type=mesh_type,
+                    colour=colour,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    alpha=alpha,
+                )
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            print("View method is not implemented yet for mayavi")
+
     def __str__(self):
         str_out = (
             "PCA Model \n"
@@ -1566,3 +1677,122 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             )
         )
         return str_out
+
+    def render_components(
+        self,
+        export_path=None,
+        filename="",
+        size=(600, 600),
+        list_weights=[-2, 2],
+        list_components=np.arange(5),
+        bgcolor=(1, 1, 1),
+        camera_settings=None,
+        mesh_color=(0.5, 0.5, 0.5),
+    ):
+        r"""
+        Render and save various components of the  model
+
+        Parameters
+        ----------
+        export_path : str or Path where the images will be saved,
+                      default: current directory
+        filename : str, the prefix of the filename,
+                   default: ''
+        size: tuple of two ints, the size of the image,
+              default:(600, 600)
+        list_weights: list of weights that std will be multipied with
+                      default: [-2, 2]
+        list_components : int, list or ndarray of the components to be rendered
+                         default: np.arange(5)
+        bgcolor : the background color of the rendering
+        camera_settings : camera settings of the rendering
+        mesh_color : tuple of three floats between 0-1 that defines mesh color
+        """
+        try:
+            from mayavi import mlab
+        except ImportError:
+            print("Cannot import mlab")
+            return 1
+
+        if export_path is None:
+            export_path = Path.cwd()
+        elif isinstance(export_path, str):
+            export_path = Path(export_path)
+
+        if not export_path.exists():
+            try:
+                export_path.mkdir(parents=True)
+            except OSError:
+                print("Cannot create directory")
+                return -1
+
+        fig = mlab.figure(bgcolor=bgcolor, size=size)
+        if camera_settings is not None:
+            mlab.move(*camera_settings[0])
+            mlab.view(*camera_settings[1])
+            mlab.roll(camera_settings[2])
+        else:
+            fig.scene.z_plus_view()
+
+        if isinstance(list_weights, int):
+            list_weights = [list_weights]
+
+        if isinstance(list_components, int):
+            list_components = [list_components]
+        list_components = np.asarray(list_components)
+        are_components = list_components < self.n_components
+        components_to_be_rendered = list_components[are_components]
+        for not_exist_component in list_components[~are_components]:
+            print("Component {} does not exist".format(not_exist_component))
+
+        mesh = self.mean()
+        s = mlab.triangular_mesh(
+            mesh.points[:, 0],
+            mesh.points[:, 1],
+            mesh.points[:, 2],
+            mesh.trilist,
+            color=mesh_color,
+        )
+
+        mlab.savefig(str(export_path / "Mean face.{}".format("png")))
+        for component in components_to_be_rendered:
+            parameters = np.zeros(component + 1)
+            std = self.eigenvalues[component] ** 0.5
+            for weight in list_weights:
+                parameters[component] = std * weight
+                s.mlab_source.points = self.instance(parameters).points
+                full_filename = "{}_{}_{}.{}".format(filename, component, weight, "png")
+                mlab.savefig(str(export_path / full_filename))
+
+    def to_list(self):
+        r"""
+        Returns the main attributes of a model as a list
+        for serialization purposes.
+        User should only expand the list.
+
+        Returns
+        ----------
+        list_elements: A list with the following  elements:
+                       mean_points: (n_features,) float32 ndarray
+                                     Flatten array with the points of the mean
+                                     mesh, casted as float32
+
+                       trilist:     (n_faces*3,) ndarray
+                                     Flatten array with the faces of the mean
+                                     mesh, casted as np.uint32
+
+                       components:   (n_features*n_components,) float32 ndarray
+                                     Flatten array with the components of the
+                                     PCAModel, casted as float32
+
+                       eigenvalues: (n_components,) float32 ndarray
+                                     Flatten array with the square rooot of
+                                     eigenvalues of the PCAModel,
+                                     casted as float32
+        """
+        return [
+            self.mean().points.flatten().astype("float32"),
+            self.mean().trilist.flatten().astype("uint32"),
+            self.components.astype("float32"),
+            np.sqrt(self.eigenvalues).astype("float32"),
+        ]

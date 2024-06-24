@@ -135,10 +135,10 @@ def bounding_cuboid(near_closest_to_origin, far_opposite_corner):
 
 class PointCloud(Shape):
     r"""
-    An N-dimensional point cloud. This is internally represented as an `ndarray`
-    of shape ``(n_points, n_dims)``. This class is important for dealing
-    with complex functionality such as viewing and representing metadata such
-    as landmarks.
+    An N-dimensional point cloud. This is internally represented as an
+    `ndarray` of shape ``(n_points, n_dims)``. This class is important for
+    dealing with complex functionality such as viewing and representing
+    metadata such as landmarks.
 
     Currently only 2D and 3D pointclouds are viewable.
 
@@ -383,6 +383,44 @@ class PointCloud(Shape):
         return "{}: n_points: {}, n_dims: {}".format(
             type(self).__name__, self.n_points, self.n_dims
         )
+
+    def __add__(self, other):
+        """
+        Overload the add operator
+
+        Parameters
+        ----------
+        other : PointCloud
+            The PointCloud to compare.
+        Returns
+        -------
+        PointCloud : A PointCloud with points the sum of
+                     the points of the two PointCloud
+        """
+        if self.same_space(other):
+            new_points = self.points + other.points
+            return PointCloud(new_points)
+        else:
+            raise ValueError("The two PointClouds dont have the same shape")
+
+    def __sub__(self, other):
+        r"""
+        Overload the add operator
+
+        Parameters
+        ----------
+        other : PointCloud
+            The PointCloud to compare.
+        Returns
+        -------
+        PointCloud : A PointCloud with points the difference
+                     the points of the two PointCloud
+        """
+        if self.same_space(other):
+            new_points = self.points - other.points
+            return PointCloud(new_points)
+        else:
+            raise ValueError("The two PointClouds dont have the same shape")
 
     def bounds(self, boundary=0):
         r"""
@@ -1024,6 +1062,10 @@ class PointCloud(Shape):
         render_numbering=False,
         numbers_colour="k",
         numbers_size=None,
+        colours=None,
+        keep_alpha=False,
+        inline=True,
+        return_widget=False,
         **kwargs,
     ):
         r"""
@@ -1040,11 +1082,11 @@ class PointCloud(Shape):
         marker_style : `str`, optional
             The style of the markers.
             Example options ::
-
-                {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond, 2dhooked_arrow,
-                 2dsquare, 2dthick_arrow, 2dthick_cross, 2dtriangle, 2dvertex,
-                 arrow, axes, cone, cube, cylinder, point, sphere}
-
+                mayavi {2darrow, 2dcircle, 2dcross, 2ddash, 2ddiamond,
+                        2dhooked_arrow, 2dsquare, 2dthick_arrow,
+                        2dthick_cross, 2dtriangle, 2dvertex,
+                        arrow, axes, cone, cube, cylinder, point, sphere}
+                K3D  {flat, dot, 3d, 3dSpecular, mesh}
         marker_size : `float` or ``None``, optional
             The size of the markers. This size can be seen as a scale factor
             applied to the size markers, which is by default calculated from
@@ -1057,8 +1099,8 @@ class PointCloud(Shape):
                 {r, g, b, c, m, k, w}
                 or
                 (3, ) ndarray
-
         marker_resolution : `int`, optional
+            Mayavi only
             The resolution of the markers. For spheres, for instance, this is
             the number of divisions along theta and phi.
         step : `int` or ``None``, optional
@@ -1075,41 +1117,94 @@ class PointCloud(Shape):
                 {r, g, b, c, m, k, w}
                 or
                 (3, ) ndarray
-
+        colours: `ndarray` or ``None``, optional
+             K3D only
+             The colours for each point.
+        keep_alpha: `bool`, False,
+            K3D only
+            If True, the alpha channel of colours' argument will
+            be used as well.
         numbers_size : `float` or ``None``, optional
             The size of the numbers. This size can be seen as a scale factor
             applied to the numbers, which is by default calculated from
             the inter-marker spacing. If ``None``, then an optimal numbers size
             value will be set automatically.
-
+        inline : `bool`, False
+               K3D only
+               If True, the viewer will be in the Jupyter cell using K3dwidgets
+               If False, the viewer will open a new window using Mayavi
+        return_widget : `bool`, False
+               K3D only
+               If True, the widget will be returned so as it can be stored
+               in a variable or displayed if it is the last command of a
+               Jupyter cell.
+               If False, the widget will be displayed. It should be used when
+               we want many widgets to be displayed in the same cell.
         Returns
         -------
         renderer : `menpo3d.visualize.PointGraphViewer3d`
             The Menpo3D rendering object.
         """
-        try:
-            from menpo3d.visualize import PointGraphViewer3d
 
-            edges = np.empty(0)
-            renderer = PointGraphViewer3d(figure_id, new_figure, self.points, edges)
-            renderer.render(
-                render_lines=False,
-                render_markers=render_markers,
-                marker_style=marker_style,
-                marker_size=marker_size,
-                marker_colour=marker_colour,
-                marker_resolution=marker_resolution,
-                step=step,
-                alpha=alpha,
-                render_numbering=render_numbering,
-                numbers_colour=numbers_colour,
-                numbers_size=numbers_size,
-            )
-            return renderer
-        except ImportError as e:
-            from menpo.visualize import Menpo3dMissingError
+        if inline:
+            try:
+                from menpo3d.visualize import PointGraphInlineViewer3d
 
-            raise Menpo3dMissingError(e)
+                edges = np.empty(0)
+                renderer = PointGraphInlineViewer3d(
+                    figure_id, new_figure, self.points, edges
+                )
+                render_return = renderer._render(
+                    render_lines=False,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    alpha=alpha,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                    colours=colours,
+                    keep_alpha=keep_alpha,
+                )
+                if render_return is not renderer:
+                    renderer.close()
+                    return
+
+                if return_widget:
+                    return renderer
+                else:
+                    renderer.display()
+
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
+        else:
+            try:
+                from menpo3d.visualize import PointGraphViewer3d
+
+                edges = np.empty(0)
+                renderer = PointGraphViewer3d(figure_id, new_figure, self.points, edges)
+                renderer.render(
+                    render_lines=False,
+                    render_markers=render_markers,
+                    marker_style=marker_style,
+                    marker_size=marker_size,
+                    marker_colour=marker_colour,
+                    marker_resolution=marker_resolution,
+                    step=step,
+                    alpha=alpha,
+                    render_numbering=render_numbering,
+                    numbers_colour=numbers_colour,
+                    numbers_size=numbers_size,
+                )
+
+                return renderer
+            except ImportError as e:
+                from menpo.visualize import Menpo3dMissingError
+
+                raise Menpo3dMissingError(e)
 
     def _view_landmarks_3d(
         self,
@@ -1278,6 +1373,42 @@ class PointCloud(Shape):
                 "The two PointClouds must be of the same " "dimensionality."
             )
         return cdist(self.points, pointcloud.points, **kwargs)
+
+    def find_closest_vertices(self, pointcloud, return_sparse=True, **kwargs):
+        r"""
+        Returns a matrix  where for each vertex in this PointCloud
+        with N vertices,  its closest vertex in target PoinCloud
+        with M vertices is calculated
+        By default the Euclidean distance is calculated - see
+        `scipy.spatial.distance.cdist` for valid kwargs to change the metric
+        and other properties.
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            The second pointcloud to compute distances between. This must be
+            of the same dimension as this PointCloud.
+
+        Returns
+        -------
+        closest_vertices_matrix: ``(N, M)`` `ndarray`
+           A numpy.darray with NxM elements with 1
+                denotes the closest vertex i.e
+                [[0,1,0],[0,0,1]]
+                The second vertex in target pointcloud is the
+                closest vertex to the first vertex in this pointcloud.
+                In a similar way, the third vertex in target pointcloud
+                is the closest vertex to the second vertex in
+               this pointcloud.
+        """
+        closest_vertices = np.zeros(
+            (self.points.shape[0], pointcloud.points.shape[0]), dtype=np.uint8
+        )
+        indx_vertices = np.argmin(self.distance_to(pointcloud, **kwargs), axis=1)
+        closest_vertices[np.arange(len(indx_vertices)), indx_vertices] = 1
+        if return_sparse:
+            closest_vertices = csr_matrix(closest_vertices)
+        return closest_vertices
 
     def norm(self, **kwargs):
         r"""
