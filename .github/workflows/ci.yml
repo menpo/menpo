@@ -1,0 +1,58 @@
+name: CI
+on:
+  push: { branches: [master] }
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --group dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy menpo
+
+  test:
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10", "3.14"]
+    runs-on: ${{ matrix.os }}
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --python ${{ matrix.python }} --group dev
+      - run: uv run pytest -q
+
+  optional-deps:
+    runs-on: ubuntu-latest
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: uv sync --group dev --extra imageio --extra opencv
+      - run: uv run pytest -q
+
+  sdist:
+    runs-on: ubuntu-latest
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build --sdist
+      - name: Build and test from the sdist (conda-forge builds from it; no git)
+        run: |
+          uv venv .venv-sdist
+          uv pip install --python .venv-sdist dist/*.tar.gz pytest pytest-mock imageio
+          cd "$(mktemp -d)"
+          "$GITHUB_WORKSPACE/.venv-sdist/bin/python" -m pytest --pyargs menpo -q

@@ -1,19 +1,61 @@
-[tool.black]
-line-length = 88
-target-version = ['py39']
-exclude = '''
+[build-system]
+requires = ["setuptools>=77", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
 
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.mypy_cache
-    | \.venv
-    | _build
-    | build
-    | dist
-  )/
-  | _version.py
-  | _static_version.py
-)
-'''
+[project]
+name = "menpo"
+dynamic = ["version"]
+description = "A Python toolkit for handling annotated data"
+readme = "README.md"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt", "AUTHORS.txt"]
+authors = [{ name = "The Menpo Team", email = "hello@menpo.org" }]
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.14", "scipy>=1.0", "matplotlib>=3.0", "pillow>=4.0"]
+
+[project.optional-dependencies]
+# imageio is needed for video/GIF import and export; ffmpeg itself is a system executable.
+imageio = ["imageio"]
+opencv = ["opencv-python"]
+
+[project.urls]
+Homepage = "https://www.menpo.org"
+Source = "https://github.com/menpo/menpo"
+Documentation = "https://menpo.readthedocs.io/en/stable/"
+
+[dependency-groups]
+dev = ["pytest>=6", "pytest-mock>=3", "mypy", "ruff", "imageio"]
+
+[tool.setuptools.packages.find]
+include = ["menpo*"]
+
+[tool.setuptools.package-data]
+menpo = ["data/*"]
+
+[tool.setuptools_scm]
+# Version comes from the vX.Y.Z git tag; the generated file replaces the old vendored miniver.
+version_file = "menpo/_version.py"
+local_scheme = "no-local-version"
+
+[tool.pytest.ini_options]
+testpaths = ["menpo"]
+
+[tool.ruff]
+line-length = 88
+extend-exclude = ["docs", "menpo/_version.py"]
+
+[tool.ruff.lint]
+select = ["E9", "F"]
+# the package namespaces re-export names from __init__ files, some via star imports
+ignore = ["F401", "F403", "F405", "F841"]
+
+[tool.mypy]
+python_version = "3.10"
+
+[[tool.mypy.overrides]]
+module = ["cv2.*", "cyvlfeat.*", "imageio.*", "menpo3d.*", "menpowidgets.*", "matplotlib.*", "numpy.*", "PIL.*", "pytest.*", "scipy.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["menpo._version"]
+ignore_errors = true
