@@ -420,14 +420,14 @@ def chain_graph(shape, graph_cls=PointDirectedGraph, closed=False):
     # return graph
     if graph_cls == Tree:
         if closed:
-            raise ValueError("A closed chain graph cannot be a Tree " "instance.")
+            raise ValueError("A closed chain graph cannot be a Tree instance.")
         else:
             return graph_cls.init_from_edges(
                 edges=edges, n_vertices=n_vertices, root_vertex=0, skip_checks=True
             )
     elif graph_cls == PointTree:
         if closed:
-            raise ValueError("A closed chain graph cannot be a PointTree " "instance.")
+            raise ValueError("A closed chain graph cannot be a PointTree instance.")
         else:
             return graph_cls.init_from_edges(
                 points=points, edges=edges, root_vertex=0, skip_checks=True

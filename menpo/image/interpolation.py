@@ -64,7 +64,7 @@ try:
             return cv2.BORDER_CONSTANT
         else:
             raise ValueError(
-                'Unknown mode "{}", must be one of ' "(nearest, constant)".format(mode)
+                'Unknown mode "{}", must be one of (nearest, constant)'.format(mode)
             )
 
     def _order_to_opencv(order):
@@ -74,7 +74,7 @@ try:
             return cv2.INTER_LINEAR
         else:
             raise ValueError(
-                'Unsupported order "{}", ' "must be one of (0, 1)".format(order)
+                'Unsupported order "{}", must be one of (0, 1)'.format(order)
             )
 
     def cv2_perspective_interpolation(

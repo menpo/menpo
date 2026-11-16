@@ -61,8 +61,9 @@ class LinearVectorModel(Copyable):
         """
         if value.shape != self._components.shape:
             raise ValueError(
-                "Trying to replace components of shape {} with some of "
-                "shape {}".format(self.components.shape, value.shape)
+                "Trying to replace components of shape {} with some of shape {}".format(
+                    self.components.shape, value.shape
+                )
             )
         else:
             np.copyto(self._components, value, casting="safe")

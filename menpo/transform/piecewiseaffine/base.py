@@ -223,7 +223,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
             source = TriMesh(source.points)
         Alignment.__init__(self, source, target)
         if self.n_dims != 2:
-            raise ValueError("source and target must be 2 " "dimensional")
+            raise ValueError("source and target must be 2 dimensional")
         self.ti, self.tij, self.tik = None, None, None
         self._rebuild_target_vectors()
 

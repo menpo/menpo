@@ -87,7 +87,7 @@ def extract_patches_by_sampling(
     """
     if pixels.ndim != 3:
         raise ValueError(
-            "Only 2D images are supported but " "found {}".format(pixels.shape)
+            "Only 2D images are supported but found {}".format(pixels.shape)
         )
 
     n_points = patch_centers.shape[0]
@@ -145,7 +145,7 @@ def extract_patches_with_slice(
     """
     if pixels.ndim != 3:
         raise ValueError(
-            "Only 2D images are supported but " "found {}".format(pixels.shape)
+            "Only 2D images are supported but found {}".format(pixels.shape)
         )
 
     n_offsets = offsets.shape[0] if offsets is not None else 1
@@ -237,7 +237,7 @@ def set_patches(patches, pixels, patch_centers, offset, offset_index):
     """
     if pixels.ndim != 3:
         raise ValueError(
-            "Only 2D images are supported but " "found {}".format(pixels.shape)
+            "Only 2D images are supported but found {}".format(pixels.shape)
         )
 
     patch_shape = patches.shape[-2:]

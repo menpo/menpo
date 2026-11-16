@@ -408,8 +408,9 @@ def ljson_importer(filepath, **kwargs):
 
     if parser is None:
         raise ValueError(
-            "{} has unknown version {} - must be "
-            "1, or 2 or 3.".format(filepath, version)
+            "{} has unknown version {} - must be 1, or 2 or 3.".format(
+                filepath, version
+            )
         )
     if version != 3:
         from menpo.base import MenpoDeprecationWarning

@@ -13,7 +13,7 @@ class Menpo3dMissingError(MenpoMissingDependencyError):
     def __init__(self, actual_missing_import_name):
         super(Menpo3dMissingError, self).__init__(actual_missing_import_name)
         self.message += (
-            "\nThis import is required in order to use the " "'menpo3d' package"
+            "\nThis import is required in order to use the 'menpo3d' package"
         )
 
 
@@ -444,7 +444,7 @@ def view_image_landmarks(
 
     if not image.has_landmarks:
         raise ValueError(
-            "Image does not have landmarks attached, unable " "to view landmarks."
+            "Image does not have landmarks attached, unable to view landmarks."
         )
 
     # Parse axes limits
@@ -847,7 +847,7 @@ def plot_curve(
 
     # check legend_entries
     if legend_entries is not None and len(legend_entries) != len(y_axis):
-        raise ValueError("legend_entries list has different length than y_axis " "list")
+        raise ValueError("legend_entries list has different length than y_axis list")
 
     # render
     return GraphPlotter(
@@ -1496,7 +1496,7 @@ def plot_gaussian_ellipses(
     elif line_style == ":":
         line_style = "dotted"
     else:
-        raise ValueError("line_style must be selected from " "['-', '--', '-.', ':'].")
+        raise ValueError("line_style must be selected from ['-', '--', '-.', ':'].")
 
     # create pointcloud
     pc = PointCloud(np.array(means))

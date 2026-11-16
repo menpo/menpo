@@ -162,7 +162,7 @@ class Graph(object):
             # check if adjacency matrix of undirected graph is symmetric
             if not self._directed and not _is_symmetric(adjacency_matrix):
                 raise ValueError(
-                    "The adjacency matrix of an undirected graph " "must be symmetric."
+                    "The adjacency matrix of an undirected graph must be symmetric."
                 )
 
         # store adjacency_matrix
@@ -638,7 +638,7 @@ class Graph(object):
         """
         if vertex > self.n_vertices - 1 or vertex < 0:
             raise ValueError(
-                "The vertex must be between " "0 and {}.".format(self.n_vertices - 1)
+                "The vertex must be between 0 and {}.".format(self.n_vertices - 1)
             )
 
 
@@ -906,7 +906,7 @@ class UndirectedGraph(Graph):
         isolated = ""
         if self.has_isolated_vertices():
             isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "Undirected graph of {} vertices{} and {} " "edges.".format(
+        return "Undirected graph of {} vertices{} and {} edges.".format(
             self.n_vertices, isolated, self.n_edges
         )
 
@@ -1114,7 +1114,7 @@ class DirectedGraph(Graph):
         isolated = ""
         if self.has_isolated_vertices():
             isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "Directed graph of {} vertices{} and {} " "edges.".format(
+        return "Directed graph of {} vertices{} and {} edges.".format(
             self.n_vertices, isolated, self.n_edges
         )
 
@@ -2319,8 +2319,7 @@ class PointGraph(Graph, PointCloud):
         """
         if not self.has_landmarks:
             raise ValueError(
-                "PointGraph does not have landmarks attached, "
-                "unable to view landmarks."
+                "PointGraph does not have landmarks attached, unable to view landmarks."
             )
         self_view = self.view(
             figure_id=figure_id,
@@ -2793,7 +2792,7 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
         isolated = ""
         if self.has_isolated_vertices():
             isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "{}D undirected graph of {} vertices{} and {} " "edges.".format(
+        return "{}D undirected graph of {} vertices{} and {} edges.".format(
             self.n_dims, self.n_vertices, isolated, self.n_edges
         )
 
@@ -2940,8 +2939,9 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
         """
         if not self.is_edge(parent, child):
             raise ValueError(
-                "Vertices {} and {} are not connected "
-                "with an edge.".format(parent, child)
+                "Vertices {} and {} are not connected with an edge.".format(
+                    parent, child
+                )
             )
         return self.points[child, ...] - self.points[parent, ...]
 
@@ -3011,7 +3011,7 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
         isolated = ""
         if self.has_isolated_vertices():
             isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "{}D directed graph of {} vertices{} and {} " "edges.".format(
+        return "{}D directed graph of {} vertices{} and {} edges.".format(
             self.n_dims, self.n_vertices, isolated, self.n_edges
         )
 

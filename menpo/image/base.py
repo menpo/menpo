@@ -112,8 +112,7 @@ def normalize_pixels_range(pixels, error_on_unknown_type=True):
     else:
         if error_on_unknown_type:
             raise ValueError(
-                "Unexpected dtype ({}) - normalisation range "
-                "is unknown".format(dtype)
+                "Unexpected dtype ({}) - normalisation range is unknown".format(dtype)
             )
         else:
             # Do nothing
@@ -180,8 +179,9 @@ def denormalize_pixels_range(pixels, out_dtype):
         max_range = 65535.0
     else:
         raise ValueError(
-            "Unexpected output dtype ({}) - normalisation range "
-            "is unknown".format(out_dtype)
+            "Unexpected output dtype ({}) - normalisation range is unknown".format(
+                out_dtype
+            )
         )
 
     return (pixels * max_range).astype(out_dtype)
@@ -765,12 +765,11 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 bins = 0
             else:
                 raise ValueError(
-                    "Bins can be either 'unique', positive int or"
-                    "a sequence of scalars."
+                    "Bins can be either 'unique', positive int ora sequence of scalars."
                 )
         elif isinstance(bins, int) and bins < 1:
             raise ValueError(
-                "Bins can be either 'unique', positive int or a " "sequence of scalars."
+                "Bins can be either 'unique', positive int or a sequence of scalars."
             )
         # compute histogram
         vec = self.as_vector(keep_channels=keep_channels)
@@ -1275,7 +1274,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
                 " length n_dims ({})".format(self.n_dims)
             )
         elif not np.all(max_indices > min_indices):
-            raise ValueError("All max indices must be greater that the min " "indices")
+            raise ValueError("All max indices must be greater that the min indices")
         min_bounded = self.constrain_points_to_bounds(min_indices)
         max_bounded = self.constrain_points_to_bounds(max_indices)
         all_max_bounded = np.all(min_bounded == min_indices)
@@ -1591,7 +1590,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         """
         if self.n_dims != 2:
             raise ValueError(
-                "Only two dimensional patch extraction is " "currently supported."
+                "Only two dimensional patch extraction is currently supported."
             )
 
         if order == 0 and mode == "constant":
@@ -1715,7 +1714,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         # parse arguments
         if self.n_dims != 2:
             raise ValueError(
-                "Only two dimensional patch insertion is " "currently supported."
+                "Only two dimensional patch insertion is currently supported."
             )
         if offset is None:
             offset = np.zeros([1, 2], dtype=np.intp)
@@ -1724,8 +1723,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         offset = np.require(offset, dtype=np.intp)
         if not offset.shape == (1, 2):
             raise ValueError(
-                "The offset must be a tuple, a list or a "
-                "numpy.array with shape (1, 2)."
+                "The offset must be a tuple, a list or a numpy.array with shape (1, 2)."
             )
         if offset_index is None:
             offset_index = 0
@@ -2510,9 +2508,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             Image rotation is presently only supported on 2D images
         """
         if self.n_dims != 2:
-            raise ValueError(
-                "Image rotation is presently only supported on " "2D images"
-            )
+            raise ValueError("Image rotation is presently only supported on 2D images")
 
         rotation = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
         return self.transform_about_centre(
@@ -2748,7 +2744,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             raise ValueError("axis cannot be negative")
         elif axis >= self.n_dims:
             raise ValueError(
-                "axis={} but the image has {} " "dimensions".format(axis, self.n_dims)
+                "axis={} but the image has {} dimensions".format(axis, self.n_dims)
             )
 
         # Create transform that includes ...
@@ -2892,7 +2888,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         elif mode == "channel":
             if channel is None:
                 raise ValueError(
-                    "For the 'channel' mode you have to provide" " a channel index"
+                    "For the 'channel' mode you have to provide a channel index"
                 )
             pixels = greyscale.pixels[channel]
         else:
@@ -3448,7 +3444,7 @@ def _create_patches_image(
             dtype=patches.dtype,
         )
     else:
-        raise ValueError("Background must be either " "black" " or " "white" ".")
+        raise ValueError("Background must be either black or white.")
 
     # If there was no slicing on the patches, then attach the original patch
     # centers. Otherwise, attach the sliced ones.

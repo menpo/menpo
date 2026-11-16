@@ -52,8 +52,9 @@ class Landmarkable(Copyable):
         lm_n_dims = value.n_dims
         if lm_n_dims is not None and lm_n_dims != self.n_dims:
             raise ValueError(
-                "Trying to set {}D landmarks on a "
-                "{}D object".format(value.n_dims, self.n_dims)
+                "Trying to set {}D landmarks on a {}D object".format(
+                    value.n_dims, self.n_dims
+                )
             )
         self._landmarks = value.copy()
 
@@ -169,8 +170,9 @@ class LandmarkManager(MutableMapping, Transformable):
         n_dims = self.n_dims
         if n_dims is not None and value.n_dims != n_dims:
             raise ValueError(
-                "Trying to set {}D landmarks on a "
-                "{}D LandmarkManager".format(value.n_dims, self.n_dims)
+                "Trying to set {}D landmarks on a {}D LandmarkManager".format(
+                    value.n_dims, self.n_dims
+                )
             )
         if not isinstance(value, PointCloud):
             raise ValueError("Valid types are any subclass of PointCloud")
@@ -199,8 +201,9 @@ class LandmarkManager(MutableMapping, Transformable):
                 group = self.group_labels[0]
             else:
                 raise ValueError(
-                    "Cannot use None as a key as there are {} "
-                    "landmark groups".format(self.n_groups)
+                    "Cannot use None as a key as there are {} landmark groups".format(
+                        self.n_groups
+                    )
                 )
         return self._landmark_groups[group]
 
