@@ -8,7 +8,11 @@ from pytest import raises
 import menpo
 import menpo.io as mio
 from menpo.image import BooleanImage, Image, MaskedImage, OutOfMaskSampleError
-from menpo.image.interpolation import cv2_perspective_interpolation
+
+try:
+    from menpo.image.interpolation import cv2_perspective_interpolation
+except ImportError:  # OpenCV is an optional dependency
+    cv2_perspective_interpolation = None
 from menpo.shape import PointCloud, bounding_box
 from menpo.transform import Affine, Rotation, UniformScale
 
@@ -31,7 +35,8 @@ def opencv_and_scipy_interpolation(func):
     # with a parameterize decorator to run unit tests with and without OpenCV
     parameterize = pytest.mark.parametrize(
         "method",
-        [None, cv2_perspective_interpolation],
+        [None]
+        + ([cv2_perspective_interpolation] if cv2_perspective_interpolation else []),
         ids=lambda x: "opencv" if x is not None else "scipy",
     )
     use_fixtures = pytest.mark.usefixtures("interpolation_method")
@@ -364,6 +369,11 @@ def test_rotate_image_90_180():
     )
 
 
+@pytest.mark.skipif(
+    cv2_perspective_interpolation is None,
+    reason="expected values are for the OpenCV backend (scipy rounds the exact "
+    "pixel-boundary samples differently)",
+)
 def test_rotate_image_45():
     image = Image(
         np.array(

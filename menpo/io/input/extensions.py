@@ -1,3 +1,5 @@
+from typing import Any, Callable
+
 from .landmark import lm2_importer, ljson_importer
 from .image import pillow_importer, abs_importer, flo_importer
 from .video import ffmpeg_types, ffmpeg_importer
@@ -5,7 +7,7 @@ from .landmark_image import asf_image_importer, pts_image_importer
 from .pickle import pickle_importer, pickle_gzip_importer
 
 
-image_types = {
+image_types: dict[str, Callable[..., Any]] = {
     ".bmp": pillow_importer,
     ".dib": pillow_importer,
     ".dcx": pillow_importer,

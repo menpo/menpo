@@ -1,6 +1,5 @@
 import unittest
 import warnings
-from distutils.version import LooseVersion
 
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal

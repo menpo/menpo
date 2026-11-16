@@ -4,6 +4,7 @@ import textwrap
 import warnings
 from functools import partial, wraps
 from itertools import chain
+from pathlib import PurePath
 from pprint import pformat
 
 
@@ -33,6 +34,11 @@ class Copyable(object):
         """
         new = self.__class__.__new__(self.__class__)
         for k, v in self.__dict__.items():
+            if isinstance(v, PurePath):
+                # paths are immutable (and Python 3.14 gave Path a ``copy(target)``
+                # method that copies files on disk, which is not what we want here)
+                new.__dict__[k] = v
+                continue
             try:
                 new.__dict__[k] = v.copy()
             except AttributeError:

@@ -6,7 +6,7 @@ def mask_adjacency_array(mask, adjacency_array):
     indices_to_remove = np.nonzero(~mask)[0]
     # Set intersection to find any rows containing those elements,
     # reshape back in to the same size as adjacency array
-    entries_to_remove = np.in1d(adjacency_array, indices_to_remove)
+    entries_to_remove = np.isin(adjacency_array, indices_to_remove)
     entries_to_remove = entries_to_remove.reshape([-1, adjacency_array.shape[1]])
     # Only keep those entries that are not flagged for removal
     indices_to_keep = ~entries_to_remove.any(axis=1)
