@@ -12,7 +12,7 @@ from menpo.image import BooleanImage, Image, MaskedImage, OutOfMaskSampleError
 try:
     from menpo.image.interpolation import cv2_perspective_interpolation
 except ImportError:  # OpenCV is an optional dependency
-    cv2_perspective_interpolation = None
+    cv2_perspective_interpolation = None  # type: ignore[assignment]
 from menpo.shape import PointCloud, bounding_box
 from menpo.transform import Affine, Rotation, UniformScale
 
@@ -36,7 +36,11 @@ def opencv_and_scipy_interpolation(func):
     parameterize = pytest.mark.parametrize(
         "method",
         [None]
-        + ([cv2_perspective_interpolation] if cv2_perspective_interpolation else []),
+        + (
+            [cv2_perspective_interpolation]
+            if cv2_perspective_interpolation is not None
+            else []
+        ),
         ids=lambda x: "opencv" if x is not None else "scipy",
     )
     use_fixtures = pytest.mark.usefixtures("interpolation_method")
