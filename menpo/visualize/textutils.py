@@ -184,7 +184,7 @@ def print_progress(
     """
     if n_items is None and offset != 0:
         raise ValueError(
-            "offset can only be set when n_items has been" " manually provided."
+            "offset can only be set when n_items has been manually provided."
         )
     if prefix != "":
         prefix += ": "

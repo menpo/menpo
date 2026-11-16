@@ -262,7 +262,7 @@ def __log_gabor_3d(
         wavelength = min_wavelength * scaling_constant**s
         fo = 1.0 / wavelength
 
-        l = np.exp((-np.log(radius / fo) ** 2) / (2.0 * np.log(center_sigma) ** 2))
+        l = np.exp((-(np.log(radius / fo) ** 2)) / (2.0 * np.log(center_sigma) ** 2))
         l = l * butterworth_filter
         l[0, 0, 0] = 0.0
 

@@ -74,7 +74,7 @@ class NonUniformScale(DiscreteAffine, Affine):
         if not skip_checks:
             if scale.size > 3 or scale.size < 2:
                 raise ValueError(
-                    "NonUniformScale can only be 2D or 3D" ", not {}".format(scale.size)
+                    "NonUniformScale can only be 2D or 3D, not {}".format(scale.size)
                 )
         h_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(h_matrix, scale)
@@ -196,7 +196,7 @@ class UniformScale(DiscreteAffine, Similarity):
         if not skip_checks:
             if n_dims > 3 or n_dims < 2:
                 raise ValueError(
-                    "UniformScale can only be 2D or 3D" ", not {}".format(n_dims)
+                    "UniformScale can only be 2D or 3D, not {}".format(n_dims)
                 )
         h_matrix = np.eye(n_dims + 1)
         np.fill_diagonal(h_matrix, scale)

@@ -97,7 +97,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
                 self.mean_alignment_error(),
             )
         else:
-            return "Failed to converge after %d iterations with av. error " "%f" % (
+            return "Failed to converge after %d iterations with av. error %f" % (
                 self.n_iterations,
                 self.mean_alignment_error(),
             )

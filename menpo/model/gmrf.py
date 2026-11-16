@@ -1186,12 +1186,12 @@ class GMRFVectorModel(object):
         incremental_str = (
             " - Can be incrementally updated."
             if self.is_incremental
-            else " - Cannot be " "incrementally updated."
+            else " - Cannot be incrementally updated."
         )
         svd_str = (
             " - # SVD components:        {}".format(self.n_components)
             if self.n_components is not None
-            else " - No " "SVD used."
+            else " - No SVD used."
         )
         _Q_sparse = "scipy.sparse" if self.sparse else "numpy.array"
         q_str = " - Q is stored as {} with {} precision".format(

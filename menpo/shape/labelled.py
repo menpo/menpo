@@ -91,7 +91,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             )
         if np.vstack(list(labels_to_masks.values())).shape[1] != points.shape[0]:
             raise ValueError(
-                "Each mask must have the same number of points " "as the given points."
+                "Each mask must have the same number of points as the given points."
             )
         if not isinstance(labels_to_masks, OrderedDict):
             raise ValueError(
@@ -757,7 +757,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
         if with_labels is not None and without_labels is not None:
             raise ValueError(
-                "You may only pass one of `with_labels` or " "`without_labels`."
+                "You may only pass one of `with_labels` or `without_labels`."
             )
         elif with_labels is not None:
             lmark_group = self.with_labels(with_labels)
@@ -841,7 +841,7 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
 
             if with_labels is not None and without_labels is not None:
                 raise ValueError(
-                    "You may only pass one of `with_labels` or " "`without_labels`."
+                    "You may only pass one of `with_labels` or `without_labels`."
                 )
             elif with_labels is not None:
                 lmark_group = self.with_labels(with_labels)

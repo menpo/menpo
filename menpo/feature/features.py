@@ -445,8 +445,9 @@ def normalize(img, scale_func=None, mode="all", error_on_divide_by_zero=True):
         scale_factor = scale_func(centered_pixels, axis=1).reshape([-1, 1])
     else:
         raise ValueError(
-            "Supported modes are {{'all', 'per_channel'}} - '{}' "
-            "is not known".format(mode)
+            "Supported modes are {{'all', 'per_channel'}} - '{}' is not known".format(
+                mode
+            )
         )
 
     zero_denom = (scale_factor == 0).ravel()

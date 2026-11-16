@@ -34,9 +34,9 @@ def dot_inplace_left(a, b, block_size=1000):
         raise ValueError("Cannot dot {} * {}".format(a.shape, b.shape))
     if n_small > k_a:
         raise ValueError(
-            "Cannot dot inplace left - "
-            "b.shape[1] ({}) > a.shape[1] "
-            "({})".format(n_small, k_a)
+            "Cannot dot inplace left - b.shape[1] ({}) > a.shape[1] ({})".format(
+                n_small, k_a
+            )
         )
     for i in range(0, n_big, block_size):
         j = i + block_size
@@ -76,9 +76,9 @@ def dot_inplace_right(a, b, block_size=1000):
         raise ValueError("Cannot dot {} * {}".format(a.shape, b.shape))
     if n_small > k_b:
         raise ValueError(
-            "Cannot dot inplace right - "
-            "a.shape[1] ({}) > b.shape[0] "
-            "({})".format(n_small, k_b)
+            "Cannot dot inplace right - a.shape[1] ({}) > b.shape[0] ({})".format(
+                n_small, k_b
+            )
         )
     for i in range(0, n_big, block_size):
         j = i + block_size
@@ -137,8 +137,9 @@ def as_matrix(vectorizables, length=None, return_template=False, verbose=False):
     data = np.zeros((length, n_features), dtype=template_vector.dtype)
     if verbose:
         print(
-            "Allocated data matrix of size {} "
-            "({} samples)".format(bytes_str(data.nbytes), length)
+            "Allocated data matrix of size {} ({} samples)".format(
+                bytes_str(data.nbytes), length
+            )
         )
 
     # now we can fill in the first element from the template

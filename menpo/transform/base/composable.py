@@ -128,8 +128,9 @@ class ComposableTransform(Transform):
             self._compose_before_inplace(transform)
         else:
             raise ValueError(
-                "{} can only compose inplace with {} - not "
-                "{}".format(type(self), self.composes_inplace_with, type(transform))
+                "{} can only compose inplace with {} - not {}".format(
+                    type(self), self.composes_inplace_with, type(transform)
+                )
             )
 
     def compose_after_inplace(self, transform):
@@ -158,8 +159,9 @@ class ComposableTransform(Transform):
             self._compose_after_inplace(transform)
         else:
             raise ValueError(
-                "{} can only compose inplace with {} - not "
-                "{}".format(type(self), self.composes_inplace_with, type(transform))
+                "{} can only compose inplace with {} - not {}".format(
+                    type(self), self.composes_inplace_with, type(transform)
+                )
             )
 
     def _compose_before(self, transform):

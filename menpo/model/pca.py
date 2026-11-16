@@ -275,8 +275,9 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         if value.shape != self._components.shape:
             raise ValueError(
-                "Trying to replace components of shape {} with some of "
-                "shape {}".format(self.components.shape, value.shape)
+                "Trying to replace components of shape {} with some of shape {}".format(
+                    self.components.shape, value.shape
+                )
             )
         else:
             np.copyto(self._components, value, casting="safe")
@@ -301,8 +302,13 @@ class PCAVectorModel(MeanLinearVectorModel):
         whitened_components : ``(n_active_components, n_features)`` `ndarray`
             The whitened components.
         """
-        return self.components / (
-            np.sqrt(self.eigenvalues * self.n_samples + self.noise_variance())[:, None]
+        return (
+            self.components
+            / (
+                np.sqrt(self.eigenvalues * self.n_samples + self.noise_variance())[
+                    :, None
+                ]
+            )
         )
 
     def original_variance(self):
@@ -476,7 +482,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         noise_variance = self.noise_variance()
         if np.allclose(noise_variance, 0):
             raise ValueError(
-                "noise variance is effectively 0 - " "cannot take the inverse"
+                "noise variance is effectively 0 - cannot take the inverse"
             )
         return 1.0 / noise_variance
 

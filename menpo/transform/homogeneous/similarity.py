@@ -78,11 +78,11 @@ class Similarity(Affine):
             return 4
         elif self.n_dims == 3:
             raise NotImplementedError(
-                "3D similarity transforms cannot be " "vectorized yet."
+                "3D similarity transforms cannot be vectorized yet."
             )
         else:
             raise ValueError(
-                "Only 2D and 3D Similarity transforms " "are currently supported."
+                "Only 2D and 3D Similarity transforms are currently supported."
             )
 
     def _as_vector(self):
@@ -127,11 +127,11 @@ class Similarity(Affine):
             return params[[0, 1, 4, 5]]
         elif n_dims == 3:
             raise NotImplementedError(
-                "3D similarity transforms cannot be " "vectorized yet."
+                "3D similarity transforms cannot be vectorized yet."
             )
         else:
             raise ValueError(
-                "Only 2D and 3D Similarity transforms " "are currently supported."
+                "Only 2D and 3D Similarity transforms are currently supported."
             )
 
     def _from_vector_inplace(self, p):
@@ -165,11 +165,11 @@ class Similarity(Affine):
             self._set_h_matrix(homog, skip_checks=True, copy=False)
         elif p.shape[0] == 7:
             raise NotImplementedError(
-                "3D similarity transforms cannot be " "vectorized yet."
+                "3D similarity transforms cannot be vectorized yet."
             )
         else:
             raise ValueError(
-                "Only 2D and 3D Similarity transforms " "are currently supported."
+                "Only 2D and 3D Similarity transforms are currently supported."
             )
 
 

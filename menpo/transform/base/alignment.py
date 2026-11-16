@@ -50,9 +50,9 @@ class Alignment(Targetable, Viewable):
             Source and target must have the same number of points
         """
         if source.n_dims != target.n_dims:
-            raise ValueError("Source and target must have the same " "dimensionality")
+            raise ValueError("Source and target must have the same dimensionality")
         elif source.n_points != target.n_points:
-            raise ValueError("Source and target must have the same number of" " points")
+            raise ValueError("Source and target must have the same number of points")
 
     @property
     def source(self):

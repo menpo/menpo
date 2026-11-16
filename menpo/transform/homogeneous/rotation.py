@@ -272,7 +272,7 @@ class Rotation(DiscreteAffine, Similarity):
             # The update better be the same size
             elif self.n_dims != shape[0]:
                 raise ValueError(
-                    "Trying to update the rotation " "matrix to a different dimension"
+                    "Trying to update the rotation matrix to a different dimension"
                 )
             # TODO actually check I am a valid rotation
             # TODO slightly dodgy here accessing _h_matrix
@@ -283,7 +283,7 @@ class Rotation(DiscreteAffine, Similarity):
         if axis is None:
             return "NO OP"
         degrees_of_rotation = np.rad2deg(radians_of_rotation)
-        message = "CCW Rotation of {:.1f} degrees " "about {}".format(
+        message = "CCW Rotation of {:.1f} degrees about {}".format(
             degrees_of_rotation, axis
         )
         return message
@@ -397,7 +397,7 @@ class Rotation(DiscreteAffine, Similarity):
             # Quaternion parameters
             return 4
         else:
-            raise NotImplementedError("Non-3D Rotations are not yet " "vectorizable")
+            raise NotImplementedError("Non-3D Rotations are not yet vectorizable")
 
     def _as_vector(self):
         r"""
@@ -443,7 +443,7 @@ class Rotation(DiscreteAffine, Similarity):
                 q = -q
             return q
         else:
-            raise NotImplementedError("Non-3D Rotations are not yet " "vectorizable")
+            raise NotImplementedError("Non-3D Rotations are not yet vectorizable")
 
     def _from_vector_inplace(self, p):
         r"""
@@ -485,11 +485,10 @@ class Rotation(DiscreteAffine, Similarity):
                 self.set_rotation_matrix(rotation, skip_checks=True)
             else:
                 raise ValueError(
-                    "Expected 4 quaternion parameters; got {} "
-                    "instead.".format(len(p))
+                    "Expected 4 quaternion parameters; got {} instead.".format(len(p))
                 )
         else:
-            raise NotImplementedError("Non-3D rotations are not yet " "vectorizable")
+            raise NotImplementedError("Non-3D rotations are not yet vectorizable")
 
     @property
     def composes_inplace_with(self):

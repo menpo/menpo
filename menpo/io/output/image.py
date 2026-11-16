@@ -35,7 +35,6 @@ def pil_exporter(image, file_handle, extension="", **kwargs):
         pil_extension = EXTENSION[extension]
     except KeyError:
         raise ValueError(
-            "PIL/Pillow does not support the provided "
-            "extension: ({})".format(extension)
+            "PIL/Pillow does not support the provided extension: ({})".format(extension)
         )
     pil_image.save(file_handle, format=pil_extension)

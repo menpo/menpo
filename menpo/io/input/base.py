@@ -27,7 +27,7 @@ from ..utils import _norm_path, _normalize_extension, _possible_extensions_from_
 def _parse_deprecated_normalise(normalise, normalize):
     if normalise is not None and normalize is not None:
         raise ValueError(
-            "normalise is now deprecated, do not set both " "normalize and normalise."
+            "normalise is now deprecated, do not set both normalize and normalise."
         )
     elif normalise is not None:
         warnings.warn(
@@ -154,8 +154,7 @@ def _register_importer(ext_map, extension, callable):
         raise ValueError("Only string type keys are supported.")
     if extension in ext_map:
         warnings.warn(
-            "Replacing an existing importer for the '{}' "
-            "extension.".format(extension)
+            "Replacing an existing importer for the '{}' extension.".format(extension)
         )
     ext_map[_normalize_extension(extension)] = callable
 
@@ -233,7 +232,7 @@ def merge_all_dicts(dicts):
         # Are there any overlapping keys?
         if intersection:
             warnings.warn(
-                "Found a keys that will be " "overwritten - {}".format(intersection)
+                "Found a keys that will be overwritten - {}".format(intersection)
             )
         new_dict.update(d)
     return new_dict
@@ -440,8 +439,9 @@ def import_video(
     video_importer_methods = {"ffmpeg": ffmpeg_video_types}
     if importer_method not in video_importer_methods:
         raise ValueError(
-            "Unsupported importer method requested. Valid values "
-            "are: {}".format(video_importer_methods.keys())
+            "Unsupported importer method requested. Valid values are: {}".format(
+                video_importer_methods.keys()
+            )
         )
 
     return _import(
@@ -780,8 +780,9 @@ def import_videos(
     video_importer_methods = {"ffmpeg": ffmpeg_video_types}
     if importer_method not in video_importer_methods:
         raise ValueError(
-            "Unsupported importer method requested. Valid values "
-            "are: {}".format(video_importer_methods.keys())
+            "Unsupported importer method requested. Valid values are: {}".format(
+                video_importer_methods.keys()
+            )
         )
 
     return _import_glob_lazy_list(
@@ -870,7 +871,7 @@ def _import_glob_lazy_list(
         random.shuffle(filepaths)
     if (max_assets is not None) and max_assets <= 0:
         raise ValueError(
-            "Max elements should be positive" " ({} provided)".format(max_assets)
+            "Max elements should be positive ({} provided)".format(max_assets)
         )
     elif max_assets:
         filepaths = filepaths[:max_assets]
@@ -1069,7 +1070,7 @@ def _pathlib_glob_for_pattern(pattern, sort=True):
             preglob = pattern_str
             pattern = "*"
         else:
-            raise ValueError("{} is an invalid glob and " "not a dir".format(pattern))
+            raise ValueError("{} is an invalid glob and not a dir".format(pattern))
     else:
         preglob = gsplit[0]
         pattern = "*" + gsplit[1]
@@ -1144,9 +1145,7 @@ def importer_for_filepath(filepath, extensions_map):
         importer_callable = extensions_map.get(possible_exts.pop(0))
 
     if importer_callable is None:
-        raise ValueError(
-            "{} does not have a " "suitable importer.".format(filepath.name)
-        )
+        raise ValueError("{} does not have a suitable importer.".format(filepath.name))
     return importer_callable
 
 

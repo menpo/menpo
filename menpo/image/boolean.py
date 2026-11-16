@@ -220,7 +220,7 @@ class BooleanImage(Image):
         Impossible for a :map:`BooleanImage` to be transformed to a
         :map:`MaskedImage`.
         """
-        raise NotImplementedError("as_masked cannot be invoked on a " "BooleanImage.")
+        raise NotImplementedError("as_masked cannot be invoked on a BooleanImage.")
 
     @property
     def mask(self):
@@ -294,7 +294,7 @@ class BooleanImage(Image):
         return np.vstack(np.nonzero(~self.pixels[0])).T
 
     def __str__(self):
-        return "{} {}D mask, {:.1%} " "of which is True".format(
+        return "{} {}D mask, {:.1%} of which is True".format(
             self._str_shape(), self.n_dims, self.proportion_true()
         )
 

@@ -141,9 +141,7 @@ class Transform(Copyable):
         try:
             x._transform_inplace(transform)
         except AttributeError:
-            raise ValueError(
-                "apply_inplace can only be used on Transformable" " objects."
-            )
+            raise ValueError("apply_inplace can only be used on Transformable objects.")
 
     def apply(self, x, batch_size=None, **kwargs):
         r"""

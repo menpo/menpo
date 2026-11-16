@@ -372,9 +372,7 @@ class MenpoMissingDependencyError(ImportError):
             Note that some packages (e.g. scikit-image) may have a different
             name on pypi/conda than their import (skimage) and thus the above 
             commands may fail.
-        """.format(
-                pname=package_name
-            )
+        """.format(pname=package_name)
         )
 
         self.missing_name = package_name
@@ -648,7 +646,7 @@ class LazyList(collections_abc.Sequence, Copyable):
         if isinstance(f, collections_abc.Iterable):
             if len(f) != len(new):
                 raise ValueError(
-                    "A callable per element of the LazyList must " "be passed."
+                    "A callable per element of the LazyList must be passed."
                 )
             new._callables = [
                 partial(delayed, one_f, x) for one_f, x in zip(f, new._callables)

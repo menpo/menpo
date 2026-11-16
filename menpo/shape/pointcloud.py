@@ -463,7 +463,7 @@ class PointCloud(Shape):
         """
         if self.n_dims != 2 and self.n_dims != 3:
             raise ValueError(
-                "Bounding boxes are only supported for 2D or 3D " "pointclouds."
+                "Bounding boxes are only supported for 2D or 3D pointclouds."
             )
         min_p, max_p = self.bounds()
         if self.n_dims == 2:
@@ -936,8 +936,7 @@ class PointCloud(Shape):
         """
         if not self.has_landmarks:
             raise ValueError(
-                "PointCloud does not have landmarks attached, "
-                "unable to view landmarks."
+                "PointCloud does not have landmarks attached, unable to view landmarks."
             )
         self_view = self.view(
             figure_id=figure_id,
@@ -1222,8 +1221,7 @@ class PointCloud(Shape):
         """
         if not self.has_landmarks:
             raise ValueError(
-                "PointCloud does not have landmarks attached, "
-                "unable to view landmarks."
+                "PointCloud does not have landmarks attached, unable to view landmarks."
             )
         self_view = self.view(figure_id=figure_id, new_figure=new_figure)
         landmark_view = self.landmarks[group].view(
@@ -1274,9 +1272,7 @@ class PointCloud(Shape):
             PointCloud.
         """
         if self.n_dims != pointcloud.n_dims:
-            raise ValueError(
-                "The two PointClouds must be of the same " "dimensionality."
-            )
+            raise ValueError("The two PointClouds must be of the same dimensionality.")
         return cdist(self.points, pointcloud.points, **kwargs)
 
     def norm(self, **kwargs):

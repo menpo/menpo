@@ -179,7 +179,7 @@ def vector_128_dsift(x, dtype=np.float32):
         x = x.pixels
     if x.shape[-1] != x.shape[-2]:
         raise ValueError(
-            "This feature only works with square images " "i.e. width == height"
+            "This feature only works with square images i.e. width == height"
         )
     patch_shape = x.shape[-1]
     n_bins = 4

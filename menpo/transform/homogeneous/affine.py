@@ -95,7 +95,7 @@ class Affine(Homogeneous):
         if not skip_checks:
             shape = value.shape
             if len(shape) != 2 or shape[0] != shape[1]:
-                raise ValueError("You need to provide a square homogeneous " "matrix")
+                raise ValueError("You need to provide a square homogeneous matrix")
             if self.h_matrix is not None:
                 # already have a matrix set! The update better be the same size
                 if self.n_dims != shape[0] - 1:

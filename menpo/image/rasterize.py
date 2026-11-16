@@ -30,7 +30,7 @@ def check_param(n, types, param_name, param):
         This is a validated list of length ``n``, one parameter for each
         element in the implicit list of other parameters.
     """
-    error_msg = "{0} must be a {1} or a list/tuple of " "{1} with length {2}".format(
+    error_msg = "{0} must be a {1} or a list/tuple of {1} with length {2}".format(
         param_name, types, n
     )
 
@@ -146,17 +146,17 @@ def _rasterize_pillow(
 
     if image.n_channels not in {1, 3}:
         raise ValueError(
-            "The Pillow rasterizer only supports grayscale or " "colour images"
+            "The Pillow rasterizer only supports grayscale or colour images"
         )
     if any(x != "-" for x in line_style):
-        raise ValueError("The Pillow rasterizer only supports the '-' " "line style.")
+        raise ValueError("The Pillow rasterizer only supports the '-' line style.")
     if any(x not in {"o", "s"} for x in marker_style):
         raise ValueError(
-            "The Pillow rasterizer only supports the 'o' and 's' " "marker styles."
+            "The Pillow rasterizer only supports the 'o' and 's' marker styles."
         )
     if any(x > 1 for x in marker_edge_width):
         raise ValueError(
-            "The Pillow rasterizer only supports " "marker_edge_width of 1 or 0."
+            "The Pillow rasterizer only supports marker_edge_width of 1 or 0."
         )
 
     if image.n_channels == 1:

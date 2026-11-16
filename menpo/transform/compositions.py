@@ -81,7 +81,7 @@ def rotate_ccw_about_centre(obj, theta, degrees=True):
         A homogeneous transform that implements the rotation.
     """
     if obj.n_dims != 2:
-        raise ValueError("CCW rotation is currently only supported for " "2D objects")
+        raise ValueError("CCW rotation is currently only supported for 2D objects")
     r = Rotation.init_from_2d_ccw_angle(theta, degrees=degrees)
     return transform_about_centre(obj, r)
 

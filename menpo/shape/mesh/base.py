@@ -414,7 +414,7 @@ class TriMesh(PointCloud):
         elif self.n_dims == 3:
             return np.linalg.norm(np.cross(ij, ik), axis=1) * 0.5
         else:
-            raise ValueError("tri_areas can only be calculated on a 2D or " "3D mesh")
+            raise ValueError("tri_areas can only be calculated on a 2D or 3D mesh")
 
     def mean_tri_area(self):
         r"""The mean area of each triangle face in this :map:`TriMesh`.
@@ -1105,8 +1105,7 @@ class TriMesh(PointCloud):
         """
         if not self.has_landmarks:
             raise ValueError(
-                "PointGraph does not have landmarks attached, "
-                "unable to view landmarks."
+                "PointGraph does not have landmarks attached, unable to view landmarks."
             )
         self_view = self.view(
             figure_id=figure_id,
