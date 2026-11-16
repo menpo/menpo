@@ -4,12 +4,8 @@
   <br><br>
   <a href="https://pypi.python.org/pypi/menpo"><img src="http://img.shields.io/pypi/v/menpo.svg?style=flat" alt="PyPI Release"/></a>
   <a href="https://github.com/menpo/menpo/blob/master/LICENSE.txt"><img src="http://img.shields.io/badge/License-BSD-green.svg" alt="BSD License"/></a>
-  <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-  <br>
-  <img src="https://img.shields.io/badge/Python-3.6-green.svg" alt="Python 3.6 Support"/>
-  <img src="https://img.shields.io/badge/Python-3.7-green.svg" alt="Python 3.7 Support"/>
-  <img src="https://img.shields.io/badge/Python-3.8-green.svg" alt="Python 3.8 Support"/>
-  <img src="https://img.shields.io/badge/Python-3.9-green.svg" alt="Python 3.9 Support"/>
+  <a href="https://github.com/menpo/menpo/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/menpo/menpo/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/astral-sh/ruff"><img alt="Code style: ruff" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json"></a>
 </p>
 
 
@@ -62,13 +58,8 @@ SciPy or Matplotlib. Installation via `conda` is as simple as
 > conda install -c conda-forge menpo
 ```
 
-#### Build Status
-And has the added benefit of installing a number of commonly used scientific
-packages such as SciPy and Numpy as Menpo also makes use of these packages.
-
-|  CI Host |        OS        |                      Build Status                                     |
-|:--------:|:----------------:|:---------------------------------------------------------------------:|
-| CircleCI | linux/amd64      | [![menpo](https://circleci.com/gh/menpo/menpo.svg?style=svg)](<LINK>) |
+Menpo requires Python 3.10 or newer. Optional extras: `pip install "menpo[imageio,opencv]"`
+(`cyvlfeat` has to be installed separately, e.g. from conda-forge).
 
 Usage
 -----
@@ -117,11 +108,12 @@ Testing
 -------
 We use [pytest](http://pytest.org/en/latest/) for unit tests.
 
-After installing `pytest`, `mock` and `pytest-mock`, running
+With [uv](https://docs.astral.sh/uv/) installed, running
 
-    >> pytest .
+    >> uv run pytest
 
-from the top of the repository will run all of the unit tests.
+from the top of the repository will set up an environment and run all of the unit
+tests. Linting is `uv run ruff check .`, `uv run ruff format --check .` and `uv run mypy menpo`.
 
 Some small parts of Menpo are only available if the user has some optional
 dependency installed. These are:
@@ -129,3 +121,14 @@ dependency installed. These are:
 - 3D viewing methods, only available if `menpo3d` is installed
 - `menpo.feature.dsift` only available if `cyvlfeat` is installed
 - Some warping unit tests are only available if `opencv` is installed
+
+Releasing
+---------
+Versions come from git tags (via `setuptools-scm`). To release, tag the commit on `master`
+(`git tag -a v0.12.0 -m "menpo 0.12.0" && git push origin v0.12.0`) and approve the `pypi`
+deployment on the resulting
+[Release workflow](https://github.com/menpo/menpo/actions/workflows/release.yml) run. The workflow
+builds the sdist and wheel, uploads them to PyPI with trusted publishing (no tokens) and creates a
+GitHub release. A manual run of the workflow with `publish: testpypi` is a dry run. The
+[conda-forge feedstock](https://github.com/conda-forge/menpo-feedstock) picks up the new PyPI release
+automatically.

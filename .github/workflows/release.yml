@@ -1,0 +1,76 @@
+name: Release
+
+# Builds the sdist + wheel on every PR, on manual runs and on version tags. Publishing uses PyPI
+# trusted publishing (OIDC, no tokens) and uploads PEP 740 attestations automatically.
+#   * push a tag `vX.Y.Z`                       -> PyPI (+ GitHub release)
+#   * manual run with `publish: testpypi`       -> TestPyPI (version is the latest tag + .devN)
+on:
+  pull_request:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Where to publish the built files"
+        type: choice
+        options: [none, testpypi]
+        default: none
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }   # setuptools-scm needs tags
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build
+      - run: uvx twine check --strict dist/*
+      - name: Smoke test the wheel
+        run: |
+          uv venv .venv-wheel
+          uv pip install --python .venv-wheel dist/*.whl
+          cd "$(mktemp -d)"
+          "$GITHUB_WORKSPACE/.venv-wheel/bin/python" -c "import menpo; print(menpo.__version__)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+
+  publish-pypi:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write        # trusted publishing
+      contents: write        # GitHub release
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: dist, path: dist }
+      - name: Tag must match the built version
+        run: |
+          test -f "dist/menpo-${GITHUB_REF_NAME#v}.tar.gz" \
+            || { echo "tag ${GITHUB_REF_NAME} does not match built files:"; ls dist; exit 1; }
+      - uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
+
+  publish-testpypi:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish == 'testpypi'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: dist, path: dist }
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
