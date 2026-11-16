@@ -157,8 +157,8 @@ def denormalize_pixels_range(pixels, out_dtype):
     if in_dtype == out_dtype:
         return pixels
 
-    if np.issubclass_(in_dtype.type, np.floating) or in_dtype == float:
-        if np.issubclass_(out_dtype, np.floating) or out_dtype == float:
+    if issubclass(in_dtype.type, np.floating) or in_dtype == float:
+        if issubclass(out_dtype, np.floating) or out_dtype == float:
             return pixels.astype(out_dtype)
         else:
             p_min = pixels.min()

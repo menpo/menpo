@@ -409,7 +409,8 @@ class TriMesh(PointCloud):
         t = self.points[self.trilist]
         ij, ik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
         if self.n_dims == 2:
-            return np.abs(np.cross(ij, ik) * 0.5)
+            # z component of the cross product (np.cross no longer accepts 2D vectors)
+            return np.abs((ij[:, 0] * ik[:, 1] - ij[:, 1] * ik[:, 0]) * 0.5)
         elif self.n_dims == 3:
             return np.linalg.norm(np.cross(ij, ik), axis=1) * 0.5
         else:
