@@ -59,7 +59,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
+        run: |
+          # PEP 440 pre-releases (a/b/rc/dev) must not become the "latest" GitHub release
+          flags=()
+          if [[ "$GITHUB_REF_NAME" =~ ([0-9](a|b|rc)[0-9]+|\.dev[0-9]+)$ ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME" "${flags[@]}"
 
   publish-testpypi:
     if: github.event_name == 'workflow_dispatch' && inputs.publish == 'testpypi'
