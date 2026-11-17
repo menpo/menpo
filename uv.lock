@@ -330,6 +330,54 @@ wheels = [
 ]
 
 [[package]]
+name = "cyvlfeat"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ae/05/b571bd3369e4ba4f2d0ba81ab9fabc62031bdc98a96f495e077a4f894500/cyvlfeat-0.8.0.tar.gz", hash = "sha256:aa0bbed729f1c21187f9acfaaf4d722e072cb1a5048e71ce57e88af903b5d3c9", size = 2438030, upload-time = "2026-11-17T19:00:57.605Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/c3/19a5023abf67ff9e8fba54992031bec599a50b40398db8f5e809725012bc/cyvlfeat-0.8.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ad72d2d6de3ecc26aec3413012395120f182c467fe6213f3bd39b37dad63bf88", size = 1706466, upload-time = "2026-11-17T18:59:59.89Z" },
+    { url = "https://files.pythonhosted.org/packages/23/fc/6a545cd384590eefed434c75d16f8c864002305664c9a49e8cde1ee6bef3/cyvlfeat-0.8.0-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:940aa1f61db25b7bef03a5e489673d58ebf99081dbbce51ca47249863b65bdfe", size = 1718031, upload-time = "2026-11-17T19:00:01.71Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/30/0338fbda36db4618b99728efda67e333d2cbd7763d41e4bd833c81b8e3b5/cyvlfeat-0.8.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:08459850e821d3f79abd1c7671a5fd7ca980cf8b9f5c493ba9bb2c06b10449b6", size = 5785068, upload-time = "2026-11-17T19:00:03.265Z" },
+    { url = "https://files.pythonhosted.org/packages/95/4f/3cc86f24f333b4cb32b84766215439ce239031a0d67334f8e94fd4b3545a/cyvlfeat-0.8.0-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0753f00a8e28a3cebb8e9c086c491dd2480b1b3d5733aaa9e338bdf64eca9606", size = 5583114, upload-time = "2026-11-17T19:00:04.972Z" },
+    { url = "https://files.pythonhosted.org/packages/60/97/5ccbcb137670bf6b01099cd750d3f47d885ecb2c6fdc12450b71434968fc/cyvlfeat-0.8.0-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:519e028cdfec312775a645bfe8a8351f064e378a901a934905c83f9541c7b163", size = 5506736, upload-time = "2026-11-17T19:00:06.534Z" },
+    { url = "https://files.pythonhosted.org/packages/df/e5/a5defbb9e0cf911a78bdecf33ca99d88d169e519b09791946b23bd31abbd/cyvlfeat-0.8.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:1e76cf4380ead20cef9cc9d1718ba5e60c88b59a4918b0f0ec76e00097ca76f9", size = 5764470, upload-time = "2026-11-17T19:00:08.15Z" },
+    { url = "https://files.pythonhosted.org/packages/41/e7/13f612cef2e8fbf41e6dca99fdec74925fe0c9e831e4284f04b7ed4dc86b/cyvlfeat-0.8.0-cp310-cp310-win_amd64.whl", hash = "sha256:1b67f3b8d50639909dc7c354a5075769bb2b7ad8efb29f65daebafbfaee78d74", size = 1590780, upload-time = "2026-11-17T19:00:10.008Z" },
+    { url = "https://files.pythonhosted.org/packages/95/a6/958c1275e94a31b2b602f5aa8d51afedaa1a95cd1d6f852e8e20aea47023/cyvlfeat-0.8.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0f38115710dca93a0b8646fb74ab73ea26ca60f84a10acc56ca277cee2a394d7", size = 1700340, upload-time = "2026-11-17T19:00:11.432Z" },
+    { url = "https://files.pythonhosted.org/packages/da/3a/4c6216a76a15677fb5f045e10f146281874a98c1bee8dc20243e50e6a15c/cyvlfeat-0.8.0-cp311-cp311-macosx_11_0_x86_64.whl", hash = "sha256:52b68babf3d2cf39b0efa6df5fb1e33f16417d9b69af9321d104caa2af272fe9", size = 1710015, upload-time = "2026-11-17T19:00:13.024Z" },
+    { url = "https://files.pythonhosted.org/packages/da/25/22d2dc76576f2e29d179c2d341909a59fa9d11140c53621f85ed4293d844/cyvlfeat-0.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:4759bbc3e8beae4704e3807ab82d311fd14c63dc213d264d67c3992e4be78cc5", size = 5956970, upload-time = "2026-11-17T19:00:14.484Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/c4/680909c48ce3b92f7ce15e957f99e3b5441d191d99757a93beb8e0df1aff/cyvlfeat-0.8.0-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:55746f22710cbdc957cb2dce72103f8864197063b7f4217879b2327948a4709a", size = 5757947, upload-time = "2026-11-17T19:00:15.991Z" },
+    { url = "https://files.pythonhosted.org/packages/71/bb/924b6fc27cd6f11c5b79de6c741b7b55d24f2c2d19e35bad23cfa4bb48d4/cyvlfeat-0.8.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:e582bde47b948a1d10b0fb731d404d0f128fd0919da95a031974e5c193a47554", size = 5690866, upload-time = "2026-11-17T19:00:17.771Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/99/d0bfdf02e83cb2f19d9aa15e7bdad87e668814210aadfcc5a7a5a52ec914/cyvlfeat-0.8.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:aae4d5fcb8b837251185a9022cbd7a97e7391cf4f9fd25638b0e25105206cc77", size = 5943996, upload-time = "2026-11-17T19:00:19.529Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/8c/bced423f252143cb4aec86d4358f48e3fb089bb15a617a55e9852e186657/cyvlfeat-0.8.0-cp311-cp311-win_amd64.whl", hash = "sha256:6017dddc4e292612068d415a8c45ebb5802ef5940ad297f37db3c2e78a33f614", size = 1587336, upload-time = "2026-11-17T19:00:21.133Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/33/3b2316b8dd44f45ff347122320f5dc9bf1196924dd96be9665f0bb8b37e3/cyvlfeat-0.8.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b57f22891c0b2130c96ea16e67ec9e2e549b3f120cd22cdda7d63cfd531d696b", size = 1701142, upload-time = "2026-11-17T19:00:22.524Z" },
+    { url = "https://files.pythonhosted.org/packages/83/37/8951b96b290f427b91e889ba07db9d924c3b48f0b9779d6c217b1a8e6e93/cyvlfeat-0.8.0-cp312-cp312-macosx_11_0_x86_64.whl", hash = "sha256:bd07549c4fa49e0b9655600a6077a4f35139b0739626538efb5a95aed91fb6da", size = 1712337, upload-time = "2026-11-17T19:00:23.835Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/bf/c203b51d660d549b33628af1ec3060c0d32b3b54d267c3d8d36e51e7171c/cyvlfeat-0.8.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:7305b039cfb5a3037f2359285697ee56022d7c6b378d2591c4cd12bb49be7344", size = 5972813, upload-time = "2026-11-17T19:00:25.229Z" },
+    { url = "https://files.pythonhosted.org/packages/24/4d/d6fb1179f269e2372b3894636c72dfe621cd8ec6c08ba4f12a3010d58fe0/cyvlfeat-0.8.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:21b204fa7820881687127bb4a2b3201acb83f0aa37ff6380f90ecc995aedf065", size = 5734141, upload-time = "2026-11-17T19:00:27.089Z" },
+    { url = "https://files.pythonhosted.org/packages/63/b9/5ef23205fa29e4a2e5153cf06fa5df197135ae3391616b0c460706405cb5/cyvlfeat-0.8.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:acc6d054efc8f9407e4853a6ff1788fa0364f54ca6fac3e9ba601f478b2e0eb6", size = 5628683, upload-time = "2026-11-17T19:00:28.735Z" },
+    { url = "https://files.pythonhosted.org/packages/34/8d/739f1946bb86543270c7beaa00142a445eb886c69b43df89492b70a5b098/cyvlfeat-0.8.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:b45d06b29315cf15b4db92c5ea94cab02112dbd5d4c08ecbc39d204b365475df", size = 5926972, upload-time = "2026-11-17T19:00:30.755Z" },
+    { url = "https://files.pythonhosted.org/packages/da/af/32ecf52218d65bfda2ef74c795162421233dfe248336bae6b8ccb56d2ff7/cyvlfeat-0.8.0-cp312-cp312-win_amd64.whl", hash = "sha256:e68196217597cefce1840693bcc172fa2aec08f36e2252735e031ae522e85c75", size = 1582319, upload-time = "2026-11-17T19:00:33.031Z" },
+    { url = "https://files.pythonhosted.org/packages/af/4c/c1af032575dadb167c103968f86648c57578373af92d4f178b6ad6caba7c/cyvlfeat-0.8.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:50c2bc680c2a8b5c353ef8b1795e29c9956ed4bd0c49ccbac35583265feae89c", size = 1701049, upload-time = "2026-11-17T19:00:34.934Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/48/aa8438f8d8e4e7f438f3bce6f6f6aaac36631389c61c574c61227148a5a7/cyvlfeat-0.8.0-cp313-cp313-macosx_11_0_x86_64.whl", hash = "sha256:e2346d83bb3b9deaa2d5e2637fe197275c27cf8f3e1f04d8fb5c1fd95c331f38", size = 1714462, upload-time = "2026-11-17T19:00:36.477Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/e2/c6c445cb04d7cec21ecea7231c21f18cc6c36bd2e3075c0b22e64d1d5c52/cyvlfeat-0.8.0-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:171ffb769dbc6ffc9a124d203047bf36c3bc8e065dcf436c0e16a8ce59dd8103", size = 5940870, upload-time = "2026-11-17T19:00:37.94Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/f1/4d80ec99d963760d91ff2bbb7474cdd2f9985b2c621ce794cba0553167bb/cyvlfeat-0.8.0-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:dcf3564b7caa16fb6fd5dba7ec8b82a91caffffff89c8c7001df268918414308", size = 5701539, upload-time = "2026-11-17T19:00:39.561Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/c5/010f4175196f40c3bbd5b14699e053c750d0210082aed43e5dc2ca308333/cyvlfeat-0.8.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:43958591854635212d8b57ac0506011a32cd083e2a31bf1b3a4300f8ba4a2da2", size = 5595620, upload-time = "2026-11-17T19:00:41.347Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/78/305b23ef026cf58ea8a797ce9cab8c13d7c737b2f6a2d2e1822f30520e28/cyvlfeat-0.8.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:af55109a1684e0c6004a98eafb7762a9e1d87d77732957a6c111e43f2cf96497", size = 5887511, upload-time = "2026-11-17T19:00:42.833Z" },
+    { url = "https://files.pythonhosted.org/packages/af/6b/cfffa84a836ec94e9a9827597ae3828daecba5711dcdfc140f4bd4e52ef5/cyvlfeat-0.8.0-cp313-cp313-win_amd64.whl", hash = "sha256:40841f878b7976071e981e7da59ce628b3f47a0d0c1e4893f15155add7105462", size = 1579695, upload-time = "2026-11-17T19:00:44.487Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/0c/0d0d1797f4c0d0981c144908e1426216e51d88d57ba0f0288044e071b3e1/cyvlfeat-0.8.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:548d3c7ce157536ad271710be9da15f54db7ccfa23c974e4087bd70f5c6b22b7", size = 1705360, upload-time = "2026-11-17T19:00:45.965Z" },
+    { url = "https://files.pythonhosted.org/packages/59/cf/8e5710eb0c1e66f37eee7b09679b14c6c6b611d07d625a3aac788c47b7de/cyvlfeat-0.8.0-cp314-cp314-macosx_11_0_x86_64.whl", hash = "sha256:fbc4d5b593fee9d80a84de33f7b7dccc2b1267db6d762a6d18053a67c00dec52", size = 1713737, upload-time = "2026-11-17T19:00:47.484Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/9a/51bbc7aa559e38af82cc2ed963f4ba953fdc78f93d0095a1845ca6a34f02/cyvlfeat-0.8.0-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:1499b25751d1813bba64be41cd89212d805c5ae1ae34a102b72542be180f2c9c", size = 5905480, upload-time = "2026-11-17T19:00:48.91Z" },
+    { url = "https://files.pythonhosted.org/packages/26/9c/51de29a405101d3a476097c8f6fb81175cbcc8af224ce34c73116ecd43ba/cyvlfeat-0.8.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f2a545ca60ad8f1585212f5fe6fd678d75ca5b0a75903aab57f154e2b572d4f7", size = 5694410, upload-time = "2026-11-17T19:00:50.587Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/7c/e2a6bffb65e9761a1bf79a3f43c896f3d06be8f2d0f2054bfbb0beec5560/cyvlfeat-0.8.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:be3e05593c0b1228e3a720280ad52f0c8ff7d56238649df33fe9fea34bb617bb", size = 5588771, upload-time = "2026-11-17T19:00:52.744Z" },
+    { url = "https://files.pythonhosted.org/packages/4f/f1/7fd5e99e455885234ac04780ff3a88b2fc215fc114e8f365a0d1a02c2700/cyvlfeat-0.8.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:7a5351688a5154ee1057e8ade2613bf690a5c4f3965e94a3777e922ae1287f42", size = 5854784, upload-time = "2026-11-17T19:00:54.4Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/b0/36b4bdcb7fac96b1822364fedf46ab0e5df76c132372a9db86c072d607e6/cyvlfeat-0.8.0-cp314-cp314-win_amd64.whl", hash = "sha256:4cf5e6dadade45b94d083ac6129f941e8230355c3d327a67050e8c437d0f1087", size = 1606127, upload-time = "2026-11-17T19:00:55.87Z" },
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -987,6 +1035,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+cyvlfeat = [
+    { name = "cyvlfeat" },
+]
 imageio = [
     { name = "imageio", version = "2.38.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "imageio", version = "2.38.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -1007,6 +1058,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cyvlfeat", marker = "extra == 'cyvlfeat'", specifier = ">=0.8" },
     { name = "imageio", marker = "extra == 'imageio'" },
     { name = "matplotlib", specifier = ">=3.0" },
     { name = "numpy", specifier = ">=1.14" },
@@ -1014,7 +1066,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=4.0" },
     { name = "scipy", specifier = ">=1.0" },
 ]
-provides-extras = ["imageio", "opencv"]
+provides-extras = ["imageio", "opencv", "cyvlfeat"]
 
 [package.metadata.requires-dev]
 dev = [

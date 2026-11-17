@@ -17,6 +17,8 @@ dependencies = ["numpy>=1.14", "scipy>=1.0", "matplotlib>=3.0", "pillow>=4.0"]
 # imageio is needed for video/GIF import and export; ffmpeg itself is a system executable.
 imageio = ["imageio"]
 opencv = ["opencv-python"]
+# menpo.feature.dsift/vector_128_dsift; cyvlfeat ships wheels with VLFeat bundled since 0.8
+cyvlfeat = ["cyvlfeat>=0.8"]
 
 [project.urls]
 Homepage = "https://www.menpo.org"
