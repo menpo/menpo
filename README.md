@@ -129,6 +129,6 @@ Versions come from git tags (via `setuptools-scm`). To release, tag the commit o
 deployment on the resulting
 [Release workflow](https://github.com/menpo/menpo/actions/workflows/release.yml) run. The workflow
 builds the sdist and wheel, uploads them to PyPI with trusted publishing (no tokens) and creates a
-GitHub release. A manual run of the workflow with `publish: testpypi` is a dry run. The
+GitHub release (tags like `v0.12.0rc1` or `v0.12.0.dev1` are published as pre-releases). A manual run of the workflow with `publish: testpypi` is a dry run. The
 [conda-forge feedstock](https://github.com/conda-forge/menpo-feedstock) picks up the new PyPI release
 automatically.
