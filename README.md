@@ -58,8 +58,8 @@ SciPy or Matplotlib. Installation via `conda` is as simple as
 > conda install -c conda-forge menpo
 ```
 
-Menpo requires Python 3.10 or newer. Optional extras: `pip install "menpo[imageio,opencv]"`
-(`cyvlfeat` has to be installed separately, e.g. from conda-forge).
+Menpo requires Python 3.10 or newer. Optional extras: `pip install "menpo[imageio,opencv,cyvlfeat]"`
+(`cyvlfeat` ships wheels with VLFeat bundled since 0.8; conda-forge also has it).
 
 Usage
 -----

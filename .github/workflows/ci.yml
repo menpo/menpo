@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: uv sync --group dev --extra imageio --extra opencv
+      - run: uv sync --group dev --extra imageio --extra opencv --extra cyvlfeat
       - run: uv run pytest -q
 
   sdist:
