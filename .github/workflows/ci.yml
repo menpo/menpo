@@ -56,3 +56,22 @@ jobs:
           uv pip install --python .venv-sdist dist/*.tar.gz pytest pytest-mock imageio
           cd "$(mktemp -d)"
           "$GITHUB_WORKSPACE/.venv-sdist/bin/python" -m pytest --pyargs menpo -q
+
+  docs:
+    runs-on: ubuntu-latest
+    env:
+      READTHEDOCS: "True"   # as on Read the Docs: use the installed menpo
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: astral-sh/setup-uv@v5
+      - name: Install what Read the Docs installs
+        run: |
+          uv venv --python 3.13 .venv-docs
+          uv pip install --python .venv-docs -r docs/requirements.txt ".[imageio,cyvlfeat]"
+      - name: Build the docs
+        run: .venv-docs/bin/python -m sphinx -b html -j auto docs/source docs/_build 2>&1 | tee docs-build.log
+      - name: Autodoc must be able to import everything (e.g. the optional cyvlfeat features)
+        run: |
+          if grep "autodoc: failed to import" docs-build.log; then exit 1; fi
