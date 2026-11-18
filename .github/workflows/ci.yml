@@ -66,6 +66,8 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: astral-sh/setup-uv@v5
+      - name: Validate the Read the Docs configuration against its schema
+        run: uvx check-jsonschema --builtin-schema vendor.readthedocs .readthedocs.yaml
       - name: Install what Read the Docs installs
         run: |
           uv venv --python 3.13 .venv-docs
