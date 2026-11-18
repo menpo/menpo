@@ -122,5 +122,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          since=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" -q .run_started_at)
+          # created_at is when the tag was pushed and never changes; run_started_at is reset by a
+          # re-run, which would then ignore a Read the Docs build that already finished
+          since=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" -q .created_at)
           python3 .github/scripts/check_rtd_build.py --tag "$GITHUB_REF_NAME" --sha "$GITHUB_SHA" --since "$since"
