@@ -3,6 +3,66 @@
 Changelog
 #########
 
+0.12.0 (2026/11/17)
+-------------------
+
+This is the first release built and published through GitHub Actions: pushing a
+release tag now builds the sdist and a universal wheel and uploads them to PyPI
+with trusted publishing (no stored tokens) and attestations. This replaces the
+old CircleCI/condaci upload, which only ever published the sdist. A wheel
+is therefore available on PyPI for the first time.
+
+**Python 3.10 or newer is now required.** Menpo is tested with NumPy 2 and
+Python 3.14, which needed a few fixes: ``np.issubclass_`` and ``np.in1d`` were
+removed from NumPy 2, ``np.cross`` no longer accepts 2D vectors (used by
+``TriMesh.tri_areas``) and ``pathlib.Path`` gained a ``copy(target)`` method in
+Python 3.14, which broke ``Copyable.copy``.
+
+Packaging has been modernised: ``pyproject.toml`` with ``setuptools-scm``
+replaces ``setup.py`` and the vendored miniver (the version now comes from the
+git tag), ``ruff`` replaces ``black`` (and the black unit test is gone), and
+the in-repo conda recipe and CircleCI configuration have been removed - the
+conda-forge feedstock builds from the sdist. Optional dependencies are
+extras: ``menpo[imageio]``, ``menpo[opencv]`` and ``menpo[cyvlfeat]``
+(``cyvlfeat`` 0.8 ships wheels with VLFeat bundled). CI now runs on Linux,
+macOS and Windows.
+
+Github Pull Requests
+....................
+- `#875`_ Move CI and releases to GitHub Actions with PyPI trusted publishing (@patricksnape)
+- `#876`_ Mark pre-release tags as GitHub pre-releases (@patricksnape)
+- `#877`_ Add the cyvlfeat extra back (@patricksnape)
+
+.. _#875: https://github.com/menpo/menpo/pull/875
+.. _#876: https://github.com/menpo/menpo/pull/876
+.. _#877: https://github.com/menpo/menpo/pull/877
+
+0.11.1 (2024/05/06)
+-------------------
+
+Fixes many usages of NumPy types that were preventing users from upgrading to
+recent NumPy releases, along with a few other fixes needed to get the CI system
+working again (including CircleCI on Python 3.10 and the deprecation of
+Python 3.6).
+
+Github Pull Requests
+....................
+- `#853`_ Only skip the black test on CI (@patricksnape)
+- `#860`_ Add kwargs to mesh view method (@patricksnape)
+- `#861`_ Fix listing of builtin methods (@patricksnape)
+- `#862`_ Fix warnings and errors (@patricksnape)
+- `#871`_ Fix edge_vectors() when dim!=2 (@patricksnape)
+- `#872`_ Update CircleCI to Python 3.10 and deprecate 3.6 (@patricksnape)
+- `#874`_ Fix build for v0.11.1 (@patricksnape)
+
+.. _#853: https://github.com/menpo/menpo/pull/853
+.. _#860: https://github.com/menpo/menpo/pull/860
+.. _#861: https://github.com/menpo/menpo/pull/861
+.. _#862: https://github.com/menpo/menpo/pull/862
+.. _#871: https://github.com/menpo/menpo/pull/871
+.. _#872: https://github.com/menpo/menpo/pull/872
+.. _#874: https://github.com/menpo/menpo/pull/874
+
 0.11.0 (2021/01/09)
 -------------------
 
