@@ -1,0 +1,5 @@
+# Documentation build dependencies (Read the Docs and CI). menpo itself is installed with its
+# optional extras so that the optional features (cyvlfeat) are documented too.
+sphinx>=7
+sphinx_rtd_theme>=2
+sphinxmapxrefrole>=0.2

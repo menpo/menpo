@@ -1,16 +1,23 @@
 version: 2
 
-# Build documentation in the docs/ directory with Sphinx
+build:
+  os: ubuntu-lts-latest
+  tools:
+    python: "3.13"
+  jobs:
+    post_checkout:
+      # the version comes from git tags (setuptools-scm) but Read the Docs clones shallowly
+      - git fetch --unshallow || true
+      - git fetch --tags || true
+
 sphinx:
   configuration: docs/source/conf.py
 
-formats: all
-
-conda:
-  environment: docs/rtd_environment.yml
-
 python:
-  version: 3.7
   install:
+    - requirements: docs/requirements.txt
     - method: pip
       path: .
+      extra_requirements:
+        - imageio
+        - cyvlfeat
