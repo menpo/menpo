@@ -7,6 +7,7 @@ name: Release
 # Read the Docs reads .readthedocs.yaml from the *tagged commit*, so a tag with a broken docs setup
 # can never be repaired afterwards (a published tag must not move). Hence for tags:
 #   * `docs` validates that config and builds the docs BEFORE anything is published;
+#   * `rtd-preflight` requires Read the Docs' own build of `latest` for this commit to have succeeded;
 #   * `rtd` waits AFTER publishing for Read the Docs to build `stable` and fails the run if it did not.
 on:
   pull_request:
@@ -66,9 +67,24 @@ jobs:
         run: |
           if grep "autodoc: failed to import" docs-build.log; then exit 1; fi
 
+  rtd-preflight:
+    # Read the Docs reads its config from the tagged commit and a published tag cannot move. It builds
+    # `latest` from every push to master with the same config, so that build of the commit being released
+    # must have succeeded BEFORE anything is published. (Pre-releases are skipped.)
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the Docs must have built this commit as `latest`
+        run: |
+          since=$(git show -s --format=%cI "$GITHUB_SHA")
+          python3 .github/scripts/check_rtd_build.py --preflight --version latest --tag "$GITHUB_REF_NAME" \
+            --sha "$GITHUB_SHA" --since "$since" --timeout 1200
+
   publish-pypi:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, docs]
+    needs: [build, docs, rtd-preflight]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
