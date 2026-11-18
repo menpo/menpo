@@ -46,7 +46,7 @@ def main():
         "--since", required=True, help="ISO time: only builds created after it count"
     )
     parser.add_argument(
-        "--timeout", type=int, default=1200, help="seconds to wait (default 20 min)"
+        "--timeout", type=int, default=3000, help="seconds to wait (default 50 min)"
     )
     parser.add_argument("--interval", type=int, default=30)
     args = parser.parse_args()
@@ -102,7 +102,10 @@ def main():
         print(f"  waiting: {status}", flush=True)
         time.sleep(args.interval)
     print(
-        f"TIMEOUT after {args.timeout}s: {status}. Is the Read the Docs GitHub app still connected to the repository?"
+        f"TIMEOUT after {args.timeout}s: {status}.\n"
+        "Read the Docs can be slow to react to a new tag (it once took 20 minutes), so look at "
+        f"https://app.readthedocs.org/projects/{args.project}/builds/ ; if nothing is queued there, "
+        "check that the Read the Docs GitHub app is still connected to the repository."
     )
     return 1
 
