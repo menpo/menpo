@@ -5,11 +5,16 @@ Read the Docs reads its configuration (.readthedocs.yaml) from the tagged commit
 broken docs setup cannot be repaired afterwards (the tag must not move). This is run after a release
 is published to make that visible straight away instead of leaving `stable` silently outdated.
 
+With --preflight it is run BEFORE publishing instead: Read the Docs builds `latest` from every push to
+the default branch and reads the same configuration from that commit, so a successful `latest` build of
+the commit about to be released shows that the tag's docs will build (a failed one blocks the release).
+
 Only the public API of the (public) project is used, no token is needed.
 """
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -34,7 +39,11 @@ def parse(timestamp):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project", default="menpo")
+    parser.add_argument(
+        "--project",
+        default=os.environ.get("GITHUB_REPOSITORY", "menpo/menpo").split("/")[-1],
+        help="Read the Docs project slug (default: the repository name)",
+    )
     parser.add_argument(
         "--version", default="stable", help="Read the Docs version to check"
     )
@@ -44,6 +53,11 @@ def main():
     )
     parser.add_argument(
         "--since", required=True, help="ISO time: only builds created after it count"
+    )
+    parser.add_argument(
+        "--preflight",
+        action="store_true",
+        help="before publishing: require the newest `latest` build to have succeeded for --sha",
     )
     parser.add_argument(
         "--timeout", type=int, default=3000, help="seconds to wait (default 50 min)"
@@ -64,7 +78,7 @@ def main():
     while time.monotonic() < deadline:
         try:
             version = get(version_url)
-            builds = get(version_url + "builds/?limit=5")["results"]
+            builds = get(version_url + "builds/?limit=10")["results"]
         except urllib.error.HTTPError as error:
             status = f"API error: {error}"
             if error.code == 429:  # anonymous API calls are rate limited: back off
@@ -78,7 +92,37 @@ def main():
         except (urllib.error.URLError, json.JSONDecodeError, KeyError) as error:
             status = f"API error: {error}"
         else:
-            if args.sha and version.get("identifier") != args.sha:
+            if args.preflight:
+                # `latest` tracks the branch: find the build of the release commit. A successful build
+                # records its commit; a failed one may not, but then it is the first build that started
+                # after the commit was pushed (builds come newest first)
+                recent = [b for b in builds if parse(b["created"]) >= since]
+                built = [
+                    b for b in recent if b["success"] and b.get("commit") == args.sha
+                ]
+                first = recent[-1] if recent else None
+                if built:
+                    print(
+                        f"OK: '{args.version}' built {args.sha} successfully: {built[0]['urls']['build']}"
+                    )
+                    return 0
+                if first is None:
+                    status = f"no build of '{args.version}' since the release commit was pushed"
+                elif first["state"]["code"] != "finished":
+                    status = f"build {first['id']} is {first['state']['name']}"
+                elif not first["success"]:
+                    print(
+                        f"FAILED: the Read the Docs build of '{args.version}' for the release commit failed: "
+                        f"{first['urls']['build']}"
+                    )
+                    print(
+                        "The tag's docs would fail the same way and a published tag cannot move: fix it on "
+                        "the default branch first, then tag the new commit."
+                    )
+                    return 1
+                else:
+                    status = f"'{args.version}' has not built {args.sha} yet"
+            elif args.sha and version.get("identifier") != args.sha:
                 status = f"'{args.version}' still points at {version.get('identifier')}, waiting for {args.sha} (tag not synced yet)"
             else:
                 recent = [b for b in builds if parse(b["created"]) >= since]
