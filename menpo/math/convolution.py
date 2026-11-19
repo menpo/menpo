@@ -214,7 +214,7 @@ def __log_gabor_3d(
 
     # Allocate space for return structures
     bandpass = np.empty(
-        [num_scales, image.shape[0], image.shape[1], image.shape[2]], dtype=np.complex
+        [num_scales, image.shape[0], image.shape[1], image.shape[2]], dtype=complex
     )
     log_gabor = np.empty([num_scales, image.shape[0], image.shape[1], image.shape[2]])
     S = np.zeros(image.shape)
@@ -227,10 +227,10 @@ def __log_gabor_3d(
             image.shape[1],
             image.shape[2],
         ],
-        dtype=np.complex,
+        dtype=complex,
     )
     tmp_complex_conv = np.empty(
-        [num_scales, image.shape[0], image.shape[1], image.shape[2]], dtype=np.complex
+        [num_scales, image.shape[0], image.shape[1], image.shape[2]], dtype=complex
     )
 
     # Pre-compute fourier values
@@ -321,14 +321,14 @@ def __log_gabor_2d(
     d_phi_sigma=1.3,
 ):
     # Allocate space for return structures
-    bandpass = np.empty([num_scales, image.shape[0], image.shape[1]], dtype=np.complex)
+    bandpass = np.empty([num_scales, image.shape[0], image.shape[1]], dtype=complex)
     log_gabor = np.empty([num_scales, image.shape[0], image.shape[1]])
     S = np.zeros(image.shape)
     complex_conv = np.empty(
-        [num_scales, num_orientations, image.shape[0], image.shape[1]], dtype=np.complex
+        [num_scales, num_orientations, image.shape[0], image.shape[1]], dtype=complex
     )
     tmp_complex_conv = np.empty(
-        [num_scales, image.shape[0], image.shape[1]], dtype=np.complex
+        [num_scales, image.shape[0], image.shape[1]], dtype=complex
     )
 
     # Pre-compute phi sigma
