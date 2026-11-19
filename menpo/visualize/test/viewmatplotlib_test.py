@@ -26,3 +26,23 @@ def test_unknown_cmap_raises():
 def test_view_image_with_a_colour_map(cmap):
     image = mio.import_builtin_asset.takeo_ppm().as_greyscale()
     image.view(cmap_name=cmap)
+
+
+@pytest.mark.parametrize("n", range(1, 31))
+def test_subplot_layout_is_integral_and_big_enough(n):
+    # the factors were floats (n /= f), and Matplotlib rejects float grid sizes in plt.subplot
+    from menpo.visualize.viewmatplotlib import MatplotlibSubplots
+
+    rows, cols = MatplotlibSubplots()._subplot_layout(n)
+    assert isinstance(rows, int) and isinstance(cols, int)
+    assert rows * cols >= n
+
+
+def test_subplot_layout_can_be_used_by_matplotlib():
+    import matplotlib.pyplot as plt
+    from menpo.visualize.viewmatplotlib import MatplotlibSubplots
+
+    rows, cols = MatplotlibSubplots()._subplot_layout(3)
+    plt.figure()
+    plt.subplot(rows, cols, 1)
+    plt.close("all")

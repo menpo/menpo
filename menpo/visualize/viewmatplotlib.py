@@ -187,7 +187,7 @@ class MatplotlibSubplots(object):
         while f * f <= n:
             while n % f == 0:
                 fs.append(f)
-                n /= f
+                n //= f
             f += gaps[next_ind]
             next_ind += 1
             if next_ind == length:
