@@ -46,3 +46,14 @@ def test_subplot_layout_can_be_used_by_matplotlib():
     plt.figure()
     plt.subplot(rows, cols, 1)
     plt.close("all")
+
+
+@pytest.mark.parametrize("format", ["png", "pdf", "svg"])
+def test_save_figure(tmp_path, format):
+    # savefig was given facecolour, edgecolour, papertype and frameon, which
+    # Matplotlib does not accept (any more)
+    image = mio.import_builtin_asset.takeo_ppm()
+    renderer = image.view()
+    path = tmp_path / f"figure.{format}"
+    renderer.save_figure(path, format=format, face_colour="k", transparent=False)
+    assert path.stat().st_size > 0
