@@ -103,7 +103,7 @@ class MatplotlibRenderer(Renderer):
         orientation : {``portrait``, ``landscape``}, optional
             The page orientation.
         paper_type : See Below, optional
-            The type of the paper.
+            The type of the paper. Ignored: Matplotlib removed it in 3.6.
             Example options ::
 
                 {``letter``, ``legal``, ``executive``, ``ledger``,
@@ -123,17 +123,18 @@ class MatplotlibRenderer(Renderer):
         """
         from menpo.io.output.base import _export
 
+        # Matplotlib spells the colours "facecolor" and "edgecolor", and it
+        # removed the "papertype" and "frameon" arguments in 3.6 (``paper_type``
+        # is therefore ignored)
         save_fig_args = {
             "dpi": dpi,
-            "facecolour": face_colour,
-            "edgecolour": edge_colour,
+            "facecolor": face_colour,
+            "edgecolor": edge_colour,
             "orientation": orientation,
-            "papertype": paper_type,
             "format": format,
             "transparent": transparent,
             "pad_inches": pad_inches,
             "bbox_inches": "tight",
-            "frameon": None,
         }
         # Use the export code so that we have a consistent interface
         _export(
