@@ -218,9 +218,11 @@ class MatplotlibSubplots(object):
 
 def _parse_cmap(cmap_name=None, image_shape_len=3):
     import matplotlib.cm as cm
+    import matplotlib.pyplot as plt
 
     if cmap_name is not None:
-        return cm.get_cmap(cmap_name)
+        # cm.get_cmap was removed in Matplotlib 3.9, plt.get_cmap exists in all versions
+        return plt.get_cmap(cmap_name)
     else:
         if image_shape_len == 2:
             # Single channels are viewed in Gray by default
