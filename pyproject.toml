@@ -47,9 +47,17 @@ line-length = 88
 extend-exclude = ["docs", "menpo/_version.py"]
 
 [tool.ruff.lint]
-select = ["E9", "F"]
+select = ["E9", "F", "I"]  # I: isort, so imports are sorted and grouped the same way everywhere
 # the package namespaces re-export names from __init__ files, some via star imports
 ignore = ["F401", "F403", "F405", "F841"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["menpo"]
+
+[tool.ruff.lint.per-file-ignores]
+# The order of the imports in a package's __init__ is part of how the package is put together (they
+# import each other), and sorting them alphabetically creates circular imports.
+"**/__init__.py" = ["I001"]
 
 [tool.mypy]
 python_version = "3.10"
