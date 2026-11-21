@@ -1,5 +1,8 @@
 import numpy as np
 from copy import deepcopy
+from itertools import chain
+
+from scipy.spatial import cKDTree
 from menpo.base import Copyable
 from menpo.transform.base import Alignment, Invertible, Transform
 
@@ -19,6 +22,10 @@ class TriangleContainmentError(Exception):
     def __init__(self, points_outside_source_domain):
         super(TriangleContainmentError, self).__init__()
         self.points_outside_source_domain = points_outside_source_domain
+
+
+# how many triangles index_alpha_beta looks for the points of at a time
+_TRIANGLES_PER_CHUNK = 1024
 
 
 def containment_from_alpha_beta(alpha, beta):
@@ -150,10 +157,64 @@ def index_alpha_beta(i, ij, ik, points):
         All `points` must be contained in a source triangle. Check
         `error.points_outside_source_domain` to handle this case.
     """
-    alpha, beta = alpha_beta(i, ij, ik, points)
-    each_point = np.arange(points.shape[0])
-    index = containment_from_alpha_beta(alpha, beta)
-    return index, alpha[each_point, index], beta[each_point, index]
+    points = np.asarray(points)
+    n_points, n_tris = points.shape[0], i.shape[1]
+    tri_index = np.zeros(n_points, dtype=np.uint32)
+    alpha = np.zeros(n_points)
+    beta = np.zeros(n_points)
+    found = np.zeros(n_points, dtype=bool)
+
+    # Only the finite points can be in a triangle (a NaN is in none), and the KD-tree needs them.
+    finite = np.flatnonzero(np.isfinite(points).all(axis=1))
+    if len(finite) and n_tris:
+        # The triangles are described by one ball each, around their bounding box. A KD-tree of the *points* gives,
+        # for every triangle at once, the points in its ball, so that a point is only tested against the triangles
+        # that are near it, and not against all of them (that is a matrix of n_points x n_tris).
+        vertices = np.stack([i, i + ij, i + ik])  # (3, 2, n_tris)
+        lower, upper = vertices.min(axis=0).T, vertices.max(axis=0).T
+        centres = (lower + upper) / 2
+        scale = max(
+            1.0, float(np.abs(points[finite]).max()), float(np.abs(vertices).max())
+        )
+        radii = np.hypot(*(upper - lower).T) / 2 * (1 + 1e-9) + 1e-12 * scale
+        tree = cKDTree(points[finite])
+
+        dot_jj = np.einsum("dt, dt -> t", ij, ij)
+        dot_kk = np.einsum("dt, dt -> t", ik, ik)
+        dot_jk = np.einsum("dt, dt -> t", ij, ik)
+        d = 1.0 / (dot_jj * dot_kk - dot_jk * dot_jk)
+
+        # in chunks of triangles, so that the candidates of a mesh whose triangles overlap a lot cannot all be
+        # in memory at once. Later chunks have the higher triangle indices, which win a point that is in several.
+        for start in range(0, n_tris, _TRIANGLES_PER_CHUNK):
+            chunk = slice(start, start + _TRIANGLES_PER_CHUNK)
+            lists = tree.query_ball_point(centres[chunk], radii[chunk])
+            counts = np.fromiter(map(len, lists), dtype=np.intp, count=len(lists))
+            if not counts.sum():
+                continue
+            tri = np.repeat(np.arange(start, start + len(lists)), counts)
+            point = finite[
+                np.fromiter(chain.from_iterable(lists), np.intp, int(counts.sum()))
+            ]
+            # the barycentric coordinates of each candidate pair, as alpha_beta computes them
+            ip = points[point] - i[:, tri].T
+            dot_pj = np.einsum("md, dm -> m", ip, ij[:, tri])
+            dot_pk = np.einsum("md, dm -> m", ip, ik[:, tri])
+            a = (dot_kk[tri] * dot_pj - dot_jk[tri] * dot_pk) * d[tri]
+            b = (dot_jj[tri] * dot_pk - dot_jk[tri] * dot_pj) * d[tri]
+            inside = np.logical_and(np.logical_and(a >= 0, b >= 0), a + b <= 1)
+            point, tri, a, b = point[inside], tri[inside], a[inside], b[inside]
+            # a point that is in more than one triangle (on an edge or a vertex) belongs to the last of them
+            order = np.lexsort((tri, point))
+            point, tri, a, b = point[order], tri[order], a[order], b[order]
+            last = np.append(point[1:] != point[:-1], True)
+            point = point[last]
+            tri_index[point], alpha[point], beta[point] = tri[last], a[last], b[last]
+            found[point] = True
+
+    if not np.all(found):
+        raise TriangleContainmentError(~found)
+    return tri_index, alpha, beta
 
 
 def barycentric_vectors(points, trilist):
