@@ -136,6 +136,49 @@ class VectorizableBackedModel(object):
         """
         return self.project_vector(instance.as_vector())
 
+    def impute_vector(self, instance_vector, mask):
+        """
+        Imputes the missing features of `instance_vector`: the weights are found
+        from the features that are available and the whole vector is rebuilt
+        from them. The missing features are taken to be the mean.
+
+        Parameters
+        ----------
+        instance_vector : ``(n_available_features,)`` `ndarray`
+            The available features of a novel instance vector, in the order of
+            the ``True`` entries of `mask`.
+        mask : ``(n_features,)`` `bool ndarray`
+            ``True`` where a feature is available in `instance_vector`.
+
+        Returns
+        -------
+        imputed_vector : ``(n_features,)`` `ndarray`
+            The imputed vector.
+        """
+        raise NotImplementedError()
+
+    def impute(self, instance, mask):
+        """
+        Imputes the missing features of `instance`, which holds only the
+        features that are available (see :meth:`impute_vector`).
+
+        Parameters
+        ----------
+        instance : :map:`Vectorizable`
+            An instance whose vector is the available features, in the order
+            of the ``True`` entries of `mask`.
+        mask : ``(n_features,)`` `bool ndarray`
+            ``True`` where a feature is available in `instance`.
+
+        Returns
+        -------
+        imputed : `type(self.template_instance)`
+            The imputed instance, with all the features of the model.
+        """
+        return self.template_instance.from_vector(
+            self.impute_vector(instance.as_vector(), mask)
+        )
+
     def reconstruct_vector(self, instance_vector):
         """
         Projects an `instance_vector` onto the linear space and rebuilds from the
