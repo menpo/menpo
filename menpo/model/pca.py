@@ -1,7 +1,8 @@
 import numpy as np
 
-from menpo.base import doc_inherit, name_of_callable
+from menpo.base import Vectorizable, doc_inherit, name_of_callable
 from menpo.math import as_matrix, ipca, pca, pcacov
+from menpo.visualize import print_progress
 from .linear import MeanLinearVectorModel
 from .vectorizable import VectorizableBackedModel
 
@@ -36,10 +37,16 @@ class PCAVectorModel(MeanLinearVectorModel):
     """
 
     def __init__(
-        self, samples, centre=True, n_samples=None, max_n_components=None, inplace=True
+        self,
+        samples,
+        centre=True,
+        n_samples=None,
+        max_n_components=None,
+        inplace=True,
+        verbose=False,
     ):
         # Generate data matrix
-        data, self.n_samples = self._data_to_matrix(samples, n_samples)
+        data, self.n_samples = self._data_to_matrix(samples, n_samples, verbose)
 
         # Compute pca
         e_vectors, e_values, mean = pca(data, centre=centre, inplace=inplace)
@@ -158,16 +165,46 @@ class PCAVectorModel(MeanLinearVectorModel):
         if max_n_components is not None:
             self.trim_components(max_n_components)
 
-    def _data_to_matrix(self, data, n_samples):
-        # build a data matrix from all the samples
+    def _data_to_matrix(self, data, n_samples, verbose=False):
+        # data is an ndarray of (n_samples, n_features), or a list or LazyList
+        # of vectors of (n_features,). The vectors are copied once, straight
+        # into a matrix allocated up front, so that a LazyList is never held
+        # in memory twice (as np.array(data) would).
+        if isinstance(data, np.ndarray):
+            if data.ndim != 2:
+                raise ValueError(
+                    "samples must be a 2D array of (n_samples, n_features), got "
+                    "an array of shape {}".format(data.shape)
+                )
+            available = data.shape[0]
+        else:
+            available = len(data)
         if n_samples is None:
-            n_samples = len(data)
-        # Assumed data is ndarray of (n_samples, n_features) or list of samples
-        if not isinstance(data, np.ndarray):
-            # Make sure we have an array, slice of the number of requested
-            # samples
-            data = np.array(data)[:n_samples]
-        return data, n_samples
+            n_samples = available
+        elif n_samples > available:
+            raise ValueError(
+                "n_samples is {} but there are only {} samples".format(
+                    n_samples, available
+                )
+            )
+        if isinstance(data, np.ndarray):
+            return data[:n_samples], n_samples
+
+        first = np.asarray(data[0])
+        matrix = np.empty((n_samples, first.shape[0]), dtype=first.dtype)
+        matrix[0] = first  # already loaded to learn the shape: do not load it again
+        samples = (data[i] for i in range(1, n_samples))
+        if verbose:
+            samples = print_progress(
+                samples,
+                n_items=n_samples,
+                offset=1,
+                prefix="Building data matrix",
+                end_with_newline=False,
+            )
+        for i, sample in enumerate(samples, 1):
+            matrix[i] = sample
+        return matrix, n_samples
 
     def __setstate__(self, state):
         if "mean_vector" in state:
@@ -1309,6 +1346,77 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
             inplace=inplace,
         )
         VectorizableBackedModel.__init__(self, template)
+
+    @classmethod
+    def init_from_data_matrix(
+        cls,
+        data,
+        template,
+        centre=True,
+        max_n_components=None,
+        inplace=True,
+        verbose=False,
+    ):
+        r"""
+        Build the model from a data matrix that already exists, and a template
+        instance that says what a row means. This is for data that arrives as
+        a matrix, where building a list of objects only to turn them back into
+        a matrix (what the constructor does) would be wasteful. For details of
+        the implementation of PCA, see :map:`pca`.
+
+        Parameters
+        ----------
+        data : ``(n_samples, n_features)`` `ndarray`
+            The data matrix, one sample per row: what :map:`as_matrix` returns
+            for a list of :map:`Vectorizable`.
+        template : :map:`Vectorizable`
+            An instance whose vector has ``n_features`` entries. It must be a
+            :map:`Vectorizable` and *not* an `ndarray`.
+        centre : `bool`, optional
+            When ``True`` (default) PCA is performed after mean centering the
+            data. If ``False`` the data is assumed to be centred, and the mean
+            will be ``0``.
+        max_n_components : `int`, optional
+            The maximum number of components to keep in the model. Any
+            components above and beyond this one are discarded.
+        inplace : `bool`, optional
+            If ``True`` (default) the data matrix is modified in place.
+            Otherwise, the data matrix is copied.
+        verbose : `bool`, optional
+            Whether to print building information or not.
+
+        Raises
+        ------
+        ValueError
+            If `data` is not a 2D array, or its rows do not have as many
+            features as `template`.
+        TypeError
+            If `template` is not a :map:`Vectorizable`.
+        """
+        if not isinstance(template, Vectorizable):
+            raise TypeError(
+                "template must be a Vectorizable, got {}".format(type(template))
+            )
+        if not isinstance(data, np.ndarray) or data.ndim != 2:
+            raise ValueError("data must be a 2D array of (n_samples, n_features)")
+        if data.shape[1] != template.n_parameters:
+            raise ValueError(
+                "data has {} features per sample but the template has {}".format(
+                    data.shape[1], template.n_parameters
+                )
+            )
+        self = PCAVectorModel.__new__(cls)
+        PCAVectorModel.__init__(
+            self,
+            data,
+            centre=centre,
+            max_n_components=max_n_components,
+            n_samples=data.shape[0],
+            inplace=inplace,
+            verbose=verbose,
+        )
+        VectorizableBackedModel.__init__(self, template)
+        return self
 
     @classmethod
     def init_from_covariance_matrix(
