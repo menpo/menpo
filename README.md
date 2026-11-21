@@ -108,6 +108,8 @@ Testing
 -------
 We use [pytest](http://pytest.org/en/latest/) for unit tests.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up, what CI checks and what a good pull request looks like.
+
 With [uv](https://docs.astral.sh/uv/) installed, running
 
     >> uv run pytest
