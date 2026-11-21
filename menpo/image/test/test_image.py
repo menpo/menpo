@@ -178,6 +178,57 @@ def test_image_clip_pixels_cutom_max_uint():
     assert image2.pixels.max() <= 200
 
 
+def _hard_edge_image():
+    # black on the left and white on the right: where interpolation overshoots the most
+    return Image(np.tile((np.arange(64) > 31).astype(float), (64, 1))[None])
+
+
+def test_linear_interpolation_stays_within_the_range_of_the_pixels():
+    image = Image(np.random.RandomState(0).rand(3, 20, 24))
+    for scale in (0.4, 1.0, 1.7):
+        pixels = image.rescale(scale, order=1).pixels
+        assert pixels.min() >= -1e-12 and pixels.max() <= 1 + 1e-12
+
+
+def test_higher_order_interpolation_can_leave_the_range_and_clip_pixels_puts_it_back():
+    # what the documentation of the interpolation order says
+    image = _hard_edge_image()
+    for order in (3, 5):
+        rescaled = image.rescale(0.7, order=order)
+        assert rescaled.pixels.min() < 0 and rescaled.pixels.max() > 1
+        assert (
+            rescaled.pixels.min() > -0.1 and rescaled.pixels.max() < 1.1
+        )  # a few percent
+        clipped = rescaled.clip_pixels()
+        assert clipped.pixels.min() == 0 and clipped.pixels.max() == 1
+        inside = (rescaled.pixels >= 0) & (rescaled.pixels <= 1)
+        assert_equal(
+            clipped.pixels[inside], rescaled.pixels[inside]
+        )  # only the outliers move
+
+
+def test_clip_pixels_keeps_the_type_the_landmarks_and_the_mask():
+    from menpo.shape import PointCloud
+
+    pixels = np.random.RandomState(1).rand(1, 6, 7) * 2 - 0.5
+    image = MaskedImage(pixels)
+    image.landmarks["points"] = PointCloud(np.array([[1.0, 2.0], [3.0, 4.0]]))
+    clipped = image.clip_pixels()
+    assert type(clipped) is MaskedImage
+    assert clipped.pixels.min() >= 0 and clipped.pixels.max() <= 1
+    assert_equal(clipped.mask.mask, image.mask.mask)
+    assert_equal(clipped.landmarks["points"].points, image.landmarks["points"].points)
+    assert image.pixels.min() < 0  # the image it was called on is untouched
+
+
+def test_clip_pixels_of_a_dtype_it_does_not_know_needs_a_maximum():
+    image = Image(np.arange(12).reshape(1, 3, 4))
+    assert image.pixels.dtype.kind == "i"
+    with raises(ValueError, match="dtype"):
+        image.clip_pixels()
+    assert image.clip_pixels(maximum=5).pixels.max() == 5
+
+
 def test_boolean_image_wrong_round():
     with raises(ValueError):
         BooleanImage.init_blank((12, 12), round="ads")

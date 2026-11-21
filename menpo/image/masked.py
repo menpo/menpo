@@ -973,6 +973,8 @@ class MaskedImage(Image):
         order : `int`, optional
             The order of interpolation. The order has to be in the range [0,5].
             See warp_to_shape for more information.
+            Orders above 1 can leave values slightly outside the range of the
+            pixels: see ``clip_pixels()``.
         mode : ``{constant, nearest, reflect, wrap}``, optional
             Points outside the boundaries of the input are filled according
             to the given mode.
@@ -1047,6 +1049,10 @@ class MaskedImage(Image):
             4         Bi-quartic
             5         Bi-quintic
             ========= =====================
+
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
 
         mode : ``{constant, nearest, reflect, wrap}``, optional
             Points outside the boundaries of the input are filled according
@@ -1134,6 +1140,10 @@ class MaskedImage(Image):
             4         Bi-quartic
             5         Bi-quintic
             ========= =====================
+
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
 
         mode : ``{constant, nearest, reflect, wrap}``, optional
             Points outside the boundaries of the input are filled according
