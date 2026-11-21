@@ -379,43 +379,51 @@ class Rotation(DiscreteAffine, Similarity):
     @property
     def n_parameters(self):
         r"""
-        Number of parameters of Rotation. Only 3D rotations are currently
-        supported.
+        Number of parameters of Rotation. A 2D rotation has 1 (its angle) and a
+        3D rotation has 4 (a quaternion). Other dimensions are not supported.
 
         Returns
         -------
         n_parameters : `int`
-            The transform parameters. Only 3D rotations are currently
-            supported which are parametrized with quaternions.
+            The number of parameters.
 
         Raises
         ------
-        DimensionalityError, NotImplementedError
-            Non-3D Rotations are not yet vectorizable
+        NotImplementedError
+            Rotations that are not 2D or 3D are not vectorizable
         """
-        if self.n_dims == 3:
+        if self.n_dims == 2:
+            # The angle
+            return 1
+        elif self.n_dims == 3:
             # Quaternion parameters
             return 4
         else:
-            raise NotImplementedError("Non-3D Rotations are not yet vectorizable")
+            raise NotImplementedError(
+                "Only 2D and 3D Rotations are vectorizable, not {}D".format(self.n_dims)
+            )
 
     def _as_vector(self):
         r"""
-        Return the parameters of the transform as a 1D array. These parameters
-        are parametrised as quaternions. Only 3D transforms are currently
-        supported.
+        Return the parameters of the transform as a 1D array. A 2D rotation is
+        parametrised by its counter-clockwise angle, in radians, in the range
+        ``(-pi, pi]``. A 3D rotation is parametrised as a quaternion. Other
+        dimensions are not supported.
 
         Returns
         -------
-        q : ``(4,)`` `ndarray`
-            The 4 quaternion parameters.
+        p : ``(1,)`` or ``(4,)`` `ndarray`
+            The angle of a 2D rotation, or the 4 quaternion parameters of a 3D
+            rotation.
 
         Raises
         ------
-        DimensionalityError, NotImplementedError
-            Non-3D Rotations are not yet vectorizable
+        NotImplementedError
+            Rotations that are not 2D or 3D are not vectorizable
         """
-        if self.n_dims == 3:
+        if self.n_dims == 2:
+            return np.array([np.arctan2(self.h_matrix[1, 0], self.h_matrix[0, 0])])
+        elif self.n_dims == 3:
             m00 = self.h_matrix[0, 0]
             m01 = self.h_matrix[0, 1]
             m02 = self.h_matrix[0, 2]
@@ -443,31 +451,41 @@ class Rotation(DiscreteAffine, Similarity):
                 q = -q
             return q
         else:
-            raise NotImplementedError("Non-3D Rotations are not yet vectorizable")
+            raise NotImplementedError(
+                "Only 2D and 3D Rotations are vectorizable, not {}D".format(self.n_dims)
+            )
 
     def _from_vector_inplace(self, p):
         r"""
-        Returns an instance of the transform from the given parameters
-        expressed in quaternions. Currently only 3D rotations are supported.
+        Sets the transform from the given parameters: the counter-clockwise
+        angle, in radians, for a 2D rotation, and a quaternion for a 3D one.
+        Other dimensions are not supported.
 
         Parameters
         ----------
-        p : ``(4,)`` `ndarray`
-            The array of quaternion parameters.
-
-        Returns
-        -------
-        transform : :map:`Rotation`
-            The transform initialised to the given parameters.
+        p : ``(1,)`` or ``(4,)`` `ndarray`
+            The angle of a 2D rotation, or the array of quaternion parameters
+            of a 3D rotation.
 
         Raises
         ------
-        DimensionalityError, NotImplementedError
-            Non-3D Rotations are not yet vectorizable
+        NotImplementedError
+            Rotations that are not 2D or 3D are not vectorizable
         ValueError
-            Expected 4 quaternion parameters; got {} instead.
+            Expected 1 angle parameter (2D) or 4 quaternion parameters (3D).
         """
-        if self.n_dims == 3:
+        if self.n_dims == 2:
+            p = np.asarray(p)
+            if p.shape != (1,):
+                raise ValueError(
+                    "Expected 1 angle parameter; got an array of shape {} "
+                    "instead.".format(p.shape)
+                )
+            cos, sin = np.cos(p[0]), np.sin(p[0])
+            self.set_rotation_matrix(
+                np.array([[cos, -sin], [sin, cos]]), skip_checks=True
+            )
+        elif self.n_dims == 3:
             if len(p) == 4:
                 n = np.dot(p, p)
                 # epsilon for testing whether a number is close to zero
@@ -488,7 +506,9 @@ class Rotation(DiscreteAffine, Similarity):
                     "Expected 4 quaternion parameters; got {} instead.".format(len(p))
                 )
         else:
-            raise NotImplementedError("Non-3D rotations are not yet vectorizable")
+            raise NotImplementedError(
+                "Only 2D and 3D Rotations are vectorizable, not {}D".format(self.n_dims)
+            )
 
     @property
     def composes_inplace_with(self):
