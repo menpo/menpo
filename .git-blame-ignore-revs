@@ -1,0 +1,5 @@
+# Mechanical changes that git blame should look through. GitHub honours this file in its blame view;
+# locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Sort the imports (ruff check --select I --fix)
+e6678fa0a9b0b762324eac0a8ee8d52aeed6f07b
