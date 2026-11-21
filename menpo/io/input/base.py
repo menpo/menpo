@@ -375,6 +375,9 @@ def import_video(
 ):
     r"""Single video (and associated landmarks) importer.
 
+    Animated GIFs are videos: they are imported here, not with
+    :map:`import_image`.
+
     If a video file is found at `filepath`, returns an :map:`LazyList` wrapping
     all the frames of the video. By default, landmark files sharing the same
     filename stem will be imported and attached with a group name based on the
@@ -1142,11 +1145,20 @@ def importer_for_filepath(filepath, extensions_map):
     # final suffix (.bar). (Note we first try '.foo.bar' as we want to catch
     # cases like '.pkl.gz')
     importer_callable = None
+    all_exts = list(possible_exts)
     while importer_callable is None and possible_exts:
         importer_callable = extensions_map.get(possible_exts.pop(0))
 
     if importer_callable is None:
-        raise ValueError("{} does not have a suitable importer.".format(filepath.name))
+        message = "{} does not have a suitable importer.".format(filepath.name)
+        if extensions_map is image_types and any(
+            e in ffmpeg_video_types for e in all_exts
+        ):
+            message += (
+                " It is a video format (an animated GIF is one too): "
+                "use menpo.io.import_video() instead."
+            )
+        raise ValueError(message)
     return importer_callable
 
 
