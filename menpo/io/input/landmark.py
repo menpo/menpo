@@ -424,3 +424,90 @@ def ljson_importer(filepath, **kwargs):
         )
 
     return parser(lms_dict)
+
+
+def tem_importer(filepath, **kwargs):
+    r"""
+    Importer for the PsychoMorph ``.tem`` template (landmark) format.
+
+    Landmark set label: TEM
+
+    The file is text. Blank lines and lines starting with ``#`` are ignored.
+    The first line is the number of points, followed by one ``x y`` line per
+    point (image coordinates, x to the right and y down). Then comes the number
+    of lines (the delineations that join points up), and each line is described
+    by three rows: a flag that is ``1`` if the line is closed, the number of
+    points on it, and their indices (starting from 0). Anything after the last
+    line is ignored.
+
+    The result is a :map:`PointUndirectedGraph` with an edge between each pair
+    of consecutive points of a line, and between its last and first points when
+    the line is closed. The axes are swapped to Menpo's (y, x) order.
+
+    Parameters
+    ----------
+    filepath : `Path`
+        Absolute filepath of the file.
+
+    Returns
+    -------
+    landmarks : `dict` {`str`: :map:`PointUndirectedGraph`}
+        The landmarks, under the label ``TEM``.
+
+    Raises
+    ------
+    ValueError
+        If the file is not a template of this format (a count that does not
+        match the rows that follow, or a point index that does not exist).
+    """
+    with open(str(filepath), "rt") as f:
+        rows = [line.strip() for line in f]
+    rows = [row for row in rows if row and not row.startswith("#")]
+
+    def fail(reason):
+        return ValueError(
+            "{} is not a PsychoMorph template: {}".format(filepath, reason)
+        )
+
+    try:
+        n_points = int(rows[0])
+        points = np.array(
+            [[float(v) for v in row.split()] for row in rows[1 : n_points + 1]]
+        )
+        n_lines = int(rows[n_points + 1])
+    except (ValueError, IndexError):
+        raise fail("could not read the points and the number of lines")
+    if points.shape != (n_points, 2):
+        raise fail("expected {} rows of 'x y' coordinates".format(n_points))
+
+    edges = []
+    first_line_row = n_points + 2
+    for k in range(n_lines):
+        row = first_line_row + 3 * k
+        try:
+            closed = int(rows[row]) != 0
+            n_indices = int(rows[row + 1])
+            indices = [int(v) for v in rows[row + 2].split()]
+        except (ValueError, IndexError):
+            raise fail("could not read line {}".format(k))
+        if len(indices) != n_indices:
+            raise fail(
+                "line {} says it has {} points but lists {}".format(
+                    k, n_indices, len(indices)
+                )
+            )
+        if indices and (min(indices) < 0 or max(indices) >= n_points):
+            raise fail(
+                "line {} has a point index outside 0..{}".format(k, n_points - 1)
+            )
+        edges.extend(zip(indices[:-1], indices[1:]))
+        if closed and len(indices) > 2:
+            edges.append((indices[-1], indices[0]))
+
+    # swap x and y for Menpo's (y, x) ordering
+    points = points[:, ::-1]
+    if edges:
+        graph = PointUndirectedGraph.init_from_edges(points, np.array(edges))
+    else:
+        graph = PointUndirectedGraph(points, csr_matrix((n_points, n_points)))
+    return {"TEM": graph}
