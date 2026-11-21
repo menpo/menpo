@@ -336,3 +336,97 @@ def test_pca_project():
     pca_model = PCAModel(pca_samples)
     projected = pca_model.project(pca_samples[0])
     assert projected.shape[0] == 9
+
+
+# ---- imputation: the missing features are taken to be the mean (zero without one)
+def _pca_vector_model(n_samples=20, n_features=12, seed=0):
+    rng = np.random.RandomState(seed)
+    return PCAVectorModel(rng.rand(n_samples, n_features))
+
+
+def _mask(n_features, missing):
+    mask = np.ones(n_features, dtype=bool)
+    mask[list(missing)] = False
+    return mask
+
+
+def test_linear_model_impute_fills_missing_with_zero_then_reconstructs():
+    rng = np.random.RandomState(1)
+    model = LinearVectorModel(np.linalg.qr(rng.rand(12, 4))[0].T)  # 4 orthonormal rows
+    mask = _mask(12, [1, 5, 6])
+    full = rng.rand(12)
+    filled = np.where(mask, full, 0.0)
+    assert_allclose(model.impute(full[mask], mask), model.reconstruct(filled))
+
+
+def test_pca_vector_model_impute_fills_missing_with_the_mean_then_reconstructs():
+    model = _pca_vector_model()
+    mask = _mask(12, [0, 3, 4, 11])
+    full = np.random.RandomState(2).rand(12)
+    filled = np.where(mask, full, model.mean())
+    assert_allclose(model.impute(full[mask], mask), model.reconstruct(filled))
+
+
+def test_impute_with_nothing_missing_is_reconstruct():
+    model = _pca_vector_model()
+    full = np.random.RandomState(3).rand(12)
+    mask = np.ones(12, dtype=bool)
+    assert_allclose(model.impute(full, mask), model.reconstruct(full))
+
+
+def test_impute_vectors_matches_impute_one_vector_at_a_time():
+    model = _pca_vector_model()
+    mask = _mask(12, [2, 7])
+    vectors = np.random.RandomState(4).rand(5, mask.sum())
+    imputed = model.impute_vectors(vectors, mask)
+    assert imputed.shape == (5, 12)
+    for v, row in zip(vectors, imputed):
+        assert_allclose(model.impute(v, mask), row)
+
+
+def test_impute_returns_a_vector_in_the_span_of_the_active_components():
+    model = _pca_vector_model()
+    model.n_active_components = 3
+    mask = _mask(12, [0, 1])
+    imputed = model.impute(np.random.RandomState(5).rand(10), mask)
+    weights = model.project(imputed)
+    assert weights.shape == (3,)
+    assert_allclose(model.instance(weights), imputed)
+
+
+def test_impute_recovers_a_missing_feature_that_the_model_ties_to_the_others():
+    # every sample has x[1] == 2 * x[0]: PCA finds the single direction (1, 2) / sqrt(5)
+    t = np.linspace(-1, 1, 30)
+    model = PCAVectorModel(np.c_[t, 2 * t])
+    assert model.n_components == 1
+    imputed = model.impute(np.array([0.5]), np.array([True, False]))
+    # the missing feature is the mean (0) in the projection, so the weight is 0.5 / sqrt(5)
+    # onto the direction (1, 2) / sqrt(5): the imputed vector is (0.1, 0.2) away from a
+    # perfect (0.5, 1.0) but points along the correct direction
+    assert_allclose(imputed[1] / imputed[0], 2.0)
+
+
+def test_impute_checks_the_mask_and_the_vectors():
+    model = _pca_vector_model()
+    mask = _mask(12, [0])
+    with raises(ValueError):
+        model.impute(np.zeros(11), np.ones(12, dtype=int))  # not a boolean mask
+    with raises(ValueError):
+        model.impute(np.zeros(11), mask[:-1])  # wrong length
+    with raises(ValueError):
+        model.impute(np.zeros(10), mask)  # 10 features, mask has 11 True
+    with raises(ValueError):
+        model.impute_vectors(np.zeros((2, 3, 11)), mask)  # not 2D
+
+
+def test_pca_model_impute_a_partial_instance():
+    rng = np.random.RandomState(6)
+    shapes = [PointCloud(rng.rand(4, 2)) for _ in range(15)]
+    model = PCAModel(shapes)
+    # the last point is missing: features are (x0, y0, x1, y1, ...)
+    mask = np.array([True] * 6 + [False] * 2)
+    partial = PointCloud(rng.rand(3, 2))
+    imputed = model.impute(partial, mask)
+    assert isinstance(imputed, PointCloud) and imputed.n_points == 4
+    filled = np.concatenate([partial.as_vector(), model.mean().as_vector()[~mask]])
+    assert_allclose(imputed.as_vector(), model.reconstruct_vector(filled))

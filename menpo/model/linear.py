@@ -211,6 +211,88 @@ class LinearVectorModel(Copyable):
         """
         return self.instance_vectors(self.project_vectors(vectors))
 
+    def _check_impute_args(self, vectors, mask):
+        mask = np.asarray(mask)
+        if mask.dtype != bool or mask.shape != (self.n_features,):
+            raise ValueError(
+                "mask must be a boolean array of shape (n_features,) = "
+                "({},), got dtype {} and shape {}".format(
+                    self.n_features, mask.dtype, mask.shape
+                )
+            )
+        vectors = np.asarray(vectors)
+        n_available = int(mask.sum())
+        if vectors.ndim != 2 or vectors.shape[1] != n_available:
+            raise ValueError(
+                "vectors must have shape (n_vectors, n_available_features) = "
+                "(n_vectors, {}) where mask is True, got {}".format(
+                    n_available, vectors.shape
+                )
+            )
+        return vectors, mask
+
+    def impute(self, vector, mask):
+        """
+        Imputes the features of `vector` that are missing: the weights are
+        found from the features that are available, and the whole vector is
+        rebuilt from them.
+
+        The missing features are taken to be zero (the mean, for a model with
+        a mean), so this is the same as filling them in with that value and
+        calling :meth:`reconstruct`. It is a simple method: the weights are
+        biased towards zero by the missing features.
+
+        Parameters
+        ----------
+        vector : ``(n_available_features,)`` `ndarray`
+            The available features of a vector, in the order of the ``True``
+            entries of `mask`.
+        mask : ``(n_features,)`` `bool ndarray`
+            ``True`` where a feature is available in `vector`.
+
+        Returns
+        -------
+        imputed : ``(n_features,)`` `ndarray`
+            The imputed vector.
+
+        Raises
+        ------
+        ValueError
+            If `mask` is not a boolean array of length ``n_features``, or
+            `vector` does not have as many features as `mask` has ``True``
+            entries.
+        """
+        return self.impute_vectors(np.asarray(vector)[None, :], mask).flatten()
+
+    def impute_vectors(self, vectors, mask):
+        """
+        Imputes the missing features of each of the `vectors`. See
+        :meth:`impute`.
+
+        Parameters
+        ----------
+        vectors : ``(n_vectors, n_available_features)`` `ndarray`
+            The available features of each vector, in the order of the
+            ``True`` entries of `mask`.
+        mask : ``(n_features,)`` `bool ndarray`
+            ``True`` where a feature is available in `vectors`.
+
+        Returns
+        -------
+        imputed : ``(n_vectors, n_features)`` `ndarray`
+            The imputed vectors.
+
+        Raises
+        ------
+        ValueError
+            If `mask` is not a boolean array of length ``n_features``, or
+            `vectors` does not have as many columns as `mask` has ``True``
+            entries.
+        """
+        vectors, mask = self._check_impute_args(vectors, mask)
+        weights = np.dot(vectors, self.components[:, mask].T)
+        return self.instance_vectors(weights)
+
     def project_out(self, vector):
         """
         Returns a version of `vector` where all the basis of the model have
@@ -364,6 +446,37 @@ class MeanLinearVectorModel(LinearVectorModel):
         """
         X = vectors - self._mean
         return np.dot(X, self.components.T)
+
+    def impute_vectors(self, vectors, mask):
+        """
+        Imputes the missing features of each of the `vectors`. The missing
+        features are taken to be the mean, so this is the same as filling them
+        in with the mean and calling :meth:`reconstruct_vectors`. See
+        :meth:`LinearVectorModel.impute`.
+
+        Parameters
+        ----------
+        vectors : ``(n_vectors, n_available_features)`` `ndarray`
+            The available features of each vector, in the order of the
+            ``True`` entries of `mask`.
+        mask : ``(n_features,)`` `bool ndarray`
+            ``True`` where a feature is available in `vectors`.
+
+        Returns
+        -------
+        imputed : ``(n_vectors, n_features)`` `ndarray`
+            The imputed vectors.
+
+        Raises
+        ------
+        ValueError
+            If `mask` is not a boolean array of length ``n_features``, or
+            `vectors` does not have as many columns as `mask` has ``True``
+            entries.
+        """
+        vectors, mask = self._check_impute_args(vectors, mask)
+        weights = np.dot(vectors - self._mean[mask], self.components[:, mask].T)
+        return self.instance_vectors(weights)
 
     def project_out_vectors(self, vectors):
         """
