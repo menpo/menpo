@@ -1569,6 +1569,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         order : `int`, optional
             The order of interpolation. The order has to be in the range [0,5].
             See warp_to_shape for more information.
+            Orders above 1 can leave values slightly outside the range of the
+            pixels: see ``clip_pixels()``.
         mode : ``{constant, nearest, reflect, wrap}``, optional
             Points outside the boundaries of the input are filled according to
             the given mode.
@@ -1830,6 +1832,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= =====================
 
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
+
         mode : ``{constant, nearest, reflect, wrap}``, optional
             Points outside the boundaries of the input are filled according
             to the given mode.
@@ -1917,6 +1923,8 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         order : `int`, optional
             The order of interpolation. The order has to be in the range [0,5].
             See warp_to_shape for more information.
+            Orders above 1 can leave values slightly outside the range of the
+            pixels: see ``clip_pixels()``.
         mode : ``{constant, nearest, reflect, wrap}``, optional
             Points outside the boundaries of the input are filled according
             to the given mode.
@@ -1977,6 +1985,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             4         Bi-quartic
             5         Bi-quintic
             ========= ====================
+
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
 
         mode : ``{constant, nearest, reflect, wrap}``, optional
             Points outside the boundaries of the input are filled according
@@ -2084,6 +2096,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             4         Bi-quartic
             5         Bi-quintic
             ========= ====================
+
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
 
         warp_landmarks : `bool`, optional
             If ``True``, result will have the same landmark dictionary
@@ -2222,6 +2238,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= ====================
 
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
+
         warp_landmarks : `bool`, optional
             If ``True``, result will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
@@ -2285,6 +2305,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             5         Bi-quintic
             ========= =====================
 
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
+
         warp_landmarks : `bool`, optional
             If ``True``, result will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
@@ -2333,6 +2357,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             4         Bi-quartic
             5         Bi-quintic
             ========= =====================
+
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
 
         warp_landmarks : `bool`, optional
             If ``True``, result will have the same landmark dictionary
@@ -2404,6 +2432,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             4         Bi-quartic
             5         Bi-quintic
             ========= =====================
+
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
 
         warp_landmarks : `bool`, optional
             If ``True``, result will have the same landmark dictionary
@@ -2486,6 +2518,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             4         Bi-quartic
             5         Bi-quintic
             ========= ====================
+
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
 
         warp_landmarks : `bool`, optional
             If ``True``, result will have the same landmark dictionary
@@ -2588,6 +2624,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             4         Bi-quartic
             5         Bi-quintic
             ========= ====================
+
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
 
         warp_landmarks : `bool`, optional
             If ``True``, result will have the same landmark dictionary
@@ -2716,6 +2756,10 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
             4         Bi-quartic
             5         Bi-quintic
             ========= ====================
+
+            Orders above 1 can leave values a little outside the range of the
+            pixels (a float image in ``[0, 1]`` can end up slightly below 0 or above
+            1, by a few percent at most): use ``clip_pixels()`` to clip them.
 
         warp_landmarks : `bool`, optional
             If ``True``, result will have the same landmark dictionary
@@ -3179,22 +3223,38 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return self.from_vector(v_new.T.ravel())
 
     def clip_pixels(self, minimum=None, maximum=None):
-        r"""A copy of this image with pixels linearly clipped to fit a range.
+        r"""A copy of this image with the pixels clipped to a range: values
+        below `minimum` become `minimum`, and values above `maximum` become
+        `maximum`.
+
+        Interpolation of an order above 1 (``rescale``, ``warp_to_shape``,
+        ``rotate_ccw_about_centre``...) can leave a few values slightly outside
+        the range of the pixels of the original, so a float image in ``[0, 1]``
+        can end up a little below 0 or above 1. This puts them back::
+
+            small = image.rescale(0.5, order=3).clip_pixels()
 
         Parameters
         ----------
         minimum: `float`, optional
-            The minimal value of the clipped pixels. If None is provided, the
-            default value will be 0.
+            The smallest value of the clipped pixels. If ``None``, ``0``.
         maximum: `float`, optional
-            The maximal value of the clipped pixels. If None is provided, the
-            default value will depend on the dtype.
+            The largest value of the clipped pixels. If ``None``, it depends on
+            the dtype of the pixels: ``255`` for ``uint8``, ``65535`` for
+            ``uint16`` and ``1.0`` for ``float32`` and ``float64``. Any other
+            dtype raises a `ValueError`.
 
         Returns
         -------
-        rescaled_image: ``type(self)``
-            A copy of this image with pixels linearly rescaled to fit in the
-            range provided.
+        clipped_image: ``type(self)``
+            A copy of this image, with its landmarks, whose pixels are within
+            the range provided.
+
+        Raises
+        ------
+        ValueError
+            If `maximum` is not given and the dtype of the pixels is not one of
+            the above.
         """
         if minimum is None:
             minimum = 0
