@@ -1,6 +1,5 @@
 import sys
 from collections import deque
-from datetime import datetime
 from time import time
 
 
@@ -110,6 +109,15 @@ def bytes_str(num):
     return "{0:3.2f} {1:s}".format(num, "TB")
 
 
+def _eta_str(seconds):
+    # hours:minutes:seconds. Not through datetime: utcfromtimestamp is deprecated, and
+    # a datetime shows 25 hours as 01:00:00. A negative time (more items than
+    # n_items said) is 0.
+    hours, remainder = divmod(max(0, int(seconds)), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+
+
 def print_progress(
     iterable,
     prefix="",
@@ -205,12 +213,10 @@ def print_progress(
         if time2 - last_update_time < min_seconds_between_updates:
             continue
         last_update_time = time2
-        duration = datetime.utcfromtimestamp(sum(timings) / len(timings) * remaining)
+        eta = _eta_str(sum(timings) / len(timings) * remaining)
         bar_str = progress_bar_str(i / n, bar_length=bar_length, show_bar=show_bar)
         count_str = " ({}/{})".format(i, n) if show_count else ""
-        eta_str = (
-            " - {} remaining".format(duration.strftime("%H:%M:%S")) if show_eta else ""
-        )
+        eta_str = " - {} remaining".format(eta) if show_eta else ""
         print_dynamic("{}{}{}{}".format(prefix, bar_str, count_str, eta_str))
 
     # the iterable has now finished - to make it clear redraw the progress with
