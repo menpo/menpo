@@ -1,4 +1,5 @@
 import collections.abc as collections_abc
+import importlib.util
 import os
 import textwrap
 import warnings
@@ -347,51 +348,90 @@ class MenpoDeprecationWarning(Warning):
 class MenpoMissingDependencyError(ImportError):
     r"""
     An exception that a dependency required for the requested functionality
-    was not detected.
+    could not be imported.
+
+    Raise it from an ``except ImportError as e`` block with the error itself,
+    ``raise MenpoMissingDependencyError(e)``, so that the message is about what
+    really went wrong:
+
+    - if a package is not installed (a ``ModuleNotFoundError`` for a package
+      that cannot be found), the message says to install that package;
+    - for any other import failure (a missing system library, a module that is
+      missing from a package that is installed, a name that a package that is
+      too old does not have), it does not invent a package to install, and shows
+      the error;
+    - either way, the original error is in the message.
+
+    It can also be raised with the name of a package, which is then the one that
+    the message says to install.
+
+    Parameters
+    ----------
+    package_name : `str` or `ImportError`
+        The name of the package that is missing, or the error that was raised
+        when importing it.
+
+    Attributes
+    ----------
+    missing_name : `str` or ``None``
+        The package that is not installed, or ``None`` if the error is not
+        that a package is missing.
     """
 
     def __init__(self, package_name):
         super(MenpoMissingDependencyError, self).__init__()
+        original = None
         if isinstance(package_name, ImportError):
-            package_name = self._handle_importerror(package_name)
-
-        self.message = textwrap.dedent(
-            """
-            You need to install the '{pname}' package in order to use this
-            functionality. We recommend that you use conda to achieve this -
-            try the command
-
-                conda install {pname}
-
-            in your terminal. Note that this package may be provided by another
-            channel such as the "menpo" channel or the "conda-forge" channel.
-            Failing that, try installing use pip:
-
-                pip install {pname}
-                
-            Note that some packages (e.g. scikit-image) may have a different
-            name on pypi/conda than their import (skimage) and thus the above 
-            commands may fail.
-        """.format(pname=package_name)
-        )
-
+            original, package_name = package_name, self._missing_package(package_name)
         self.missing_name = package_name
+        self.message = self._make_message(package_name, original)
 
-    def _handle_importerror(self, error):
-        if hasattr(error, "name"):
-            return error.name
+    @staticmethod
+    def _missing_package(error):
+        # The name of the package that is not installed, or None if this is
+        # not a package that is missing.
+        name = getattr(error, "name", None)
+        if not isinstance(error, ModuleNotFoundError) or not name:
+            return None
+        # a missing submodule is reported with its dotted name ("pkg.sub"); the
+        # package is what would be installed
+        package = name.split(".")[0]
+        try:
+            importable = importlib.util.find_spec(package) is not None
+        except (ImportError, ValueError, AttributeError):
+            importable = False
+        # "pkg" is installed and lacks "pkg.sub": there is nothing to install
+        return None if importable else package
+
+    @staticmethod
+    def _make_message(package_name, original):
+        if package_name is not None:
+            message = textwrap.dedent(
+                """
+                You need to install the '{pname}' package in order to use this
+                functionality. Try the command
+
+                    pip install {pname}
+
+                in your terminal. Note that some packages (e.g. scikit-image) have
+                a different name on PyPI than the one that is imported (skimage), in
+                which case that command will not find them.
+                """
+            ).format(pname=package_name)
         else:
-            try:
-                # Python 2 doesn't have ModuleNotFoundError
-                # (so doesn't have the name attribute)
-                base_name = error.message.split("No module named ")[1]
-                # Furthermore - the default ImportError includes the full path
-                # so we split the name and return just the first part
-                # (presumably the name of the package)
-                return base_name.split(".")[0]
-            except:
-                # Worst case, just stringify the error
-                return str(error)
+            message = textwrap.dedent(
+                """
+                A package that is needed for this functionality could not be
+                imported. This is not a package that is simply missing: it may be a
+                system library that it needs, or a version of a package that is too
+                old, so read the error below.
+                """
+            )
+        if original is not None:
+            message += "\nThe import failed with:\n\n    {}: {}\n".format(
+                type(original).__name__, original
+            )
+        return message
 
     def __str__(self):
         return self.message
