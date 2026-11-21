@@ -1,5 +1,7 @@
 import numpy as np
 
+from menpo.base import describe
+
 from .base import Alignment, Invertible, Transform
 from .rbf import R2LogR2RBF
 
@@ -32,6 +34,9 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
     ValueError
         TPS is only with on 2-dimensional data
     """
+
+    def __str__(self):
+        return describe(self, {"n_dims": self.n_dims, "n_points": self.n_points})
 
     def __init__(self, source, target, kernel=None, min_singular_val=1e-4):
         Alignment.__init__(self, source, target)

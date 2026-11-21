@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-from menpo.base import Copyable
+from menpo.base import Copyable, describe
 from menpo.shape import PointCloud, PointUndirectedGraph, TriMesh
 from menpo.shape.graph import PointGraph, _convert_edges_to_symmetric_adjacency_matrix
 
@@ -873,6 +873,12 @@ class LabelledPointUndirectedGraph(PointUndirectedGraph):
             raise Menpo3dMissingError(e)
 
     def __str__(self):
-        return "{}: n_labels: {}, n_points: {}, n_edges: {}".format(
-            type(self).__name__, self.n_labels, self.n_points, self.n_edges
+        return describe(
+            self,
+            {
+                "n_points": self.n_points,
+                "n_dims": self.n_dims,
+                "n_edges": self.n_edges,
+                "n_labels": self.n_labels,
+            },
         )

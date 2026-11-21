@@ -1,6 +1,6 @@
 import numpy as np
 
-from menpo.base import Vectorizable, doc_inherit, name_of_callable
+from menpo.base import Vectorizable, describe, doc_inherit, name_of_callable
 from menpo.math import as_matrix, ipca, pca, pcacov
 from menpo.visualize import print_progress
 
@@ -1268,28 +1268,33 @@ class PCAVectorModel(MeanLinearVectorModel):
             grid_line_width=grid_line_width,
         )
 
+    def _str_details(self):
+        # the lines that follow the summary in str(): shared by PCAModel
+        return [
+            ("centred", self.centred),
+            ("n_components", self.n_components),
+            (
+                "kept_variance",
+                "{:.2} ({:.1%})".format(self.variance(), self.variance_ratio()),
+            ),
+            (
+                "noise_variance",
+                "{:.2} ({:.1%})".format(
+                    self.noise_variance(), self.noise_variance_ratio()
+                ),
+            ),
+            ("components_shape", self.components.shape),
+        ]
+
     def __str__(self):
-        str_out = (
-            "PCA Vector Model \n"
-            " - centred:              {}\n"
-            " - # features:           {}\n"
-            " - # active components:  {}\n"
-            " - kept variance:        {:.2}  {:.1%}\n"
-            " - noise variance:       {:.2}  {:.1%}\n"
-            " - total # components:   {}\n"
-            " - components shape:     {}\n".format(
-                self.centred,
-                self.n_features,
-                self.n_active_components,
-                self.variance(),
-                self.variance_ratio(),
-                self.noise_variance(),
-                self.noise_variance_ratio(),
-                self.n_components,
-                self.components.shape,
-            )
+        return describe(
+            self,
+            {
+                "n_active_components": self.n_active_components,
+                "n_features": self.n_features,
+            },
+            self._str_details(),
         )
-        return str_out
 
 
 class PCAModel(VectorizableBackedModel, PCAVectorModel):
@@ -1662,26 +1667,12 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         )
 
     def __str__(self):
-        str_out = (
-            "PCA Model \n"
-            " - instance class:       {}\n"
-            " - centred:              {}\n"
-            " - # features:           {}\n"
-            " - # active components:  {}\n"
-            " - kept variance:        {:.2}  {:.1%}\n"
-            " - noise variance:       {:.2}  {:.1%}\n"
-            " - total # components:   {}\n"
-            " - components shape:     {}\n".format(
-                name_of_callable(self.template_instance),
-                self.centred,
-                self.n_features,
-                self.n_active_components,
-                self.variance(),
-                self.variance_ratio(),
-                self.noise_variance(),
-                self.noise_variance_ratio(),
-                self.n_components,
-                self.components.shape,
-            )
+        return describe(
+            self,
+            {
+                "n_active_components": self.n_active_components,
+                "n_features": self.n_features,
+            },
+            [("instance_class", name_of_callable(self.template_instance))]
+            + self._str_details(),
         )
-        return str_out

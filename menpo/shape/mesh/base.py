@@ -3,6 +3,8 @@ from warnings import warn
 
 import numpy as np
 
+from menpo.base import describe
+
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .normals import compute_face_normals, compute_vertex_normals
@@ -290,7 +292,10 @@ class TriMesh(PointCloud):
         )
 
     def __str__(self):
-        return "{}, n_tris: {}".format(PointCloud.__str__(self), self.n_tris)
+        return describe(
+            self,
+            {"n_points": self.n_points, "n_dims": self.n_dims, "n_tris": self.n_tris},
+        )
 
     @property
     def n_tris(self):

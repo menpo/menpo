@@ -2,7 +2,7 @@ from warnings import warn
 
 import numpy as np
 
-from menpo.base import MenpoDeprecationWarning, Vectorizable
+from menpo.base import MenpoDeprecationWarning, Vectorizable, describe
 from menpo.transform.base import (
     Alignment,
     ComposableTransform,
@@ -154,9 +154,11 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return self_copy
 
     def __str__(self):
-        rep = self._transform_str() + "\n"
-        rep += str(self.h_matrix)
-        return rep
+        return describe(
+            self,
+            {"n_dims": self.n_dims},
+            {"description": self._transform_str(), "h_matrix": self.h_matrix},
+        )
 
     def _transform_str(self):
         r"""

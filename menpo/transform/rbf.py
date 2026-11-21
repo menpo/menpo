@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 
+from menpo.base import describe
+
 from .base import Transform
 
 
@@ -17,6 +19,9 @@ class RadialBasisFunction(Transform):
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
+
+    def __str__(self):
+        return describe(self, {"n_centres": self.n_centres, "n_dims": self.n_dims})
 
     def __init__(self, c):
         self.c = c

@@ -1,5 +1,7 @@
 import numpy as np
 
+from menpo.base import describe
+
 from ..homogeneous import AlignmentSimilarity
 from .base import MultipleAlignment
 
@@ -92,13 +94,12 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         return sum([t.alignment_error() for t in self.transforms]) / self.n_sources
 
     def __str__(self):
-        if self.converged:
-            return "Converged after %d iterations with av. error %f" % (
-                self.n_iterations,
-                self.mean_alignment_error(),
-            )
-        else:
-            return "Failed to converge after %d iterations with av. error %f" % (
-                self.n_iterations,
-                self.mean_alignment_error(),
-            )
+        return describe(
+            self,
+            {
+                "n_sources": self.n_sources,
+                "converged": self.converged,
+                "n_iterations": self.n_iterations,
+                "mean_alignment_error": "{:.6f}".format(self.mean_alignment_error()),
+            },
+        )

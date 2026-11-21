@@ -7,7 +7,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
-from menpo.base import copy_landmarks_and_path
+from menpo.base import copy_landmarks_and_path, describe
 from menpo.transform import WithDims
 
 from .base import Shape
@@ -382,9 +382,7 @@ class PointCloud(Shape):
         self.points = vector.reshape([-1, self.n_dims])
 
     def __str__(self):
-        return "{}: n_points: {}, n_dims: {}".format(
-            type(self).__name__, self.n_points, self.n_dims
-        )
+        return describe(self, {"n_points": self.n_points, "n_dims": self.n_dims})
 
     def as_pointcloud(self, copy=True):
         r"""
