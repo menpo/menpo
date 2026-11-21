@@ -118,6 +118,55 @@ def subsampled_grid_triangulation(shape, subsampling=1):
     return np.vstack([tri_down_left, tri_up_right]).astype(np.uint32)
 
 
+def _check_trilist(trilist, n_points):
+    r"""
+    Check that `trilist` is a triangle list of ``n_points`` points: an
+    ``(M, 3)`` array of point indices that are integers from ``0`` to
+    ``n_points - 1``. An integer array is returned as it is. A float array whose
+    values are all whole numbers is converted to integers (numpy cannot index
+    with floats, so a float triangle list fails later in ``tri_areas``,
+    ``vertex_normals``, and so on).
+
+    Raises
+    ------
+    ValueError
+        If it is not of shape ``(M, 3)``, holds booleans or other non-numbers or
+        fractions, or refers to a point that does not exist (a negative index
+        would silently count from the end).
+    """
+    trilist = np.asarray(trilist)
+    if trilist.ndim != 2 or trilist.shape[1] != 3:
+        raise ValueError(
+            "trilist must have shape (n_tris, 3), but has shape {}".format(
+                trilist.shape
+            )
+        )
+    if trilist.dtype.kind == "f":
+        if not np.all(np.isfinite(trilist)) or np.any(trilist != np.floor(trilist)):
+            bad = trilist[~np.isfinite(trilist) | (trilist != np.floor(trilist))]
+            raise ValueError(
+                "trilist must hold point indices, which are whole numbers, but "
+                "it holds {}".format(bad[0])
+            )
+        trilist = trilist.astype(np.intp)
+    elif trilist.dtype.kind not in "iu":
+        raise ValueError(
+            "trilist must hold integer point indices, but has dtype {}".format(
+                trilist.dtype
+            )
+        )
+    if trilist.size:
+        lowest, highest = int(trilist.min()), int(trilist.max())
+        if lowest < 0:
+            raise ValueError("trilist holds the negative point index {}".format(lowest))
+        if highest >= n_points:
+            raise ValueError(
+                "trilist refers to point {}, but there are only {} points "
+                "(indices 0 to {})".format(highest, n_points, n_points - 1)
+            )
+    return trilist
+
+
 class TriMesh(PointCloud):
     r"""
     A :map:`PointCloud` with a connectivity defined by a triangle list. These
@@ -128,20 +177,36 @@ class TriMesh(PointCloud):
     points : ``(n_points, n_dims)`` `ndarray`
         The array representing the points.
     trilist : ``(M, 3)`` `ndarray` or ``None``, optional
-        The triangle list. If `None`, a Delaunay triangulation of
-        the points will be used instead.
+        The triangle list: the indices of the 3 points of each triangle, so
+        whole numbers from ``0`` to ``n_points - 1``. An integer array is kept
+        as it is; an array of floats that are whole numbers is converted to
+        integers. If `None`, a Delaunay triangulation of the points will be
+        used instead.
     copy: `bool`, optional
         If ``False``, the points will not be copied on assignment.
         Any trilist will also not be copied.
         In general this should only be used if you know what you are doing.
+    skip_checks : `bool`, optional
+        If ``True``, the trilist is not checked (or converted from floats). It
+        is the caller's job to give a ``(M, 3)`` integer array of valid point
+        indices; anything else fails later, or worse, gives wrong results (a
+        negative index counts from the end).
+
+    Raises
+    ------
+    ValueError
+        If the trilist is not of shape ``(M, 3)``, does not hold integers, or
+        refers to a point that does not exist (unless `skip_checks`).
     """
 
-    def __init__(self, points, trilist=None, copy=True):
+    def __init__(self, points, trilist=None, copy=True, skip_checks=False):
         super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
             from scipy.spatial import Delaunay  # expensive import
 
             trilist = Delaunay(points).simplices
+        elif not skip_checks:
+            trilist = _check_trilist(trilist, self.n_points)
         if not copy:
             if not trilist.flags.c_contiguous:
                 warn(
