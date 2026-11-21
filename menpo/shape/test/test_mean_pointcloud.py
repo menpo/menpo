@@ -12,8 +12,8 @@ def test_mean_pointcloud():
 
 
 def test_mean_pointcloud_type():
-    points = np.array([[1, 2, 3], [1, 1, 1]])
-    trilist = np.array([0, 1, 2])
+    points = np.array([[1, 2, 3], [1, 1, 1], [0, 0, 1]])
+    trilist = np.array([[0, 1, 2]])
     pcs = [TriMesh(points, trilist), TriMesh(points + 2, trilist)]
     mean_pc = mean_pointcloud(pcs)
     assert isinstance(mean_pc, TriMesh)

@@ -27,10 +27,16 @@ class TexturedTriMesh(TriMesh):
         If ``False``, the points, trilist and texture will not be copied on
         assignment.
         In general this should only be used if you know what you are doing.
+    skip_checks : `bool`, optional
+        If ``True``, the trilist is not checked (see :map:`TriMesh`).
     """
 
-    def __init__(self, points, tcoords, texture, trilist=None, copy=True):
-        super(TexturedTriMesh, self).__init__(points, trilist=trilist, copy=copy)
+    def __init__(
+        self, points, tcoords, texture, trilist=None, copy=True, skip_checks=False
+    ):
+        super(TexturedTriMesh, self).__init__(
+            points, trilist=trilist, copy=copy, skip_checks=skip_checks
+        )
         self.tcoords = PointCloud(tcoords, copy=copy)
 
         if not copy:
@@ -100,7 +106,9 @@ class TexturedTriMesh(TriMesh):
 
             # Default texture is all black
             texture = Image.init_blank(shape)
-        return TexturedTriMesh(points, tcoords, texture, trilist=trilist, copy=False)
+        return TexturedTriMesh(
+            points, tcoords, texture, trilist=trilist, copy=False, skip_checks=True
+        )
 
     @classmethod
     def init_from_depth_image(cls, depth_image, tcoords=None, texture=None):
@@ -195,6 +203,7 @@ class TexturedTriMesh(TriMesh):
             self.tcoords.points,
             self.texture,
             trilist=self.trilist,
+            skip_checks=True,
         )
 
     def from_mask(self, mask):

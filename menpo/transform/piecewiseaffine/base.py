@@ -372,7 +372,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
         """
         from menpo.shape import PointCloud, TriMesh  # to avoid circular import
 
-        new_source = TriMesh(self.target.points, self.source.trilist)
+        new_source = TriMesh(self.target.points, self.source.trilist, skip_checks=True)
         new_target = PointCloud(self.source.points)
         return type(self)(new_source, new_target)
 

@@ -22,6 +22,8 @@ class ColouredTriMesh(TriMesh):
         If ``False``, the points, trilist and colours will not be copied on
         assignment.
         In general this should only be used if you know what you are doing.
+    skip_checks : `bool`, optional
+        If ``True``, the trilist is not checked (see :map:`TriMesh`).
 
     Raises
     ------
@@ -29,8 +31,12 @@ class ColouredTriMesh(TriMesh):
         If the number of colour values does not match the number of vertices.
     """
 
-    def __init__(self, points, trilist=None, colours=None, copy=True):
-        TriMesh.__init__(self, points, trilist=trilist, copy=copy)
+    def __init__(
+        self, points, trilist=None, colours=None, copy=True, skip_checks=False
+    ):
+        TriMesh.__init__(
+            self, points, trilist=trilist, copy=copy, skip_checks=skip_checks
+        )
         # Handle the settings of colours, either be provided a default grey
         # set of colours, or copy the given array if necessary
         if colours is None:
@@ -84,7 +90,9 @@ class ColouredTriMesh(TriMesh):
         # Ensure that the colours are copied
         if colours is not None:
             colours = colours.copy()
-        return ColouredTriMesh(points, trilist=trilist, colours=colours, copy=False)
+        return ColouredTriMesh(
+            points, trilist=trilist, colours=colours, copy=False, skip_checks=True
+        )
 
     @classmethod
     def init_from_depth_image(cls, depth_image, colours=None):
