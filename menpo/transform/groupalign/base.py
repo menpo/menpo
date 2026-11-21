@@ -17,6 +17,10 @@ class MultipleAlignment(object):
         Need at least two sources to align
     """
 
+    def __repr__(self):
+        # as for the other Menpo objects: the notebook shows str (see issue #752)
+        return self.__str__()
+
     def __init__(self, sources, target=None):
         from menpo.shape import PointCloud
 

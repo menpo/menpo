@@ -1,5 +1,6 @@
 import numpy as np
 
+from menpo.base import describe
 from menpo.shape import PointCloud
 from menpo.transform import tcoords_to_image_coords
 
@@ -653,6 +654,11 @@ class TexturedTriMesh(TriMesh):
         )
 
     def __str__(self):
-        return "{}\ntexture_shape: {}, n_texture_channels: {}".format(
-            TriMesh.__str__(self), self.texture.shape, self.texture.n_channels
+        return describe(
+            self,
+            {"n_points": self.n_points, "n_dims": self.n_dims, "n_tris": self.n_tris},
+            {
+                "texture_shape": self.texture.shape,
+                "n_texture_channels": self.texture.n_channels,
+            },
         )

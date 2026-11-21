@@ -3,6 +3,7 @@ from warnings import warn
 
 import numpy as np
 
+from menpo.base import describe
 from menpo.transform import Translation
 
 from .base import Image
@@ -297,8 +298,12 @@ class BooleanImage(Image):
         return np.vstack(np.nonzero(~self.pixels[0])).T
 
     def __str__(self):
-        return "{} {}D mask, {:.1%} of which is True".format(
-            self._str_shape(), self.n_dims, self.proportion_true()
+        return describe(
+            self,
+            {
+                "shape": self.shape,
+                "proportion_true": "{:.1%}".format(self.proportion_true()),
+            },
         )
 
     def from_vector(self, vector, copy=True):

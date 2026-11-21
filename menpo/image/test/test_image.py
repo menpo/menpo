@@ -261,7 +261,7 @@ def test_boolean_image_false_indices():
 
 def test_boolean_image_str():
     image = BooleanImage.init_blank((2, 3))
-    assert image.__str__() == "3W x 2H 2D mask, 100.0% of which is True"
+    assert image.__str__() == "BooleanImage: shape: (2, 3), proportion_true: 100.0%"
 
 
 def test_boolean_image_from_vector():

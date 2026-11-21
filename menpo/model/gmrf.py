@@ -3,7 +3,7 @@ from functools import partial
 import numpy as np
 from scipy.sparse import bsr_matrix
 
-from menpo.base import name_of_callable
+from menpo.base import describe, name_of_callable
 from menpo.math import as_matrix
 from menpo.shape import UndirectedGraph
 from menpo.visualize import bytes_str, print_dynamic, print_progress
@@ -1184,44 +1184,23 @@ class GMRFVectorModel(object):
         return "GMRF model on {} {}".format(tmp, self.graph)
 
     def __str__(self):
-        incremental_str = (
-            " - Can be incrementally updated."
-            if self.is_incremental
-            else " - Cannot be incrementally updated."
+        return describe(
+            self,
+            {
+                "n_variables": self.graph.n_vertices,
+                "n_features_per_variable": self.n_features_per_vertex,
+                "n_features": self.n_features,
+                "n_samples": self.n_samples,
+            },
+            [
+                ("graph", self.graph),
+                ("mode", self.mode),
+                ("q_storage", "scipy.sparse" if self.sparse else "numpy.array"),
+                ("dtype", name_of_callable(self.dtype)),
+                ("n_svd_components", self.n_components),
+                ("is_incremental", self.is_incremental),
+            ],
         )
-        svd_str = (
-            " - # SVD components:        {}".format(self.n_components)
-            if self.n_components is not None
-            else " - No SVD used."
-        )
-        _Q_sparse = "scipy.sparse" if self.sparse else "numpy.array"
-        q_str = " - Q is stored as {} with {} precision".format(
-            _Q_sparse, name_of_callable(self.dtype)
-        )
-        mode_str = "concatenated" if self.mode == "concatenation" else "subtracted"
-        str_out = (
-            "Gaussian MRF Model \n"
-            " - {}\n"
-            " - The data of the vertexes of each edge are {}.\n"
-            "{}\n"
-            " - # variables (vertexes):  {}\n"
-            " - # features per variable: {}\n"
-            " - # features in total:     {}\n"
-            "{}\n"
-            " - # samples:               {}\n"
-            "{}\n".format(
-                self.graph.__str__(),
-                mode_str,
-                q_str,
-                self.graph.n_vertices,
-                self.n_features_per_vertex,
-                self.n_features,
-                svd_str,
-                self.n_samples,
-                incremental_str,
-            )
-        )
-        return str_out
 
 
 class GMRFModel(GMRFVectorModel):

@@ -4,7 +4,12 @@ from warnings import warn
 import numpy as np
 import PIL.Image as PILImage
 
-from menpo.base import MenpoDeprecationWarning, Vectorizable, copy_landmarks_and_path
+from menpo.base import (
+    MenpoDeprecationWarning,
+    Vectorizable,
+    copy_landmarks_and_path,
+    describe,
+)
 from menpo.landmark import Landmarkable
 from menpo.shape import PointCloud, bounding_box
 from menpo.transform import (
@@ -3089,9 +3094,7 @@ class Image(Vectorizable, Landmarkable, Viewable, LandmarkableViewable):
         return np.squeeze(p)
 
     def __str__(self):
-        return "{} {}D Image with {} channel{}".format(
-            self._str_shape(), self.n_dims, self.n_channels, "s" * (self.n_channels > 1)
-        )
+        return describe(self, {"shape": self.shape, "n_channels": self.n_channels})
 
     def has_landmarks_outside_bounds(self):
         """

@@ -4,7 +4,7 @@ from itertools import chain
 import numpy as np
 from scipy.spatial import cKDTree
 
-from menpo.base import Copyable
+from menpo.base import Copyable, describe
 from menpo.transform.base import Alignment, Invertible, Transform
 
 # TODO View is broken for PWA (TriangleContainmentError)
@@ -288,6 +288,9 @@ class AbstractPWA(Alignment, Transform, Invertible):
             raise ValueError("source and target must be 2 dimensional")
         self.ti, self.tij, self.tik = None, None, None
         self._rebuild_target_vectors()
+
+    def __str__(self):
+        return describe(self, {"n_dims": self.n_dims, "n_tris": self.n_tris})
 
     @property
     def n_tris(self):

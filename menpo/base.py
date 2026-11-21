@@ -6,7 +6,55 @@ import warnings
 from functools import partial, wraps
 from itertools import chain
 from pathlib import PurePath
-from pprint import pformat
+
+
+def describe(obj, fields=None, details=None):
+    r"""
+    Build the text of ``str(obj)`` for a Menpo object, in the form that every
+    Menpo object uses. (``repr`` is the same text, so that evaluating an object
+    in a notebook shows it: see issue #752.)
+
+    The text is:
+
+    1. A **summary line**: ``ClassName: key: value, key: value``. It starts
+       with the name of the class of `obj` (so subclasses are named right), the
+       keys are the names of attributes a user can read (``n_points``,
+       ``n_dims``, ``shape``, ``n_channels``...) and the values are short. With
+       no `fields` the line is just ``ClassName``. It is not a sentence: no
+       trailing full stop and no trailing space.
+    2. Optionally **details**, one ``key: value`` per line, indented by two
+       spaces. A value of several lines (a matrix, a decomposition) goes on the
+       lines after its key, indented by four.
+
+    Never put the state of the object, or a large array, in the text.
+
+    Parameters
+    ----------
+    obj : `object`
+        The object that is being described.
+    fields : `dict` or `list` of `(str, object)`, optional
+        What goes in the summary line, in order.
+    details : `dict` or `list` of `(str, object)`, optional
+        What goes on the lines after it, in order.
+
+    Returns
+    -------
+    text : `str`
+        The text, with no trailing new line.
+    """
+    fields = list(fields.items() if hasattr(fields, "items") else (fields or ()))
+    details = list(details.items() if hasattr(details, "items") else (details or ()))
+    text = type(obj).__name__
+    if fields:
+        text += ": " + ", ".join("{}: {}".format(k, v) for k, v in fields)
+    for key, value in details:
+        lines = str(value).split("\n")
+        if len(lines) == 1:
+            text += "\n  {}: {}".format(key, lines[0])
+        else:
+            text += "\n  {}:".format(key)
+            text += "".join("\n    " + line.rstrip() for line in lines)
+    return text
 
 
 class Copyable(object):
@@ -48,8 +96,11 @@ class Copyable(object):
 
     def __str__(self):
         # We have to be sure that we implement __str__ otherwise the __repr__
-        # implementation below will lead to an infinite recursion.
-        return "Copyable Menpo Object with keys:\n{}".format(pformat(self.__dict__))
+        # implementation below will lead to an infinite recursion. Classes that
+        # have something to say override this with describe(); the default is
+        # just the name of the class (it used to dump __dict__, which for a
+        # model is pages of arrays).
+        return describe(self)
 
     def __repr__(self):
         # Most classes in Menpo derive from Copyable, so it's a handy place
@@ -775,7 +826,7 @@ class LazyList(collections_abc.Sequence, Copyable):
             )
 
     def __str__(self):
-        return "LazyList containing {} items".format(len(self))
+        return describe(self, {"n_items": len(self)})
 
 
 def partial_doc(func, *args, **kwargs):

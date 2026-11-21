@@ -2,7 +2,7 @@ import fnmatch
 from collections import OrderedDict
 from collections.abc import MutableMapping
 
-from menpo.base import Copyable
+from menpo.base import Copyable, describe
 from menpo.transform.base import Transformable
 
 
@@ -303,13 +303,11 @@ class LandmarkManager(MutableMapping, Transformable):
         return self
 
     def __str__(self):
-        out_string = "{}: n_groups: {}".format(type(self).__name__, self.n_groups)
-        if self.has_landmarks:
-            for label in self:
-                out_string += "\n"
-                out_string += "({}): {}".format(label, self[label].__str__())
-
-        return out_string
+        return describe(
+            self,
+            {"n_groups": self.n_groups},
+            [(label, self[label]) for label in self] if self.has_landmarks else None,
+        )
 
 
 # TODO: Deprecate this - this handles importing old-style LandmarkGroup

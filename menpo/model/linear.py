@@ -1,6 +1,6 @@
 import numpy as np
 
-from menpo.base import Copyable
+from menpo.base import Copyable, describe
 
 
 class LinearVectorModel(Copyable):
@@ -13,6 +13,11 @@ class LinearVectorModel(Copyable):
     components : ``(n_components, n_features)`` `ndarray`
         The components array.
     """
+
+    def __str__(self):
+        return describe(
+            self, {"n_components": self.n_components, "n_features": self.n_features}
+        )
 
     def __init__(self, components):
         self._components = components  # getter/setter variable

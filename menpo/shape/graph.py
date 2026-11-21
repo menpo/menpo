@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.sparse import csgraph, csr_matrix, issparse, triu
 
+from menpo.base import describe
+
 from . import PointCloud
 
 
@@ -266,6 +268,20 @@ class Graph(object):
         :type: `list`
         """
         return range(self.adjacency_matrix.shape[0])
+
+    def __repr__(self):
+        # as for the other Menpo objects: the notebook shows str (see issue #752)
+        return self.__str__()
+
+    def _graph_fields(self, count_key, with_dims=False):
+        # the summary of str() for every kind of graph
+        fields = {count_key: self.n_vertices}
+        if with_dims:
+            fields["n_dims"] = self.n_dims
+        fields["n_edges"] = self.n_edges
+        if self.has_isolated_vertices():
+            fields["n_isolated_vertices"] = len(self.isolated_vertices())
+        return fields
 
     @property
     def n_vertices(self):
@@ -903,12 +919,7 @@ class UndirectedGraph(Graph):
         return Tree(mst_adjacency, root_vertex, skip_checks=True)
 
     def __str__(self):
-        isolated = ""
-        if self.has_isolated_vertices():
-            isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "Undirected graph of {} vertices{} and {} edges.".format(
-            self.n_vertices, isolated, self.n_edges
-        )
+        return describe(self, self._graph_fields("n_vertices"))
 
 
 class DirectedGraph(Graph):
@@ -1111,12 +1122,7 @@ class DirectedGraph(Graph):
         return len(self.parents(vertex, skip_checks=skip_checks))
 
     def __str__(self):
-        isolated = ""
-        if self.has_isolated_vertices():
-            isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "Directed graph of {} vertices{} and {} edges.".format(
-            self.n_vertices, isolated, self.n_edges
-        )
+        return describe(self, self._graph_fields("n_vertices"))
 
 
 class Tree(DirectedGraph):
@@ -1456,8 +1462,13 @@ class Tree(DirectedGraph):
         return self.predecessors_list[vertex]
 
     def __str__(self):
-        return "Tree of depth {} with {} vertices and {} leaves.".format(
-            self.maximum_depth, self.n_vertices, self.n_leaves
+        return describe(
+            self,
+            {
+                "n_vertices": self.n_vertices,
+                "n_leaves": self.n_leaves,
+                "maximum_depth": self.maximum_depth,
+            },
         )
 
 
@@ -2789,12 +2800,7 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
         )
 
     def __str__(self):
-        isolated = ""
-        if self.has_isolated_vertices():
-            isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "{}D undirected graph of {} vertices{} and {} edges.".format(
-            self.n_dims, self.n_vertices, isolated, self.n_edges
-        )
+        return describe(self, self._graph_fields("n_points", with_dims=True))
 
 
 class PointDirectedGraph(PointGraph, DirectedGraph):
@@ -3008,12 +3014,7 @@ class PointDirectedGraph(PointGraph, DirectedGraph):
             )
 
     def __str__(self):
-        isolated = ""
-        if self.has_isolated_vertices():
-            isolated = " ({} isolated)".format(len(self.isolated_vertices()))
-        return "{}D directed graph of {} vertices{} and {} edges.".format(
-            self.n_dims, self.n_vertices, isolated, self.n_edges
-        )
+        return describe(self, self._graph_fields("n_points", with_dims=True))
 
 
 class PointTree(PointDirectedGraph, Tree):
@@ -3394,8 +3395,14 @@ class PointTree(PointDirectedGraph, Tree):
             )
 
     def __str__(self):
-        return "{}D tree of depth {} with {} vertices and {} leaves.".format(
-            self.n_dims, self.maximum_depth, self.n_vertices, self.n_leaves
+        return describe(
+            self,
+            {
+                "n_points": self.n_points,
+                "n_dims": self.n_dims,
+                "n_leaves": self.n_leaves,
+                "maximum_depth": self.maximum_depth,
+            },
         )
 
 
