@@ -3,6 +3,43 @@
 Changelog
 #########
 
+0.12.1 (2026/11/19)
+-------------------
+
+Fixes for current Matplotlib and NumPy, and the documentation builds again.
+
+- Colour maps given by name failed with Matplotlib 3.9 or newer
+  (``matplotlib.cm.get_cmap`` was removed), the subplot grid passed floats to
+  ``plt.subplot``, and ``save_figure`` passed arguments Matplotlib no longer
+  accepts (``papertype`` and ``frameon``). menpowidgets 0.5 and newer need
+  these fixes.
+- ``log_gabor`` used ``np.complex``, which NumPy 1.24 removed.
+- The Read the Docs build was broken (an old Python 3.7 configuration and an
+  extension that does not work with Sphinx 9). The configuration is now
+  ``.readthedocs.yaml``, CI builds the docs and fails if autodoc cannot import
+  something, and a release is blocked unless Read the Docs has built the commit
+  as ``latest`` (and is checked again after publishing).
+
+Github Pull Requests
+....................
+- `#878`_ Changelog for 0.11.1 and 0.12.0 (@patricksnape)
+- `#879`_ Fix the Read the Docs build and build the docs in CI (@patricksnape)
+- `#880`_ Rename the Read the Docs config to .readthedocs.yaml (@patricksnape)
+- `#881`_ Check the Read the Docs build for every release (@patricksnape)
+- `#882`_ RTD release check: wait up to 50 minutes (@patricksnape)
+- `#883`_ Release: block publishing when Read the Docs cannot build the commit (@patricksnape)
+- `#884`_ Fix Matplotlib >= 3.9 breakages: colour maps, the subplot grid and save_figure (@patricksnape)
+- `#885`_ Fix log_gabor on current NumPy (np.complex was removed) (@patricksnape)
+
+.. _#878: https://github.com/menpo/menpo/pull/878
+.. _#879: https://github.com/menpo/menpo/pull/879
+.. _#880: https://github.com/menpo/menpo/pull/880
+.. _#881: https://github.com/menpo/menpo/pull/881
+.. _#882: https://github.com/menpo/menpo/pull/882
+.. _#883: https://github.com/menpo/menpo/pull/883
+.. _#884: https://github.com/menpo/menpo/pull/884
+.. _#885: https://github.com/menpo/menpo/pull/885
+
 0.12.0 (2026/11/17)
 -------------------
 
