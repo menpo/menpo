@@ -7,6 +7,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
+from menpo.base import copy_landmarks_and_path
 from menpo.transform import WithDims
 from .base import Shape
 
@@ -383,6 +384,29 @@ class PointCloud(Shape):
         return "{}: n_points: {}, n_dims: {}".format(
             type(self).__name__, self.n_points, self.n_dims
         )
+
+    def as_pointcloud(self, copy=True):
+        r"""
+        Convert this shape to a plain :map:`PointCloud` with the same points,
+        dropping whatever else it is (the triangles of a mesh, the edges of a
+        graph, its labels, colours or texture). Useful for viewing or processing
+        only the points. The landmarks and the path, if any, are kept.
+
+        :map:`PointCloud` has this method too, so it can be called on any
+        shape, and it then returns another :map:`PointCloud`.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            If ``False``, the points are shared with this shape, so changing
+            one changes the other.
+
+        Returns
+        -------
+        pointcloud : :map:`PointCloud`
+            A plain point cloud.
+        """
+        return copy_landmarks_and_path(self, PointCloud(self.points, copy=copy))
 
     def bounds(self, boundary=0):
         r"""
