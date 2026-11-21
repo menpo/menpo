@@ -6,13 +6,14 @@ from .landmark_image import asf_image_importer, pts_image_importer
 from .pickle import pickle_gzip_importer, pickle_importer
 from .video import ffmpeg_importer, ffmpeg_types
 
+# Still images only. An animated GIF is a video (it has frames, and the landmarks of an image are
+# not those of a frame): it is in ffmpeg_video_types below and is imported with import_video.
 image_types: dict[str, Callable[..., Any]] = {
     ".bmp": pillow_importer,
     ".dib": pillow_importer,
     ".dcx": pillow_importer,
     ".eps": pillow_importer,
     ".ps": pillow_importer,
-    ".gif": ffmpeg_importer,
     ".im": pillow_importer,
     ".jpg": pillow_importer,
     ".jpg2": pillow_importer,

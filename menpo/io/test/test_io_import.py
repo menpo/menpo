@@ -409,7 +409,7 @@ def test_importing_ffmpeg_GIF_normalize(is_file, video_infos_ffprobe, pipe):
     pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
-    ll = mio.import_image("fake_image_being_mocked.gif", normalize=True)
+    ll = mio.import_video("fake_image_being_mocked.gif", normalize=True)
     assert ll.path.name == "fake_image_being_mocked.gif"
     assert ll.fps == 5
     assert len(ll) == 10
@@ -435,7 +435,7 @@ def test_importing_ffmpeg_GIF_no_normalize(is_file, video_infos_ffprobe, pipe):
     pipe.return_value.stdout.read.return_value = empty_frame
     is_file.return_value = True
 
-    ll = mio.import_image("fake_image_being_mocked.gif", normalize=False)
+    ll = mio.import_video("fake_image_being_mocked.gif", normalize=False)
     assert ll.path.name == "fake_image_being_mocked.gif"
     assert ll.fps == 5
     assert len(ll) == 10
@@ -917,3 +917,70 @@ def test_import_tem_is_found_next_to_an_image(tmp_path):
 def test_import_tem_rejects_a_file_that_is_not_a_template(tmp_path, text):
     with pytest.raises(ValueError, match="PsychoMorph"):
         mio.import_landmark_file(_write_tem(tmp_path, text))
+
+
+# ---- a GIF is a video, not an image
+def _write_gif_and_png(tmp_path, landmarks=True):
+    frames = [
+        PILImage.fromarray(
+            (np.random.RandomState(i).rand(20, 30, 3) * 255).astype("uint8")
+        )
+        for i in range(3)
+    ]
+    gif, png = tmp_path / "anim.gif", tmp_path / "still.png"
+    frames[0].save(gif, save_all=True, append_images=frames[1:], duration=100, loop=0)
+    frames[0].save(png)
+    if (
+        landmarks
+    ):  # a landmark file for each: the one next to the GIF used to crash the import
+        for name in ("anim", "still"):
+            (tmp_path / (name + ".pts")).write_text(
+                "version: 1\nn_points: 2\n{\n 1.0 2.0\n 3.0 4.0\n}\n"
+            )
+    return gif, png
+
+
+def test_import_images_of_a_folder_with_a_gif_gives_only_the_still_images(tmp_path):
+    _write_gif_and_png(tmp_path)
+    images = list(mio.import_images(str(tmp_path / "*")))
+    assert len(images) == 1
+    assert images[0].path.name == "still.png" and images[0].n_dims == 2
+    assert images[0].landmarks.n_groups == 1
+
+
+def test_image_paths_leave_out_a_gif_and_video_paths_keep_it(tmp_path):
+    _write_gif_and_png(tmp_path, landmarks=False)
+    assert [p.name for p in mio.image_paths(str(tmp_path / "*"))] == ["still.png"]
+    assert "anim.gif" in [p.name for p in mio.video_paths(str(tmp_path / "*"))]
+
+
+@pytest.mark.parametrize("landmarks", [False, True])
+def test_import_image_of_a_gif_says_to_use_import_video(tmp_path, landmarks):
+    gif, _ = _write_gif_and_png(tmp_path, landmarks=landmarks)
+    # it used to return a LazyList, or crash with an AttributeError if a landmark file was next to it
+    with raises(
+        ValueError, match="does not have a suitable importer.*video.*import_video"
+    ):
+        mio.import_image(gif)
+
+
+def test_import_image_of_a_video_says_to_use_import_video(tmp_path):
+    path = tmp_path / "clip.mp4"
+    path.write_bytes(b"not a real video")
+    with raises(ValueError, match="import_video"):
+        mio.import_image(path)
+
+
+def test_import_image_of_an_unknown_format_has_no_such_hint(tmp_path):
+    path = tmp_path / "thing.xyz"
+    path.write_bytes(b"?")
+    with raises(ValueError) as info:
+        mio.import_image(path)
+    assert "does not have a suitable importer." in str(info.value)
+    assert "video" not in str(info.value)
+
+
+def test_gif_is_not_an_image_type_but_is_a_video_type():
+    from menpo.io.input.extensions import ffmpeg_video_types, image_types
+
+    assert ".gif" not in image_types and ".gif" in ffmpeg_video_types
