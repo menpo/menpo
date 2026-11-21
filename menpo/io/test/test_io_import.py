@@ -4,10 +4,12 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 from PIL import Image as PILImage
+import pytest
+from numpy.testing import assert_allclose
 from pytest import raises
 
 import menpo.io as mio
-from menpo.shape import PointCloud
+from menpo.shape import PointCloud, PointUndirectedGraph
 
 
 def test_import_incorrect_built_in():
@@ -842,3 +844,72 @@ def test_register_no_leading_period():
     mio.input.base._register_importer(ext_map, "foo", lambda x: x)
     assert ".foo" in ext_map
     assert "foo" not in ext_map
+
+
+# ---- PsychoMorph .tem templates
+_TEM = """# a template: a closed square, a line from the corner to the centre
+5
+10 20
+30 20
+30 40
+10 40
+20 30
+
+2
+1
+4
+0 1 2 3
+0
+2
+3 4
+this and everything after the last line is ignored
+"""
+
+
+def _write_tem(tmp_path, text, name="face.tem"):
+    path = tmp_path / name
+    path.write_text(text)
+    return path
+
+
+def test_import_tem_points_edges_and_axes(tmp_path):
+    graph = mio.import_landmark_file(_write_tem(tmp_path, _TEM))["TEM"]
+    assert isinstance(graph, PointUndirectedGraph)
+    assert graph.n_points == 5
+    # menpo is (y, x): the file has x first
+    assert_allclose(graph.points[0], [20, 10])
+    assert_allclose(graph.points[4], [30, 20])
+    # the line flagged closed is joined last to first; the open line is not
+    edges = {tuple(sorted(e)) for e in graph.edges.tolist()}
+    assert edges == {(0, 1), (1, 2), (2, 3), (0, 3), (3, 4)}
+
+
+def test_import_tem_without_lines_is_a_graph_with_no_edges(tmp_path):
+    graph = mio.import_landmark_file(_write_tem(tmp_path, "2\n1 2\n3 4\n0\n"))["TEM"]
+    assert graph.n_points == 2 and graph.n_edges == 0
+
+
+def test_import_tem_is_found_next_to_an_image(tmp_path):
+    _write_tem(tmp_path, _TEM)
+    PILImage.fromarray(np.zeros((60, 50, 3), dtype=np.uint8)).save(
+        tmp_path / "face.png"
+    )
+    image = mio.import_image(tmp_path / "face.png")
+    assert image.landmarks["TEM"].n_points == 5
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "",  # empty
+        "3\n1 2\n3 4\n",  # fewer points than it says
+        "2\n1 2\n3\n0\n",  # a point with one coordinate
+        "2\n1 2\n3 4\n1\n0\n",  # cut off in the middle of a line
+        "2\n1 2\n3 4\n1\n0\n3\n0 1\n",  # says 3 points, lists 2
+        "2\n1 2\n3 4\n1\n0\n2\n0 2\n",  # index 2 does not exist
+        "2\n1 2\n3 4\n1\n0\n2\n-1 1\n",  # negative index
+    ],
+)
+def test_import_tem_rejects_a_file_that_is_not_a_template(tmp_path, text):
+    with pytest.raises(ValueError, match="PsychoMorph"):
+        mio.import_landmark_file(_write_tem(tmp_path, text))
