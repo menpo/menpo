@@ -331,14 +331,13 @@ def test_scale_zero_scale_raise_valuerror():
 # Vectorizable interface tests
 
 
-def test_rotation2d_from_vector_raises_notimplementederror():
-    with raises(NotImplementedError):
-        Rotation.init_identity(2).from_vector(0)
+def test_rotation2d_from_vector_is_the_rotation_by_that_angle():
+    rotation = Rotation.init_identity(2).from_vector(np.array([0.0]))
+    assert_allclose(rotation.h_matrix, np.eye(3))
 
 
-def test_rotation2d_as_vector_raises_notimplementederror():
-    with raises(NotImplementedError):
-        Rotation.init_identity(2).as_vector()
+def test_rotation2d_as_vector_is_the_angle():
+    assert_allclose(Rotation.init_identity(2).as_vector(), [0.0])
 
 
 def test_affine_2d_n_parameters():
@@ -402,11 +401,10 @@ def test_translation_3d_n_parameters():
     assert t.n_parameters == 3
 
 
-def test_rotation2d_n_parameters_raises_notimplementederror():
+def test_rotation2d_n_parameters():
     rot_matrix = np.eye(2)
     t = Rotation(rot_matrix)
-    with raises(NotImplementedError):
-        t.n_parameters
+    assert t.n_parameters == 1
 
 
 # Test list construction is equivalent to ndarray construction
