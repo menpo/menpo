@@ -3,8 +3,9 @@ import matplotlib
 matplotlib.use("Agg")
 
 import pytest
-from menpo.visualize.viewmatplotlib import _parse_cmap
+
 import menpo.io as mio
+from menpo.visualize.viewmatplotlib import _parse_cmap
 
 
 def test_parse_cmap_by_name():
@@ -40,6 +41,7 @@ def test_subplot_layout_is_integral_and_big_enough(n):
 
 def test_subplot_layout_can_be_used_by_matplotlib():
     import matplotlib.pyplot as plt
+
     from menpo.visualize.viewmatplotlib import MatplotlibSubplots
 
     rows, cols = MatplotlibSubplots()._subplot_layout(3)

@@ -1,8 +1,9 @@
+from functools import reduce
+
 import numpy as np
 
-from .base import HomogFamilyAlignment
 from .affine import Affine
-from functools import reduce
+from .base import HomogFamilyAlignment
 
 
 class Similarity(Affine):
@@ -269,8 +270,8 @@ def procrustes_alignment(source, target, rotation=True, allow_mirror=False):
         `target`.
     """
     from .rotation import Rotation, optimal_rotation_matrix
-    from .translation import Translation
     from .scale import UniformScale
+    from .translation import Translation
 
     # Compute the transforms we need - centering translations
     tgt_t = Translation(-target.centre(), skip_checks=True)

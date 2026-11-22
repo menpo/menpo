@@ -1,9 +1,8 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.shape import PointCloud
-
+from menpo.transform.thinplatesplines import ThinPlateSplines
 
 square_src_landmarks = np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]])
 

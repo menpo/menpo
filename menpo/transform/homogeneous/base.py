@@ -2,7 +2,7 @@ from warnings import warn
 
 import numpy as np
 
-from menpo.base import Vectorizable, MenpoDeprecationWarning
+from menpo.base import MenpoDeprecationWarning, Vectorizable
 from menpo.transform.base import (
     Alignment,
     ComposableTransform,

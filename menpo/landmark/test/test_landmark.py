@@ -1,13 +1,13 @@
 from collections import OrderedDict
+
 import numpy as np
-from scipy.sparse import csr_matrix
-from pytest import raises
 from numpy.testing import assert_allclose, assert_equal
+from pytest import raises
+from scipy.sparse import csr_matrix
 
 from menpo.landmark import LandmarkManager
-from menpo.shape import PointCloud, LabelledPointUndirectedGraph
+from menpo.shape import LabelledPointUndirectedGraph, PointCloud
 from menpo.testing import is_same_array
-
 
 points = np.ones((10, 3))
 adjacency_matrix = csr_matrix((10, 10))

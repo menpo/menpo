@@ -1,7 +1,7 @@
 import numpy as np
 
+from .affine import Affine, DiscreteAffine
 from .base import HomogFamilyAlignment
-from .affine import DiscreteAffine, Affine
 from .similarity import Similarity
 
 

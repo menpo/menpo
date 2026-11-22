@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal, assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 
 import menpo.io as mio
 from menpo.image.base import (
@@ -8,7 +8,7 @@ from menpo.image.base import (
     _convert_patches_list_to_single_array,
     _create_patches_image,
 )
-from menpo.image.patches import extract_patches_with_slice, extract_patches_by_sampling
+from menpo.image.patches import extract_patches_by_sampling, extract_patches_with_slice
 from menpo.shape import PointCloud
 
 

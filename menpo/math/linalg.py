@@ -1,6 +1,8 @@
 from itertools import islice
+
 import numpy as np
-from menpo.visualize import print_progress, bytes_str, print_dynamic
+
+from menpo.visualize import bytes_str, print_dynamic, print_progress
 
 
 def dot_inplace_left(a, b, block_size=1000):

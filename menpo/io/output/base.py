@@ -3,9 +3,9 @@ import warnings
 from functools import partial
 from pathlib import Path
 
-from .extensions import landmark_types, image_types, pickle_types, video_types
 from ..exceptions import OverwriteError
-from ..utils import _norm_path, _possible_extensions_from_filepath, _normalize_extension
+from ..utils import _norm_path, _normalize_extension, _possible_extensions_from_filepath
+from .extensions import image_types, landmark_types, pickle_types, video_types
 
 # an open file handle that uses a small fast level of compression
 gzip_open = partial(gzip.open, compresslevel=3)

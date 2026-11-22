@@ -1,6 +1,6 @@
 from functools import reduce
 
-from .homogeneous import Translation, UniformScale, Rotation, Affine, Homogeneous
+from .homogeneous import Affine, Homogeneous, Rotation, Translation, UniformScale
 
 
 def transform_about_centre(obj, transform):

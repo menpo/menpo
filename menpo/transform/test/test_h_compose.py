@@ -1,18 +1,18 @@
 import numpy as np
 from numpy.testing import assert_allclose
 from pytest import raises
-from menpo.shape import PointCloud
 
+from menpo.shape import PointCloud
 from menpo.transform import (
-    Homogeneous,
-    Scale,
-    NonUniformScale,
-    UniformScale,
-    Translation,
-    Similarity,
-    Rotation,
-    AlignmentUniformScale,
     AlignmentRotation,
+    AlignmentUniformScale,
+    Homogeneous,
+    NonUniformScale,
+    Rotation,
+    Scale,
+    Similarity,
+    Translation,
+    UniformScale,
 )
 
 # NON-INPLACE COMPOSE

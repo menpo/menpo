@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 from pytest import raises
 
-from menpo.image import MaskedImage, BooleanImage
+from menpo.image import BooleanImage, MaskedImage
 from menpo.shape import PointCloud
 
 

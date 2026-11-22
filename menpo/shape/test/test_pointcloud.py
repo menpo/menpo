@@ -1,7 +1,9 @@
 import warnings
+
 import numpy as np
-from pytest import raises
 from numpy.testing import assert_allclose
+from pytest import raises
+
 from menpo.image import Image, MaskedImage
 from menpo.shape import PointCloud, bounding_box
 from menpo.testing import is_same_array

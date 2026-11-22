@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.testing import assert_almost_equal
-from menpo.math import eigenvalue_decomposition, pca, ipca
+
+from menpo.math import eigenvalue_decomposition, ipca, pca
 
 # Positive semi-definite matrix
 cov_matrix = np.array([[3, 1], [1, 3]])

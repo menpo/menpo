@@ -1,5 +1,6 @@
-from menpo.image import Image, MaskedImage
 import numpy as np
+
+from menpo.image import Image, MaskedImage
 
 
 def test_rescale_pixels():

@@ -5,6 +5,7 @@ import numpy as np
 from menpo.base import MenpoDeprecationWarning, copy_landmarks_and_path
 from menpo.transform import Translation
 from menpo.visualize.base import ImageViewer
+
 from .base import Image
 from .boolean import BooleanImage
 

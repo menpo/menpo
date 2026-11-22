@@ -1,5 +1,6 @@
 import numpy as np
-from .base import Transform, Alignment, Invertible
+
+from .base import Alignment, Invertible, Transform
 from .rbf import R2LogR2RBF
 
 

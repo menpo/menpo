@@ -1,8 +1,9 @@
-import numpy as np
 from copy import deepcopy
 from itertools import chain
 
+import numpy as np
 from scipy.spatial import cKDTree
+
 from menpo.base import Copyable
 from menpo.transform.base import Alignment, Invertible, Transform
 

@@ -1,4 +1,5 @@
 import numpy as np
+
 from menpo.shape import PointCloud
 from menpo.transform import WithDims
 

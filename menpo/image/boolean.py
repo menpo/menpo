@@ -4,6 +4,7 @@ from warnings import warn
 import numpy as np
 
 from menpo.transform import Translation
+
 from .base import Image
 
 
@@ -32,8 +33,10 @@ def pwa_point_in_pointcloud(pcloud, indices, batch_size=None):
         Whether each pixel index was in inside the convex hull of the
         pointcloud or not.
     """
-    from menpo.transform.piecewiseaffine import PiecewiseAffine
-    from menpo.transform.piecewiseaffine import TriangleContainmentError
+    from menpo.transform.piecewiseaffine import (
+        PiecewiseAffine,
+        TriangleContainmentError,
+    )
 
     try:
         pwa = PiecewiseAffine(pcloud, pcloud)
@@ -71,8 +74,8 @@ def convex_hull_point_in_pointcloud(pcloud, indices):
         Whether each pixel index was in inside the convex hull of the
         pointcloud or not.
     """
-    from scipy.spatial import ConvexHull
     from matplotlib.path import Path
+    from scipy.spatial import ConvexHull
 
     c_hull = ConvexHull(pcloud.points)
     polygon = pcloud.points[c_hull.vertices, :]

@@ -3,9 +3,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-from PIL import Image as PILImage
 import pytest
 from numpy.testing import assert_allclose
+from PIL import Image as PILImage
 from pytest import raises
 
 import menpo.io as mio
@@ -99,8 +99,9 @@ def test_path():
 
 @patch("menpo.io.input.base._pathlib_glob_for_pattern")
 def test_single_suffix_dot_in_path(pathlib_glob):
-    import menpo.io.input.base as mio_base
     from pathlib import Path
+
+    import menpo.io.input.base as mio_base
 
     fake_path = Path("fake_path.t0.t1.t2")
     pathlib_glob.return_value = [fake_path]
@@ -113,8 +114,9 @@ def test_single_suffix_dot_in_path(pathlib_glob):
 
 
 def test_upper_extension_mapped_to_lower():
-    import menpo.io.input.base as mio_base
     from pathlib import Path
+
+    import menpo.io.input.base as mio_base
 
     ext_map = MagicMock()
 
@@ -124,8 +126,9 @@ def test_upper_extension_mapped_to_lower():
 
 @patch("menpo.io.input.base._pathlib_glob_for_pattern")
 def test_double_suffix(pathlib_glob):
-    import menpo.io.input.base as mio_base
     from pathlib import Path
+
+    import menpo.io.input.base as mio_base
 
     fake_path = Path("fake_path.t1.t2")
     pathlib_glob.return_value = [fake_path]
@@ -632,6 +635,7 @@ def test_importing_pickle_encoding_ignored_py2(
 @patch("menpo.io.input.base.Path.is_file")
 def test_importing_pickles(is_file, glob, mock_open, mock_pickle):
     from pathlib import Path
+
     from menpo.base import LazyList
 
     mock_pickle.return_value = {"test": 1}
@@ -650,8 +654,8 @@ def test_importing_pickles(is_file, glob, mock_open, mock_pickle):
 @patch("menpo.io.input.base.Path.glob")
 @patch("menpo.io.input.base.Path.is_file")
 def test_importing_pickles_as_generator(is_file, glob, mock_open, mock_pickle):
-    from pathlib import Path
     import types
+    from pathlib import Path
 
     mock_pickle.return_value = {"test": 1}
     is_file.return_value = True
@@ -810,8 +814,8 @@ def test_register_landmark_importer(is_file):
 
 @patch("menpo.io.input.base.Path.is_file")
 def test_register_video_importer(is_file):
-    from menpo.image import Image
     from menpo.base import LazyList
+    from menpo.image import Image
 
     def foo_importer(filepath, **kwargs):
         return LazyList([lambda: Image.init_blank((10, 10))])

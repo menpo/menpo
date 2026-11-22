@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from menpo.image import Image, MaskedImage
-from menpo.shape import TriMesh, TexturedTriMesh, ColouredTriMesh
+from menpo.shape import ColouredTriMesh, TexturedTriMesh, TriMesh
 from menpo.testing import is_same_array
 
 

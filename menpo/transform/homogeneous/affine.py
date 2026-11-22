@@ -1,7 +1,8 @@
+from functools import reduce
+
 import numpy as np
 
 from .base import Homogeneous, HomogFamilyAlignment
-from functools import reduce
 
 
 class Affine(Homogeneous):
@@ -146,8 +147,8 @@ class Affine(Homogeneous):
 
         """
         from .rotation import Rotation
-        from .translation import Translation
         from .scale import Scale
+        from .translation import Translation
 
         U, S, V = np.linalg.svd(self.linear_component)
         rotation_2 = Rotation(U)

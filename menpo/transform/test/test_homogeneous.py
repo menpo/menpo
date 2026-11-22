@@ -2,17 +2,18 @@ import warnings
 
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
+from pytest import raises
+
 from menpo.transform import (
     Affine,
-    Similarity,
+    Homogeneous,
+    NonUniformScale,
     Rotation,
     Scale,
-    NonUniformScale,
-    UniformScale,
+    Similarity,
     Translation,
-    Homogeneous,
+    UniformScale,
 )
-from pytest import raises
 
 
 def test_1d_translation():

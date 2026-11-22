@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from functools import wraps
+
 import numpy as np
 
 from menpo.base import name_of_callable

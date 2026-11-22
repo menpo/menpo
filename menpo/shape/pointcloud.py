@@ -9,6 +9,7 @@ from scipy.spatial.distance import cdist
 
 from menpo.base import copy_landmarks_and_path
 from menpo.transform import WithDims
+
 from .base import Shape
 
 

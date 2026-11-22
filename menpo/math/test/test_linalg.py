@@ -1,9 +1,9 @@
-from pytest import raises
 import numpy as np
-from numpy.testing import assert_equal, assert_allclose
-from menpo.math import dot_inplace_left, dot_inplace_right, as_matrix, from_matrix
-from menpo.image import MaskedImage
+from numpy.testing import assert_allclose, assert_equal
+from pytest import raises
 
+from menpo.image import MaskedImage
+from menpo.math import as_matrix, dot_inplace_left, dot_inplace_right, from_matrix
 
 n_big = 9182
 k = 100

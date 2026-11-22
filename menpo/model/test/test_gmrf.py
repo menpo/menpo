@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
-from menpo.shape import PointCloud, DirectedGraph, UndirectedGraph
 from menpo.math import as_matrix
+from menpo.shape import DirectedGraph, PointCloud, UndirectedGraph
 
 from .. import GMRFModel, GMRFVectorModel
 

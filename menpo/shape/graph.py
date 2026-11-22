@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import csgraph, csr_matrix, triu, issparse
+from scipy.sparse import csgraph, csr_matrix, issparse, triu
 
 from . import PointCloud
 

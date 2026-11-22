@@ -3,9 +3,9 @@ from warnings import warn
 
 import numpy as np
 
-from .normals import compute_face_normals, compute_vertex_normals
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
+from .normals import compute_face_normals, compute_vertex_normals
 
 
 def grid_tcoords(shape):

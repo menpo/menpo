@@ -1,6 +1,6 @@
 import numpy as np
 
-from menpo.image import Image, BooleanImage, MaskedImage
+from menpo.image import BooleanImage, Image, MaskedImage
 from menpo.shape import PointCloud
 from menpo.testing import is_same_array
 

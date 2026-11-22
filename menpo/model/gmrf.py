@@ -1,11 +1,12 @@
 from functools import partial
+
 import numpy as np
 from scipy.sparse import bsr_matrix
 
 from menpo.base import name_of_callable
 from menpo.math import as_matrix
 from menpo.shape import UndirectedGraph
-from menpo.visualize import print_progress, bytes_str, print_dynamic
+from menpo.visualize import bytes_str, print_dynamic, print_progress
 
 
 def _covariance_matrix_inverse(cov_mat, n_components):
