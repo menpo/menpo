@@ -1,7 +1,7 @@
 import numpy as np
 
-from .base import MultipleAlignment
 from ..homogeneous import AlignmentSimilarity
+from .base import MultipleAlignment
 
 
 class GeneralizedProcrustesAnalysis(MultipleAlignment):
@@ -47,7 +47,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         Recursively calculates a procrustes alignment.
         """
         # Avoid circular imports
-        from menpo.shape import mean_pointcloud, PointCloud
+        from menpo.shape import PointCloud, mean_pointcloud
+
         from ..compositions import scale_about_centre
 
         if self.n_iterations > self.max_iterations:

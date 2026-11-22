@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from menpo.visualize import print_progress
+
 from ..utils import _call_subprocess
 
 _FFMPEG_CMD = lambda: str(Path(os.environ.get("MENPO_FFMPEG_CMD", "ffmpeg")))

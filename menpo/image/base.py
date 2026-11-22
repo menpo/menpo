@@ -1,8 +1,8 @@
 from typing import Iterable, Optional
 from warnings import warn
 
-import PIL.Image as PILImage
 import numpy as np
+import PIL.Image as PILImage
 
 from menpo.base import MenpoDeprecationWarning, Vectorizable, copy_landmarks_and_path
 from menpo.landmark import Landmarkable
@@ -17,6 +17,7 @@ from menpo.transform import (
     transform_about_centre,
 )
 from menpo.visualize.base import ImageViewer, LandmarkableViewable, Viewable
+
 from .interpolation import scipy_interpolation
 
 try:
@@ -25,9 +26,9 @@ except ImportError:
     warn("Falling back to scipy interpolation for affine warps")
     cv2_perspective_interpolation = None  # type: ignore
 from .patches import (
+    extract_patches_by_sampling,
     extract_patches_with_slice,
     set_patches,
-    extract_patches_by_sampling,
 )
 
 # Cache the greyscale luminosity coefficients as they are invariant.

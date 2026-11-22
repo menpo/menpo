@@ -1,12 +1,12 @@
 from collections import OrderedDict
+
 import numpy as np
-from pytest import raises
 from numpy.testing import assert_allclose
+from pytest import raises
 from scipy.sparse import csr_matrix
 
 from menpo.shape import LabelledPointUndirectedGraph, PointUndirectedGraph
 from menpo.testing import is_same_array
-
 
 points = np.ones((10, 3))
 adjacency_matrix = csr_matrix((10, 10))

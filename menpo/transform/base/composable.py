@@ -1,5 +1,6 @@
-from menpo.transform.base import Transform
 from functools import reduce
+
+from menpo.transform.base import Transform
 
 
 class ComposableTransform(Transform):

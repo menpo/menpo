@@ -1,5 +1,6 @@
-from numpy.testing import assert_allclose
 import numpy as np
+from numpy.testing import assert_allclose
+
 from menpo.transform import R2LogR2RBF, R2LogRRBF
 
 centers = np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]])

@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+
 import numpy as np
 
 from menpo.base import MenpoMissingDependencyError
@@ -195,13 +196,13 @@ class LandmarkableViewable(object):
 
 
 from menpo.visualize.viewmatplotlib import (
-    MatplotlibImageViewer2d,
-    MatplotlibImageSubplotsViewer2d,
-    MatplotlibLandmarkViewer2d,
     MatplotlibAlignmentViewer2d,
     MatplotlibGraphPlotter,
-    MatplotlibMultiImageViewer2d,
+    MatplotlibImageSubplotsViewer2d,
+    MatplotlibImageViewer2d,
+    MatplotlibLandmarkViewer2d,
     MatplotlibMultiImageSubplotsViewer2d,
+    MatplotlibMultiImageViewer2d,
     MatplotlibPointGraphViewer2d,
 )
 
@@ -1474,11 +1475,12 @@ def plot_gaussian_ellipses(
     figure_size : (`float`, `float`) `tuple` or ``None`` optional
         The size of the figure in inches.
     """
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Ellipse
-    import matplotlib.colors as colors
     import matplotlib.cm as cmx
+    import matplotlib.colors as colors
+    import matplotlib.pyplot as plt
     from matplotlib.font_manager import FontProperties
+    from matplotlib.patches import Ellipse
+
     from menpo.shape import PointCloud
 
     def eigh_sorted(cov):

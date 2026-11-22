@@ -30,8 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import numpy as np
 
-from .base import HomogFamilyAlignment
 from .affine import DiscreteAffine
+from .base import HomogFamilyAlignment
 from .similarity import Similarity
 
 

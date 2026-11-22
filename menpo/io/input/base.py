@@ -14,13 +14,14 @@ from menpo.base import (
     partial_doc,
 )
 from menpo.visualize import print_progress
+
+from ..utils import _norm_path, _normalize_extension, _possible_extensions_from_filepath
 from .extensions import (
     ffmpeg_video_types,
     image_landmark_types,
     image_types,
     pickle_types,
 )
-from ..utils import _norm_path, _normalize_extension, _possible_extensions_from_filepath
 
 
 # TODO: Remove once deprecated

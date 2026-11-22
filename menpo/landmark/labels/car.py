@@ -1,7 +1,8 @@
 from collections import OrderedDict
+
 import numpy as np
 
-from .base import labeller_func, validate_input, connectivity_from_array
+from .base import connectivity_from_array, labeller_func, validate_input
 
 
 @labeller_func(group_label="car_streetscene_view_0_8")

@@ -1,5 +1,6 @@
-import menpo
 from numpy.testing import assert_equal
+
+import menpo
 from menpo.transform.piecewiseaffine.base import CachedPWA, PythonPWA
 
 b = menpo.io.import_builtin_asset("breakingbad.jpg").as_masked()

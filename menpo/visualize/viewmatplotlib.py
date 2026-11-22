@@ -587,8 +587,8 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         figure_size=(7, 7),
         label=None,
     ):
-        from matplotlib import collections as mc
         import matplotlib.pyplot as plt
+        from matplotlib import collections as mc
 
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
@@ -1183,9 +1183,9 @@ class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
         self.image_list = image_list
 
     def render(self, interval=50, **kwargs):
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
         import matplotlib.animation as animation
+        import matplotlib.cm as cm
+        import matplotlib.pyplot as plt
 
         if len(self.image_list[0].shape) == 2:
             # Single channels are viewed in Gray
@@ -1221,8 +1221,8 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplot
         self.plot_layout = self._subplot_layout(self.num_subplots)
 
     def render(self, interval=50, **kwargs):
-        import matplotlib.cm as cm
         import matplotlib.animation as animation
+        import matplotlib.cm as cm
         import matplotlib.pyplot as plt
 
         p = self.plot_layout

@@ -1,7 +1,7 @@
 import numpy as np
 
 from menpo.image import Image
-from menpo.shape import PointCloud, TriMesh, TexturedTriMesh, ColouredTriMesh
+from menpo.shape import ColouredTriMesh, PointCloud, TexturedTriMesh, TriMesh
 from menpo.testing import is_same_array
 
 

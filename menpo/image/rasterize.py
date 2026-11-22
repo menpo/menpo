@@ -1,8 +1,9 @@
 import collections
+
 import numpy as np
 
-from menpo.shape import TriMesh
 from menpo.image import Image
+from menpo.shape import TriMesh
 
 
 def check_param(n, types, param_name, param):

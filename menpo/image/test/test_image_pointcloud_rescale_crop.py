@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
+
 from menpo.image import Image
 from menpo.shape import bounding_box
 

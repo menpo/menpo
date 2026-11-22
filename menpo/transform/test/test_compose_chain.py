@@ -1,10 +1,9 @@
 import numpy as np
 
 from menpo.shape import PointCloud, TriMesh
-
-from menpo.transform import TransformChain, Translation, Scale
-from menpo.transform.thinplatesplines import ThinPlateSplines
+from menpo.transform import Scale, TransformChain, Translation
 from menpo.transform.piecewiseaffine import PiecewiseAffine
+from menpo.transform.thinplatesplines import ThinPlateSplines
 
 
 def test_chain_tps_before_tps():

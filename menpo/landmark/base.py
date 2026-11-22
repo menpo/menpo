@@ -1,6 +1,6 @@
-from collections.abc import MutableMapping
 import fnmatch
 from collections import OrderedDict
+from collections.abc import MutableMapping
 
 from menpo.base import Copyable
 from menpo.transform.base import Transformable

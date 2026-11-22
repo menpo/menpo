@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
 from pytest import raises
 
-from menpo.transform import UniformScale, NonUniformScale, Scale
+from menpo.transform import NonUniformScale, Scale, UniformScale
 
 
 def test_nonuniformscale_from_list():

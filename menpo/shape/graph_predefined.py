@@ -2,14 +2,14 @@ import numpy as np
 import scipy.sparse as sparse
 
 from . import (
-    PointCloud,
-    UndirectedGraph,
     DirectedGraph,
-    Tree,
-    TriMesh,
-    PointUndirectedGraph,
+    PointCloud,
     PointDirectedGraph,
     PointTree,
+    PointUndirectedGraph,
+    Tree,
+    TriMesh,
+    UndirectedGraph,
 )
 
 

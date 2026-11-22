@@ -1,5 +1,6 @@
-import json
 import itertools
+import json
+
 import numpy as np
 
 

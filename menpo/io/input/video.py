@@ -9,6 +9,7 @@ import numpy as np
 from menpo.base import LazyList
 from menpo.image import Image
 from menpo.image.base import normalize_pixels_range
+
 from ..utils import _call_subprocess
 
 _FFMPEG_CMD = lambda: str(Path(os.environ.get("MENPO_FFMPEG_CMD", "ffmpeg")))

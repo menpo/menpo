@@ -4,7 +4,6 @@ from numpy.testing import assert_allclose
 from menpo.base import Vectorizable
 from menpo.transform.base import VInvertible
 
-
 ones_vector = np.ones(3)
 
 

@@ -1,17 +1,18 @@
 import numpy as np
 from numpy.testing import assert_allclose
+
 from menpo.shape import PointCloud
 from menpo.transform import (
     Affine,
     AlignmentAffine,
-    Similarity,
-    AlignmentSimilarity,
-    Rotation,
     AlignmentRotation,
-    Translation,
+    AlignmentSimilarity,
     AlignmentTranslation,
-    UniformScale,
     AlignmentUniformScale,
+    Rotation,
+    Similarity,
+    Translation,
+    UniformScale,
 )
 
 # TODO check composition works correctly on all alignment methods

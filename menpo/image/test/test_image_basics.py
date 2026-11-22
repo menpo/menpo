@@ -1,14 +1,14 @@
 import warnings
+from pathlib import Path
 
 import numpy as np
 from numpy.testing import assert_allclose
 from pytest import raises
-from pathlib import Path
 
 import menpo
-from menpo.image import Image, MaskedImage, BooleanImage
+from menpo.image import BooleanImage, Image, MaskedImage
 from menpo.shape import PointCloud
-from menpo.transform import UniformScale, Translation
+from menpo.transform import Translation, UniformScale
 
 
 def test_image_as_masked():

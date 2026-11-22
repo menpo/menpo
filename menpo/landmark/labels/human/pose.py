@@ -1,11 +1,12 @@
 from collections import OrderedDict
+
 import numpy as np
 
 from ..base import (
-    labeller_func,
-    validate_input,
     connectivity_from_array,
+    labeller_func,
     pcloud_and_lgroup_from_ranges,
+    validate_input,
 )
 
 

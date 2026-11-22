@@ -1,11 +1,11 @@
 from functools import partial
-
-import numpy as np
 from pathlib import Path
 
+import numpy as np
+
 from menpo.base import LazyList
-from menpo.image import Image, MaskedImage, BooleanImage
-from menpo.image.base import normalize_pixels_range, channels_to_front
+from menpo.image import BooleanImage, Image, MaskedImage
+from menpo.image.base import channels_to_front, normalize_pixels_range
 
 
 def _pil_to_numpy(pil_image, normalize, convert=None):

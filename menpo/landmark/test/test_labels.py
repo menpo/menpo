@@ -1,10 +1,10 @@
+import inspect
+
+import numpy as np
 import pytest
 
 import menpo.landmark.labels as labels
-import inspect
-import numpy as np
 from menpo.shape import PointCloud
-
 
 EXEMPT_FUNCTIONS = {
     "labeller",

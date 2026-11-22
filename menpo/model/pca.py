@@ -3,6 +3,7 @@ import numpy as np
 from menpo.base import Vectorizable, doc_inherit, name_of_callable
 from menpo.math import as_matrix, ipca, pca, pcacov
 from menpo.visualize import print_progress
+
 from .linear import MeanLinearVectorModel
 from .vectorizable import VectorizableBackedModel
 

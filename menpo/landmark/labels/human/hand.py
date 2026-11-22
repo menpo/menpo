@@ -1,7 +1,8 @@
 from collections import OrderedDict
+
 import numpy as np
 
-from ..base import validate_input, connectivity_from_array, labeller_func
+from ..base import connectivity_from_array, labeller_func, validate_input
 
 
 @labeller_func(group_label="hand_ibug_39")
