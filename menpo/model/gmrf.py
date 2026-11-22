@@ -1021,10 +1021,10 @@ class GMRFVectorModel(object):
         """
         return self.mean_vector
 
-    def increment(self, samples, n_samples=None, verbose=False):
+    def increment_inplace(self, samples, n_samples=None, verbose=False):
         r"""
-        Update the mean and precision matrix of the GMRF by updating the
-        distributions of all the edges.
+        Update the mean and precision matrix of the GMRF, in place, by updating
+        the distributions of all the edges.
 
         Parameters
         ----------
@@ -1333,10 +1333,10 @@ class GMRFModel(GMRFVectorModel):
         """
         return self.template_instance.from_vector(self.mean_vector)
 
-    def increment(self, samples, n_samples=None, verbose=False):
+    def increment_inplace(self, samples, n_samples=None, verbose=False):
         r"""
-        Update the mean and precision matrix of the GMRF by updating the
-        distributions of all the edges.
+        Update the mean and precision matrix of the GMRF, in place, by updating
+        the distributions of all the edges.
 
         Parameters
         ----------

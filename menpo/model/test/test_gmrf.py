@@ -170,7 +170,7 @@ def test_increment():
                             dtype=np.float64,
                             incremental=True,
                         )
-                        gmrf1.increment(samples[50::])
+                        gmrf1.increment_inplace(samples[50::])
 
                         # Non incremental GMRF
                         gmrf2 = GMRFVectorModel(
