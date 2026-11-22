@@ -4,7 +4,7 @@ from menpo.base import Vectorizable, describe, doc_inherit, name_of_callable
 from menpo.math import as_matrix, ipca, pca, pcacov
 from menpo.visualize import print_progress
 
-from .linear import MeanLinearVectorModel
+from .linear import MeanLinearVectorModel, _as_components, _read_only
 from .vectorizable import VectorizableBackedModel
 
 
@@ -35,6 +35,14 @@ class PCAVectorModel(MeanLinearVectorModel):
     inplace : `bool`, optional
         If ``True`` the data matrix is modified in place. Otherwise, the data
         matrix is copied.
+
+    Notes
+    -----
+    The arrays of a model (components, eigenvalues, mean) are never written
+    to. The methods whose names end in ``_inplace`` change the model by giving
+    it new arrays, and return ``None``; every other method leaves the model as
+    it is. So :meth:`trim_components`, which returns a model that shares the arrays
+    of this one, is free, and the two can never change each other.
     """
 
     def __init__(
@@ -160,11 +168,9 @@ class PCAVectorModel(MeanLinearVectorModel):
             )
         self.centred = centred
         self._eigenvalues = eigenvalues
-        # start the active components as all the components
-        self._n_active_components = int(self.n_components)
         self._trimmed_eigenvalues = np.array([])
         if max_n_components is not None:
-            self.trim_components(max_n_components)
+            self.trim_components_inplace(max_n_components)
 
     def _data_to_matrix(self, data, n_samples, verbose=False):
         # data is an ndarray of (n_samples, n_features), or a list or LazyList
@@ -214,39 +220,13 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         self.__dict__ = state
 
-    @property
-    def n_active_components(self):
-        r"""
-        The number of components currently in use on this model.
-
-        :type: `int`
-        """
-        return self._n_active_components
-
-    @n_active_components.setter
-    def n_active_components(self, value):
-        r"""
-        Sets an updated number of active components on this model. The number
-        of active components represents the number of principal components
-        that will be used for generative purposes. Note that this therefore
-        makes the model stateful. Also note that setting the number of
-        components will not affect memory unless :meth:`trim_components`
-        is called.
-
-        Parameters
-        ----------
-        value : `int`
-            The new number of active components.
-
-        Raises
-        ------
-        ValueError
-            Tried setting n_active_components to {value} - value needs to be a
-            float 0.0 < n_components < self._total_kept_variance_ratio ({}) or
-            an integer 1 < n_components < self.n_components ({})
-        """
+    def _parse_n_components(self, value):
+        # The number of components that `value` (an int, or the ratio of the
+        # variance to keep as a float) asks for, from 1 to self.n_components
+        # (more than there are means all of them). Raises ValueError if it can not
+        # be.
         err_str = (
-            "Tried setting n_active_components to {} - "
+            "Tried to use {} as a number of components - "
             "value needs to be a float "
             "0.0 < n_components < self._total_kept_variance_ratio "
             "({}) or an integer 1 < n_components < "
@@ -273,52 +253,24 @@ class PCAVectorModel(MeanLinearVectorModel):
                 # at least 1 value must be kept
                 raise ValueError(err_str)
             elif value >= self.n_components:
-                if self.n_active_components < self.n_components:
-                    # if the number of available components is smaller than
-                    # the total number of components set value to the later
-                    value = self.n_components
-                else:
-                    # if the previous is false and value bigger than the
-                    # total number of components, do nothing
-                    return
+                # more than there are: all of them
+                value = self.n_components
         if 0 < value <= self.n_components:
-            self._n_active_components = int(value)
+            return int(value)
         else:
             raise ValueError(err_str)
 
     @property
     def components(self):
         r"""
-        Returns the active components of the model.
+        Returns the active components of the model: a read-only view of the
+        memory of the model, not a copy. It can not be written to (to change
+        the components see :meth:`orthonormalize_inplace`) and it shows any
+        change that is made to the model.
 
-        :type: ``(n_active_components, n_features)`` `ndarray`
+        :type: ``(n_components, n_features)`` `ndarray`
         """
-        return self._components[: self.n_active_components, :]
-
-    @components.setter
-    def components(self, value):
-        r"""
-        Updates the components of this linear model, ensuring that the shape
-        of the components is not changed.
-
-        Parameters
-        ----------
-        value : ``(n_components, n_features)`` `ndarray`
-            The new components array.
-
-        Raises
-        ------
-        ValueError
-            Trying to replace components of shape {} with some of shape {}
-        """
-        if value.shape != self._components.shape:
-            raise ValueError(
-                "Trying to replace components of shape {} with some of shape {}".format(
-                    self.components.shape, value.shape
-                )
-            )
-        else:
-            np.copyto(self._components, value, casting="safe")
+        return _read_only(self._components)
 
     @property
     def eigenvalues(self):
@@ -327,9 +279,11 @@ class PCAVectorModel(MeanLinearVectorModel):
         model, i.e. the amount of variance captured by each active component,
         sorted form largest to smallest.
 
-        :type: ``(n_active_components,)`` `ndarray`
+        This is a read-only view of the memory of the model, not a copy.
+
+        :type: ``(n_components,)`` `ndarray`
         """
-        return self._eigenvalues[: self.n_active_components]
+        return _read_only(self._eigenvalues)
 
     def whitened_components(self):
         r"""
@@ -337,7 +291,7 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         Returns
         -------
-        whitened_components : ``(n_active_components, n_features)`` `ndarray`
+        whitened_components : ``(n_components, n_features)`` `ndarray`
             The whitened components.
         """
         return (
@@ -420,7 +374,7 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         Returns
         -------
-        eigenvalues_ratio : ``(n_active_components,)`` `ndarray`
+        eigenvalues_ratio : ``(n_components,)`` `ndarray`
             The active eigenvalues array scaled by the original variance.
         """
         return self.eigenvalues / self.original_variance()
@@ -446,7 +400,7 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         Returns
         -------
-        eigenvalues_cumulative_ratio : ``(n_active_components,)`` `ndarray`
+        eigenvalues_cumulative_ratio : ``(n_components,)`` `ndarray`
             Array of cumulative eigenvalues.
         """
         return np.cumsum(self.eigenvalues_ratio())
@@ -459,7 +413,7 @@ class PCAVectorModel(MeanLinearVectorModel):
 
         Returns
         -------
-        total_eigenvalues_cumulative_ratio : ``(n_active_components,)`` `ndarray`
+        total_eigenvalues_cumulative_ratio : ``(n_components,)`` `ndarray`
             Array of total cumulative eigenvalues.
         """
         return np.cumsum(self._total_eigenvalues_ratio())
@@ -476,19 +430,9 @@ class PCAVectorModel(MeanLinearVectorModel):
         noise_variance : `float`
             The mean variance of the inactive components.
         """
-        if self.n_active_components == self.n_components:
-            if self._trimmed_eigenvalues.size != 0:
-                noise_variance = self._trimmed_eigenvalues.mean()
-            else:
-                noise_variance = 0.0
-        else:
-            noise_variance = np.hstack(
-                (
-                    self._eigenvalues[self.n_active_components :],
-                    self._trimmed_eigenvalues,
-                )
-            ).mean()
-        return noise_variance
+        if self._trimmed_eigenvalues.size != 0:
+            return self._trimmed_eigenvalues.mean()
+        return 0.0
 
     def noise_variance_ratio(self):
         r"""
@@ -588,15 +532,15 @@ class PCAVectorModel(MeanLinearVectorModel):
         """
         weights = np.asarray(weights)  # if eg a list is provided
         n_instances, n_weights = weights.shape
-        if n_weights > self.n_active_components:
+        if n_weights > self.n_components:
             raise ValueError(
                 "Number of weightings cannot be greater than {}".format(
-                    self.n_active_components
+                    self.n_components
                 )
             )
         else:
             full_weights = np.zeros(
-                (n_instances, self.n_active_components), dtype=self._components.dtype
+                (n_instances, self.n_components), dtype=self._components.dtype
             )
             full_weights[..., :n_weights] = weights
             weights = full_weights
@@ -636,23 +580,87 @@ class PCAVectorModel(MeanLinearVectorModel):
             weights[None, :], normalized_weights=normalized_weights
         ).flatten()
 
-    def trim_components(self, n_components=None):
+    def trim_components(self, n_components):
         r"""
-        Permanently trims the components down to a certain amount. The number of
-        active components will be automatically reset to this particular value.
+        Returns a new model with only the first ``n_components`` components,
+        leaving this model as it is. (To trim this model itself, use
+        :meth:`trim_components_inplace`.) The new model **shares its memory** with
+        this one: nothing is copied, so it is instant and free however large
+        the model is, and any number of trimmed models cost no more than the
+        one they came from. The components of what is left out are kept as
+        noise (see :meth:`noise_variance`), as with :meth:`trim_components_inplace`.
 
-        This will reduce `self.n_components` down to `n_components`
-        (if ``None``, `self.n_active_components` will be used), freeing up
-        memory in the process.
+        .. code-block:: python
 
-        Once the model is trimmed, the trimmed components cannot be recovered.
+            small = model.trim_components(5)
+            small.n_components  # 5
+            model.n_components  # unchanged
 
         Parameters
         ----------
-        n_components: `int` >= ``1`` or `float` > ``0.0`` or ``None``, optional
+        n_components : `int` >= ``1`` or `float` > ``0.0``
             The number of components that are kept or else the amount (ratio)
-            of variance that is kept. If ``None``, `self.n_active_components` is
-            used.
+            of variance that is kept. More than the model has means all of
+            them.
+
+        Returns
+        -------
+        model : ``type(self)``
+            The trimmed model.
+
+        Raises
+        ------
+        ValueError
+            ``n_components`` is not a number of components this model has, or a
+            ratio of variance it has.
+
+        Notes
+        -----
+        .. versionchanged:: 0.13
+            Before this release ``trim_components`` trimmed this model in place
+            and returned ``None``: that is now :meth:`trim_components_inplace`.
+            Code that calls ``trim_components`` and ignores what it returns now
+            trims nothing.
+
+        The new model shares the arrays of this one (its components,
+        eigenvalues and mean are views of them), and neither can change the
+        other: the arrays of a model are never written to, and the methods that
+        change a model (``*_inplace``) give it new arrays.
+
+        Memory: a trimmed model keeps the arrays of the full model alive, and
+        if the model it came from is changed by an ``*_inplace`` method while
+        it is alive, the old arrays stay in memory until it is gone. To give a
+        trimmed model arrays of its own, the size of what it has, use
+        :meth:`copy`.
+        """
+        n = self._parse_n_components(n_components)
+        new = self.__class__.__new__(self.__class__)
+        new.__dict__.update(self.__dict__)
+        new._components = _read_only(self._components[:n])
+        new._eigenvalues = _read_only(self._eigenvalues[:n])
+        new._mean = _read_only(self._mean)
+        # the variance of what is left out, that noise_variance() needs
+        new._trimmed_eigenvalues = np.hstack(
+            (self._trimmed_eigenvalues, self._eigenvalues[n:])
+        )
+        return new
+
+    def trim_components_inplace(self, n_components):
+        r"""
+        Permanently trims the components down to ``n_components``, in place,
+        freeing up memory in the process: the components that are kept are
+        copied into arrays of their own, so the result does not share its
+        memory with any other model. (For a model that shares the memory
+        instead, and leaves this one as it is, see :meth:`trim_components`.)
+
+        Once the model is trimmed, the trimmed components cannot be recovered
+        (their variance is kept as noise, see :meth:`noise_variance`).
+
+        Parameters
+        ----------
+        n_components: `int` >= ``1`` or `float` > ``0.0``
+            The number of components that are kept or else the amount (ratio)
+            of variance that is kept.
 
         Notes
         -----
@@ -660,27 +668,16 @@ class PCAVectorModel(MeanLinearVectorModel):
         greater than the amount of variance currently kept, this method does
         not perform any action.
         """
-        if n_components is None:
-            # by default trim using the current n_active_components
-            n_components = self.n_active_components
-        # set self.n_active_components to n_components
-        self.n_active_components = n_components
-
-        if self.n_active_components < self.n_components:
-            # Just stored so that we can fit < 80 chars
-            nac = self.n_active_components
-            # set self.n_components to n_components. We have to copy to ensure
-            # that the data is actually removed, otherwise a view is returned
-            self._components = self._components[:nac].copy()
-            # store the eigenvalues associated to the discarded components
+        n = self._parse_n_components(n_components)
+        if n < self.n_components:
+            # copy, to ensure that the data is actually removed: otherwise a
+            # view is kept, and with it all the memory
+            # store the eigenvalues of the discarded components
             self._trimmed_eigenvalues = np.hstack(
-                (
-                    self._trimmed_eigenvalues,
-                    self._eigenvalues[self.n_active_components :],
-                )
+                (self._trimmed_eigenvalues, self._eigenvalues[n:])
             )
-            # make sure that the eigenvalues are trimmed too
-            self._eigenvalues = self._eigenvalues[:nac].copy()
+            self._components = self._components[:n].copy()
+            self._eigenvalues = self._eigenvalues[:n].copy()
 
     def project_whitened(self, vector_instance):
         """
@@ -712,7 +709,10 @@ class PCAVectorModel(MeanLinearVectorModel):
         The removed components will always be trimmed from the end of
         components (i.e. the components which capture the least variance).
         If trimming is performed, `n_components` and `n_available_components`
-        would be altered - see :meth:`trim_components` for details.
+        would be altered - see :meth:`trim_components_inplace` for details.
+
+        Both models get new components; the arrays they had are not written
+        to.
 
         Parameters
         ----------
@@ -725,7 +725,9 @@ class PCAVectorModel(MeanLinearVectorModel):
         ).T
         # the model passed to us went first, so all it's components will
         # survive. Pull them off, and update the other model.
-        linear_model.components = Q[: linear_model.n_components, :]
+        linear_model._components = _as_components(
+            Q[: linear_model.n_components, :], like=linear_model._components
+        )
         # it's possible that all of our components didn't survive due to
         # degeneracy. We need to trim our components down before replacing
         # them to ensure the number of components is consistent (otherwise
@@ -733,25 +735,23 @@ class PCAVectorModel(MeanLinearVectorModel):
         n_available_components = Q.shape[0] - linear_model.n_components
         if n_available_components < self.n_components:
             # oh dear, we've lost some components from the end of our model.
-            if self.n_active_components < n_available_components:
-                # save the current number of active components
-                n_active_components = self.n_active_components
-            else:
-                # save the current number of available components
-                n_active_components = n_available_components
-            # call trim_components to update our state.
-            self.trim_components(n_components=n_available_components)
-            if n_active_components < n_available_components:
-                # reset the number of active components
-                self.n_active_components = n_active_components
+            self.trim_components_inplace(n_available_components)
 
         # now we can set our own components with the updated orthogonal ones
-        self.components = Q[linear_model.n_components :, :]
+        self._components = _as_components(
+            Q[linear_model.n_components :, :], like=self._components
+        )
 
-    def increment(self, data, n_samples=None, forgetting_factor=1.0, verbose=False):
+    def increment_inplace(
+        self, data, n_samples=None, forgetting_factor=1.0, verbose=False
+    ):
         r"""
-        Update the eigenvectors, eigenvalues and mean vector of this model
-        by performing incremental PCA on the given samples.
+        Update the eigenvectors, eigenvalues and mean vector of this model,
+        in place, by performing incremental PCA on the given samples.
+
+        The model gets new arrays of its own (it does not write into the old
+        ones), so a model that shares the memory of the old ones (see
+        :meth:`trim_components`) is not changed and keeps them alive.
 
         Parameters
         ----------
@@ -785,20 +785,11 @@ class PCAVectorModel(MeanLinearVectorModel):
             f=forgetting_factor,
         )
 
-        # if the number of active components is the same as the total number
-        # of components so it will be after this method is executed
-        reset = self.n_active_components == self.n_components
-
         # update mean, components, eigenvalues and number of samples
         self._mean = m_vector
         self._components = e_vectors
         self._eigenvalues = e_values
         self.n_samples += n_new_samples
-
-        # reset the number of active components to the total number of
-        # components
-        if reset:
-            self.n_active_components = self.n_components
 
     def plot_eigenvalues(
         self,
@@ -922,7 +913,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         from menpo.visualize import plot_curve
 
         return plot_curve(
-            range(self.n_active_components),
+            range(self.n_components),
             [self.eigenvalues],
             figure_id=figure_id,
             new_figure=new_figure,
@@ -930,7 +921,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             title="Eigenvalues",
             x_label="Component Number",
             y_label="Eigenvalue",
-            axes_x_limits=[0, self.n_active_components - 1],
+            axes_x_limits=[0, self.n_components - 1],
             axes_y_limits=None,
             axes_x_ticks=None,
             axes_y_ticks=None,
@@ -1078,7 +1069,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         from menpo.visualize import plot_curve
 
         return plot_curve(
-            range(self.n_active_components),
+            range(self.n_components),
             [self.eigenvalues_ratio()],
             figure_id=figure_id,
             new_figure=new_figure,
@@ -1086,7 +1077,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             title="Variance Ratio of Eigenvalues",
             x_label="Component Number",
             y_label="Variance Ratio",
-            axes_x_limits=[0, self.n_active_components - 1],
+            axes_x_limits=[0, self.n_components - 1],
             axes_y_limits=None,
             axes_x_ticks=None,
             axes_y_ticks=None,
@@ -1234,7 +1225,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         from menpo.visualize import plot_curve
 
         return plot_curve(
-            range(self.n_active_components),
+            range(self.n_components),
             [self.eigenvalues_cumulative_ratio()],
             figure_id=figure_id,
             new_figure=new_figure,
@@ -1242,7 +1233,7 @@ class PCAVectorModel(MeanLinearVectorModel):
             title="Cumulative Variance Ratio of Eigenvalues",
             x_label="Component Number",
             y_label="Cumulative Variance Ratio",
-            axes_x_limits=[0, self.n_active_components - 1],
+            axes_x_limits=[0, self.n_components - 1],
             axes_y_limits=None,
             axes_x_ticks=None,
             axes_y_ticks=None,
@@ -1272,7 +1263,6 @@ class PCAVectorModel(MeanLinearVectorModel):
         # the lines that follow the summary in str(): shared by PCAModel
         return [
             ("centred", self.centred),
-            ("n_components", self.n_components),
             (
                 "kept_variance",
                 "{:.2} ({:.1%})".format(self.variance(), self.variance_ratio()),
@@ -1290,7 +1280,7 @@ class PCAVectorModel(MeanLinearVectorModel):
         return describe(
             self,
             {
-                "n_active_components": self.n_active_components,
+                "n_components": self.n_components,
                 "n_features": self.n_features,
             },
             self._str_details(),
@@ -1524,11 +1514,12 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
     @property
     def mean_vector(self):
         r"""
-        Return the mean of the model as a 1D vector.
+        Return the mean of the model as a 1D vector: a read-only view of the
+        memory of the model, not a copy.
 
         :type: `ndarray`
         """
-        return self._mean
+        return _read_only(self._mean)
 
     @doc_inherit(name="project_out")
     def project_out_vector(self, instance_vector):
@@ -1630,7 +1621,9 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         """
         return self.project_whitened_vector(instance.as_vector())
 
-    def increment(self, samples, n_samples=None, forgetting_factor=1.0, verbose=False):
+    def increment_inplace(
+        self, samples, n_samples=None, forgetting_factor=1.0, verbose=False
+    ):
         r"""
         Update the eigenvectors, eigenvalues and mean vector of this model
         by performing incremental PCA on the given samples.
@@ -1658,7 +1651,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         # build a data matrix from the new samples
         data = as_matrix(samples, length=n_samples, verbose=verbose)
         n_new_samples = data.shape[0]
-        PCAVectorModel.increment(
+        PCAVectorModel.increment_inplace(
             self,
             data,
             n_samples=n_new_samples,
@@ -1670,7 +1663,7 @@ class PCAModel(VectorizableBackedModel, PCAVectorModel):
         return describe(
             self,
             {
-                "n_active_components": self.n_active_components,
+                "n_components": self.n_components,
                 "n_features": self.n_features,
             },
             [("instance_class", name_of_callable(self.template_instance))]

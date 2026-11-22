@@ -2,6 +2,26 @@ import numpy as np
 
 from menpo.base import Copyable, describe
 
+# The arrays of a model are never written to: the methods that change a model
+# (the ones whose names end in _inplace) give it new arrays. So a model made by
+# PCAVectorModel.trim_components(), which shares the arrays of the model it came from,
+# can not change it and is not changed by it.
+
+
+def _read_only(array):
+    # A view of `array` that can not be written to: for handing out the memory of
+    # a model (or sharing it with another model) without it being changed by
+    # accident. The array itself is untouched.
+    view = array.view()
+    view.flags.writeable = False
+    return view
+
+
+def _as_components(array, like):
+    # New components from a result (e.g. of a QR decomposition): C-contiguous,
+    # as the components are everywhere else, and of the dtype of the old ones
+    return np.ascontiguousarray(array, dtype=like.dtype)
+
 
 class LinearVectorModel(Copyable):
     r"""
@@ -43,36 +63,14 @@ class LinearVectorModel(Copyable):
     @property
     def components(self):
         r"""
-        The components matrix of the linear model.
+        The components matrix of the linear model. This is a read-only view
+        of the memory of the model, not a copy: it can not be written to (to
+        change the components see :meth:`orthonormalize_inplace`), and it shows
+        any change that is made to the model.
 
         :type: ``(n_available_components, n_features)`` `ndarray`
         """
-        return self._components
-
-    @components.setter
-    def components(self, value):
-        r"""
-        Updates the components of this linear model, ensuring that the shape
-        of the components is not changed.
-
-        Parameters
-        ----------
-        value : ``(n_components, n_features)`` `ndarray`
-            The new components array.
-
-        Raises
-        ------
-        ValueError
-            Trying to replace components of shape {} with some of shape {}
-        """
-        if value.shape != self._components.shape:
-            raise ValueError(
-                "Trying to replace components of shape {} with some of shape {}".format(
-                    self.components.shape, value.shape
-                )
-            )
-        else:
-            np.copyto(self._components, value, casting="safe")
+        return _read_only(self._components)
 
     def component(self, index):
         r"""
@@ -338,9 +336,13 @@ class LinearVectorModel(Copyable):
         r"""
         Enforces that this model's components are orthonormalized,
         s.t. ``component_vector(i).dot(component_vector(j) = dirac_delta``.
+
+        This model gets new components; the array it had is not written to.
+        The QR decomposition needs several times the memory of the components
+        while it runs.
         """
         Q = np.linalg.qr(self.components.T)[0].T
-        self.components[...] = Q
+        self._components = _as_components(Q, like=self._components)
 
     # TODO: Investigate the meaning and consequences of trying to
     # orthonormalize two identical vectors
@@ -351,6 +353,8 @@ class LinearVectorModel(Copyable):
 
         Both models keep its number of components unchanged or else a value
         error is raised.
+
+        Both models get new components; the arrays they had are not written to.
 
         Parameters
         ----------
@@ -375,9 +379,13 @@ class LinearVectorModel(Copyable):
             np.linalg.qr(np.hstack((linear_model._components.T, self._components.T)))[0]
         ).T
         # set the orthonormalized components of the model being passed
-        linear_model.components = Q[: linear_model.n_components, :]
+        linear_model._components = _as_components(
+            Q[: linear_model.n_components, :], like=linear_model._components
+        )
         # set the orthonormalized components of this model
-        self.components = Q[linear_model.n_components :, :]
+        self._components = _as_components(
+            Q[linear_model.n_components :, :], like=self._components
+        )
 
 
 class MeanLinearVectorModel(LinearVectorModel):
@@ -403,11 +411,12 @@ class MeanLinearVectorModel(LinearVectorModel):
 
     def mean(self):
         r"""
-        Return the mean of the model.
+        Return the mean of the model: a read-only view of the memory of the
+        model, not a copy.
 
         :type: `ndarray`
         """
-        return self._mean
+        return _read_only(self._mean)
 
     def component(self, index, with_mean=True, scale=1.0):
         r"""
