@@ -3,6 +3,124 @@
 Changelog
 #########
 
+0.13.0 (unreleased)
+-------------------
+
+**Breaking changes.** Read these before upgrading: menpofit 0.8, menpo3d 0.10
+and older menpowidgets call the PCA methods below and need their next releases
+to work with this one.
+
+PCA models never write to their own arrays (`#901`_). A method that changes a
+model has ``_inplace`` in its name and gives the model new arrays; everything
+else leaves it alone.
+
+- ``PCAVectorModel.trim_components(n)`` now **returns a new model** with the
+  first ``n`` components (or that ratio of the variance) and leaves the model
+  as it is. The new model is made of read-only views of the arrays of the one
+  it came from, so it costs no memory however large the model is. It used to
+  trim in place and return ``None``: that is now ``trim_components_inplace(n)``,
+  which needs its number. Code that calls ``trim_components`` and ignores the
+  result now does nothing, with no warning.
+- ``n_active_components`` is removed (the setter and the property): a model has
+  ``n_components`` components, and to use fewer you ``trim_components(n)``.
+- The ``components`` setter is removed, and ``components``, ``eigenvalues`` and
+  ``mean`` are read-only views. ``increment()`` of the PCA and GMRF models is
+  ``increment_inplace()``.
+- ``orthonormalize_inplace``, ``orthonormalize_against_inplace`` and
+  ``increment_inplace`` give the model new arrays. ``orthonormalize_against_inplace``
+  used to write into the components of the other model too.
+
+Other breaking changes:
+
+- ``.gif`` is no longer an image type (`#899`_). It is a video: ``import_image``
+  of a GIF raises a ``ValueError`` that says to use ``import_video``, and
+  ``import_images`` and ``image_paths`` no longer include GIFs (a folder with a
+  GIF in it used to crash when a landmark file was next to the GIF).
+- ``str()`` of every Menpo object follows one standard, written down in
+  ``menpo.base.describe``: a summary line ``ClassName: key: value, ...``, then
+  optional detail lines (`#892`_). Anything that matched on the old text
+  changes. The default for a ``Copyable`` is now the class name; it used to dump
+  its state.
+- A 2D ``Rotation`` is vectorizable (`#895`_): its parameter is the
+  counter-clockwise angle in radians, in ``(-pi, pi]``. Code that expected
+  ``NotImplementedError`` from ``as_vector()`` gets the angle.
+- A ``TriMesh`` checks its triangle list when it is made (`#896`_): a wrong
+  shape, an index that does not exist (also a negative one, which used to give
+  wrong results quietly), or non-integer values raise a ``ValueError``. A float
+  array of whole numbers is converted. ``skip_checks=True`` skips the check.
+
+New:
+
+- ``impute(vector, mask)`` and ``impute_vectors`` on the linear and PCA models
+  fill in the features that are missing from a vector (`#887`_).
+- ``PCAModel.init_from_data_matrix`` builds a model from a data matrix and a
+  template (`#888`_). Building a ``PCAVectorModel`` from a list or a
+  ``LazyList`` no longer copies it twice, loads each sample once, and takes
+  ``verbose``. Asking for more ``n_samples`` than there are now raises a
+  ``ValueError`` (it used to keep fewer and report the larger number).
+- PsychoMorph ``.tem`` templates import as landmarks, under the label ``TEM``
+  (`#889`_).
+- ``PointCloud.as_pointcloud()`` converts any shape to a plain ``PointCloud``,
+  keeping the landmarks and the path (`#894`_).
+
+Fixes:
+
+- ``PiecewiseAffine`` finds the triangle of each point with a KD-tree instead
+  of testing every point against every triangle (`#893`_): the same results,
+  and 4,000 triangles over 99,000 points take 0.26 s and 154 MB instead of 90 s
+  and 22 GB. The unused ``fastpwa`` C++ source is deleted.
+- ``print_progress`` no longer uses ``datetime.utcfromtimestamp``, which is
+  deprecated and being removed: it warned on every run, wrapped at 24 hours and
+  showed a negative time as a date in 1970 (`#900`_).
+- ``MenpoMissingDependencyError`` only suggests installing a package that is
+  really absent (`#897`_). It used to say ``conda install numpy.nope`` or
+  ``conda install None`` for a missing submodule, a missing name or a missing
+  system library, hiding the real error, which it now always includes. The
+  advice is ``pip install``.
+- The documentation says that interpolation orders above 1 can leave pixel
+  values slightly outside the range of the image, and what ``clip_pixels`` does
+  about it (`#898`_).
+
+Development: the imports are sorted and checked by ``ruff`` in CI (`#890`_,
+the commit is in ``.git-blame-ignore-revs``) and there is a ``CONTRIBUTING.md``
+(`#891`_).
+
+Github Pull Requests
+....................
+- `#886`_ Changelog: add the missing 0.12.1 entry and require an entry for every release (@patricksnape)
+- `#887`_ Add impute to the linear and PCA models (@patricksnape)
+- `#888`_ Build a PCAModel from a data matrix, and a PCAVectorModel from a LazyList without copying it twice (@patricksnape)
+- `#889`_ Import PsychoMorph .tem templates (@patricksnape)
+- `#890`_ Sort the imports and check them in CI (ruff isort rules) (@patricksnape)
+- `#891`_ Add CONTRIBUTING.md (@patricksnape)
+- `#892`_ One standard for the text of str(): describe() (@patricksnape)
+- `#893`_ Find the triangle of each point with a KD-tree, not by testing every triangle (@patricksnape)
+- `#894`_ Add PointCloud.as_pointcloud() for every shape (@patricksnape)
+- `#895`_ Vectorize 2D rotations: the parameter is the counter-clockwise angle (@patricksnape)
+- `#896`_ Check the triangle list of a TriMesh when it is made (skip_checks to opt out) (@patricksnape)
+- `#897`_ Say what really went wrong when an optional dependency cannot be imported (@patricksnape)
+- `#898`_ Document the overshoot of high-order interpolation and clip_pixels (@patricksnape)
+- `#899`_ A GIF is a video: import it with import_video, not import_image (@patricksnape)
+- `#900`_ Fix print_progress's time estimate (deprecated datetime, 24 hour wrap) and test the text utilities (@patricksnape)
+- `#901`_ PCA models: trim_components() shares memory, arrays are never written to (breaking) (@patricksnape)
+
+.. _#886: https://github.com/menpo/menpo/pull/886
+.. _#887: https://github.com/menpo/menpo/pull/887
+.. _#888: https://github.com/menpo/menpo/pull/888
+.. _#889: https://github.com/menpo/menpo/pull/889
+.. _#890: https://github.com/menpo/menpo/pull/890
+.. _#891: https://github.com/menpo/menpo/pull/891
+.. _#892: https://github.com/menpo/menpo/pull/892
+.. _#893: https://github.com/menpo/menpo/pull/893
+.. _#894: https://github.com/menpo/menpo/pull/894
+.. _#895: https://github.com/menpo/menpo/pull/895
+.. _#896: https://github.com/menpo/menpo/pull/896
+.. _#897: https://github.com/menpo/menpo/pull/897
+.. _#898: https://github.com/menpo/menpo/pull/898
+.. _#899: https://github.com/menpo/menpo/pull/899
+.. _#900: https://github.com/menpo/menpo/pull/900
+.. _#901: https://github.com/menpo/menpo/pull/901
+
 0.12.1 (2026/11/19)
 -------------------
 
