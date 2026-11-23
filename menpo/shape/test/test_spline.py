@@ -4,7 +4,12 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from menpo.shape import CatmullRom, LabelledPointUndirectedGraph, PointUndirectedGraph
+from menpo.shape import (
+    CatmullRom,
+    LabelledPointUndirectedGraph,
+    PointUndirectedGraph,
+    Spline,
+)
 from menpo.shape.spline import curves_from_edges, resample_curves
 
 
@@ -199,3 +204,39 @@ def test_resample_curves_leaves_points_without_a_curve_alone():
     points = np.arange(10.0).reshape(5, 2)
     result = resample_curves(points, np.array([(0, 1), (1, 2), (2, 3)]), [])
     assert_allclose(result[4], points[4])
+
+
+class Polyline(Spline):
+    """The simplest spline: straight lines between the control points."""
+
+    def _sample_dense(self):
+        n = len(self.points)
+        segments = n if self.closed else n - 1
+        t = np.linspace(0, 1, self.resolution, endpoint=False)[:, None]
+        pieces = [
+            (1 - t) * self.points[i] + t * self.points[(i + 1) % n]
+            for i in range(segments)
+        ]
+        end = self.points[:1] if self.closed else self.points[-1:]
+        dense = np.concatenate(pieces + [end])
+        return dense, np.arange(segments + 1) * self.resolution
+
+
+def test_spline_is_an_interface_that_cannot_be_instantiated():
+    with pytest.raises(TypeError):
+        Spline(np.zeros((3, 2)))
+
+
+def test_a_new_kind_of_spline_gets_the_arc_length_machinery():
+    line = Polyline([[0.0, 0.0], [1.0, 0.0], [10.0, 0.0]])
+    assert line.length == pytest.approx(10.0)
+    assert_allclose(line.arc_positions, [0.0, 1.0, 10.0], atol=1e-9)
+    assert_allclose(line.resample(), [[0, 0], [5, 0], [10, 0]], atol=1e-9)
+
+
+def test_resample_curves_takes_the_kind_of_spline():
+    points = np.array([[0.0, 0.0], [1.0, 0.0], [10.0, 0.0]])
+    moved = resample_curves(points, [[0, 1], [1, 2]], spline_cls=Polyline)
+    assert_allclose(moved, [[0, 0], [5, 0], [10, 0]], atol=1e-9)
+    default = resample_curves(points, [[0, 1], [1, 2]])
+    assert_allclose(default[:, 1], 0, atol=1e-9)
