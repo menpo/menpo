@@ -60,6 +60,13 @@ New:
   ``ValueError`` (it used to keep fewer and report the larger number).
 - PsychoMorph ``.tem`` templates import as landmarks, under the label ``TEM``
   (`#889`_).
+- ``menpo.shape.CatmullRom``, and ``PointUndirectedGraph.resampled()`` (`#905`_):
+  a centripetal Catmull-Rom spline through points (open or closed, any number of
+  dimensions) and a way to move the points of a contour to equal steps along it.
+  The *anchors* you name (jaw ends and chin, say) stay where they are, and
+  ``spacing`` gives fractions other than equal steps, for instance the mean
+  spacing of the 300-W annotators. ``resampled()`` does it to every chain and
+  loop of a graph. ``Spline`` is the interface for other kinds of spline.
 - ``PointCloud.as_pointcloud()`` converts any shape to a plain ``PointCloud``,
   keeping the landmarks and the path (`#894`_).
 
@@ -69,6 +76,8 @@ Fixes:
   of testing every point against every triangle (`#893`_): the same results,
   and 4,000 triangles over 99,000 points take 0.26 s and 154 MB instead of 90 s
   and 22 GB. The unused ``fastpwa`` C++ source is deleted.
+- Exporting a JPEG failed after a PNG had been imported (`#904`_): Pillow
+  registers its image formats lazily and menpo read an incomplete list.
 - ``print_progress`` no longer uses ``datetime.utcfromtimestamp``, which is
   deprecated and being removed: it warned on every run, wrapped at 24 hours and
   showed a negative time as a date in 1970 (`#900`_).
@@ -103,6 +112,8 @@ Github Pull Requests
 - `#899`_ A GIF is a video: import it with import_video, not import_image (@patricksnape)
 - `#900`_ Fix print_progress's time estimate (deprecated datetime, 24 hour wrap) and test the text utilities (@patricksnape)
 - `#901`_ PCA models: trim_components() shares memory, arrays are never written to (breaking) (@patricksnape)
+- `#904`_ Exporting a JPEG failed after importing a PNG (@patricksnape)
+- `#905`_ CatmullRom, and PointUndirectedGraph.resampled to space points evenly along their curves (@patricksnape)
 
 .. _#886: https://github.com/menpo/menpo/pull/886
 .. _#887: https://github.com/menpo/menpo/pull/887
@@ -120,6 +131,8 @@ Github Pull Requests
 .. _#899: https://github.com/menpo/menpo/pull/899
 .. _#900: https://github.com/menpo/menpo/pull/900
 .. _#901: https://github.com/menpo/menpo/pull/901
+.. _#904: https://github.com/menpo/menpo/pull/904
+.. _#905: https://github.com/menpo/menpo/pull/905
 
 0.12.1 (2026/11/19)
 -------------------
