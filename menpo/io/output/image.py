@@ -15,24 +15,17 @@ def pil_exporter(image, file_handle, extension="", **kwargs):
     extension : `str`, optional
         The extension to use for writing if necessary
     """
-    from PIL.Image import EXTENSION
-
-    # The extensions are only filled out when save or open are called - which
-    # may not have been called before we reach here. So let's make sure that
-    # pillow is properly initialised.
-    if not EXTENSION:
-        from PIL.Image import init, preinit
-
-        preinit()
-        init()
+    from PIL.Image import registered_extensions
 
     pil_image = image.as_PILImage()
-    # Also, the format kwarg of PIL/Pillow is a bit confusing and actually
-    # refers to the underlying algorithm and not the extension. Therefore,
-    # we need to reach into PIL/Pillow and grab the correct format for our
-    # given extension.
+    # The format kwarg of PIL/Pillow is a bit confusing and actually refers to
+    # the underlying algorithm and not the extension. Therefore, we need to
+    # reach into PIL/Pillow and grab the correct format for our given
+    # extension. Pillow only registers the plugins of the formats that it has
+    # used so far (a PNG that was imported registers PNG alone), and
+    # registered_extensions() loads all of them before it answers.
     try:
-        pil_extension = EXTENSION[extension]
+        pil_extension = registered_extensions()[extension]
     except KeyError:
         raise ValueError(
             "PIL/Pillow does not support the provided extension: ({})".format(extension)

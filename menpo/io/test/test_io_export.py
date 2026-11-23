@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import warnings
 from pathlib import Path, PosixPath, WindowsPath
@@ -391,3 +392,22 @@ def test_pickle_paths_as_pure_cleans_up_on_exception():
             raise ValueError()
     except ValueError:
         assert prev_reduce == Path.__reduce__  # ensure we clean up
+
+
+def test_export_jpg_after_importing_a_png(tmp_path):
+    # Pillow registers the plugin of a format when it first uses it, so after
+    # importing a PNG only PNG is known; exporting a JPEG then failed with
+    # "PIL/Pillow does not support the provided extension". A fresh interpreter,
+    # because the state of Pillow is global.
+    code = (
+        "import sys, menpo.io as mio; "
+        "mio.export_image(mio.import_builtin_asset.lenna_png(), sys.argv[1]); "
+        "print(mio.import_image(sys.argv[1]).shape)"
+    )
+    target = tmp_path / "lenna.jpg"
+    result = subprocess.run(
+        [sys.executable, "-c", code, str(target)], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+    assert target.exists()
+    assert result.stdout.strip() == "(512, 512)"
