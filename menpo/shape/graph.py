@@ -2717,6 +2717,43 @@ class PointUndirectedGraph(PointGraph, UndirectedGraph):
         )
         return cls(points, adjacency_matrix, copy=copy, skip_checks=skip_checks)
 
+    def resampled(self, anchors=None, spacing=None, alpha=0.5):
+        r"""
+        A copy with the points moved along the curves that the edges make, so
+        that they are evenly spaced between the anchors.
+
+        Every chain or loop of the graph is a Catmull-Rom spline through its
+        points (see :map:`CatmullRom`); the points that are not anchors move
+        along it. The ends of every chain and the first point of every loop
+        are anchors without being asked to, and branching parts of the graph
+        stay as they are.
+
+        Parameters
+        ----------
+        anchors : `iterable` of `int`, optional
+            Indices of the points that must not move: the corners, eye and
+            mouth corners of a face, for example.
+        spacing : `dict` of `int` to `float`, optional
+            For some points, the fraction (strictly between 0 and 1) of the
+            arc length from the previous anchor to the next one at which they
+            go, instead of equal steps; see :meth:`CatmullRom.resample`.
+        alpha : `float`, optional
+            The parametrisation of the splines: ``0.5`` is centripetal.
+
+        Returns
+        -------
+        graph : :map:`PointUndirectedGraph`
+            A copy of the same type, with the same edges and (for a labelled
+            graph) labels.
+        """
+        from menpo.shape.spline import resample_curves
+
+        new = self.copy()
+        new.points = resample_curves(
+            self.points, self.edges, anchors=anchors, spacing=spacing, alpha=alpha
+        )
+        return new
+
     def from_mask(self, mask):
         """
         A 1D boolean array with the same number of elements as the number of

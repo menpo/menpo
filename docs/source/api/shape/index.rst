@@ -58,6 +58,19 @@ A subclass of :map:`PointUndirectedGraph` that allows the attaching of
   LabelledPointUndirectedGraph
 
 
+Curves
+------
+
+A spline through points, to resample a contour so that its points are evenly
+spaced. :meth:`menpo.shape.PointUndirectedGraph.resampled` does it for every
+chain and loop of a graph.
+
+.. toctree::
+  :maxdepth: 2
+
+  CatmullRom
+
+
 Predefined Graphs
 -----------------
 
